@@ -186,10 +186,6 @@ export const ofDbDate = (value: Date): LocalDate =>
 export const wallClock = (date: LocalDate, time: string, offset: string) =>
   new Date(`${date}T${time}${offset}`);
 
-/** The UTC calendar day of an instant (only where the server uses one). */
-export const utcDay = (instant: Date): LocalDate =>
-  instant.toISOString().slice(0, 10);
-
 function zonedAt(date: LocalDate, minute: number, zone: string): Date {
   const instant = zonedInstant(date, minute, zone);
   if (!instant)

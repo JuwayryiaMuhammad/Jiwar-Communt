@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { REASON_CODES } from '../../core/common/reasons';
+import { addDays } from '../../core/common/slots/day-slots';
 import {
   BOARD_KINDS,
   boardOf,
@@ -87,13 +88,32 @@ describe('board rules (ADR 0042)', () => {
     ).toEqual(['found']);
   });
 
-  it('a day is a real calendar day, today or before (a day of slack for the time zone)', () => {
-    expect(parseDay('2026-10-19', NOW)).toEqual(at('2026-10-19T00:00:00.000Z'));
-    expect(parseDay('2026-10-21', NOW)).toEqual(at('2026-10-21T00:00:00.000Z'));
-    expect(parseDay('2026-10-22', NOW)).toBeNull();
-    expect(parseDay('2026-02-30', NOW)).toBeNull();
-    expect(parseDay('19/10/2026', NOW)).toBeNull();
-    expect(parseDay('2026-10-19T00:00:00Z', NOW)).toBeNull();
+  it('a day is a real calendar day, the compound’s today or before', () => {
+    const cairo = (text: string, now = NOW) =>
+      parseDay(text, now, 'Africa/Cairo');
+    expect(cairo('2026-10-19')).toEqual(at('2026-10-19T00:00:00.000Z'));
+    expect(cairo('2026-10-20')).toEqual(at('2026-10-20T00:00:00.000Z'));
+    expect(cairo('2026-10-21')).toBeNull();
+    expect(cairo('2026-02-30')).toBeNull();
+    expect(cairo('19/10/2026')).toBeNull();
+    expect(cairo('2026-10-19T00:00:00Z')).toBeNull();
+  });
+
+  it.each([
+    // 2026-10-17 in Cairo (UTC+3), whatever the UTC date.
+    ['00:30', '2026-10-16T21:30:00.000Z', '2026-10-17'],
+    ['02:59', '2026-10-16T23:59:00.000Z', '2026-10-17'],
+    ['23:50', '2026-10-17T20:50:00.000Z', '2026-10-17'],
+    // Across 2026-10-29 (the clocks go back at 24:00 UTC+3).
+    ['23:30, before', '2026-10-29T20:30:00.000Z', '2026-10-29'],
+    ['23:30, again', '2026-10-29T21:30:00.000Z', '2026-10-29'],
+    ['00:30 after', '2026-10-29T22:30:00.000Z', '2026-10-30'],
+  ])('%s in Cairo: today is %s, tomorrow is refused', (_, iso, today) => {
+    const now = at(iso);
+    expect(parseDay(today, now, 'Africa/Cairo')).toEqual(
+      at(`${today}T00:00:00.000Z`),
+    );
+    expect(parseDay(addDays(today, 1), now, 'Africa/Cairo')).toBeNull();
   });
 
   it('the reasons a post closes and a claim is declined are one list in three places: the service, the dashboards and the CHECK', () => {

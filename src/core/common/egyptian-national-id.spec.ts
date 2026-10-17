@@ -91,6 +91,18 @@ describe('localToday and adultCutoff (a compound time zone)', () => {
     expect(localToday('Africa/Cairo', now)).toEqual(d(2026, 10, 1));
   });
 
+  it.each([
+    // 2026-10-17 in Cairo (UTC+3), whatever the UTC date.
+    ['00:30', '2026-10-16T21:30:00Z', d(2026, 10, 17)],
+    ['02:59', '2026-10-16T23:59:00Z', d(2026, 10, 17)],
+    ['23:50', '2026-10-17T20:50:00Z', d(2026, 10, 17)],
+    // Across 2026-10-29 (the clocks go back at 24:00 UTC+3).
+    ['23:30 (UTC+2)', '2026-10-29T21:30:00Z', d(2026, 10, 29)],
+    ['00:30 (UTC+2)', '2026-10-29T22:30:00Z', d(2026, 10, 30)],
+  ])('%s in Cairo: the household’s today', (_, iso, today) => {
+    expect(localToday('Africa/Cairo', new Date(iso))).toEqual(today);
+  });
+
   it('the cutoff agrees with isAdult, 29 February included', () => {
     for (const today of [d(2026, 2, 28), d(2026, 3, 1), d(2028, 2, 29)]) {
       const cutoff = adultCutoff(today);

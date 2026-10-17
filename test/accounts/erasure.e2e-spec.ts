@@ -22,7 +22,7 @@ import {
 import { loginViaOtp } from '../setup/login';
 import { required } from '../setup/test-env';
 import { Client } from 'pg';
-import { utcDay } from '../setup/compound-clock';
+import { localDay } from '../setup/compound-clock';
 
 const HOLD = { code: 'litigation', text: 'Case 12/2026 — keep everything' };
 
@@ -98,7 +98,7 @@ describe('Account erasure', () => {
       },
     });
     expect(mail.params).toMatchObject({
-      effectiveDate: utcDay(req.effectiveAt),
+      effectiveDate: localDay(req.effectiveAt),
     });
     // The account stays usable during the grace period.
     await loginViaOtp(h, primary.email, primary.id);

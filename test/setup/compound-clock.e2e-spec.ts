@@ -16,7 +16,6 @@ import {
   middayZone,
   month,
   ofDbDate,
-  utcDay,
   yearsBefore,
   ZONE,
 } from './compound-clock';
@@ -64,10 +63,9 @@ describe('The compound clock (tests)', () => {
     expect(c.at(c.day(90), 18).toISOString()).toBe('2027-01-15T16:00:00.000Z');
   });
 
-  it('00:30 in Cairo in winter (UTC+2): the UTC date is the day before', () => {
+  it('00:30 in Cairo in winter (UTC+2), 22:30 UTC the day before', () => {
     const c = cairo('2026-12-15T22:30:00Z');
     expect(c.today).toBe('2026-12-16');
-    expect(utcDay(c.now)).toBe('2026-12-15');
     expect(c.day(-1)).toBe('2026-12-15');
     expect(c.day(31)).toBe('2027-01-16');
   });

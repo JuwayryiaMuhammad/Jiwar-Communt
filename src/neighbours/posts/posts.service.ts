@@ -22,6 +22,7 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { FilesService } from '../../core/files/files.service';
 import type { PresignedRead } from '../../core/files/object-storage';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { NeighbourAccess } from '../access';
 import { ClaimDecisions } from '../claims/claim-decisions';
 import { dbNow } from '../db-clock';
@@ -151,6 +152,7 @@ export class PostsService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly claims: ClaimDecisions,
     private readonly notices: BoardNotices,
+    private readonly tenantSettings: TenantSettingsService,
   ) {}
 
   onModuleInit(): void {
@@ -285,8 +287,11 @@ export class PostsService implements OnModuleInit {
     now: Date,
     by: { side: 'resident' | 'staff'; unitId: string | null; expiresAt: Date },
   ): Promise<NeighbourPost> {
+    const { timezone } = await this.tenantSettings.inTx(tx, this.ctx.tenantId);
     const occurredOn =
-      input.occurredOn === undefined ? null : parseDay(input.occurredOn, now);
+      input.occurredOn === undefined
+        ? null
+        : parseDay(input.occurredOn, now, timezone);
     if (input.occurredOn !== undefined && occurredOn === null)
       throw invalid([
         { field: 'occurredOn', code: FieldErrorCode.INVALID_VALUE },

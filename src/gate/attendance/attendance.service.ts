@@ -7,8 +7,14 @@ import {
   FieldErrorCode,
   type FieldError,
 } from '../../core/common/errors';
+import {
+  addDays,
+  localDate,
+  type LocalDate,
+} from '../../core/common/slots/day-slots';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { dbNow } from '../db-clock';
 
 export const ATTENDANCE_MAX_DAYS = 93;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -62,13 +68,7 @@ export class AttendanceService {
           'Engagement not found',
         );
       const tz = (await this.settings.inTx(tx, tenantId)).timezone;
-      const today = localDate(new Date(), tz);
-      const to = range.to ?? today;
-      const from =
-        range.from ??
-        new Date(Date.parse(`${to}T00:00:00Z`) - 29 * DAY)
-          .toISOString()
-          .slice(0, 10);
+      const { from, to } = attendanceRange(range, await dbNow(tx), tz);
       checkRange(from, to);
       // A day either side: local dates straddle UTC midnight.
       const entries = await tx.gateEntry.findMany({
@@ -117,13 +117,17 @@ export class AttendanceService {
   }
 }
 
-function localDate(instant: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(instant);
+/**
+ * The days asked for: up to the compound's today by default (its zone, the
+ * database's clock), from 29 calendar days before the last one.
+ */
+export function attendanceRange(
+  range: { from?: string; to?: string },
+  now: Date,
+  timeZone: string,
+): { from: LocalDate; to: LocalDate } {
+  const to = range.to ?? localDate(now, timeZone);
+  return { from: range.from ?? addDays(to, -29), to };
 }
 
 function checkFormats(range: { from?: string; to?: string }): void {

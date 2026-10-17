@@ -3,6 +3,7 @@ import type {
   NeighbourPostStatus,
   Prisma,
 } from '@prisma/client';
+import { localDate } from '../../core/common/slots/day-slots';
 
 // ============================================================================
 // The two boards (ADR 0042), as pure rules. A post is on its board while
@@ -71,13 +72,17 @@ export const isClaimable = (kind: NeighbourPostKind): boolean =>
   kind === 'found';
 
 /**
- * A calendar day written `YYYY-MM-DD` that exists and is not after
- * tomorrow by UTC (the compound may be a day ahead of the server), or null.
+ * A calendar day written `YYYY-MM-DD` that exists and is not after the
+ * compound's today (its zone, at `now`), as a `@db.Date`; or null.
  */
-export function parseDay(text: string, now: Date): Date | null {
+export function parseDay(
+  text: string,
+  now: Date,
+  timeZone: string,
+): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
   const day = new Date(`${text}T00:00:00.000Z`);
   if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== text)
     return null;
-  return day.getTime() > now.getTime() + DAY ? null : day;
+  return text > localDate(now, timeZone) ? null : day;
 }

@@ -76,6 +76,25 @@ describe('slots of a local day', () => {
     );
   });
 
+  it.each([
+    // 2026-10-17 in Cairo (UTC+3), whatever the UTC date.
+    ['00:30', '2026-10-16T21:30:00Z', '2026-10-17'],
+    ['02:59', '2026-10-16T23:59:00Z', '2026-10-17'],
+    ['23:50', '2026-10-17T20:50:00Z', '2026-10-17'],
+    // Across 2026-10-29: 23:30 happens twice, then the 30th.
+    ['23:30 (UTC+3)', '2026-10-29T20:30:00Z', '2026-10-29'],
+    ['23:30 (UTC+2)', '2026-10-29T21:30:00Z', '2026-10-29'],
+    ['00:30 (UTC+2)', '2026-10-29T22:30:00Z', '2026-10-30'],
+  ])('%s in Cairo is on %s', (_, iso, date) => {
+    expect(localDate(new Date(iso), CAIRO)).toBe(date);
+  });
+
+  it('days add by the calendar across a clock change', () => {
+    expect(addDays('2026-10-17', 12)).toBe('2026-10-29');
+    expect(addDays('2026-10-17', 90)).toBe('2027-01-15');
+    expect(addDays('2026-10-30', -29)).toBe('2026-10-01');
+  });
+
   it('touching windows do not overlap; sharing an instant does', () => {
     const w = (a: string, b: string) => ({
       startsAt: new Date(`2031-01-15T${a}:00Z`),

@@ -15,6 +15,7 @@ import {
   requireReasonCodeOnly,
   type ReasonInput,
 } from '../common/reasons';
+import { localDate } from '../common/slots/day-slots';
 import { newId } from '../common/uuid';
 import type { Env } from '../config/env.schema';
 import { GlobalDbService } from '../database/global-db.service';
@@ -22,6 +23,7 @@ import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 import { NO_RECIPIENT, Outbox } from '../mail/outbox';
 import { Notifier } from '../notifications/notifier';
 import { SweepRunner } from '../sweep/sweep-runner';
+import { TenantSettingsService } from '../tenant-settings/tenant-settings.service';
 import { ACCOUNT_EMAILS } from './account-emails';
 import {
   AccountLifecycle,
@@ -160,6 +162,7 @@ export class AccountDeletionService implements OnModuleInit {
     private readonly staff: StaffRecipients,
     private readonly lifecycle: AccountLifecycle,
     private readonly sweep: SweepRunner,
+    private readonly settings: TenantSettingsService,
   ) {
     this.graceMs =
       config.get('DELETION_GRACE_DAYS', { infer: true }) * 86_400_000;
@@ -263,7 +266,7 @@ export class AccountDeletionService implements OnModuleInit {
       targetId: request.id,
     });
     await this.tell(tx, accountId, ACCOUNT_EMAILS.deletionRequested, {
-      effectiveDate: request.effectiveAt.toISOString().slice(0, 10),
+      effectiveDate: await this.localDay(tx, request.effectiveAt),
     });
     return view(request);
   }
@@ -681,7 +684,7 @@ export class AccountDeletionService implements OnModuleInit {
           targetId: r.id,
         });
         await this.tell(tx, r.account_id, ACCOUNT_EMAILS.deletionReminder, {
-          effectiveDate: r.effective_at.toISOString().slice(0, 10),
+          effectiveDate: await this.localDay(tx, r.effective_at),
         });
       }
       return due.length;
@@ -869,6 +872,12 @@ export class AccountDeletionService implements OnModuleInit {
       },
     });
     return after;
+  }
+
+  /** The compound's calendar day of an instant: what an email names. */
+  private async localDay(tx: TenantTxClient, instant: Date): Promise<string> {
+    const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
+    return localDate(instant, timezone);
   }
 
   /** The account row, locked for the rest of the transaction. */

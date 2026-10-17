@@ -53,6 +53,7 @@ import {
 import { Outbox } from '../../core/mail/outbox';
 import { Notifier } from '../../core/notifications/notifier';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { dbNow } from '../db-clock';
 import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
 import { DelegationsService } from './delegations.service';
@@ -588,10 +589,13 @@ export class HouseholdsService {
     return { inviteId, token, expiresAt };
   }
 
-  /** Today in the compound's time zone (tenant_settings.timezone). */
+  /**
+   * Today in the compound's time zone (tenant_settings.timezone), by the
+   * database's clock.
+   */
   private async compoundToday(tx: TenantTxClient): Promise<Date> {
     const { timezone } = await this.settings.inTx(tx, this.ctx.tenantId);
-    return localToday(timezone);
+    return localToday(timezone, await dbNow(tx));
   }
 
   private async requirePrimaryOnly(tx: TenantTxClient, unitId: string) {

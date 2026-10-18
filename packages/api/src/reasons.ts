@@ -129,6 +129,9 @@ export const REASON_CODES = {
   blocklistLift: ['resolved', 'entered_in_error', 'other'],
   blocklistLiftSystem: ['expired'],
   permitWorkStop: ['safety_hazard', 'outside_hours', 'noise_complaint', 'unauthorized_work', 'damage', 'other'],
+  incidentType: ['injury', 'near_miss', 'hazard', 'security_breach', 'property_damage', 'fire', 'other'],
+  incidentSeverity: ['low', 'medium', 'high', 'critical'],
+  incidentOutcome: ['resolved', 'referred_to_police', 'referred_to_management', 'no_action_needed', 'unfounded', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

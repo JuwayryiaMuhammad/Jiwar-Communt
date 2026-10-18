@@ -269,6 +269,22 @@
         ],
         "type": "string"
       },
+      "AcknowledgeIncidentDto": {
+        "properties": {
+          "role": {
+            "description": "`author`: the one who reported it; `reviewer`: a keeper who did not (INCIDENT_OWN otherwise).",
+            "enum": [
+              "author",
+              "reviewer"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "type": "object"
+      },
       "ActionTokenDto": {
         "properties": {
           "token": {
@@ -1039,6 +1055,19 @@
         },
         "required": [
           "technicianId"
+        ],
+        "type": "object"
+      },
+      "AssignIncidentDto": {
+        "properties": {
+          "investigatorId": {
+            "description": "An active holder of `incidents.manage`.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "investigatorId"
         ],
         "type": "object"
       },
@@ -4104,6 +4133,25 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CloseIncidentDto": {
+        "properties": {
+          "note": {
+            "description": "The closer’s own words, the management’s only.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "The outcome, from the closed list `incidentOutcome`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "note"
         ],
         "type": "object"
       },
@@ -14230,6 +14278,142 @@
         ],
         "type": "object"
       },
+      "GuardIncidentView": {
+        "properties": {
+          "authorAcknowledgedAt": {
+            "description": "When the author acknowledged it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "description": "The author’s words; null once their account was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "links": {
+            "$ref": "#/components/schemas/IncidentLinksView"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "place": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "example": "I-0042",
+            "type": "string"
+          },
+          "reportedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reviewerAcknowledgedAt": {
+            "description": "When a reviewer acknowledged it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentSeverity"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentStatus"
+              }
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentUnitView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "type",
+          "severity",
+          "status",
+          "place",
+          "unit",
+          "occurredAt",
+          "reportedAt",
+          "description",
+          "photos",
+          "links",
+          "outcome",
+          "closedAt",
+          "authorAcknowledgedAt",
+          "reviewerAcknowledgedAt"
+        ],
+        "type": "object"
+      },
+      "GuardIncidentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardIncidentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GuardInstructionAudience": {
         "enum": [
           "all",
@@ -15678,6 +15862,157 @@
         },
         "required": [
           "id"
+        ],
+        "type": "object"
+      },
+      "IncidentAcknowledgementView": {
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "author",
+              "reviewer"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "account",
+          "at"
+        ],
+        "type": "object"
+      },
+      "IncidentLinksView": {
+        "properties": {
+          "emergencyId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "gateServiceRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "patrolNoteId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "emergencyId",
+          "gateServiceRequestId",
+          "patrolNoteId"
+        ],
+        "type": "object"
+      },
+      "IncidentNoteDto": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "IncidentNoteView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "body": {
+            "description": "Null once its author’s account was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "author",
+          "body",
+          "at"
+        ],
+        "type": "object"
+      },
+      "IncidentOutcome": {
+        "enum": [
+          "resolved",
+          "referred_to_police",
+          "referred_to_management",
+          "no_action_needed",
+          "unfounded",
+          "other"
+        ],
+        "type": "string"
+      },
+      "IncidentSeverity": {
+        "description": "`critical` is a critical push to the incidents’ keepers.",
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "type": "string"
+      },
+      "IncidentStatus": {
+        "enum": [
+          "open",
+          "investigating",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "IncidentType": {
+        "enum": [
+          "injury",
+          "near_miss",
+          "hazard",
+          "security_breach",
+          "property_damage",
+          "fire",
+          "other"
+        ],
+        "type": "string"
+      },
+      "IncidentUnitView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "building"
         ],
         "type": "object"
       },
@@ -24719,6 +25054,73 @@
         ],
         "type": "object"
       },
+      "ReportIncidentDto": {
+        "properties": {
+          "description": {
+            "description": "What happened, in the author’s words. Never a resident’s to read.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "emergencyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "gateServiceRequestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "description": "At most 30 days back, not more than 5 minutes ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "patrolNoteId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Up to five `incident_photo` uploads of the caller’s.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "placeId": {
+            "description": "A place in service (`GET /community/places`); and/or a unit.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentSeverity"
+              }
+            ],
+            "description": "`critical` is a critical push to the incidents’ keepers."
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentType"
+              }
+            ]
+          },
+          "unitCode": {
+            "description": "A unit’s code; and/or a place.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "severity",
+          "occurredAt",
+          "description"
+        ],
+        "type": "object"
+      },
       "ReportMatchView": {
         "properties": {
           "permitStatus": {
@@ -32403,6 +32805,203 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffGuardTaskView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffIncidentView": {
+        "properties": {
+          "acknowledgements": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentAcknowledgementView"
+            },
+            "type": "array"
+          },
+          "assignedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "authorAcknowledgedAt": {
+            "description": "When the author acknowledged it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "closingNote": {
+            "description": "The closer’s words; null once their account was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "description": "The author’s words; null once their account was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "investigator": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "links": {
+            "$ref": "#/components/schemas/IncidentLinksView"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentNoteView"
+            },
+            "type": "array"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "place": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "A guard’s report: the post of their shift.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "example": "I-0042",
+            "type": "string"
+          },
+          "reportedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reportedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "reviewerAcknowledgedAt": {
+            "description": "When a reviewer acknowledged it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentSeverity"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentStatus"
+              }
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentUnitView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "type",
+          "severity",
+          "status",
+          "place",
+          "unit",
+          "occurredAt",
+          "reportedAt",
+          "description",
+          "photos",
+          "links",
+          "outcome",
+          "closedAt",
+          "authorAcknowledgedAt",
+          "reviewerAcknowledgedAt",
+          "reportedBy",
+          "post",
+          "investigator",
+          "assignedAt",
+          "notes",
+          "closingNote",
+          "closedBy",
+          "acknowledgements"
+        ],
+        "type": "object"
+      },
+      "StaffIncidentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffIncidentView"
             },
             "type": "array"
           },
@@ -45703,6 +46302,183 @@
         "summary": "Look an ID number up on the blocklist",
         "tags": [
           "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/incidents": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "GateIncidentsController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardIncidentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The incidents I reported",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Inside a shift, at a gate or in a zone: what happened, how bad, where (a place and/or a unit), when, your words and up to five photos, and what it links to. The incidents’ keepers are told; a critical one is a critical push.",
+        "operationId": "GateIncidentsController_report",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report an incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/incidents/{id}": {
+      "get": {
+        "description": "Another’s is not found.",
+        "operationId": "GateIncidentsController_own",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An incident I reported",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/incidents/{id}/acknowledge": {
+      "post": {
+        "description": "Once; again answers the same.",
+        "operationId": "GateIncidentsController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge an incident I reported",
+        "tags": [
+          "incidents"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -66056,6 +66832,403 @@
         "summary": "Get a handover",
         "tags": [
           "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents": {
+      "get": {
+        "description": "Newest first; by status, type, severity and when they happened.",
+        "operationId": "StaffIncidentsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "investigating",
+                "closed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "enum": [
+                "injury",
+                "near_miss",
+                "hazard",
+                "security_breach",
+                "property_damage",
+                "fire",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Happened at or after.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Happened before.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffIncidentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the incidents",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "As a guard does, with no shift.",
+        "operationId": "StaffIncidentsController_report",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report an incident from the office",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/{id}": {
+      "get": {
+        "operationId": "StaffIncidentsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/{id}/acknowledge": {
+      "post": {
+        "description": "As its author (one you reported), or as a reviewer (one you did not: INCIDENT_OWN otherwise). Once each; again answers the same.",
+        "operationId": "StaffIncidentsController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge an incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/{id}/assign": {
+      "post": {
+        "description": "An active holder of `incidents.manage` (INVESTIGATOR_NOT_ELIGIBLE). Open: now investigating. Closed: INCIDENT_CLOSED. The investigator is told.",
+        "operationId": "StaffIncidentsController_assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign an investigator",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/{id}/close": {
+      "post": {
+        "description": "With an outcome code (`incidentOutcome`) and a closing note of your own. Closed already: INCIDENT_CLOSED.",
+        "operationId": "StaffIncidentsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close an incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/{id}/notes": {
+      "post": {
+        "description": "The management’s only: never the author’s to read.",
+        "operationId": "StaffIncidentsController_note",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write an internal note",
+        "tags": [
+          "incidents"
         ],
         "x-no-store": true,
         "x-stability": "draft"

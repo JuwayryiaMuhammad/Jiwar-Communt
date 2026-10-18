@@ -2009,6 +2009,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The incidents I reported
+         * @description Newest first.
+         */
+        get: operations["GateIncidentsController_mine"];
+        put?: never;
+        /**
+         * Report an incident
+         * @description Inside a shift, at a gate or in a zone: what happened, how bad, where (a place and/or a unit), when, your words and up to five photos, and what it links to. The incidents’ keepers are told; a critical one is a critical push.
+         */
+        post: operations["GateIncidentsController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/incidents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * An incident I reported
+         * @description Another’s is not found.
+         */
+        get: operations["GateIncidentsController_own"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/incidents/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acknowledge an incident I reported
+         * @description Once; again answers the same.
+         */
+        post: operations["GateIncidentsController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/inside": {
         parameters: {
             query?: never;
@@ -8980,6 +9044,127 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the incidents
+         * @description Newest first; by status, type, severity and when they happened.
+         */
+        get: operations["StaffIncidentsController_list"];
+        put?: never;
+        /**
+         * Report an incident from the office
+         * @description As a guard does, with no shift.
+         */
+        post: operations["StaffIncidentsController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incidents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an incident */
+        get: operations["StaffIncidentsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incidents/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acknowledge an incident
+         * @description As its author (one you reported), or as a reviewer (one you did not: INCIDENT_OWN otherwise). Once each; again answers the same.
+         */
+        post: operations["StaffIncidentsController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incidents/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign an investigator
+         * @description An active holder of `incidents.manage` (INVESTIGATOR_NOT_ELIGIBLE). Open: now investigating. Closed: INCIDENT_CLOSED. The investigator is told.
+         */
+        post: operations["StaffIncidentsController_assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incidents/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close an incident
+         * @description With an outcome code (`incidentOutcome`) and a closing note of your own. Closed already: INCIDENT_CLOSED.
+         */
+        post: operations["StaffIncidentsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incidents/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write an internal note
+         * @description The management’s only: never the author’s to read.
+         */
+        post: operations["StaffIncidentsController_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/instructions": {
         parameters: {
             query?: never;
@@ -12277,6 +12462,13 @@ export interface components {
         AccountStatus: "active" | "inactive" | "frozen" | "erased";
         /** @enum {string} */
         AccountType: "resident" | "staff" | "manager" | "family";
+        AcknowledgeIncidentDto: {
+            /**
+             * @description `author`: the one who reported it; `reviewer`: a keeper who did not (INCIDENT_OWN otherwise).
+             * @enum {string}
+             */
+            role: "author" | "reviewer";
+        };
         ActionTokenDto: {
             /** @description The fragment of the link in the email. Anything that is not a live link answers 404 ACTION_TOKEN_INVALID. */
             token: string;
@@ -12529,6 +12721,13 @@ export interface components {
         AssignDto: {
             /** Format: uuid */
             technicianId: string;
+        };
+        AssignIncidentDto: {
+            /**
+             * Format: uuid
+             * @description An active holder of `incidents.manage`.
+             */
+            investigatorId: string;
         };
         AssignRequestDto: {
             /**
@@ -13441,6 +13640,12 @@ export interface components {
             /** @description Security’s own words, kept for the management. */
             note?: string;
             /** @description From the closed list `gateServiceClose`. */
+            reasonCode: string;
+        };
+        CloseIncidentDto: {
+            /** @description The closer’s own words, the management’s only. */
+            note: string;
+            /** @description The outcome, from the closed list `incidentOutcome`. */
             reasonCode: string;
         };
         CloseParkingReportDto: {
@@ -16600,6 +16805,42 @@ export interface components {
             data: components["schemas"]["GuardHandoverView"][];
             nextCursor: string | null;
         };
+        GuardIncidentView: {
+            /**
+             * Format: date-time
+             * @description When the author acknowledged it.
+             */
+            authorAcknowledgedAt: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** @description The author’s words; null once their account was erased. */
+            description: string | null;
+            /** Format: uuid */
+            id: string;
+            links: components["schemas"]["IncidentLinksView"];
+            /** Format: date-time */
+            occurredAt: string;
+            outcome: components["schemas"]["IncidentOutcome"] | null;
+            photos: components["schemas"]["PresignedReadView"][];
+            place: components["schemas"]["PlaceView"] | null;
+            /** @example I-0042 */
+            reference: string;
+            /** Format: date-time */
+            reportedAt: string;
+            /**
+             * Format: date-time
+             * @description When a reviewer acknowledged it.
+             */
+            reviewerAcknowledgedAt: string | null;
+            severity: components["schemas"]["IncidentSeverity"];
+            status: components["schemas"]["IncidentStatus"];
+            type: components["schemas"]["IncidentType"];
+            unit: components["schemas"]["IncidentUnitView"] | null;
+        };
+        GuardIncidentViewList: {
+            data: components["schemas"]["GuardIncidentView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         GuardInstructionAudience: "all" | "gate" | "zone";
         /**
@@ -17024,6 +17265,50 @@ export interface components {
         IdView: {
             /** Format: uuid */
             id: string;
+        };
+        IncidentAcknowledgementView: {
+            account: components["schemas"]["AccountRefView"];
+            /** Format: date-time */
+            at: string;
+            /** @enum {string} */
+            role: "author" | "reviewer";
+        };
+        IncidentLinksView: {
+            /** Format: uuid */
+            emergencyId: string | null;
+            /** Format: uuid */
+            gateServiceRequestId: string | null;
+            /** Format: uuid */
+            patrolNoteId: string | null;
+        };
+        IncidentNoteDto: {
+            body: string;
+        };
+        IncidentNoteView: {
+            /** Format: date-time */
+            at: string;
+            author: components["schemas"]["AccountRefView"];
+            /** @description Null once its author’s account was erased. */
+            body: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        /** @enum {string} */
+        IncidentOutcome: "resolved" | "referred_to_police" | "referred_to_management" | "no_action_needed" | "unfounded" | "other";
+        /**
+         * @description `critical` is a critical push to the incidents’ keepers.
+         * @enum {string}
+         */
+        IncidentSeverity: "low" | "medium" | "high" | "critical";
+        /** @enum {string} */
+        IncidentStatus: "open" | "investigating" | "closed";
+        /** @enum {string} */
+        IncidentType: "injury" | "near_miss" | "hazard" | "security_breach" | "property_damage" | "fire" | "other";
+        IncidentUnitView: {
+            building: string | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
         };
         InsideView: {
             /** Format: date-time */
@@ -19939,6 +20224,33 @@ export interface components {
              */
             unitId: string;
         };
+        ReportIncidentDto: {
+            /** @description What happened, in the author’s words. Never a resident’s to read. */
+            description: string;
+            /** Format: uuid */
+            emergencyId?: string;
+            /** Format: uuid */
+            gateServiceRequestId?: string;
+            /**
+             * Format: date-time
+             * @description At most 30 days back, not more than 5 minutes ahead.
+             */
+            occurredAt: string;
+            /** Format: uuid */
+            patrolNoteId?: string;
+            /** @description Up to five `incident_photo` uploads of the caller’s. */
+            photoFileIds?: string[];
+            /**
+             * Format: uuid
+             * @description A place in service (`GET /community/places`); and/or a unit.
+             */
+            placeId?: string;
+            /** @description `critical` is a critical push to the incidents’ keepers. */
+            severity: components["schemas"]["IncidentSeverity"];
+            type: components["schemas"]["IncidentType"];
+            /** @description A unit’s code; and/or a place. */
+            unitCode?: string;
+        };
         ReportMatchView: {
             permitStatus: components["schemas"]["VehiclePermitStatus"];
             unitCode: string;
@@ -22157,6 +22469,53 @@ export interface components {
         };
         StaffGuardTaskViewList: {
             data: components["schemas"]["StaffGuardTaskView"][];
+            nextCursor: string | null;
+        };
+        StaffIncidentView: {
+            acknowledgements: components["schemas"]["IncidentAcknowledgementView"][];
+            /** Format: date-time */
+            assignedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the author acknowledged it.
+             */
+            authorAcknowledgedAt: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The closer’s words; null once their account was erased. */
+            closingNote: string | null;
+            /** @description The author’s words; null once their account was erased. */
+            description: string | null;
+            /** Format: uuid */
+            id: string;
+            investigator: components["schemas"]["AccountRefView"] | null;
+            links: components["schemas"]["IncidentLinksView"];
+            notes: components["schemas"]["IncidentNoteView"][];
+            /** Format: date-time */
+            occurredAt: string;
+            outcome: components["schemas"]["IncidentOutcome"] | null;
+            photos: components["schemas"]["PresignedReadView"][];
+            place: components["schemas"]["PlaceView"] | null;
+            /** @description A guard’s report: the post of their shift. */
+            post: components["schemas"]["PostView"] | null;
+            /** @example I-0042 */
+            reference: string;
+            /** Format: date-time */
+            reportedAt: string;
+            reportedBy: components["schemas"]["AccountRefView"];
+            /**
+             * Format: date-time
+             * @description When a reviewer acknowledged it.
+             */
+            reviewerAcknowledgedAt: string | null;
+            severity: components["schemas"]["IncidentSeverity"];
+            status: components["schemas"]["IncidentStatus"];
+            type: components["schemas"]["IncidentType"];
+            unit: components["schemas"]["IncidentUnitView"] | null;
+        };
+        StaffIncidentViewList: {
+            data: components["schemas"]["StaffIncidentView"][];
             nextCursor: string | null;
         };
         StaffLockdownView: {
@@ -27444,6 +27803,97 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IdLookupView"];
+                };
+            };
+        };
+    };
+    GateIncidentsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardIncidentViewList"];
+                };
+            };
+        };
+    };
+    GateIncidentsController_report: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportIncidentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardIncidentView"];
+                };
+            };
+        };
+    };
+    GateIncidentsController_own: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardIncidentView"];
+                };
+            };
+        };
+    };
+    GateIncidentsController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardIncidentView"];
                 };
             };
         };
@@ -38039,6 +38489,183 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGuardHandoverView"];
+                };
+            };
+        };
+    };
+    StaffIncidentsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "open" | "investigating" | "closed";
+                type?: "injury" | "near_miss" | "hazard" | "security_breach" | "property_damage" | "fire" | "other";
+                severity?: "low" | "medium" | "high" | "critical";
+                /** @description Happened at or after. */
+                from?: string;
+                /** @description Happened before. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffIncidentViewList"];
+                };
+            };
+        };
+    };
+    StaffIncidentsController_report: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportIncidentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentsController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcknowledgeIncidentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentsController_assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignIncidentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseIncidentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentsController_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IncidentNoteDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffIncidentView"];
                 };
             };
         };

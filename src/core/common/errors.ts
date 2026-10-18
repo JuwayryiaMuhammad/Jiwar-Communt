@@ -867,6 +867,22 @@ export const ErrorCode = {
   PERMIT_WORK_STOPPED: 'PERMIT_WORK_STOPPED',
   /** The permit's work is not stopped: there is nothing to resume (409). */
   PERMIT_WORK_NOT_STOPPED: 'PERMIT_WORK_NOT_STOPPED',
+  /** Unknown, another compound's, or not the caller's to see. */
+  INCIDENT_NOT_FOUND: 'INCIDENT_NOT_FOUND',
+  /** The incident was closed already: it changes no more (409). */
+  INCIDENT_CLOSED: 'INCIDENT_CLOSED',
+  /** The author never reviews their own incident (403). */
+  INCIDENT_OWN: 'INCIDENT_OWN',
+  /**
+   * An investigator is an active holder of incidents.manage (422, field
+   * investigatorId).
+   */
+  INVESTIGATOR_NOT_ELIGIBLE: 'INVESTIGATOR_NOT_ELIGIBLE',
+  /**
+   * A linked emergency, gate service request or patrol note is unknown (404,
+   * params.field).
+   */
+  INCIDENT_LINK_NOT_FOUND: 'INCIDENT_LINK_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

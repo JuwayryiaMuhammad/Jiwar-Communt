@@ -6,6 +6,10 @@ import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import { permitRow } from '../setup/permits-rows';
 import {
   blocklistRow,
+  incidentAckRow,
+  incidentNoteRow,
+  incidentPhotoRow,
+  incidentRow,
   lockdownRow,
   matchRow,
   overrideRow,
@@ -13,7 +17,7 @@ import {
   refusalRow,
   workStopRow,
 } from '../setup/security-ops-rows';
-import { gateRow, shiftRow } from '../setup/security-rows';
+import { dutyFileRow, gateRow, shiftRow } from '../setup/security-rows';
 import { required } from '../setup/test-env';
 
 /**
@@ -37,6 +41,8 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
   let personEntryId: string;
   let permitId: string;
   let stopId: string;
+  let incidentId: string;
+  let noteId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -82,6 +88,23 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
           permitId,
           stoppedById: guardId,
         });
+        incidentId = await incidentRow(tx, {
+          tenantId,
+          unitId,
+          reportedById: guardId,
+        });
+        noteId = await incidentNoteRow(tx, {
+          tenantId,
+          incidentId,
+          authorId: managerId,
+        });
+        await incidentPhotoRow(tx, {
+          tenantId,
+          incidentId,
+          fileId: await dutyFileRow(tx, tenantId, 'incident_photo'),
+          uploadedById: guardId,
+        });
+        await incidentAckRow(tx, { tenantId, incidentId, accountId: guardId });
         await overrideRow(tx, {
           tenantId,
           lockdownId: liveId,
@@ -137,6 +160,8 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'gate_lockdowns',
       'blocklist_entries',
       'permit_work_stops',
+      'incidents',
+      'incident_notes',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -153,6 +178,8 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'gate_lockdown_overrides',
       'blocklist_matches',
       'security_refusals',
+      'incident_photos',
+      'incident_acknowledgements',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -173,6 +200,10 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'blocklist_matches',
       'security_refusals',
       'permit_work_stops',
+      'incidents',
+      'incident_photos',
+      'incident_notes',
+      'incident_acknowledgements',
     ]) {
       // A row to refuse: a row trigger never fires on a DELETE of none.
       const found = await attempt(
@@ -439,6 +470,117 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
            VALUES ('${newId()}', '${tenantId}', '${move}', '${guardId}', 'damage', now(), now())`,
         ),
       ).rejects.toThrow(/permit_work_stops_permit_fkey/);
+    });
+  });
+
+  describe('incidents', () => {
+    const where = () => `id = '${incidentId}'`;
+    const assign = () =>
+      `UPDATE incidents SET status = 'investigating', investigator_account_id = '${managerId}', assigned_at = now() WHERE `;
+    const close = () =>
+      `UPDATE incidents SET status = 'closed', outcome = 'resolved', closing_note = 'Done', closed_by_account_id = '${managerId}', closed_at = now() WHERE `;
+
+    it('the report never changes; its words are cleared once at most', async () => {
+      for (const set of [
+        `type = 'fire'`,
+        `severity = 'critical'`,
+        `occurred_at = now() - interval '1 day'`,
+        `reported_by_account_id = '${managerId}'`,
+        `description = 'Other words'`,
+      ])
+        await expect(
+          asApp(`UPDATE incidents SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/never changes/);
+      const clear = `UPDATE incidents SET description = NULL, text_cleared_at = now() WHERE ${where()}`;
+      await expect(asApp(clear)).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(`UPDATE incidents SET description = NULL WHERE ${where()}`),
+      ).rejects.toThrow(/incidents_description/);
+      // Once: a second clear at another moment, or the words written back,
+      // is refused. The moment differs explicitly: two clock reads may not.
+      for (const again of [
+        `text_cleared_at = text_cleared_at + interval '1 second'`,
+        `description = 'Back', text_cleared_at = NULL`,
+      ])
+        await expect(
+          asApp(clear, `UPDATE incidents SET ${again} WHERE ${where()}`),
+        ).rejects.toThrow(/never changes/);
+    });
+
+    it('forward only: open → investigating → closed; closed, nothing changes but the closer’s words, once', async () => {
+      await expect(
+        asApp(
+          `${assign()}${where()}`,
+          `UPDATE incidents SET status = 'open', investigator_account_id = NULL, assigned_at = NULL WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/never changes/);
+      await expect(
+        asApp(`${assign()}${where()}`, `${close()}${where()}`),
+      ).resolves.toBeDefined();
+      for (const set of [
+        `outcome = 'other'`,
+        `investigator_account_id = '${guardId}'`,
+        `closed_at = now() + interval '1 hour'`,
+      ])
+        await expect(
+          asApp(
+            `${close()}${where()}`,
+            `UPDATE incidents SET ${set} WHERE ${where()}`,
+          ),
+        ).rejects.toThrow(/never changes/);
+      const clearNote = `UPDATE incidents SET closing_note = NULL, closing_note_cleared_at = now() WHERE ${where()}`;
+      await expect(
+        asApp(`${close()}${where()}`, clearNote),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      for (const again of [
+        `closing_note_cleared_at = closing_note_cleared_at + interval '1 second'`,
+        `closing_note = 'Back', closing_note_cleared_at = NULL`,
+      ])
+        await expect(
+          asApp(
+            `${close()}${where()}`,
+            clearNote,
+            `UPDATE incidents SET ${again} WHERE ${where()}`,
+          ),
+        ).rejects.toThrow(/never changes/);
+    });
+
+    it('the shapes: somewhere, a status that agrees, a closing note on a close', async () => {
+      await expect(
+        asApp(
+          `INSERT INTO incidents (id, tenant_id, number, type, severity, occurred_at, description, reported_by_account_id, updated_at)
+           VALUES ('${newId()}', '${tenantId}', 777001, 'hazard', 'low', now(), 'Nowhere', '${guardId}', now())`,
+        ),
+      ).rejects.toThrow(/incidents_where/);
+      await expect(
+        asApp(`UPDATE incidents SET status = 'investigating' WHERE ${where()}`),
+      ).rejects.toThrow(/incidents_state_shape/);
+      await expect(
+        asApp(
+          `UPDATE incidents SET status = 'closed', outcome = 'resolved', closed_by_account_id = '${managerId}', closed_at = now() WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/incidents_closing_note/);
+      await expect(
+        asApp(
+          `UPDATE incidents SET status = 'closed', outcome = 'shrug', closing_note = 'x', closed_by_account_id = '${managerId}', closed_at = now() WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/incidents_outcome/);
+    });
+
+    it('a note is kept, its words cleared once at most', async () => {
+      const at = `id = '${noteId}'`;
+      await expect(
+        asApp(`UPDATE incident_notes SET body = 'Edited' WHERE ${at}`),
+      ).rejects.toThrow(/cleared once/);
+      const clear = `UPDATE incident_notes SET body = NULL, text_cleared_at = now() WHERE ${at}`;
+      await expect(asApp(clear)).resolves.toMatchObject({ rowCount: 1 });
+      for (const again of [
+        `text_cleared_at = text_cleared_at + interval '1 second'`,
+        `body = 'Back', text_cleared_at = NULL`,
+      ])
+        await expect(
+          asApp(clear, `UPDATE incident_notes SET ${again} WHERE ${at}`),
+        ).rejects.toThrow(/cleared once/);
     });
   });
 

@@ -131,6 +131,7 @@ describe('audit catalog', () => {
         // ADR 0053.
         'gate_lockdown',
         'blocklist_entry',
+        'incident',
       ]).toContain(def.target);
     }
   });

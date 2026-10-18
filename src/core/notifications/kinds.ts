@@ -1546,6 +1546,33 @@ export const NOTIFICATION_KINDS = {
     target: 'unit_permit',
     params: {},
   },
+  /**
+   * An incident was reported (ADR 0053), low to high severity: to the
+   * incidents' keepers. params.severity, params.incidentType.
+   */
+  'incident.reported': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'incident',
+    params: { severity: {}, incidentType: {} },
+  },
+  /** A critical incident was reported: to the incidents' keepers, critical. */
+  'incident.critical': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'incident',
+    params: { incidentType: {} },
+  },
+  /** You investigate an incident: to its investigator. */
+  'incident.assigned': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'incident',
+    params: {},
+  },
   /** A guest of the event, or the move's truck, was refused by security. */
   'unit_permit.refused_by_security': {
     priority: 'normal',

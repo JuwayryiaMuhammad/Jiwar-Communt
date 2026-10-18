@@ -4,13 +4,17 @@ import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import { permitRow } from '../setup/permits-rows';
 import {
   blocklistRow,
+  incidentAckRow,
+  incidentNoteRow,
+  incidentPhotoRow,
+  incidentRow,
   lockdownRow,
   matchRow,
   overrideRow,
   refusalRow,
   workStopRow,
 } from '../setup/security-ops-rows';
-import { gateRow, shiftRow } from '../setup/security-rows';
+import { dutyFileRow, gateRow, shiftRow } from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -21,6 +25,7 @@ interface Side {
   lockdownId: string;
   entryId: string;
   unitId: string;
+  incidentId: string;
 }
 
 /**
@@ -98,6 +103,49 @@ const TABLES: Table[] = [
         stoppedById: link.accountId,
       }),
   },
+  {
+    table: 'incidents',
+    insert: (tx, own, link) =>
+      incidentRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        reportedById: link.accountId,
+      }),
+  },
+  {
+    table: 'incident_photos',
+    insert: async (tx, own, link) =>
+      incidentPhotoRow(tx, {
+        tenantId: own.tenantId,
+        incidentId: link.incidentId,
+        fileId: await dutyFileRow(tx, own.tenantId, 'incident_photo'),
+        uploadedById: link.accountId,
+      }),
+  },
+  {
+    table: 'incident_notes',
+    insert: (tx, own, link) =>
+      incidentNoteRow(tx, {
+        tenantId: own.tenantId,
+        incidentId: link.incidentId,
+        authorId: link.accountId,
+      }),
+  },
+  {
+    table: 'incident_acknowledgements',
+    key: 'incident_id',
+    // One per incident and role: an incident of its own each time.
+    insert: async (tx, own, link) =>
+      incidentAckRow(tx, {
+        tenantId: own.tenantId,
+        incidentId: await incidentRow(tx, {
+          tenantId: own.tenantId,
+          unitId: own.unitId,
+          reportedById: own.accountId,
+        }),
+        accountId: link.accountId,
+      }),
+  },
 ];
 
 describe('RLS isolation — security tables (ADR 0053)', () => {
@@ -121,6 +169,7 @@ describe('RLS isolation — security tables (ADR 0053)', () => {
       lockdownId: '',
       entryId: '',
       unitId: (await createUnit(h, tenantId)).id,
+      incidentId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -138,6 +187,11 @@ describe('RLS isolation — security tables (ADR 0053)', () => {
       s.entryId = await blocklistRow(tx, {
         tenantId,
         createdById: s.accountId,
+      });
+      s.incidentId = await incidentRow(tx, {
+        tenantId,
+        unitId: s.unitId,
+        reportedById: s.accountId,
       });
     });
     return s;

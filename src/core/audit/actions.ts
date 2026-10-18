@@ -1180,6 +1180,19 @@ export const AUDIT_ACTIONS = {
   'permit_work.stopped': { log: 'tenant', target: 'unit_permit' },
   // metadata: stopId, recipients.
   'permit_work.resumed': { log: 'tenant', target: 'unit_permit' },
+  // Incidents (ADR 0053). Never the description, a note's or the closing
+  // note's words. metadata: number, type, severity, placeId, unitId,
+  // shiftId, photos (how many), emergencyId, gateServiceRequestId,
+  // patrolNoteId.
+  'incident.reported': { log: 'tenant', target: 'incident' },
+  // metadata: investigatorId, from (the previous one, or null).
+  'incident.assigned': { log: 'tenant', target: 'incident' },
+  // metadata: noteId.
+  'incident.note_added': { log: 'tenant', target: 'incident' },
+  // metadata: role (author | reviewer).
+  'incident.acknowledged': { log: 'tenant', target: 'incident' },
+  // metadata: outcome, from (the status).
+  'incident.closed': { log: 'tenant', target: 'incident' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

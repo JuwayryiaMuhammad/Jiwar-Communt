@@ -1422,6 +1422,9 @@ describe('API v0 — PII leak scan', () => {
       // B's blocklist entry, not found for everyone of A.
       '/staff/security/blocklist/{id}': w.bBlocklistEntryId,
       '/staff/security/blocklist/{id}/matches': w.bBlocklistEntryId,
+      // B's incident, not found for everyone of A.
+      '/gate/incidents/{id}': w.bIncidentId,
+      '/staff/security/incidents/{id}': w.bIncidentId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

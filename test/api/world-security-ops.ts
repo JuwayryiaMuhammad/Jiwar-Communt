@@ -1,4 +1,5 @@
 import { BlocklistService } from '../../src/gate/blocklist/blocklist.service';
+import { IncidentsService } from '../../src/gate/incidents/incidents.service';
 import { LockdownService } from '../../src/gate/lockdown/lockdown.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
@@ -10,6 +11,8 @@ export interface SecurityOpsWorld {
   bLockdownId: string;
   /** A plate B bans. */
   bBlocklistEntryId: string;
+  /** An incident B's manager reported. */
+  bIncidentId: string;
 }
 
 export async function securityOpsWorld(
@@ -40,8 +43,25 @@ export async function securityOpsWorld(
       reasonCode: 'other',
     }),
   );
+  const incident = await helpers.asManager(b, async () =>
+    h.moduleRef.get(IncidentsService).report(
+      {
+        type: 'other',
+        severity: 'low',
+        unitCode: (
+          await helpers.prisma.tenant.unit.findUniqueOrThrow({
+            where: { id: b.homeUnitId },
+          })
+        ).code,
+        occurredAt: new Date(),
+        description: 'World incident',
+      },
+      'staff',
+    ),
+  );
   return {
     bLockdownId: record.lockdown.id,
     bBlocklistEntryId: entry.entry.id,
+    bIncidentId: incident.incident.id,
   };
 }

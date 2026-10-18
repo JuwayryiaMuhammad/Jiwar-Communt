@@ -1671,6 +1671,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'سمحت الإدارة باستئناف العمل في تصريحك.',
     },
   },
+  'incident.reported': {
+    en: {
+      title: 'Incident reported',
+      body: 'A new incident was reported. Open the incidents.',
+    },
+    ar: {
+      title: 'بلاغ عن حادث',
+      body: 'تم الإبلاغ عن حادث جديد. افتح الحوادث.',
+    },
+  },
+  'incident.critical': {
+    en: {
+      title: 'Critical incident',
+      body: 'A critical incident was reported. Open it now.',
+    },
+    ar: {
+      title: 'حادث خطير',
+      body: 'تم الإبلاغ عن حادث خطير. افتحه الآن.',
+    },
+  },
+  'incident.assigned': {
+    en: {
+      title: 'Incident to investigate',
+      body: 'An incident was assigned to you. Open it.',
+    },
+    ar: {
+      title: 'حادث للتحقيق',
+      body: 'أُسند إليك التحقيق في حادث. افتحه.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

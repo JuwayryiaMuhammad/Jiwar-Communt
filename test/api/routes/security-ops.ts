@@ -296,3 +296,224 @@ export const STOP_WORK_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Incidents (ADR 0053): the guard's side and the management's. */
+export const INCIDENT_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/incidents',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: {
+        type: 'riot',
+        severity: 'low',
+        unitCode: 'A1',
+        occurredAt: '2026-10-01T10:00:00Z',
+        description: 'x',
+      },
+      fields: [
+        {
+          field: 'type',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: [
+              'injury',
+              'near_miss',
+              'hazard',
+              'security_breach',
+              'property_damage',
+              'fire',
+              'other',
+            ],
+          },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/incidents',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/incidents/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bIncidentId }),
+      code: 'INCIDENT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/incidents/{id}/acknowledge',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bIncidentId }),
+      code: 'INCIDENT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/incidents',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: {
+        type: 'hazard',
+        severity: 'apocalyptic',
+        unitCode: 'A1',
+        occurredAt: '2026-10-01T10:00:00Z',
+        description: 'x',
+      },
+      fields: [
+        {
+          field: 'severity',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['low', 'medium', 'high', 'critical'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/incidents',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'lost' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'investigating', 'closed'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/incidents/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bIncidentId }),
+      code: 'INCIDENT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/incidents/{id}/assign',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bIncidentId }),
+      code: 'INCIDENT_NOT_FOUND',
+      body: (w) => ({ investigatorId: w.a.ids.manager }),
+    },
+    invalid: {
+      body: { investigatorId: 'someone' },
+      fields: [{ field: 'investigatorId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/incidents/{id}/notes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bIncidentId }),
+      code: 'INCIDENT_NOT_FOUND',
+      body: () => ({ body: 'A note' }),
+    },
+    invalid: {
+      body: { body: '' },
+      fields: [
+        {
+          field: 'body',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 2000 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/incidents/{id}/acknowledge',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bIncidentId }),
+      code: 'INCIDENT_NOT_FOUND',
+      body: () => ({ role: 'reviewer' }),
+    },
+    invalid: {
+      body: { role: 'judge' },
+      fields: [
+        {
+          field: 'role',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['author', 'reviewer'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/incidents/{id}/close',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bIncidentId }),
+      code: 'INCIDENT_NOT_FOUND',
+      body: () => ({ reasonCode: 'resolved', note: 'Done' }),
+    },
+    invalid: {
+      body: { reasonCode: 'resolved' },
+      fields: [{ field: 'note', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+];

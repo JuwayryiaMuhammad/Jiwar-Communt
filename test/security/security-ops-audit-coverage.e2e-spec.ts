@@ -280,6 +280,66 @@ describe('Audit coverage — security (ADR 0053)', () => {
     });
   });
 
+  describe('incidents', () => {
+    it('reported, assigned, noted, acknowledged and closed: ids, codes and counts; never the words', async () => {
+      const guard = await x.guardOnDuty(s.c);
+      const supervisor = await x.supervisor(s.c);
+      const res = await x
+        .http('post', '/gate/incidents', guard.token, {
+          type: 'injury',
+          severity: 'high',
+          unitCode: s.home.code,
+          occurredAt: new Date().toISOString(),
+          description: WORDS,
+        })
+        .expect(201);
+      const id = (res.body as { id: string }).id;
+      const reported = await single('incident.reported', id);
+      expect(reported).toMatchObject(by(guard, 'incident'));
+      expect(reported.metadata).toEqual({
+        number: expect.any(Number) as number,
+        type: 'injury',
+        severity: 'high',
+        placeId: null,
+        unitId: s.home.id,
+        shiftId: guard.shiftId,
+        photos: 0,
+        emergencyId: null,
+        gateServiceRequestId: null,
+        patrolNoteId: null,
+      });
+      const staff = (path: string, body: object) =>
+        x
+          .http(
+            'post',
+            `/staff/security/incidents/${id}/${path}`,
+            s.manager.token,
+            body,
+          )
+          .expect(200);
+      await staff('assign', { investigatorId: supervisor.id });
+      expect((await single('incident.assigned', id)).metadata).toEqual({
+        investigatorId: supervisor.id,
+        from: null,
+      });
+      await staff('notes', { body: WORDS });
+      const noted = await single('incident.note_added', id);
+      expect(noted).toMatchObject(by(s.manager, 'incident'));
+      expect(noted.metadata).toEqual({
+        noteId: expect.any(String) as string,
+      });
+      await staff('acknowledge', { role: 'reviewer' });
+      expect((await single('incident.acknowledged', id)).metadata).toEqual({
+        role: 'reviewer',
+      });
+      await staff('close', { reasonCode: 'referred_to_police', note: WORDS });
+      expect((await single('incident.closed', id)).metadata).toEqual({
+        outcome: 'referred_to_police',
+        from: 'investigating',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every security entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

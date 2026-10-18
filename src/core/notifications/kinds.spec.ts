@@ -32,6 +32,7 @@ const CRITICAL_KINDS = [
   // ADR 0053.
   'gate_lockdown.resident_notice',
   'gate_lockdown.started',
+  'incident.critical',
   // ADR 0050.
   'guard_instruction.urgent',
   'guard_shift.absent_unmanned',

@@ -14656,6 +14656,457 @@
     {
       "item": [
         {
+          "name": "The incidents I reported",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "incidents"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/incidents"
+            }
+          }
+        },
+        {
+          "name": "Report an incident",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"type\": \"injury\",\n  \"severity\": \"low\",\n  \"occurredAt\": \"2026-01-01T09:00:00.000Z\",\n  \"description\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string | yes | What happened, in the author’s words. Never a resident’s to read. |\n| `emergencyId` | string (uuid) |  |  |\n| `gateServiceRequestId` | string (uuid) |  |  |\n| `occurredAt` | string (date-time) | yes | At most 30 days back, not more than 5 minutes ahead. |\n| `patrolNoteId` | string (uuid) |  |  |\n| `photoFileIds` | string (uuid)[] |  | Up to five `incident_photo` uploads of the caller’s. |\n| `placeId` | string (uuid) |  | A place in service (`GET /community/places`); and/or a unit. |\n| `severity` | `low` \\| `medium` \\| `high` \\| `critical` | yes | `critical` is a critical push to the incidents’ keepers. |\n| `type` | `injury` \\| `near_miss` \\| `hazard` \\| `security_breach` \\| `property_damage` \\| `fire` \\| `other` | yes |  |\n| `unitCode` | string |  | A unit’s code; and/or a place. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "incidents"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/incidents"
+            }
+          }
+        },
+        {
+          "name": "An incident I reported",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "incidents",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/incidents/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Acknowledge an incident I reported",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "incidents",
+                ":id",
+                "acknowledge"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/incidents/:id/acknowledge",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the incidents",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "severity",
+                  "value": ""
+                },
+                {
+                  "description": "Happened at or after.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "Happened before.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents"
+            }
+          }
+        },
+        {
+          "name": "Report an incident from the office",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"type\": \"injury\",\n  \"severity\": \"low\",\n  \"occurredAt\": \"2026-01-01T09:00:00.000Z\",\n  \"description\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string | yes | What happened, in the author’s words. Never a resident’s to read. |\n| `emergencyId` | string (uuid) |  |  |\n| `gateServiceRequestId` | string (uuid) |  |  |\n| `occurredAt` | string (date-time) | yes | At most 30 days back, not more than 5 minutes ahead. |\n| `patrolNoteId` | string (uuid) |  |  |\n| `photoFileIds` | string (uuid)[] |  | Up to five `incident_photo` uploads of the caller’s. |\n| `placeId` | string (uuid) |  | A place in service (`GET /community/places`); and/or a unit. |\n| `severity` | `low` \\| `medium` \\| `high` \\| `critical` | yes | `critical` is a critical push to the incidents’ keepers. |\n| `type` | `injury` \\| `near_miss` \\| `hazard` \\| `security_breach` \\| `property_damage` \\| `fire` \\| `other` | yes |  |\n| `unitCode` | string |  | A unit’s code; and/or a place. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents"
+            }
+          }
+        },
+        {
+          "name": "Get an incident",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Acknowledge an incident",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"role\": \"author\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `role` | `author` \\| `reviewer` | yes | `author`: the one who reported it; `reviewer`: a keeper who did not (INCIDENT_OWN otherwise). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id",
+                "acknowledge"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/acknowledge",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Assign an investigator",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"investigatorId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `investigatorId` | string (uuid) | yes | An active holder of `incidents.manage`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id",
+                "assign"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/assign",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close an incident",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\",\n  \"note\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string | yes | The closer’s own words, the management’s only. |\n| `reasonCode` | string | yes | The outcome, from the closed list `incidentOutcome`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Write an internal note",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id",
+                "notes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/notes",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "incidents"
+    },
+    {
+      "item": [
+        {
           "name": "Lock one gate or all down",
           "request": {
             "body": {

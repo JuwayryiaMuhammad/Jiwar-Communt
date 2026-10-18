@@ -1431,6 +1431,27 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'end_kind and ended_at are compared only once NOT NULL (the IS NULL branches come first)',
   },
+  // Incidents (ADR 0053).
+  incidents_number_positive: {},
+  incidents_type: {},
+  incidents_severity: {},
+  incidents_where: {
+    guarded: 'num_nonnulls counts the NULLs and is never NULL',
+  },
+  incidents_post: {
+    guarded:
+      'num_nonnulls counts the NULLs and is never NULL; the rest are IS NULL tests',
+  },
+  incidents_description: {
+    guarded: 'description IS NULL is tested first',
+  },
+  incidents_state_shape: {},
+  incidents_outcome: { guarded: 'outcome IS NULL is tested first' },
+  incidents_closing_note: {
+    guarded: 'closing_note IS NULL is tested first',
+  },
+  incident_notes_body: { guarded: 'body IS NULL is tested first' },
+  incident_acknowledgements_role: {},
 };
 
 interface Check {

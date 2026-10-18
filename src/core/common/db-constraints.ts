@@ -386,6 +386,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // row lock first.
   permit_work_stops_tenant_id_id_key: null,
   permit_work_stops_one_live: null,
+  // Incidents (ADR 0053): numbers come from the counter under its row lock.
+  incidents_tenant_id_id_key: null,
+  incidents_number_key: null,
+  incident_photos_tenant_id_id_key: null,
+  incident_photos_file_key: null,
+  incident_notes_tenant_id_id_key: null,
   gate_service_requests_tenant_id_id_key: null,
   // Numbers come from the counter under its row lock: a collision is a bug.
   gate_service_requests_number_key: null,

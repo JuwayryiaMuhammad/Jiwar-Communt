@@ -58,7 +58,66 @@ export function securityOpsCalls(
         reasonCode: 'other',
       }),
     );
+  /** An incident A's guard reports at A's home: its id. */
+  const anIncident = async () =>
+    id(
+      await guard('POST', '/gate/incidents', {
+        type: 'hazard',
+        severity: 'low',
+        placeId: world().aPlaceId,
+        occurredAt: new Date().toISOString(),
+        description: 'No-store incident',
+      }),
+    );
   return {
+    'POST /gate/incidents': () =>
+      guard('POST', '/gate/incidents', {
+        type: 'hazard',
+        severity: 'low',
+        placeId: world().aPlaceId,
+        occurredAt: new Date().toISOString(),
+        description: 'No-store incident',
+      }),
+    'GET /gate/incidents': () => guard('GET', '/gate/incidents'),
+    'GET /gate/incidents/{id}': async () =>
+      guard('GET', `/gate/incidents/${await anIncident()}`),
+    'POST /gate/incidents/{id}/acknowledge': async () =>
+      guard('POST', `/gate/incidents/${await anIncident()}/acknowledge`, {}),
+    'POST /staff/security/incidents': () =>
+      manager('POST', '/staff/security/incidents', {
+        type: 'near_miss',
+        severity: 'low',
+        placeId: world().aPlaceId,
+        occurredAt: new Date().toISOString(),
+        description: 'No-store office incident',
+      }),
+    'GET /staff/security/incidents': () =>
+      manager('GET', '/staff/security/incidents'),
+    'GET /staff/security/incidents/{id}': async () =>
+      manager('GET', `/staff/security/incidents/${await anIncident()}`),
+    'POST /staff/security/incidents/{id}/assign': async () =>
+      manager(
+        'POST',
+        `/staff/security/incidents/${await anIncident()}/assign`,
+        {
+          investigatorId: world().a.ids.manager,
+        },
+      ),
+    'POST /staff/security/incidents/{id}/notes': async () =>
+      manager('POST', `/staff/security/incidents/${await anIncident()}/notes`, {
+        body: 'No-store note',
+      }),
+    'POST /staff/security/incidents/{id}/acknowledge': async () =>
+      manager(
+        'POST',
+        `/staff/security/incidents/${await anIncident()}/acknowledge`,
+        { role: 'reviewer' },
+      ),
+    'POST /staff/security/incidents/{id}/close': async () =>
+      manager('POST', `/staff/security/incidents/${await anIncident()}/close`, {
+        reasonCode: 'resolved',
+        note: 'No-store close',
+      }),
     'GET /staff/security/blocklist': () =>
       manager('GET', '/staff/security/blocklist'),
     'POST /staff/security/blocklist': () =>

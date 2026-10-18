@@ -506,4 +506,9 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'gate.id_lookup',
   'permit_work.stopped',
   'permit_work.resumed',
+  'incident.reported',
+  'incident.assigned',
+  'incident.note_added',
+  'incident.acknowledged',
+  'incident.closed',
 ];

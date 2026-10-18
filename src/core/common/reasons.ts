@@ -601,4 +601,23 @@ export const REASON_CODES = {
     'damage',
     'other',
   ],
+  // Incidents (ADR 0053): what happened, how bad, and how it was closed.
+  incidentType: [
+    'injury',
+    'near_miss',
+    'hazard',
+    'security_breach',
+    'property_damage',
+    'fire',
+    'other',
+  ],
+  incidentSeverity: ['low', 'medium', 'high', 'critical'],
+  incidentOutcome: [
+    'resolved',
+    'referred_to_police',
+    'referred_to_management',
+    'no_action_needed',
+    'unfounded',
+    'other',
+  ],
 } as const;

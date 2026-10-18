@@ -165,3 +165,59 @@ export async function workStopRow(
   });
   return id;
 }
+
+let incidents = 0;
+
+/** An open incident at a unit, reported from the office. */
+export async function incidentRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; unitId: string; reportedById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.incident.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      number: 900_000 + ++incidents,
+      type: 'hazard',
+      severity: 'low',
+      unitId: r.unitId,
+      occurredAt: new Date(),
+      description: 'Row words',
+      reportedById: r.reportedById,
+    },
+  });
+  return id;
+}
+
+export async function incidentPhotoRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    incidentId: string;
+    fileId: string;
+    uploadedById: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.incidentPhoto.create({ data: { id, ...r } });
+  return id;
+}
+
+export async function incidentNoteRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; incidentId: string; authorId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.incidentNote.create({ data: { id, ...r, body: 'Row note' } });
+  return id;
+}
+
+/** An acknowledgement: its incident id (the key with the role). */
+export async function incidentAckRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; incidentId: string; accountId: string },
+): Promise<string> {
+  await tx.incidentAcknowledgement.create({ data: { ...r, role: 'author' } });
+  return r.incidentId;
+}

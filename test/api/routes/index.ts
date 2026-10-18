@@ -132,6 +132,7 @@ import {
 } from './safety';
 import {
   BLOCKLIST_ROUTES,
+  INCIDENT_ROUTES,
   LOCKDOWN_ROUTES,
   STOP_WORK_ROUTES,
 } from './security-ops';
@@ -222,6 +223,7 @@ export const ROUTES: Row[] = [
   ...LOCKDOWN_ROUTES,
   ...BLOCKLIST_ROUTES,
   ...STOP_WORK_ROUTES,
+  ...INCIDENT_ROUTES,
   ...GATE_SERVICE_ROUTES,
   ...GATE_SERVICE_HANDLER_ROUTES,
   ...PERMIT_SETTINGS_ROUTES,

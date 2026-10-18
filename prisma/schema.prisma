@@ -7236,3 +7236,84 @@ model PermitWorkStop {
   @@index([tenantId, permitId, stoppedAt, id], map: "permit_work_stops_permit_idx")
   @@map("permit_work_stops")
 }
+
+/// What a guard or the management reports happened (ADR 0053): never a
+/// resident's to see. The report never changes (an erasure may clear its
+/// author's words once); it moves open → investigating → closed.
+model Incident {
+  id                   String    @id @db.Uuid
+  tenantId             String    @map("tenant_id") @db.Uuid
+  number               Int
+  type                 String
+  severity             String
+  placeId              String?   @map("place_id") @db.Uuid
+  unitId               String?   @map("unit_id") @db.Uuid
+  occurredAt           DateTime  @map("occurred_at") @db.Timestamptz(3)
+  description          String?
+  reportedById         String    @map("reported_by_account_id") @db.Uuid
+  shiftId              String?   @map("shift_id") @db.Uuid
+  postGateId           String?   @map("post_gate_id") @db.Uuid
+  postPlaceId          String?   @map("post_place_id") @db.Uuid
+  emergencyId          String?   @map("emergency_id") @db.Uuid
+  gateServiceRequestId String?   @map("gate_service_request_id") @db.Uuid
+  patrolNoteId         String?   @map("patrol_note_id") @db.Uuid
+  /// open | investigating | closed.
+  status               String    @default("open")
+  investigatorId       String?   @map("investigator_account_id") @db.Uuid
+  assignedAt           DateTime? @map("assigned_at") @db.Timestamptz(3)
+  outcome              String?
+  closingNote          String?   @map("closing_note")
+  closedById           String?   @map("closed_by_account_id") @db.Uuid
+  closedAt             DateTime? @map("closed_at") @db.Timestamptz(3)
+  textClearedAt        DateTime? @map("text_cleared_at") @db.Timestamptz(3)
+  closingNoteClearedAt DateTime? @map("closing_note_cleared_at") @db.Timestamptz(3)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "incidents_number_key")
+  @@index([tenantId, createdAt, id], map: "incidents_list_idx")
+  @@map("incidents")
+}
+
+/// An incident's photo (ADR 0053), five at most. Append-only.
+model IncidentPhoto {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  incidentId   String   @map("incident_id") @db.Uuid
+  fileId       String   @unique(map: "incident_photos_file_key") @map("file_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, incidentId], map: "incident_photos_incident_idx")
+  @@map("incident_photos")
+}
+
+/// The management's internal note on an incident (ADR 0053).
+model IncidentNote {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  incidentId    String    @map("incident_id") @db.Uuid
+  authorId      String    @map("author_account_id") @db.Uuid
+  body          String?
+  textClearedAt DateTime? @map("text_cleared_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, incidentId, createdAt, id], map: "incident_notes_incident_idx")
+  @@map("incident_notes")
+}
+
+/// The author's and a reviewer's acknowledgement of an incident, once each.
+model IncidentAcknowledgement {
+  tenantId       String   @map("tenant_id") @db.Uuid
+  incidentId     String   @map("incident_id") @db.Uuid
+  /// author | reviewer.
+  role           String
+  accountId      String   @map("account_id") @db.Uuid
+  acknowledgedAt DateTime @default(now()) @map("acknowledged_at") @db.Timestamptz(3)
+
+  @@id([tenantId, incidentId, role])
+  @@map("incident_acknowledgements")
+}

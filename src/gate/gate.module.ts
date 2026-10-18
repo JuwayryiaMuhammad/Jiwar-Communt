@@ -107,6 +107,9 @@ import {
 } from './blocklist/gate-blocklist.controller';
 import { IdLookupService } from './blocklist/id-lookup.service';
 import { StaffBlocklistController } from './blocklist/staff-blocklist.controller';
+import { GateIncidentsController } from './incidents/gate-incidents.controller';
+import { IncidentsService } from './incidents/incidents.service';
+import { StaffIncidentsController } from './incidents/staff-incidents.controller';
 import { GateLockdownsController } from './lockdown/gate-lockdowns.controller';
 import { LockdownCore } from './lockdown/lockdown-core';
 import { LockdownProvisioning } from './lockdown/lockdown-provisioning';
@@ -257,6 +260,8 @@ import { RosterService } from './roster/roster.service';
     StaffBlocklistController,
     GateBlocklistController,
     GateIdLookupController,
+    GateIncidentsController,
+    StaffIncidentsController,
     GateServicesController,
     GateServiceHandlersController,
     PermitRulesController,
@@ -342,6 +347,7 @@ import { RosterService } from './roster/roster.service';
     BlocklistService,
     BlocklistMatcher,
     IdLookupService,
+    IncidentsService,
     GateServiceRecords,
     GateServicesService,
     GateServiceHandlersService,

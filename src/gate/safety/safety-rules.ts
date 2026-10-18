@@ -4,8 +4,11 @@
  * from them. Pure; unit-tested.
  */
 
-/** E- for emergencies, A- for accessibility help, S- for the other services. */
-export type SafetyPrefix = 'E' | 'A' | 'S';
+/**
+ * E- for emergencies, A- for accessibility help, S- for the other services;
+ * I- for incidents and V- for violations (ADR 0053).
+ */
+export type SafetyPrefix = 'E' | 'A' | 'S' | 'I' | 'V';
 
 /** `E-0042`: the compound's own numbers, as everywhere (ADR 0008). */
 export function safetyReference(prefix: SafetyPrefix, n: number): string {

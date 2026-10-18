@@ -9635,6 +9635,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/reports/incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the incidents report
+         * @description Per type, the incidents that happened on the compound’s days asked: reported, by guards, by severity, open, investigating and closed now, and the average hours to a close. Counts only.
+         */
+        get: operations["IncidentReportController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/reports/incidents/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the incidents report as CSV
+         * @description UTF-8 with a byte-order mark, CRLF; one row per type, the totals last (`all`).
+         */
+        get: operations["IncidentReportController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/reports/violations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the violations report
+         * @description Per kind, the violations of the compound’s days asked: issued, by guards, warnings and fined, the amounts issued and paid, open, under appeal, paid and cancelled now, and the appeals and their decisions. Counts only.
+         */
+        get: operations["ViolationReportController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/reports/violations/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the violations report as CSV
+         * @description UTF-8 with a byte-order mark, CRLF; one row per kind, the totals last (`all`).
+         */
+        get: operations["ViolationReportController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/roster/slots": {
         parameters: {
             query?: never;
@@ -15331,6 +15411,8 @@ export interface components {
             filledSlots: number;
             /** @description Gate services accepted this day: a lane at this gate, or by a guard on shift here. */
             gateServices: number;
+            /** @description Incidents a guard on shift here reported this day (ADR 0053); at gates and in zones. */
+            incidents: number;
             /** @description Of the slots, opened more than ten minutes late. */
             late: number;
             /** @description Materials the guards logged in at this gate (ADR 0049); null for a zone. */
@@ -15348,6 +15430,8 @@ export interface components {
             tasksOpen: number;
             /** @description Shifts that filled no slot. */
             unscheduledShifts: number;
+            /** @description Violations a guard on shift here issued this day (ADR 0053); at gates and in zones. */
+            violations: number;
             /** @description Visitors in at this gate (passes and gate requests); null for a zone. */
             visitors: number | null;
         };
@@ -17527,6 +17611,54 @@ export interface components {
         };
         /** @enum {string} */
         IncidentOutcome: "resolved" | "referred_to_police" | "referred_to_management" | "no_action_needed" | "unfounded" | "other";
+        IncidentReportCountsView: {
+            /** @description From the report to its close, on average, in hours (one decimal). */
+            avgHoursToClose: number | null;
+            /** @description Reported by a guard on shift; the rest by the management. */
+            byGuards: number;
+            closed: number;
+            critical: number;
+            high: number;
+            /** @description Under investigation now. */
+            investigating: number;
+            low: number;
+            medium: number;
+            /** @description Open now. */
+            open: number;
+            reported: number;
+        };
+        IncidentReportTypeView: {
+            /** @description From the report to its close, on average, in hours (one decimal). */
+            avgHoursToClose: number | null;
+            /** @description Reported by a guard on shift; the rest by the management. */
+            byGuards: number;
+            closed: number;
+            critical: number;
+            high: number;
+            /** @description Under investigation now. */
+            investigating: number;
+            low: number;
+            medium: number;
+            /** @description Open now. */
+            open: number;
+            reported: number;
+            type: components["schemas"]["IncidentType"];
+        };
+        IncidentReportView: {
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            from: string;
+            /**
+             * Format: date
+             * @example 2026-11-07
+             */
+            to: string;
+            totals: components["schemas"]["IncidentReportCountsView"];
+            /** @description Every type, in a fixed order, zeros included. */
+            types: components["schemas"]["IncidentReportTypeView"][];
+        };
         /**
          * @description `critical` is a critical push to the incidents’ keepers.
          * @enum {string}
@@ -24837,6 +24969,76 @@ export interface components {
             reversesId: string | null;
             /** Format: uuid */
             violationId: string;
+        };
+        ViolationReportCountsView: {
+            /**
+             * @description The amounts issued, cancelled ones included.
+             * @example 1250.00
+             */
+            amountIssued: string;
+            /** @example 500.00 */
+            amountPaid: string;
+            appealed: number;
+            /** @description Cancelled on appeal. */
+            appealsAccepted: number;
+            appealsUpheld: number;
+            /** @description Issued by a guard on shift; the rest by the office. */
+            byGuards: number;
+            cancelled: number;
+            /** @description With an amount. */
+            fined: number;
+            issued: number;
+            /** @description Open now. */
+            open: number;
+            paid: number;
+            /** @description Under appeal now. */
+            underAppeal: number;
+            /** @description Without an amount. */
+            warnings: number;
+        };
+        ViolationReportKindView: {
+            /**
+             * @description The amounts issued, cancelled ones included.
+             * @example 1250.00
+             */
+            amountIssued: string;
+            /** @example 500.00 */
+            amountPaid: string;
+            appealed: number;
+            /** @description Cancelled on appeal. */
+            appealsAccepted: number;
+            appealsUpheld: number;
+            /** @description Issued by a guard on shift; the rest by the office. */
+            byGuards: number;
+            cancelled: number;
+            /** @description With an amount. */
+            fined: number;
+            issued: number;
+            kind: components["schemas"]["ViolationKind"];
+            /** @description Open now. */
+            open: number;
+            paid: number;
+            /** @description Under appeal now. */
+            underAppeal: number;
+            /** @description Without an amount. */
+            warnings: number;
+        };
+        ViolationReportView: {
+            /** @enum {string} */
+            currency: "EGP";
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            from: string;
+            /** @description Every kind, in a fixed order, zeros included. */
+            kinds: components["schemas"]["ViolationReportKindView"][];
+            /**
+             * Format: date
+             * @example 2026-11-07
+             */
+            to: string;
+            totals: components["schemas"]["ViolationReportCountsView"];
         };
         /** @enum {string} */
         ViolationStatus: "open" | "under_appeal" | "paid" | "cancelled";
@@ -39697,6 +39899,98 @@ export interface operations {
                 date?: string;
                 /** @description One gate only. */
                 gateId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    IncidentReportController_report: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentReportView"];
+                };
+            };
+        };
+    };
+    IncidentReportController_export: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    ViolationReportController_report: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViolationReportView"];
+                };
+            };
+        };
+    };
+    ViolationReportController_export: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
             };
             header?: never;
             path?: never;

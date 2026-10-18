@@ -140,6 +140,14 @@ export function securityOpsCalls(
         { reasonCode: 'entered_in_error' },
       );
     },
+    'GET /staff/security/reports/incidents': () =>
+      manager('GET', '/staff/security/reports/incidents'),
+    'GET /staff/security/reports/incidents/export': () =>
+      manager('GET', '/staff/security/reports/incidents/export'),
+    'GET /staff/security/reports/violations': () =>
+      manager('GET', '/staff/security/reports/violations'),
+    'GET /staff/security/reports/violations/export': () =>
+      manager('GET', '/staff/security/reports/violations/export'),
     'POST /gate/violations': () =>
       guard('POST', '/gate/violations', {
         kind: 'pets',

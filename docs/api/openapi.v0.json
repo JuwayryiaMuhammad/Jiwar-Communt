@@ -8283,6 +8283,10 @@
             "description": "Gate services accepted this day: a lane at this gate, or by a guard on shift here.",
             "type": "number"
           },
+          "incidents": {
+            "description": "Incidents a guard on shift here reported this day (ADR 0053); at gates and in zones.",
+            "type": "number"
+          },
           "late": {
             "description": "Of the slots, opened more than ten minutes late.",
             "type": "number"
@@ -8323,6 +8327,10 @@
             "description": "Shifts that filled no slot.",
             "type": "number"
           },
+          "violations": {
+            "description": "Violations a guard on shift here issued this day (ADR 0053); at gates and in zones.",
+            "type": "number"
+          },
           "visitors": {
             "description": "Visitors in at this gate (passes and gate requests); null for a zone.",
             "nullable": true,
@@ -8346,7 +8354,9 @@
           "eventGuests",
           "moveTrucks",
           "materialEntries",
-          "materialExits"
+          "materialExits",
+          "incidents",
+          "violations"
         ],
         "type": "object"
       },
@@ -16062,6 +16072,149 @@
           "other"
         ],
         "type": "string"
+      },
+      "IncidentReportCountsView": {
+        "properties": {
+          "avgHoursToClose": {
+            "description": "From the report to its close, on average, in hours (one decimal).",
+            "nullable": true,
+            "type": "number"
+          },
+          "byGuards": {
+            "description": "Reported by a guard on shift; the rest by the management.",
+            "type": "number"
+          },
+          "closed": {
+            "type": "number"
+          },
+          "critical": {
+            "type": "number"
+          },
+          "high": {
+            "type": "number"
+          },
+          "investigating": {
+            "description": "Under investigation now.",
+            "type": "number"
+          },
+          "low": {
+            "type": "number"
+          },
+          "medium": {
+            "type": "number"
+          },
+          "open": {
+            "description": "Open now.",
+            "type": "number"
+          },
+          "reported": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "reported",
+          "byGuards",
+          "low",
+          "medium",
+          "high",
+          "critical",
+          "open",
+          "investigating",
+          "closed",
+          "avgHoursToClose"
+        ],
+        "type": "object"
+      },
+      "IncidentReportTypeView": {
+        "properties": {
+          "avgHoursToClose": {
+            "description": "From the report to its close, on average, in hours (one decimal).",
+            "nullable": true,
+            "type": "number"
+          },
+          "byGuards": {
+            "description": "Reported by a guard on shift; the rest by the management.",
+            "type": "number"
+          },
+          "closed": {
+            "type": "number"
+          },
+          "critical": {
+            "type": "number"
+          },
+          "high": {
+            "type": "number"
+          },
+          "investigating": {
+            "description": "Under investigation now.",
+            "type": "number"
+          },
+          "low": {
+            "type": "number"
+          },
+          "medium": {
+            "type": "number"
+          },
+          "open": {
+            "description": "Open now.",
+            "type": "number"
+          },
+          "reported": {
+            "type": "number"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reported",
+          "byGuards",
+          "low",
+          "medium",
+          "high",
+          "critical",
+          "open",
+          "investigating",
+          "closed",
+          "avgHoursToClose",
+          "type"
+        ],
+        "type": "object"
+      },
+      "IncidentReportView": {
+        "properties": {
+          "from": {
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "example": "2026-11-07",
+            "format": "date",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/IncidentReportCountsView"
+          },
+          "types": {
+            "description": "Every type, in a fixed order, zeros included.",
+            "items": {
+              "$ref": "#/components/schemas/IncidentReportTypeView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "totals",
+          "types"
+        ],
+        "type": "object"
       },
       "IncidentSeverity": {
         "description": "`critical` is a critical push to the incidents’ keepers.",
@@ -40109,6 +40262,188 @@
           "reasonCode",
           "recordedBy",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "ViolationReportCountsView": {
+        "properties": {
+          "amountIssued": {
+            "description": "The amounts issued, cancelled ones included.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "amountPaid": {
+            "example": "500.00",
+            "type": "string"
+          },
+          "appealed": {
+            "type": "number"
+          },
+          "appealsAccepted": {
+            "description": "Cancelled on appeal.",
+            "type": "number"
+          },
+          "appealsUpheld": {
+            "type": "number"
+          },
+          "byGuards": {
+            "description": "Issued by a guard on shift; the rest by the office.",
+            "type": "number"
+          },
+          "cancelled": {
+            "type": "number"
+          },
+          "fined": {
+            "description": "With an amount.",
+            "type": "number"
+          },
+          "issued": {
+            "type": "number"
+          },
+          "open": {
+            "description": "Open now.",
+            "type": "number"
+          },
+          "paid": {
+            "type": "number"
+          },
+          "underAppeal": {
+            "description": "Under appeal now.",
+            "type": "number"
+          },
+          "warnings": {
+            "description": "Without an amount.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "issued",
+          "byGuards",
+          "warnings",
+          "fined",
+          "amountIssued",
+          "open",
+          "underAppeal",
+          "paid",
+          "cancelled",
+          "amountPaid",
+          "appealed",
+          "appealsUpheld",
+          "appealsAccepted"
+        ],
+        "type": "object"
+      },
+      "ViolationReportKindView": {
+        "properties": {
+          "amountIssued": {
+            "description": "The amounts issued, cancelled ones included.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "amountPaid": {
+            "example": "500.00",
+            "type": "string"
+          },
+          "appealed": {
+            "type": "number"
+          },
+          "appealsAccepted": {
+            "description": "Cancelled on appeal.",
+            "type": "number"
+          },
+          "appealsUpheld": {
+            "type": "number"
+          },
+          "byGuards": {
+            "description": "Issued by a guard on shift; the rest by the office.",
+            "type": "number"
+          },
+          "cancelled": {
+            "type": "number"
+          },
+          "fined": {
+            "description": "With an amount.",
+            "type": "number"
+          },
+          "issued": {
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationKind"
+              }
+            ]
+          },
+          "open": {
+            "description": "Open now.",
+            "type": "number"
+          },
+          "paid": {
+            "type": "number"
+          },
+          "underAppeal": {
+            "description": "Under appeal now.",
+            "type": "number"
+          },
+          "warnings": {
+            "description": "Without an amount.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "issued",
+          "byGuards",
+          "warnings",
+          "fined",
+          "amountIssued",
+          "open",
+          "underAppeal",
+          "paid",
+          "cancelled",
+          "amountPaid",
+          "appealed",
+          "appealsUpheld",
+          "appealsAccepted",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "ViolationReportView": {
+        "properties": {
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "from": {
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "kinds": {
+            "description": "Every kind, in a fixed order, zeros included.",
+            "items": {
+              "$ref": "#/components/schemas/ViolationReportKindView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-11-07",
+            "format": "date",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ViolationReportCountsView"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "currency",
+          "totals",
+          "kinds"
         ],
         "type": "object"
       },
@@ -69295,6 +69630,206 @@
         "summary": "Export the daily report as CSV",
         "tags": [
           "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/reports/incidents": {
+      "get": {
+        "description": "Per type, the incidents that happened on the compound’s days asked: reported, by guards, by severity, open, investigating and closed now, and the average hours to a close. Counts only.",
+        "operationId": "IncidentReportController_report",
+        "parameters": [
+          {
+            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the incidents report",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/reports/incidents/export": {
+      "get": {
+        "description": "UTF-8 with a byte-order mark, CRLF; one row per type, the totals last (`all`).",
+        "operationId": "IncidentReportController_export",
+        "parameters": [
+          {
+            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the incidents report as CSV",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/reports/violations": {
+      "get": {
+        "description": "Per kind, the violations of the compound’s days asked: issued, by guards, warnings and fined, the amounts issued and paid, open, under appeal, paid and cancelled now, and the appeals and their decisions. Counts only.",
+        "operationId": "ViolationReportController_report",
+        "parameters": [
+          {
+            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViolationReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the violations report",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/reports/violations/export": {
+      "get": {
+        "description": "UTF-8 with a byte-order mark, CRLF; one row per kind, the totals last (`all`).",
+        "operationId": "ViolationReportController_export",
+        "parameters": [
+          {
+            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the violations report as CSV",
+        "tags": [
+          "violations"
         ],
         "x-no-store": true,
         "x-stability": "draft"

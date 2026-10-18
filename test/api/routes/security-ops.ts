@@ -720,3 +720,22 @@ export const VIOLATION_PAYMENT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The incidents and violations reports (ADR 0053). */
+export const SECURITY_REPORT_ROUTES: Row[] = (
+  ['incidents', 'violations'] as const
+).flatMap((report) =>
+  ['', '/export'].map((exported): Row => ({
+    method: 'GET',
+    path: `/staff/security/reports/${report}${exported}`,
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { from: '1 Nov' },
+      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  })),
+);

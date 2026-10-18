@@ -134,6 +134,11 @@ import { GateServiceHandlersService } from './gate-services/gate-service-handler
 import { DailyReportController } from './reports/daily-report.controller';
 import { DailyReportService } from './reports/daily-report.service';
 import {
+  IncidentReportController,
+  ViolationReportController,
+} from './reports/security-reports.controller';
+import { SecurityReportsService } from './reports/security-reports.service';
+import {
   PermitRulesController,
   PermitSettingsController,
 } from './permits/permit-settings.controller';
@@ -296,6 +301,8 @@ import { RosterService } from './roster/roster.service';
     GuardFoundItemsController,
     StaffFoundItemsController,
     DailyReportController,
+    IncidentReportController,
+    ViolationReportController,
     CheckpointsController,
     RoutesController,
     GuardPatrolsController,
@@ -394,6 +401,7 @@ import { RosterService } from './roster/roster.service';
     GuardInstructionsService,
     FoundItemsService,
     DailyReportService,
+    SecurityReportsService,
     GuardDutyLifecycle,
     GuardDutyExportSections,
     CheckpointsService,

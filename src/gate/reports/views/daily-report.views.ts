@@ -104,6 +104,18 @@ export class DailyCountsView {
       'Material exits let out at this gate (a permit used, ADR 0049); null for a zone.',
   })
   materialExits: number | null;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Incidents a guard on shift here reported this day (ADR 0053); at gates and in zones.',
+  })
+  incidents: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Violations a guard on shift here issued this day (ADR 0053); at gates and in zones.',
+  })
+  violations: number;
 }
 
 /** The post's patrol runs planned this day (ADR 0052), gates and zones alike. */

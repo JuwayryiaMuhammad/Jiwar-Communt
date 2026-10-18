@@ -263,7 +263,8 @@ describe('Patrol report and the daily report’s patrols', () => {
     const cells = Object.fromEntries(
       head.split(',').map((k, i) => [k, row.split(',')[i]]),
     );
-    expect(head.split(',').slice(-5)).toEqual([
+    // The patrols' five, before G6b's incidents and violations (ADR 0053).
+    expect(head.split(',').slice(-7, -2)).toEqual([
       'patrols_scheduled',
       'patrols_done',
       'patrols_late',

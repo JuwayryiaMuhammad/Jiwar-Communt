@@ -44,6 +44,8 @@ interface Counts {
   moveTrucks: number | null;
   materialEntries: number | null;
   materialExits: number | null;
+  incidents: number;
+  violations: number;
 }
 
 /** G3's gate counts (ADR 0049), each its own: never inside `visitors`. */
@@ -73,6 +75,8 @@ const zero = (gate: boolean): Counts => ({
   moveTrucks: gate ? 0 : null,
   materialEntries: gate ? 0 : null,
   materialExits: gate ? 0 : null,
+  incidents: 0,
+  violations: 0,
 });
 
 /** The CSV's columns, one row per post. Numbers are ours; names are text. */
@@ -103,6 +107,8 @@ export const DAILY_COLUMNS: readonly CsvColumn[] = [
   { header: 'patrols_late', kind: 'number' },
   { header: 'patrols_missed', kind: 'number' },
   { header: 'patrols_incomplete', kind: 'number' },
+  { header: 'incidents', kind: 'number' },
+  { header: 'violations', kind: 'number' },
 ];
 
 /** The patrols' counts (ADR 0052), in the CSV's order. */
@@ -130,8 +136,9 @@ const noPatrols = (): DailyPatrolCountsView => ({
  * and the permits' traffic there (ADR 0049), each its own count: the
  * contractor workers, event guests and move trucks let in, the materials
  * logged in and the material exits let out; and the patrol runs planned
- * then (ADR 0052): scheduled, done, late, missed, incomplete.
- * Fixed aggregate queries, one per kind of row: never one per post. Every
+ * then (ADR 0052): scheduled, done, late, missed, incomplete; and the
+ * incidents reported and violations issued by a guard on shift there (ADR
+ * 0053). Fixed aggregate queries, one per kind of row: never one per post. Every
  * gate is listed; a zone when something happened there.
  */
 @Injectable()
@@ -177,6 +184,8 @@ export class DailyReportService {
         p.counts[k] === null ? null : String(p.counts[k]),
       ),
       ...PATROL_COUNTS.map((k) => String(p.patrols[k])),
+      String(p.counts.incidents),
+      String(p.counts.violations),
     ]);
     return {
       name: `security-daily-${report.date}.csv`,
@@ -445,6 +454,42 @@ export class DailyReportService {
         missed: r.missed,
         incomplete: r.incomplete,
       });
+    }
+
+    // The incidents reported and the violations issued by a guard on shift
+    // at the post this day (ADR 0053), at gates and in zones.
+    const postOnly = onlyGate
+      ? Prisma.sql`AND post_gate_id = ${onlyGate}::uuid`
+      : Prisma.empty;
+    const security = await tx.$queryRaw<
+      {
+        gate_id: string | null;
+        place_id: string | null;
+        incidents: number;
+        violations: number;
+      }[]
+    >`
+      SELECT gate_id, place_id, sum(incidents)::int AS incidents,
+             sum(violations)::int AS violations
+        FROM (
+          SELECT post_gate_id AS gate_id, post_place_id AS place_id,
+                 1 AS incidents, 0 AS violations
+            FROM incidents
+           WHERE shift_id IS NOT NULL
+             AND created_at >= ${start} AND created_at < ${end}
+             ${postOnly}
+          UNION ALL
+          SELECT post_gate_id, post_place_id, 0, 1
+            FROM unit_violations
+           WHERE issued_shift_id IS NOT NULL
+             AND created_at >= ${start} AND created_at < ${end}
+             ${postOnly}
+        ) security
+       GROUP BY gate_id, place_id`;
+    for (const r of security) {
+      const c = of(r.gate_id, r.place_id);
+      c.incidents += r.incidents;
+      c.violations += r.violations;
     }
 
     // Names, and the order: gates by name, then zones in the places' order.

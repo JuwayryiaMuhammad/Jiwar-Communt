@@ -66,6 +66,54 @@ export class CommunityFacilitiesPort {
     return flag !== null;
   }
 
+  /**
+   * Whether `memberId` is one of the unit's active minors, read FOR SHARE:
+   * a removal waits for the booking naming them (ADR 0054).
+   */
+  async isMinorOf(
+    tx: TenantTxClient,
+    unitId: string,
+    memberId: string,
+  ): Promise<boolean> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM household_members
+       WHERE id = ${memberId}::uuid AND unit_id = ${unitId}::uuid
+         AND status = 'active' AND is_minor
+         FOR SHARE`;
+    return rows.length > 0;
+  }
+
+  /**
+   * The first names of members who are still active minors of these units
+   * (ADR 0054): a booking's occasion, for the household's own views.
+   */
+  async minorFirstNames(
+    tx: TenantTxClient,
+    members: readonly { memberId: string; unitId: string }[],
+  ): Promise<Map<string, string | null>> {
+    if (!members.length) return new Map();
+    const rows = await tx.householdMember.findMany({
+      where: {
+        id: { in: [...new Set(members.map((m) => m.memberId))] },
+        status: 'active',
+        isMinor: true,
+      },
+      select: { id: true, unitId: true, fullName: true },
+    });
+    const of = new Map(rows.map((r) => [r.id, r]));
+    return new Map(
+      members.map((m) => {
+        const r = of.get(m.memberId);
+        return [
+          m.memberId,
+          r && r.unitId === m.unitId
+            ? (r.fullName ?? '').trim().split(/\s+/)[0] || null
+            : null,
+        ];
+      }),
+    );
+  }
+
   /** Every active account that may book for the unit now. */
   bookers(tx: TenantTxClient, unitId: string): Promise<string[]> {
     return this.capabilities.holders(tx, unitId, 'bookings');

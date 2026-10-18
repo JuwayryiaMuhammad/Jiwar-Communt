@@ -41,7 +41,7 @@ import {
   type FacilitySlot,
 } from './facility-slots';
 import { WEEK_MS, withinQuota } from './quota-window';
-import { BookingView } from './views/booking.views';
+import { BookingView, type BookingOccasion } from './views/booking.views';
 
 export const BOOKING_RESOURCE = 'booking';
 
@@ -49,7 +49,12 @@ export interface NewBooking {
   facilityId: string;
   startsAt: Date;
   guests?: number;
+  /** One of the unit's minors as the occasion (ADR 0054). */
+  occasionMemberId?: string;
 }
+
+/** A booking with its occasion, as the household sees it (ADR 0054). */
+export type BookingRead = Booking & { occasion: BookingOccasion | null };
 
 /** A slot as a resident sees it: free or full, never how full or by whom. */
 export interface SlotState extends FacilitySlot {
@@ -120,7 +125,11 @@ export class BookingsService implements OnModuleInit {
     this.idempotency.renderer(BOOKING_RESOURCE, async (id) =>
       this.tenantTx.withTenantTx(async (tx) =>
         BookingView.from(
-          await tx.booking.findUniqueOrThrow({ where: { id } }),
+          (
+            await this.withOccasions(tx, [
+              await tx.booking.findUniqueOrThrow({ where: { id } }),
+            ])
+          )[0],
           this.ctx.accountId,
         ),
       ),
@@ -233,7 +242,7 @@ export class BookingsService implements OnModuleInit {
   forUnit(
     unitId: string,
     q: { scope: 'upcoming' | 'past'; cursor?: string; limit?: number },
-  ): Promise<Page<Booking>> {
+  ): Promise<Page<BookingRead>> {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.requirePlace(tx, unitId);
       const now = await dbNow(tx);
@@ -255,7 +264,11 @@ export class BookingsService implements OnModuleInit {
         orderBy: page.orderBy,
         take: limit + 1,
       });
-      return page.toPage(rows, limit);
+      const found = page.toPage(rows, limit);
+      return {
+        ...found,
+        items: await this.withOccasions(tx, found.items),
+      };
     });
   }
 
@@ -270,8 +283,37 @@ export class BookingsService implements OnModuleInit {
   }
 
   /** One booking the caller sees (see `visible`). */
-  get(id: string): Promise<Booking> {
-    return this.tenantTx.withTenantTx((tx) => this.visible(tx, id));
+  get(id: string): Promise<BookingRead> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const [booking] = await this.withOccasions(tx, [
+        await this.visible(tx, id),
+      ]);
+      return booking;
+    });
+  }
+
+  /**
+   * Each booking with its occasion (ADR 0054): the child's first name while
+   * they are still the unit's minor. For the household's views only.
+   */
+  private async withOccasions(
+    tx: TenantTxClient,
+    rows: readonly Booking[],
+  ): Promise<BookingRead[]> {
+    const named = rows.filter((b) => b.occasionMemberId !== null);
+    const names = await this.community.minorFirstNames(
+      tx,
+      named.map((b) => ({ memberId: b.occasionMemberId!, unitId: b.unitId })),
+    );
+    return rows.map((b) => ({
+      ...b,
+      occasion: b.occasionMemberId
+        ? {
+            memberId: b.occasionMemberId,
+            firstName: names.get(b.occasionMemberId) ?? null,
+          }
+        : null,
+    }));
   }
 
   // --------------------------------------------------------------------------
@@ -286,7 +328,7 @@ export class BookingsService implements OnModuleInit {
    * quota (and its peak quota) keeps every 7 days within bounds; the slot
    * has room for the party.
    */
-  book(unitId: string, input: NewBooking): Promise<Booking> {
+  book(unitId: string, input: NewBooking): Promise<BookingRead> {
     const guests = input.guests ?? 0;
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
@@ -373,6 +415,24 @@ export class BookingsService implements OnModuleInit {
           ErrorCode.CLUB_MEMBERSHIP_REQUIRED,
           'This facility is for club members',
         );
+      if (input.occasionMemberId !== undefined) {
+        if (!rules.childOccasions)
+          throw invalid([
+            {
+              field: 'occasionMemberId',
+              code: FieldErrorCode.FIELD_NOT_ALLOWED,
+            },
+          ]);
+        if (
+          !(await this.community.isMinorOf(tx, unitId, input.occasionMemberId))
+        )
+          throw invalid([
+            {
+              field: 'occasionMemberId',
+              code: FieldErrorCode.PERSON_NOT_OF_UNIT,
+            },
+          ]);
+      }
       if (await closedOver(tx, facility.id, slot))
         throw appError.conflict(
           ErrorCode.FACILITY_CLOSED,
@@ -406,6 +466,7 @@ export class BookingsService implements OnModuleInit {
           partySize: party,
           peak: slot.peak,
           status,
+          occasionMemberId: input.occasionMemberId ?? null,
           createdAt: now,
         },
       });
@@ -419,9 +480,10 @@ export class BookingsService implements OnModuleInit {
           peak: slot.peak,
           guests,
           startsAt: slot.startsAt.toISOString(),
+          ...(booking.occasionMemberId ? { childOccasion: true } : {}),
         },
       });
-      return booking;
+      return (await this.withOccasions(tx, [booking]))[0];
     });
   }
 

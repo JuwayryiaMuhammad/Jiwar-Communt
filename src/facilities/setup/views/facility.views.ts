@@ -77,6 +77,12 @@ export class FacilityBookingRulesView {
   })
   requiresMembership: boolean;
   @ApiProperty({
+    type: Boolean,
+    description:
+      "A booking may name one of the unit's children as its occasion (ADR 0054).",
+  })
+  childOccasions: boolean;
+  @ApiProperty({
     type: Number,
     description: 'Bookings a unit may hold here in any 7 days.',
   })
@@ -145,6 +151,7 @@ export class FacilityView {
         maxGuests: rules.maxGuests,
         requiresApproval: rules.requiresApproval,
         requiresMembership: rules.requiresMembership,
+        childOccasions: rules.childOccasions,
         weeklyQuota: rules.weeklyQuota,
         peakQuota: rules.peakQuota,
       },

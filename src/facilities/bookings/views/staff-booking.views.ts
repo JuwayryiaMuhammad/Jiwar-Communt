@@ -61,6 +61,12 @@ export class StaffBookingView {
   cancelledAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   noShowMarkedAt: Date | null;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      "One of the unit's children is the booking's occasion (ADR 0054): never who.",
+  })
+  childOccasion: boolean;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -87,6 +93,7 @@ export class StaffBookingView {
       cancelReason: b.cancelReason,
       cancelledAt: b.cancelledAt,
       noShowMarkedAt: b.noShowMarkedAt,
+      childOccasion: b.occasionMemberId !== null,
       createdAt: b.createdAt,
     };
   }

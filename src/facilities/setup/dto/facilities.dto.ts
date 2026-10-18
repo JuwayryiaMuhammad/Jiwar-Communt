@@ -154,6 +154,16 @@ class FacilityRulesInput {
   @IsBoolean()
   requiresMembership?: boolean;
 
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      "A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  childOccasions?: boolean;
+
   @Rule(
     'weeklyQuota',
     'Bookings a unit may hold here in any 7 days. Default 2.',

@@ -32,6 +32,7 @@ describe('a facility’s rules (ADR 0044)', () => {
       maxGuests: 0,
       requiresApproval: false,
       requiresMembership: false,
+      childOccasions: false,
       weeklyQuota: 2,
       peakQuota: 1,
     });
@@ -58,6 +59,7 @@ describe('a facility’s rules (ADR 0044)', () => {
         maxGuests: null,
         requiresApproval: false,
         requiresMembership: false,
+        childOccasions: false,
         weeklyQuota: null,
         peakQuota: null,
       }),

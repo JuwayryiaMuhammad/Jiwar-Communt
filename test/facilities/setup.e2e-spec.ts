@@ -77,6 +77,7 @@ describe('Facilities: set-up (ADR 0044)', () => {
           maxGuests: 0,
           requiresApproval: false,
           requiresMembership: false,
+          childOccasions: false,
           weeklyQuota: 2,
           peakQuota: 1,
         },
@@ -344,6 +345,7 @@ describe('Facilities: set-up (ADR 0044)', () => {
       expect(seen.hours).toEqual(ALL_WEEK);
       expect(Object.keys(seen.rules!).sort()).toEqual([
         'cancelCutoffMinutes',
+        'childOccasions',
         'maxDaysAhead',
         'maxGuests',
         'minMinutesBefore',

@@ -26,6 +26,17 @@ export class CreateBookingDto {
 
   @ApiProperty({
     type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      "One of the unit's children as the occasion (ADR 0054), on a facility that takes one (`childOccasions`).",
+  })
+  @IsOptional()
+  @IsUUID()
+  occasionMemberId?: string;
+
+  @ApiProperty({
+    type: String,
     format: 'date-time',
     description:
       'The start of one of the facility’s slots, exactly (BOOKING_SLOT_NOT_OFFERED); not sooner than its `minMinutesBefore` (BOOKING_TOO_SOON) nor further than its `maxDaysAhead` (BOOKING_TOO_FAR).',

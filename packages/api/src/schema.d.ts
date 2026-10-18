@@ -13817,6 +13817,12 @@ export interface components {
             data: components["schemas"]["BoardTermView"][];
             nextCursor: string | null;
         };
+        BookingOccasionView: {
+            /** @description The child's first name; null once they are no longer the unit's. */
+            firstName: string | null;
+            /** Format: uuid */
+            memberId: string;
+        };
         BookingPersonView: {
             erased: boolean;
             /** @description Null once erased. */
@@ -13884,6 +13890,8 @@ export interface components {
             id: string;
             /** @description The caller made it. */
             mine: boolean;
+            /** @description The child whose occasion it is (a birthday space), or null. */
+            occasion: components["schemas"]["BookingOccasionView"] | null;
             /** @description The slot is in a peak time: it counts towards the peak quota. */
             peak: boolean;
             /** @description A code of `bookingReject`. */
@@ -15103,6 +15111,11 @@ export interface components {
             /** @description Guests beside the booker: a number, never names. At most the facility’s `maxGuests` (BOOKING_TOO_MANY_GUESTS). Default 0. */
             guests?: number;
             /**
+             * Format: uuid
+             * @description One of the unit's children as the occasion (ADR 0054), on a facility that takes one (`childOccasions`).
+             */
+            occasionMemberId?: string;
+            /**
              * Format: date-time
              * @description The start of one of the facility’s slots, exactly (BOOKING_SLOT_NOT_OFFERED); not sooner than its `minMinutesBefore` (BOOKING_TOO_SOON) nor further than its `maxDaysAhead` (BOOKING_TOO_FAR).
              */
@@ -15272,6 +15285,8 @@ export interface components {
             capacity?: number;
             /** @description Default `bookings`. */
             capacityUnit?: components["schemas"]["FacilityCapacityUnit"];
+            /** @description A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false. */
+            childOccasions?: boolean;
             /** @description Optional, per language. On an update, null clears it. */
             descriptionAr?: string | null;
             /** @description Optional, per language. On an update, null clears it. */
@@ -16799,6 +16814,8 @@ export interface components {
         FacilityBookingRulesView: {
             /** @description A confirmed booking is cancelled by the resident at least this many minutes before its start. */
             cancelCutoffMinutes: number;
+            /** @description A booking may name one of the unit's children as its occasion (ADR 0054). */
+            childOccasions: boolean;
             /** @description How many local days ahead a slot may be booked. */
             maxDaysAhead: number;
             /** @description Guests a booking may bring, beside the booker. */
@@ -16896,6 +16913,8 @@ export interface components {
             capacity: number;
             /** @description `bookings`: a slot takes `capacity` bookings. `people`: a slot takes `capacity` people, each booking its booker and guests. */
             capacityUnit: components["schemas"]["FacilityCapacityUnit"];
+            /** @description A booking may name one of the unit's children as its occasion (ADR 0054). */
+            childOccasions: boolean;
             /** @description How many local days ahead a slot may be booked. */
             maxDaysAhead: number;
             /** @description Guests a booking may bring, beside the booker. */
@@ -22937,6 +22956,8 @@ export interface components {
             /** Format: date-time */
             cancelledAt: string | null;
             cancelledSide: components["schemas"]["BookingSide"] | null;
+            /** @description One of the unit's children is the booking's occasion (ADR 0054): never who. */
+            childOccasion: boolean;
             /** Format: date-time */
             createdAt: string;
             /**
@@ -25243,6 +25264,8 @@ export interface components {
             capacity?: number;
             /** @description Default `bookings`. */
             capacityUnit?: components["schemas"]["FacilityCapacityUnit"];
+            /** @description A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false. */
+            childOccasions?: boolean;
             /** @description Optional, per language. On an update, null clears it. */
             descriptionAr?: string | null;
             /** @description Optional, per language. On an update, null clears it. */

@@ -52,6 +52,7 @@ describe('Bookings: a resident books for a unit (ADR 0044)', () => {
         'guests',
         'id',
         'mine',
+        'occasion',
         'peak',
         'rejectReason',
         'startsAt',

@@ -37,6 +37,8 @@ export interface FacilityRules {
   maxGuests: number;
   requiresApproval: boolean;
   requiresMembership: boolean;
+  /** A booking may name one of the unit's minors as its occasion (ADR 0054). */
+  childOccasions: boolean;
   weeklyQuota: number;
   peakQuota: number;
 }
@@ -53,6 +55,7 @@ export function rulesOf(f: {
   maxGuests: number | null;
   requiresApproval: boolean;
   requiresMembership: boolean;
+  childOccasions: boolean;
   weeklyQuota: number | null;
   peakQuota: number | null;
 }): FacilityRules | null {
@@ -67,6 +70,7 @@ export function rulesOf(f: {
     maxGuests: f.maxGuests!,
     requiresApproval: f.requiresApproval,
     requiresMembership: f.requiresMembership,
+    childOccasions: f.childOccasions,
     weeklyQuota: f.weeklyQuota!,
     peakQuota: f.peakQuota!,
   };
@@ -88,6 +92,7 @@ export function withDefaults(
     maxGuests: given.maxGuests ?? RULE_RANGES.maxGuests.default,
     requiresApproval: given.requiresApproval ?? false,
     requiresMembership: given.requiresMembership ?? false,
+    childOccasions: given.childOccasions ?? false,
     weeklyQuota: given.weeklyQuota ?? RULE_RANGES.weeklyQuota.default,
     peakQuota: given.peakQuota ?? RULE_RANGES.peakQuota.default,
   };

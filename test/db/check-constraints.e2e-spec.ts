@@ -1542,6 +1542,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   child_pickups_method_shape: {},
   child_pickups_escort_shape: {},
+  facilities_child_occasions_bookable: {},
   community_events_children: {
     guarded:
       'for_children is NOT NULL and tested first; the ages are then tested NOT NULL before BETWEEN',

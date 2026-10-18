@@ -41,6 +41,7 @@ const RULE_FIELDS = [
   'maxGuests',
   'requiresApproval',
   'requiresMembership',
+  'childOccasions',
   'weeklyQuota',
   'peakQuota',
 ] as const satisfies readonly (keyof FacilityRules)[];

@@ -1,6 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BookingSide, BookingStatus, type Booking } from '@prisma/client';
 
+/** A booking's occasion: one of the unit's children (ADR 0054). */
+export interface BookingOccasion {
+  memberId: string;
+  firstName: string | null;
+}
+
+export class BookingOccasionView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  memberId: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "The child's first name; null once they are no longer the unit's.",
+  })
+  firstName: string | null;
+}
+
 /**
  * A booking as residents see it: the unit's, never who of the household
  * made it beyond `mine`, and never an account id.
@@ -43,10 +61,19 @@ export class BookingView {
       'A code of `bookingResidentCancel`, `bookingStaffCancel` or `bookingSystemCancel`, by side.',
   })
   cancelReason: string | null;
+  @ApiProperty({
+    type: BookingOccasionView,
+    nullable: true,
+    description: 'The child whose occasion it is (a birthday space), or null.',
+  })
+  occasion: BookingOccasionView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
-  static from(b: Booking, accountId: string): BookingView {
+  static from(
+    b: Booking & { occasion?: BookingOccasion | null },
+    accountId: string,
+  ): BookingView {
     return {
       id: b.id,
       facilityId: b.facilityId,
@@ -60,6 +87,7 @@ export class BookingView {
       rejectReason: b.rejectReason,
       cancelledSide: b.cancelledSide,
       cancelReason: b.cancelReason,
+      occasion: b.occasion ?? null,
       createdAt: b.createdAt,
     };
   }

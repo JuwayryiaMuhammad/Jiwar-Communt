@@ -4546,6 +4546,8 @@ model Facility {
   cancelCutoffMinutes Int?                  @map("cancel_cutoff_minutes")
   maxGuests           Int?                  @map("max_guests")
   requiresApproval    Boolean               @default(false) @map("requires_approval")
+  /// A child may be a booking's occasion (ADR 0054); bookable only.
+  childOccasions      Boolean @default(false) @map("child_occasions")
   requiresMembership  Boolean               @default(false) @map("requires_membership")
   weeklyQuota         Int?                  @map("weekly_quota")
   peakQuota           Int?                  @map("peak_quota")
@@ -4674,6 +4676,9 @@ model Booking {
   noShowBy    Account?           @relation("BookingNoShowMarker", fields: [tenantId, noShowMarkedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_no_show_by_fkey")
   closure     FacilityClosure?   @relation(fields: [tenantId, closureId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_closure_id_fkey")
   suspension  BookingSuspension?
+
+  /// One of the unit's minors, the booking's occasion (ADR 0054). Never changes.
+  occasionMemberId     String?       @map("occasion_member_id") @db.Uuid
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId, startsAt, id], map: "bookings_unit_idx")

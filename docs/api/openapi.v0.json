@@ -2684,6 +2684,24 @@
         ],
         "type": "object"
       },
+      "BookingOccasionView": {
+        "properties": {
+          "firstName": {
+            "description": "The child's first name; null once they are no longer the unit's.",
+            "nullable": true,
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId",
+          "firstName"
+        ],
+        "type": "object"
+      },
       "BookingPersonView": {
         "properties": {
           "erased": {
@@ -2876,6 +2894,16 @@
             "description": "The caller made it.",
             "type": "boolean"
           },
+          "occasion": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingOccasionView"
+              }
+            ],
+            "description": "The child whose occasion it is (a birthday space), or null.",
+            "nullable": true,
+            "type": "object"
+          },
           "peak": {
             "description": "The slot is in a peak time: it counts towards the peak quota.",
             "type": "boolean"
@@ -2914,6 +2942,7 @@
           "rejectReason",
           "cancelledSide",
           "cancelReason",
+          "occasion",
           "createdAt"
         ],
         "type": "object"
@@ -6769,6 +6798,11 @@
             "minimum": 0,
             "type": "number"
           },
+          "occasionMemberId": {
+            "description": "One of the unit's children as the occasion (ADR 0054), on a facility that takes one (`childOccasions`).",
+            "format": "uuid",
+            "type": "string"
+          },
           "startsAt": {
             "description": "The start of one of the facility’s slots, exactly (BOOKING_SLOT_NOT_OFFERED); not sooner than its `minMinutesBefore` (BOOKING_TOO_SOON) nor further than its `maxDaysAhead` (BOOKING_TOO_FAR).",
             "format": "date-time",
@@ -7216,6 +7250,10 @@
               }
             ],
             "description": "Default `bookings`."
+          },
+          "childOccasions": {
+            "description": "A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false.",
+            "type": "boolean"
           },
           "descriptionAr": {
             "description": "Optional, per language. On an update, null clears it.",
@@ -11809,6 +11847,10 @@
             "description": "A confirmed booking is cancelled by the resident at least this many minutes before its start.",
             "type": "number"
           },
+          "childOccasions": {
+            "description": "A booking may name one of the unit's children as its occasion (ADR 0054).",
+            "type": "boolean"
+          },
           "maxDaysAhead": {
             "description": "How many local days ahead a slot may be booked.",
             "type": "number"
@@ -11849,6 +11891,7 @@
           "maxGuests",
           "requiresApproval",
           "requiresMembership",
+          "childOccasions",
           "weeklyQuota",
           "peakQuota"
         ],
@@ -12095,6 +12138,10 @@
             ],
             "description": "`bookings`: a slot takes `capacity` bookings. `people`: a slot takes `capacity` people, each booking its booker and guests."
           },
+          "childOccasions": {
+            "description": "A booking may name one of the unit's children as its occasion (ADR 0054).",
+            "type": "boolean"
+          },
           "maxDaysAhead": {
             "description": "How many local days ahead a slot may be booked.",
             "type": "number"
@@ -12135,6 +12182,7 @@
           "maxGuests",
           "requiresApproval",
           "requiresMembership",
+          "childOccasions",
           "weeklyQuota",
           "peakQuota",
           "capacity",
@@ -31806,6 +31854,10 @@
             ],
             "nullable": true
           },
+          "childOccasion": {
+            "description": "One of the unit's children is the booking's occasion (ADR 0054): never who.",
+            "type": "boolean"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -31884,6 +31936,7 @@
           "cancelReason",
           "cancelledAt",
           "noShowMarkedAt",
+          "childOccasion",
           "createdAt"
         ],
         "type": "object"
@@ -40050,6 +40103,10 @@
               }
             ],
             "description": "Default `bookings`."
+          },
+          "childOccasions": {
+            "description": "A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false.",
+            "type": "boolean"
           },
           "descriptionAr": {
             "description": "Optional, per language. On an update, null clears it.",

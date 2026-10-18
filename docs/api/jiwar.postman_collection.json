@@ -28707,6 +28707,55 @@
           }
         },
         {
+          "name": "Reverse a violation’s payment, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `violationPaymentReverse`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "violation-payments",
+                ":id",
+                "reverse"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/violation-payments/:id/reverse",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the violations",
           "request": {
             "description": "**Responses:** 200",
@@ -28904,6 +28953,55 @@
                 "decide-appeal"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/violations/:id/decide-appeal",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a violation’s payment at the office",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\",\n  \"receiptNumber\": \"\",\n  \"paidOn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | The whole amount of the violation (AMOUNT_MISMATCH, params.amount). |\n| `currency` | `EGP` |  |  |\n| `paidOn` | string | yes | The local day it was paid: not ahead, at most 90 days ago, not before the violation’s day (PAID_ON_OUT_OF_RANGE). |\n| `receiptNumber` | string | yes | Once among the compound’s violation payments (DUPLICATE_RESOURCE). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "violations",
+                ":id",
+                "payments"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/violations/:id/payments",
               "variable": [
                 {
                   "description": "",

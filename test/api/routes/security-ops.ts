@@ -678,3 +678,45 @@ export const VIOLATION_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** A violation's payment at the office (ADR 0053), `fines.billing`. */
+export const VIOLATION_PAYMENT_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/violations/{id}/payments',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bViolationId }),
+      code: 'VIOLATION_NOT_FOUND',
+      body: () => ({
+        amount: '100',
+        receiptNumber: 'FOREIGN-1',
+        paidOn: '2026-10-15',
+      }),
+    },
+    invalid: {
+      body: { amount: '100', receiptNumber: 'no spaces', paidOn: '2026-10-15' },
+      fields: [{ field: 'receiptNumber', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/violation-payments/{id}/reverse',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bViolationId }),
+      code: 'VIOLATION_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: { reasonCode: 3 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+];

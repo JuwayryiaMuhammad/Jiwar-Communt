@@ -116,6 +116,8 @@ import {
   StaffViolationsController,
   UnitViolationsController,
 } from './violations/violations.controller';
+import { ViolationPaymentsController } from './violations/violation-payments.controller';
+import { ViolationPaymentsService } from './violations/violation-payments.service';
 import { ViolationsService } from './violations/violations.service';
 import { LockdownCore } from './lockdown/lockdown-core';
 import { LockdownProvisioning } from './lockdown/lockdown-provisioning';
@@ -271,6 +273,7 @@ import { RosterService } from './roster/roster.service';
     UnitViolationsController,
     StaffViolationsController,
     GateViolationsController,
+    ViolationPaymentsController,
     GateServicesController,
     GateServiceHandlersController,
     PermitRulesController,
@@ -358,6 +361,7 @@ import { RosterService } from './roster/roster.service';
     IdLookupService,
     IncidentsService,
     ViolationsService,
+    ViolationPaymentsService,
     GateServiceRecords,
     GateServicesService,
     GateServiceHandlersService,

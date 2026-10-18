@@ -414,6 +414,70 @@ describe('Audit coverage — security (ADR 0053)', () => {
     });
   });
 
+  describe('violation payments', () => {
+    it('recorded and reversed at the office: ids, the amount, the receipt and the day; the reversal’s code', async () => {
+      const accountant = await x.staff(s.c, ['fines.billing']);
+      const v = (
+        await x
+          .http('post', '/staff/violations', s.manager.token, {
+            kind: 'pets',
+            unitCode: s.home.code,
+            amount: '40',
+            occurredOn: today(),
+          })
+          .expect(201)
+      ).body as { id: string };
+      const paid = (
+        await x
+          .http(
+            'post',
+            `/staff/violations/${v.id}/payments`,
+            accountant.token,
+            {
+              amount: '40',
+              receiptNumber: 'AUD-5521',
+              paidOn: today(),
+            },
+          )
+          .expect(201)
+      ).body as { payments: { id: string }[] };
+      const paymentId = paid.payments[0].id;
+      const recorded = await single('violation.payment_recorded', paymentId);
+      expect(recorded).toMatchObject(by(accountant, 'unit_violation_payment'));
+      expect(recorded.metadata).toEqual({
+        violationId: v.id,
+        unitId: s.home.id,
+        amount: '40.00',
+        currency: 'EGP',
+        receiptNumber: 'AUD-5521',
+        paidOn: today(),
+      });
+      const reversed = (
+        await x
+          .http(
+            'post',
+            `/staff/violation-payments/${paymentId}/reverse`,
+            accountant.token,
+            {
+              reasonCode: 'refunded',
+            },
+          )
+          .expect(201)
+      ).body as { payments: { id: string; kind: string }[] };
+      const reversalId = reversed.payments.find(
+        (p) => p.kind === 'reversal',
+      )!.id;
+      expect(
+        (await single('violation.payment_reversed', reversalId)).metadata,
+      ).toEqual({
+        violationId: v.id,
+        unitId: s.home.id,
+        reversesId: paymentId,
+        reasonCode: 'refunded',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every security entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

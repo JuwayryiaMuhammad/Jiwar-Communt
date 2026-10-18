@@ -10,6 +10,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { RECEIPT } from '../../fines/fine-rules';
 import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
 import { AMOUNT, APPEAL_TEXT, NOTE } from '../violations.service';
 
@@ -176,4 +177,50 @@ export class AppealViolationDto {
   @IsOptional()
   @IsUUID()
   photoFileId?: string;
+}
+
+export class RecordViolationPaymentDto {
+  @ApiProperty({
+    type: String,
+    pattern: AMOUNT.source,
+    description:
+      'The whole amount of the violation (AMOUNT_MISMATCH, params.amount).',
+  })
+  @IsString()
+  @Matches(AMOUNT)
+  amount: string;
+
+  @ApiProperty({ type: String, required: false, enum: ['EGP'], default: 'EGP' })
+  @IsOptional()
+  @IsIn(['EGP'])
+  currency?: string;
+
+  @ApiProperty({
+    type: String,
+    pattern: RECEIPT.source,
+    description:
+      'Once among the compound’s violation payments (DUPLICATE_RESOURCE).',
+  })
+  @IsString()
+  @Matches(RECEIPT)
+  receiptNumber: string;
+
+  @ApiProperty({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    description:
+      'The local day it was paid: not ahead, at most 90 days ago, not before the violation’s day (PAID_ON_OUT_OF_RANGE).',
+  })
+  @IsString()
+  @Matches(LOCAL_DATE)
+  paidOn: string;
+}
+
+export class ReverseViolationPaymentDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `violationPaymentReverse`.',
+  })
+  @IsString()
+  reasonCode: string;
 }

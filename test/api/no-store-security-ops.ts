@@ -31,6 +31,7 @@ export function securityOpsCalls(
       body: payload,
     });
   const id = (res: Response) => (res.body as { id: string }).id;
+  const body = <T>(res: Response) => res.body as T;
   const start = () =>
     guard('POST', '/gate/lockdowns', {
       scope: 'gate',
@@ -115,6 +116,30 @@ export function securityOpsCalls(
       manager('POST', `/staff/violations/${await aViolation()}/cancel`, {
         reasonCode: 'duplicate',
       }),
+    'POST /staff/violations/{id}/payments': async () =>
+      manager('POST', `/staff/violations/${await aViolation()}/payments`, {
+        amount: '50',
+        receiptNumber: `NS-${++n}-${Date.now() % 100000}`,
+        paidOn: today(),
+      }),
+    'POST /staff/violation-payments/{id}/reverse': async () => {
+      const paid = body<{ payments: { id: string }[] }>(
+        await manager(
+          'POST',
+          `/staff/violations/${await aViolation()}/payments`,
+          {
+            amount: '50',
+            receiptNumber: `NS-${++n}-${Date.now() % 100000}`,
+            paidOn: today(),
+          },
+        ),
+      );
+      return manager(
+        'POST',
+        `/staff/violation-payments/${paid.payments[0].id}/reverse`,
+        { reasonCode: 'entered_in_error' },
+      );
+    },
     'POST /gate/violations': () =>
       guard('POST', '/gate/violations', {
         kind: 'pets',

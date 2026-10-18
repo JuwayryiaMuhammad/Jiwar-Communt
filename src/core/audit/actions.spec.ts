@@ -133,6 +133,7 @@ describe('audit catalog', () => {
         'blocklist_entry',
         'incident',
         'unit_violation',
+        'unit_violation_payment',
       ]).toContain(def.target);
     }
   });

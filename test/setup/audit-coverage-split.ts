@@ -515,4 +515,6 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'violation.appealed',
   'violation.appeal_decided',
   'violation.cancelled',
+  'violation.payment_recorded',
+  'violation.payment_reversed',
 ];

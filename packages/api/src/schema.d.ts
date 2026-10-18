@@ -10353,6 +10353,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/violation-payments/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reverse a violation’s payment, once
+         * @description With a code from `violationPaymentReverse`: the violation is open again. Reversed already: VIOLATION_PAYMENT_ALREADY_REVERSED.
+         */
+        post: operations["ViolationPaymentsController_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/violations": {
         parameters: {
             query?: never;
@@ -10428,6 +10448,26 @@ export interface paths {
          * @description `upheld`: open again; `cancelled`: cancelled with a reason code. The appellant is told. Not under appeal: VIOLATION_NOT_UNDER_APPEAL.
          */
         post: operations["StaffViolationsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/violations/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a violation’s payment at the office
+         * @description The whole amount, a receipt number (once among the compound’s violation payments) and the local day. A warning, a paid or a cancelled one: VIOLATION_NOT_PAYABLE; under appeal: VIOLATION_UNDER_APPEAL.
+         */
+        post: operations["ViolationPaymentsController_record"];
         delete?: never;
         options?: never;
         head?: never;
@@ -20241,6 +20281,19 @@ export interface components {
             /** @description The local day the money was paid back: up to 31 days ago. */
             refundedOn: string;
         };
+        RecordViolationPaymentDto: {
+            /** @description The whole amount of the violation (AMOUNT_MISMATCH, params.amount). */
+            amount: string;
+            /**
+             * @default EGP
+             * @enum {string}
+             */
+            currency: "EGP";
+            /** @description The local day it was paid: not ahead, at most 90 days ago, not before the violation’s day (PAID_ON_OUT_OF_RANGE). */
+            paidOn: string;
+            /** @description Once among the compound’s violation payments (DUPLICATE_RESOURCE). */
+            receiptNumber: string;
+        };
         RefreshTokenDto: {
             refreshToken: string;
         };
@@ -21118,6 +21171,10 @@ export interface components {
         };
         ReverseRefundDto: {
             /** @description `entered_in_error`, `refund_failed` or `other` (REASON_CODES.refundReverse). */
+            reasonCode: string;
+        };
+        ReverseViolationPaymentDto: {
+            /** @description From the closed list `violationPaymentReverse`. */
             reasonCode: string;
         };
         ReviewDto: {
@@ -40683,6 +40740,34 @@ export interface operations {
             };
         };
     };
+    ViolationPaymentsController_reverse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseViolationPaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffViolationView"];
+                };
+            };
+        };
+    };
     StaffViolationsController_list: {
         parameters: {
             query?: {
@@ -40798,6 +40883,34 @@ export interface operations {
         };
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffViolationView"];
+                };
+            };
+        };
+    };
+    ViolationPaymentsController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordViolationPaymentDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

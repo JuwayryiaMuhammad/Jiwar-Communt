@@ -900,6 +900,17 @@ export const ErrorCode = {
   VIOLATION_APPEAL_WINDOW_PASSED: 'VIOLATION_APPEAL_WINDOW_PASSED',
   /** Only the unit's keepers or its primary appeal a violation (403). */
   VIOLATION_APPEAL_NOT_ALLOWED: 'VIOLATION_APPEAL_NOT_ALLOWED',
+  /**
+   * The violation waits for its appeal's decision before it is paid (409).
+   */
+  VIOLATION_UNDER_APPEAL: 'VIOLATION_UNDER_APPEAL',
+  /**
+   * A warning, a paid or a cancelled violation is not paid (409,
+   * params.status).
+   */
+  VIOLATION_NOT_PAYABLE: 'VIOLATION_NOT_PAYABLE',
+  /** That payment was reversed already (409). */
+  VIOLATION_PAYMENT_ALREADY_REVERSED: 'VIOLATION_PAYMENT_ALREADY_REVERSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

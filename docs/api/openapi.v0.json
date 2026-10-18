@@ -24554,6 +24554,38 @@
         ],
         "type": "object"
       },
+      "RecordViolationPaymentDto": {
+        "properties": {
+          "amount": {
+            "description": "The whole amount of the violation (AMOUNT_MISMATCH, params.amount).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,6}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "currency": {
+            "default": "EGP",
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "paidOn": {
+            "description": "The local day it was paid: not ahead, at most 90 days ago, not before the violation’s day (PAID_ON_OUT_OF_RANGE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "description": "Once among the compound’s violation payments (DUPLICATE_RESOURCE).",
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "receiptNumber",
+          "paidOn"
+        ],
+        "type": "object"
+      },
       "RefreshTokenDto": {
         "properties": {
           "refreshToken": {
@@ -27456,6 +27488,18 @@
         "properties": {
           "reasonCode": {
             "description": "`entered_in_error`, `refund_failed` or `other` (REASON_CODES.refundReverse).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReverseViolationPaymentDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `violationPaymentReverse`.",
             "type": "string"
           }
         },
@@ -71410,6 +71454,64 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/violation-payments/{id}/reverse": {
+      "post": {
+        "description": "With a code from `violationPaymentReverse`: the violation is open again. Reversed already: VIOLATION_PAYMENT_ALREADY_REVERSED.",
+        "operationId": "ViolationPaymentsController_reverse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseViolationPaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reverse a violation’s payment, once",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/violations": {
       "get": {
         "description": "`status=under_appeal` is the appeals queue, oldest first.",
@@ -71676,6 +71778,64 @@
           }
         ],
         "summary": "Decide a violation’s appeal",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/violations/{id}/payments": {
+      "post": {
+        "description": "The whole amount, a receipt number (once among the compound’s violation payments) and the local day. A warning, a paid or a cancelled one: VIOLATION_NOT_PAYABLE; under appeal: VIOLATION_UNDER_APPEAL.",
+        "operationId": "ViolationPaymentsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordViolationPaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a violation’s payment at the office",
         "tags": [
           "violations"
         ],

@@ -2,6 +2,11 @@ import type { HouseholdMemberStatus } from '@prisma/client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
+import {
+  AccountLifecycle,
+  runAfterCommit,
+  type AfterCommit,
+} from '../../core/accounts/account-lifecycle';
 import { AccountWriter } from '../../core/accounts/account-writer';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
@@ -62,6 +67,7 @@ export class InviteAcceptanceService {
     private readonly cls: ClsService<AppClsStore>,
     private readonly permissions: MemberPermissionsService,
     private readonly notifier: CommunityNotifier,
+    private readonly lifecycle: AccountLifecycle,
   ) {}
 
   /**
@@ -127,12 +133,14 @@ export class InviteAcceptanceService {
     }
     // Everything below is written by the system on the invitee's behalf; the
     // OTP proved they own the invited email (ADR 0014: actor `system`).
+    const after: AfterCommit[] = [];
     const accepted = await this.cls.run({ ifNested: 'inherit' }, () => {
       this.cls.set('auditActor', { type: 'system', id: null });
       return this.tenantTx.runInTenantUnsafe(pointer.tenantId, (tx) =>
-        this.accept(tx, pointer.tenantId, pointer.inviteId),
+        this.accept(tx, pointer.tenantId, pointer.inviteId, after),
       );
     });
+    await runAfterCommit(after, this.logger);
     if (!accepted) {
       await this.tokenInvalid('complete', 'invite_not_pending');
       throw invalidCode();
@@ -177,6 +185,7 @@ export class InviteAcceptanceService {
     tx: TenantTxClient,
     tenantId: string,
     inviteId: string,
+    after: AfterCommit[],
   ): Promise<AcceptedInvite | null> {
     const found = await tx.householdInvite.findUnique({
       where: { id: inviteId },
@@ -228,6 +237,26 @@ export class InviteAcceptanceService {
       // A majority invite (ADR 0021): the SAME member row becomes an adult
       // with an account — its document moves to the account (the invite
       // carried it), so earlier history keeps pointing at this member.
+      // What the domains keep for a child ends first (ADR 0054): a child's
+      // live exit control refuses a member who is no longer a minor.
+      const minor = await tx.householdMember.findFirst({
+        where: {
+          id: invite.memberId,
+          status: 'active',
+          isMinor: true,
+          accountId: null,
+        },
+        select: { id: true },
+      });
+      if (!minor) return null; // no longer an active minor
+      after.push(
+        ...(await this.lifecycle.minorLeaving(tx, {
+          tenantId,
+          unitId: invite.unitId,
+          memberId: invite.memberId,
+          cause: 'came_of_age',
+        })),
+      );
       const { count } = await tx.householdMember.updateMany({
         where: {
           id: invite.memberId,

@@ -54,6 +54,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Client-generated (UUIDv7): a violation is an id collision.
   registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,
+  household_members_tenant_id_id_unit_id_is_minor_key: null,
   // The gate (ADR 0028).
   gates_tenant_id_name_key: ['name'],
   gates_tenant_id_id_key: null,

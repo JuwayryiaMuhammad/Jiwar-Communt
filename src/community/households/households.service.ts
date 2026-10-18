@@ -923,6 +923,15 @@ export class HouseholdsService {
         id: member.accountId,
         tenantId: member.tenantId,
       });
+    } else if (member.isMinor) {
+      // A minor has no account, so no account hook fires: what the domains
+      // keep for a child ends with the membership (ADR 0054).
+      lifecycleTasks = await this.lifecycle.minorLeaving(tx, {
+        tenantId: member.tenantId,
+        unitId: member.unitId,
+        memberId: member.id,
+        cause: 'membership_ended',
+      });
     }
 
     await this.audit.record(tx, {

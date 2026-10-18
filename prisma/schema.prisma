@@ -1215,6 +1215,7 @@ model HouseholdMember {
 
   @@unique([tenantId, id])
   @@unique([tenantId, id, isMinor])
+  @@unique([tenantId, id, unitId, isMinor])
   @@index([tenantId, unitId])
   @@index([tenantId, accountId])
   @@map("household_members")

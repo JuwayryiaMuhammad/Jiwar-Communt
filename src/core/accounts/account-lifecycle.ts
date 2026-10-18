@@ -29,6 +29,23 @@ export type HouseholdStartHandler = (
 ) => Promise<void>;
 
 /**
+ * A minor about to stop being one of the unit's minors (ADR 0054): their
+ * membership just ended, or the same member row is about to become an
+ * adult with an account. A minor has no account, so no account hook fires.
+ */
+export interface MinorLeaving {
+  tenantId: string;
+  unitId: string;
+  memberId: string;
+  cause: 'membership_ended' | 'came_of_age';
+}
+
+export type MinorLeavingHandler = (
+  tx: TenantTxClient,
+  minor: MinorLeaving,
+) => Promise<AfterCommit[]>;
+
+/**
  * What keeps an account from being erased now (ADR 0036), as blocker codes;
  * read under the account's row lock, when a deletion is asked for and again
  * in the transaction that executes it.
@@ -62,6 +79,7 @@ export class AccountLifecycle {
   private readonly sessionsRevokedAll: AccountHandler[] = [];
   private readonly residence: AccountHandler[] = [];
   private readonly householdStarts: HouseholdStartHandler[] = [];
+  private readonly minorsLeaving: MinorLeavingHandler[] = [];
   private readonly blockerChecks: DeletionBlockerCheck[] = [];
 
   /** A domain's reasons an account cannot be erased yet (ADR 0036). */
@@ -128,6 +146,26 @@ export class AccountLifecycle {
     household: HouseholdStart,
   ): Promise<void> {
     for (const handler of this.householdStarts) await handler(tx, household);
+  }
+
+  /**
+   * A minor leaves the household, or comes of age (ADR 0054): the domains
+   * that keep something for a child end it, in the same transaction. Told
+   * after a removal's status write, and before the coming-of-age write (a
+   * child's live exit control refuses a member that is no longer a minor).
+   */
+  onMinorLeaving(handler: MinorLeavingHandler): void {
+    this.minorsLeaving.push(handler);
+  }
+
+  async minorLeaving(
+    tx: TenantTxClient,
+    minor: MinorLeaving,
+  ): Promise<AfterCommit[]> {
+    const tasks: AfterCommit[] = [];
+    for (const handler of this.minorsLeaving)
+      tasks.push(...(await handler(tx, minor)));
+    return tasks;
   }
 
   /** Before an erasure: the domains end what hangs off the account. */

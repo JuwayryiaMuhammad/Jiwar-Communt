@@ -171,3 +171,13 @@ The full notes for the guard app are in [`notes/patrols.md`](notes/patrols.md).
 - The guard: `GET /gate/patrols` (the board), starting a scheduled run (`/gate/patrols/runs/{id}/start`, the first wins) or one of their own (`/gate/patrols/routes/{id}/start`), scans and notes with the app's own UUIDv7 and the device's time, the track in batches, ending.
 - `GET /staff/security/reports/daily` gains `patrols { scheduled, done, late, missed, incomplete }` per post; its CSV the five last columns `patrols_*`.
 - A new file purpose `patrol_photo`, an export section `patrols/`, three notification kinds `patrol.*` (category `guard_duty`).
+
+### Gate card — security operations (ADR 0053)
+
+The full notes for the guard app are in [`notes/security.md`](notes/security.md).
+
+- The guard: an SOS from the post (`POST /gate/emergencies`, one open per post and type), a lockdown (`POST /gate/lockdowns` with the typed `confirmation: "LOCKDOWN"`, `GET /gate/lockdowns/active`, overrides for emergency vehicles), the active blocklist (`GET /gate/blocklist`), an ID lookup (`POST /gate/id-lookup`, never stored), stop work (`POST /gate/unit-permits/{id}/stop-work`), incidents (`/gate/incidents`) and violations (`POST /gate/violations`).
+- At a locked gate an entry in, a gate request and a material entry are 409 `LOCKDOWN_ACTIVE`, and the verify says `lockdown_active`; exits always go through. A banned plate or person is 409 `ENTRY_BLOCKED`, or `entry_blocked` at the verify; the verify's `display.blocklist` and the plate lookup's `blocklist` name the entry. `POST /gate/approval-requests` gains `vehiclePlate` and `idNumber`.
+- Residents: a unit's violations (`GET /units/{unitId}/violations`, `GET /violations/{id}`, `POST /violations/{id}/appeal`, once within 30 days, a keeper or the primary), as its fines; a warning has `amount: null`. A visitor pass's detail gains `refusedBySecurity`. Residents get a generic critical `gate_lockdown.resident_notice` while the gates are locked, `visitor_pass.refused_by_security`, `unit_permit.work_stopped` / `work_resumed`, and `violation.*` (category `household`). Works permit views gain `workStopped`.
+- The management: `/staff/security/lockdowns`, `/staff/security/blocklist`, `/staff/security/incidents`, `/staff/violations` and `/staff/violation-payments`, and the reports `/staff/security/reports/incidents` and `/violations` (JSON and CSV). `GET /staff/security/reports/daily` gains `incidents` and `violations` per post; its CSV the two last columns.
+- Four new file purposes (`incident_photo`, `blocklist_photo`, `violation_photo`, `violation_appeal_photo`), export sections `incidents/` and `violations/`, five new permissions.

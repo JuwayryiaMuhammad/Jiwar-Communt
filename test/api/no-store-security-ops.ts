@@ -10,7 +10,11 @@ import type { World } from './world';
 export function securityOpsCalls(
   world: () => World,
 ): Record<string, () => Promise<Response>> {
-  const manager = (method: 'GET' | 'POST', path: string, payload?: object) =>
+  const manager = (
+    method: 'GET' | 'POST' | 'PATCH',
+    path: string,
+    payload?: object,
+  ) =>
     call(world(), method, path, {
       token: world().a.tokens.manager,
       body: payload,
@@ -43,7 +47,38 @@ export function securityOpsCalls(
       await end(lockdownId);
     }
   };
+  let n = 0;
+  /** A plate A bans: its id. */
+  const aEntry = async () =>
+    id(
+      await manager('POST', '/staff/security/blocklist', {
+        kind: 'watch',
+        subject: 'plate',
+        plate: `NS ${++n}${Date.now() % 1000}`,
+        reasonCode: 'other',
+      }),
+    );
   return {
+    'GET /staff/security/blocklist': () =>
+      manager('GET', '/staff/security/blocklist'),
+    'POST /staff/security/blocklist': () =>
+      manager('POST', '/staff/security/blocklist', {
+        kind: 'watch',
+        subject: 'plate',
+        plate: `NS ${++n}${Date.now() % 1000}`,
+        reasonCode: 'other',
+      }),
+    'GET /staff/security/blocklist/{id}': async () =>
+      manager('GET', `/staff/security/blocklist/${await aEntry()}`),
+    'PATCH /staff/security/blocklist/{id}': async () =>
+      manager('PATCH', `/staff/security/blocklist/${await aEntry()}`, {
+        kind: 'watch',
+      }),
+    'POST /staff/security/blocklist/{id}/lift': async () =>
+      manager('POST', `/staff/security/blocklist/${await aEntry()}/lift`, {
+        reasonCode: 'resolved',
+      }),
+    'GET /gate/blocklist': () => guard('GET', '/gate/blocklist'),
     'POST /gate/lockdowns': async () => {
       const res = await start();
       await end(id(res));

@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import type { Compound } from './community';
+import { fileHelpers } from './files';
 import type { HttpHarness } from './http-app';
 import { securityHelpers } from './security';
 import type { Who } from './vehicles';
@@ -32,6 +33,25 @@ export interface StaffEmergencyBody {
   closeReason: string | null;
 }
 
+/** A blocklist entry as the management sees it (ADR 0053). */
+export interface BlocklistBody {
+  id: string;
+  kind: 'ban' | 'watch';
+  subject: 'plate' | 'person';
+  plate: string | null;
+  fullName: string | null;
+  photo: { url: string } | null;
+  since: string;
+  status: 'active' | 'expired' | 'lifted';
+  hasIdNumber: boolean;
+  reasonCode: string;
+  note: string | null;
+  expiresAt: string | null;
+  liftedAt: string | null;
+  liftReason: string | null;
+  purgedAt: string | null;
+}
+
 /** A lockdown as the guard sees it (ADR 0053). */
 export interface LockdownBody {
   id: string;
@@ -50,6 +70,7 @@ export interface LockdownBody {
  */
 export function securityOpsHelpers(h: HttpHarness) {
   const x = securityHelpers(h);
+  const files = fileHelpers(h);
 
   /** A guard on an open shift in a zone: who, the zone and the shift. */
   async function guardInZone(
@@ -191,9 +212,43 @@ export function securityOpsHelpers(h: HttpHarness) {
     return `JWR2.${c.id}.${step}.${mac}`;
   }
 
+  /** `POST /staff/security/blocklist` as `as`. */
+  function blockRaw(
+    as: Who,
+    body: Record<string, unknown>,
+    headers: Record<string, string> = {},
+  ) {
+    return x.http(
+      'post',
+      '/staff/security/blocklist',
+      as.token,
+      { kind: 'ban', reasonCode: 'trespassing', ...body },
+      headers,
+    );
+  }
+
+  /** An entry that must be made: its body. */
+  async function block(
+    as: Who,
+    body: Record<string, unknown>,
+  ): Promise<BlocklistBody> {
+    const res = await blockRaw(as, body);
+    if (res.status !== 201)
+      throw new Error(`block: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as BlocklistBody;
+  }
+
+  /** A finalized `blocklist_photo` (or another purpose) of the caller's. */
+  const photo = (as: Who, purpose = 'blocklist_photo') =>
+    files.ready(as.token, purpose);
+
   return {
     ...x,
     x,
+    files,
+    blockRaw,
+    block,
+    photo,
     guardInZone,
     guardAt,
     sosRaw,

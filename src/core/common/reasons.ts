@@ -576,4 +576,19 @@ export const REASON_CODES = {
   ],
   gateLockdownEnd: ['threat_cleared', 'false_alarm', 'drill_over', 'other'],
   gateLockdownOverride: ['ambulance', 'fire_truck', 'police', 'civil_defense'],
+  // The blocklist (ADR 0053): why a plate or a person is banned or watched,
+  // and why the entry was lifted (the system lifts it once expired).
+  blocklistReason: [
+    'trespassing',
+    'theft',
+    'violence',
+    'harassment',
+    'fraud',
+    'vandalism',
+    'police_request',
+    'management_decision',
+    'other',
+  ],
+  blocklistLift: ['resolved', 'entered_in_error', 'other'],
+  blocklistLiftSystem: ['expired'],
 } as const;

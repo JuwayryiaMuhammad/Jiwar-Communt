@@ -2343,6 +2343,237 @@
     {
       "item": [
         {
+          "name": "The active blocklist",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "blocklist"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/blocklist"
+            }
+          }
+        },
+        {
+          "name": "List the blocklist",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "blocklist"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/blocklist"
+            }
+          }
+        },
+        {
+          "name": "Ban or watch a plate or a person",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"ban\",\n  \"subject\": \"plate\",\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `expiresAt` | string (date-time) |  | In the future, at most three years ahead. None: until lifted. |\n| `fullName` | string |  | A person: the name the guards read. |\n| `idNumber` | string |  | A person: their full ID number (a national ID, a passport). Never stored: only a keyed hash is kept, and nobody sees it again. |\n| `kind` | `ban` \\| `watch` | yes | `ban`: refused at the gate; `watch`: let in, the management told. |\n| `note` | string |  | The management’s own words: never shown to a guard. |\n| `photoFileId` | string (uuid) |  | A person: a `blocklist_photo` upload of their face. |\n| `plate` | string |  | A plate entry: the plate (as a vehicle’s: 12 at most). |\n| `reasonCode` | string | yes | From the closed list `blocklistReason`. |\n| `subject` | `plate` \\| `person` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "blocklist"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/blocklist"
+            }
+          }
+        },
+        {
+          "name": "Get a blocklist entry",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "blocklist",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/blocklist/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change what a live entry says",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"expiresAt\": \"2026-01-01T09:00:00.000Z\",\n  \"kind\": \"ban\",\n  \"note\": \"\",\n  \"photoFileId\": \"\",\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `expiresAt` | string (date-time) |  | `null`: until lifted. |\n| `kind` | `ban` \\| `watch` |  |  |\n| `note` | string |  | `null` removes it. |\n| `photoFileId` | string (uuid) |  | A person’s new face (`blocklist_photo`); `null` removes it. |\n| `reasonCode` | string |  | From the closed list `blocklistReason`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "blocklist",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/blocklist/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lift an entry",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `blocklistLift`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "blocklist",
+                ":id",
+                "lift"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/blocklist/:id/lift",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "blocklist"
+    },
+    {
+      "item": [
+        {
           "name": "Get a booking",
           "request": {
             "description": "**Responses:** 200",

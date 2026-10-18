@@ -3,7 +3,12 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { newId } from '../../src/core/common/uuid';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { lockdownRow, overrideRow } from '../setup/security-ops-rows';
+import {
+  blocklistRow,
+  lockdownRow,
+  overrideRow,
+  personRow,
+} from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 import { required } from '../setup/test-env';
 
@@ -24,6 +29,8 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
   let shiftId: string;
   let liveId: string;
   let endedId: string;
+  let plateEntryId: string;
+  let personEntryId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -43,6 +50,14 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
           live: true,
         });
         endedId = await lockdownRow(tx, { tenantId, gateId, guardId, shiftId });
+        plateEntryId = await blocklistRow(tx, {
+          tenantId,
+          createdById: managerId,
+        });
+        personEntryId = await personRow(tx, {
+          tenantId,
+          createdById: managerId,
+        });
         await overrideRow(tx, {
           tenantId,
           lockdownId: liveId,
@@ -93,7 +108,11 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
   };
 
   it('the app updates (or locks) but never deletes or truncates what is kept', async () => {
-    for (const table of ['gate_lockdown_states', 'gate_lockdowns'])
+    for (const table of [
+      'gate_lockdown_states',
+      'gate_lockdowns',
+      'blocklist_entries',
+    ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
         select: true,
@@ -121,6 +140,7 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'gate_lockdown_states',
       'gate_lockdowns',
       'gate_lockdown_overrides',
+      'blocklist_entries',
     ]) {
       // A row to refuse: a row trigger never fires on a DELETE of none.
       const found = await attempt(
@@ -219,6 +239,114 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
            VALUES ('${newId()}', '${tenantId}', '${otherGateId}', 'boredom', '${guardId}', '${shiftId}', now(), now())`,
         ),
       ).rejects.toThrow(/gate_lockdowns_reason/);
+    });
+  });
+
+  describe('blocklist_entries', () => {
+    const where = (id: string) => `id = '${id}'`;
+    const lift = (id: string) =>
+      `UPDATE blocklist_entries SET lifted_at = now(), lifted_by_account_id = '${managerId}', lift_reason = 'resolved' WHERE ${where(id)}`;
+    const purge = (id: string) =>
+      `UPDATE blocklist_entries SET full_name = NULL, id_hash = NULL, photo_file_id = NULL, note = NULL, purged_at = now() WHERE ${where(id)}`;
+
+    it('its subject never changes; what it says does while live', async () => {
+      for (const set of [
+        `plate = 'OTHER 1'`,
+        `subject = 'person'`,
+        `created_at = now()`,
+      ])
+        await expect(
+          asApp(
+            `UPDATE blocklist_entries SET ${set} WHERE ${where(plateEntryId)}`,
+          ),
+        ).rejects.toThrow(/keeps its subject/);
+      for (const set of [
+        `full_name = 'Someone else'`,
+        `id_hash = repeat('a', 64)`,
+      ])
+        await expect(
+          asApp(
+            `UPDATE blocklist_entries SET ${set} WHERE ${where(personEntryId)}`,
+          ),
+        ).rejects.toThrow(/keeps its subject/);
+      await expect(
+        asApp(
+          `UPDATE blocklist_entries SET kind = 'watch', note = 'n', expires_at = now() + interval '1 day' WHERE ${where(plateEntryId)}`,
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+    });
+
+    it('lifted once; then only the one purge, of a person, after which nothing changes', async () => {
+      await expect(
+        asApp(lift(plateEntryId), lift(plateEntryId)),
+      ).rejects.toThrow(/keeps its subject/);
+      await expect(
+        asApp(
+          lift(plateEntryId),
+          `UPDATE blocklist_entries SET note = 'x' WHERE ${where(plateEntryId)}`,
+        ),
+      ).rejects.toThrow(/keeps its subject/);
+      // A plate is never purged.
+      await expect(
+        asApp(
+          lift(plateEntryId),
+          `UPDATE blocklist_entries SET purged_at = now() WHERE ${where(plateEntryId)}`,
+        ),
+      ).rejects.toThrow(/blocklist_entries_subject_shape/);
+      // Never purged while live.
+      await expect(asApp(purge(personEntryId))).rejects.toThrow(
+        /keeps its subject/,
+      );
+      await expect(
+        asApp(lift(personEntryId), purge(personEntryId)),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(lift(personEntryId), purge(personEntryId), purge(personEntryId)),
+      ).rejects.toThrow(/keeps its subject/);
+      // A purge clears everything of the person, together.
+      await expect(
+        asApp(
+          lift(personEntryId),
+          `UPDATE blocklist_entries SET id_hash = NULL, purged_at = now() WHERE ${where(personEntryId)}`,
+        ),
+      ).rejects.toThrow(/blocklist_entries_purge_shape/);
+    });
+
+    it('the shapes: a plate carries nothing of a person, a person no plate; one live per plate and per person', async () => {
+      const insert = (cols: string, values: string) =>
+        `INSERT INTO blocklist_entries (id, tenant_id, kind, subject, reason_code, created_by_account_id, updated_at, ${cols})
+         VALUES ('${newId()}', '${tenantId}', 'ban', ${values.split('|')[0]}, 'other', '${managerId}', now(), ${values.split('|')[1]})`;
+      await expect(
+        asApp(insert('plate, full_name', `'plate'|'SHAPE 1', 'A Name'`)),
+      ).rejects.toThrow(/blocklist_entries_subject_shape/);
+      await expect(
+        asApp(insert('full_name', `'person'|'No Hash'`)),
+      ).rejects.toThrow(/blocklist_entries_subject_shape/);
+      await expect(
+        asApp(insert('full_name, id_hash', `'person'|'Bad Hash', 'XYZ'`)),
+      ).rejects.toThrow(/blocklist_entries_id_hash_shape/);
+      const plate = (await asApp(
+        `SELECT plate FROM blocklist_entries WHERE ${where(plateEntryId)}`,
+      ))!.rows[0] as { plate: string };
+      await expect(
+        asApp(insert('plate', `'plate'|'${plate.plate.replace(' ', '')}'`)),
+      ).rejects.toThrow(/blocklist_entries_live_plate_key/);
+      await expect(
+        asApp(
+          `INSERT INTO blocklist_entries (id, tenant_id, kind, subject, reason_code, created_by_account_id, updated_at, plate)
+           VALUES ('${newId()}', '${tenantId}', 'ban', 'plate', 'gossip', '${managerId}', now(), 'SHAPE 2')`,
+        ),
+      ).rejects.toThrow(/blocklist_entries_reason/);
+      await expect(
+        asApp(
+          `UPDATE blocklist_entries SET lifted_at = now(), lift_reason = 'resolved' WHERE ${where(plateEntryId)}`,
+        ),
+      ).rejects.toThrow(/blocklist_entries_lift_shape/);
+      await expect(
+        asApp(
+          `UPDATE blocklist_entries SET lifted_at = now(), lifted_by_account_id = '${managerId}', lift_reason = 'expired' WHERE ${where(plateEntryId)}`,
+        ),
+      ).rejects.toThrow(/blocklist_entries_lift_shape/);
     });
   });
 

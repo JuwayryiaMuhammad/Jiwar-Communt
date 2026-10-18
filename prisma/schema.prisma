@@ -7144,3 +7144,36 @@ model GateLockdownOverride {
   @@index([tenantId, lockdownId, occurredAt, id], map: "gate_lockdown_overrides_lockdown_idx")
   @@map("gate_lockdown_overrides")
 }
+
+/// A banned or watched plate or person (ADR 0053). A person's full ID number
+/// is only ever its peppered HMAC, bound to the compound. One live entry per
+/// plate key and per ID hash; lifted once; a person's data purged 30 days
+/// after it was lifted. Never deleted.
+model BlocklistEntry {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  /// ban | watch.
+  kind        String
+  /// plate | person.
+  subject     String
+  plate       String?
+  plateKey    String?   @map("plate_key")
+  fullName    String?   @map("full_name")
+  idHash      String?   @map("id_hash") @db.Char(64)
+  photoFileId String?   @unique(map: "blocklist_entries_photo_key") @map("photo_file_id") @db.Uuid
+  reasonCode  String    @map("reason_code")
+  /// The management's words.
+  note        String?
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz(3)
+  createdById String    @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  liftedAt    DateTime? @map("lifted_at") @db.Timestamptz(3)
+  liftedById  String?   @map("lifted_by_account_id") @db.Uuid
+  liftReason  String?   @map("lift_reason")
+  purgedAt    DateTime? @map("purged_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "blocklist_entries_list_idx")
+  @@map("blocklist_entries")
+}

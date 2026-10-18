@@ -105,3 +105,108 @@ export const LOCKDOWN_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The blocklist and the watchlist (ADR 0053). */
+export const BLOCKLIST_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/security/blocklist',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { kind: 'maybe' },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['ban', 'watch'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/blocklist',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { kind: 'ban', subject: 'car', reasonCode: 'other' },
+      fields: [
+        {
+          field: 'subject',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['plate', 'person'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/blocklist/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBlocklistEntryId }),
+      code: 'BLOCKLIST_ENTRY_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/security/blocklist/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBlocklistEntryId }),
+      code: 'BLOCKLIST_ENTRY_NOT_FOUND',
+      body: () => ({ kind: 'watch' }),
+    },
+    invalid: {
+      body: { note: '' },
+      fields: [
+        {
+          field: 'note',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1000 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/blocklist/{id}/lift',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBlocklistEntryId }),
+      code: 'BLOCKLIST_ENTRY_NOT_FOUND',
+      body: () => ({ reasonCode: 'resolved' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/blocklist',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+];

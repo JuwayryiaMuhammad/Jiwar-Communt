@@ -127,6 +127,15 @@ export class IdentifierHasher {
     return this.hmac(`permit-worker-id:v1:${tenantId}:${workerId}:${last4}`);
   }
 
+  /**
+   * A full ID number on the compound's blocklist (ADR 0053), normalized
+   * (`normalizeIdNumber`), bound to the compound: the number is never
+   * stored, and an ID typed at the gate is compared by this alone.
+   */
+  hashBlocklistId(tenantId: string, idNumber: string): string {
+    return this.hmac(`blocklist-id:v1:${tenantId}:${idNumber}`);
+  }
+
   /** A worker's national ID, to find the same person again (ADR 0017). */
   hashWorkerNationalId(nationalId: string): string {
     return this.hmac(`worker-national-id:${nationalId}`);

@@ -1159,6 +1159,19 @@ export const AUDIT_ACTIONS = {
   // An emergency vehicle let through a locked gate. metadata: overrideId,
   // gateId, shiftId, kind, emergencyId, gateServiceRequestId (or nulls).
   'gate_lockdown.override': { log: 'tenant', target: 'gate_lockdown' },
+  // The blocklist (ADR 0053). Never a plate, a name, an ID number or its
+  // hash, nor the note's words. metadata: kind, subject, reasonCode,
+  // expiresAt, photo and note (booleans).
+  'blocklist_entry.created': { log: 'tenant', target: 'blocklist_entry' },
+  // metadata: changed (the field names), kind, reasonCode, expiresAt.
+  'blocklist_entry.updated': { log: 'tenant', target: 'blocklist_entry' },
+  // metadata: reasonCode.
+  'blocklist_entry.lifted': { log: 'tenant', target: 'blocklist_entry' },
+  // The system lifts an entry once its expiry passed. No metadata.
+  'blocklist_entry.expired': { log: 'tenant', target: 'blocklist_entry' },
+  // 30 days after a person's entry was lifted, its name, ID hash, photo and
+  // note go (system). metadata: photo (whether there was one).
+  'blocklist_entry.purged': { log: 'tenant', target: 'blocklist_entry' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

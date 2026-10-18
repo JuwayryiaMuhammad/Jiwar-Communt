@@ -1395,6 +1395,28 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'end_note IS NULL is tested first',
   },
   gate_lockdown_overrides_kind: {},
+  // The blocklist (ADR 0053).
+  blocklist_entries_kind: {},
+  blocklist_entries_subject_shape: {
+    guarded:
+      'subject is NOT NULL and compared first; every other column only under IS [NOT] NULL',
+  },
+  blocklist_entries_plate_length: { guarded: 'plate IS NULL is tested first' },
+  blocklist_entries_name_length: {
+    guarded: 'full_name IS NULL is tested first',
+  },
+  blocklist_entries_id_hash_shape: {
+    guarded: 'id_hash IS NULL is tested first',
+  },
+  blocklist_entries_note_length: { guarded: 'note IS NULL is tested first' },
+  blocklist_entries_reason: {},
+  blocklist_entries_lift_shape: {
+    guarded:
+      'lift_reason is compared only once it is NOT NULL (the IS NULL branch comes first)',
+  },
+  blocklist_entries_purge_shape: {
+    guarded: 'purged_at IS NULL is tested first',
+  },
 };
 
 interface Check {

@@ -70,3 +70,46 @@ export async function overrideRow(
   });
   return id;
 }
+
+let plates = 0;
+
+/** A live ban of a plate of its own (one live entry per plate). */
+export async function blocklistRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.blocklistEntry.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      kind: 'ban',
+      subject: 'plate',
+      plate: `ROW ${(++plates % 1e6).toString()}`,
+      reasonCode: 'other',
+      createdById: r.createdById,
+    },
+  });
+  return id;
+}
+
+/** A live watch of a person, with a made-up ID hash of its own. */
+export async function personRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.blocklistEntry.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      kind: 'watch',
+      subject: 'person',
+      fullName: 'Row Person',
+      idHash: id.replace(/-/g, '').padEnd(64, '0'),
+      reasonCode: 'other',
+      createdById: r.createdById,
+    },
+  });
+  return id;
+}

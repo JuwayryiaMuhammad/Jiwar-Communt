@@ -1845,6 +1845,51 @@
         ],
         "type": "object"
       },
+      "BlocklistKind": {
+        "enum": [
+          "ban",
+          "watch"
+        ],
+        "type": "string"
+      },
+      "BlocklistLift": {
+        "enum": [
+          "resolved",
+          "entered_in_error",
+          "other",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "BlocklistReason": {
+        "enum": [
+          "trespassing",
+          "theft",
+          "violence",
+          "harassment",
+          "fraud",
+          "vandalism",
+          "police_request",
+          "management_decision",
+          "other"
+        ],
+        "type": "string"
+      },
+      "BlocklistStatus": {
+        "enum": [
+          "active",
+          "expired",
+          "lifted"
+        ],
+        "type": "string"
+      },
+      "BlocklistSubject": {
+        "enum": [
+          "plate",
+          "person"
+        ],
+        "type": "string"
+      },
       "BoardNowView": {
         "properties": {
           "board": {
@@ -5703,6 +5748,66 @@
           "startsOn",
           "issueDaysBefore",
           "dueDaysAfterIssue"
+        ],
+        "type": "object"
+      },
+      "CreateBlocklistEntryDto": {
+        "properties": {
+          "expiresAt": {
+            "description": "In the future, at most three years ahead. None: until lifted.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fullName": {
+            "description": "A person: the name the guards read.",
+            "maxLength": 120,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idNumber": {
+            "description": "A person: their full ID number (a national ID, a passport). Never stored: only a keyed hash is kept, and nobody sees it again.",
+            "type": "string"
+          },
+          "kind": {
+            "description": "`ban`: refused at the gate; `watch`: let in, the management told.",
+            "enum": [
+              "ban",
+              "watch"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "description": "The management’s own words: never shown to a guard.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A person: a `blocklist_photo` upload of their face.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "plate": {
+            "description": "A plate entry: the plate (as a vehicle’s: 12 at most).",
+            "example": "ق ب ط 1234",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `blocklistReason`.",
+            "type": "string"
+          },
+          "subject": {
+            "enum": [
+              "plate",
+              "person"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "subject",
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -13722,6 +13827,60 @@
         ],
         "type": "object"
       },
+      "GuardBlocklistEntryView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistKind"
+              }
+            ]
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "The face, a presigned URL.",
+            "nullable": true,
+            "type": "object"
+          },
+          "plate": {
+            "nullable": true,
+            "type": "string"
+          },
+          "since": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "subject": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistSubject"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "subject",
+          "plate",
+          "fullName",
+          "photo",
+          "since"
+        ],
+        "type": "object"
+      },
       "GuardGateView": {
         "properties": {
           "id": {
@@ -16684,6 +16843,18 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "LiftBlocklistEntryDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `blocklistLift`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -29031,6 +29202,148 @@
         ],
         "type": "object"
       },
+      "StaffBlocklistEntryView": {
+        "properties": {
+          "createdBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "hasIdNumber": {
+            "description": "A person: whether their ID number is on file (its hash; never shown). False once purged.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistKind"
+              }
+            ]
+          },
+          "liftReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistLift"
+              }
+            ],
+            "nullable": true
+          },
+          "liftedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "liftedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null when the system lifted it (expired).",
+            "nullable": true,
+            "type": "object"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "The face, a presigned URL.",
+            "nullable": true,
+            "type": "object"
+          },
+          "plate": {
+            "nullable": true,
+            "type": "string"
+          },
+          "purgedAt": {
+            "description": "When the person’s name, ID hash, face and note went.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistReason"
+              }
+            ]
+          },
+          "since": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistStatus"
+              }
+            ]
+          },
+          "subject": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistSubject"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "subject",
+          "plate",
+          "fullName",
+          "photo",
+          "since",
+          "status",
+          "hasIdNumber",
+          "reasonCode",
+          "note",
+          "expiresAt",
+          "createdBy",
+          "liftedAt",
+          "liftedBy",
+          "liftReason",
+          "purgedAt"
+        ],
+        "type": "object"
+      },
+      "StaffBlocklistEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffBlocklistEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffBoardNowView": {
         "properties": {
           "board": {
@@ -36675,6 +36988,41 @@
         },
         "type": "object"
       },
+      "UpdateBlocklistEntryDto": {
+        "properties": {
+          "expiresAt": {
+            "description": "`null`: until lifted.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ban",
+              "watch"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "description": "`null` removes it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A person’s new face (`blocklist_photo`); `null` removes it.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `blocklistReason`.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateCategoryDto": {
         "properties": {
           "active": {
@@ -43738,6 +44086,39 @@
         "summary": "Withdraw an approval request",
         "tags": [
           "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/blocklist": {
+      "get": {
+        "description": "For a guard on shift (a gate or a zone): each entry’s kind, plate or name, and face. Never why, never an ID number.",
+        "operationId": "GateBlocklistController_active",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GuardBlocklistEntryView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The active blocklist",
+        "tags": [
+          "blocklist"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -64434,6 +64815,264 @@
         "summary": "Read the guards’ attendance and overtime",
         "tags": [
           "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/blocklist": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffBlocklistController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "expired",
+                "lifted"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ban",
+                "watch"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBlocklistEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the blocklist",
+        "tags": [
+          "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A plate, or a person (a name, their full ID number, a face). The ID number is kept only as a keyed hash: nobody sees it again; the request’s idempotency record leaves it out and stores no body (a replay is rendered afresh). One live entry per plate and per person (409 DUPLICATE_RESOURCE).",
+        "operationId": "StaffBlocklistController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBlocklistEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBlocklistEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ban or watch a plate or a person",
+        "tags": [
+          "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/blocklist/{id}": {
+      "get": {
+        "operationId": "StaffBlocklistController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBlocklistEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a blocklist entry",
+        "tags": [
+          "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Its kind, reason, note, expiry or face; never its plate or person. A lifted one changes no more (BLOCKLIST_ENTRY_LIFTED).",
+        "operationId": "StaffBlocklistController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBlocklistEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBlocklistEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change what a live entry says",
+        "tags": [
+          "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/blocklist/{id}/lift": {
+      "post": {
+        "description": "With a code from `blocklistLift`. A person’s name, ID hash, face and note go 30 days later.",
+        "operationId": "StaffBlocklistController_lift",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiftBlocklistEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBlocklistEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lift an entry",
+        "tags": [
+          "blocklist"
         ],
         "x-no-store": true,
         "x-stability": "draft"

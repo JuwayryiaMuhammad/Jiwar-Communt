@@ -1,3 +1,4 @@
+import { BlocklistService } from '../../src/gate/blocklist/blocklist.service';
 import { LockdownService } from '../../src/gate/lockdown/lockdown.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
@@ -7,6 +8,8 @@ import type { Side } from './world';
 export interface SecurityOpsWorld {
   /** A lockdown of B's gate, started by B's guard and ended at once. */
   bLockdownId: string;
+  /** A plate B bans. */
+  bBlocklistEntryId: string;
 }
 
 export async function securityOpsWorld(
@@ -29,5 +32,16 @@ export async function securityOpsWorld(
   await helpers.asManager(b, () =>
     lockdowns.end(record.lockdown.id, { reasonCode: 'drill_over' }),
   );
-  return { bLockdownId: record.lockdown.id };
+  const entry = await helpers.asManager(b, () =>
+    h.moduleRef.get(BlocklistService).create({
+      kind: 'ban',
+      subject: 'plate',
+      plate: 'WRLD 77',
+      reasonCode: 'other',
+    }),
+  );
+  return {
+    bLockdownId: record.lockdown.id,
+    bBlocklistEntryId: entry.entry.id,
+  };
 }

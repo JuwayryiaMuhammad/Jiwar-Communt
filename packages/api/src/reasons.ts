@@ -125,6 +125,9 @@ export const REASON_CODES = {
   gateLockdownStart: ['security_threat', 'intruder', 'violence', 'fire', 'police_request', 'drill', 'other'],
   gateLockdownEnd: ['threat_cleared', 'false_alarm', 'drill_over', 'other'],
   gateLockdownOverride: ['ambulance', 'fire_truck', 'police', 'civil_defense'],
+  blocklistReason: ['trespassing', 'theft', 'violence', 'harassment', 'fraud', 'vandalism', 'police_request', 'management_decision', 'other'],
+  blocklistLift: ['resolved', 'entered_in_error', 'other'],
+  blocklistLiftSystem: ['expired'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

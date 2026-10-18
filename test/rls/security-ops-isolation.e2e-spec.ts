@@ -1,7 +1,11 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { lockdownRow, overrideRow } from '../setup/security-ops-rows';
+import {
+  blocklistRow,
+  lockdownRow,
+  overrideRow,
+} from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
@@ -51,6 +55,11 @@ const TABLES: Table[] = [
         shiftId: link.shiftId,
         guardId: link.accountId,
       }),
+  },
+  {
+    table: 'blocklist_entries',
+    insert: (tx, own, link) =>
+      blocklistRow(tx, { tenantId: own.tenantId, createdById: link.accountId }),
   },
 ];
 

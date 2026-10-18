@@ -375,6 +375,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_lockdowns_tenant_id_id_key: null,
   gate_lockdowns_one_live: null,
   gate_lockdown_overrides_tenant_id_id_key: null,
+  // The blocklist (ADR 0053): one live entry per plate and per person,
+  // checked under the compound's blocklist lock first, with the same fields.
+  blocklist_entries_tenant_id_id_key: null,
+  blocklist_entries_live_plate_key: ['plate'],
+  blocklist_entries_live_id_key: ['idNumber'],
+  blocklist_entries_photo_key: null,
   gate_service_requests_tenant_id_id_key: null,
   // Numbers come from the counter under its row lock: a collision is a bug.
   gate_service_requests_number_key: null,

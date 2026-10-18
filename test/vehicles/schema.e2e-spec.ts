@@ -419,6 +419,8 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
         ORDER BY c.table_name`,
     );
     expect(columns.map((c) => c.table)).toEqual([
+      // A banned or watched plate (ADR 0053).
+      'blocklist_entries',
       'parking_reports',
       // A move's truck and an event's guests (ADR 0049).
       'permit_guests',
@@ -434,8 +436,16 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
         ),
       ).size,
     ).toBe(1);
-    expect(columns[0].expr).toContain(PLATE_FOLD_FROM);
-    expect(columns[0].expr).toContain(PLATE_FOLD_TO);
+    for (const c of columns) {
+      expect([c.table, c.expr.includes(PLATE_FOLD_FROM)]).toEqual([
+        c.table,
+        true,
+      ]);
+      expect([c.table, c.expr.includes(PLATE_FOLD_TO)]).toEqual([
+        c.table,
+        true,
+      ]);
+    }
   });
 
   describe('the fold migration’s pre-check (ADR 0047)', () => {

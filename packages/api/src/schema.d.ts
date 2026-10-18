@@ -1541,6 +1541,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/blocklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The active blocklist
+         * @description For a guard on shift (a gate or a zone): each entry’s kind, plate or name, and face. Never why, never an ID number.
+         */
+        get: operations["GateBlocklistController_active"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/emergencies": {
         parameters: {
             query?: never;
@@ -8659,6 +8679,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/blocklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the blocklist
+         * @description Newest first.
+         */
+        get: operations["StaffBlocklistController_list"];
+        put?: never;
+        /**
+         * Ban or watch a plate or a person
+         * @description A plate, or a person (a name, their full ID number, a face). The ID number is kept only as a keyed hash: nobody sees it again; the request’s idempotency record leaves it out and stores no body (a replay is rendered afresh). One live entry per plate and per person (409 DUPLICATE_RESOURCE).
+         */
+        post: operations["StaffBlocklistController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/blocklist/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a blocklist entry */
+        get: operations["StaffBlocklistController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change what a live entry says
+         * @description Its kind, reason, note, expiry or face; never its plate or person. A lifted one changes no more (BLOCKLIST_ENTRY_LIFTED).
+         */
+        patch: operations["StaffBlocklistController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/security/blocklist/{id}/lift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lift an entry
+         * @description With a code from `blocklistLift`. A person’s name, ID hash, face and note go 30 days later.
+         */
+        post: operations["StaffBlocklistController_lift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/found-items": {
         parameters: {
             query?: never;
@@ -12572,6 +12657,16 @@ export interface components {
             data: components["schemas"]["BlockView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        BlocklistKind: "ban" | "watch";
+        /** @enum {string} */
+        BlocklistLift: "resolved" | "entered_in_error" | "other" | "expired";
+        /** @enum {string} */
+        BlocklistReason: "trespassing" | "theft" | "violence" | "harassment" | "fraud" | "vandalism" | "police_request" | "management_decision" | "other";
+        /** @enum {string} */
+        BlocklistStatus: "active" | "expired" | "lifted";
+        /** @enum {string} */
+        BlocklistSubject: "plate" | "person";
         BoardNowView: {
             board: components["schemas"]["BoardTermView"] | null;
         };
@@ -13759,6 +13854,38 @@ export interface components {
             nameEn: string;
             /** @description The first day of the first period: the first of a month, from this month to a year ahead. Never changes. */
             startsOn: string;
+        };
+        CreateBlocklistEntryDto: {
+            /**
+             * Format: date-time
+             * @description In the future, at most three years ahead. None: until lifted.
+             */
+            expiresAt?: string;
+            /** @description A person: the name the guards read. */
+            fullName?: string;
+            /** @description A person: their full ID number (a national ID, a passport). Never stored: only a keyed hash is kept, and nobody sees it again. */
+            idNumber?: string;
+            /**
+             * @description `ban`: refused at the gate; `watch`: let in, the management told.
+             * @enum {string}
+             */
+            kind: "ban" | "watch";
+            /** @description The management’s own words: never shown to a guard. */
+            note?: string;
+            /**
+             * Format: uuid
+             * @description A person: a `blocklist_photo` upload of their face.
+             */
+            photoFileId?: string;
+            /**
+             * @description A plate entry: the plate (as a vehicle’s: 12 at most).
+             * @example ق ب ط 1234
+             */
+            plate?: string;
+            /** @description From the closed list `blocklistReason`. */
+            reasonCode: string;
+            /** @enum {string} */
+            subject: "plate" | "person";
         };
         CreateBookingDto: {
             /** Format: uuid */
@@ -16264,6 +16391,18 @@ export interface components {
             data: components["schemas"]["GuardAttendanceView"][];
             nextCursor: string | null;
         };
+        GuardBlocklistEntryView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BlocklistKind"];
+            /** @description The face, a presigned URL. */
+            photo: components["schemas"]["PresignedReadView"] | null;
+            plate: string | null;
+            /** Format: date-time */
+            since: string;
+            subject: components["schemas"]["BlocklistSubject"];
+        };
         GuardGateView: {
             /** Format: uuid */
             id: string;
@@ -17194,6 +17333,10 @@ export interface components {
         LegalHoldResponseList: {
             data: components["schemas"]["LegalHoldResponse"][];
             nextCursor: string | null;
+        };
+        LiftBlocklistEntryDto: {
+            /** @description From the closed list `blocklistLift`. */
+            reasonCode: string;
         };
         LiftClosureDto: {
             /** @description From the closed list `facilityClosureLift`. */
@@ -21057,6 +21200,40 @@ export interface components {
             data: components["schemas"]["StaffAppointmentSlotView"][];
             nextCursor: string | null;
         };
+        StaffBlocklistEntryView: {
+            createdBy: components["schemas"]["AccountRefView"];
+            /** Format: date-time */
+            expiresAt: string | null;
+            fullName: string | null;
+            /** @description A person: whether their ID number is on file (its hash; never shown). False once purged. */
+            hasIdNumber: boolean;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BlocklistKind"];
+            liftReason: components["schemas"]["BlocklistLift"] | null;
+            /** Format: date-time */
+            liftedAt: string | null;
+            /** @description Null when the system lifted it (expired). */
+            liftedBy: components["schemas"]["AccountRefView"] | null;
+            note: string | null;
+            /** @description The face, a presigned URL. */
+            photo: components["schemas"]["PresignedReadView"] | null;
+            plate: string | null;
+            /**
+             * Format: date-time
+             * @description When the person’s name, ID hash, face and note went.
+             */
+            purgedAt: string | null;
+            reasonCode: components["schemas"]["BlocklistReason"];
+            /** Format: date-time */
+            since: string;
+            status: components["schemas"]["BlocklistStatus"];
+            subject: components["schemas"]["BlocklistSubject"];
+        };
+        StaffBlocklistEntryViewList: {
+            data: components["schemas"]["StaffBlocklistEntryView"][];
+            nextCursor: string | null;
+        };
         StaffBoardNowView: {
             /** @description The open term, current or lapsed; null before the first board. */
             board: components["schemas"]["StaffBoardTermView"] | null;
@@ -23196,6 +23373,24 @@ export interface components {
             issueDaysBefore?: number;
             nameAr?: string;
             nameEn?: string;
+        };
+        UpdateBlocklistEntryDto: {
+            /**
+             * Format: date-time
+             * @description `null`: until lifted.
+             */
+            expiresAt?: string | null;
+            /** @enum {string} */
+            kind?: "ban" | "watch";
+            /** @description `null` removes it. */
+            note?: string | null;
+            /**
+             * Format: uuid
+             * @description A person’s new face (`blocklist_photo`); `null` removes it.
+             */
+            photoFileId?: string | null;
+            /** @description From the closed list `blocklistReason`. */
+            reasonCode?: string;
         };
         UpdateCategoryDto: {
             /** @description False retires it: no new ticket under it. */
@@ -26420,6 +26615,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardRequestResponse"];
+                };
+            };
+        };
+    };
+    GateBlocklistController_active: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardBlocklistEntryView"][];
                 };
             };
         };
@@ -37184,6 +37398,128 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardAttendanceViewList"];
+                };
+            };
+        };
+    };
+    StaffBlocklistController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "active" | "expired" | "lifted";
+                kind?: "ban" | "watch";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBlocklistEntryViewList"];
+                };
+            };
+        };
+    };
+    StaffBlocklistController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBlocklistEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBlocklistEntryView"];
+                };
+            };
+        };
+    };
+    StaffBlocklistController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBlocklistEntryView"];
+                };
+            };
+        };
+    };
+    StaffBlocklistController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBlocklistEntryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBlocklistEntryView"];
+                };
+            };
+        };
+    };
+    StaffBlocklistController_lift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LiftBlocklistEntryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBlocklistEntryView"];
                 };
             };
         };

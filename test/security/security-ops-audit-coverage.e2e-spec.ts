@@ -1,4 +1,5 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { BLOCKLIST_SWEEP } from '../../src/gate/blocklist/blocklist.service';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -67,6 +68,12 @@ describe('Audit coverage — security (ADR 0053)', () => {
     actorId: who.id,
     targetType,
   });
+  const system = (targetType: string) => ({
+    actorType: 'system',
+    actorId: null,
+    targetType,
+  });
+  const DAY = 86_400_000;
 
   describe('the lockdown', () => {
     it('started, overridden and ended: scope, codes, shift and counts; the end’s note only as whether there was one', async () => {
@@ -120,6 +127,82 @@ describe('Audit coverage — security (ADR 0053)', () => {
         recipients: 1,
         residents: 1,
       });
+    });
+  });
+
+  describe('the blocklist', () => {
+    it('created, updated, lifted: codes and booleans; never the plate, the name, the ID or its hash, nor the note', async () => {
+      const e = await x.block(s.manager, {
+        kind: 'watch',
+        subject: 'person',
+        fullName: `${WORDS} Name`,
+        idNumber: 'AUD55210',
+        photoFileId: await x.photo(s.manager),
+        note: WORDS,
+        reasonCode: 'fraud',
+      });
+      const created = await single('blocklist_entry.created', e.id);
+      expect(created).toMatchObject(by(s.manager, 'blocklist_entry'));
+      expect(created.metadata).toEqual({
+        kind: 'watch',
+        subject: 'person',
+        reasonCode: 'fraud',
+        expiresAt: null,
+        photo: true,
+        note: true,
+      });
+      const hash = (
+        await x.inTx(s.c, (tx) =>
+          tx.blocklistEntry.findUniqueOrThrow({ where: { id: e.id } }),
+        )
+      ).idHash!;
+      await x
+        .http('patch', `/staff/security/blocklist/${e.id}`, s.manager.token, {
+          kind: 'ban',
+          note: `${WORDS} again`,
+        })
+        .expect(200);
+      const updated = await single('blocklist_entry.updated', e.id);
+      expect(updated).toMatchObject(by(s.manager, 'blocklist_entry'));
+      expect(updated.metadata).toEqual({
+        changed: ['kind', 'note'],
+        kind: 'ban',
+        reasonCode: 'fraud',
+        expiresAt: null,
+      });
+      await x
+        .http(
+          'post',
+          `/staff/security/blocklist/${e.id}/lift`,
+          s.manager.token,
+          {
+            reasonCode: 'resolved',
+          },
+        )
+        .expect(200);
+      const lifted = await single('blocklist_entry.lifted', e.id);
+      expect(lifted).toMatchObject(by(s.manager, 'blocklist_entry'));
+      expect(lifted.metadata).toEqual({ reasonCode: 'resolved' });
+      for (const row of [created, updated, lifted])
+        expect(leakText(row)).not.toMatch(new RegExp(`AUD55210|${hash}`));
+      // 30 days on, the system purges the person's data.
+      await x.sweep(BLOCKLIST_SWEEP, new Date(Date.now() + 31 * DAY));
+      const purged = await single('blocklist_entry.purged', e.id);
+      expect(purged).toMatchObject(system('blocklist_entry'));
+      expect(purged.metadata).toEqual({ photo: true });
+    });
+
+    it('expired: lifted by the system, no metadata', async () => {
+      const e = await x.block(s.manager, {
+        subject: 'plate',
+        plate: 'AUD 5521',
+        expiresAt: new Date(Date.now() + DAY).toISOString(),
+      });
+      await x.sweep(BLOCKLIST_SWEEP, new Date(Date.now() + 2 * DAY));
+      const expired = await single('blocklist_entry.expired', e.id);
+      expect(expired).toMatchObject(system('blocklist_entry'));
+      expect(expired.metadata).toBeNull();
+      expect(leakText(expired)).not.toMatch(/5521|AUD/);
     });
   });
 

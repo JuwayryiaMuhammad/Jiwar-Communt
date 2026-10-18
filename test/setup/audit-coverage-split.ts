@@ -498,4 +498,9 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'gate_lockdown.started',
   'gate_lockdown.ended',
   'gate_lockdown.override',
+  'blocklist_entry.created',
+  'blocklist_entry.updated',
+  'blocklist_entry.lifted',
+  'blocklist_entry.expired',
+  'blocklist_entry.purged',
 ];

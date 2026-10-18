@@ -44,6 +44,7 @@ const born = (y: number, m: number, d: number) =>
   new Date(Date.UTC(y, m - 1, d));
 const iso = ofDbDate;
 import { at, day } from '../setup/facilities';
+import { BlocklistService } from '../../src/gate/blocklist/blocklist.service';
 /** A name's first word: what first-name views show. */
 const first = (fullName?: string) => fullName?.split(' ')[0] ?? '';
 
@@ -479,7 +480,28 @@ describe('API v0 — PII leak scan', () => {
         }),
       )
     ).tokenHash;
+    // A banned person (ADR 0053): their name and face reach only the guards
+    // on shift (the active list) and the blocklist's keepers; their ID
+    // number reaches nobody, nor its hash.
+    const blockedFace = await fileHelpers(h).ready(
+      a.tokens.manager,
+      'blocklist_photo',
+    );
+    const blocked = await c.asManager(a, () =>
+      h.moduleRef.get(BlocklistService).create({
+        kind: 'ban',
+        subject: 'person',
+        fullName: 'PII-BLOCKLISTED person',
+        idNumber: 'PIIX774411',
+        photoFileId: blockedFace,
+        reasonCode: 'trespassing',
+        note: 'PII-NOTE-blocklist',
+      }),
+    );
+    const blockedFaceKey = `t/${a.tenantId}/${blockedFace}`;
     const secrets = [
+      'PIIX774411',
+      blocked.entry.idHash!,
       checkpointQr.qrPayload.split('.')[2],
       checkpointHash,
       entry.secret,
@@ -1397,6 +1419,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/security/patrols/runs/{id}/track': w.bRunId,
       // ADR 0053: B's lockdown, not found for everyone of A.
       '/staff/security/lockdowns/{id}': w.bLockdownId,
+      // B's blocklist entry, not found for everyone of A.
+      '/staff/security/blocklist/{id}': w.bBlocklistEntryId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented
@@ -1533,6 +1557,18 @@ describe('API v0 — PII leak scan', () => {
         for (const s of secrets)
           if (found(s) && !(passCodeReader && s === visit.code))
             leaks.push(`${name} ${r.path}: secret ${s}`);
+        // ADR 0053: the blocklist's names and faces, only where it is read.
+        const blocklistReader =
+          (name === 'guard' && r.path === '/gate/blocklist') ||
+          (name === 'manager' &&
+            r.path.startsWith('/staff/security/blocklist'));
+        if (
+          !blocklistReader &&
+          (found('PII-BLOCKLISTED person') || found(blockedFaceKey))
+        )
+          leaks.push(`${name} ${r.path}: a blocklisted person`);
+        if (found('PII-NOTE-blocklist') && name !== 'manager')
+          leaks.push(`${name} ${r.path}: the blocklist's note`);
         const others = people.filter((p) => p.id !== persona.self);
         if (name === 'guard') {
           for (const p of others)

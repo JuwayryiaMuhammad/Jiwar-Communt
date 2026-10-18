@@ -854,6 +854,10 @@ export const ErrorCode = {
    * (409).
    */
   LOCKDOWN_NOT_AT_GATE: 'LOCKDOWN_NOT_AT_GATE',
+  /** Unknown, or another compound's blocklist entry. */
+  BLOCKLIST_ENTRY_NOT_FOUND: 'BLOCKLIST_ENTRY_NOT_FOUND',
+  /** The entry was lifted already: it changes no more (409). */
+  BLOCKLIST_ENTRY_LIFTED: 'BLOCKLIST_ENTRY_LIFTED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

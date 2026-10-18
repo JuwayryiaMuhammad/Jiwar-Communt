@@ -1,5 +1,3 @@
-import type { Server } from 'node:http';
-import request from 'supertest';
 import { RolesService } from '../../src/core/access/roles.service';
 import { communityHelpers, type Compound } from './community';
 import { gateHelpers } from './gate';
@@ -131,7 +129,7 @@ export function managementHelpers(h: HttpHarness) {
     body?: object,
     headers: Record<string, string> = {},
   ) => {
-    const agent = request(h.app.getHttpServer() as Server);
+    const agent = h.http();
     let req = agent[method](`${API}${path}`).set(
       'Authorization',
       `Bearer ${token}`,

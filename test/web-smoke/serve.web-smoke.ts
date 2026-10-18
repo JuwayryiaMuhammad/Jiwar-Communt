@@ -49,7 +49,7 @@ describe('Web smoke: the API behind apps/public', () => {
   it(
     'seeds one link of every kind and serves until told to stop',
     async () => {
-      h = await createHttpHarness();
+      h = await createHttpHarness({ listen: false });
       const x = communityHelpers(h);
       const c = await x.compound('Web Smoke Court');
       const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });

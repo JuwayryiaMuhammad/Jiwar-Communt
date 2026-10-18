@@ -13,6 +13,7 @@ import { call, err } from './request';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
 import { month } from '../setup/compound-clock';
+import { leakText } from '../setup/leak-text';
 
 const PAYMENT = [
   'amount',
@@ -96,7 +97,7 @@ describe('API v0 — worker wages', () => {
       targetId: id,
     });
     expect(entry.metadata).toMatchObject({ set: true });
-    expect(JSON.stringify(entry)).not.toContain('3200');
+    expect(leakText(entry)).not.toContain('3200');
 
     const cleared = await call(w, 'PUT', `/worker-engagements/${id}/wage`, {
       token: owner(),
@@ -542,7 +543,7 @@ describe('API v0 — worker wages', () => {
     )!;
     expect(item).toBeDefined();
     expect('monthlyWage' in item).toBe(false);
-    expect(seen.text).not.toContain('2750');
+    expect(leakText(seen.body)).not.toContain('2750');
     await call(w, 'GET', `/worker-engagements/${id}/wage-payments`, {
       token: w.a.tokens.family,
     }).expect(403);

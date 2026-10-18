@@ -1,6 +1,4 @@
-import type { Server } from 'node:http';
 import { ClsService } from 'nestjs-cls';
-import request from 'supertest';
 import type { AppClsStore } from '../../src/core/common/cls/app-cls';
 import {
   TenantTx,
@@ -61,7 +59,7 @@ export function dispatchHelpers(h: HttpHarness) {
     token: string,
     body?: object,
   ) => {
-    const agent = request(h.app.getHttpServer() as Server);
+    const agent = h.http();
     const req = agent[method](`${API}${path}`).set(
       'Authorization',
       `Bearer ${token}`,

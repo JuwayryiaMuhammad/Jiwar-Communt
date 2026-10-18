@@ -47,9 +47,20 @@ export interface HttpHarness {
   close(): Promise<void>;
 }
 
-/** The full AppModule, configured exactly like main.ts, without listening. */
+/**
+ * The full AppModule, configured exactly like main.ts, listening once on a
+ * free local port. supertest given a server that is not listening listens it
+ * for each request and adds three `once` listeners per request still waiting
+ * (more than ten in a race: MaxListenersExceededWarning), then closes it and
+ * listens again on another port. A listening server is only addressed.
+ */
 export async function createHttpHarness(
   opts: {
+    /**
+     * False for a caller that listens on its own port (the web smoke's
+     * fixed one): a server listens once.
+     */
+    listen?: boolean;
     controllers?: Type[];
     imports?: Type[];
     /**
@@ -77,6 +88,7 @@ export async function createHttpHarness(
   const app = moduleRef.createNestApplication({ logger: false });
   configureApp(app);
   await app.init();
+  if (opts.listen ?? true) await app.listen(0, '127.0.0.1');
 
   const globalDb = moduleRef.get(GlobalDbService);
   const accounts = moduleRef.get(AccountsService);

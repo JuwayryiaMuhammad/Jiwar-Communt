@@ -13,6 +13,7 @@ import {
   type PermitSetUp,
   type Who,
 } from '../setup/permits';
+import { leakText } from '../setup/leak-text';
 
 const DAY = 86_400_000;
 
@@ -351,7 +352,7 @@ describe('Permits — privacy (ADR 0049)', () => {
       });
       const aliceText = aliceArchive.text('permits/permits.json');
       expect(aliceText).toContain('Export Worker');
-      expect(aliceText).not.toContain('6157');
+      expect(leakText(aliceText)).not.toContain('6157');
       expect(aliceText).not.toContain('EXPORT-STAFF');
       expect(aliceText).not.toMatch(/"url"|idLast4Hash|staffNote/);
     });

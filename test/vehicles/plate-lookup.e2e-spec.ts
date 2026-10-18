@@ -2,6 +2,7 @@ import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { auditReaders } from '../setup/audit';
 import { gateHelpers } from '../setup/gate';
 import { sticker, vehicleHelpers, type Who } from '../setup/vehicles';
+import { leakText } from '../setup/leak-text';
 
 interface Match {
   kind: string;
@@ -260,7 +261,7 @@ describe('Gate — plate lookup and visitor parking', () => {
         matches: 1,
       },
     });
-    const text = JSON.stringify(rows);
+    const text = leakText(rows);
     expect(text).not.toContain('AUDL');
     expect(text).not.toContain('5150');
   });

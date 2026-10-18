@@ -29,6 +29,7 @@ import {
   type PermitSetUp,
   type Who,
 } from '../setup/permits';
+import { leakText } from '../setup/leak-text';
 
 /**
  * One scenario per permits catalog entry (ADR 0014, 0049): actor, target,
@@ -151,7 +152,7 @@ describe('Audit coverage — permits', () => {
         reasonCode: 'plans_changed',
       });
       for (const row of [r, added, removed, cancelled])
-        expect(JSON.stringify(row)).not.toMatch(new RegExp(`${WORDS}|9182`));
+        expect(leakText(row)).not.toMatch(new RegExp(`${WORDS}|9182`));
     });
 
     it('approved, rejected and revoked by the management: codes and whether there was a note', async () => {

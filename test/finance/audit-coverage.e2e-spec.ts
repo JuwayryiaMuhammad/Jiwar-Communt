@@ -26,6 +26,7 @@ import {
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { FakePaymob } from '../setup/paymob-fake';
 import { waitForOtp } from '../setup/mailpit';
+import { leakText } from '../setup/leak-text';
 
 /**
  * One scenario per finance catalog entry (ADR 0014, 0046): actor, target
@@ -123,7 +124,7 @@ describe('Audit coverage — finance', () => {
         },
       });
       for (const v of [body.secretKey, body.publicKey, body.hmacSecret])
-        expect(JSON.stringify(row)).not.toContain(v.slice(-4));
+        expect(leakText(row)).not.toContain(v.slice(-4));
     });
 
     it('finance_gateway.toggled: on or off', async () => {

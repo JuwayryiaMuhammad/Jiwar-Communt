@@ -26,6 +26,7 @@ import {
 } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { patrolHelpers, type Who } from '../setup/patrols';
+import { leakText } from '../setup/leak-text';
 
 /**
  * One scenario per patrols catalog entry (ADR 0014, 0052): actor, target
@@ -346,7 +347,7 @@ describe('Audit coverage — patrols', () => {
       targetId: null,
     });
     expect(purged[0].metadata).toEqual({ points: 2 });
-    expect(JSON.stringify(purged[0])).not.toContain('30.1');
+    expect(leakText(purged[0])).not.toContain('30.1');
   });
 
   it('a guard’s erasure: their notes’ words go, by id; their track, how many', async () => {

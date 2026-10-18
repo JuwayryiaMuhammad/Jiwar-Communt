@@ -16,6 +16,7 @@ import {
   type FinanceSetUp,
 } from '../setup/finance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { leakText } from '../setup/leak-text';
 
 const code = (res: Response) => (res.body as { code: string }).code;
 
@@ -191,7 +192,7 @@ describe('Finance — gateway', () => {
       ],
       ['finance_gateway.toggled', { onlineEnabled: true }],
     ]);
-    expect(JSON.stringify(rows)).not.toContain(first.secretKey.slice(-4));
+    expect(leakText(rows)).not.toContain(first.secretKey.slice(-4));
   });
 
   describe('the platform', () => {

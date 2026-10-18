@@ -4,6 +4,7 @@ import { call, err } from './request';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
 import { month } from '../setup/compound-clock';
+import { leakText } from '../setup/leak-text';
 
 /**
  * ADR 0037: one of the unit's workers, for its residents: the list item and,
@@ -98,7 +99,7 @@ describe('API v0 — a unit’s worker', () => {
     expect(member.body).toMatchObject({ id, status: 'active' });
     expect(keyPaths(member.body)).not.toContain('monthlyWage');
     expect(keyPaths(member.body)).not.toContain('lastPaidPeriod');
-    expect(member.text).not.toContain('2500');
+    expect(leakText(member.body)).not.toContain('2500');
   });
 
   it('only the unit’s own: another unit’s engagement through this unit, a neighbour, a landlord', async () => {

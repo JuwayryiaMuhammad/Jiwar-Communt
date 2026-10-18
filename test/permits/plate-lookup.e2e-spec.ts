@@ -2,6 +2,7 @@ import { auditReaders } from '../setup/audit';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { day, permitHelpers } from '../setup/permits';
 import { clock } from '../setup/compound-clock';
+import { leakText } from '../setup/leak-text';
 
 interface Match {
   kind: string;
@@ -135,7 +136,7 @@ describe('Permits — the plate lookup finds moves and guests’ cars (ADR 0049)
         matches: 1,
       },
     ]);
-    expect(JSON.stringify(rows)).not.toMatch(/GST|٤٥٦|456/);
+    expect(leakText(rows)).not.toMatch(/GST|٤٥٦|456/);
   });
 
   it('a revoked move is not found; one outside the hours says why', async () => {

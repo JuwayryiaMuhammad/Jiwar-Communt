@@ -7,6 +7,7 @@ import {
   type Who,
 } from '../setup/permits';
 import { clock, middayZone } from '../setup/compound-clock';
+import { leakText } from '../setup/leak-text';
 
 const HOUR = 3_600_000;
 
@@ -120,7 +121,7 @@ describe('Permits — at the gate (ADR 0049)', () => {
         inside: false,
       }),
     ]);
-    expect(JSON.stringify(detail)).not.toContain('7731');
+    expect(leakText(detail)).not.toContain('7731');
     // A pending permit is not the gate's.
     await p
       .http('get', `/gate/unit-permits/${pending.id}`, c.guard.token)

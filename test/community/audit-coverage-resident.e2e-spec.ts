@@ -11,6 +11,7 @@ import {
   type HttpHarness,
 } from '../setup/http-app';
 import { month } from '../setup/compound-clock';
+import { leakText } from '../setup/leak-text';
 
 /**
  * One scenario per catalog entry of the resident's screens (ADR 0037), each
@@ -73,7 +74,7 @@ describe('Audit coverage — the resident’s screens (ADR 0037)', () => {
         targetType: 'worker_engagement',
         metadata: { unitId: u.id, set: true },
       });
-      expect(JSON.stringify(entry)).not.toContain('4100');
+      expect(leakText(entry)).not.toContain('4100');
     });
 
     it('worker.wage_obligation_settled — by a manager, with the reason code', async () => {

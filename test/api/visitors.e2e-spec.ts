@@ -16,6 +16,7 @@ import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { passBody } from './routes/visitors';
 import { buildWorld, type World } from './world';
+import { leakText } from '../setup/leak-text';
 
 const ISSUED = [
   'code',
@@ -364,7 +365,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
       visitorPhoneMasked: null,
       createdBy: { id: member.id },
     });
-    expect(JSON.stringify(asOther)).not.toContain(phone.slice(-4));
+    expect(leakText(asOther)).not.toContain(phone.slice(-4));
     // Another unit's resident: the same answer as an unknown pass.
     const foreign = await get(w.a.tokens.tenant);
     expect(status(foreign)).toEqual({

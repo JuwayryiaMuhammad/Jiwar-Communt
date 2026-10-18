@@ -7,6 +7,7 @@ import {
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { permitHelpers, type PermitBody } from '../setup/permits';
 import { HASH, permitFileRow, permitWorkerRow } from '../setup/permits-rows';
+import { leakText } from '../setup/leak-text';
 
 describe('Permits — contractor workers (ADR 0049)', () => {
   let h: HttpHarness;
@@ -37,7 +38,7 @@ describe('Permits — contractor workers (ADR 0049)', () => {
       201,
     );
     expect(res.headers['cache-control']).toBe('no-store');
-    expect(JSON.stringify(res.body)).not.toContain('4821');
+    expect(leakText(res.body)).not.toContain('4821');
     const body = res.body as PermitBody;
     expect(body.works).toMatchObject({ workerCount: 1 });
     const [w] = body.works!.workers;
@@ -72,7 +73,7 @@ describe('Permits — contractor workers (ADR 0049)', () => {
     expect(audit.map((a) => a.metadata)).toEqual([
       { workerId: w.id, idType: 'national_id', workers: 1 },
     ]);
-    expect(JSON.stringify(audit)).not.toMatch(/4821|Mahmoud/);
+    expect(leakText(audit)).not.toMatch(/4821|Mahmoud/);
   });
 
   it('the last four: digits on a national ID, letters or digits on a passport', async () => {
@@ -271,6 +272,6 @@ describe('Permits — contractor workers (ADR 0049)', () => {
         hashedBody({ ...body, idLast4: '9999' }, ['idLast4']),
       ),
     );
-    expect(JSON.stringify(stored)).not.toContain('1111');
+    expect(leakText(stored)).not.toContain('1111');
   });
 });

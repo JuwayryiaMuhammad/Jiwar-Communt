@@ -410,7 +410,10 @@ export class ChildControlsService implements OnModuleInit {
     control: ChildControl,
   ): Promise<ChildControlView> {
     const photo = await this.files.readUrl(tx, control.photoFileId);
-    return ChildControlView.of(control, photo?.url ?? null);
+    const escorts = await tx.childEscort.count({
+      where: { controlId: control.id, revokedAt: null },
+    });
+    return ChildControlView.of(control, photo?.url ?? null, escorts);
   }
 
   /** An ended control on a replay: no card and no photo left. */
@@ -422,6 +425,7 @@ export class ChildControlsService implements OnModuleInit {
       cardIssuedAt: control.updatedAt,
       photoUrl: null,
       turnedOnAt: control.turnedOnAt,
+      escorts: 0,
     });
   }
 

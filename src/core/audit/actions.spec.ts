@@ -137,6 +137,7 @@ describe('audit catalog', () => {
         'unit_violation_payment',
         // ADR 0054.
         'child_control',
+        'child_escort',
       ]).toContain(def.target);
     }
   });

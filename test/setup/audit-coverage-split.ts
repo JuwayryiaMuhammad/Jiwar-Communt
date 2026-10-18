@@ -529,4 +529,8 @@ export const CHILDREN_COVERAGE: readonly string[] = [
   'child_control.card_reissued',
   'child_control.photo_changed',
   'child_control.ended',
+  'child_escort.added',
+  'child_escort.updated',
+  'child_escort.revoked',
+  'child_escort.code_reissued',
 ];

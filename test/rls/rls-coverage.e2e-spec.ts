@@ -23,6 +23,9 @@ const GLOBAL_WITH_TENANT_ID = [
   'registration_links',
   // Resolves a visitor's link before the tenant is known (ADR 0030); no PII.
   'visitor_pass_links',
+  // Resolves an outside escort's pickup link before the tenant is known
+  // (ADR 0054); no PII.
+  'child_pickup_links',
   // Resolves a receipt's code before the tenant is known (ADR 0046): the
   // code's hash and the payment's id; no PII.
   'receipt_links',

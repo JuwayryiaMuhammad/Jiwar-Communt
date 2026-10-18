@@ -502,6 +502,7 @@ model Tenant {
   settings                     TenantSettings?
   registrationLinks            RegistrationLink[]
   visitorPassLinks             VisitorPassLink[]
+  childPickupLinks             ChildPickupLink[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
   preventiveServices           PreventiveService[]
@@ -7417,4 +7418,68 @@ model ChildControl {
   @@unique([tenantId, id, unitId])
   @@index([tenantId, unitId], map: "child_controls_unit_idx")
   @@map("child_controls")
+}
+
+/// Who may collect a child (ADR 0054): an adult of the household, one of
+/// the unit's domestic workers, or an outside person with a pickup code.
+enum ChildEscortKind {
+  adult
+  worker
+  outside
+
+  @@map("child_escort_kind")
+}
+
+/// An escort of one control (ADR 0054), with its validity. Revoked once,
+/// never deleted. An outside escort's code, QR and link exist exactly while
+/// it is live (only their HMACs); their name and phone are cleared 30 days
+/// after the revocation.
+model ChildEscort {
+  id               String          @id @db.Uuid
+  tenantId         String          @map("tenant_id") @db.Uuid
+  controlId        String          @map("control_id") @db.Uuid
+  unitId           String          @map("unit_id") @db.Uuid
+  kind             ChildEscortKind
+  accountId        String?         @map("account_id") @db.Uuid
+  engagementId     String?         @map("engagement_id") @db.Uuid
+  fullName         String?         @map("full_name")
+  phone            String?
+  photoFileId      String?         @map("photo_file_id") @db.Uuid
+  pickupCodeHash   String?         @map("pickup_code_hash") @db.Char(64)
+  pickupQrHash     String?         @map("pickup_qr_hash") @db.Char(64)
+  pickupIssuedAt   DateTime?       @map("pickup_issued_at") @db.Timestamptz(3)
+  /// The first and last local days it is valid; null: open-ended.
+  validFrom        DateTime        @map("valid_from") @db.Date
+  validUntil       DateTime?       @map("valid_until") @db.Date
+  /// A weekly schedule (days and windows); null: at any time.
+  schedule         Json?
+  gateId           String?         @map("gate_id") @db.Uuid
+  placeId          String?         @map("place_id") @db.Uuid
+  revokedAt        DateTime?       @map("revoked_at") @db.Timestamptz(3)
+  /// household | left_household | control_off
+  revokeReason     String?         @map("revoke_reason")
+  revokedById      String?         @map("revoked_by_account_id") @db.Uuid
+  piiClearedAt     DateTime?       @map("pii_cleared_at") @db.Timestamptz(3)
+  createdById      String          @map("created_by_account_id") @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, controlId], map: "child_escorts_control_idx")
+  @@map("child_escorts")
+}
+
+/// The global pointer of an outside escort's pickup link (ADR 0054), like
+/// visitor_pass_links: HMAC(pepper, "child-pickup-link:<token>") → (compound,
+/// escort). No personal data, no RLS.
+model ChildPickupLink {
+  tokenHash String   @id @map("token_hash") @db.Char(64)
+  tenantId  String   @map("tenant_id") @db.Uuid
+  escortId  String   @map("escort_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onUpdate: Restrict)
+
+  @@index([escortId])
+  @@map("child_pickup_links")
 }

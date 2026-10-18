@@ -16,6 +16,7 @@ type GlobalTables = Pick<
   | 'outboxMessage'
   | 'registrationLink'
   | 'visitorPassLink'
+  | 'childPickupLink'
   | 'receiptLink'
   | 'actionToken'
   | 'pushDevice'
@@ -26,6 +27,7 @@ type GlobalTables = Pick<
  * The only path to the global (non-RLS) tables: tenants, login_identifiers,
  * otp_challenges, sessions, platform_admins, platform_sessions, the audit
  * tables, invite_tokens, registration_links, visitor_pass_links,
+ * child_pickup_links,
  * receipt_links,
  * action_tokens, outbox_messages, push_devices and push_deliveries. Tenant
  * tables are deliberately not exposed here.
@@ -80,6 +82,10 @@ export class GlobalDbService implements GlobalTables {
 
   get visitorPassLink() {
     return this.base.client.visitorPassLink;
+  }
+
+  get childPickupLink() {
+    return this.base.client.childPickupLink;
   }
 
   /** The public receipt page's pointers (ADR 0046). */
@@ -284,6 +290,7 @@ export class GlobalDbService implements GlobalTables {
       outboxMessage: tx.outboxMessage,
       registrationLink: tx.registrationLink,
       visitorPassLink: tx.visitorPassLink,
+      childPickupLink: tx.childPickupLink,
       receiptLink: tx.receiptLink,
       actionToken: tx.actionToken,
       pushDevice: tx.pushDevice,

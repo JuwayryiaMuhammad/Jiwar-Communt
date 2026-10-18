@@ -105,6 +105,7 @@ describe('Audit coverage — children', () => {
       unitId: home.id,
       memberId,
       reasonCode: 'household',
+      escortsRevoked: 0,
     });
   });
 
@@ -126,7 +127,88 @@ describe('Audit coverage — children', () => {
       unitId: home.id,
       memberId,
       reasonCode: 'left_household',
+      escortsRevoked: 0,
     });
+  });
+
+  it('an escort added, changed, its code reissued, revoked by the household and by the control ending', async () => {
+    const { home, primary, memberId } = await x.controlled(s.c, undefined, {
+      fullName: CHILD_NAME,
+    });
+    const PERSON = 'Audited Escortname Sentinel';
+    const escort = await x.addEscort(primary, home.id, memberId, {
+      ...x.outside(PERSON),
+    });
+    const phone = (
+      await x.inTx(s.c, (tx) =>
+        tx.childEscort.findUniqueOrThrow({ where: { id: escort.id } }),
+      )
+    ).phone!;
+    const token = x.tokenOf(escort.pickup!);
+    const secrets = [PERSON, phone, token, escort.pickup!.code];
+    const as = (action: string) => ({
+      ...by(primary),
+      action,
+      targetType: 'child_escort',
+    });
+    const added = await single('child_escort.added', escort.id, secrets);
+    expect(added).toMatchObject(as('child_escort.added'));
+    expect(added.changes).toMatchObject({
+      kind: { from: null, to: 'outside' },
+      fullName: { changed: true },
+      phone: { changed: true },
+    });
+    const control = (await x.children(primary, home.id))[0].control!;
+    expect(added.metadata).toEqual({
+      controlId: control.id,
+      unitId: home.id,
+      memberId,
+    });
+
+    const base = `${x.escortsPath(home.id, memberId)}/${escort.id}`;
+    await x
+      .http('patch', base, primary.token, { schedule: null, validUntil: null })
+      .expect(200);
+    await x
+      .http('patch', base, primary.token, {
+        schedule: { days: [1], windows: [{ from: '14:00', to: '15:00' }] },
+      })
+      .expect(200);
+    const updated = await single('child_escort.updated', escort.id, secrets);
+    expect(updated.changes).toEqual({
+      schedule: {
+        from: null,
+        to: { days: [1], windows: [{ from: '14:00', to: '15:00' }] },
+      },
+    });
+
+    const fresh = (
+      await x.http('post', `${base}/reissue`, primary.token).expect(200)
+    ).body as { pickup: { code: string; link: string } };
+    const reissued = await single('child_escort.code_reissued', escort.id, [
+      ...secrets,
+      fresh.pickup.code,
+      fresh.pickup.link,
+    ]);
+    expect(reissued).toMatchObject(as('child_escort.code_reissued'));
+    expect(reissued.metadata).toBeNull();
+
+    await x.http('post', `${base}/revoke`, primary.token).expect(204);
+    const revoked = await single('child_escort.revoked', escort.id, secrets);
+    expect(revoked.metadata).toEqual({
+      controlId: control.id,
+      kind: 'outside',
+      reasonCode: 'household',
+    });
+
+    const second = await x.addEscort(primary, home.id, memberId, x.outside());
+    await x
+      .http('post', `${x.controlPath(home.id, memberId)}/off`, primary.token)
+      .expect(204);
+    const off = await single('child_escort.revoked', second.id);
+    expect(off.metadata).toMatchObject({ reasonCode: 'control_off' });
+    const ended = await single('child_control.ended', control.id);
+    expect(ended.metadata).toMatchObject({ escortsRevoked: 1 });
   });
 
   describe('catalog completeness', () => {

@@ -316,6 +316,65 @@
         ],
         "type": "object"
       },
+      "AddChildEscortDto": {
+        "properties": {
+          "accountId": {
+            "description": "`adult`: someone who lives in the unit with an account.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "engagementId": {
+            "description": "`worker`: one of the unit's active engagements (a nanny, a driver…).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildEscortKind"
+              }
+            ]
+          },
+          "outside": {
+            "$ref": "#/components/schemas/OutsideEscortDto"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostDto"
+              }
+            ],
+            "description": "A gate or a zone (one of the compound’s places) where the child may be collected; null or absent: anywhere.",
+            "nullable": true,
+            "type": "object"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyScheduleDto"
+              }
+            ],
+            "description": "Weekdays and hours in the compound's time zone; null or absent: at any time.",
+            "nullable": true,
+            "type": "object"
+          },
+          "validFrom": {
+            "description": "Its first day, `YYYY-MM-DD`: today or later (today by default).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "validUntil": {
+            "description": "Its last day, inclusive; null or absent: open-ended.",
+            "nullable": true,
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
       "AddPermitGuestsDto": {
         "properties": {
           "guests": {
@@ -4137,6 +4196,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "escorts": {
+            "description": "How many escorts may collect the child now (live ones).",
+            "type": "number"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -4166,6 +4229,7 @@
           "cardIssuedAt",
           "photoUrl",
           "turnedOnAt",
+          "escorts",
           "card"
         ],
         "type": "object"
@@ -4176,6 +4240,10 @@
             "description": "When the card was printed last: an older card no longer scans.",
             "format": "date-time",
             "type": "string"
+          },
+          "escorts": {
+            "description": "How many escorts may collect the child now (live ones).",
+            "type": "number"
           },
           "id": {
             "format": "uuid",
@@ -4205,7 +4273,215 @@
           "notifyPickups",
           "cardIssuedAt",
           "photoUrl",
-          "turnedOnAt"
+          "turnedOnAt",
+          "escorts"
+        ],
+        "type": "object"
+      },
+      "ChildEscortKind": {
+        "enum": [
+          "adult",
+          "worker",
+          "outside"
+        ],
+        "type": "string"
+      },
+      "ChildEscortSecretView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "engagementId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildEscortKind"
+              }
+            ]
+          },
+          "name": {
+            "description": "The adult's or the worker's name as the household knows it, or the outside person's; null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "description": "An outside person's phone; null for the others.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoUrl": {
+            "description": "An outside person's photo (a presigned URL), or null.",
+            "nullable": true,
+            "type": "string"
+          },
+          "pickup": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PickupCodeView"
+              }
+            ],
+            "description": "An outside person’s pickup code, once; null for the others, and on a replay once the escort is revoked.",
+            "nullable": true,
+            "type": "object"
+          },
+          "pickupIssuedAt": {
+            "description": "When an outside person's pickup code was issued last: an older one no longer works.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyScheduleView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "validFrom": {
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "accountId",
+          "engagementId",
+          "name",
+          "phone",
+          "photoUrl",
+          "validFrom",
+          "validUntil",
+          "schedule",
+          "post",
+          "pickupIssuedAt",
+          "createdAt",
+          "pickup"
+        ],
+        "type": "object"
+      },
+      "ChildEscortView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "engagementId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildEscortKind"
+              }
+            ]
+          },
+          "name": {
+            "description": "The adult's or the worker's name as the household knows it, or the outside person's; null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "description": "An outside person's phone; null for the others.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoUrl": {
+            "description": "An outside person's photo (a presigned URL), or null.",
+            "nullable": true,
+            "type": "string"
+          },
+          "pickupIssuedAt": {
+            "description": "When an outside person's pickup code was issued last: an older one no longer works.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyScheduleView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "validFrom": {
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "accountId",
+          "engagementId",
+          "name",
+          "phone",
+          "photoUrl",
+          "validFrom",
+          "validUntil",
+          "schedule",
+          "post",
+          "pickupIssuedAt",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -20972,6 +21248,31 @@
         ],
         "type": "object"
       },
+      "OutsideEscortDto": {
+        "properties": {
+          "fullName": {
+            "example": "Mona Adel",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "phone": {
+            "description": "For the household; never shown to a guard.",
+            "example": "+201001234567",
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "One of your finalized `child_escort_photo` files.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName",
+          "phone"
+        ],
+        "type": "object"
+      },
       "OutstandingRowView": {
         "properties": {
           "building": {
@@ -23158,6 +23459,157 @@
         ],
         "type": "object"
       },
+      "PickupCodeView": {
+        "properties": {
+          "code": {
+            "example": "042817",
+            "type": "string"
+          },
+          "link": {
+            "description": "The token is in the fragment: no server ever receives it from the address.",
+            "example": "https://app.jiwar.example/c#q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek",
+            "type": "string"
+          },
+          "qrPayload": {
+            "example": "JWP1.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "qrPayload",
+          "link"
+        ],
+        "type": "object"
+      },
+      "PickupPageStatus": {
+        "description": "`not_yet` before its first day, `expired` after its last.",
+        "enum": [
+          "active",
+          "not_yet",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "PickupPageView": {
+        "properties": {
+          "code": {
+            "description": "The 6-digit code, while the status is `active`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "compoundName": {
+            "type": "string"
+          },
+          "emergencyPhone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PickupPostView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "qrPayload": {
+            "description": "The QR (`JWP1.<token>`), while the status is `active`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyScheduleView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PickupPageStatus"
+              }
+            ],
+            "description": "`not_yet` before its first day, `expired` after its last."
+          },
+          "timeZone": {
+            "example": "Africa/Cairo",
+            "type": "string"
+          },
+          "unitCode": {
+            "example": "A-101",
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "visitorDirections": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "compoundName",
+          "unitCode",
+          "validFrom",
+          "validUntil",
+          "timeZone",
+          "schedule",
+          "post",
+          "status",
+          "code",
+          "qrPayload",
+          "visitorDirections",
+          "emergencyPhone"
+        ],
+        "type": "object"
+      },
+      "PickupPostView": {
+        "properties": {
+          "gateName": {
+            "example": "Main gate",
+            "nullable": true,
+            "type": "string"
+          },
+          "zoneNameAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "zoneNameEn": {
+            "example": "Clubhouse",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "gateName",
+          "zoneNameEn",
+          "zoneNameAr"
+        ],
+        "type": "object"
+      },
+      "PickupTokenDto": {
+        "properties": {
+          "token": {
+            "description": "The fragment of the pickup link. Anything that is not a live link answers 404 CHILD_PICKUP_NOT_FOUND.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
       "PlaceKey": {
         "description": "One of the defaults every compound starts with, for the app to name in its own words; null for a place the management added.",
         "enum": [
@@ -23954,6 +24406,20 @@
           "expiresAt",
           "createdAt"
         ],
+        "type": "object"
+      },
+      "PostDto": {
+        "properties": {
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "zoneId": {
+            "description": "A place in service, for a post that is not a gate.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "PostPhotoView": {
@@ -38861,6 +39327,42 @@
           },
           "notifyPickups": {
             "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateChildEscortDto": {
+        "properties": {
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostDto"
+              }
+            ],
+            "description": "A gate or a zone (one of the compound’s places) where the child may be collected; null or absent: anywhere.",
+            "nullable": true,
+            "type": "object"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyScheduleDto"
+              }
+            ],
+            "description": "Weekdays and hours in the compound's time zone; null or absent: at any time.",
+            "nullable": true,
+            "type": "object"
+          },
+          "validFrom": {
+            "description": "Its first day, `YYYY-MM-DD`: today or later (today by default).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "validUntil": {
+            "description": "Its last day, inclusive; null or absent: open-ended.",
+            "nullable": true,
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
           }
         },
         "type": "object"
@@ -61601,6 +62103,40 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/public/child-pickups/lookup": {
+      "post": {
+        "operationId": "PickupPageController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickupPageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Open a child's pickup code from its link",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/public/data-exports/code": {
       "post": {
         "operationId": "PublicDataExportsController_code",
@@ -76150,6 +76686,295 @@
           "children"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/{memberId}/control/escorts": {
+      "get": {
+        "description": "For the people who live in the unit: the live escorts, with when and where each may collect the child. Never a pickup code.",
+        "operationId": "ChildEscortsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChildEscortView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a child's escorts",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "An adult who lives in the unit, one of its domestic workers, or an outside person, who gets a pickup code once: send them the link. Ten live escorts per child at most.",
+        "operationId": "ChildEscortsController_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddChildEscortDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildEscortSecretView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an escort",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/{memberId}/control/escorts/{id}": {
+      "patch": {
+        "operationId": "ChildEscortsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChildEscortDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildEscortView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change when and where an escort may collect the child",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/{memberId}/control/escorts/{id}/reissue": {
+      "post": {
+        "description": "A new code, QR and link, once; the old ones stop at once.",
+        "operationId": "ChildEscortsController_reissue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildEscortSecretView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reissue an outside escort's pickup code",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/{memberId}/control/escorts/{id}/revoke": {
+      "post": {
+        "description": "At once: their pickup code and link stop working and an outside photo is deleted.",
+        "operationId": "ChildEscortsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke an escort",
+        "tags": [
+          "children"
+        ],
         "x-stability": "draft"
       }
     },

@@ -3,6 +3,7 @@ import { InviteAcceptanceService } from '../../src/community/households/invite-a
 import { ResidentsService } from '../../src/community/residents/residents.service';
 import { CHILD_MAJORITY_SWEEP } from '../../src/gate/children/child-controls.service';
 import { auditReaders } from '../setup/audit';
+import { eraseNow } from '../setup/erasure';
 import { childrenHelpers } from '../setup/children';
 import { at, day } from '../setup/compound-clock';
 import { bornYearsAgo } from '../setup/fixtures';
@@ -137,5 +138,39 @@ describe('Children — when a control ends by itself', () => {
     await expectEnded(control.id, photo, 'came_of_age');
     expect((await x.controlRow(s.c, control.id)).memberIsMinor).toBe(false);
     expect(await x.children(primary, home.id)).toEqual([]);
+  });
+
+  it('an adult escort who leaves the household, or whose account is erased, no longer collects the child (left_household)', async () => {
+    const { home, primary, memberId } = await x.controlled(s.c);
+    const leaving = await x.family(s.c, home.id, primary);
+    const erased = await x.family(s.c, home.id, primary);
+    const stays = await x.family(s.c, home.id, primary);
+    const add = (accountId: string) =>
+      x.addEscort(primary, home.id, memberId, { kind: 'adult', accountId });
+    const [a, b, c] = [
+      await add(leaving.id),
+      await add(erased.id),
+      await add(stays.id),
+    ];
+    await x.x.as(s.c, { id: primary.id, type: 'resident' }, () =>
+      h.moduleRef.get(HouseholdsService).removeMember(leaving.memberId, {
+        code: 'moved_out',
+        text: 'Moved',
+      }),
+    );
+    await eraseNow(h, s.c, erased.id);
+    const rows = await x.inTx(s.c, (tx) =>
+      tx.childEscort.findMany({
+        where: { id: { in: [a.id, b.id, c.id] } },
+        select: { id: true, revokeReason: true },
+      }),
+    );
+    const reason = new Map(rows.map((r) => [r.id, r.revokeReason]));
+    expect(reason.get(a.id)).toBe('left_household');
+    expect(reason.get(b.id)).toBe('left_household');
+    expect(reason.get(c.id)).toBeNull();
+    expect(
+      (await x.escorts(primary, home.id, memberId)).map((e) => e.id),
+    ).toEqual([c.id]);
   });
 });

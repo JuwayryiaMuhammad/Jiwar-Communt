@@ -177,6 +177,24 @@ export class IdentifierHasher {
     return this.hmac(`parcel-qr:${tenantId}:${token}`);
   }
 
+  /**
+   * An outside escort's pickup code (ADR 0054), bound to its compound, with
+   * a label of its own: never a visitor, a worker or a parcel code.
+   */
+  hashChildPickupCode(tenantId: string, code: string): string {
+    return this.hmac(`child-pickup-code:${tenantId}:${code}`);
+  }
+
+  /** A pickup code's QR token, bound to its compound and apart from `qr:` (ADR 0054). */
+  hashChildPickupQr(tenantId: string, token: string): string {
+    return this.hmac(`child-pickup-qr:${tenantId}:${token}`);
+  }
+
+  /** A pickup link, global: the public page knows no compound yet (ADR 0054). */
+  hashChildPickupLink(token: string): string {
+    return this.hmac(`child-pickup-link:${token}`);
+  }
+
   /** A visitor's link, global: the public page knows no compound yet (ADR 0030). */
   hashVisitorLink(token: string): string {
     return this.hmac(`visitor-link:${token}`);

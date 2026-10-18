@@ -28,7 +28,7 @@ class WeeklyWindowDto {
   to: string;
 }
 
-class WeeklyScheduleDto {
+export class WeeklyScheduleDto {
   @ApiProperty({
     type: [Number],
     description: 'Weekdays, 0 = Sunday … 6 = Saturday.',

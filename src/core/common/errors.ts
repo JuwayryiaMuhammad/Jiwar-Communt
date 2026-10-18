@@ -918,6 +918,14 @@ export const ErrorCode = {
   CHILD_CONTROL_ACTIVE: 'CHILD_CONTROL_ACTIVE',
   /** The child's exit control is not on (404). */
   CHILD_CONTROL_NOT_FOUND: 'CHILD_CONTROL_NOT_FOUND',
+  /** Not a live escort of this child (404). */
+  CHILD_ESCORT_NOT_FOUND: 'CHILD_ESCORT_NOT_FOUND',
+  /** That person or worker is already an escort of this child (409). */
+  CHILD_ESCORT_DUPLICATE: 'CHILD_ESCORT_DUPLICATE',
+  /** A child has params.max live escorts at most (409). */
+  CHILD_ESCORT_LIMIT_REACHED: 'CHILD_ESCORT_LIMIT_REACHED',
+  /** The public pickup page: one answer for every token that is not a live link (404). */
+  CHILD_PICKUP_NOT_FOUND: 'CHILD_PICKUP_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1109,6 +1117,12 @@ export const FieldErrorCode = {
   PATROL_SCHEDULE_OVERLAP: 'PATROL_SCHEDULE_OVERLAP',
   /** Not a checkpoint in service of this compound. */
   CHECKPOINT_NOT_AVAILABLE: 'CHECKPOINT_NOT_AVAILABLE',
+  // children (ADR 0054)
+  /**
+   * Not someone who may collect this child: an adult who lives in the unit
+   * with an account, or an active engagement of the unit.
+   */
+  ESCORT_NOT_ELIGIBLE: 'ESCORT_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

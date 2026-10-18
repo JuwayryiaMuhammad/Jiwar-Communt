@@ -107,6 +107,7 @@ export default tseslint.config(
       'src/core/push/push-processor.ts',
       'src/core/sweep/sweep-runner.ts',
       'src/gate/visitors/visitor-page.service.ts',
+      'src/gate/children/pickup-page.service.ts',
       'src/finance/gateway/platform-gateway.service.ts',
       'src/finance/gateway/gateway-keys.ts',
       'src/finance/online/paymob-webhook.service.ts',

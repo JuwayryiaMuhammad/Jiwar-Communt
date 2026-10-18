@@ -1,5 +1,10 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
-import { controlRow, minorRow, unitRow } from '../setup/children-rows';
+import {
+  controlRow,
+  escortRow,
+  minorRow,
+  unitRow,
+} from '../setup/children-rows';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 
@@ -8,6 +13,8 @@ interface Side {
   tenantId: string;
   accountId: string;
   unitId: string;
+  /** A live control of one of its minors. */
+  controlId: string;
   /** Minors with no control yet, one taken per insert that links here. */
   spareMinors: string[];
 }
@@ -47,6 +54,16 @@ const TABLES: Table[] = [
         turnedOnById: link.accountId,
       }),
   },
+  {
+    table: 'child_escorts',
+    insert: (tx, own, link) =>
+      escortRow(tx, {
+        tenantId: own.tenantId,
+        controlId: link.controlId,
+        unitId: link.unitId,
+        createdById: link.accountId,
+      }),
+  },
 ];
 
 describe('RLS isolation — children tables', () => {
@@ -66,10 +83,21 @@ describe('RLS isolation — children tables', () => {
       tenantId,
       accountId: (await createAccountRow(h, tenantId)).id,
       unitId: '',
+      controlId: '',
       spareMinors: [],
     };
     await inTenant(s, async (tx) => {
       s.unitId = await unitRow(tx, tenantId);
+      s.controlId = await controlRow(tx, {
+        tenantId,
+        unitId: s.unitId,
+        memberId: await minorRow(tx, {
+          tenantId,
+          unitId: s.unitId,
+          addedById: s.accountId,
+        }),
+        turnedOnById: s.accountId,
+      });
       for (let i = 0; i < 4; i++)
         s.spareMinors.push(
           await minorRow(tx, {

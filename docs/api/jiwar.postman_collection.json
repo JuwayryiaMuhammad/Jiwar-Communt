@@ -3422,6 +3422,247 @@
           }
         },
         {
+          "name": "List a child's escorts",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "children",
+                ":memberId",
+                "control",
+                "escorts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/children/:memberId/control/escorts",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "memberId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add an escort",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"adult\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `accountId` | string (uuid) |  | `adult`: someone who lives in the unit with an account. |\n| `engagementId` | string (uuid) |  | `worker`: one of the unit's active engagements (a nanny, a driver…). |\n| `kind` | `adult` \\| `worker` \\| `outside` | yes |  |\n| `outside` | object |  |  |\n| `post` | object |  | A gate or a zone (one of the compound’s places) where the child may be collected; null or absent: anywhere. |\n| `schedule` | object |  | Weekdays and hours in the compound's time zone; null or absent: at any time. |\n| `validFrom` | string |  | Its first day, `YYYY-MM-DD`: today or later (today by default). |\n| `validUntil` | string |  | Its last day, inclusive; null or absent: open-ended. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "children",
+                ":memberId",
+                "control",
+                "escorts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/children/:memberId/control/escorts",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "memberId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change when and where an escort may collect the child",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"post\": {\n    \"gateId\": \"\",\n    \"zoneId\": \"\"\n  },\n  \"schedule\": {\n    \"days\": [],\n    \"windows\": []\n  },\n  \"validFrom\": \"\",\n  \"validUntil\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `post` | object |  | A gate or a zone (one of the compound’s places) where the child may be collected; null or absent: anywhere. |\n| `schedule` | object |  | Weekdays and hours in the compound's time zone; null or absent: at any time. |\n| `validFrom` | string |  | Its first day, `YYYY-MM-DD`: today or later (today by default). |\n| `validUntil` | string |  | Its last day, inclusive; null or absent: open-ended. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "children",
+                ":memberId",
+                "control",
+                "escorts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/children/:memberId/control/escorts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "memberId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reissue an outside escort's pickup code",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "children",
+                ":memberId",
+                "control",
+                "escorts",
+                ":id",
+                "reissue"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/children/:memberId/control/escorts/:id/reissue",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "memberId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Revoke an escort",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "children",
+                ":memberId",
+                "control",
+                "escorts",
+                ":id",
+                "revoke"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/children/:memberId/control/escorts/:id/revoke",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "memberId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Turn off a child's exit control",
           "request": {
             "description": "**Responses:** 204",
@@ -25185,6 +25426,45 @@
                 "start"
               ],
               "raw": "{{baseUrl}}/api/v1/invites/accept/start"
+            }
+          }
+        },
+        {
+          "name": "Open a child's pickup code from its link",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes | The fragment of the pickup link. Anything that is not a live link answers 404 CHILD_PICKUP_NOT_FOUND. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "child-pickups",
+                "lookup"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/child-pickups/lookup"
             }
           }
         },

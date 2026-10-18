@@ -69,3 +69,33 @@ export async function controlRow(
   });
   return id;
 }
+
+/** A live outside escort of the control, with a pickup code. */
+export async function escortRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    controlId: string;
+    unitId: string;
+    createdById: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.childEscort.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      controlId: r.controlId,
+      unitId: r.unitId,
+      kind: 'outside',
+      fullName: 'Row Escort',
+      phone: '+201001234567',
+      pickupCodeHash: randomBytes(32).toString('hex'),
+      pickupQrHash: randomBytes(32).toString('hex'),
+      pickupIssuedAt: new Date(),
+      validFrom: new Date('2030-01-01T00:00:00Z'),
+      createdById: r.createdById,
+    },
+  });
+  return id;
+}

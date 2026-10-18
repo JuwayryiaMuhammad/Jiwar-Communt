@@ -1,6 +1,9 @@
+import type { Server } from 'node:http';
+import request from 'supertest';
+import { WorkersService } from '../../src/community/workers/workers.service';
 import type { Compound } from './community';
 import { bornYearsAgo, nationalIdFor } from './fixtures';
-import type { HttpHarness } from './http-app';
+import { API, uniquePhone, type HttpHarness } from './http-app';
 import { safetyHelpers, type Who } from './safety';
 
 export type { Who } from './safety';
@@ -12,6 +15,7 @@ export interface ChildControlBody {
   cardIssuedAt: string;
   photoUrl: string | null;
   turnedOnAt: string;
+  escorts: number;
 }
 
 export interface ChildCardBody {
@@ -19,6 +23,29 @@ export interface ChildCardBody {
   firstName: string;
   unitCode: string;
   compoundName: string;
+}
+
+export interface PickupBody {
+  code: string;
+  qrPayload: string;
+  link: string;
+}
+
+export interface EscortBody {
+  id: string;
+  kind: 'adult' | 'worker' | 'outside';
+  accountId: string | null;
+  engagementId: string | null;
+  name: string | null;
+  phone: string | null;
+  photoUrl: string | null;
+  validFrom: string;
+  validUntil: string | null;
+  schedule: { days: number[]; windows: { from: string; to: string }[] } | null;
+  post: { gateId: string | null; gateName: string | null } | null;
+  pickupIssuedAt: string | null;
+  createdAt: string;
+  pickup?: PickupBody | null;
 }
 
 export interface ChildBody {
@@ -130,9 +157,94 @@ export function childrenHelpers(h: HttpHarness) {
     );
   }
 
+  const escortsPath = (unitId: string, memberId: string) =>
+    `${controlPath(unitId, memberId)}/escorts`;
+
+  /** `POST …/escorts`: the response. */
+  function addEscortRaw(
+    as: Who,
+    unitId: string,
+    memberId: string,
+    body: Record<string, unknown>,
+    headers: Record<string, string> = {},
+  ) {
+    return http('post', escortsPath(unitId, memberId), as.token, body, headers);
+  }
+
+  /** Adds one: the escort, with an outside person's pickup code. */
+  async function addEscort(
+    as: Who,
+    unitId: string,
+    memberId: string,
+    body: Record<string, unknown>,
+  ): Promise<EscortBody> {
+    const res = await addEscortRaw(as, unitId, memberId, body);
+    if (res.status !== 201)
+      throw new Error(`addEscort: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as EscortBody;
+  }
+
+  /** An outside person, with a name and a phone nobody else has. */
+  const outside = (fullName = 'Mona Outside Escort') => ({
+    kind: 'outside',
+    outside: { fullName, phone: uniquePhone() },
+  });
+
+  /** `GET …/escorts` as `as`. */
+  async function escorts(
+    as: Who,
+    unitId: string,
+    memberId: string,
+  ): Promise<EscortBody[]> {
+    return (
+      await http('get', escortsPath(unitId, memberId), as.token).expect(200)
+    ).body as EscortBody[];
+  }
+
+  /** `POST /public/child-pickups/lookup`, with no token: the response. */
+  function pickupPage(token: string, ip = '10.7.7.7') {
+    return request(h.app.getHttpServer() as Server)
+      .post(`${API}/public/child-pickups/lookup`)
+      .set('X-Forwarded-For', ip)
+      .send({ token });
+  }
+
+  /** The token in a pickup link's fragment. */
+  const tokenOf = (pickup: PickupBody) => pickup.link.split('#')[1];
+
+  /** An approved hourly engagement of the unit, registered by its primary. */
+  async function worker(c: Compound, primary: Who, unitId: string) {
+    const p = s.x.person('worker');
+    const reg = await s.x.as(c, { id: primary.id, type: 'resident' }, () =>
+      h.moduleRef.get(WorkersService).register(unitId, {
+        fullName: p.fullName,
+        idDocumentType: 'national_id',
+        idDocumentNumber: p.idDocumentNumber,
+        phone: p.phone,
+        capacity: 'nanny',
+        schedule: {
+          days: [0, 1, 2, 3, 4, 5, 6],
+          windows: [{ from: '00:00', to: '23:59' }],
+        },
+      }),
+    );
+    const approved = await s.x.asManager(c, () =>
+      h.moduleRef.get(WorkersService).review(reg.engagementId, 'approve'),
+    );
+    return { engagementId: reg.engagementId, fullName: p.fullName, approved };
+  }
+
   return {
     ...s,
     s,
+    escortsPath,
+    addEscortRaw,
+    addEscort,
+    outside,
+    escorts,
+    pickupPage,
+    tokenOf,
+    worker,
     setUp,
     minor,
     controlPath,

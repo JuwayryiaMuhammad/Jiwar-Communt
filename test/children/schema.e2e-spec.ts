@@ -1,6 +1,11 @@
 import { Client } from 'pg';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
-import { controlRow, minorRow, unitRow } from '../setup/children-rows';
+import {
+  controlRow,
+  escortRow,
+  minorRow,
+  unitRow,
+} from '../setup/children-rows';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 import { dutyFileRow } from '../setup/security-rows';
@@ -25,6 +30,8 @@ describe('Children tables — CHECKs, triggers and privileges', () => {
   let endedMemberId: string;
   let endedId: string;
   let photoId: string;
+  let escortId: string;
+  let revokedEscortId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -67,6 +74,26 @@ describe('Children tables — CHECKs, triggers and privileges', () => {
           },
         });
         photoId = await dutyFileRow(tx, tenantId, 'child_photo');
+        const escort = () =>
+          escortRow(tx, {
+            tenantId,
+            controlId,
+            unitId,
+            createdById: managerId,
+          });
+        escortId = await escort();
+        revokedEscortId = await escort();
+        await tx.childEscort.update({
+          where: { id: revokedEscortId },
+          data: {
+            revokedAt: new Date(),
+            revokeReason: 'household',
+            revokedById: managerId,
+            pickupCodeHash: null,
+            pickupQrHash: null,
+            pickupIssuedAt: null,
+          },
+        });
       }),
     );
     app = new Client({ connectionString: process.env.DATABASE_URL });
@@ -244,5 +271,116 @@ describe('Children tables — CHECKs, triggers and privileges', () => {
          VALUES (gen_random_uuid(), '${tenantId}', '${unitId}', '${memberId}', false, true, repeat('d', 64), now(), '${managerId}', now(), now())`,
       ),
     ).rejects.toThrow(/child_controls_one_live_per_member/);
+  });
+
+  describe('child_escorts', () => {
+    const live = () => `id = '${escortId}'`;
+    const revoked = () => `id = '${revokedEscortId}'`;
+
+    it('the app updates escorts but never deletes them; the link pointer is added and deleted, never changed', async () => {
+      expect(await privileges('child_escorts')).toEqual({
+        select: true,
+        insert: true,
+        update: true,
+        delete: false,
+        truncate: false,
+      });
+      expect(await privileges('child_pickup_links')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: true,
+        truncate: false,
+      });
+      await expect(
+        attempt(migrator, `DELETE FROM child_escorts WHERE ${live()}`),
+      ).rejects.toThrow(/never deleted/);
+    });
+
+    it('who may collect which child never changes', async () => {
+      for (const set of [
+        `control_id = '${endedId}'`,
+        "kind = 'adult'",
+        `account_id = '${otherId}'`,
+        `created_by_account_id = '${otherId}'`,
+      ])
+        await expect(
+          asApp(`UPDATE child_escorts SET ${set} WHERE ${live()}`),
+        ).rejects.toThrow(/never changes/);
+    });
+
+    it('a new code comes with a later issue time; revoked once, and then only the name and phone go, once', async () => {
+      await asApp(
+        `UPDATE child_escorts SET pickup_code_hash = repeat('a', 64), pickup_qr_hash = repeat('b', 64), pickup_issued_at = pickup_issued_at + interval '1 millisecond' WHERE ${live()}`,
+      );
+      await expect(
+        asApp(
+          `UPDATE child_escorts SET pickup_code_hash = repeat('a', 64) WHERE ${live()}`,
+        ),
+      ).rejects.toThrow(/never changes/);
+      // A live escort's name is never cleared.
+      await expect(
+        asApp(
+          `UPDATE child_escorts SET full_name = NULL, phone = NULL, pii_cleared_at = now() WHERE ${live()}`,
+        ),
+      ).rejects.toThrow(/never changes|child_escorts_/);
+      await asApp(
+        `UPDATE child_escorts SET full_name = NULL, phone = NULL, pii_cleared_at = now() WHERE ${revoked()}`,
+      );
+      for (const set of [
+        'revoked_at = NULL, revoke_reason = NULL, revoked_by_account_id = NULL',
+        `valid_until = valid_from`,
+        "full_name = 'Changed'",
+        `pickup_code_hash = repeat('c', 64), pickup_qr_hash = repeat('d', 64), pickup_issued_at = now()`,
+      ])
+        await expect(
+          asApp(`UPDATE child_escorts SET ${set} WHERE ${revoked()}`),
+        ).rejects.toThrow(/never changes/);
+      await expect(
+        asApp(
+          `UPDATE child_escorts SET full_name = NULL, phone = NULL, pii_cleared_at = now() WHERE ${revoked()}`,
+          `UPDATE child_escorts SET pii_cleared_at = pii_cleared_at + interval '1 minute' WHERE ${revoked()}`,
+        ),
+      ).rejects.toThrow(/never changes/);
+    });
+
+    it('the shapes hold: by kind, the code while live, no photo after the end, a post at most', async () => {
+      const insert = (cols: string) =>
+        asApp(
+          `INSERT INTO child_escorts (id, tenant_id, control_id, unit_id, valid_from, created_by_account_id, updated_at, ${cols.split('|')[0]})
+           VALUES (gen_random_uuid(), '${tenantId}', '${controlId}', '${unitId}', current_date, '${managerId}', now(), ${cols.split('|')[1]})`,
+        );
+      for (const [cols, check] of [
+        ["kind, full_name|'outside', 'No Phone'", 'kind_shape'],
+        [
+          `kind, account_id, full_name|'adult', '${otherId}', 'Named'`,
+          'personal_only_outside',
+        ],
+        [
+          `kind, account_id, pickup_code_hash, pickup_qr_hash, pickup_issued_at|'adult', '${otherId}', repeat('e', 64), repeat('f', 64), now()`,
+          'pickup_while_live',
+        ],
+        [
+          "kind, full_name, phone|'outside', 'No Code', '+201001234567'",
+          'pickup_while_live',
+        ],
+        [
+          `kind, full_name, phone, pickup_code_hash, pickup_qr_hash, pickup_issued_at, valid_until|'outside', 'Ends Early', '+201001234567', repeat('1', 64), repeat('2', 64), now(), current_date - 1`,
+          'validity',
+        ],
+        [
+          `kind, full_name, phone, pickup_code_hash, pickup_qr_hash, pickup_issued_at|'outside', 'Bad Phone', '01001234567', repeat('3', 64), repeat('4', 64), now()`,
+          'phone_shape',
+        ],
+      ] as const)
+        await expect(insert(cols)).rejects.toThrow(
+          new RegExp(`child_escorts_${check}`),
+        );
+      await expect(
+        asApp(
+          `UPDATE child_escorts SET photo_file_id = '${photoId}' WHERE ${revoked()}`,
+        ),
+      ).rejects.toThrow(/never changes|child_escorts_photo_while_live/);
+    });
   });
 });

@@ -86,6 +86,7 @@ describe('Children — exit control', () => {
         cardIssuedAt: body.cardIssuedAt,
         photoUrl: null,
         turnedOnAt: body.turnedOnAt,
+        escorts: 0,
       },
     });
     expect(JSON.stringify(child)).not.toContain(body.card.qrPayload);

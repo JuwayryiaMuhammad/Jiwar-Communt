@@ -1505,6 +1505,34 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   child_controls_end_reason: {
     guarded: 'end_reason IS NULL is tested first',
   },
+  child_escorts_kind_shape: {},
+  child_escorts_personal_only_outside: {},
+  child_escorts_name_length: {
+    guarded: 'full_name IS NULL is tested first',
+  },
+  child_escorts_phone_shape: {
+    guarded: 'phone IS NULL is tested first',
+  },
+  child_escorts_pickup_while_live: {},
+  child_escorts_pickup_hash_shape: {
+    guarded:
+      'pickup_code_hash IS NULL is tested first; pickup_while_live makes pickup_qr_hash present with it',
+  },
+  child_escorts_photo_while_live: {},
+  child_escorts_validity: {
+    guarded: 'valid_until IS NULL is tested first',
+  },
+  child_escorts_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  child_escorts_revoked_shape: {
+    guarded:
+      'revoke_reason is compared only with IS [NOT] DISTINCT FROM, which never yields NULL',
+  },
+  child_escorts_revoke_reason: {
+    guarded: 'revoke_reason IS NULL is tested first',
+  },
+  child_escorts_pii_cleared_shape: {},
 };
 
 interface Check {

@@ -49,3 +49,18 @@ export function childCardMatches(
   const b = Buffer.from(childCardHash(tenantId, token), 'utf8');
   return a.length === b.length && timingSafeEqual(a, b);
 }
+
+/** `JWP1.<token>`: an outside escort's pickup QR (ADR 0054). */
+export const PICKUP_QR_PREFIX = 'JWP1.';
+
+export function pickupPayload(token: string): string {
+  return `${PICKUP_QR_PREFIX}${token}`;
+}
+
+/** The token of a scanned pickup QR, or null for anything else. */
+export function parsePickupQr(raw: string): string | null {
+  const value = raw.trim();
+  if (!value.startsWith(PICKUP_QR_PREFIX)) return null;
+  const token = value.slice(PICKUP_QR_PREFIX.length);
+  return isToken(token) ? token : null;
+}

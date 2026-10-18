@@ -1,5 +1,6 @@
 import type { Response } from 'supertest';
 import { bornYearsAgo, nationalIdFor } from '../setup/fixtures';
+import { uniquePhone } from '../setup/http-app';
 import { call } from './request';
 import type { World } from './world';
 
@@ -41,7 +42,49 @@ export function childrenCalls(
     });
     return memberId;
   };
+  const escorts = (memberId: string) =>
+    `/units/${home()}/children/${memberId}/control/escorts`;
+  /** An outside escort of a new controlled child: the child and the response. */
+  const anEscort = async () => {
+    const memberId = await aControlled();
+    const res = await owner('POST', escorts(memberId), {
+      kind: 'outside',
+      outside: { fullName: 'No Store Escort', phone: uniquePhone() },
+    });
+    return {
+      memberId,
+      id: (res.body as { id: string }).id,
+      token: (res.body as { pickup: { link: string } }).pickup.link.split(
+        '#',
+      )[1],
+    };
+  };
   return {
+    'GET /units/{unitId}/children/{memberId}/control/escorts': async () => {
+      const e = await anEscort();
+      return owner('GET', escorts(e.memberId));
+    },
+    'POST /units/{unitId}/children/{memberId}/control/escorts': async () =>
+      owner('POST', escorts(await aControlled()), {
+        kind: 'outside',
+        outside: { fullName: 'No Store Escort', phone: uniquePhone() },
+      }),
+    'PATCH /units/{unitId}/children/{memberId}/control/escorts/{id}':
+      async () => {
+        const e = await anEscort();
+        return owner('PATCH', `${escorts(e.memberId)}/${e.id}`, {
+          validUntil: null,
+        });
+      },
+    'POST /units/{unitId}/children/{memberId}/control/escorts/{id}/reissue':
+      async () => {
+        const e = await anEscort();
+        return owner('POST', `${escorts(e.memberId)}/${e.id}/reissue`);
+      },
+    'POST /public/child-pickups/lookup': async () =>
+      call(world(), 'POST', '/public/child-pickups/lookup', {
+        body: { token: (await anEscort()).token },
+      }),
     'GET /units/{unitId}/children': async () => {
       await aControlled();
       return owner('GET', `/units/${home()}/children`);

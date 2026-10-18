@@ -33,8 +33,17 @@ export class ChildControlView {
   photoUrl: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   turnedOnAt: Date;
+  @ApiProperty({
+    type: Number,
+    description: 'How many escorts may collect the child now (live ones).',
+  })
+  escorts: number;
 
-  static of(c: ChildControl, photoUrl: string | null): ChildControlView {
+  static of(
+    c: ChildControl,
+    photoUrl: string | null,
+    escorts: number,
+  ): ChildControlView {
     return {
       id: c.id,
       mayLeaveAlone: c.mayLeaveAlone,
@@ -43,6 +52,7 @@ export class ChildControlView {
       cardIssuedAt: c.cardIssuedAt!,
       photoUrl,
       turnedOnAt: c.turnedOnAt,
+      escorts,
     };
   }
 }

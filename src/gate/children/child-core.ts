@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import type { ChildControl } from '@prisma/client';
+import type { ChildControl, ChildEscort } from '@prisma/client';
 import { CommunityGatePort, type UnitMinor } from '../../community';
 import type { AfterCommit } from '../../core/accounts/account-lifecycle';
 import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { localToday, isAdult } from '../../core/common/egyptian-national-id';
 import { appError, ErrorCode } from '../../core/common/errors';
+import { GlobalDbService } from '../../core/database/global-db.service';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { FilesService } from '../../core/files/files.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
@@ -13,6 +14,12 @@ import { dbNow } from '../db-clock';
 
 /** Why a control ended (`child_controls_end_reason`). */
 export type ChildControlEnd = 'household' | 'left_household' | 'came_of_age';
+
+/** Why an escort was revoked (`child_escorts_revoke_reason`). */
+export type ChildEscortEnd = 'household' | 'left_household' | 'control_off';
+
+/** A child has this many live escorts at most. */
+export const MAX_ESCORTS = 10;
 
 export const childNotFound = () =>
   appError.notFound(ErrorCode.CHILD_NOT_FOUND, 'Child not found');
@@ -43,6 +50,7 @@ export class ChildCore {
     private readonly settings: TenantSettingsService,
     private readonly files: FilesService,
     private readonly audit: AuditService,
+    private readonly globalDb: GlobalDbService,
   ) {}
 
   /** Today in the compound's time zone, by the database's clock. */
@@ -124,7 +132,8 @@ export class ChildCore {
 
   /**
    * Ends a live control held FOR UPDATE, in the caller's transaction: the
-   * card dies and the photo is deleted. `by` is the account when the household ended it, null
+   * card dies, the photo is deleted, and every live escort is revoked
+   * (`control_off`). `by` is the account when the household ended it, null
    * for the system. A request passes `after` to purge the photo's object
    * once it commits; the hooks and sweeps leave it to the files sweep.
    */
@@ -136,6 +145,7 @@ export class ChildCore {
     after?: AfterCommit[],
   ): Promise<void> {
     if (control.endedAt) return;
+    const escortsRevoked = await this.revokeAll(tx, control.id, 'control_off');
     await tx.childControl.update({
       where: { id: control.id },
       data: {
@@ -162,6 +172,75 @@ export class ChildCore {
       metadata: {
         unitId: control.unitId,
         memberId: control.memberId,
+        reasonCode: reason,
+        escortsRevoked,
+      },
+    });
+  }
+
+  /** Every live escort of a control held FOR UPDATE; how many. */
+  async revokeAll(
+    tx: TenantTxClient,
+    controlId: string,
+    reason: ChildEscortEnd,
+  ): Promise<number> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM child_escorts
+       WHERE control_id = ${controlId}::uuid AND revoked_at IS NULL
+       ORDER BY id FOR UPDATE`;
+    for (const { id } of rows)
+      await this.revoke(
+        tx,
+        await tx.childEscort.findUniqueOrThrow({ where: { id } }),
+        reason,
+        null,
+      );
+    return rows.length;
+  }
+
+  /**
+   * Revokes a live escort held FOR UPDATE (under its control's lock): its
+   * pickup code, QR and link die, and an outside escort's photo is deleted.
+   * Their name and phone stay 30 days, for the household's records.
+   */
+  async revoke(
+    tx: TenantTxClient,
+    escort: ChildEscort,
+    reason: ChildEscortEnd,
+    by: string | null,
+    after?: AfterCommit[],
+  ): Promise<void> {
+    if (escort.revokedAt) return;
+    await tx.childEscort.update({
+      where: { id: escort.id },
+      data: {
+        revokedAt: await dbNow(tx),
+        revokeReason: reason,
+        revokedById: by,
+        pickupCodeHash: null,
+        pickupQrHash: null,
+        pickupIssuedAt: null,
+        photoFileId: null,
+      },
+    });
+    await this.globalDb
+      .in(tx)
+      .childPickupLink.deleteMany({ where: { escortId: escort.id } });
+    if (escort.photoFileId) {
+      const photo = escort.photoFileId;
+      await this.files.markDeleted(
+        tx,
+        { id: photo, purpose: 'child_escort_photo' },
+        'retention',
+      );
+      after?.push(() => this.files.purge(photo).then(() => undefined));
+    }
+    await this.audit.record(tx, {
+      action: 'child_escort.revoked',
+      targetId: escort.id,
+      metadata: {
+        controlId: escort.controlId,
+        kind: escort.kind,
         reasonCode: reason,
       },
     });

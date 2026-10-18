@@ -573,6 +573,22 @@ describe('API v0 — PII leak scan', () => {
       { token: childToken, body: { fileId: childPhotoId } },
     ).expect(204);
     const childPhotoKey = `t/${a.tenantId}/${childPhotoId}`;
+    // The child's outside escort (ADR 0054): their name and phone are the
+    // household's; the guard sees a first name and a photo at the gate.
+    const escortName = 'Pii Escortname Sentinel';
+    const escortPhone = uniquePhone();
+    await call(
+      w,
+      'POST',
+      `/units/${unit.id}/children/${child.id}/control/escorts`,
+      {
+        token: childToken,
+        body: {
+          kind: 'outside',
+          outside: { fullName: escortName, phone: escortPhone },
+        },
+      },
+    ).expect(201);
 
     // A ticket the family member opened on the primary's unit (ADR 0032).
     const asFamily = <T>(fn: () => Promise<T>) =>
@@ -1307,6 +1323,10 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/household': unit.id,
       '/units/{unitId}/household/minors-ready': unit.id,
       '/units/{unitId}/children': unit.id,
+      '/units/{unitId}/children/{memberId}/control/escorts': {
+        unitId: unit.id,
+        memberId: child.id,
+      },
       '/units/{unitId}/workers': unit.id,
       // ADR 0037.
       '/units/{unitId}/workers/{id}': {
@@ -2232,6 +2252,23 @@ describe('API v0 — PII leak scan', () => {
       if (!childNameViews.has(key) && text.includes(childName))
         leaks.push(`${key}: a child's name`);
     expect(seen.get('resident /units/{unitId}/children')).toContain(childName);
+    // An outside escort's name and phone (ADR 0054): the household's list of
+    // the child's escorts, nothing else.
+    const escortViews = new Set([
+      'resident /units/{unitId}/children/{memberId}/control/escorts',
+      'family /units/{unitId}/children/{memberId}/control/escorts',
+      'plainMember /units/{unitId}/children/{memberId}/control/escorts',
+    ]);
+    for (const [key, text] of seen)
+      if (
+        !escortViews.has(key) &&
+        (text.includes(escortName) || text.includes(escortPhone))
+      )
+        leaks.push(`${key}: an escort's name or phone`);
+    for (const key of escortViews) {
+      expect(seen.get(key)).toContain(escortName);
+      expect(seen.get(key)).toContain(escortPhone);
+    }
 
     // The label's name and the pickup code (ADR 0035): the unit's residents
     // alone, never the guard, the manager, a landlord or anyone else.
@@ -2417,6 +2454,8 @@ describe('API v0 — PII leak scan', () => {
     expect(publicReads).toEqual([
       '/public/visitor-passes/lookup',
       '/public/receipts/lookup',
+      // ADR 0054: an outside escort's page names nobody (test/children/escorts).
+      '/public/child-pickups/lookup',
     ]);
     const ids = [...people.map((p) => p.id), ...Object.values(a.ids)].filter(
       Boolean,

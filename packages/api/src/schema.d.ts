@@ -6909,6 +6909,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/child-pickups/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a child's pickup code from its link */
+        post: operations["PickupPageController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/data-exports/code": {
         parameters: {
             query?: never;
@@ -11741,6 +11758,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/children/{memberId}/control/escorts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a child's escorts
+         * @description For the people who live in the unit: the live escorts, with when and where each may collect the child. Never a pickup code.
+         */
+        get: operations["ChildEscortsController_list"];
+        put?: never;
+        /**
+         * Add an escort
+         * @description An adult who lives in the unit, one of its domestic workers, or an outside person, who gets a pickup code once: send them the link. Ten live escorts per child at most.
+         */
+        post: operations["ChildEscortsController_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/children/{memberId}/control/escorts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change when and where an escort may collect the child */
+        patch: operations["ChildEscortsController_update"];
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/children/{memberId}/control/escorts/{id}/reissue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reissue an outside escort's pickup code
+         * @description A new code, QR and link, once; the old ones stop at once.
+         */
+        post: operations["ChildEscortsController_reissue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/children/{memberId}/control/escorts/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke an escort
+         * @description At once: their pickup code and link stop working and an outside photo is deleted.
+         */
+        post: operations["ChildEscortsController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/children/{memberId}/control/off": {
         parameters: {
             query?: never;
@@ -12875,6 +12973,28 @@ export interface components {
         };
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
+        };
+        AddChildEscortDto: {
+            /**
+             * Format: uuid
+             * @description `adult`: someone who lives in the unit with an account.
+             */
+            accountId?: string;
+            /**
+             * Format: uuid
+             * @description `worker`: one of the unit's active engagements (a nanny, a driver…).
+             */
+            engagementId?: string;
+            kind: components["schemas"]["ChildEscortKind"];
+            outside?: components["schemas"]["OutsideEscortDto"];
+            /** @description A gate or a zone (one of the compound’s places) where the child may be collected; null or absent: anywhere. */
+            post?: components["schemas"]["PostDto"] | null;
+            /** @description Weekdays and hours in the compound's time zone; null or absent: at any time. */
+            schedule?: components["schemas"]["WeeklyScheduleDto"] | null;
+            /** @description Its first day, `YYYY-MM-DD`: today or later (today by default). */
+            validFrom?: string;
+            /** @description Its last day, inclusive; null or absent: open-ended. */
+            validUntil?: string | null;
         };
         AddPermitGuestsDto: {
             /** @description Until the event starts (PERMIT_STARTED); never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`). */
@@ -14051,6 +14171,8 @@ export interface components {
              * @description When the card was printed last: an older card no longer scans.
              */
             cardIssuedAt: string;
+            /** @description How many escorts may collect the child now (live ones). */
+            escorts: number;
             /** Format: uuid */
             id: string;
             /** @description Whether the child may leave the compound alone: otherwise a guard holds them and the household is alerted. */
@@ -14068,6 +14190,8 @@ export interface components {
              * @description When the card was printed last: an older card no longer scans.
              */
             cardIssuedAt: string;
+            /** @description How many escorts may collect the child now (live ones). */
+            escorts: number;
             /** Format: uuid */
             id: string;
             /** @description Whether the child may leave the compound alone: otherwise a guard holds them and the household is alerted. */
@@ -14078,6 +14202,72 @@ export interface components {
             photoUrl: string | null;
             /** Format: date-time */
             turnedOnAt: string;
+        };
+        /** @enum {string} */
+        ChildEscortKind: "adult" | "worker" | "outside";
+        ChildEscortSecretView: {
+            /** Format: uuid */
+            accountId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            engagementId: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ChildEscortKind"];
+            /** @description The adult's or the worker's name as the household knows it, or the outside person's; null once erased. */
+            name: string | null;
+            /** @description An outside person's phone; null for the others. */
+            phone: string | null;
+            /** @description An outside person's photo (a presigned URL), or null. */
+            photoUrl: string | null;
+            /** @description An outside person’s pickup code, once; null for the others, and on a replay once the escort is revoked. */
+            pickup: components["schemas"]["PickupCodeView"] | null;
+            /**
+             * Format: date-time
+             * @description When an outside person's pickup code was issued last: an older one no longer works.
+             */
+            pickupIssuedAt: string | null;
+            post: components["schemas"]["PostView"] | null;
+            schedule: components["schemas"]["WeeklyScheduleView"] | null;
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            validFrom: string;
+            /** Format: date */
+            validUntil: string | null;
+        };
+        ChildEscortView: {
+            /** Format: uuid */
+            accountId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            engagementId: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ChildEscortKind"];
+            /** @description The adult's or the worker's name as the household knows it, or the outside person's; null once erased. */
+            name: string | null;
+            /** @description An outside person's phone; null for the others. */
+            phone: string | null;
+            /** @description An outside person's photo (a presigned URL), or null. */
+            photoUrl: string | null;
+            /**
+             * Format: date-time
+             * @description When an outside person's pickup code was issued last: an older one no longer works.
+             */
+            pickupIssuedAt: string | null;
+            post: components["schemas"]["PostView"] | null;
+            schedule: components["schemas"]["WeeklyScheduleView"] | null;
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            validFrom: string;
+            /** Format: date */
+            validUntil: string | null;
         };
         ChildPhotoDto: {
             /**
@@ -19319,6 +19509,20 @@ export interface components {
             /** @description Single use, short-lived. Exchange it with POST /auth/select-account. */
             loginTicket: string;
         };
+        OutsideEscortDto: {
+            /** @example Mona Adel */
+            fullName: string;
+            /**
+             * @description For the household; never shown to a guard.
+             * @example +201001234567
+             */
+            phone: string;
+            /**
+             * Format: uuid
+             * @description One of your finalized `child_escort_photo` files.
+             */
+            photoFileId?: string;
+        };
         OutstandingRowView: {
             building: string | null;
             /** @description Held for its next invoices. */
@@ -20058,6 +20262,54 @@ export interface components {
             /** @description A presigned GET, valid until `expiresAt`. */
             url: string | null;
         };
+        PickupCodeView: {
+            /** @example 042817 */
+            code: string;
+            /**
+             * @description The token is in the fragment: no server ever receives it from the address.
+             * @example https://app.jiwar.example/c#q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek
+             */
+            link: string;
+            /** @example JWP1.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek */
+            qrPayload: string;
+        };
+        /**
+         * @description `not_yet` before its first day, `expired` after its last.
+         * @enum {string}
+         */
+        PickupPageStatus: "active" | "not_yet" | "expired";
+        PickupPageView: {
+            /** @description The 6-digit code, while the status is `active`. */
+            code: string | null;
+            compoundName: string;
+            emergencyPhone: string | null;
+            post: components["schemas"]["PickupPostView"] | null;
+            /** @description The QR (`JWP1.<token>`), while the status is `active`. */
+            qrPayload: string | null;
+            schedule: components["schemas"]["WeeklyScheduleView"] | null;
+            /** @description `not_yet` before its first day, `expired` after its last. */
+            status: components["schemas"]["PickupPageStatus"];
+            /** @example Africa/Cairo */
+            timeZone: string;
+            /** @example A-101 */
+            unitCode: string;
+            /** Format: date */
+            validFrom: string;
+            /** Format: date */
+            validUntil: string | null;
+            visitorDirections: string | null;
+        };
+        PickupPostView: {
+            /** @example Main gate */
+            gateName: string | null;
+            zoneNameAr: string | null;
+            /** @example Clubhouse */
+            zoneNameEn: string | null;
+        };
+        PickupTokenDto: {
+            /** @description The fragment of the pickup link. Anything that is not a live link answers 404 CHILD_PICKUP_NOT_FOUND. */
+            token: string;
+        };
         /**
          * @description One of the defaults every compound starts with, for the app to name in its own words; null for a place the management added.
          * @enum {string}
@@ -20290,6 +20542,15 @@ export interface components {
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["NeighbourPostKind"];
+        };
+        PostDto: {
+            /** Format: uuid */
+            gateId?: string;
+            /**
+             * Format: uuid
+             * @description A place in service, for a post that is not a gate.
+             */
+            zoneId?: string;
         };
         PostPhotoView: {
             /** @description image/jpeg, image/png or image/webp. */
@@ -24652,6 +24913,16 @@ export interface components {
         UpdateChildControlDto: {
             mayLeaveAlone?: boolean;
             notifyPickups?: boolean;
+        };
+        UpdateChildEscortDto: {
+            /** @description A gate or a zone (one of the compound’s places) where the child may be collected; null or absent: anywhere. */
+            post?: components["schemas"]["PostDto"] | null;
+            /** @description Weekdays and hours in the compound's time zone; null or absent: at any time. */
+            schedule?: components["schemas"]["WeeklyScheduleDto"] | null;
+            /** @description Its first day, `YYYY-MM-DD`: today or later (today by default). */
+            validFrom?: string;
+            /** @description Its last day, inclusive; null or absent: open-ended. */
+            validUntil?: string | null;
         };
         UpdateClubPlanDto: {
             /** @description False retires the plan. */
@@ -36064,6 +36335,29 @@ export interface operations {
             };
         };
     };
+    PickupPageController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PickupTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickupPageView"];
+                };
+            };
+        };
+    };
     PublicDataExportsController_code: {
         parameters: {
             query?: never;
@@ -43276,6 +43570,131 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ChildControlSecretView"];
                 };
+            };
+        };
+    };
+    ChildEscortsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildEscortView"][];
+                };
+            };
+        };
+    };
+    ChildEscortsController_add: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddChildEscortDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildEscortSecretView"];
+                };
+            };
+        };
+    };
+    ChildEscortsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                memberId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateChildEscortDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildEscortView"];
+                };
+            };
+        };
+    };
+    ChildEscortsController_reissue: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+                memberId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildEscortSecretView"];
+                };
+            };
+        };
+    };
+    ChildEscortsController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                memberId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

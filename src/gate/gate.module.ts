@@ -227,6 +227,10 @@ import { RosterService } from './roster/roster.service';
 import { ChildControlsController } from './children/child-controls.controller';
 import { ChildControlsService } from './children/child-controls.service';
 import { ChildCore } from './children/child-core';
+import { ChildEscortsController } from './children/child-escorts.controller';
+import { ChildEscortsService } from './children/child-escorts.service';
+import { PickupPageController } from './children/pickup-page.controller';
+import { PickupPageService } from './children/pickup-page.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -316,6 +320,8 @@ import { ChildCore } from './children/child-core';
     StaffRunsController,
     PatrolReportController,
     ChildControlsController,
+    ChildEscortsController,
+    PickupPageController,
   ],
   providers: [
     GatesService,
@@ -430,6 +436,8 @@ import { ChildCore } from './children/child-core';
     PatrolExportSections,
     ChildCore,
     ChildControlsService,
+    ChildEscortsService,
+    PickupPageService,
   ],
 })
 export class GateModule {}

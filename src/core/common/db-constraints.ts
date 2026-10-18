@@ -131,6 +131,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   child_controls_tenant_id_id_unit_id_key: null,
   child_controls_one_live_per_member: null,
   child_controls_live_card_key: null,
+  // An escort once per person per child (checked under the control's lock
+  // first, CHILD_ESCORT_DUPLICATE); a pickup code is derived from a random
+  // token, drawn again on a collision.
+  child_escorts_tenant_id_id_key: null,
+  child_escorts_live_account: null,
+  child_escorts_live_engagement: null,
+  child_escorts_live_code: null,
+  child_escorts_live_qr: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

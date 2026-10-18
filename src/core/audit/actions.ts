@@ -1237,6 +1237,17 @@ export const AUDIT_ACTIONS = {
   // metadata: reasonCode (household, left_household, came_of_age), and how
   // many escorts it revoked.
   'child_control.ended': { log: 'tenant', target: 'child_control' },
+  // An escort: kind, account or engagement id and validity by value; an
+  // outside person's name, phone and photo as changed.
+  'child_escort.added': {
+    log: 'tenant',
+    target: 'child_escort',
+    sensitive: ['fullName', 'phone', 'photo'],
+  },
+  'child_escort.updated': { log: 'tenant', target: 'child_escort' },
+  // metadata: reasonCode (household, left_household, control_off).
+  'child_escort.revoked': { log: 'tenant', target: 'child_escort' },
+  'child_escort.code_reissued': { log: 'tenant', target: 'child_escort' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

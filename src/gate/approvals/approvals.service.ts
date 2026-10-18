@@ -11,6 +11,8 @@ import { AuditService } from '../../core/audit/audit.service';
 import type { AppClsStore } from '../../core/common/cls/app-cls';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
+import { normalizeIdNumber } from '../../core/common/id-number';
+import { normalizePlate, PLATE_MAX } from '../../core/common/vehicle-plate';
 import { newId } from '../../core/common/uuid';
 import {
   TenantTx,
@@ -29,6 +31,7 @@ import {
   type GuardInstruction,
 } from '../visitors/standing-instructions.service';
 import { VISITOR_DATA_DAYS } from '../visitors/visitor-passes.service';
+import { BlocklistMatcher, entryBlocked } from '../blocklist/blocklist-matcher';
 import { LockdownCore } from '../lockdown/lockdown-core';
 
 export const REQUEST_RESOURCE = 'gate_approval_request';
@@ -38,12 +41,19 @@ export const REQUEST_PHOTOS_SWEEP = 'gate.request_photos';
 export const REQUEST_PHOTO_DAYS = 7;
 const DAY = 86_400_000;
 
+/** A ban refused the visitor: what `request`'s transaction answers then. */
+const BLOCKED = Symbol('blocked');
+
 export type NewRequest = (
   | {
       kind: 'uninvited_visitor' | 'delivery';
       unitCode: string;
       partySize?: number;
       visitorName?: string;
+      /** Their car's plate (ADR 0053), kept with the visitor's data. */
+      vehiclePlate?: string;
+      /** The full ID number they show: matched, never stored. */
+      idNumber?: string;
     }
   | { kind: 'worker_off_schedule'; engagementId: string }
 ) & {
@@ -126,6 +136,7 @@ export class ApprovalsService implements OnModuleInit {
     private readonly standing: StandingInstructionsService,
     private readonly files: FilesService,
     private readonly lockdown: LockdownCore,
+    private readonly matcher: BlocklistMatcher,
   ) {}
 
   onModuleInit(): void {
@@ -168,14 +179,52 @@ export class ApprovalsService implements OnModuleInit {
   // The guard (`gate.operate`, inside a shift)
   // --------------------------------------------------------------------------
 
-  request(input: NewRequest): Promise<GuardRequestView> {
+  async request(input: NewRequest): Promise<GuardRequestView> {
     const tenantId = this.ctx.tenantId;
     const guardId = this.ctx.accountId;
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const visitor = input.kind === 'worker_off_schedule' ? null : input;
+    const plate =
+      visitor?.vehiclePlate === undefined
+        ? null
+        : normalizePlate(visitor.vehiclePlate);
+    if (visitor?.vehiclePlate !== undefined && !plate)
+      throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid plate', {
+        fields: [
+          {
+            field: 'vehiclePlate',
+            code: FieldErrorCode.INVALID_FORMAT,
+            params: { maxLength: PLATE_MAX },
+          },
+        ],
+      });
+    if (visitor?.idNumber !== undefined && !normalizeIdNumber(visitor.idNumber))
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'Invalid ID number',
+        {
+          fields: [{ field: 'idNumber', code: FieldErrorCode.INVALID_FORMAT }],
+        },
+      );
+    const made = await this.tenantTx.withTenantTx(async (tx) => {
       const shift = await this.shifts.requireOpen(tx);
       // A lockdown (ADR 0053): nobody is asked about someone who may not
-      // come in.
+      // come in. Then the blocklist: a ban refuses them before the household
+      // is asked (the refusal recorded, the keepers told, and this
+      // transaction committed without the request, nor its key).
       await this.lockdown.refuseIn(tx, shift.gateId, new Date());
+      const met = await this.matcher.check(tx, {
+        plates: [plate],
+        idNumbers: [visitor?.idNumber],
+      });
+      if (met.kind === 'ban') {
+        await this.matcher.record(tx, met, {
+          source: 'gate_request',
+          outcome: 'refused',
+          gateId: shift.gateId,
+          shiftId: shift.id,
+        });
+        return BLOCKED;
+      }
       const id = newId();
       await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });
       const now = new Date();
@@ -239,13 +288,14 @@ export class ApprovalsService implements OnModuleInit {
           },
         );
       let detailsId: string | null = null;
-      if (visitorName) {
+      if (visitorName || plate) {
         detailsId = newId();
         await tx.visitorDetails.create({
           data: {
             id: detailsId,
             tenantId,
             fullName: visitorName,
+            vehiclePlate: plate,
             expiresAt: new Date(now.getTime() + VISITOR_DATA_DAYS * DAY),
           },
         });
@@ -297,8 +347,18 @@ export class ApprovalsService implements OnModuleInit {
         },
         targetId: id,
       });
+      // A watched visitor or delivery: asked about as any, the keepers told.
+      await this.matcher.record(tx, met, {
+        source: 'gate_request',
+        outcome: 'flagged',
+        subject: { type: 'gate_request', id },
+        gateId: shift.gateId,
+        shiftId: shift.id,
+      });
       return this.guardView(tx, request, unitCode);
     });
+    if (made === BLOCKED) throw entryBlocked();
+    return made;
   }
 
   /** The guard follows the answer; a timeout is applied on the way. */

@@ -100,7 +100,12 @@ import { GuardSosController } from './emergencies/guard-sos.controller';
 import { GuardSosService } from './emergencies/guard-sos.service';
 import { BlocklistCore } from './blocklist/blocklist-core';
 import { BlocklistService } from './blocklist/blocklist.service';
-import { GateBlocklistController } from './blocklist/gate-blocklist.controller';
+import { BlocklistMatcher } from './blocklist/blocklist-matcher';
+import {
+  GateBlocklistController,
+  GateIdLookupController,
+} from './blocklist/gate-blocklist.controller';
+import { IdLookupService } from './blocklist/id-lookup.service';
 import { StaffBlocklistController } from './blocklist/staff-blocklist.controller';
 import { GateLockdownsController } from './lockdown/gate-lockdowns.controller';
 import { LockdownCore } from './lockdown/lockdown-core';
@@ -250,6 +255,7 @@ import { RosterService } from './roster/roster.service';
     StaffLockdownsController,
     StaffBlocklistController,
     GateBlocklistController,
+    GateIdLookupController,
     GateServicesController,
     GateServiceHandlersController,
     PermitRulesController,
@@ -333,6 +339,8 @@ import { RosterService } from './roster/roster.service';
     LockdownProvisioning,
     BlocklistCore,
     BlocklistService,
+    BlocklistMatcher,
+    IdLookupService,
     GateServiceRecords,
     GateServicesService,
     GateServiceHandlersService,

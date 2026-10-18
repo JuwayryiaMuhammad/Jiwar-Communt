@@ -1417,6 +1417,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   blocklist_entries_purge_shape: {
     guarded: 'purged_at IS NULL is tested first',
   },
+  blocklist_matches_kind: {},
+  blocklist_matches_source: {},
+  blocklist_matches_outcome: {},
+  blocklist_matches_subject: {
+    guarded: 'subject_type IS NULL is tested first',
+  },
+  security_refusals_subject: {},
 };
 
 interface Check {

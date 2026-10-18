@@ -26,6 +26,7 @@ import {
   PermitsService,
   startOfDay,
 } from './permits.service';
+import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
 
 const HOUR_MS = 3_600_000;
 /** An event may start up to this long ago (a request sent at the door). */
@@ -73,6 +74,7 @@ export class PermitRequestsService {
     private readonly core: PermitCore,
     private readonly settings: PermitSettingsService,
     private readonly permits: PermitsService,
+    private readonly matcher: BlocklistMatcher,
   ) {}
 
   /** Opens the transaction every request shares, up to the claimed key. */
@@ -159,6 +161,13 @@ export class PermitRequestsService {
         });
       if (fields.length) throw invalid(fields);
       await this.idempotency.claim(tx, { type: PERMIT_RESOURCE, id: at.id });
+      // The truck's plate on the blocklist (ADR 0053): noted, never refused.
+      await this.matcher.noteRecorded(
+        tx,
+        'move_permit',
+        { type: 'move_permit', id: at.id },
+        plate,
+      );
       return this.permits.open(
         tx,
         {
@@ -322,16 +331,23 @@ export class PermitRequestsService {
         },
         at.id,
       );
-      await tx.permitGuest.createMany({
-        data: guests.map((g) => ({
-          id: newId(),
-          tenantId: this.ctx.txTenantId,
-          permitId: at.id,
-          fullName: g.fullName,
-          vehiclePlate: g.vehiclePlate,
-          addedById: this.ctx.accountId,
-        })),
-      });
+      const rows = guests.map((g) => ({
+        id: newId(),
+        tenantId: this.ctx.txTenantId,
+        permitId: at.id,
+        fullName: g.fullName,
+        vehiclePlate: g.vehiclePlate,
+        addedById: this.ctx.accountId,
+      }));
+      await tx.permitGuest.createMany({ data: rows });
+      // Their cars' plates on the blocklist (ADR 0053): noted, never refused.
+      for (const g of rows)
+        await this.matcher.noteRecorded(
+          tx,
+          'event_guest',
+          { type: 'event_guest', id: g.id },
+          g.vehiclePlate,
+        );
       return this.permits.reload(tx, record);
     });
   }

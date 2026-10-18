@@ -113,3 +113,36 @@ export async function personRow(
   });
   return id;
 }
+
+/** A plate the gate met (refused at an entry). */
+export async function matchRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; entryId: string; actorId: string; gateId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.blocklistMatch.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      entryId: r.entryId,
+      kind: 'ban',
+      source: 'entry',
+      gateId: r.gateId,
+      actorAccountId: r.actorId,
+      outcome: 'refused',
+    },
+  });
+  return id;
+}
+
+/** A pass security refused, once: its pointer (the subject id). */
+export async function refusalRow(
+  tx: TenantTxClient,
+  r: { tenantId: string },
+): Promise<string> {
+  const subjectId = newId();
+  await tx.securityRefusal.create({
+    data: { tenantId: r.tenantId, subjectType: 'visitor_pass', subjectId },
+  });
+  return subjectId;
+}

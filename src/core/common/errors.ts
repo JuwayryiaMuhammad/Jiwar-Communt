@@ -858,6 +858,11 @@ export const ErrorCode = {
   BLOCKLIST_ENTRY_NOT_FOUND: 'BLOCKLIST_ENTRY_NOT_FOUND',
   /** The entry was lifted already: it changes no more (409). */
   BLOCKLIST_ENTRY_LIFTED: 'BLOCKLIST_ENTRY_LIFTED',
+  /**
+   * Security does not let them in (409, ADR 0053). Never says why: the guard
+   * reads the blocklist.
+   */
+  ENTRY_BLOCKED: 'ENTRY_BLOCKED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

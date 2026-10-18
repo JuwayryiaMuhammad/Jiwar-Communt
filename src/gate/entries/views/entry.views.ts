@@ -36,9 +36,18 @@ const REASONS = [
   'id_mismatch',
   'worker_removed',
   'guest_removed',
-  // Lockdown (ADR 0053).
+  // Lockdown and the blocklist (ADR 0053).
   'lockdown_active',
+  'entry_blocked',
 ];
+
+/** The blocklist entry a verify met (ADR 0053). */
+export class VerifyBlocklistView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  entryId: string;
+  @ApiProperty({ enum: ['ban', 'watch'], enumName: 'BlocklistKind' })
+  kind: 'ban' | 'watch';
+}
 
 export class VerifyDisplayView {
   @ApiProperty({
@@ -116,6 +125,14 @@ export class VerifyDisplayView {
   })
   parking: GuardParkingView | null;
 
+  @ApiProperty({
+    type: VerifyBlocklistView,
+    nullable: true,
+    description:
+      'A pass whose visitor’s plate is on the blocklist (ADR 0053): a `ban` (refused, `entry_blocked`) or a `watch` (let in, the management told). Open the entry in the active list for the face; never why.',
+  })
+  blocklist: VerifyBlocklistView | null;
+
   static from(d: VerifyDisplay): VerifyDisplayView {
     return {
       unitCode: d.unitCode,
@@ -131,6 +148,7 @@ export class VerifyDisplayView {
       entriesUsed: d.entriesUsed,
       insideCount: d.insideCount,
       parking: GuardParkingView.from(d.parking),
+      blocklist: d.blocklist && { ...d.blocklist },
     };
   }
 }

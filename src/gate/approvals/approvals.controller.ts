@@ -44,7 +44,7 @@ export class GuardApprovalsController {
   @Post()
   @ApiOperation({ summary: 'Ask a household to approve a visitor at the gate' })
   @NoStore()
-  @Idempotent()
+  @Idempotent({ omit: ['idNumber'] })
   @ApiCreatedResponse({ type: GuardRequestResponse })
   async create(
     @Body() dto: CreateGateRequestDto,
@@ -140,6 +140,8 @@ function toRequest(dto: CreateGateRequestDto): NewRequest {
           ...(dto.unitCode !== undefined ? [extra('unitCode')] : []),
           ...(dto.visitorName !== undefined ? [extra('visitorName')] : []),
           ...(dto.partySize !== undefined ? [extra('partySize')] : []),
+          ...(dto.vehiclePlate !== undefined ? [extra('vehiclePlate')] : []),
+          ...(dto.idNumber !== undefined ? [extra('idNumber')] : []),
         ]
       : [
           ...(dto.unitCode ? [] : [missing('unitCode')]),
@@ -160,6 +162,8 @@ function toRequest(dto: CreateGateRequestDto): NewRequest {
         unitCode: dto.unitCode!,
         partySize: dto.partySize,
         visitorName: dto.visitorName,
+        vehiclePlate: dto.vehiclePlate,
+        idNumber: dto.idNumber,
         photoFileId: dto.photoFileId,
       };
 }

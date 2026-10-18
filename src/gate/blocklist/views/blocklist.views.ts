@@ -2,9 +2,16 @@ import { ApiProperty } from '@nestjs/swagger';
 import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { PresignedReadView } from '../../../core/files/views/file.views';
-import type { BlocklistRecord } from '../blocklist.service';
+import type { BlocklistRecord, MatchRecord } from '../blocklist.service';
 
 const KINDS = ['ban', 'watch'] as const;
+
+export class BlocklistGateView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String })
+  name: string;
+}
 const SUBJECTS = ['plate', 'person'] as const;
 const STATUSES = ['active', 'expired', 'lifted'] as const;
 
@@ -104,6 +111,81 @@ export class StaffBlocklistEntryView extends GuardBlocklistEntryView {
       liftedBy: r.liftedBy && accountRef(r.liftedBy),
       liftReason: e.liftReason,
       purgedAt: e.purgedAt,
+    };
+  }
+}
+
+/** What the guard's ID lookup answers (ADR 0053). */
+export class IdLookupView {
+  @ApiProperty({
+    type: [GuardBlocklistEntryView],
+    description: 'The person’s live entries; empty for none.',
+  })
+  matches: GuardBlocklistEntryView[];
+}
+
+/** Where the gate met an entry (ADR 0053), for its keepers. */
+export class BlocklistMatchView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    enum: KINDS,
+    enumName: 'BlocklistKind',
+    description: 'The entry’s kind when it was met.',
+  })
+  kind: string;
+  @ApiProperty({
+    enum: [
+      'visitor_pass',
+      'move_permit',
+      'event_guest',
+      'gate_request',
+      'verify',
+      'entry',
+      'plate_lookup',
+      'id_lookup',
+    ],
+    enumName: 'BlocklistMatchSource',
+    description:
+      'Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup.',
+  })
+  source: string;
+  @ApiProperty({
+    enum: ['refused', 'flagged', 'noted'],
+    enumName: 'BlocklistMatchOutcome',
+    description:
+      '`refused`: kept out; `flagged`: let in and watched; `noted`: met on a record or a lookup.',
+  })
+  outcome: string;
+  @ApiProperty({
+    enum: ['visitor_pass', 'gate_request', 'event_guest', 'move_permit'],
+    nullable: true,
+  })
+  subjectType: string | null;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  subjectId: string | null;
+  @ApiProperty({ type: BlocklistGateView, nullable: true })
+  gate: BlocklistGateView | null;
+  @ApiProperty({
+    type: AccountRefView,
+    description: 'Who recorded or looked it up.',
+  })
+  actor: AccountRefView;
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+
+  static from(r: MatchRecord): BlocklistMatchView {
+    const m = r.match;
+    return {
+      id: m.id,
+      kind: m.kind,
+      source: m.source,
+      outcome: m.outcome,
+      subjectType: m.subjectType,
+      subjectId: m.subjectId,
+      gate: r.gate && { ...r.gate },
+      actor: accountRef(r.actor),
+      at: m.createdAt,
     };
   }
 }

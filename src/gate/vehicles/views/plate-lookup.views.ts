@@ -21,8 +21,9 @@ const PASS_REFUSALS = [
   'host_inactive',
   'used',
   'cancelled',
-  // Lockdown (ADR 0053).
+  // Lockdown and the blocklist (ADR 0053).
   'lockdown_active',
+  'entry_blocked',
 ];
 
 /** Why a permit does not let its truck or guest in now (ADR 0049). */
@@ -35,8 +36,9 @@ const PERMIT_REFUSALS = [
   'outside_work_hours',
   'day_off',
   'guest_removed',
-  // Lockdown (ADR 0053).
+  // Lockdown and the blocklist (ADR 0053).
   'lockdown_active',
+  'entry_blocked',
 ];
 
 /** A move's truck or an event guest's car (ADR 0049): never a name. */
@@ -206,16 +208,31 @@ export class PlateMatchView {
 }
 
 /** What a plate is found on, for the guard (ADR 0045). Never a name. */
+/** A live blocklist entry for the plate (ADR 0053). */
+export class PlateBlocklistView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  entryId: string;
+  @ApiProperty({ enum: ['ban', 'watch'], enumName: 'BlocklistKind' })
+  kind: 'ban' | 'watch';
+}
+
 export class PlateLookupView {
   @ApiProperty({ type: String, description: 'The plate looked up, tidied.' })
   plate: string;
   @ApiProperty({ type: [PlateMatchView] })
   matches: PlateMatchView[];
+  @ApiProperty({
+    type: [PlateBlocklistView],
+    description:
+      'The plate on the blocklist (ADR 0053): a `ban` refuses whoever it names (`entry_blocked`), a `watch` only says so. The management is told. Empty for none.',
+  })
+  blocklist: PlateBlocklistView[];
 
   static from(l: PlateLookup): PlateLookupView {
     return {
       plate: l.plate,
       matches: l.matches.map((m) => PlateMatchView.from(m)),
+      blocklist: l.blocklist.map((b) => ({ ...b })),
     };
   }
 }

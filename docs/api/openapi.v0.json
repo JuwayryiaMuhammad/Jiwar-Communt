@@ -1845,6 +1845,22 @@
         ],
         "type": "object"
       },
+      "BlocklistGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
       "BlocklistKind": {
         "enum": [
           "ban",
@@ -1860,6 +1876,128 @@
           "expired"
         ],
         "type": "string"
+      },
+      "BlocklistMatchOutcome": {
+        "description": "`refused`: kept out; `flagged`: let in and watched; `noted`: met on a record or a lookup.",
+        "enum": [
+          "refused",
+          "flagged",
+          "noted"
+        ],
+        "type": "string"
+      },
+      "BlocklistMatchSource": {
+        "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup.",
+        "enum": [
+          "visitor_pass",
+          "move_permit",
+          "event_guest",
+          "gate_request",
+          "verify",
+          "entry",
+          "plate_lookup",
+          "id_lookup"
+        ],
+        "type": "string"
+      },
+      "BlocklistMatchView": {
+        "properties": {
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Who recorded or looked it up."
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistGateView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistKind"
+              }
+            ],
+            "description": "The entry’s kind when it was met."
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistMatchOutcome"
+              }
+            ],
+            "description": "`refused`: kept out; `flagged`: let in and watched; `noted`: met on a record or a lookup."
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistMatchSource"
+              }
+            ],
+            "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup."
+          },
+          "subjectId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "subjectType": {
+            "enum": [
+              "visitor_pass",
+              "gate_request",
+              "event_guest",
+              "move_permit"
+            ],
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "source",
+          "outcome",
+          "subjectType",
+          "subjectId",
+          "gate",
+          "actor",
+          "at"
+        ],
+        "type": "object"
+      },
+      "BlocklistMatchViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BlocklistMatchView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "BlocklistReason": {
         "enum": [
@@ -6380,6 +6518,10 @@
             "format": "uuid",
             "type": "string"
           },
+          "idNumber": {
+            "description": "Visitors and deliveries: the full ID number on the card they show (ADR 0053). Matched against the blocklist and never stored, nor kept in the request’s idempotency record.",
+            "type": "string"
+          },
           "kind": {
             "allOf": [
               {
@@ -6400,6 +6542,11 @@
           },
           "unitCode": {
             "description": "Visitors and deliveries: the unit they came for.",
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "description": "Visitors and deliveries: their car’s plate, as a pass’s (ADR 0053). Kept with the visitor’s data and matched against the blocklist.",
+            "example": "ق ب ط 1234",
             "type": "string"
           },
           "visitorName": {
@@ -15458,6 +15605,34 @@
         ],
         "type": "string"
       },
+      "IdLookupDto": {
+        "properties": {
+          "idNumber": {
+            "description": "The full ID number on the card (a national ID, a passport). In the body, never a URL; never stored.",
+            "example": "29001011234567",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idNumber"
+        ],
+        "type": "object"
+      },
+      "IdLookupView": {
+        "properties": {
+          "matches": {
+            "description": "The person’s live entries; empty for none.",
+            "items": {
+              "$ref": "#/components/schemas/GuardBlocklistEntryView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "matches"
+        ],
+        "type": "object"
+      },
       "IdView": {
         "properties": {
           "id": {
@@ -20287,6 +20462,10 @@
             "nullable": true,
             "type": "string"
           },
+          "refusedBySecurity": {
+            "description": "Security did not let its visitor in (ADR 0053). Never why: the household is told only that.",
+            "type": "boolean"
+          },
           "schedule": {
             "allOf": [
               {
@@ -20348,7 +20527,8 @@
           "code",
           "link",
           "qrPayload",
-          "visitorPhoneMasked"
+          "visitorPhoneMasked",
+          "refusedBySecurity"
         ],
         "type": "object"
       },
@@ -22153,6 +22333,26 @@
         ],
         "type": "object"
       },
+      "PlateBlocklistView": {
+        "properties": {
+          "entryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "entryId",
+          "kind"
+        ],
+        "type": "object"
+      },
       "PlateLookupDto": {
         "properties": {
           "plate": {
@@ -22167,6 +22367,13 @@
       },
       "PlateLookupView": {
         "properties": {
+          "blocklist": {
+            "description": "The plate on the blocklist (ADR 0053): a `ban` refuses whoever it names (`entry_blocked`), a `watch` only says so. The management is told. Empty for none.",
+            "items": {
+              "$ref": "#/components/schemas/PlateBlocklistView"
+            },
+            "type": "array"
+          },
           "matches": {
             "items": {
               "$ref": "#/components/schemas/PlateMatchView"
@@ -22180,7 +22387,8 @@
         },
         "required": [
           "plate",
-          "matches"
+          "matches",
+          "blocklist"
         ],
         "type": "object"
       },
@@ -22267,7 +22475,8 @@
               "host_inactive",
               "used",
               "cancelled",
-              "lockdown_active"
+              "lockdown_active",
+              "entry_blocked"
             ],
             "nullable": true,
             "type": "string"
@@ -22326,7 +22535,8 @@
               "outside_work_hours",
               "day_off",
               "guest_removed",
-              "lockdown_active"
+              "lockdown_active",
+              "entry_blocked"
             ],
             "nullable": true,
             "type": "string"
@@ -38328,8 +38538,38 @@
         ],
         "type": "object"
       },
+      "VerifyBlocklistView": {
+        "properties": {
+          "entryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BlocklistKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "entryId",
+          "kind"
+        ],
+        "type": "object"
+      },
       "VerifyDisplayView": {
         "properties": {
+          "blocklist": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerifyBlocklistView"
+              }
+            ],
+            "description": "A pass whose visitor’s plate is on the blocklist (ADR 0053): a `ban` (refused, `entry_blocked`) or a `watch` (let in, the management told). Open the entry in the active list for the face; never why.",
+            "nullable": true,
+            "type": "object"
+          },
           "capacity": {
             "nullable": true,
             "type": "string"
@@ -38418,7 +38658,8 @@
           "vehiclePlate",
           "entriesUsed",
           "insideCount",
-          "parking"
+          "parking",
+          "blocklist"
         ],
         "type": "object"
       },
@@ -38496,7 +38737,8 @@
               "id_mismatch",
               "worker_removed",
               "guest_removed",
-              "lockdown_active"
+              "lockdown_active",
+              "entry_blocked"
             ],
             "nullable": true,
             "type": "string"
@@ -45330,6 +45572,46 @@
         "summary": "Acknowledge a handover at my post",
         "tags": [
           "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/id-lookup": {
+      "post": {
+        "description": "Inside an open shift at a gate, on the guard’s own rate limit. Answers the person’s live entries (kind, name, face) and nothing else. Audited by the entries’ ids, never the number.",
+        "operationId": "GateIdLookupController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdLookupDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdLookupView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Look an ID number up on the blocklist",
+        "tags": [
+          "blocklist"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -65071,6 +65353,65 @@
           }
         ],
         "summary": "Lift an entry",
+        "tags": [
+          "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/blocklist/{id}/matches": {
+      "get": {
+        "description": "Newest first: a pass, a move or a guest a resident recorded with the plate; a gate request, a verify or an entry; a guard’s plate or ID lookup. Refused, flagged (let in, watched) or noted.",
+        "operationId": "StaffBlocklistController_matches",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlocklistMatchViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where the gate met an entry",
         "tags": [
           "blocklist"
         ],

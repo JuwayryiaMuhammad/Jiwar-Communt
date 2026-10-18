@@ -16,7 +16,12 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
-import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
+import {
+  ListOf,
+  PageQueryDto,
+  toList,
+  type ListResponse,
+} from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { BlocklistService } from './blocklist.service';
@@ -26,7 +31,10 @@ import {
   LiftBlocklistEntryDto,
   UpdateBlocklistEntryDto,
 } from './dto/blocklist.dto';
-import { StaffBlocklistEntryView } from './views/blocklist.views';
+import {
+  BlocklistMatchView,
+  StaffBlocklistEntryView,
+} from './views/blocklist.views';
 
 /** The blocklist and the watchlist, kept by `blocklist.manage` (ADR 0053). */
 @ApiArea('blocklist')
@@ -70,6 +78,23 @@ export class StaffBlocklistController {
     @Param('id', parseId()) id: string,
   ): Promise<StaffBlocklistEntryView> {
     return StaffBlocklistEntryView.from(await this.blocklist.get(id));
+  }
+
+  @Get(':id/matches')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Where the gate met an entry',
+    description:
+      'Newest first: a pass, a move or a guest a resident recorded with the plate; a gate request, a verify or an entry; a guard’s plate or ID lookup. Refused, flagged (let in, watched) or noted.',
+  })
+  @ApiOkResponse({ type: ListOf(BlocklistMatchView) })
+  async matches(
+    @Param('id', parseId()) id: string,
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<BlocklistMatchView>> {
+    return toList(await this.blocklist.matches(id, q), (r) =>
+      BlocklistMatchView.from(r),
+    );
   }
 
   @Patch(':id')

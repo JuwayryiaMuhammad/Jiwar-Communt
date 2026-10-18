@@ -45,7 +45,9 @@ export type Refusal =
   | 'worker_removed'
   | 'guest_removed'
   // The gate is locked down (ADR 0053): nobody but a resident comes in.
-  | 'lockdown_active';
+  | 'lockdown_active'
+  // A ban on the blocklist (ADR 0053): the guard reads the list, never why.
+  | 'entry_blocked';
 
 /** Who comes through the gate, resolved in this compound (ADR 0028). */
 export interface GateSubject {

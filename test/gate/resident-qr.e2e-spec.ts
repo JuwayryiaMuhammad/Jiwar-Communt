@@ -105,6 +105,8 @@ describe('Gate — the resident entry QR (ADR 0031)', () => {
           entriesUsed: null,
           insideCount: null,
           parking: null,
+          // Never matched against the blocklist (ADR 0053).
+          blocklist: null,
         },
       });
       // Never the full name, a contact or the document.

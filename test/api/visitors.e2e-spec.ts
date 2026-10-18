@@ -54,6 +54,8 @@ const DETAIL = [
   'createdBy.id',
   'link',
   'qrPayload',
+  // Security refused its visitor (ADR 0053).
+  'refusedBySecurity',
   'visitorPhoneMasked',
 ].sort();
 const LINK = /^https:\/\/app\.jiwar\.test\/v#([A-Za-z0-9_-]{43})$/;

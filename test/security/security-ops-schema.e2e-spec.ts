@@ -6,8 +6,10 @@ import { createAccountRow, createTenant } from '../setup/fixtures';
 import {
   blocklistRow,
   lockdownRow,
+  matchRow,
   overrideRow,
   personRow,
+  refusalRow,
 } from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 import { required } from '../setup/test-env';
@@ -58,6 +60,13 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
           tenantId,
           createdById: managerId,
         });
+        await matchRow(tx, {
+          tenantId,
+          entryId: plateEntryId,
+          actorId: guardId,
+          gateId,
+        });
+        await refusalRow(tx, { tenantId });
         await overrideRow(tx, {
           tenantId,
           lockdownId: liveId,
@@ -124,7 +133,11 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
   });
 
   it('what is only ever added is neither changed nor deleted by the app', async () => {
-    for (const table of ['gate_lockdown_overrides'])
+    for (const table of [
+      'gate_lockdown_overrides',
+      'blocklist_matches',
+      'security_refusals',
+    ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
         select: true,
@@ -141,6 +154,8 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'gate_lockdowns',
       'gate_lockdown_overrides',
       'blocklist_entries',
+      'blocklist_matches',
+      'security_refusals',
     ]) {
       // A row to refuse: a row trigger never fires on a DELETE of none.
       const found = await attempt(

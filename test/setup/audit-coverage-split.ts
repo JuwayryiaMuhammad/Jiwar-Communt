@@ -503,4 +503,5 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'blocklist_entry.lifted',
   'blocklist_entry.expired',
   'blocklist_entry.purged',
+  'gate.id_lookup',
 ];

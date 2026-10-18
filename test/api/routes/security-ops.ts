@@ -201,6 +201,41 @@ export const BLOCKLIST_ROUTES: Row[] = [
   },
   {
     method: 'GET',
+    path: '/staff/security/blocklist/{id}/matches',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBlocklistEntryId }),
+      code: 'BLOCKLIST_ENTRY_NOT_FOUND',
+    },
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/id-lookup',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { idNumber: 7 },
+      fields: [{ field: 'idNumber', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
     path: '/gate/blocklist',
     auth: 'tenant',
     as: 'guard',

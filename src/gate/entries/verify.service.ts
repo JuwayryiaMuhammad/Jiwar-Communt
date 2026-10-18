@@ -15,6 +15,7 @@ import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { parseEntryQr } from '../entry/entry-secrets';
 import { ResidentVerifier } from '../entry/resident-verifier';
+import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
 import { LockdownCore } from '../lockdown/lockdown-core';
 import {
   VisitorParkingService,
@@ -61,6 +62,12 @@ export interface VerifyDisplay {
    * next within two hours. Where and when, never who.
    */
   parking: GuardParking | null;
+  /**
+   * A pass whose visitor's plate is on the blocklist (ADR 0053): the entry,
+   * a ban (refused, `entry_blocked`) or a watch (let in, the management
+   * told). The guard reads the list for the face; never why.
+   */
+  blocklist: { entryId: string; kind: 'ban' | 'watch' } | null;
 }
 
 export interface VerifyResult {
@@ -114,6 +121,7 @@ export class VerifyService {
     private readonly residents: ResidentVerifier,
     private readonly parking: VisitorParkingService,
     private readonly lockdown: LockdownCore,
+    private readonly matcher: BlocklistMatcher,
     config: ConfigService<Env, true>,
   ) {
     this.perMinute = config.get('GATE_VERIFY_RATE_LIMIT_PER_MINUTE', {
@@ -159,11 +167,22 @@ export class VerifyService {
       // Coming in is checked now, while there is room on the subject (a
       // group pass: one person per entry, ADR 0043). Otherwise someone
       // inside may always leave.
+      // The blocklist (ADR 0053), under its shared lock, when they could
+      // come in: a ban refuses them, a watch lets them in; both recorded.
+      const met =
+        !locked && inside < capacityOf(subject)
+          ? await this.matcher.atGate(tx, 'verify', subject.type, subject.id, {
+              id: shift.id,
+              gateId: shift.gateId,
+            })
+          : null;
       const entryRefusal =
         inside < capacityOf(subject)
           ? locked
             ? 'lockdown_active'
-            : await this.subjects.refusal(tx, subject, new Date(), tz)
+            : met?.kind === 'ban'
+              ? 'entry_blocked'
+              : await this.subjects.refusal(tx, subject, new Date(), tz)
           : null;
       const canEnter = inside < capacityOf(subject) && entryRefusal === null;
       const refusal = canEnter || inside > 0 ? null : entryRefusal;
@@ -187,6 +206,12 @@ export class VerifyService {
           firstName: null,
           unitCodes: null,
           photoUrl: null,
+          blocklist: met?.entry
+            ? {
+                entryId: met.entry.id,
+                kind: met.entry.kind as 'ban' | 'watch',
+              }
+            : null,
           entriesUsed: pass?.kind === 'one_time' ? pass.entriesUsed : null,
           insideCount: pass ? inside : null,
           parking:

@@ -2363,6 +2363,41 @@
           }
         },
         {
+          "name": "Look an ID number up on the blocklist",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idNumber\": \"29001011234567\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `idNumber` | string | yes | The full ID number on the card (a national ID, a passport). In the body, never a URL; never stored. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "id-lookup"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/id-lookup"
+            }
+          }
+        },
+        {
           "name": "List the blocklist",
           "request": {
             "description": "**Responses:** 200",
@@ -2558,6 +2593,50 @@
                 "lift"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/blocklist/:id/lift",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Where the gate met an entry",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "blocklist",
+                ":id",
+                "matches"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/blocklist/:id/matches",
               "variable": [
                 {
                   "description": "",
@@ -9747,7 +9826,7 @@
               },
               "raw": "{\n  \"kind\": \"uninvited_visitor\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `engagementId` | string (uuid) |  | worker_off_schedule: the engagement verify returned. |\n| `kind` | `uninvited_visitor` \\| `delivery` \\| `worker_off_schedule` | yes |  |\n| `partySize` | number |  |  |\n| `photoFileId` | string (uuid) |  | Any kind: the photo of whoever waits (ADR 0043), uploaded by this guard first (`POST /files`, purpose `gate_request_photo`, then finalize). The household asked and the guards see it; deleted 7 days after the decision. |\n| `unitCode` | string |  | Visitors and deliveries: the unit they came for. |\n| `visitorName` | string |  | As the visitor gives it; shown to the household only. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `engagementId` | string (uuid) |  | worker_off_schedule: the engagement verify returned. |\n| `idNumber` | string |  | Visitors and deliveries: the full ID number on the card they show (ADR 0053). Matched against the blocklist and never stored, nor kept in the request’s idempotency record. |\n| `kind` | `uninvited_visitor` \\| `delivery` \\| `worker_off_schedule` | yes |  |\n| `partySize` | number |  |  |\n| `photoFileId` | string (uuid) |  | Any kind: the photo of whoever waits (ADR 0043), uploaded by this guard first (`POST /files`, purpose `gate_request_photo`, then finalize). The household asked and the guards see it; deleted 7 days after the decision. |\n| `unitCode` | string |  | Visitors and deliveries: the unit they came for. |\n| `vehiclePlate` | string |  | Visitors and deliveries: their car’s plate, as a pass’s (ADR 0053). Kept with the visitor’s data and matched against the blocklist. |\n| `visitorName` | string |  | As the visitor gives it; shown to the household only. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

@@ -68,6 +68,8 @@ export class ResidentVerifier {
         entriesUsed: null,
         insideCount: null,
         photoUrl: photo?.url ?? null,
+        // A resident is never matched against the blocklist.
+        blocklist: null,
       },
     };
   }

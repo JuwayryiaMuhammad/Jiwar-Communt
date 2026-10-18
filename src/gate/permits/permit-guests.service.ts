@@ -20,6 +20,7 @@ import {
 } from './permit-records';
 import { checkGuests, type NewGuest } from './permit-requests.service';
 import { invalid, PermitsService } from './permits.service';
+import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
 
 export const permitGuestNotFound = () =>
   appError.notFound(ErrorCode.PERMIT_GUEST_NOT_FOUND, 'Guest not found');
@@ -41,6 +42,7 @@ export class PermitGuestsService {
     private readonly core: PermitCore,
     private readonly records: PermitRecords,
     private readonly permits: PermitsService,
+    private readonly matcher: BlocklistMatcher,
   ) {}
 
   add(permitId: string, guests: NewGuest[]): Promise<PermitRecord> {
@@ -66,16 +68,23 @@ export class PermitGuestsService {
           { params: { scope: 'guests', max: p.guestLimit! } },
         );
       await this.idempotency.claim(tx, { type: PERMIT_RESOURCE, id: p.id });
-      await tx.permitGuest.createMany({
-        data: tidy.map((g) => ({
-          id: newId(),
-          tenantId: this.ctx.txTenantId,
-          permitId,
-          fullName: g.fullName,
-          vehiclePlate: g.vehiclePlate,
-          addedById: this.ctx.accountId,
-        })),
-      });
+      const rows = tidy.map((g) => ({
+        id: newId(),
+        tenantId: this.ctx.txTenantId,
+        permitId,
+        fullName: g.fullName,
+        vehiclePlate: g.vehiclePlate,
+        addedById: this.ctx.accountId,
+      }));
+      await tx.permitGuest.createMany({ data: rows });
+      // Their cars' plates on the blocklist (ADR 0053): noted, never refused.
+      for (const g of rows)
+        await this.matcher.noteRecorded(
+          tx,
+          'event_guest',
+          { type: 'event_guest', id: g.id },
+          g.vehiclePlate,
+        );
       await this.audit.record(tx, {
         action: 'unit_permit.guests_changed',
         targetId: permitId,

@@ -62,6 +62,27 @@ export class CreateGateRequestDto {
 
   @ApiProperty({
     type: String,
+    required: false,
+    example: 'ق ب ط 1234',
+    description:
+      'Visitors and deliveries: their car’s plate, as a pass’s (ADR 0053). Kept with the visitor’s data and matched against the blocklist.',
+  })
+  @IsOptional()
+  @IsString()
+  vehiclePlate?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description:
+      'Visitors and deliveries: the full ID number on the card they show (ADR 0053). Matched against the blocklist and never stored, nor kept in the request’s idempotency record.',
+  })
+  @IsOptional()
+  @IsString()
+  idNumber?: string;
+
+  @ApiProperty({
+    type: String,
     format: 'uuid',
     required: false,
     description: 'worker_off_schedule: the engagement verify returned.',

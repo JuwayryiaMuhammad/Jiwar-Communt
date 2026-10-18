@@ -4,7 +4,9 @@ import { createAccountRow, createTenant } from '../setup/fixtures';
 import {
   blocklistRow,
   lockdownRow,
+  matchRow,
   overrideRow,
+  refusalRow,
 } from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
@@ -15,6 +17,7 @@ interface Side {
   gateId: string;
   shiftId: string;
   lockdownId: string;
+  entryId: string;
 }
 
 /**
@@ -61,6 +64,23 @@ const TABLES: Table[] = [
     insert: (tx, own, link) =>
       blocklistRow(tx, { tenantId: own.tenantId, createdById: link.accountId }),
   },
+  {
+    table: 'blocklist_matches',
+    insert: (tx, own, link) =>
+      matchRow(tx, {
+        tenantId: own.tenantId,
+        entryId: link.entryId,
+        actorId: link.accountId,
+        gateId: link.gateId,
+      }),
+  },
+  {
+    table: 'security_refusals',
+    key: 'subject_id',
+    // A pointer to a subject, no foreign key: nothing to link.
+    linked: false,
+    insert: (tx, own) => refusalRow(tx, { tenantId: own.tenantId }),
+  },
 ];
 
 describe('RLS isolation — security tables (ADR 0053)', () => {
@@ -82,6 +102,7 @@ describe('RLS isolation — security tables (ADR 0053)', () => {
       gateId: '',
       shiftId: '',
       lockdownId: '',
+      entryId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -95,6 +116,10 @@ describe('RLS isolation — security tables (ADR 0053)', () => {
         gateId: s.gateId,
         guardId: s.accountId,
         shiftId: s.shiftId,
+      });
+      s.entryId = await blocklistRow(tx, {
+        tenantId,
+        createdById: s.accountId,
       });
     });
     return s;

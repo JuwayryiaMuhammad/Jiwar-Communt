@@ -192,6 +192,22 @@ describe('Audit coverage — security (ADR 0053)', () => {
       expect(purged.metadata).toEqual({ photo: true });
     });
 
+    it('the guard’s ID lookup: on the shift, the entries’ ids and how many; never the number', async () => {
+      const guard = await x.guardOnDuty(s.c);
+      const e = await x.block(s.manager, {
+        subject: 'person',
+        fullName: 'Looked Up',
+        idNumber: 'AUD77001',
+      });
+      await x
+        .http('post', '/gate/id-lookup', guard.token, { idNumber: 'aud 77001' })
+        .expect(200);
+      const looked = await single('gate.id_lookup', guard.shiftId);
+      expect(looked).toMatchObject(by(guard, 'guard_shift'));
+      expect(looked.metadata).toEqual({ entryIds: [e.id], matches: 1 });
+      expect(leakText(looked)).not.toContain('77001');
+    });
+
     it('expired: lifted by the system, no metadata', async () => {
       const e = await x.block(s.manager, {
         subject: 'plate',
@@ -237,10 +253,11 @@ describe('Audit coverage — security (ADR 0053)', () => {
       // And nothing of the domain is left out of the list.
       expect(
         all
-          .filter((k) =>
-            /^(gate_lockdown|blocklist|incident|violation|unit_violation|permit_work)[a-z_]*\./.test(
-              k,
-            ),
+          .filter(
+            (k) =>
+              /^(gate_lockdown|blocklist|incident|violation|unit_violation|permit_work)[a-z_]*\./.test(
+                k,
+              ) || k === 'gate.id_lookup',
           )
           .sort(),
       ).toEqual([...SECURITY_OPS_COVERAGE].sort());

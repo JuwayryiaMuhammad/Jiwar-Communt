@@ -28,6 +28,7 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { PassTokens, type PassSecret } from './pass-tokens';
 import { normalizePlate, PLATE_MAX } from '../../core/common/vehicle-plate';
 import { VisitorParkingService } from '../parking/visitor-parking.service';
+import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
 
 export interface NewPass {
   kind: VisitorPassKind;
@@ -98,6 +99,8 @@ export interface PassDetail extends PassListItem {
   qrPayload: string | null;
   /** `••••1234`, the host's own passes only. */
   visitorPhoneMasked: string | null;
+  /** Security refused its visitor (ADR 0053); never why. */
+  refusedBySecurity: boolean;
 }
 
 /** When a pass's visitors last came and went (ADR 0043). */
@@ -157,6 +160,7 @@ export class VisitorPassesService implements OnModuleInit {
     private readonly passTokens: PassTokens,
     private readonly parking: VisitorParkingService,
     config: ConfigService<Env, true>,
+    private readonly matcher: BlocklistMatcher,
   ) {
     this.appUrl = config.get('PUBLIC_APP_URL', { infer: true });
   }
@@ -304,6 +308,14 @@ export class VisitorPassesService implements OnModuleInit {
         partySize: input.partySize,
       },
     });
+    // A plate on the blocklist (ADR 0053): noted for the keepers, never
+    // refused here; the gate refuses a ban.
+    await this.matcher.noteRecorded(
+      tx,
+      'visitor_pass',
+      { type: 'visitor_pass', id },
+      input.vehiclePlate,
+    );
     return this.issued(created, secret);
   }
 
@@ -502,6 +514,10 @@ export class VisitorPassesService implements OnModuleInit {
         link: secret ? this.linkOf(secret) : null,
         qrPayload: secret ? this.tokens.qrPayload(secret.token) : null,
         visitorPhoneMasked: phone ? `••••${phone.slice(-4)}` : null,
+        refusedBySecurity:
+          (await tx.securityRefusal.count({
+            where: { subjectType: 'visitor_pass', subjectId: pass.id },
+          })) > 0,
       };
     });
   }

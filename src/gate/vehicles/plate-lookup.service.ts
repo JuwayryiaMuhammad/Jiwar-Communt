@@ -24,6 +24,7 @@ import {
 import { ShiftsService } from '../shifts/shifts.service';
 import { VehicleCore } from './vehicle-core';
 import { dayOf, permitStatus, type PermitStatus } from './vehicle-rules';
+import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
 import { LockdownCore } from '../lockdown/lockdown-core';
 
 const DAY = 86_400_000;
@@ -61,6 +62,8 @@ export interface PermitMatch {
 export interface PlateLookup {
   plate: string;
   matches: (VehicleMatch | PassMatch | PermitMatch)[];
+  /** The live blocklist entries for the plate (ADR 0053). */
+  blocklist: { entryId: string; kind: 'ban' | 'watch' }[];
 }
 
 /**
@@ -91,6 +94,7 @@ export class PlateLookupService {
     private readonly core: VehicleCore,
     private readonly parking: VisitorParkingService,
     private readonly lockdown: LockdownCore,
+    private readonly matcher: BlocklistMatcher,
     config: ConfigService<Env, true>,
   ) {
     this.perMinute = config.get('GATE_VERIFY_RATE_LIMIT_PER_MINUTE', {
@@ -124,8 +128,15 @@ export class PlateLookupService {
       const now = await dbNow(tx);
       const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
       const today = localDate(now, timezone);
-      // A lockdown (ADR 0053): nobody a plate names may come in now.
+      // A lockdown (ADR 0053): nobody a plate names may come in now. A ban
+      // on the plate refuses whoever it names; a watch only says so.
       const locked = (await this.lockdown.live(tx, shift.gateId)) !== null;
+      const met = await this.matcher.check(tx, { plates: [plate] });
+      const block: Refusal | null = locked
+        ? 'lockdown_active'
+        : met.kind === 'ban'
+          ? 'entry_blocked'
+          : null;
       const vehicles = await tx.vehicle.findMany({
         where: { plateKey: key, status: { in: ['pending', 'active'] } },
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -199,9 +210,8 @@ export class PlateLookupService {
           unitCode: codes.get(pass.unitId) ?? '',
           pass,
           plate: visitorDetails?.vehiclePlate ?? plate,
-          refusal: locked
-            ? 'lockdown_active'
-            : await this.subjects.refusal(tx, subject, now, timezone),
+          refusal:
+            block ?? (await this.subjects.refusal(tx, subject, now, timezone)),
           parking: await this.parking.forPass(tx, pass.id, now),
         });
       }
@@ -229,9 +239,8 @@ export class PlateLookupService {
           subjectId: id,
           refusal: !subject
             ? 'unknown_code'
-            : locked
-              ? 'lockdown_active'
-              : await this.subjects.refusal(tx, subject, now, timezone),
+            : (block ??
+              (await this.subjects.refusal(tx, subject, now, timezone))),
         });
       }
       await this.audit.record(tx, {
@@ -245,7 +254,20 @@ export class PlateLookupService {
           matches: matches.length,
         },
       });
-      return { plate, matches };
+      await this.matcher.record(tx, met, {
+        source: 'plate_lookup',
+        outcome: 'noted',
+        gateId: shift.gateId,
+        shiftId: shift.id,
+      });
+      return {
+        plate,
+        matches,
+        blocklist: met.entries.map((e) => ({
+          entryId: e.id,
+          kind: e.kind as 'ban' | 'watch',
+        })),
+      };
     });
   }
 

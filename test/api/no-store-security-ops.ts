@@ -79,6 +79,10 @@ export function securityOpsCalls(
         reasonCode: 'resolved',
       }),
     'GET /gate/blocklist': () => guard('GET', '/gate/blocklist'),
+    'GET /staff/security/blocklist/{id}/matches': async () =>
+      manager('GET', `/staff/security/blocklist/${await aEntry()}/matches`),
+    'POST /gate/id-lookup': () =>
+      guard('POST', '/gate/id-lookup', { idNumber: 'NS0000001' }),
     'POST /gate/lockdowns': async () => {
       const res = await start();
       await end(id(res));

@@ -707,6 +707,9 @@ export const AUDIT_ACTIONS = {
   // passIds, permitIds (moves) and guestIds (ADR 0049), matches. Never the
   // plate, nor a hash of it.
   'gate.plate_lookup': { log: 'tenant', target: 'guard_shift' },
+  // The guard's ID lookup against the blocklist (ADR 0053), on their shift.
+  // metadata: entryIds, matches. Never the number, nor a hash of it.
+  'gate.id_lookup': { log: 'tenant', target: 'guard_shift' },
   // metadata: unitId, areaId, side, reasonCode.
   'visitor_parking_booking.cancelled': {
     log: 'tenant',

@@ -1611,6 +1611,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'عادت البوابات إلى العمل كالمعتاد.',
     },
   },
+  'blocklist.ban_matched': {
+    en: {
+      title: 'Blocklist match',
+      body: 'Someone on the blocklist was met at the gate. Open the blocklist.',
+    },
+    ar: {
+      title: 'تطابق في قائمة الحظر',
+      body: 'وُجد شخص من قائمة الحظر عند البوابة. افتح قائمة الحظر.',
+    },
+  },
+  'blocklist.watch_matched': {
+    en: {
+      title: 'Watchlist match',
+      body: 'Someone on the watchlist was met at the gate. Open the blocklist.',
+    },
+    ar: {
+      title: 'تطابق في قائمة المراقبة',
+      body: 'وُجد شخص من قائمة المراقبة عند البوابة. افتح قائمة الحظر.',
+    },
+  },
+  'visitor_pass.refused_by_security': {
+    en: {
+      title: 'Visitor refused',
+      body: 'Security did not let your visitor in.',
+    },
+    ar: {
+      title: 'لم يُسمح للزائر',
+      body: 'لم يسمح الأمن بدخول زائرك.',
+    },
+  },
+  'unit_permit.refused_by_security': {
+    en: {
+      title: 'Refused at the gate',
+      body: 'Security did not let someone of your permit in.',
+    },
+    ar: {
+      title: 'رُفض عند البوابة',
+      body: 'لم يسمح الأمن بدخول أحد من تصريحك.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -1989,6 +1989,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/id-lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Look an ID number up on the blocklist
+         * @description Inside an open shift at a gate, on the guard’s own rate limit. Answers the person’s live entries (kind, name, face) and nothing else. Audited by the entries’ ids, never the number.
+         */
+        post: operations["GateIdLookupController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/inside": {
         parameters: {
             query?: never;
@@ -8744,6 +8764,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/blocklist/{id}/matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where the gate met an entry
+         * @description Newest first: a pass, a move or a guest a resident recorded with the plate; a gate request, a verify or an entry; a guard’s plate or ID lookup. Refused, flagged (let in, watched) or noted.
+         */
+        get: operations["StaffBlocklistController_matches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/found-items": {
         parameters: {
             query?: never;
@@ -12657,10 +12697,48 @@ export interface components {
             data: components["schemas"]["BlockView"][];
             nextCursor: string | null;
         };
+        BlocklistGateView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         /** @enum {string} */
         BlocklistKind: "ban" | "watch";
         /** @enum {string} */
         BlocklistLift: "resolved" | "entered_in_error" | "other" | "expired";
+        /**
+         * @description `refused`: kept out; `flagged`: let in and watched; `noted`: met on a record or a lookup.
+         * @enum {string}
+         */
+        BlocklistMatchOutcome: "refused" | "flagged" | "noted";
+        /**
+         * @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup.
+         * @enum {string}
+         */
+        BlocklistMatchSource: "visitor_pass" | "move_permit" | "event_guest" | "gate_request" | "verify" | "entry" | "plate_lookup" | "id_lookup";
+        BlocklistMatchView: {
+            /** @description Who recorded or looked it up. */
+            actor: components["schemas"]["AccountRefView"];
+            /** Format: date-time */
+            at: string;
+            gate: components["schemas"]["BlocklistGateView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The entry’s kind when it was met. */
+            kind: components["schemas"]["BlocklistKind"];
+            /** @description `refused`: kept out; `flagged`: let in and watched; `noted`: met on a record or a lookup. */
+            outcome: components["schemas"]["BlocklistMatchOutcome"];
+            /** @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup. */
+            source: components["schemas"]["BlocklistMatchSource"];
+            /** Format: uuid */
+            subjectId: string | null;
+            /** @enum {string|null} */
+            subjectType: "visitor_pass" | "gate_request" | "event_guest" | "move_permit" | null;
+        };
+        BlocklistMatchViewList: {
+            data: components["schemas"]["BlocklistMatchView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         BlocklistReason: "trespassing" | "theft" | "violence" | "harassment" | "fraud" | "vandalism" | "police_request" | "management_decision" | "other";
         /** @enum {string} */
@@ -14100,6 +14178,8 @@ export interface components {
              * @description worker_off_schedule: the engagement verify returned.
              */
             engagementId?: string;
+            /** @description Visitors and deliveries: the full ID number on the card they show (ADR 0053). Matched against the blocklist and never stored, nor kept in the request’s idempotency record. */
+            idNumber?: string;
             kind: components["schemas"]["GateRequestKind"];
             /** @default 1 */
             partySize: number;
@@ -14110,6 +14190,11 @@ export interface components {
             photoFileId?: string;
             /** @description Visitors and deliveries: the unit they came for. */
             unitCode?: string;
+            /**
+             * @description Visitors and deliveries: their car’s plate, as a pass’s (ADR 0053). Kept with the visitor’s data and matched against the blocklist.
+             * @example ق ب ط 1234
+             */
+            vehiclePlate?: string;
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
         };
@@ -16855,6 +16940,17 @@ export interface components {
         };
         /** @enum {string} */
         IdDocumentType: "national_id" | "passport";
+        IdLookupDto: {
+            /**
+             * @description The full ID number on the card (a national ID, a passport). In the body, never a URL; never stored.
+             * @example 29001011234567
+             */
+            idNumber: string;
+        };
+        IdLookupView: {
+            /** @description The person’s live entries; empty for none. */
+            matches: components["schemas"]["GuardBlocklistEntryView"][];
+        };
         IdView: {
             /** Format: uuid */
             id: string;
@@ -18403,6 +18499,8 @@ export interface components {
              * @example JWR1.q3Jz…
              */
             qrPayload: string | null;
+            /** @description Security did not let its visitor in (ADR 0053). Never why: the household is told only that. */
+            refusedBySecurity: boolean;
             schedule: components["schemas"]["VisitorScheduleDto"] | null;
             /**
              * @description - `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).
@@ -19032,11 +19130,18 @@ export interface components {
             data: components["schemas"]["PlaceView"][];
             nextCursor: string | null;
         };
+        PlateBlocklistView: {
+            /** Format: uuid */
+            entryId: string;
+            kind: components["schemas"]["BlocklistKind"];
+        };
         PlateLookupDto: {
             /** @description As read off the car: spaces and the digits’ script do not matter (INVALID_FORMAT otherwise). */
             plate: string;
         };
         PlateLookupView: {
+            /** @description The plate on the blocklist (ADR 0053): a `ban` refuses whoever it names (`entry_blocked`), a `watch` only says so. The management is told. Empty for none. */
+            blocklist: components["schemas"]["PlateBlocklistView"][];
             matches: components["schemas"]["PlateMatchView"][];
             /** @description The plate looked up, tidied. */
             plate: string;
@@ -19059,7 +19164,7 @@ export interface components {
              * @description Why not, when it does not.
              * @enum {string|null}
              */
-            refusal: "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "lockdown_active" | null;
+            refusal: "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "lockdown_active" | "entry_blocked" | null;
             /** @description The pass lets its visitor in now. */
             valid: boolean;
             /** Format: date-time */
@@ -19077,7 +19182,7 @@ export interface components {
             /** @example M-0007 */
             reference: string;
             /** @enum {string|null} */
-            refusal: "not_yet_valid" | "expired" | "not_approved" | "cancelled" | "revoked" | "outside_work_hours" | "day_off" | "guest_removed" | "lockdown_active" | null;
+            refusal: "not_yet_valid" | "expired" | "not_approved" | "cancelled" | "revoked" | "outside_work_hours" | "day_off" | "guest_removed" | "lockdown_active" | "entry_blocked" | null;
             /** Format: date-time */
             startsAt: string;
             /** Format: uuid */
@@ -23834,7 +23939,14 @@ export interface components {
             data: components["schemas"]["VehicleView"][];
             nextCursor: string | null;
         };
+        VerifyBlocklistView: {
+            /** Format: uuid */
+            entryId: string;
+            kind: components["schemas"]["BlocklistKind"];
+        };
         VerifyDisplayView: {
+            /** @description A pass whose visitor’s plate is on the blocklist (ADR 0053): a `ban` (refused, `entry_blocked`) or a `watch` (let in, the management told). Open the entry in the active list for the face; never why. */
+            blocklist: components["schemas"]["VerifyBlocklistView"] | null;
             capacity: string | null;
             /** @description A one-time pass: how many of its `partySize` came in (ADR 0043). The code lets the rest in until it reaches `partySize` or the pass ends. Null otherwise. */
             entriesUsed: number | null;
@@ -23877,7 +23989,7 @@ export interface components {
             /** @enum {string|null} */
             next: "in" | "out" | null;
             /** @enum {string|null} */
-            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | "outside_work_hours" | "day_off" | "id_mismatch" | "worker_removed" | "guest_removed" | "lockdown_active" | null;
+            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | "outside_work_hours" | "day_off" | "id_mismatch" | "worker_removed" | "guest_removed" | "lockdown_active" | "entry_blocked" | null;
             /** @enum {string} */
             result: "valid" | "invalid";
             /** @enum {string|null} */
@@ -27226,6 +27338,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardHandoverView"];
+                };
+            };
+        };
+    };
+    GateIdLookupController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdLookupDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdLookupView"];
                 };
             };
         };
@@ -37520,6 +37655,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffBlocklistEntryView"];
+                };
+            };
+        };
+    };
+    StaffBlocklistController_matches: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlocklistMatchViewList"];
                 };
             };
         };

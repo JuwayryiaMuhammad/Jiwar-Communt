@@ -7177,3 +7177,38 @@ model BlocklistEntry {
   @@index([tenantId, createdAt, id], map: "blocklist_entries_list_idx")
   @@map("blocklist_entries")
 }
+
+/// Where the blocklist met someone at the gate (ADR 0053): append-only, read
+/// by `blocklist.manage` only. The subject is a pointer, as on gate entries.
+model BlocklistMatch {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  entryId        String   @map("entry_id") @db.Uuid
+  /// ban | watch, as the entry was then.
+  kind           String
+  source         String
+  subjectType    String?  @map("subject_type")
+  subjectId      String?  @map("subject_id") @db.Uuid
+  gateId         String?  @map("gate_id") @db.Uuid
+  shiftId        String?  @map("shift_id") @db.Uuid
+  actorAccountId String   @map("actor_account_id") @db.Uuid
+  /// refused | flagged | noted.
+  outcome        String
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, entryId, createdAt, id], map: "blocklist_matches_entry_idx")
+  @@map("blocklist_matches")
+}
+
+/// That a pass, a guest or a move was refused by security (ADR 0053): its
+/// household is told once, never why.
+model SecurityRefusal {
+  tenantId    String   @map("tenant_id") @db.Uuid
+  subjectType String   @map("subject_type")
+  subjectId   String   @map("subject_id") @db.Uuid
+  firstAt     DateTime @default(now()) @map("first_at") @db.Timestamptz(3)
+
+  @@id([tenantId, subjectType, subjectId])
+  @@map("security_refusals")
+}

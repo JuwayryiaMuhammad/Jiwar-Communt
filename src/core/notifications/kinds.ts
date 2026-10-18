@@ -1495,6 +1495,45 @@ export const NOTIFICATION_KINDS = {
     target: 'gate_lockdown',
     params: { scope: {} },
   },
+  /**
+   * A banned plate or person was met at the gate (ADR 0053): refused, or
+   * met on a pass, a permit or a lookup. To the blocklist's keepers.
+   * params.source: where. Never the plate, the person or the unit.
+   */
+  'blocklist.ban_matched': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'blocklist_entry',
+    params: { source: {} },
+  },
+  /** A watched plate or person was met at the gate: let in, and told. */
+  'blocklist.watch_matched': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'blocklist_entry',
+    params: { source: {} },
+  },
+  /**
+   * The host's visitor was refused by security (ADR 0053): once per pass,
+   * never why.
+   */
+  'visitor_pass.refused_by_security': {
+    priority: 'normal',
+    category: 'gate_visitors',
+    critical: false,
+    target: 'visitor_pass',
+    params: {},
+  },
+  /** A guest of the event, or the move's truck, was refused by security. */
+  'unit_permit.refused_by_security': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

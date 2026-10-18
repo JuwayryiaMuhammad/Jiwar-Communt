@@ -1,5 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import type { BlocklistEntry, Prisma } from '@prisma/client';
+import type { BlocklistEntry, BlocklistMatch, Prisma } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { IdentifierHasher } from '../../core/auth/identifier';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -78,6 +78,15 @@ export interface EntryChanges {
   expiresAt?: Date | null;
   photoFileId?: string | null;
 }
+
+/** Where an entry was met, as its keepers read it. */
+export interface MatchRecord {
+  match: BlocklistMatch;
+  gate: { id: string; name: string } | null;
+  actor: Person;
+}
+
+const MATCH_PAGE = keysetCursor('createdAt', 'desc');
 
 export const blocklistNotFound = () =>
   appError.notFound(
@@ -347,6 +356,59 @@ export class BlocklistService implements OnModuleInit {
     });
   }
 
+  /** Where the gate met an entry (ADR 0053), newest first. */
+  matches(
+    id: string,
+    q: { cursor?: string; limit?: number },
+  ): Promise<Page<MatchRecord>> {
+    const limit = clampLimit(q.limit);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      if (!(await tx.blocklistEntry.count({ where: { id } })))
+        throw blocklistNotFound();
+      const rows = await tx.blocklistMatch.findMany({
+        where: {
+          AND: [
+            { entryId: id },
+            ...(MATCH_PAGE.after(
+              q.cursor,
+            ) as Prisma.BlocklistMatchWhereInput[]),
+          ],
+        },
+        orderBy: MATCH_PAGE.orderBy,
+        take: limit + 1,
+      });
+      const { items, nextCursor } = MATCH_PAGE.toPage(rows, limit);
+      const gates = new Map(
+        (
+          await tx.gate.findMany({
+            where: {
+              id: { in: items.flatMap((m) => (m.gateId ? [m.gateId] : [])) },
+            },
+            select: { id: true, name: true },
+          })
+        ).map((g) => [g.id, g]),
+      );
+      const people = new Map(
+        (
+          await tx.account.findMany({
+            where: {
+              id: { in: [...new Set(items.map((m) => m.actorAccountId))] },
+            },
+            select: { id: true, fullName: true, status: true },
+          })
+        ).map((a) => [a.id, a]),
+      );
+      return {
+        items: items.map((m) => ({
+          match: m,
+          gate: m.gateId ? (gates.get(m.gateId) ?? null) : null,
+          actor: people.get(m.actorAccountId)!,
+        })),
+        nextCursor,
+      };
+    });
+  }
+
   // --------------------------------------------------------------------------
   // The guards on shift
   // --------------------------------------------------------------------------
@@ -522,7 +584,8 @@ export class BlocklistService implements OnModuleInit {
     return (await this.records(tx, [entry], now))[0];
   }
 
-  private async records(
+  /** Entries with what their views show (the ID lookup's too). */
+  async records(
     tx: TenantTxClient,
     list: BlocklistEntry[],
     now: Date,

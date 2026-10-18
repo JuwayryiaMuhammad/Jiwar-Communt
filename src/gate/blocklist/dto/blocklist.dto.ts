@@ -174,3 +174,14 @@ export class BlocklistQueryDto extends PageQueryDto {
   @IsIn(KINDS, withParams({ allowed: [...KINDS] }))
   kind?: (typeof KINDS)[number];
 }
+
+export class IdLookupDto {
+  @ApiProperty({
+    type: String,
+    example: '29001011234567',
+    description:
+      'The full ID number on the card (a national ID, a passport). In the body, never a URL; never stored.',
+  })
+  @IsString()
+  idNumber: string;
+}

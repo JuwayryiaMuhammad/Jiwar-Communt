@@ -222,6 +222,13 @@ export class PassDetailView extends PassView {
   })
   visitorPhoneMasked: string | null;
 
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Security did not let its visitor in (ADR 0053). Never why: the household is told only that.',
+  })
+  refusedBySecurity: boolean;
+
   static fromDetail(p: PassDetail): PassDetailView {
     return {
       ...PassView.from(p),
@@ -230,6 +237,7 @@ export class PassDetailView extends PassView {
       link: p.link,
       qrPayload: p.qrPayload,
       visitorPhoneMasked: p.visitorPhoneMasked,
+      refusedBySecurity: p.refusedBySecurity,
     };
   }
 }

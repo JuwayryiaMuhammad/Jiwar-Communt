@@ -25,6 +25,7 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { ApprovalsService } from '../approvals/approvals.service';
 import { permitReference } from '../permits/permit-core';
 import { PermitIdCheck } from '../permits/permit-id-check';
+import { BlocklistMatcher, entryBlocked } from '../blocklist/blocklist-matcher';
 import { LockdownCore } from '../lockdown/lockdown-core';
 import { ShiftsService } from '../shifts/shifts.service';
 import { GateSubjects, unknownType, type GateSubject } from './subjects';
@@ -130,6 +131,9 @@ export function capacityOf(s: GateSubject): number {
   return s.type === 'visitor_pass' ? s.partySize : 1;
 }
 
+/** A ban refused the entry: what `record`'s transaction answers then. */
+const BLOCKED = Symbol('blocked');
+
 const refused = (reason: string) =>
   appError.conflict(ErrorCode.GATE_ENTRY_REFUSED, 'They may not come in', {
     params: { reason },
@@ -168,6 +172,7 @@ export class EntriesService implements OnModuleInit {
     private readonly notifier: Notifier,
     private readonly ids: PermitIdCheck,
     private readonly lockdown: LockdownCore,
+    private readonly matcher: BlocklistMatcher,
     config: ConfigService<Env, true>,
   ) {
     this.unconfirmedAfterMs =
@@ -188,7 +193,7 @@ export class EntriesService implements OnModuleInit {
     );
   }
 
-  record(input: NewEntry): Promise<EntryRecord> {
+  async record(input: NewEntry): Promise<EntryRecord> {
     const tenantId = this.ctx.tenantId;
     const guardId = this.ctx.accountId;
     const now = new Date();
@@ -220,7 +225,7 @@ export class EntriesService implements OnModuleInit {
           fields: [{ field: 'idLast4', code: FieldErrorCode.FIELD_REQUIRED }],
         },
       );
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const recorded = await this.tenantTx.withTenantTx(async (tx) => {
       const shift = await this.shifts.requireOpen(tx);
       // A guard off duty learns nothing; a locked-out one learns no more.
       if (idCheck) {
@@ -253,12 +258,25 @@ export class EntriesService implements OnModuleInit {
           return this.render(tx, known);
         }
       }
-      await this.idempotency.claim(tx, { type: ENTRY_RESOURCE, id });
-      // A lockdown (ADR 0053): the compound's lockdown row FOR SHARE before
-      // anything of the subject, so a start waits for this entry or this
-      // entry sees it. Exits are always recorded.
-      if (input.direction === 'in')
+      if (input.direction === 'in') {
+        // A lockdown (ADR 0053): the compound's lockdown row FOR SHARE
+        // before anything of the subject, so a start waits for this entry
+        // or this entry sees it. Then the blocklist, under its shared lock:
+        // a ban added meanwhile committed first, or waits. A ban's refusal
+        // is recorded and the household told, so this transaction commits
+        // without the entry (and without the key: a retry asks again).
+        // Exits are always recorded.
         await this.lockdown.refuseIn(tx, shift.gateId, occurredAt);
+        const met = await this.matcher.atGate(
+          tx,
+          'entry',
+          input.subjectType,
+          input.subjectId,
+          shift,
+        );
+        if (met?.kind === 'ban') return BLOCKED;
+      }
+      await this.idempotency.claim(tx, { type: ENTRY_RESOURCE, id });
       // On a household's approval: the request under its lock (a deny
       // racing this entry waits for it, or wins before it), its timeout
       // applied first. A worker let in off schedule stays the worker.
@@ -417,6 +435,8 @@ export class EntriesService implements OnModuleInit {
       }
       return this.render(tx, entry);
     });
+    if (recorded === BLOCKED) throw entryBlocked();
+    return recorded;
   }
 
   /** The manager's log, newest first. */

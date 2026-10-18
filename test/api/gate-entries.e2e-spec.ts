@@ -21,6 +21,8 @@ import {
 
 const VERIFY = [
   'display',
+  // A pass's plate on the blocklist (ADR 0053).
+  'display.blocklist',
   'display.capacity',
   // A one-time pass's entries (ADR 0043).
   'display.entriesUsed',
@@ -169,6 +171,8 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
         entriesUsed: 0,
         insideCount: 0,
         parking: null,
+        // A pass with no plate meets no blocklist (ADR 0053).
+        blocklist: null,
       },
     });
     const entered = await io('in').expect(201);

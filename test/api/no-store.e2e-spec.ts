@@ -1330,6 +1330,19 @@ describe('API v0 — no-store', () => {
       as('owner', 'POST', `/emergencies/${await anEmergency('fire')}/cancel`, {
         reasonCode: 'false_alarm',
       }),
+    // A guard's SOS (ADR 0053): raised (or the open one answered) and cancelled.
+    'POST /gate/emergencies': () =>
+      asGuard('POST', '/gate/emergencies', { type: 'security' }),
+    'POST /gate/emergencies/{id}/cancel': async () => {
+      const raised = await asGuard('POST', '/gate/emergencies', {
+        type: 'facilities',
+      });
+      return asGuard(
+        'POST',
+        `/gate/emergencies/${(raised.body as { id: string }).id}/cancel`,
+        {},
+      );
+    },
     'GET /gate/emergencies': () =>
       asGuard('GET', '/gate/emergencies?status=open'),
     'GET /gate/emergencies/{id}': async () =>

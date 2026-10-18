@@ -23050,6 +23050,22 @@
         ],
         "type": "object"
       },
+      "RaiseSosDto": {
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyType"
+              }
+            ],
+            "description": "Raised from the post of your open shift, a gate or a zone (ADR 0053)."
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
       "RateRequestDto": {
         "properties": {
           "comment": {
@@ -29639,11 +29655,28 @@
             "type": "boolean"
           },
           "location": {
-            "$ref": "#/components/schemas/EmergencyLocationView"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyLocationView"
+              }
+            ],
+            "description": "The unit it came from; null for a guard’s SOS.",
+            "nullable": true,
+            "type": "object"
           },
           "minutesAway": {
             "nullable": true,
             "type": "number"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "A guard’s SOS (ADR 0053): the gate or the zone it was raised at; null for a unit’s emergency.",
+            "nullable": true,
+            "type": "object"
           },
           "reference": {
             "example": "E-0042",
@@ -29708,6 +29741,7 @@
           "status",
           "reportedAt",
           "location",
+          "post",
           "reportedBy",
           "responderAccount",
           "responder",
@@ -43435,6 +43469,64 @@
         ],
         "x-no-store": true,
         "x-stability": "draft"
+      },
+      "post": {
+        "description": "From the gate or the zone of your open shift (NO_OPEN_SHIFT without one). The other guards on shift, the responders and the management are told at once (a critical push); nobody’s family is. One open per post and type: a repeat answers 200 with the open one.",
+        "operationId": "GuardSosController_raise",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaiseSosDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": "The open one."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Raise an SOS from your post",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
       }
     },
     "/api/v1/gate/emergencies/{id}": {
@@ -43555,6 +43647,55 @@
           }
         ],
         "summary": "Mark that you arrived (its responder)",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/emergencies/{id}/cancel": {
+      "post": {
+        "description": "While it is open, with a code from `emergencyCancel` or none. Another’s SOS is not found.",
+        "operationId": "GuardSosController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelEmergencyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel the SOS you raised",
         "tags": [
           "emergencies"
         ],

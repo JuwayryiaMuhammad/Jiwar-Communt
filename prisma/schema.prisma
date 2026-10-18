@@ -5923,7 +5923,12 @@ model Emergency {
   id                 String          @id @db.Uuid
   tenantId           String          @map("tenant_id") @db.Uuid
   number             Int
-  unitId             String          @map("unit_id") @db.Uuid
+  /// The unit it came from; null for a guard's SOS from a post (ADR 0053).
+  unitId             String?         @map("unit_id") @db.Uuid
+  /// A guard's SOS (ADR 0053): the gate or the zone of their open shift.
+  originGateId       String?         @map("origin_gate_id") @db.Uuid
+  originPlaceId      String?         @map("origin_place_id") @db.Uuid
+  originShiftId      String?         @map("origin_shift_id") @db.Uuid
   type               EmergencyType
   status             EmergencyStatus @default(reported)
   reportedById       String          @map("reported_by_account_id") @db.Uuid

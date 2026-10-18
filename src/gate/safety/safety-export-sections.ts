@@ -12,8 +12,8 @@ import { safetyReference, seriesOf } from './safety-rules';
  * The emergencies and gate services section of a personal-data export
  * (ADR 0047), `safety/`:
  * - `emergencies.json`: `reported`, those the account reported — type,
- *   status, unit, times, the close's code, how many of the family were
- *   told; `alerted`, those it was only alerted to — codes and times only,
+ *   status, unit (or, for a guard's SOS, its post by name: ADR 0053),
+ *   times, the close's code, how many of the family were told; `alerted`, those it was only alerted to — codes and times only,
  *   with its own "on my way". Never who reported, never who responded;
  * - `gate-services.json`: its own requests, with what it wrote while it
  *   lasts and whether there is a photo (the photo is the request's, not
@@ -64,11 +64,16 @@ export class SafetyExportSections implements OnModuleInit {
           await tx.place.findMany({
             where: {
               id: {
-                in: requests.flatMap((r) =>
-                  [r.fromPlaceId, r.toPlaceId, r.placeId].filter(
-                    (p): p is string => p !== null,
+                in: [
+                  ...requests.flatMap((r) =>
+                    [r.fromPlaceId, r.toPlaceId, r.placeId].filter(
+                      (p): p is string => p !== null,
+                    ),
                   ),
-                ),
+                  ...reported.flatMap((e) =>
+                    e.originPlaceId ? [e.originPlaceId] : [],
+                  ),
+                ],
               },
             },
           })
@@ -78,17 +83,27 @@ export class SafetyExportSections implements OnModuleInit {
         (
           await tx.gate.findMany({
             where: {
-              id: { in: requests.flatMap((r) => (r.gateId ? [r.gateId] : [])) },
+              id: {
+                in: [
+                  ...requests.flatMap((r) => (r.gateId ? [r.gateId] : [])),
+                  ...reported.flatMap((e) =>
+                    e.originGateId ? [e.originGateId] : [],
+                  ),
+                ],
+              },
             },
             select: { id: true, name: true },
           })
         ).map((g) => [g.id, g.name]),
       );
-      const codes = await this.community.unitCodes(tx, [
-        ...reported.map((e) => e.unitId),
-        ...[...alerted.values()].map((e) => e.unitId),
-        ...requests.map((r) => r.unitId),
-      ]);
+      const codes = await this.community.unitCodes(
+        tx,
+        [
+          ...reported.map((e) => e.unitId),
+          ...[...alerted.values()].map((e) => e.unitId),
+          ...requests.map((r) => r.unitId),
+        ].filter((u): u is string => u !== null),
+      );
       return {
         reported,
         alerts,
@@ -110,7 +125,10 @@ export class SafetyExportSections implements OnModuleInit {
           reference: safetyReference('E', e.number),
           type: e.type,
           status: e.status,
-          unitCode: codes.get(e.unitId) ?? null,
+          unitCode: e.unitId ? (codes.get(e.unitId) ?? null) : null,
+          post: e.originGateId
+            ? (data.gates.get(e.originGateId) ?? null)
+            : placeName(e.originPlaceId),
           reportedAt: e.reportedAt,
           acceptedAt: e.acceptedAt,
           arrivedAt: e.arrivedAt,
@@ -126,7 +144,7 @@ export class SafetyExportSections implements OnModuleInit {
                   reference: safetyReference('E', e.number),
                   type: e.type,
                   status: e.status,
-                  unitCode: codes.get(e.unitId) ?? null,
+                  unitCode: e.unitId ? (codes.get(e.unitId) ?? null) : null,
                   alertedAt: a.notifiedAt,
                   onMyWayAt: a.onMyWayAt,
                 },

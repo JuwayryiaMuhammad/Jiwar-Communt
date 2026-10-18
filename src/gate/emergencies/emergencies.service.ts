@@ -163,11 +163,14 @@ export class EmergenciesService implements OnModuleInit {
     });
   }
 
-  /** The reporter's, or one they were alerted to; else not found. */
+  /**
+   * The reporter's, or one they were alerted to; else not found. A guard's
+   * SOS (ADR 0053) is never the household's.
+   */
   get(id: string): Promise<HouseholdEmergency> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const e = await tx.emergency.findUnique({ where: { id } });
-      if (!e) throw emergencyNotFound();
+      if (!e?.unitId) throw emergencyNotFound();
       const record = await this.household(tx, e);
       if (!record.viewer.isReporter && !record.viewer.alerted)
         throw emergencyNotFound();
@@ -194,6 +197,7 @@ export class EmergenciesService implements OnModuleInit {
         where: {
           AND: [
             { OR: [{ reportedById: me }, { id: { in: alerted } }] },
+            { unitId: { not: null } },
             ...(q.status === 'open'
               ? [{ status: { in: OPEN_EMERGENCY } }]
               : q.status === 'closed'
@@ -239,6 +243,7 @@ export class EmergenciesService implements OnModuleInit {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
       const e = await this.records.lock(tx, id, 'update');
+      if (!e.unitId) throw emergencyNotFound();
       const seen = await this.household(tx, e);
       if (!seen.viewer.isReporter && !seen.viewer.alerted)
         throw emergencyNotFound();
@@ -332,7 +337,9 @@ export class EmergenciesService implements OnModuleInit {
       viewer: {
         accountId: me,
         isReporter: e.reportedById === me,
-        isPrimary: await this.community.isPrimary(tx, e.unitId, me),
+        isPrimary: e.unitId
+          ? await this.community.isPrimary(tx, e.unitId, me)
+          : false,
         alerted: mine !== undefined,
         onMyWayAt: mine?.onMyWayAt ?? null,
       },

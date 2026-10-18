@@ -96,6 +96,8 @@ import { EmergencyRespondersController } from './emergencies/emergency-responder
 import { EmergencyRespondersService } from './emergencies/emergency-responders.service';
 import { EmergencyEscalation } from './emergencies/emergency-escalation';
 import { EmergencyRecords } from './emergencies/emergency-records';
+import { GuardSosController } from './emergencies/guard-sos.controller';
+import { GuardSosService } from './emergencies/guard-sos.service';
 import { SafetyCore } from './safety/safety-core';
 import { SafetyExportSections } from './safety/safety-export-sections';
 import { SafetyLifecycle } from './safety/safety-lifecycle';
@@ -234,6 +236,7 @@ import { RosterService } from './roster/roster.service';
     EmergencyContactsController,
     EmergenciesController,
     EmergencyRespondersController,
+    GuardSosController,
     GateServicesController,
     GateServiceHandlersController,
     PermitRulesController,
@@ -311,6 +314,7 @@ import { RosterService } from './roster/roster.service';
     EmergencyEscalation,
     EmergenciesService,
     EmergencyRespondersService,
+    GuardSosService,
     GateServiceRecords,
     GateServicesService,
     GateServiceHandlersService,

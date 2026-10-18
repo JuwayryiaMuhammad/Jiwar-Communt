@@ -1554,7 +1554,11 @@ export interface paths {
          */
         get: operations["EmergencyRespondersController_list"];
         put?: never;
-        post?: never;
+        /**
+         * Raise an SOS from your post
+         * @description From the gate or the zone of your open shift (NO_OPEN_SHIFT without one). The other guards on shift, the responders and the management are told at once (a critical push); nobody’s family is. One open per post and type: a repeat answers 200 with the open one.
+         */
+        post: operations["GuardSosController_raise"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1609,6 +1613,26 @@ export interface paths {
         put?: never;
         /** Mark that you arrived (its responder) */
         post: operations["EmergencyRespondersController_arrived"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/emergencies/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel the SOS you raised
+         * @description While it is open, with a code from `emergencyCancel` or none. Another’s SOS is not found.
+         */
+        post: operations["GuardSosController_cancel"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19077,6 +19101,10 @@ export interface components {
             /** @example 22:00 */
             start: string;
         };
+        RaiseSosDto: {
+            /** @description Raised from the post of your open shift, a gate or a zone (ADR 0053). */
+            type: components["schemas"]["EmergencyType"];
+        };
         RateRequestDto: {
             comment?: string;
             rating: number;
@@ -21089,8 +21117,11 @@ export interface components {
             id: string;
             /** @description The caller is its responder. */
             isMine: boolean;
-            location: components["schemas"]["EmergencyLocationView"];
+            /** @description The unit it came from; null for a guard’s SOS. */
+            location: components["schemas"]["EmergencyLocationView"] | null;
             minutesAway: number | null;
+            /** @description A guard’s SOS (ADR 0053): the gate or the zone it was raised at; null for a unit’s emergency. */
+            post: components["schemas"]["PostView"] | null;
             /** @example E-0042 */
             reference: string;
             /** Format: date-time */
@@ -26202,6 +26233,41 @@ export interface operations {
             };
         };
     };
+    GuardSosController_raise: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaiseSosDto"];
+            };
+        };
+        responses: {
+            /** @description The open one. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
+                };
+            };
+        };
+    };
     EmergencyRespondersController_get: {
         parameters: {
             query?: never;
@@ -26258,6 +26324,31 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
+                };
+            };
+        };
+    };
+    GuardSosController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelEmergencyDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {

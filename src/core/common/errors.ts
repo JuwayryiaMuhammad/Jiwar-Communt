@@ -532,6 +532,8 @@ export const ErrorCode = {
   EMERGENCY_NOT_RESPONDER: 'EMERGENCY_NOT_RESPONDER',
   /** Nobody accepted it yet: there is no arrival to mark (409, params.status). */
   EMERGENCY_NOT_ON_THE_WAY: 'EMERGENCY_NOT_ON_THE_WAY',
+  /** A guard never answers the SOS they raised themselves (403, ADR 0053). */
+  EMERGENCY_OWN: 'EMERGENCY_OWN',
   /** Unknown, another compound's, or not the caller's to see. */
   GATE_SERVICE_NOT_FOUND: 'GATE_SERVICE_NOT_FOUND',
   /** Only someone who lives in the unit asks security for a service (403). */

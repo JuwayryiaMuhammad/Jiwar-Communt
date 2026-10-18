@@ -268,6 +268,45 @@ export const EMERGENCY_RESPONDER_ROUTES: Row[] = [
   },
 ];
 
+/** A guard's SOS from their post (ADR 0053). */
+export const GUARD_SOS_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/emergencies',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { type: 'flood' },
+      fields: [
+        {
+          field: 'type',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['medical', 'fire', 'security', 'facilities'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/emergencies/{id}/cancel',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bEmergencyId }),
+      code: 'EMERGENCY_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 7 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+];
+
 const WHEN = ['now', 'in_15', 'in_30'];
 
 /** Gate services, the requester's side (ADR 0047). */

@@ -28,8 +28,8 @@ export const CLOSE_NOTE = { min: 1, max: 500 } as const;
  * Emergencies, the responders' side (ADR 0047). A guard inside an open
  * shift, an `emergencies.respond` holder or an `emergencies.manage` holder
  * sees every emergency of the compound — the unit, the building, the type,
- * the reporter's first name; never a resident's phone (a resident's number
- * never reaches a staff device).
+ * the reporter's first name, or the post of a guard's SOS (ADR 0053); never
+ * a resident's phone (a resident's number never reaches a staff device).
  * The first to accept it, with the minutes they expect to take, is its
  * responder (409 EMERGENCY_ALREADY_ACCEPTED for the rest); the household
  * is told. The responder marks the arrival; the responder or the
@@ -98,6 +98,12 @@ export class EmergencyRespondersService {
       const { gateId } = await this.core.acting(tx, RESPONDERS);
       const e = await this.records.lock(tx, id, 'update');
       if (!OPEN_EMERGENCY.includes(e.status)) throw emergencyClosed(e.status);
+      // A guard's own SOS (ADR 0053) is someone else's to answer.
+      if (e.reportedById === me)
+        throw appError.forbidden(
+          ErrorCode.EMERGENCY_OWN,
+          'Someone else answers the SOS you raised',
+        );
       if (e.responderId)
         throw appError.conflict(
           ErrorCode.EMERGENCY_ALREADY_ACCEPTED,

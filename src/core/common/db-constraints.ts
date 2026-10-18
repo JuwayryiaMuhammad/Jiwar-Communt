@@ -366,6 +366,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Checked under the unit's emergency lock first, and a violation re-reads
   // the open one: a race.
   emergencies_one_open: null,
+  // A guard's SOS (ADR 0053): checked under the post's emergency lock first,
+  // like the unit's.
+  emergencies_one_open_at_gate: null,
+  emergencies_one_open_in_zone: null,
   gate_service_requests_tenant_id_id_key: null,
   // Numbers come from the counter under its row lock: a collision is a bug.
   gate_service_requests_number_key: null,

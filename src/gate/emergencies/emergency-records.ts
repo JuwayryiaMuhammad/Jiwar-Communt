@@ -3,6 +3,8 @@ import type { Account, Emergency, EmergencyStatus } from '@prisma/client';
 import { appError, ErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { dbNow } from '../db-clock';
+import { DutyNamesReader } from '../roster/duty-names';
+import { PostView } from '../roster/views/roster.views';
 import { SafetyCore, type UnitLocation } from '../safety/safety-core';
 
 export const EMERGENCY_RESOURCE = 'emergency';
@@ -34,7 +36,10 @@ export interface FamilyAlert {
 /** An emergency with what its views show, read in one transaction. */
 export interface EmergencyRecord {
   emergency: Emergency;
-  location: UnitLocation;
+  /** The unit it came from; null for a guard's SOS (ADR 0053). */
+  location: UnitLocation | null;
+  /** A guard's SOS: the gate or the zone it was raised at. */
+  post: PostView | null;
   reporter: Person;
   responder: Person | null;
   /** The phone the responder gives: their gate's, else the compound's. */
@@ -50,7 +55,10 @@ export interface EmergencyRecord {
  */
 @Injectable()
 export class EmergencyRecords {
-  constructor(private readonly core: SafetyCore) {}
+  constructor(
+    private readonly core: SafetyCore,
+    private readonly names: DutyNamesReader,
+  ) {}
 
   /** The row, locked FOR UPDATE (a write on it) or FOR SHARE (a write beside it). */
   async lock(
@@ -105,14 +113,26 @@ export class EmergencyRecords {
     );
     const locations = await this.core.locations(
       tx,
-      list.map((e) => e.unitId),
+      list.flatMap((e) => (e.unitId ? [e.unitId] : [])),
     );
+    const posts = list.map((e) => ({
+      gateId: e.originGateId,
+      placeId: e.originPlaceId,
+    }));
+    const names = await this.names.read(tx, [], posts);
     const now = await dbNow(tx);
     const out: EmergencyRecord[] = [];
     for (const e of list)
       out.push({
         emergency: e,
-        location: locations.get(e.unitId)!,
+        location: e.unitId ? locations.get(e.unitId)! : null,
+        post:
+          e.originGateId || e.originPlaceId
+            ? PostView.of(
+                { gateId: e.originGateId, placeId: e.originPlaceId },
+                names,
+              )
+            : null,
         reporter: people.get(e.reportedById)!,
         responder: e.responderId ? (people.get(e.responderId) ?? null) : null,
         responderPhone: e.responderId

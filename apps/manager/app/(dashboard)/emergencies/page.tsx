@@ -20,6 +20,7 @@ import {
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { postName } from '@/components/security/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type StaffEmergency } from '@/lib/queries';
@@ -28,8 +29,13 @@ const VIEWS = ['open', 'closed'] as const;
 type View = (typeof VIEWS)[number];
 const MINUTES = [2, 5, 10, 15] as const;
 
-/** Where: "Building 7 · 12". */
-const where = (e: StaffEmergency) => [e.location.building, e.location.unitCode].filter(Boolean).join(' · ');
+/** Where: "Building 7 · 12", or a guard's post for their SOS (ADR 0053). */
+const where = (e: StaffEmergency) =>
+  e.location
+    ? [e.location.building, e.location.unitCode].filter(Boolean).join(' · ')
+    : e.post
+      ? `A guard’s SOS · ${postName(e.post)}`
+      : '—';
 
 function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const toast = useToast();

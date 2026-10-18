@@ -4,6 +4,7 @@ import {
   firstNameRef,
   FirstNameRefView,
 } from '../../../core/common/http/personal';
+import { PostView } from '../../roster/views/roster.views';
 import { minutesAway, safetyReference } from '../../safety/safety-rules';
 import type { EmergencyRecord } from '../emergency-records';
 import {
@@ -30,8 +31,19 @@ export class StaffEmergencyView {
   status: EmergencyStatus;
   @ApiProperty({ type: String, format: 'date-time' })
   reportedAt: Date;
-  @ApiProperty({ type: EmergencyLocationView })
-  location: EmergencyLocationView;
+  @ApiProperty({
+    type: EmergencyLocationView,
+    nullable: true,
+    description: 'The unit it came from; null for a guard’s SOS.',
+  })
+  location: EmergencyLocationView | null;
+  @ApiProperty({
+    type: PostView,
+    nullable: true,
+    description:
+      'A guard’s SOS (ADR 0053): the gate or the zone it was raised at; null for a unit’s emergency.',
+  })
+  post: PostView | null;
   @ApiProperty({ type: FirstNameRefView })
   reportedBy: FirstNameRefView;
   @ApiProperty({
@@ -93,7 +105,8 @@ export class StaffEmergencyView {
       type: e.type,
       status: e.status,
       reportedAt: e.reportedAt,
-      location: { ...r.location },
+      location: r.location && { ...r.location },
+      post: r.post,
       reportedBy: firstNameRef(r.reporter),
       responderAccount: r.responder && firstNameRef(r.responder),
       responder: responderOf(r),

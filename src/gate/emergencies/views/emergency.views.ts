@@ -180,7 +180,8 @@ export class EmergencyView {
       type: e.type,
       status: e.status,
       reportedAt: e.reportedAt,
-      location: { ...r.location },
+      // The household's own: always a unit's (a guard's SOS never is).
+      location: { ...r.location! },
       reportedBy: firstNameRef(r.reporter),
       responder: responderOf(r),
       minutesAway: minutesAway(e, r.now),

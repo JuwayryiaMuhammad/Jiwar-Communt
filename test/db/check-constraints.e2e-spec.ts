@@ -1069,6 +1069,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'close_reason IS NOT NULL is required before the list, so NULL fails',
   },
   emergencies_close_reason_open: {},
+  // A guard's SOS (ADR 0053): exactly one of the unit, the gate and the
+  // zone, and a shift exactly for a post.
+  emergencies_origin: {
+    guarded:
+      'num_nonnulls counts the NULLs and is never NULL; the shift is compared under IS NULL',
+  },
   emergencies_close_note_length: {
     guarded:
       'close_note IS NULL is tested first; the length runs only on a value',

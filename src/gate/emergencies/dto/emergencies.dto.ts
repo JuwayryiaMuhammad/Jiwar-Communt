@@ -27,6 +27,17 @@ export class ReportEmergencyDto {
   unitId: string;
 }
 
+export class RaiseSosDto {
+  @ApiProperty({
+    enum: EmergencyType,
+    enumName: 'EmergencyType',
+    description:
+      'Raised from the post of your open shift, a gate or a zone (ADR 0053).',
+  })
+  @IsEnum(EmergencyType, withParams({ allowed: Object.values(EmergencyType) }))
+  type: EmergencyType;
+}
+
 export class CancelEmergencyDto {
   @ApiProperty({
     type: String,

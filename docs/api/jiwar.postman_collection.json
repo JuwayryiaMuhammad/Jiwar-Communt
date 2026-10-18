@@ -5766,6 +5766,46 @@
           }
         },
         {
+          "name": "Raise an SOS from your post",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"type\": \"medical\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `type` | `medical` \\| `fire` \\| `security` \\| `facilities` | yes | Raised from the post of your open shift, a gate or a zone (ADR 0053). |\n\n**Responses:** 200, 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "emergencies"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/emergencies"
+            }
+          }
+        },
+        {
           "name": "Get an emergency",
           "request": {
             "description": "**Responses:** 200",
@@ -5856,6 +5896,50 @@
                 "arrived"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/emergencies/:id/arrived",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel the SOS you raised",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string |  | From the closed list `emergencyCancel`; optional. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "emergencies",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/emergencies/:id/cancel",
               "variable": [
                 {
                   "description": "",

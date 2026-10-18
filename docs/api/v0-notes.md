@@ -181,3 +181,13 @@ The full notes for the guard app are in [`notes/security.md`](notes/security.md)
 - Residents: a unit's violations (`GET /units/{unitId}/violations`, `GET /violations/{id}`, `POST /violations/{id}/appeal`, once within 30 days, a keeper or the primary), as its fines; a warning has `amount: null`. A visitor pass's detail gains `refusedBySecurity`. Residents get a generic critical `gate_lockdown.resident_notice` while the gates are locked, `visitor_pass.refused_by_security`, `unit_permit.work_stopped` / `work_resumed`, and `violation.*` (category `household`). Works permit views gain `workStopped`.
 - The management: `/staff/security/lockdowns`, `/staff/security/blocklist`, `/staff/security/incidents`, `/staff/violations` and `/staff/violation-payments`, and the reports `/staff/security/reports/incidents` and `/violations` (JSON and CSV). `GET /staff/security/reports/daily` gains `incidents` and `violations` per post; its CSV the two last columns.
 - Four new file purposes (`incident_photo`, `blocklist_photo`, `violation_photo`, `violation_appeal_photo`), export sections `incidents/` and `violations/`, five new permissions.
+### Children (ADR 0054)
+
+The full notes for the household app and the guard app are in [`notes/children.md`](notes/children.md).
+
+- The household: `/units/{unitId}/children` (a minor's exit control, the card answered once at turn-on and at a reissue, the child's photo), `…/control/escorts` (adults of the home, its workers, or an outside person whose pickup code and link are answered once), and `/units/{unitId}/children/pickups` (the exits of the last 30 days).
+- The outside person: `POST /public/child-pickups/lookup` (the token from the link's fragment; never a name).
+- The guard: `POST /gate/children/verify` (the child's card: first name, photo, today's escorts; records nothing) and `POST /gate/children/exits` (who takes the child, or alone, or unidentified; refused means hold the child).
+- The keepers: `GET /staff/security/child-alerts` and `…/{id}` (unauthorized pickups, never the child).
+- Events gain `forChildren` with an age range and `PUT/DELETE /events/{id}/children/{memberId}`; a booking may name `occasionMemberId` on a facility with `childOccasions`.
+- New file purposes `child_photo` and `child_escort_photo`, an export section `children/`, three notification kinds `child.*` (category `household`, two critical).

@@ -7,6 +7,7 @@ import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { FilesService } from '../../core/files/files.service';
 import { dbNow } from '../db-clock';
 import { PermitCore } from './permit-core';
+import { PermitWorkStopsService } from './permit-work-stops.service';
 
 /**
  * What happens to an account's permits when it goes (ADR 0049), in the
@@ -36,6 +37,7 @@ export class PermitLifecycle implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly files: FilesService,
     private readonly core: PermitCore,
+    private readonly stops: PermitWorkStopsService,
   ) {}
 
   onModuleInit(): void {
@@ -81,6 +83,7 @@ export class PermitLifecycle implements OnModuleInit {
           cancelReason: 'requester_left',
         },
       });
+      await this.stops.endWith(tx, id, 'permit_cancelled', null);
       await this.audit.record(tx, {
         action: 'unit_permit.cancelled',
         targetId: id,

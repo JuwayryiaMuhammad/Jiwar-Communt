@@ -25,6 +25,7 @@ import {
 } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { leakText } from '../setup/leak-text';
+import { day, permitHelpers } from '../setup/permits';
 import { securityOpsHelpers, type Who } from '../setup/security-ops';
 
 /**
@@ -219,6 +220,63 @@ describe('Audit coverage — security (ADR 0053)', () => {
       expect(expired).toMatchObject(system('blocklist_entry'));
       expect(expired.metadata).toBeNull();
       expect(leakText(expired)).not.toMatch(/5521|AUD/);
+    });
+  });
+
+  describe('stop work', () => {
+    it('stopped by a guard and resumed by the management: the code, the side, the shift, how many were told', async () => {
+      const p = permitHelpers(h);
+      const c = await p.setUp('Security Audit Permits Court');
+      await p.anyTime(c.manager);
+      const guard = await p.guardOnDuty(c.c);
+      const permit = await p.works(c.alice, c.home.id, {
+        startsOn: day(0),
+        endsOn: day(1),
+        dailyHours: { from: '00:00', to: '23:59' },
+      });
+      await p.approve(c.manager, permit.id);
+      await p
+        .http(
+          'post',
+          `/gate/unit-permits/${permit.id}/stop-work`,
+          guard.token,
+          {
+            reasonCode: 'damage',
+          },
+        )
+        .expect(200);
+      const read = (action: string) =>
+        auditReaders(h).tenant(c.c.tenantId, { action, targetId: permit.id });
+      const [stopped] = await read('permit_work.stopped');
+      covered.add('permit_work.stopped');
+      expect(stopped).toMatchObject({
+        actorId: guard.id,
+        targetType: 'unit_permit',
+      });
+      expect(stopped.metadata).toEqual({
+        reasonCode: 'damage',
+        side: 'guard',
+        shiftId: guard.shiftId,
+        recipients: 2,
+      });
+      const stop = await p.inTx(c.c, (tx) =>
+        tx.permitWorkStop.findFirstOrThrow({ where: { permitId: permit.id } }),
+      );
+      await p
+        .http(
+          'post',
+          `/staff/unit-permits/${permit.id}/resume-work`,
+          c.manager.token,
+          {},
+        )
+        .expect(200);
+      const [resumed] = await read('permit_work.resumed');
+      covered.add('permit_work.resumed');
+      expect(resumed).toMatchObject({
+        actorId: c.manager.id,
+        targetType: 'unit_permit',
+      });
+      expect(resumed.metadata).toEqual({ stopId: stop.id, recipients: 1 });
     });
   });
 

@@ -304,4 +304,46 @@ describe('Permits concurrency', () => {
       expect((await p.row(c.c, permitId)).purgedAt).not.toBeNull();
     }
   });
+
+  it('R10: stop work racing a worker’s entry (ADR 0053): the entry is in before the stop, or refused work_stopped; never after', async () => {
+    for (let i = 0; i < ROUNDS; i++) {
+      const { permit, workerId } = await approvedWorker();
+      const [entry, stop] = await Promise.all([
+        enter(gateA, workerId),
+        p.http(
+          'post',
+          `/gate/unit-permits/${permit.id}/stop-work`,
+          gateB.token,
+          {
+            reasonCode: 'safety_hazard',
+          },
+        ),
+      ]);
+      expect(stop.status).toBe(200);
+      const stopped = await p.v.inTx(c.c, (tx) =>
+        tx.permitWorkStop.findFirstOrThrow({ where: { permitId: permit.id } }),
+      );
+      if (entry.status === 201) {
+        const [e] = await p.v.inTx(c.c, (tx) =>
+          tx.gateEntry.findMany({ where: { subjectId: workerId } }),
+        );
+        expect(e.recordedAt.getTime()).toBeLessThanOrEqual(
+          stopped.stoppedAt.getTime(),
+        );
+        await p
+          .http('post', '/gate/entries', gateB.token, {
+            subjectType: 'permit_worker',
+            subjectId: workerId,
+            direction: 'out',
+          })
+          .expect(201);
+      } else {
+        expect(reason(entry)).toBe('work_stopped');
+        expect(await entries(workerId)).toBe(0);
+      }
+      expect(reason(await enter(gateB, workerId).expect(409))).toBe(
+        'work_stopped',
+      );
+    }
+  });
 });

@@ -863,6 +863,10 @@ export const ErrorCode = {
    * reads the blocklist.
    */
   ENTRY_BLOCKED: 'ENTRY_BLOCKED',
+  /** The permit's work is stopped already (409). */
+  PERMIT_WORK_STOPPED: 'PERMIT_WORK_STOPPED',
+  /** The permit's work is not stopped: there is nothing to resume (409). */
+  PERMIT_WORK_NOT_STOPPED: 'PERMIT_WORK_NOT_STOPPED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

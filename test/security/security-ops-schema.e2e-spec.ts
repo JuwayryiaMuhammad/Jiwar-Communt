@@ -2,7 +2,8 @@ import { Client } from 'pg';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { newId } from '../../src/core/common/uuid';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
-import { createAccountRow, createTenant } from '../setup/fixtures';
+import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
+import { permitRow } from '../setup/permits-rows';
 import {
   blocklistRow,
   lockdownRow,
@@ -10,6 +11,7 @@ import {
   overrideRow,
   personRow,
   refusalRow,
+  workStopRow,
 } from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 import { required } from '../setup/test-env';
@@ -33,12 +35,15 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
   let endedId: string;
   let plateEntryId: string;
   let personEntryId: string;
+  let permitId: string;
+  let stopId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
     tenantId = await createTenant(h, 'Security schema');
     guardId = (await createAccountRow(h, tenantId)).id;
     managerId = (await createAccountRow(h, tenantId)).id;
+    const unitId = (await createUnit(h, tenantId)).id;
     await h.asTenant(tenantId, () =>
       h.tenantTx.withTenantTx(async (tx: TenantTxClient) => {
         gateId = await gateRow(tx, tenantId);
@@ -67,6 +72,16 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
           gateId,
         });
         await refusalRow(tx, { tenantId });
+        permitId = await permitRow(tx, {
+          tenantId,
+          unitId,
+          requestedById: managerId,
+        });
+        stopId = await workStopRow(tx, {
+          tenantId,
+          permitId,
+          stoppedById: guardId,
+        });
         await overrideRow(tx, {
           tenantId,
           lockdownId: liveId,
@@ -121,6 +136,7 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'gate_lockdown_states',
       'gate_lockdowns',
       'blocklist_entries',
+      'permit_work_stops',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -156,6 +172,7 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'blocklist_entries',
       'blocklist_matches',
       'security_refusals',
+      'permit_work_stops',
     ]) {
       // A row to refuse: a row trigger never fires on a DELETE of none.
       const found = await attempt(
@@ -362,6 +379,66 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
           `UPDATE blocklist_entries SET lifted_at = now(), lifted_by_account_id = '${managerId}', lift_reason = 'expired' WHERE ${where(plateEntryId)}`,
         ),
       ).rejects.toThrow(/blocklist_entries_lift_shape/);
+    });
+  });
+
+  describe('permit_work_stops', () => {
+    const where = () => `id = '${stopId}'`;
+
+    it('one live stop per permit; ended once, with how; what stopped it never changes', async () => {
+      await expect(
+        asApp(
+          `INSERT INTO permit_work_stops (id, tenant_id, permit_id, stopped_by_account_id, reason_code, stopped_at, updated_at)
+           VALUES ('${newId()}', '${tenantId}', '${permitId}', '${guardId}', 'damage', now(), now())`,
+        ),
+      ).rejects.toThrow(/permit_work_stops_one_live/);
+      for (const set of [
+        `reason_code = 'damage'`,
+        `stopped_at = now() - interval '1 hour'`,
+      ])
+        await expect(
+          asApp(`UPDATE permit_work_stops SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/ended once/);
+      await expect(
+        asApp(
+          `UPDATE permit_work_stops SET ended_at = now(), end_kind = 'resumed' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/permit_work_stops_end_shape/);
+      const resume = `UPDATE permit_work_stops SET ended_at = now(), ended_by_account_id = '${managerId}', end_kind = 'resumed' WHERE ${where()}`;
+      await expect(asApp(resume)).resolves.toMatchObject({ rowCount: 1 });
+      await expect(asApp(resume, resume)).rejects.toThrow(/ended once/);
+      await expect(
+        asApp(
+          `UPDATE permit_work_stops SET ended_at = now(), end_kind = 'permit_revoked' WHERE ${where()}`,
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+    });
+
+    it('only a works permit has its work stopped', async () => {
+      const move = await h.asTenant(tenantId, () =>
+        h.tenantTx.withTenantTx(async (tx) =>
+          permitRow(tx, {
+            tenantId,
+            unitId: (
+              await tx.unitPermit.findUniqueOrThrow({ where: { id: permitId } })
+            ).unitId,
+            requestedById: managerId,
+            kind: 'move',
+          }),
+        ),
+      );
+      await expect(
+        asApp(
+          `INSERT INTO permit_work_stops (id, tenant_id, permit_id, permit_kind, stopped_by_account_id, reason_code, stopped_at, updated_at)
+           VALUES ('${newId()}', '${tenantId}', '${move}', 'move', '${guardId}', 'damage', now(), now())`,
+        ),
+      ).rejects.toThrow(/permit_work_stops_kind/);
+      await expect(
+        asApp(
+          `INSERT INTO permit_work_stops (id, tenant_id, permit_id, stopped_by_account_id, reason_code, stopped_at, updated_at)
+           VALUES ('${newId()}', '${tenantId}', '${move}', '${guardId}', 'damage', now(), now())`,
+        ),
+      ).rejects.toThrow(/permit_work_stops_permit_fkey/);
     });
   });
 

@@ -1209,6 +1209,29 @@ describe('API v0 — no-store', () => {
         reasonCode: 'other',
       });
     },
+    // Stop work (ADR 0053).
+    'POST /staff/unit-permits/{id}/stop-work': async () => {
+      const id = await aPermit();
+      await as('manager', 'POST', `/staff/unit-permits/${id}/approve`, {});
+      return as('manager', 'POST', `/staff/unit-permits/${id}/stop-work`, {
+        reasonCode: 'other',
+      });
+    },
+    'POST /staff/unit-permits/{id}/resume-work': async () => {
+      const id = await aPermit();
+      await as('manager', 'POST', `/staff/unit-permits/${id}/approve`, {});
+      await as('manager', 'POST', `/staff/unit-permits/${id}/stop-work`, {
+        reasonCode: 'other',
+      });
+      return as('manager', 'POST', `/staff/unit-permits/${id}/resume-work`, {});
+    },
+    'POST /gate/unit-permits/{id}/stop-work': async () => {
+      const id = await aPermit();
+      await as('manager', 'POST', `/staff/unit-permits/${id}/approve`, {});
+      return asGuard('POST', `/gate/unit-permits/${id}/stop-work`, {
+        reasonCode: 'safety_hazard',
+      });
+    },
     'POST /staff/unit-permits/{id}/workers/{workerId}/remove': async () => {
       const permitId = await aPermit();
       const added = body<{ works: { workers: { id: string }[] } }>(

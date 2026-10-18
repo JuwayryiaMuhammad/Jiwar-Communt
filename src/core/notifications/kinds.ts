@@ -1526,6 +1526,26 @@ export const NOTIFICATION_KINDS = {
     target: 'visitor_pass',
     params: {},
   },
+  /**
+   * Work on the works permit was stopped at the site (ADR 0053): to the
+   * requester and the unit's primary, and, when a guard stopped it, to the
+   * permits' staff. params.reason: the code.
+   */
+  'unit_permit.work_stopped': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { reason: {} },
+  },
+  /** The management let the work go on: the requester and the primary. */
+  'unit_permit.work_resumed': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: {},
+  },
   /** A guest of the event, or the move's truck, was refused by security. */
   'unit_permit.refused_by_security': {
     priority: 'normal',

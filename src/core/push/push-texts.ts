@@ -1651,6 +1651,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يسمح الأمن بدخول أحد من تصريحك.',
     },
   },
+  'unit_permit.work_stopped': {
+    en: {
+      title: 'Work stopped',
+      body: 'Security stopped the work under your permit. Open the permit.',
+    },
+    ar: {
+      title: 'تم إيقاف العمل',
+      body: 'أوقف الأمن العمل المسموح به في تصريحك. افتح التصريح.',
+    },
+  },
+  'unit_permit.work_resumed': {
+    en: {
+      title: 'Work may go on',
+      body: 'The management let the work under your permit go on.',
+    },
+    ar: {
+      title: 'يمكن استئناف العمل',
+      body: 'سمحت الإدارة باستئناف العمل في تصريحك.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

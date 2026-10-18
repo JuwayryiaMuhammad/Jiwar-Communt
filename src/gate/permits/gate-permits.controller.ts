@@ -28,12 +28,15 @@ import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
   LogMaterialEntryDto,
   MaterialEntriesQueryDto,
+  StopWorkDto,
 } from './dto/permits.dto';
 import { GatePermitsService } from './gate-permits.service';
 import { MaterialEntriesService } from './material-entries.service';
 import { GatePermitView } from './views/gate-permit.views';
 import { MaterialEntryView } from './views/material-entry.views';
 import { toList } from '../../core/common/http/list';
+import { PermitWorkStopsService } from './permit-work-stops.service';
+import { GuardWorkStopView } from './views/permit.views';
 
 export class GatePermitsQueryDto {
   @ApiProperty({
@@ -65,7 +68,10 @@ export class GatePermitsQueryDto {
 @RequirePermissions('gate.operate')
 @Controller('gate/unit-permits')
 export class GatePermitsController {
-  constructor(private readonly permits: GatePermitsService) {}
+  constructor(
+    private readonly permits: GatePermitsService,
+    private readonly stops: PermitWorkStopsService,
+  ) {}
 
   @Get()
   @NoStore()
@@ -91,6 +97,24 @@ export class GatePermitsController {
   @ApiOkResponse({ type: GatePermitView })
   async get(@Param('id', parseId()) id: string): Promise<GatePermitView> {
     return GatePermitView.from(await this.permits.get(id));
+  }
+
+  @Post(':id/stop-work')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Stop the work of a works permit',
+    description:
+      'A guard on shift, at a gate or in a zone (ADR 0053), with a code from `permitWorkStop`: an approved works permit in force (PERMIT_NOT_ACTIVE otherwise). Its workers are refused at the gate (`work_stopped`) until the management resumes it. The requester, the primary and the permits’ staff are told.',
+  })
+  @ApiOkResponse({ type: GuardWorkStopView })
+  async stopWork(
+    @Param('id', parseId()) id: string,
+    @Body() dto: StopWorkDto,
+  ): Promise<GuardWorkStopView> {
+    return GuardWorkStopView.from(
+      await this.stops.stop(id, dto.reasonCode, 'guard'),
+    );
   }
 
   @Post(':id/use')

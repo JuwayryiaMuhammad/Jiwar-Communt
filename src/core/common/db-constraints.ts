@@ -382,6 +382,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   blocklist_entries_live_id_key: ['idNumber'],
   blocklist_entries_photo_key: null,
   blocklist_matches_tenant_id_id_key: null,
+  // Stop work (ADR 0053): one live per permit, checked under the permit's
+  // row lock first.
+  permit_work_stops_tenant_id_id_key: null,
+  permit_work_stops_one_live: null,
   gate_service_requests_tenant_id_id_key: null,
   // Numbers come from the counter under its row lock: a collision is a bug.
   gate_service_requests_number_key: null,

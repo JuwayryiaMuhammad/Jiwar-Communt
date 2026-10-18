@@ -146,3 +146,22 @@ export async function refusalRow(
   });
   return subjectId;
 }
+
+/** A live stop of an approved works permit's work. */
+export async function workStopRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; permitId: string; stoppedById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.permitWorkStop.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      permitId: r.permitId,
+      stoppedById: r.stoppedById,
+      reasonCode: 'safety_hazard',
+      stoppedAt: new Date(),
+    },
+  });
+  return id;
+}

@@ -47,7 +47,9 @@ export type Refusal =
   // The gate is locked down (ADR 0053): nobody but a resident comes in.
   | 'lockdown_active'
   // A ban on the blocklist (ADR 0053): the guard reads the list, never why.
-  | 'entry_blocked';
+  | 'entry_blocked'
+  // The works permit's work was stopped (ADR 0053).
+  | 'work_stopped';
 
 /** Who comes through the gate, resolved in this compound (ADR 0028). */
 export interface GateSubject {
@@ -237,6 +239,15 @@ export class GateSubjects {
     if (at.getTime() >= p.endsAt.getTime()) return 'expired';
     if (s.permitWorker && (s.permitWorker.removedAt || s.permitWorker.purgedAt))
       return 'worker_removed';
+    // Work stopped (ADR 0053): read under the permit's row, which the entry
+    // holds FOR SHARE and a stop FOR UPDATE.
+    if (
+      s.type === 'permit_worker' &&
+      (await tx.permitWorkStop.count({
+        where: { permitId: p.id, endedAt: null },
+      }))
+    )
+      return 'work_stopped';
     if (s.guest && (s.guest.removedAt || s.guest.purgedAt))
       return 'guest_removed';
     if (s.type === 'event_guest') return null;

@@ -22997,6 +22997,50 @@
           }
         },
         {
+          "name": "Stop the work of a works permit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `permitWorkStop`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "unit-permits",
+                ":id",
+                "stop-work"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/unit-permits/:id/stop-work",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Let a material exit’s goods out, once",
           "request": {
             "description": "**Responses:** 200",
@@ -23579,6 +23623,35 @@
           }
         },
         {
+          "name": "Let the stopped work go on",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "resume-work"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/resume-work",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Revoke an approved permit in force, with a reason code",
           "request": {
             "body": {
@@ -23612,6 +23685,50 @@
                 "revoke"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/revoke",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stop the work of a works permit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `permitWorkStop`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "stop-work"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/stop-work",
               "variable": [
                 {
                   "description": "",

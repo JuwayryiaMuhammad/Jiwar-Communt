@@ -20,6 +20,7 @@ import { PermitIdCheck } from './permit-id-check';
 import { PermitWorkersService } from './permit-workers.service';
 import type { PermitLockoutsView } from './views/permit.views';
 import { clean } from './permits.service';
+import { PermitWorkStopsService } from './permit-work-stops.service';
 
 const PAGE = keysetCursor('createdAt', 'desc');
 
@@ -46,6 +47,7 @@ export class StaffPermitsService {
     private readonly records: PermitRecords,
     private readonly workers: PermitWorkersService,
     private readonly ids: PermitIdCheck,
+    private readonly stops: PermitWorkStopsService,
   ) {}
 
   /** Newest first; `live`: approved and in force now. */
@@ -275,6 +277,8 @@ export class StaffPermitsService {
           revokeNote,
         },
       });
+      // A stop of its work (ADR 0053) ends with it.
+      await this.stops.endWith(tx, id, 'permit_revoked', this.ctx.accountId);
       await this.audit.record(tx, {
         action: 'unit_permit.revoked',
         targetId: id,

@@ -10,6 +10,8 @@ import {
   MaterialItemView,
   PERMIT_VIEW_STATUSES,
   PermitHoursView,
+  workStoppedOf,
+  WorkStoppedView,
 } from './permit.views';
 
 /** A contractor worker as the guard sees them: never the ID's last four. */
@@ -60,6 +62,13 @@ export class GateWorksView {
   contractorCompany: string | null;
   @ApiProperty({ type: [GatePermitWorkerView] })
   workers: GatePermitWorkerView[];
+  @ApiProperty({
+    type: WorkStoppedView,
+    nullable: true,
+    description:
+      'Work stopped (ADR 0053): its workers are refused (`work_stopped`) until the management resumes it.',
+  })
+  workStopped: WorkStoppedView | null;
 }
 
 export class GateMoveView {
@@ -168,6 +177,7 @@ export class GatePermitView {
                 removed: w.removedAt !== null || w.purgedAt !== null,
                 inside: r.inside.has(w.id),
               })),
+              workStopped: workStoppedOf(r),
             }
           : null,
       move:

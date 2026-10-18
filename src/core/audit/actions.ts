@@ -1175,6 +1175,11 @@ export const AUDIT_ACTIONS = {
   // 30 days after a person's entry was lifted, its name, ID hash, photo and
   // note go (system). metadata: photo (whether there was one).
   'blocklist_entry.purged': { log: 'tenant', target: 'blocklist_entry' },
+  // Stop work (ADR 0053). metadata: reasonCode, side (guard | staff),
+  // shiftId (the guard's, or null), recipients.
+  'permit_work.stopped': { log: 'tenant', target: 'unit_permit' },
+  // metadata: stopId, recipients.
+  'permit_work.resumed': { log: 'tenant', target: 'unit_permit' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

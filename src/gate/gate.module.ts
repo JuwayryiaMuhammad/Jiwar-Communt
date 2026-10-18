@@ -127,6 +127,7 @@ import {
   PermitSettingsController,
 } from './permits/permit-settings.controller';
 import { PermitProvisioning } from './permits/permit-provisioning';
+import { PermitWorkStopsService } from './permits/permit-work-stops.service';
 import { PermitSettingsService } from './permits/permit-settings.service';
 import { PermitCore } from './permits/permit-core';
 import { PermitRecords } from './permits/permit-records';
@@ -347,6 +348,7 @@ import { RosterService } from './roster/roster.service';
     SafetyLifecycle,
     SafetyExportSections,
     PermitProvisioning,
+    PermitWorkStopsService,
     PermitSettingsService,
     PermitCore,
     PermitRecords,

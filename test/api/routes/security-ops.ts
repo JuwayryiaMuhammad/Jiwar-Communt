@@ -245,3 +245,54 @@ export const BLOCKLIST_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Stop work on a works permit (ADR 0053). */
+export const STOP_WORK_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/unit-permits/{id}/stop-work',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({ reasonCode: 'safety_hazard' }),
+    },
+    invalid: {
+      body: { reasonCode: 3 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/stop-work',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({ reasonCode: 'safety_hazard' }),
+    },
+    invalid: {
+      body: { reasonCode: 3 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/resume-work',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

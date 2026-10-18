@@ -128,6 +128,7 @@ export const REASON_CODES = {
   blocklistReason: ['trespassing', 'theft', 'violence', 'harassment', 'fraud', 'vandalism', 'police_request', 'management_decision', 'other'],
   blocklistLift: ['resolved', 'entered_in_error', 'other'],
   blocklistLiftSystem: ['expired'],
+  permitWorkStop: ['safety_hazard', 'outside_hours', 'noise_complaint', 'unauthorized_work', 'damage', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

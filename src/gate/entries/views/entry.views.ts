@@ -39,6 +39,7 @@ const REASONS = [
   // Lockdown and the blocklist (ADR 0053).
   'lockdown_active',
   'entry_blocked',
+  'work_stopped',
 ];
 
 /** The blocklist entry a verify met (ADR 0053). */

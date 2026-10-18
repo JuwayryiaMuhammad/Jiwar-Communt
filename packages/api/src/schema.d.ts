@@ -2708,6 +2708,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/unit-permits/{id}/stop-work": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop the work of a works permit
+         * @description A guard on shift, at a gate or in a zone (ADR 0053), with a code from `permitWorkStop`: an approved works permit in force (PERMIT_NOT_ACTIVE otherwise). Its workers are refused at the gate (`work_stopped`) until the management resumes it. The requester, the primary and the permits’ staff are told.
+         */
+        post: operations["GatePermitsController_stopWork"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/unit-permits/{id}/use": {
         parameters: {
             query?: never;
@@ -9730,6 +9750,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/unit-permits/{id}/resume-work": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Let the stopped work go on
+         * @description Its workers come in again. Not stopped: PERMIT_WORK_NOT_STOPPED. The requester and the primary are told.
+         */
+        post: operations["StaffPermitsController_resumeWork"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits/{id}/revoke": {
         parameters: {
             query?: never;
@@ -9744,6 +9784,26 @@ export interface paths {
          * @description From then on the guard refuses it (`revoked`). Not approved, over or used: PERMIT_NOT_ACTIVE. The requester is told.
          */
         post: operations["StaffPermitsController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/stop-work": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop the work of a works permit
+         * @description An approved works permit in force (PERMIT_NOT_ACTIVE otherwise), with a code from `permitWorkStop`. Its workers are refused at the gate (`work_stopped`) until it is resumed, revoked or cancelled. Stopped already: PERMIT_WORK_STOPPED. The requester and the primary are told.
+         */
+        post: operations["StaffPermitsController_stopWork"];
         delete?: never;
         options?: never;
         head?: never;
@@ -16217,6 +16277,8 @@ export interface components {
         };
         GateWorksView: {
             contractorCompany: string | null;
+            /** @description Work stopped (ADR 0053): its workers are refused (`work_stopped`) until the management resumes it. */
+            workStopped: components["schemas"]["WorkStoppedView"] | null;
             workType: components["schemas"]["PermitWorkType"];
             workers: components["schemas"]["GatePermitWorkerView"][];
         };
@@ -16804,6 +16866,14 @@ export interface components {
         GuardVisitorParkingViewList: {
             data: components["schemas"]["GuardVisitorParkingView"][];
             nextCursor: string | null;
+        };
+        GuardWorkStopView: {
+            /** Format: uuid */
+            permitId: string;
+            /** @example W-0042 */
+            reference: string;
+            unitCode: string;
+            workStopped: components["schemas"]["WorkStoppedView"];
         };
         HandOverDto: {
             /**
@@ -19073,6 +19143,8 @@ export interface components {
          * @enum {string}
          */
         PermitViewStatus: "pending" | "approved" | "ended" | "rejected" | "cancelled" | "revoked" | "used";
+        /** @enum {string} */
+        PermitWorkStop: "safety_hazard" | "outside_hours" | "noise_complaint" | "unauthorized_work" | "damage" | "other";
         /** @enum {string} */
         PermitWorkType: "renovation" | "finishing";
         PermitWorkerView: {
@@ -22842,6 +22914,10 @@ export interface components {
              */
             expiresAt: string;
         };
+        StopWorkDto: {
+            /** @description From the closed list `permitWorkStop`. */
+            reasonCode: string;
+        };
         SuggestionAuthorView: {
             fullName: string | null;
             /** Format: uuid */
@@ -23989,7 +24065,7 @@ export interface components {
             /** @enum {string|null} */
             next: "in" | "out" | null;
             /** @enum {string|null} */
-            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | "outside_work_hours" | "day_off" | "id_mismatch" | "worker_removed" | "guest_removed" | "lockdown_active" | "entry_blocked" | null;
+            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | "outside_work_hours" | "day_off" | "id_mismatch" | "worker_removed" | "guest_removed" | "lockdown_active" | "entry_blocked" | "work_stopped" | null;
             /** @enum {string} */
             result: "valid" | "invalid";
             /** @enum {string|null} */
@@ -24298,6 +24374,11 @@ export interface components {
             /** @enum {string} */
             kind: "before" | "after";
         };
+        WorkStoppedView: {
+            reasonCode: components["schemas"]["PermitWorkStop"];
+            /** Format: date-time */
+            since: string;
+        };
         /** @enum {string} */
         WorkerCapacity: "live_in" | "hourly" | "driver" | "nanny" | "temporary";
         WorkerCardView: {
@@ -24361,6 +24442,8 @@ export interface components {
              * @example 2026-11-01
              */
             startsOn: string;
+            /** @description Security stopped the work (ADR 0053): its workers are refused at the gate until the management resumes it. */
+            workStopped: components["schemas"]["WorkStoppedView"] | null;
             workType: components["schemas"]["PermitWorkType"];
             /** @description Workers on the permit now (not removed). */
             workerCount: number;
@@ -28274,6 +28357,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GatePermitView"];
+                };
+            };
+        };
+    };
+    GatePermitsController_stopWork: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StopWorkDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardWorkStopView"];
                 };
             };
         };
@@ -39010,6 +39118,27 @@ export interface operations {
             };
         };
     };
+    StaffPermitsController_resumeWork: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
     StaffPermitsController_revoke: {
         parameters: {
             query?: never;
@@ -39022,6 +39151,31 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RevokePermitDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffPermitsController_stopWork: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StopWorkDto"];
             };
         };
         responses: {

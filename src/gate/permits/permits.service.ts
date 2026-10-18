@@ -42,6 +42,7 @@ import {
 } from './permit-rules';
 import { PermitSettingsService } from './permit-settings.service';
 import { PermitView } from './views/permit.views';
+import { PermitWorkStopsService } from './permit-work-stops.service';
 
 const PAGE = keysetCursor('createdAt', 'desc');
 
@@ -158,6 +159,7 @@ export class PermitsService implements OnModuleInit {
     private readonly core: PermitCore,
     private readonly records: PermitRecords,
     private readonly settings: PermitSettingsService,
+    private readonly stops: PermitWorkStopsService,
   ) {}
 
   onModuleInit(): void {
@@ -417,6 +419,8 @@ export class PermitsService implements OnModuleInit {
           cancelReason: reason,
         },
       });
+      // A stop of its work (ADR 0053) ends with it.
+      await this.stops.endWith(tx, id, 'permit_cancelled', this.ctx.accountId);
       await this.audit.record(tx, {
         action: 'unit_permit.cancelled',
         targetId: id,

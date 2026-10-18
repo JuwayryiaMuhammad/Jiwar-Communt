@@ -7212,3 +7212,27 @@ model SecurityRefusal {
   @@id([tenantId, subjectType, subjectId])
   @@map("security_refusals")
 }
+
+/// Work stopped on an approved works permit (ADR 0053), by a guard on shift
+/// or the permits' staff: its workers are refused at the gate until it ends
+/// (resumed by the management, or the permit revoked or cancelled). One
+/// live per permit.
+model PermitWorkStop {
+  id             String         @id @db.Uuid
+  tenantId       String         @map("tenant_id") @db.Uuid
+  permitId       String         @map("permit_id") @db.Uuid
+  permitKind     UnitPermitKind @default(works) @map("permit_kind")
+  stoppedById    String         @map("stopped_by_account_id") @db.Uuid
+  stoppedShiftId String?        @map("stopped_shift_id") @db.Uuid
+  reasonCode     String         @map("reason_code")
+  stoppedAt      DateTime       @map("stopped_at") @db.Timestamptz(3)
+  endedAt        DateTime?      @map("ended_at") @db.Timestamptz(3)
+  endedById      String?        @map("ended_by_account_id") @db.Uuid
+  /// resumed | permit_revoked | permit_cancelled.
+  endKind        String?        @map("end_kind")
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, permitId, stoppedAt, id], map: "permit_work_stops_permit_idx")
+  @@map("permit_work_stops")
+}

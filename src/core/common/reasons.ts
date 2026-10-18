@@ -591,4 +591,14 @@ export const REASON_CODES = {
   ],
   blocklistLift: ['resolved', 'entered_in_error', 'other'],
   blocklistLiftSystem: ['expired'],
+  // Why a guard or the permits' staff stopped a works permit's work (ADR
+  // 0053).
+  permitWorkStop: [
+    'safety_hazard',
+    'outside_hours',
+    'noise_complaint',
+    'unauthorized_work',
+    'damage',
+    'other',
+  ],
 } as const;

@@ -13015,6 +13015,16 @@
             "nullable": true,
             "type": "string"
           },
+          "workStopped": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkStoppedView"
+              }
+            ],
+            "description": "Work stopped (ADR 0053): its workers are refused (`work_stopped`) until the management resumes it.",
+            "nullable": true,
+            "type": "object"
+          },
           "workType": {
             "allOf": [
               {
@@ -13032,7 +13042,8 @@
         "required": [
           "workType",
           "contractorCompany",
-          "workers"
+          "workers",
+          "workStopped"
         ],
         "type": "object"
       },
@@ -15176,6 +15187,31 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GuardWorkStopView": {
+        "properties": {
+          "permitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reference": {
+            "example": "W-0042",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "workStopped": {
+            "$ref": "#/components/schemas/WorkStoppedView"
+          }
+        },
+        "required": [
+          "permitId",
+          "reference",
+          "unitCode",
+          "workStopped"
         ],
         "type": "object"
       },
@@ -22136,6 +22172,17 @@
           "cancelled",
           "revoked",
           "used"
+        ],
+        "type": "string"
+      },
+      "PermitWorkStop": {
+        "enum": [
+          "safety_hazard",
+          "outside_hours",
+          "noise_complaint",
+          "unauthorized_work",
+          "damage",
+          "other"
         ],
         "type": "string"
       },
@@ -34963,6 +35010,18 @@
         ],
         "type": "object"
       },
+      "StopWorkDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `permitWorkStop`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "SuggestionAuthorView": {
         "properties": {
           "fullName": {
@@ -38738,7 +38797,8 @@
               "worker_removed",
               "guest_removed",
               "lockdown_active",
-              "entry_blocked"
+              "entry_blocked",
+              "work_stopped"
             ],
             "nullable": true,
             "type": "string"
@@ -39680,6 +39740,26 @@
         ],
         "type": "object"
       },
+      "WorkStoppedView": {
+        "properties": {
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitWorkStop"
+              }
+            ]
+          },
+          "since": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "since",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "WorkerCapacity": {
         "enum": [
           "live_in",
@@ -39863,6 +39943,16 @@
             "example": "2026-11-01",
             "type": "string"
           },
+          "workStopped": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkStoppedView"
+              }
+            ],
+            "description": "Security stopped the work (ADR 0053): its workers are refused at the gate until the management resumes it.",
+            "nullable": true,
+            "type": "object"
+          },
           "workType": {
             "allOf": [
               {
@@ -39890,7 +39980,8 @@
           "contractorCompany",
           "description",
           "workerCount",
-          "workers"
+          "workers",
+          "workStopped"
         ],
         "type": "object"
       },
@@ -47358,6 +47449,55 @@
           }
         ],
         "summary": "Get a permit at the gate",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/unit-permits/{id}/stop-work": {
+      "post": {
+        "description": "A guard on shift, at a gate or in a zone (ADR 0053), with a code from `permitWorkStop`: an approved works permit in force (PERMIT_NOT_ACTIVE otherwise). Its workers are refused at the gate (`work_stopped`) until the management resumes it. The requester, the primary and the permits’ staff are told.",
+        "operationId": "GatePermitsController_stopWork",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopWorkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardWorkStopView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stop the work of a works permit",
         "tags": [
           "permits"
         ],
@@ -68280,6 +68420,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/unit-permits/{id}/resume-work": {
+      "post": {
+        "description": "Its workers come in again. Not stopped: PERMIT_WORK_NOT_STOPPED. The requester and the primary are told.",
+        "operationId": "StaffPermitsController_resumeWork",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Let the stopped work go on",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/unit-permits/{id}/revoke": {
       "post": {
         "description": "From then on the guard refuses it (`revoked`). Not approved, over or used: PERMIT_NOT_ACTIVE. The requester is told.",
@@ -68322,6 +68501,55 @@
           }
         ],
         "summary": "Revoke an approved permit in force, with a reason code",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/stop-work": {
+      "post": {
+        "description": "An approved works permit in force (PERMIT_NOT_ACTIVE otherwise), with a code from `permitWorkStop`. Its workers are refused at the gate (`work_stopped`) until it is resumed, revoked or cancelled. Stopped already: PERMIT_WORK_STOPPED. The requester and the primary are told.",
+        "operationId": "StaffPermitsController_stopWork",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopWorkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stop the work of a works permit",
         "tags": [
           "permits"
         ],

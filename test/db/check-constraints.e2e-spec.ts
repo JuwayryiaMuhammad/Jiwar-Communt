@@ -1424,6 +1424,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'subject_type IS NULL is tested first',
   },
   security_refusals_subject: {},
+  // Stop work (ADR 0053).
+  permit_work_stops_kind: {},
+  permit_work_stops_reason: {},
+  permit_work_stops_end_shape: {
+    guarded:
+      'end_kind and ended_at are compared only once NOT NULL (the IS NULL branches come first)',
+  },
 };
 
 interface Check {

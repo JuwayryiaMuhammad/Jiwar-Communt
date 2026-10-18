@@ -1,12 +1,14 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
-import { createAccountRow, createTenant } from '../setup/fixtures';
+import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
+import { permitRow } from '../setup/permits-rows';
 import {
   blocklistRow,
   lockdownRow,
   matchRow,
   overrideRow,
   refusalRow,
+  workStopRow,
 } from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
@@ -18,6 +20,7 @@ interface Side {
   shiftId: string;
   lockdownId: string;
   entryId: string;
+  unitId: string;
 }
 
 /**
@@ -81,6 +84,20 @@ const TABLES: Table[] = [
     linked: false,
     insert: (tx, own) => refusalRow(tx, { tenantId: own.tenantId }),
   },
+  {
+    table: 'permit_work_stops',
+    // A works permit of its own each time: one live stop per permit.
+    insert: async (tx, own, link) =>
+      workStopRow(tx, {
+        tenantId: own.tenantId,
+        permitId: await permitRow(tx, {
+          tenantId: own.tenantId,
+          unitId: own.unitId,
+          requestedById: own.accountId,
+        }),
+        stoppedById: link.accountId,
+      }),
+  },
 ];
 
 describe('RLS isolation — security tables (ADR 0053)', () => {
@@ -103,6 +120,7 @@ describe('RLS isolation — security tables (ADR 0053)', () => {
       shiftId: '',
       lockdownId: '',
       entryId: '',
+      unitId: (await createUnit(h, tenantId)).id,
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);

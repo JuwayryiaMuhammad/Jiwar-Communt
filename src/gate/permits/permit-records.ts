@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type {
   PermitGuest,
   PermitWorker,
+  PermitWorkStop,
   UnitPermit,
   UnitPermitStatus,
 } from '@prisma/client';
@@ -51,6 +52,8 @@ export interface PermitRecord {
   workers: PermitWorker[];
   /** event: every guest, removed ones too. */
   guests: PermitGuest[];
+  /** works: its live stop of work (ADR 0053), if any. */
+  workStop: PermitWorkStop | null;
   /** Presigned reads of the faces and the material photo, by file id. */
   photos: Map<string, PresignedRead>;
   timeZone: string;
@@ -119,6 +122,11 @@ export class PermitRecords {
           orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         })
       : [];
+    const stops = list.some((p) => p.kind === 'works')
+      ? await tx.permitWorkStop.findMany({
+          where: { permitId: { in: ids }, endedAt: null },
+        })
+      : [];
     const timeZone = await this.core.timeZone(tx);
     const now = await dbNow(tx);
     const photos = new Map<string, PresignedRead>();
@@ -146,6 +154,7 @@ export class PermitRecords {
       },
       workers: workers.filter((w) => w.permitId === permit.id),
       guests: guests.filter((g) => g.permitId === permit.id),
+      workStop: stops.find((w) => w.permitId === permit.id) ?? null,
       photos,
       timeZone,
       now,

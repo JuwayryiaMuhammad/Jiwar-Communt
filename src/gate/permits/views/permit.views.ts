@@ -108,6 +108,23 @@ export class PermitGuestView {
   }
 }
 
+/** Work stopped on a works permit (ADR 0053): since when, and why. */
+export class WorkStoppedView {
+  @ApiProperty({ type: String, format: 'date-time' })
+  since: Date;
+  @ApiProperty({
+    enum: [...REASON_CODES.permitWorkStop],
+    enumName: 'PermitWorkStop',
+  })
+  reasonCode: string;
+}
+
+export function workStoppedOf(r: PermitRecord): WorkStoppedView | null {
+  return r.workStop
+    ? { since: r.workStop.stoppedAt, reasonCode: r.workStop.reasonCode }
+    : null;
+}
+
 export class WorksDetailsView {
   @ApiProperty({
     enum: [...REASON_CODES.permitWorkType],
@@ -145,6 +162,13 @@ export class WorksDetailsView {
     description: 'Every worker, removed ones too, in the order added.',
   })
   workers: PermitWorkerView[];
+  @ApiProperty({
+    type: WorkStoppedView,
+    nullable: true,
+    description:
+      'Security stopped the work (ADR 0053): its workers are refused at the gate until the management resumes it.',
+  })
+  workStopped: WorkStoppedView | null;
 }
 
 export class MoveDetailsView {
@@ -351,6 +375,7 @@ export class PermitBaseView {
               description: p.description,
               workerCount: r.workers.filter((w) => !w.removedAt).length,
               workers: r.workers.map((w) => PermitWorkerView.from(w, r)),
+              workStopped: workStoppedOf(r),
             }
           : null,
       move:
@@ -459,6 +484,27 @@ export class StaffPermitView extends PermitBaseView {
       staffNote: r.permit.staffNote,
       revokeNote: r.permit.revokeNote,
       lockouts,
+    };
+  }
+}
+
+/** A works permit whose work a guard stopped (ADR 0053), as they see it. */
+export class GuardWorkStopView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  permitId: string;
+  @ApiProperty({ type: String, example: 'W-0042' })
+  reference: string;
+  @ApiProperty({ type: String })
+  unitCode: string;
+  @ApiProperty({ type: WorkStoppedView })
+  workStopped: WorkStoppedView;
+
+  static from(r: PermitRecord): GuardWorkStopView {
+    return {
+      permitId: r.permit.id,
+      reference: permitReference(r.permit.kind, r.permit.number),
+      unitCode: r.location.unitCode,
+      workStopped: workStoppedOf(r)!,
     };
   }
 }

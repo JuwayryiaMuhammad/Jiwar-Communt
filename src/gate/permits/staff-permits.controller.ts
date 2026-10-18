@@ -19,16 +19,21 @@ import {
   RevokePermitDto,
   StaffPermitsQueryDto,
   StaffRemoveWorkerDto,
+  StopWorkDto,
 } from './dto/permits.dto';
 import { StaffPermitsService } from './staff-permits.service';
 import { StaffPermitView } from './views/permit.views';
+import { PermitWorkStopsService } from './permit-work-stops.service';
 
 /** The units' permits, the management's side (ADR 0049). */
 @ApiArea('permits')
 @RequirePermissions('permits.manage')
 @Controller('staff/unit-permits')
 export class StaffPermitsController {
-  constructor(private readonly permits: StaffPermitsService) {}
+  constructor(
+    private readonly permits: StaffPermitsService,
+    private readonly stops: PermitWorkStopsService,
+  ) {}
 
   @Get()
   @NoStore()
@@ -103,6 +108,39 @@ export class StaffPermitsController {
     @Body() dto: RevokePermitDto,
   ): Promise<StaffPermitView> {
     return StaffPermitView.from(await this.permits.revoke(id, dto));
+  }
+
+  @Post(':id/stop-work')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Stop the work of a works permit',
+    description:
+      'An approved works permit in force (PERMIT_NOT_ACTIVE otherwise), with a code from `permitWorkStop`. Its workers are refused at the gate (`work_stopped`) until it is resumed, revoked or cancelled. Stopped already: PERMIT_WORK_STOPPED. The requester and the primary are told.',
+  })
+  @ApiOkResponse({ type: StaffPermitView })
+  async stopWork(
+    @Param('id', parseId()) id: string,
+    @Body() dto: StopWorkDto,
+  ): Promise<StaffPermitView> {
+    return StaffPermitView.from(
+      await this.stops.stop(id, dto.reasonCode, 'staff'),
+    );
+  }
+
+  @Post(':id/resume-work')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Let the stopped work go on',
+    description:
+      'Its workers come in again. Not stopped: PERMIT_WORK_NOT_STOPPED. The requester and the primary are told.',
+  })
+  @ApiOkResponse({ type: StaffPermitView })
+  async resumeWork(
+    @Param('id', parseId()) id: string,
+  ): Promise<StaffPermitView> {
+    return StaffPermitView.from(await this.stops.resume(id));
   }
 
   @Post(':id/workers/:workerId/unlock')

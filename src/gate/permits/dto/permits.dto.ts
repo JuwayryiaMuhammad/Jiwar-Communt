@@ -453,6 +453,15 @@ export class RevokePermitDto extends ApprovePermitDto {
   reasonCode: string;
 }
 
+export class StopWorkDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `permitWorkStop`.',
+  })
+  @IsString()
+  reasonCode: string;
+}
+
 export class StaffRemoveWorkerDto {
   @ApiProperty({
     type: String,

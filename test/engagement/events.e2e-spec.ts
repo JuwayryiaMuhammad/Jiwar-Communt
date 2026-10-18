@@ -71,7 +71,7 @@ describe('Community life — events and answers', () => {
         titleEn: 'Garden day',
         place: 'The central garden',
         capacity: 30,
-        counts: { going: 0, notGoing: 0, seats: 0, remaining: 30 },
+        counts: { going: 0, notGoing: 0, seats: 0, children: 0, remaining: 30 },
         myRsvp: null,
       });
       expect(view.attachments!.map((a) => a.contentType)).toEqual([
@@ -176,6 +176,7 @@ describe('Community life — events and answers', () => {
         going: 2,
         notGoing: 0,
         seats: 4,
+        children: 0,
         remaining: 6,
       });
       expect((await mine(s.owner, id)).myRsvp).toEqual({
@@ -188,6 +189,7 @@ describe('Community life — events and answers', () => {
         going: 1,
         notGoing: 1,
         seats: 1,
+        children: 0,
         remaining: 9,
       });
       await e.rsvp(s.owner, id, { response: 'going', guests: 1 }).expect(204);

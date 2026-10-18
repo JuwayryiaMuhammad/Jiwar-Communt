@@ -85,6 +85,23 @@ export class EngagementExportSections implements OnModuleInit {
       })),
     };
 
+    // The children it registered for events (ADR 0054), by first name.
+    const children = await this.tenantTx.withTenantTx((tx) =>
+      this.events.childRegistrationsOf(tx, s.accountId),
+    );
+    yield {
+      path: 'community/event-children.json',
+      json: children.map((c) => ({
+        eventId: c.eventId,
+        titleEn: c.event?.titleEn ?? null,
+        titleAr: c.event?.titleAr ?? null,
+        startsAt: c.event?.startsAt ?? null,
+        memberId: c.memberId,
+        firstName: c.firstName,
+        registeredAt: c.registeredAt,
+      })),
+    };
+
     const votes = await this.tenantTx.withTenantTx((tx) =>
       this.polls.participationOf(tx, s.accountId),
     );

@@ -536,4 +536,6 @@ export const CHILDREN_COVERAGE: readonly string[] = [
   'child_escort.pii_cleared',
   'child_pickup.recorded',
   'child_pickup.purged',
+  'community_event.child_registered',
+  'community_event.child_unregistered',
 ];

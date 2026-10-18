@@ -265,6 +265,34 @@ describe('Audit coverage — children', () => {
     expect(cleared.metadata).toBeNull();
   });
 
+  it('a child registered for an event for children, and taken back: ids only', async () => {
+    const home = await x.unit(s.c, 'A');
+    const primary = await x.owner(s.c, home.id);
+    const kid = await x.minor(primary, home.id, { fullName: CHILD_NAME });
+    const event = await x.e.event(s.manager, {
+      forChildren: true,
+      childAgeMin: 5,
+      childAgeMax: 12,
+    });
+    await x
+      .http('put', `/events/${event}/children/${kid}`, primary.token, {})
+      .expect(204);
+    const on = await rows('community_event.child_registered', event);
+    expect(on).toHaveLength(1);
+    expect(on[0]).toMatchObject({
+      actorType: 'account',
+      actorId: primary.id,
+      targetType: 'community_event',
+    });
+    expect(on[0].metadata).toEqual({ unitId: home.id, memberId: kid });
+    await x
+      .http('delete', `/events/${event}/children/${kid}`, primary.token)
+      .expect(204);
+    const off = await rows('community_event.child_unregistered', event);
+    expect(off).toHaveLength(1);
+    expect(off[0].metadata).toEqual({ unitId: home.id, memberId: kid });
+  });
+
   describe('catalog completeness', () => {
     it('every children entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
@@ -277,9 +305,14 @@ describe('Audit coverage — children', () => {
       }
       expect([...covered].sort()).toEqual([...split.CHILDREN_COVERAGE].sort());
       // And nothing of the domain is left out of the list.
-      expect(all.filter((k) => /^child_[a-z_]+\./.test(k)).sort()).toEqual(
-        [...split.CHILDREN_COVERAGE].sort(),
-      );
+      expect(
+        all
+          .filter(
+            (k) =>
+              /^child_[a-z_]+\./.test(k) || /^community_event\.child_/.test(k),
+          )
+          .sort(),
+      ).toEqual([...split.CHILDREN_COVERAGE].sort());
     });
   });
 });

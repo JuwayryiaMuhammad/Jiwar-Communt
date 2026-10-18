@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 import { CapabilitiesService } from './capabilities/capabilities.service';
+import { HouseholdAuthority } from './households/household-authority';
 import { lockUnits } from './units/unit-lock';
 
 /** Which capacities a piece of community content is put to. */
@@ -76,7 +77,58 @@ const PLACE_TYPES = ['resident', 'family'] as const;
  */
 @Injectable()
 export class CommunityEngagementPort {
-  constructor(private readonly capabilities: CapabilitiesService) {}
+  constructor(
+    private readonly capabilities: CapabilitiesService,
+    private readonly household: HouseholdAuthority,
+  ) {}
+
+  /**
+   * The caller runs the unit's household: its primary or a `household`
+   * delegate (ADR 0016). Registers the unit's children (ADR 0054).
+   */
+  async requireHousehold(tx: TenantTxClient, unitId: string): Promise<void> {
+    await this.household.require(tx, unitId, 'household');
+  }
+
+  /**
+   * One of the unit's active minors, read FOR SHARE (a removal waits for
+   * the registration naming them, ADR 0054): their name and birth date.
+   */
+  async minorOf(
+    tx: TenantTxClient,
+    unitId: string,
+    memberId: string,
+  ): Promise<{ memberId: string; fullName: string; birthDate: Date } | null> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM household_members
+       WHERE id = ${memberId}::uuid AND unit_id = ${unitId}::uuid
+         AND status = 'active' AND is_minor
+         FOR SHARE`;
+    if (!rows.length) return null;
+    const m = await tx.householdMember.findUniqueOrThrow({
+      where: { id: memberId },
+      select: { fullName: true, birthDate: true },
+    });
+    return { memberId, fullName: m.fullName ?? '', birthDate: m.birthDate };
+  }
+
+  /** Members' first names (the household's own views), null once gone. */
+  async memberFirstNames(
+    tx: TenantTxClient,
+    memberIds: readonly string[],
+  ): Promise<Map<string, string | null>> {
+    if (!memberIds.length) return new Map();
+    const rows = await tx.householdMember.findMany({
+      where: { id: { in: [...new Set(memberIds)] } },
+      select: { id: true, fullName: true },
+    });
+    return new Map(
+      rows.map((m) => [
+        m.id,
+        (m.fullName ?? '').trim().split(/\s+/)[0] || null,
+      ]),
+    );
+  }
 
   /** The places the account holds now, by unit. */
   async places(

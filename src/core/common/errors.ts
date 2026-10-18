@@ -941,6 +941,10 @@ export const ErrorCode = {
   CHILD_JUST_PICKED_UP: 'CHILD_JUST_PICKED_UP',
   /** Not an unauthorized pickup of the last 30 days (404). */
   CHILD_ALERT_NOT_FOUND: 'CHILD_ALERT_NOT_FOUND',
+  /** A child may be registered only for an event for children (409). */
+  COMMUNITY_EVENT_NOT_FOR_CHILDREN: 'COMMUNITY_EVENT_NOT_FOR_CHILDREN',
+  /** The child is not of the event's age range, params.min to params.max (409). */
+  COMMUNITY_EVENT_AGE_MISMATCH: 'COMMUNITY_EVENT_AGE_MISMATCH',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

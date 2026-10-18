@@ -92,6 +92,26 @@ export function childrenCalls(
       ).body as { pickupId: string }
     ).pickupId;
   return {
+    'PUT /events/{id}/children/{memberId}': async () => {
+      const ev = await call(world(), 'POST', '/community/events', {
+        token: world().a.tokens.manager,
+        body: {
+          titleEn: 'No-store kids',
+          descriptionEn: 'Games.',
+          place: 'Club',
+          startsAt: new Date(Date.now() + 48 * 3_600_000),
+          endsAt: new Date(Date.now() + 50 * 3_600_000),
+          forChildren: true,
+          childAgeMin: 5,
+          childAgeMax: 10,
+        },
+      });
+      const id = (ev.body as { id: string }).id;
+      return call(world(), 'PUT', `/events/${id}/children/${await aMinor()}`, {
+        token: world().a.tokens.owner,
+        body: { unitId: home() },
+      });
+    },
     'POST /gate/children/verify': async () =>
       guard('/gate/children/verify', { card: (await aCard()).card }),
     'POST /gate/children/exits': async () =>

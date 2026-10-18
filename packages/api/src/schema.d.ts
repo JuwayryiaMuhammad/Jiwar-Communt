@@ -1299,6 +1299,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{id}/children/{memberId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Register one of my children for an event for children
+         * @description The unit’s primary or a household delegate, before the start, for a child of the event’s ages on its start day. A seat, counted with the answers; registering again changes nothing.
+         */
+        put: operations["EventsController_registerChild"];
+        post?: never;
+        /** Take a child's registration back */
+        delete: operations["EventsController_unregisterChild"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{id}/rsvp": {
         parameters: {
             query?: never;
@@ -13432,6 +13453,8 @@ export interface components {
             accountId: string;
             /** Format: date-time */
             answeredAt: string;
+            /** @description The unit's children registered (ADR 0054): never who. */
+            children: number;
             fullName: string | null;
             guests: number;
             response: components["schemas"]["EventRsvpResponse"];
@@ -14435,6 +14458,13 @@ export interface components {
             data: components["schemas"]["ChildPickupView"][];
             nextCursor: string | null;
         };
+        ChildRegistrationDto: {
+            /**
+             * Format: uuid
+             * @description Which of my units the child is of: needed when I have several in the audience.
+             */
+            unitId?: string;
+        };
         ChildVerifyView: {
             child: components["schemas"]["GateChildView"];
             escorts: components["schemas"]["GateEscortView"][];
@@ -15198,6 +15228,10 @@ export interface components {
             audience?: components["schemas"]["AudienceDto"];
             /** @description Seats in all, guests included. Null or absent: no limit. Never below the seats already taken. */
             capacity?: number | null;
+            /** @description With `forChildren`: the oldest, in years on the start day. */
+            childAgeMax?: number;
+            /** @description With `forChildren`: the youngest, in years on the start day. */
+            childAgeMin?: number;
             descriptionAr?: string | null;
             descriptionEn?: string | null;
             /**
@@ -15205,6 +15239,8 @@ export interface components {
              * @description After `startsAt` (ENDS_BEFORE_START).
              */
             endsAt: string;
+            /** @description For children (ADR 0054): the household registers its minors of the age range. Never changes. */
+            forChildren?: boolean;
             /** @description Where, in the staff’s words. */
             place: string;
             /** Format: date-time */
@@ -16629,12 +16665,14 @@ export interface components {
             slaCycle: number;
         };
         EventCountsView: {
+            /** @description Children registered (an event for children). Never who. */
+            children: number;
             /** @description Accounts that said they are going. */
             going: number;
             notGoing: number;
             /** @description Seats left. Null: the event has no limit. */
             remaining: number | null;
-            /** @description Seats taken: those going and their guests. */
+            /** @description Seats taken: those going, their guests and the children registered. */
             seats: number;
         };
         EventCreatedView: {
@@ -16662,13 +16700,19 @@ export interface components {
             cancelledAt: string | null;
             /** @description Seats in all, guests included. Null: no limit. */
             capacity: number | null;
+            childAgeMax: number | null;
+            childAgeMin: number | null;
             counts: components["schemas"]["EventCountsView"];
             descriptionAr: string | null;
             descriptionEn: string | null;
             /** Format: date-time */
             endsAt: string;
+            /** @description For children (ADR 0054): the household registers its minors. */
+            forChildren: boolean;
             /** Format: uuid */
             id: string;
+            /** @description My units' children registered for it. */
+            myChildren: components["schemas"]["MyChildView"][];
             /** @description Null: the caller has not answered. */
             myRsvp: components["schemas"]["MyRsvpView"] | null;
             /** @description Where, in the staff’s words. */
@@ -16700,13 +16744,19 @@ export interface components {
             cancelledAt: string | null;
             /** @description Seats in all, guests included. Null: no limit. */
             capacity: number | null;
+            childAgeMax: number | null;
+            childAgeMin: number | null;
             counts: components["schemas"]["EventCountsView"];
             descriptionAr: string | null;
             descriptionEn: string | null;
             /** Format: date-time */
             endsAt: string;
+            /** @description For children (ADR 0054): the household registers its minors. */
+            forChildren: boolean;
             /** Format: uuid */
             id: string;
+            /** @description My units' children registered for it. */
+            myChildren: components["schemas"]["MyChildView"][];
             /** @description Null: the caller has not answered. */
             myRsvp: components["schemas"]["MyRsvpView"] | null;
             /** @description Where, in the staff’s words. */
@@ -19143,6 +19193,12 @@ export interface components {
             response?: string;
             /** @description A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final. */
             status: components["schemas"]["SuggestionStatus"];
+        };
+        MyChildView: {
+            /** @example Omar */
+            firstName: string | null;
+            /** Format: uuid */
+            memberId: string;
         };
         MyClaimRefView: {
             /** Format: uuid */
@@ -23097,6 +23153,8 @@ export interface components {
             cancelledAt: string | null;
             /** @description Seats in all, guests included. Null: no limit. */
             capacity: number | null;
+            childAgeMax: number | null;
+            childAgeMin: number | null;
             counts: components["schemas"]["EventCountsView"];
             /** Format: date-time */
             createdAt: string;
@@ -23104,6 +23162,8 @@ export interface components {
             descriptionEn: string | null;
             /** Format: date-time */
             endsAt: string;
+            /** @description For children (ADR 0054): the household registers its minors. */
+            forChildren: boolean;
             /** Format: uuid */
             id: string;
             /** @description Where, in the staff’s words. */
@@ -23134,6 +23194,8 @@ export interface components {
             cancelledAt: string | null;
             /** @description Seats in all, guests included. Null: no limit. */
             capacity: number | null;
+            childAgeMax: number | null;
+            childAgeMin: number | null;
             counts: components["schemas"]["EventCountsView"];
             /** Format: date-time */
             createdAt: string;
@@ -23141,6 +23203,8 @@ export interface components {
             descriptionEn: string | null;
             /** Format: date-time */
             endsAt: string;
+            /** @description For children (ADR 0054): the household registers its minors. */
+            forChildren: boolean;
             /** Format: uuid */
             id: string;
             /** @description Where, in the staff’s words. */
@@ -28116,6 +28180,50 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EventView"];
                 };
+            };
+        };
+    };
+    EventsController_registerChild: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChildRegistrationDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EventsController_unregisterChild: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

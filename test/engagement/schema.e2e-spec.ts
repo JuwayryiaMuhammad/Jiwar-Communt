@@ -556,7 +556,7 @@ describe('Community life tables — CHECKs, triggers and privileges', () => {
     });
   });
 
-  it('nothing of the community life is deleted by the app, but an answer, a support, an option and a ballot box', async () => {
+  it('nothing of the community life is deleted by the app, but an answer, a child registration, a support, an option and a ballot box', async () => {
     const deletable: string[] = [];
     for (const table of [
       'engagement_settings',
@@ -568,6 +568,8 @@ describe('Community life tables — CHECKs, triggers and privileges', () => {
       'community_events',
       'event_attachments',
       'event_rsvps',
+      // ADR 0054: taken back before the start, or with the child leaving.
+      'event_child_registrations',
       'polls',
       'poll_options',
       'poll_ballot_boxes',
@@ -587,6 +589,7 @@ describe('Community life tables — CHECKs, triggers and privileges', () => {
     }
     expect(deletable).toEqual([
       'event_rsvps',
+      'event_child_registrations',
       'poll_options',
       'poll_ballot_boxes',
       'suggestion_supports',

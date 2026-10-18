@@ -5,6 +5,7 @@ import { ATTENDANCE_ROUTES } from './attendance';
 import {
   CHILD_CONTROL_ROUTES,
   CHILD_ESCORT_ROUTES,
+  CHILD_EVENT_ROUTES,
   CHILD_GATE_ROUTES,
 } from './children';
 import { CONSENTS_ROUTES } from './consents';
@@ -262,4 +263,5 @@ export const ROUTES: Row[] = [
   ...CHILD_CONTROL_ROUTES,
   ...CHILD_ESCORT_ROUTES,
   ...CHILD_GATE_ROUTES,
+  ...CHILD_EVENT_ROUTES,
 ];

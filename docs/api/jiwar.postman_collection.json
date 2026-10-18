@@ -4928,7 +4928,7 @@
               },
               "raw": "{\n  \"place\": \"\",\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. Never changes. |\n| `capacity` | number |  | Seats in all, guests included. Null or absent: no limit. Never below the seats already taken. |\n| `descriptionAr` | string |  |  |\n| `descriptionEn` | string |  |  |\n| `endsAt` | string (date-time) | yes | After `startsAt` (ENDS_BEFORE_START). |\n| `place` | string | yes | Where, in the staff’s words. |\n| `startsAt` | string (date-time) | yes |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. Never changes. |\n| `capacity` | number |  | Seats in all, guests included. Null or absent: no limit. Never below the seats already taken. |\n| `childAgeMax` | number |  | With `forChildren`: the oldest, in years on the start day. |\n| `childAgeMin` | number |  | With `forChildren`: the youngest, in years on the start day. |\n| `descriptionAr` | string |  |  |\n| `descriptionEn` | string |  |  |\n| `endsAt` | string (date-time) | yes | After `startsAt` (ENDS_BEFORE_START). |\n| `forChildren` | boolean |  | For children (ADR 0054): the household registers its minors of the age range. Never changes. |\n| `place` | string | yes | Where, in the staff’s words. |\n| `startsAt` | string (date-time) | yes |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -5850,6 +5850,89 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register one of my children for an event for children",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `unitId` | string (uuid) |  | Which of my units the child is of: needed when I have several in the audience. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                ":id",
+                "children",
+                ":memberId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/events/:id/children/:memberId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "memberId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a child's registration back",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                ":id",
+                "children",
+                ":memberId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/events/:id/children/:memberId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "memberId",
                   "value": ""
                 }
               ]

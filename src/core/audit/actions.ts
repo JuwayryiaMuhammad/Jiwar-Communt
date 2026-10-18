@@ -1256,6 +1256,15 @@ export const AUDIT_ACTIONS = {
   'child_pickup.recorded': { log: 'tenant', target: 'child_pickup' },
   // The 30-day purge: metadata records (how many), no target.
   'child_pickup.purged': { log: 'tenant', target: 'child_pickup' },
+  // An event for children (ADR 0054): metadata unitId, memberId.
+  'community_event.child_registered': {
+    log: 'tenant',
+    target: 'community_event',
+  },
+  'community_event.child_unregistered': {
+    log: 'tenant',
+    target: 'community_event',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

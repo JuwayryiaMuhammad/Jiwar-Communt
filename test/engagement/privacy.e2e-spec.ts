@@ -104,6 +104,7 @@ describe('Community life — export and erasure', () => {
       const archive = await exportOf(p);
       expect(archive.names.filter((n) => n.startsWith('community/'))).toEqual([
         'community/event-answers.json',
+        'community/event-children.json',
         'community/poll-votes.json',
         'community/suggestion-supports.json',
         'community/suggestions.json',

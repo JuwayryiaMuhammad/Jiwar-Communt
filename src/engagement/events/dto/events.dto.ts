@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDate,
   IsEnum,
   IsIn,
@@ -23,6 +24,7 @@ import { MAX_ATTACHMENTS } from '../../content/attachments';
 import { EVENT_MAX_GUESTS } from '../../settings/engagement-settings.service';
 import { EVENT_STATUSES, type EventStatus } from '../event-rules';
 import {
+  CHILD_AGE,
   EVENT_CAPACITY,
   EVENT_DESCRIPTION_MAX,
   EVENT_PLACE_MAX,
@@ -128,6 +130,38 @@ export class CreateEventDto extends EventTextDto {
   @ValidateNested()
   @Type(() => AudienceDto)
   audience?: AudienceDto;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'For children (ADR 0054): the household registers its minors of the age range. Never changes.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  forChildren?: boolean;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: CHILD_AGE.min,
+    maximum: CHILD_AGE.max,
+    description: 'With `forChildren`: the youngest, in years on the start day.',
+  })
+  @IsOptional()
+  @IsInt()
+  childAgeMin?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: CHILD_AGE.min,
+    maximum: CHILD_AGE.max,
+    description: 'With `forChildren`: the oldest, in years on the start day.',
+  })
+  @IsOptional()
+  @IsInt()
+  childAgeMax?: number;
 }
 
 /** What is absent stays. Only an event that has not started changes. */
@@ -219,4 +253,17 @@ export class AttendeesQueryDto extends PageQueryDto {
     withParams({ allowed: Object.values(EventRsvpResponse) }),
   )
   response?: EventRsvpResponse;
+}
+
+export class ChildRegistrationDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'Which of my units the child is of: needed when I have several in the audience.',
+  })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
 }

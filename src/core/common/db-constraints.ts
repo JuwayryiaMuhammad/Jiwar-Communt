@@ -140,6 +140,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   child_escorts_live_code: null,
   child_escorts_live_qr: null,
   child_pickups_tenant_id_id_key: null,
+  // A child registered once per event (checked first: registering again
+  // is a no-op).
+  event_child_registrations_tenant_id_id_key: null,
+  event_child_registrations_once: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

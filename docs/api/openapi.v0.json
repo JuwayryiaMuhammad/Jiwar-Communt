@@ -1423,6 +1423,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "children": {
+            "description": "The unit's children registered (ADR 0054): never who.",
+            "type": "number"
+          },
           "fullName": {
             "nullable": true,
             "type": "string"
@@ -1453,6 +1457,7 @@
           "unitCode",
           "response",
           "guests",
+          "children",
           "answeredAt"
         ],
         "type": "object"
@@ -4744,6 +4749,16 @@
         ],
         "type": "object"
       },
+      "ChildRegistrationDto": {
+        "properties": {
+          "unitId": {
+            "description": "Which of my units the child is of: needed when I have several in the audience.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ChildVerifyView": {
         "properties": {
           "child": {
@@ -7083,6 +7098,18 @@
             "nullable": true,
             "type": "number"
           },
+          "childAgeMax": {
+            "description": "With `forChildren`: the oldest, in years on the start day.",
+            "maximum": 17,
+            "minimum": 0,
+            "type": "number"
+          },
+          "childAgeMin": {
+            "description": "With `forChildren`: the youngest, in years on the start day.",
+            "maximum": 17,
+            "minimum": 0,
+            "type": "number"
+          },
           "descriptionAr": {
             "maxLength": 5000,
             "minLength": 1,
@@ -7099,6 +7126,10 @@
             "description": "After `startsAt` (ENDS_BEFORE_START).",
             "format": "date-time",
             "type": "string"
+          },
+          "forChildren": {
+            "description": "For children (ADR 0054): the household registers its minors of the age range. Never changes.",
+            "type": "boolean"
           },
           "place": {
             "description": "Where, in the staff’s words.",
@@ -11350,6 +11381,10 @@
       },
       "EventCountsView": {
         "properties": {
+          "children": {
+            "description": "Children registered (an event for children). Never who.",
+            "type": "number"
+          },
           "going": {
             "description": "Accounts that said they are going.",
             "type": "number"
@@ -11363,7 +11398,7 @@
             "type": "number"
           },
           "seats": {
-            "description": "Seats taken: those going and their guests.",
+            "description": "Seats taken: those going, their guests and the children registered.",
             "type": "number"
           }
         },
@@ -11371,6 +11406,7 @@
           "going",
           "notGoing",
           "seats",
+          "children",
           "remaining"
         ],
         "type": "object"
@@ -11444,6 +11480,14 @@
             "nullable": true,
             "type": "number"
           },
+          "childAgeMax": {
+            "nullable": true,
+            "type": "number"
+          },
+          "childAgeMin": {
+            "nullable": true,
+            "type": "number"
+          },
           "counts": {
             "$ref": "#/components/schemas/EventCountsView"
           },
@@ -11459,9 +11503,20 @@
             "format": "date-time",
             "type": "string"
           },
+          "forChildren": {
+            "description": "For children (ADR 0054): the household registers its minors.",
+            "type": "boolean"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
+          },
+          "myChildren": {
+            "description": "My units' children registered for it.",
+            "items": {
+              "$ref": "#/components/schemas/MyChildView"
+            },
+            "type": "array"
           },
           "myRsvp": {
             "allOf": [
@@ -11513,10 +11568,14 @@
           "endsAt",
           "capacity",
           "counts",
+          "forChildren",
+          "childAgeMin",
+          "childAgeMax",
           "cancelledAt",
           "cancelReason",
           "attachmentCount",
-          "myRsvp"
+          "myRsvp",
+          "myChildren"
         ],
         "type": "object"
       },
@@ -11573,6 +11632,14 @@
             "nullable": true,
             "type": "number"
           },
+          "childAgeMax": {
+            "nullable": true,
+            "type": "number"
+          },
+          "childAgeMin": {
+            "nullable": true,
+            "type": "number"
+          },
           "counts": {
             "$ref": "#/components/schemas/EventCountsView"
           },
@@ -11588,9 +11655,20 @@
             "format": "date-time",
             "type": "string"
           },
+          "forChildren": {
+            "description": "For children (ADR 0054): the household registers its minors.",
+            "type": "boolean"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
+          },
+          "myChildren": {
+            "description": "My units' children registered for it.",
+            "items": {
+              "$ref": "#/components/schemas/MyChildView"
+            },
+            "type": "array"
           },
           "myRsvp": {
             "allOf": [
@@ -11642,10 +11720,14 @@
           "endsAt",
           "capacity",
           "counts",
+          "forChildren",
+          "childAgeMin",
+          "childAgeMax",
           "cancelledAt",
           "cancelReason",
           "attachmentCount",
           "myRsvp",
+          "myChildren",
           "attachments"
         ],
         "type": "object"
@@ -19775,6 +19857,24 @@
         },
         "required": [
           "status"
+        ],
+        "type": "object"
+      },
+      "MyChildView": {
+        "properties": {
+          "firstName": {
+            "example": "Omar",
+            "nullable": true,
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId",
+          "firstName"
         ],
         "type": "object"
       },
@@ -32494,6 +32594,14 @@
             "nullable": true,
             "type": "number"
           },
+          "childAgeMax": {
+            "nullable": true,
+            "type": "number"
+          },
+          "childAgeMin": {
+            "nullable": true,
+            "type": "number"
+          },
           "counts": {
             "$ref": "#/components/schemas/EventCountsView"
           },
@@ -32512,6 +32620,10 @@
           "endsAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "forChildren": {
+            "description": "For children (ADR 0054): the household registers its minors.",
+            "type": "boolean"
           },
           "id": {
             "format": "uuid",
@@ -32557,6 +32669,9 @@
           "endsAt",
           "capacity",
           "counts",
+          "forChildren",
+          "childAgeMin",
+          "childAgeMax",
           "cancelledAt",
           "cancelReason",
           "attachmentCount",
@@ -32614,6 +32729,14 @@
             "nullable": true,
             "type": "number"
           },
+          "childAgeMax": {
+            "nullable": true,
+            "type": "number"
+          },
+          "childAgeMin": {
+            "nullable": true,
+            "type": "number"
+          },
           "counts": {
             "$ref": "#/components/schemas/EventCountsView"
           },
@@ -32632,6 +32755,10 @@
           "endsAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "forChildren": {
+            "description": "For children (ADR 0054): the household registers its minors.",
+            "type": "boolean"
           },
           "id": {
             "format": "uuid",
@@ -32677,6 +32804,9 @@
           "endsAt",
           "capacity",
           "counts",
+          "forChildren",
+          "childAgeMin",
+          "childAgeMax",
           "cancelledAt",
           "cancelReason",
           "attachmentCount",
@@ -46520,6 +46650,92 @@
           }
         ],
         "summary": "Get one event put to me",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/events/{id}/children/{memberId}": {
+      "delete": {
+        "operationId": "EventsController_unregisterChild",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a child's registration back",
+        "tags": [
+          "community"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "description": "The unit’s primary or a household delegate, before the start, for a child of the event’s ages on its start day. A seat, counted with the answers; registering again changes nothing.",
+        "operationId": "EventsController_registerChild",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildRegistrationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register one of my children for an event for children",
         "tags": [
           "community"
         ],

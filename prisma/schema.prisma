@@ -3753,6 +3753,10 @@ model CommunityEvent {
   cancelledAt       DateTime?         @map("cancelled_at") @db.Timestamptz(3)
   /// A code from the closed list `communityEventCancel`.
   cancelReason      String?           @map("cancel_reason")
+  /// For children of an age range (ADR 0054): fixed once written.
+  forChildren       Boolean           @default(false) @map("for_children")
+  childAgeMin       Int?              @map("child_age_min")
+  childAgeMax       Int?              @map("child_age_max")
   createdById       String            @map("created_by_account_id") @db.Uuid
   createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -7531,4 +7535,22 @@ model ChildPickup {
   @@index([tenantId, unitId, at, id], map: "child_pickups_unit_idx")
   @@index([tenantId, at], map: "child_pickups_age_idx")
   @@map("child_pickups")
+}
+
+/// A minor registered for an event for children (ADR 0054): a seat. Added
+/// and taken back, never changed.
+model EventChildRegistration {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  eventId        String   @map("event_id") @db.Uuid
+  unitId         String   @map("unit_id") @db.Uuid
+  memberId       String   @map("member_id") @db.Uuid
+  registeredById String   @map("registered_by_account_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, eventId, memberId], map: "event_child_registrations_once")
+  @@index([tenantId, memberId], map: "event_child_registrations_member_idx")
+  @@index([tenantId, registeredById], map: "event_child_registrations_by_idx")
+  @@map("event_child_registrations")
 }

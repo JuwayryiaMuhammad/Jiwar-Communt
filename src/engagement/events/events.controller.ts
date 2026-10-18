@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -28,6 +29,7 @@ import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
   AttendeesQueryDto,
   CancelEventDto,
+  ChildRegistrationDto,
   CreateEventDto,
   RsvpDto,
   StaffEventsQueryDto,
@@ -152,5 +154,35 @@ export class EventsController {
     @Body() dto: RsvpDto,
   ): Promise<void> {
     await this.events.rsvp(id, dto);
+  }
+
+  @Put(':id/children/:memberId')
+  @RequirePermissions('community.read', 'household.manage')
+  @NoStore()
+  @HttpCode(204)
+  @ApiOperation({
+    summary: 'Register one of my children for an event for children',
+    description:
+      'The unit’s primary or a household delegate, before the start, for a child of the event’s ages on its start day. A seat, counted with the answers; registering again changes nothing.',
+  })
+  @ApiNoContentResponse()
+  async registerChild(
+    @Param('id', parseId()) id: string,
+    @Param('memberId', parseId('memberId')) memberId: string,
+    @Body() dto: ChildRegistrationDto,
+  ): Promise<void> {
+    await this.events.registerChild(id, memberId, dto);
+  }
+
+  @Delete(':id/children/:memberId')
+  @RequirePermissions('community.read', 'household.manage')
+  @HttpCode(204)
+  @ApiOperation({ summary: "Take a child's registration back" })
+  @ApiNoContentResponse()
+  async unregisterChild(
+    @Param('id', parseId()) id: string,
+    @Param('memberId', parseId('memberId')) memberId: string,
+  ): Promise<void> {
+    await this.events.unregisterChild(id, memberId);
   }
 }

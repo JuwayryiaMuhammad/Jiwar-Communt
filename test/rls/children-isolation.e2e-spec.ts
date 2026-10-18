@@ -1,3 +1,4 @@
+import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import {
   controlRow,
@@ -6,6 +7,7 @@ import {
   pickupRow,
   unitRow,
 } from '../setup/children-rows';
+import { eventRow } from '../setup/engagement-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
@@ -19,6 +21,7 @@ interface Side {
   controlId: string;
   gateId: string;
   shiftId: string;
+  eventId: string;
   /** Minors with no control yet, one taken per insert that links here. */
   spareMinors: string[];
 }
@@ -80,6 +83,30 @@ const TABLES: Table[] = [
         gateId: link.gateId,
       }),
   },
+  {
+    table: 'event_child_registrations',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.eventChildRegistration.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          eventId: link.eventId,
+          unitId: link.unitId,
+          memberId:
+            own === link
+              ? await minorRow(tx, {
+                  tenantId: own.tenantId,
+                  unitId: own.unitId,
+                  addedById: own.accountId,
+                })
+              : link.spareMinors.pop()!,
+          registeredById: link.accountId,
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — children tables', () => {
@@ -102,11 +129,13 @@ describe('RLS isolation — children tables', () => {
       controlId: '',
       gateId: '',
       shiftId: '',
+      eventId: '',
       spareMinors: [],
     };
     await inTenant(s, async (tx) => {
       s.unitId = await unitRow(tx, tenantId);
       s.gateId = await gateRow(tx, tenantId);
+      s.eventId = await eventRow(tx, { tenantId, createdById: s.accountId });
       s.shiftId = await shiftRow(tx, {
         tenantId,
         guardId: s.accountId,
@@ -122,7 +151,7 @@ describe('RLS isolation — children tables', () => {
         }),
         turnedOnById: s.accountId,
       });
-      for (let i = 0; i < 4; i++)
+      for (let i = 0; i < 8; i++)
         s.spareMinors.push(
           await minorRow(tx, {
             tenantId,

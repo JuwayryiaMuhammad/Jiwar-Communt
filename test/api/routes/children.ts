@@ -294,3 +294,36 @@ export const CHILD_GATE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Children registered for an event for children (ADR 0054). */
+export const CHILD_EVENT_ROUTES: Row[] = [
+  {
+    method: 'PUT',
+    path: '/events/{id}/children/{memberId}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bEventId, memberId: w.bMinorId }),
+      code: 'COMMUNITY_EVENT_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: {
+      body: { unitId: 'x' },
+      fields: [{ field: 'unitId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'DELETE',
+    path: '/events/{id}/children/{memberId}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bEventId, memberId: w.bMinorId }),
+      code: 'COMMUNITY_EVENT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];

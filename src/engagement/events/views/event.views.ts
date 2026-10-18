@@ -32,9 +32,15 @@ export class EventCountsView {
   notGoing: number;
   @ApiProperty({
     type: Number,
-    description: 'Seats taken: those going and their guests.',
+    description:
+      'Seats taken: those going, their guests and the children registered.',
   })
   seats: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Children registered (an event for children). Never who.',
+  })
+  children: number;
   @ApiProperty({
     type: Number,
     nullable: true,
@@ -47,6 +53,7 @@ export class EventCountsView {
       going: c.going,
       notGoing: c.notGoing,
       seats: c.seats,
+      children: c.children,
       remaining: c.remaining,
     };
   }
@@ -103,6 +110,15 @@ class EventBaseView {
   capacity: number | null;
   @ApiProperty({ type: EventCountsView })
   counts: EventCountsView;
+  @ApiProperty({
+    type: Boolean,
+    description: 'For children (ADR 0054): the household registers its minors.',
+  })
+  forChildren: boolean;
+  @ApiProperty({ type: Number, nullable: true })
+  childAgeMin: number | null;
+  @ApiProperty({ type: Number, nullable: true })
+  childAgeMax: number | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   cancelledAt: Date | null;
   @ApiProperty({
@@ -128,11 +144,22 @@ class EventBaseView {
       endsAt: e.endsAt,
       capacity: e.capacity,
       counts: EventCountsView.from(r.counts),
+      forChildren: e.forChildren,
+      childAgeMin: e.childAgeMin,
+      childAgeMax: e.childAgeMax,
       cancelledAt: e.cancelledAt,
       cancelReason: e.cancelReason,
       attachmentCount: e.attachmentIds.length,
     };
   }
+}
+
+/** A child of mine registered for an event (ADR 0054). */
+export class MyChildView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  memberId: string;
+  @ApiProperty({ type: String, nullable: true, example: 'Omar' })
+  firstName: string | null;
 }
 
 /** An event as a resident sees it: how full it is, and their own answer. */
@@ -143,9 +170,18 @@ export class EventListItemView extends EventBaseView {
     description: 'Null: the caller has not answered.',
   })
   myRsvp: MyRsvpView | null;
+  @ApiProperty({
+    type: [MyChildView],
+    description: "My units' children registered for it.",
+  })
+  myChildren: MyChildView[];
 
   static from(r: EventRead): EventListItemView {
-    return { ...EventBaseView.base(r), myRsvp: MyRsvpView.from(r.mine) };
+    return {
+      ...EventBaseView.base(r),
+      myRsvp: MyRsvpView.from(r.mine),
+      myChildren: r.myChildren,
+    };
   }
 }
 
@@ -207,6 +243,11 @@ export class AttendeeView {
   response: EventRsvpResponse;
   @ApiProperty({ type: Number })
   guests: number;
+  @ApiProperty({
+    type: Number,
+    description: "The unit's children registered (ADR 0054): never who.",
+  })
+  children: number;
   @ApiProperty({ type: String, format: 'date-time' })
   answeredAt: Date;
 
@@ -218,6 +259,7 @@ export class AttendeeView {
       unitCode: a.unitCode,
       response: a.rsvp.response,
       guests: a.rsvp.guests,
+      children: a.children,
       answeredAt: a.rsvp.updatedAt,
     };
   }

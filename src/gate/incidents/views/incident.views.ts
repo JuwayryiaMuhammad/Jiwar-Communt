@@ -144,6 +144,14 @@ export class IncidentAcknowledgementView {
   at: Date;
 }
 
+/** Who may investigate an incident (ADR 0053): an active keeper. */
+export class IncidentInvestigatorView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, nullable: true })
+  fullName: string | null;
+}
+
 /**
  * An incident as the management keeps it (`incidents.manage`): everything
  * the author sees, and who reported it, where they were on shift, the

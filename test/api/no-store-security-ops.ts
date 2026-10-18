@@ -175,6 +175,8 @@ export function securityOpsCalls(
         occurredAt: new Date().toISOString(),
         description: 'No-store office incident',
       }),
+    'GET /staff/security/incidents/investigators': () =>
+      manager('GET', '/staff/security/incidents/investigators'),
     'GET /staff/security/incidents': () =>
       manager('GET', '/staff/security/incidents'),
     'GET /staff/security/incidents/{id}': async () =>

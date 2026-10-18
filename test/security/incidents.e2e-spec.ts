@@ -341,4 +341,18 @@ describe('Incidents', () => {
       role: 'author',
     }).expect(200);
   });
+  it('who may investigate: the active keepers by name; never asked by a guard', async () => {
+    const res = await x
+      .http('get', '/staff/security/incidents/investigators', s.manager.token)
+      .expect(200);
+    expect(res.headers['cache-control']).toBe('no-store');
+    const ids = (
+      res.body as { data: { id: string; fullName: string | null }[] }
+    ).data.map((a) => a.id);
+    expect(ids).toEqual(expect.arrayContaining([s.manager.id, supervisor.id]));
+    expect(ids).not.toContain(guard.id);
+    await x
+      .http('get', '/staff/security/incidents/investigators', guard.token)
+      .expect(403);
+  });
 });

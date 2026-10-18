@@ -406,6 +406,16 @@ export const INCIDENT_ROUTES: Row[] = [
   },
   {
     method: 'GET',
+    path: '/staff/security/incidents/investigators',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
     path: '/staff/security/incidents',
     auth: 'tenant',
     as: 'manager',

@@ -15,7 +15,12 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
-import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
+import {
+  bounded,
+  ListOf,
+  toList,
+  type ListResponse,
+} from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
@@ -27,7 +32,10 @@ import {
   StaffIncidentsQueryDto,
 } from './dto/incidents.dto';
 import { IncidentsService } from './incidents.service';
-import { StaffIncidentView } from './views/incident.views';
+import {
+  IncidentInvestigatorView,
+  StaffIncidentView,
+} from './views/incident.views';
 
 /** Incidents, the management's side (ADR 0053): `incidents.manage`. */
 @ApiArea('incidents')
@@ -62,6 +70,17 @@ export class StaffIncidentsController {
     return toList(await this.incidents.list(q), (r) =>
       StaffIncidentView.from(r),
     );
+  }
+
+  @Get('investigators')
+  @NoStore()
+  @ApiOperation({
+    summary: 'List who may investigate an incident',
+    description: 'Active accounts holding `incidents.manage`, by name.',
+  })
+  @ApiOkResponse({ type: ListOf(IncidentInvestigatorView) })
+  async investigators(): Promise<ListResponse<IncidentInvestigatorView>> {
+    return bounded(await this.incidents.investigators(), (a) => a);
   }
 
   @Get(':id')

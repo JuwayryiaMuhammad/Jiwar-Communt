@@ -14893,6 +14893,28 @@
           }
         },
         {
+          "name": "List who may investigate an incident",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                "investigators"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/investigators"
+            }
+          }
+        },
+        {
           "name": "Get an incident",
           "request": {
             "description": "**Responses:** 200",

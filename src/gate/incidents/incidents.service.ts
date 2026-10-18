@@ -342,6 +342,21 @@ export class IncidentsService implements OnModuleInit {
     });
   }
 
+  /** Who may be assigned: the active holders of `incidents.manage`, by name. */
+  investigators(): Promise<{ id: string; fullName: string | null }[]> {
+    return this.tenantTx.withTenantTx((tx) =>
+      tx.account.findMany({
+        where: {
+          status: 'active',
+          role: { permissions: { some: { permission: 'incidents.manage' } } },
+        },
+        select: { id: true, fullName: true },
+        orderBy: [{ fullName: 'asc' }, { id: 'asc' }],
+        take: 200,
+      }),
+    );
+  }
+
   /** An investigator: an active holder of `incidents.manage`. */
   assign(id: string, investigatorId: string): Promise<IncidentRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {

@@ -9088,6 +9088,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/incidents/investigators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List who may investigate an incident
+         * @description Active accounts holding `incidents.manage`, by name.
+         */
+        get: operations["StaffIncidentsController_investigators"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/incidents/{id}": {
         parameters: {
             query?: never;
@@ -17588,6 +17608,15 @@ export interface components {
             at: string;
             /** @enum {string} */
             role: "author" | "reviewer";
+        };
+        IncidentInvestigatorView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        IncidentInvestigatorViewList: {
+            data: components["schemas"]["IncidentInvestigatorView"][];
+            nextCursor: string | null;
         };
         IncidentLinksView: {
             /** Format: uuid */
@@ -39178,6 +39207,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentsController_investigators: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentInvestigatorViewList"];
                 };
             };
         };

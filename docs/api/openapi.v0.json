@@ -15997,6 +15997,42 @@
         ],
         "type": "object"
       },
+      "IncidentInvestigatorView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "IncidentInvestigatorViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentInvestigatorView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "IncidentLinksView": {
         "properties": {
           "emergencyId": {
@@ -68064,6 +68100,36 @@
           }
         ],
         "summary": "Report an incident from the office",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/investigators": {
+      "get": {
+        "description": "Active accounts holding `incidents.manage`, by name.",
+        "operationId": "StaffIncidentsController_investigators",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentInvestigatorViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List who may investigate an incident",
         "tags": [
           "incidents"
         ],

@@ -15,6 +15,7 @@ import {
   isPrimary,
 } from './households/household-authority';
 import { CommunityEngagementPort } from './engagement-port';
+import { ReviewFlags } from './units/review-flags';
 import { lockUnits } from './units/unit-lock';
 import { WorkersAuthority } from './workers/workers-authority';
 import {
@@ -40,6 +41,14 @@ export interface GateEngagement {
   suspendedByManagement: boolean;
   /** The worker's photo file (ADR 0029): the guard compares the face. */
   photoFileId: string | null;
+}
+
+/** One of a unit's minors (ADR 0054): a membership without an account. */
+export interface UnitMinor {
+  memberId: string;
+  unitId: string;
+  fullName: string;
+  birthDate: Date;
 }
 
 /** Someone who lives in a unit, and as what (ADR 0047). */
@@ -68,6 +77,7 @@ export class CommunityGatePort {
     private readonly hasher: IdentifierHasher,
     private readonly workers: WorkersAuthority,
     private readonly engagement: CommunityEngagementPort,
+    private readonly flags: ReviewFlags,
   ) {}
 
   /**
@@ -81,6 +91,70 @@ export class CommunityGatePort {
       occupancy: 'everyone',
     });
     return [...new Set(places.map((p) => p.accountId))].sort();
+  }
+
+  /**
+   * The unit's active minors (ADR 0054), oldest first. Whether one has come
+   * of age by the compound's day is the caller's to judge (`birthDate`).
+   */
+  async minors(tx: TenantTxClient, unitId: string): Promise<UnitMinor[]> {
+    const rows = await tx.householdMember.findMany({
+      where: { unitId, status: 'active', isMinor: true },
+      select: { id: true, unitId: true, fullName: true, birthDate: true },
+      orderBy: [{ birthDate: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(toMinor);
+  }
+
+  /**
+   * One of the unit's active minors, read FOR SHARE: a removal or a coming
+   * of age waits for the write naming them (ADR 0054). Null otherwise.
+   */
+  async minorOf(
+    tx: TenantTxClient,
+    unitId: string,
+    memberId: string,
+  ): Promise<UnitMinor | null> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM household_members
+       WHERE id = ${memberId}::uuid AND unit_id = ${unitId}::uuid
+         AND status = 'active' AND is_minor
+         FOR SHARE`;
+    if (!rows.length) return null;
+    const m = await tx.householdMember.findUniqueOrThrow({
+      where: { id: memberId },
+      select: { id: true, unitId: true, fullName: true, birthDate: true },
+    });
+    return toMinor(m);
+  }
+
+  /** Members by id, as minors of their unit, whatever their status now. */
+  async minorsById(
+    tx: TenantTxClient,
+    memberIds: readonly string[],
+  ): Promise<Map<string, UnitMinor & { active: boolean }>> {
+    if (!memberIds.length) return new Map();
+    const rows = await tx.householdMember.findMany({
+      where: { id: { in: [...new Set(memberIds)] }, isMinor: true },
+      select: {
+        id: true,
+        unitId: true,
+        fullName: true,
+        birthDate: true,
+        status: true,
+      },
+    });
+    return new Map(
+      rows.map((m) => [m.id, { ...toMinor(m), active: m.status === 'active' }]),
+    );
+  }
+
+  /**
+   * Refused under a death review (403 HOUSEHOLD_UNDER_REVIEW, ADR 0021):
+   * what adds to the household's arrangements waits for the management.
+   */
+  assertHouseholdMutable(tx: TenantTxClient, unitId: string): Promise<void> {
+    return this.flags.assertMutable(tx, unitId);
   }
 
   /**
@@ -340,9 +414,15 @@ export class CommunityGatePort {
     return row?.accountId ?? null;
   }
 
-  /** The caller runs the unit's household: its primary or a `household` delegate. */
-  async requireHousehold(tx: TenantTxClient, unitId: string): Promise<void> {
-    await this.household.require(tx, unitId, 'household');
+  /**
+   * The caller runs the unit's household: its primary or a `household`
+   * delegate. `onBehalfOf` is the primary a delegate acts for (ADR 0016).
+   */
+  async requireHousehold(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<{ accountId: string; onBehalfOf: string | null }> {
+    return this.household.require(tx, unitId, 'household');
   }
 
   /** Serializes what hangs off a unit (the pass cap) for this transaction. */
@@ -365,6 +445,21 @@ export class CommunityGatePort {
   ): boolean {
     return isWithinSchedule(schedule, instant, timeZone);
   }
+}
+
+function toMinor(m: {
+  id: string;
+  unitId: string;
+  fullName: string | null;
+  birthDate: Date;
+}): UnitMinor {
+  // A minor's membership always carries the name (household_members CHECK).
+  return {
+    memberId: m.id,
+    unitId: m.unitId,
+    fullName: m.fullName ?? '',
+    birthDate: m.birthDate,
+  };
 }
 
 function toGate(e: {

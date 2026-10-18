@@ -13,6 +13,7 @@ export {
   CommunityGatePort,
   type CapabilityFlag,
   type GateEngagement,
+  type UnitMinor,
   type GateSchedule,
 } from './gate-port';
 export { CommunityMaintenancePortModule } from './maintenance-port.module';

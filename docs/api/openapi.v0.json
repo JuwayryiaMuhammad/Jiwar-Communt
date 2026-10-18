@@ -4093,6 +4093,173 @@
         ],
         "type": "object"
       },
+      "ChildCardView": {
+        "properties": {
+          "compoundName": {
+            "type": "string"
+          },
+          "firstName": {
+            "example": "Omar",
+            "type": "string"
+          },
+          "qrPayload": {
+            "description": "For the QR: `JWC1.<token>`. Shown once; a reissue prints a new one and the old card stops scanning.",
+            "example": "JWC1.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek",
+            "type": "string"
+          },
+          "unitCode": {
+            "example": "A-101",
+            "type": "string"
+          }
+        },
+        "required": [
+          "qrPayload",
+          "firstName",
+          "unitCode",
+          "compoundName"
+        ],
+        "type": "object"
+      },
+      "ChildControlSecretView": {
+        "properties": {
+          "card": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildCardView"
+              }
+            ],
+            "description": "The card, once. Null only on a replay (same `Idempotency-Key`) after the control has ended.",
+            "nullable": true,
+            "type": "object"
+          },
+          "cardIssuedAt": {
+            "description": "When the card was printed last: an older card no longer scans.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mayLeaveAlone": {
+            "description": "Whether the child may leave the compound alone: otherwise a guard holds them and the household is alerted.",
+            "type": "boolean"
+          },
+          "notifyPickups": {
+            "description": "Whether the household is told of each exit (`child.picked_up`). Alerts are sent whatever this says.",
+            "type": "boolean"
+          },
+          "photoUrl": {
+            "description": "A presigned URL of the child's photo (minutes), or null: the guard asks the escort when there is none.",
+            "nullable": true,
+            "type": "string"
+          },
+          "turnedOnAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mayLeaveAlone",
+          "notifyPickups",
+          "cardIssuedAt",
+          "photoUrl",
+          "turnedOnAt",
+          "card"
+        ],
+        "type": "object"
+      },
+      "ChildControlView": {
+        "properties": {
+          "cardIssuedAt": {
+            "description": "When the card was printed last: an older card no longer scans.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mayLeaveAlone": {
+            "description": "Whether the child may leave the compound alone: otherwise a guard holds them and the household is alerted.",
+            "type": "boolean"
+          },
+          "notifyPickups": {
+            "description": "Whether the household is told of each exit (`child.picked_up`). Alerts are sent whatever this says.",
+            "type": "boolean"
+          },
+          "photoUrl": {
+            "description": "A presigned URL of the child's photo (minutes), or null: the guard asks the escort when there is none.",
+            "nullable": true,
+            "type": "string"
+          },
+          "turnedOnAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mayLeaveAlone",
+          "notifyPickups",
+          "cardIssuedAt",
+          "photoUrl",
+          "turnedOnAt"
+        ],
+        "type": "object"
+      },
+      "ChildPhotoDto": {
+        "properties": {
+          "fileId": {
+            "description": "One of your finalized `child_photo` files.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
+      "ChildView": {
+        "properties": {
+          "age": {
+            "description": "Years, on the compound's day.",
+            "example": 9,
+            "type": "number"
+          },
+          "control": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildControlView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "firstName": {
+            "example": "Omar",
+            "type": "string"
+          },
+          "fullName": {
+            "example": "Omar Ahmed Hassan",
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId",
+          "firstName",
+          "fullName",
+          "age",
+          "control"
+        ],
+        "type": "object"
+      },
       "ClaimCreatedView": {
         "properties": {
           "createdAt": {
@@ -11664,7 +11831,9 @@
           "incident_photo",
           "blocklist_photo",
           "violation_photo",
-          "violation_appeal_photo"
+          "violation_appeal_photo",
+          "child_photo",
+          "child_escort_photo"
         ],
         "type": "string"
       },
@@ -37797,6 +37966,23 @@
         ],
         "type": "object"
       },
+      "TurnOnChildControlDto": {
+        "properties": {
+          "mayLeaveAlone": {
+            "description": "Whether the child may leave the compound alone.",
+            "type": "boolean"
+          },
+          "notifyPickups": {
+            "description": "Whether the household is told of each exit.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mayLeaveAlone",
+          "notifyPickups"
+        ],
+        "type": "object"
+      },
       "UnitComplaintHistoryView": {
         "properties": {
           "history": {
@@ -38664,6 +38850,17 @@
             "description": "Null removes the position; absent leaves it.",
             "nullable": true,
             "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateChildControlDto": {
+        "properties": {
+          "mayLeaveAlone": {
+            "type": "boolean"
+          },
+          "notifyPickups": {
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -75735,6 +75932,348 @@
           "bookings"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children": {
+      "get": {
+        "description": "For the people who live in the unit. Each minor under 18, with their control when it is on (never the card).",
+        "operationId": "ChildControlsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChildView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit's children and their exit control",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/{memberId}/control": {
+      "patch": {
+        "operationId": "ChildControlsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChildControlDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildControlView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a child's exit control",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "The unit's primary or a household delegate. Answers the child's card once: print it. A retry with the same `Idempotency-Key` prints a new one.",
+        "operationId": "ChildControlsController_turnOn",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnOnChildControlDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildControlSecretView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn on a child's exit control",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/{memberId}/control/card": {
+      "post": {
+        "description": "A lost card: a new one, once. The old card stops scanning at once.",
+        "operationId": "ChildControlsController_reissueCard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildControlSecretView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reissue a child's card",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/{memberId}/control/off": {
+      "post": {
+        "description": "At once: the card stops scanning, the photo is deleted and every escort is revoked.",
+        "operationId": "ChildControlsController_turnOff",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn off a child's exit control",
+        "tags": [
+          "children"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/{memberId}/control/photo": {
+      "delete": {
+        "operationId": "ChildControlsController_removePhoto",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a child's photo",
+        "tags": [
+          "children"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "description": "Shown to the household and to a guard checking the child at the gate; deleted when the control ends.",
+        "operationId": "ChildControlsController_setPhoto",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildPhotoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set or replace a child's photo",
+        "tags": [
+          "children"
+        ],
         "x-stability": "draft"
       }
     },

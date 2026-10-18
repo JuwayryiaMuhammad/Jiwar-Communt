@@ -49,6 +49,8 @@ export const FILES_ROUTES: Row[] = [
               'blocklist_photo',
               'violation_photo',
               'violation_appeal_photo',
+              'child_photo',
+              'child_escort_photo',
             ],
           },
         },

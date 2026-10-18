@@ -911,6 +911,13 @@ export const ErrorCode = {
   VIOLATION_NOT_PAYABLE: 'VIOLATION_NOT_PAYABLE',
   /** That payment was reversed already (409). */
   VIOLATION_PAYMENT_ALREADY_REVERSED: 'VIOLATION_PAYMENT_ALREADY_REVERSED',
+  // children (ADR 0054)
+  /** Not one of the unit's minors (404): unknown, removed or of age. */
+  CHILD_NOT_FOUND: 'CHILD_NOT_FOUND',
+  /** The child's exit control is on already (409). */
+  CHILD_CONTROL_ACTIVE: 'CHILD_CONTROL_ACTIVE',
+  /** The child's exit control is not on (404). */
+  CHILD_CONTROL_NOT_FOUND: 'CHILD_CONTROL_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

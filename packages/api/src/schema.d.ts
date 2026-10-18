@@ -11680,6 +11680,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unit's children and their exit control
+         * @description For the people who live in the unit. Each minor under 18, with their control when it is on (never the card).
+         */
+        get: operations["ChildControlsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/children/{memberId}/control": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn on a child's exit control
+         * @description The unit's primary or a household delegate. Answers the child's card once: print it. A retry with the same `Idempotency-Key` prints a new one.
+         */
+        post: operations["ChildControlsController_turnOn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a child's exit control */
+        patch: operations["ChildControlsController_update"];
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/children/{memberId}/control/card": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reissue a child's card
+         * @description A lost card: a new one, once. The old card stops scanning at once.
+         */
+        post: operations["ChildControlsController_reissueCard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/children/{memberId}/control/off": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn off a child's exit control
+         * @description At once: the card stops scanning, the photo is deleted and every escort is revoked.
+         */
+        post: operations["ChildControlsController_turnOff"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/children/{memberId}/control/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set or replace a child's photo
+         * @description Shown to the household and to a guard checking the child at the gate; deleted when the control ends.
+         */
+        put: operations["ChildControlsController_setPhoto"];
+        post?: never;
+        /** Remove a child's photo */
+        delete: operations["ChildControlsController_removePhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/club-membership": {
         parameters: {
             query?: never;
@@ -13928,6 +14030,75 @@ export interface components {
         CheckpointViewList: {
             data: components["schemas"]["CheckpointView"][];
             nextCursor: string | null;
+        };
+        ChildCardView: {
+            compoundName: string;
+            /** @example Omar */
+            firstName: string;
+            /**
+             * @description For the QR: `JWC1.<token>`. Shown once; a reissue prints a new one and the old card stops scanning.
+             * @example JWC1.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek
+             */
+            qrPayload: string;
+            /** @example A-101 */
+            unitCode: string;
+        };
+        ChildControlSecretView: {
+            /** @description The card, once. Null only on a replay (same `Idempotency-Key`) after the control has ended. */
+            card: components["schemas"]["ChildCardView"] | null;
+            /**
+             * Format: date-time
+             * @description When the card was printed last: an older card no longer scans.
+             */
+            cardIssuedAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Whether the child may leave the compound alone: otherwise a guard holds them and the household is alerted. */
+            mayLeaveAlone: boolean;
+            /** @description Whether the household is told of each exit (`child.picked_up`). Alerts are sent whatever this says. */
+            notifyPickups: boolean;
+            /** @description A presigned URL of the child's photo (minutes), or null: the guard asks the escort when there is none. */
+            photoUrl: string | null;
+            /** Format: date-time */
+            turnedOnAt: string;
+        };
+        ChildControlView: {
+            /**
+             * Format: date-time
+             * @description When the card was printed last: an older card no longer scans.
+             */
+            cardIssuedAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Whether the child may leave the compound alone: otherwise a guard holds them and the household is alerted. */
+            mayLeaveAlone: boolean;
+            /** @description Whether the household is told of each exit (`child.picked_up`). Alerts are sent whatever this says. */
+            notifyPickups: boolean;
+            /** @description A presigned URL of the child's photo (minutes), or null: the guard asks the escort when there is none. */
+            photoUrl: string | null;
+            /** Format: date-time */
+            turnedOnAt: string;
+        };
+        ChildPhotoDto: {
+            /**
+             * Format: uuid
+             * @description One of your finalized `child_photo` files.
+             */
+            fileId: string;
+        };
+        ChildView: {
+            /**
+             * @description Years, on the compound's day.
+             * @example 9
+             */
+            age: number;
+            control: components["schemas"]["ChildControlView"] | null;
+            /** @example Omar */
+            firstName: string;
+            /** @example Omar Ahmed Hassan */
+            fullName: string;
+            /** Format: uuid */
+            memberId: string;
         };
         ClaimCreatedView: {
             /** Format: date-time */
@@ -16417,7 +16588,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -24224,6 +24395,12 @@ export interface components {
              */
             toAccountId: string;
         };
+        TurnOnChildControlDto: {
+            /** @description Whether the child may leave the compound alone. */
+            mayLeaveAlone: boolean;
+            /** @description Whether the household is told of each exit. */
+            notifyPickups: boolean;
+        };
         UnitComplaintHistoryView: {
             history: components["schemas"]["ComplaintUnitHistoryView"];
             unit: components["schemas"]["ComplaintUnitRefView"];
@@ -24471,6 +24648,10 @@ export interface components {
             nameEn?: string;
             /** @description Null removes the position; absent leaves it. */
             position?: components["schemas"]["CheckpointPositionDto"] | null;
+        };
+        UpdateChildControlDto: {
+            mayLeaveAlone?: boolean;
+            notifyPickups?: boolean;
         };
         UpdateClubPlanDto: {
             /** @description False retires the plan. */
@@ -42994,6 +43175,171 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["BookingView"];
                 };
+            };
+        };
+    };
+    ChildControlsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildView"][];
+                };
+            };
+        };
+    };
+    ChildControlsController_turnOn: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TurnOnChildControlDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildControlSecretView"];
+                };
+            };
+        };
+    };
+    ChildControlsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateChildControlDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildControlView"];
+                };
+            };
+        };
+    };
+    ChildControlsController_reissueCard: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildControlSecretView"];
+                };
+            };
+        };
+    };
+    ChildControlsController_turnOff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ChildControlsController_setPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChildPhotoDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ChildControlsController_removePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

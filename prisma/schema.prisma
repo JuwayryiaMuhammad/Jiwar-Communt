@@ -2209,6 +2209,10 @@ enum FilePurpose {
   violation_photo
   /// A resident's photo backing a violation's appeal (ADR 0053).
   violation_appeal_photo
+  /// A child's photo under exit control (ADR 0054), the household's.
+  child_photo
+  /// An outside escort's photo (ADR 0054), the household's.
+  child_escort_photo
 
   @@map("file_purpose")
 }
@@ -7382,4 +7386,35 @@ model UnitViolationPayment {
   @@unique([tenantId, id])
   @@index([tenantId, violationId, createdAt, id], map: "unit_violation_payments_violation_idx")
   @@map("unit_violation_payments")
+}
+
+/// A child's exit control (ADR 0054): one period, from its turn-on by the
+/// unit's primary or a household delegate to its end, once. The card (only
+/// its SHA-256 is kept) and the photo exist exactly while it is live. Names
+/// "this minor of this unit"; `memberIsMinor` follows the member row (ON
+/// UPDATE CASCADE), and a live control on an adult is refused. Never deleted.
+model ChildControl {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  unitId             String    @map("unit_id") @db.Uuid
+  memberId           String    @map("member_id") @db.Uuid
+  memberIsMinor      Boolean   @default(true) @map("member_is_minor")
+  mayLeaveAlone      Boolean   @map("may_leave_alone")
+  notifyPickups      Boolean   @map("notify_pickups")
+  cardTokenHash      String?   @map("card_token_hash") @db.Char(64)
+  cardIssuedAt       DateTime? @map("card_issued_at") @db.Timestamptz(3)
+  photoFileId        String?   @map("photo_file_id") @db.Uuid
+  turnedOnById       String    @map("turned_on_by_account_id") @db.Uuid
+  turnedOnAt         DateTime  @map("turned_on_at") @db.Timestamptz(3)
+  endedAt            DateTime? @map("ended_at") @db.Timestamptz(3)
+  /// household | left_household | came_of_age
+  endReason          String?   @map("end_reason")
+  endedById          String?   @map("ended_by_account_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, id, unitId])
+  @@index([tenantId, unitId], map: "child_controls_unit_idx")
+  @@map("child_controls")
 }

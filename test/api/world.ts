@@ -69,6 +69,7 @@ import { communityHelpers, type Compound } from '../setup/community';
 import { guardDutyWorld, type GuardDutyWorld } from './world-guard-duty';
 import { patrolsWorld, type PatrolsWorld } from './world-patrols';
 import { securityOpsWorld, type SecurityOpsWorld } from './world-security-ops';
+import { childrenWorld, type ChildrenWorld } from './world-children';
 import { fileHelpers } from '../setup/files';
 import { parcelHelpers } from '../setup/parcels';
 import { gateHelpers } from '../setup/gate';
@@ -124,7 +125,8 @@ export interface Side extends Compound {
   shiftId: string;
 }
 
-export interface World extends GuardDutyWorld, PatrolsWorld, SecurityOpsWorld {
+export interface World
+  extends GuardDutyWorld, PatrolsWorld, SecurityOpsWorld, ChildrenWorld {
   h: HttpHarness;
   helpers: ReturnType<typeof communityHelpers>;
   /** The compound the requests act in. */
@@ -1099,10 +1101,12 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const guardDuty = await guardDutyWorld(h, helpers, b);
   const patrols = await patrolsWorld(h, helpers, b);
   const securityOps = await securityOpsWorld(h, helpers, b);
+  const children = await childrenWorld(h, helpers, b);
   return {
     ...guardDuty,
     ...patrols,
     ...securityOps,
+    ...children,
     bInvoiceBatchId: bFinance.batchId,
     bInvoiceId: bFinance.invoiceId,
     bParkingReportId: bParkingReport.id,

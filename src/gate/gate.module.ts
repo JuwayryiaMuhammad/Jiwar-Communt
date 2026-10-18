@@ -224,11 +224,14 @@ import {
   StaffRosterController,
 } from './roster/roster.controller';
 import { RosterService } from './roster/roster.service';
+import { ChildControlsController } from './children/child-controls.controller';
+import { ChildControlsService } from './children/child-controls.service';
+import { ChildCore } from './children/child-core';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
  * vehicles and parking (ADR 0045), emergencies and gate services
- * (ADR 0047), and a unit's permits and contractors (ADR 0049). It imports core freely and the community
+ * (ADR 0047), a unit's permits and contractors (ADR 0049), and the children's exit control (ADR 0054). It imports core freely and the community
  * domain only through src/community/index.ts (ADR 0015).
  */
 @Module({
@@ -312,6 +315,7 @@ import { RosterService } from './roster/roster.service';
     GuardPatrolsController,
     StaffRunsController,
     PatrolReportController,
+    ChildControlsController,
   ],
   providers: [
     GatesService,
@@ -424,6 +428,8 @@ import { RosterService } from './roster/roster.service';
     PatrolSweeps,
     PatrolLifecycle,
     PatrolExportSections,
+    ChildCore,
+    ChildControlsService,
   ],
 })
 export class GateModule {}

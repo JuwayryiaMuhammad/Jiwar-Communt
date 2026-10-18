@@ -124,7 +124,9 @@ export async function dutyFileRow(
     | 'incident_photo'
     | 'blocklist_photo'
     | 'violation_photo'
-    | 'violation_appeal_photo' = 'guard_task_photo',
+    | 'violation_appeal_photo'
+    | 'child_photo'
+    | 'child_escort_photo' = 'guard_task_photo',
 ): Promise<string> {
   const id = newId();
   const now = new Date();

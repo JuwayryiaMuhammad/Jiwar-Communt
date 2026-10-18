@@ -2,6 +2,7 @@ import type { Row } from '../registry';
 import { APPROVALS_ROUTES } from './approvals';
 import { ASSIST_ROUTES } from './assist';
 import { ATTENDANCE_ROUTES } from './attendance';
+import { CHILD_CONTROL_ROUTES } from './children';
 import { CONSENTS_ROUTES } from './consents';
 import { ACCOUNTS_ROUTES } from './accounts';
 import { ADMIN_ROUTES } from './admin';
@@ -254,4 +255,5 @@ export const ROUTES: Row[] = [
   ...GUARD_PATROL_ROUTES,
   ...STAFF_RUN_ROUTES,
   ...PATROL_REPORT_ROUTES,
+  ...CHILD_CONTROL_ROUTES,
 ];

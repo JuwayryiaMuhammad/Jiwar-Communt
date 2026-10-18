@@ -22,7 +22,7 @@ import { VisitsService } from '../../src/maintenance/visits/visits.service';
 import { gateHelpers } from '../setup/gate';
 import { parcelHelpers } from '../setup/parcels';
 import { fileHelpers } from '../setup/files';
-import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
+import { bornYearsAgo, nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
   createHttpHarness,
   uniqueEmail,
@@ -544,6 +544,35 @@ describe('API v0 — PII leak scan', () => {
     const familyPhotoKey = await ownPhoto(
       await w.tokenFor(a, family.id, 'family'),
     );
+
+    // A child under exit control (ADR 0054), in the primary's own unit: the
+    // child's name and photo are the household's (and a guard's check of
+    // the child, a POST: test/children/exits).
+    const childName = 'Pii Childname Sentinel';
+    const childToken = await w.tokenFor(a, primary.id, 'resident');
+    const child = (
+      await call(w, 'POST', `/units/${unit.id}/household/minors`, {
+        token: childToken,
+        body: {
+          fullName: childName,
+          idDocumentType: 'national_id',
+          idDocumentNumber: nationalIdFor(bornYearsAgo(6)),
+          relation: 'child',
+        },
+      }).expect(201)
+    ).body as { id: string };
+    await call(w, 'POST', `/units/${unit.id}/children/${child.id}/control`, {
+      token: childToken,
+      body: { mayLeaveAlone: false, notifyPickups: true },
+    }).expect(201);
+    const childPhotoId = await fileHelpers(h).ready(childToken, 'child_photo');
+    await call(
+      w,
+      'PUT',
+      `/units/${unit.id}/children/${child.id}/control/photo`,
+      { token: childToken, body: { fileId: childPhotoId } },
+    ).expect(204);
+    const childPhotoKey = `t/${a.tenantId}/${childPhotoId}`;
 
     // A ticket the family member opened on the primary's unit (ADR 0032).
     const asFamily = <T>(fn: () => Promise<T>) =>
@@ -1277,6 +1306,7 @@ describe('API v0 — PII leak scan', () => {
       '/units/{id}/household/to-review': unit.id,
       '/units/{unitId}/household': unit.id,
       '/units/{unitId}/household/minors-ready': unit.id,
+      '/units/{unitId}/children': unit.id,
       '/units/{unitId}/workers': unit.id,
       // ADR 0037.
       '/units/{unitId}/workers/{id}': {
@@ -2153,6 +2183,15 @@ describe('API v0 — PII leak scan', () => {
         'plainMember /me/parcels',
       ]),
     ]);
+    // A child's photo (ADR 0054): the household adults' list of its children.
+    fileViews.push([
+      childPhotoKey,
+      new Set([
+        'resident /units/{unitId}/children',
+        'family /units/{unitId}/children',
+        'plainMember /units/{unitId}/children',
+      ]),
+    ]);
     for (const [fileKey, views] of fileViews) {
       for (const [key, text] of seen) {
         if (!views.has(key) && text.includes(fileKey))
@@ -2172,6 +2211,27 @@ describe('API v0 — PII leak scan', () => {
     expect(seen.get('resident /me/entry-credentials')).toContain(
       'PII-DEVICE-name',
     );
+
+    // A child's name (ADR 0054): the household's own views, and the reads
+    // that showed a household's minors before (the management's household
+    // read, ADR 0016/0021; the club's people, ADR 0044). No view of R9's
+    // outside the household carries it.
+    const childNameViews = new Set([
+      'resident /units/{unitId}/household',
+      // The new primary's members to review (ADR 0021): the household's own.
+      'resident /units/{id}/household/to-review',
+      'family /units/{unitId}/household',
+      'plainMember /units/{unitId}/household',
+      'manager /units/{unitId}/household',
+      'manager /staff/club/units/{unitId}/people',
+      'resident /units/{unitId}/children',
+      'family /units/{unitId}/children',
+      'plainMember /units/{unitId}/children',
+    ]);
+    for (const [key, text] of seen)
+      if (!childNameViews.has(key) && text.includes(childName))
+        leaks.push(`${key}: a child's name`);
+    expect(seen.get('resident /units/{unitId}/children')).toContain(childName);
 
     // The label's name and the pickup code (ADR 0035): the unit's residents
     // alone, never the guard, the manager, a landlord or anyone else.

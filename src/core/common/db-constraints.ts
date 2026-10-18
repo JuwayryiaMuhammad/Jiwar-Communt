@@ -125,6 +125,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // A point at an instant of a run, once (ON CONFLICT DO NOTHING).
   patrol_track_points_tenant_id_id_key: null,
   patrol_track_points_once_key: null,
+  // Children (ADR 0054): one live control per child (checked under the
+  // unit's lock first, CHILD_CONTROL_ACTIVE); a card's hash is random.
+  child_controls_tenant_id_id_key: null,
+  child_controls_tenant_id_id_unit_id_key: null,
+  child_controls_one_live_per_member: null,
+  child_controls_live_card_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

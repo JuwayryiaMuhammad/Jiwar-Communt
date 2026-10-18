@@ -198,6 +198,21 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['units.read'],
   },
+  // A child's photo (ADR 0054), set by the primary or a household delegate
+  // while the child's exit control is on: shown to the household and to a
+  // guard checking the child at the gate, deleted when the control ends.
+  child_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['household.manage'],
+  },
+  // An outside escort's photo (ADR 0054): the person who may collect a
+  // child, for the guard to compare. Deleted when the escort is revoked.
+  child_escort_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['household.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

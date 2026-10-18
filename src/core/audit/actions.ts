@@ -1222,6 +1222,21 @@ export const AUDIT_ACTIONS = {
   // An erasure (ADR 0053): the appellant's words and photo go, once.
   // metadata: unitId, photo (a boolean).
   'violation.appeal_cleared': { log: 'tenant', target: 'unit_violation' },
+  // Children (ADR 0054). Ids, codes and switches; never a child's name or
+  // photo. turned_on: metadata unitId, memberId, the two switches.
+  'child_control.turned_on': { log: 'tenant', target: 'child_control' },
+  // The switches by value.
+  'child_control.updated': { log: 'tenant', target: 'child_control' },
+  'child_control.card_reissued': { log: 'tenant', target: 'child_control' },
+  // The photo as changed, never a file id.
+  'child_control.photo_changed': {
+    log: 'tenant',
+    target: 'child_control',
+    sensitive: ['photo'],
+  },
+  // metadata: reasonCode (household, left_household, came_of_age), and how
+  // many escorts it revoked.
+  'child_control.ended': { log: 'tenant', target: 'child_control' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

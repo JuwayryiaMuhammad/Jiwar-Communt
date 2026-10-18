@@ -1491,6 +1491,20 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   unit_violation_payments_reason: {
     guarded: 'reason_code IS NULL is tested first',
   },
+  // Children (ADR 0054).
+  child_controls_live_on_minor: {},
+  child_controls_card_while_live: {},
+  child_controls_card_hash_shape: {
+    guarded: 'card_token_hash IS NULL is tested first',
+  },
+  child_controls_photo_while_live: {},
+  child_controls_ended_shape: {
+    guarded:
+      'end_reason is compared only with IS [NOT] DISTINCT FROM, which never yields NULL',
+  },
+  child_controls_end_reason: {
+    guarded: 'end_reason IS NULL is tested first',
+  },
 };
 
 interface Check {

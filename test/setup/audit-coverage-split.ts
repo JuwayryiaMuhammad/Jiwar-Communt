@@ -521,3 +521,12 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'violation.payment_reversed',
   'violation.appeal_cleared',
 ];
+
+/** Children (ADR 0054): test/children/audit-coverage. */
+export const CHILDREN_COVERAGE: readonly string[] = [
+  'child_control.turned_on',
+  'child_control.updated',
+  'child_control.card_reissued',
+  'child_control.photo_changed',
+  'child_control.ended',
+];

@@ -132,6 +132,7 @@ describe('audit catalog', () => {
         'gate_lockdown',
         'blocklist_entry',
         'incident',
+        'incident_note',
         'unit_violation',
         'unit_violation_payment',
       ]).toContain(def.target);

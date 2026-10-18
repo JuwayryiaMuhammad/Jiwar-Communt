@@ -511,10 +511,13 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'incident.note_added',
   'incident.acknowledged',
   'incident.closed',
+  'incident.text_cleared',
+  'incident_note.text_cleared',
   'violation.issued',
   'violation.appealed',
   'violation.appeal_decided',
   'violation.cancelled',
   'violation.payment_recorded',
   'violation.payment_reversed',
+  'violation.appeal_cleared',
 ];

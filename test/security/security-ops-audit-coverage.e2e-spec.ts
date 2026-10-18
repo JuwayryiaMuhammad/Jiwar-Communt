@@ -23,6 +23,7 @@ import {
   SECURITY_OPS_COVERAGE,
   VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
+import { eraseNow } from '../setup/erasure';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { leakText } from '../setup/leak-text';
 import { today } from '../setup/compound-clock';
@@ -475,6 +476,82 @@ describe('Audit coverage — security (ADR 0053)', () => {
         reversesId: paymentId,
         reasonCode: 'refunded',
       });
+    });
+  });
+
+  describe('erasure', () => {
+    it('what the erased account wrote goes, by id: which words, as booleans; the appeal’s photo as whether there was one', async () => {
+      const leaving = await x.staff(s.c, ['incidents.manage']);
+      const reported = (
+        await x
+          .http('post', '/staff/security/incidents', leaving.token, {
+            type: 'hazard',
+            severity: 'low',
+            unitCode: s.home.code,
+            occurredAt: new Date().toISOString(),
+            description: WORDS,
+          })
+          .expect(201)
+      ).body as { id: string; notes: { id: string }[] };
+      const noted = (
+        await x
+          .http(
+            'post',
+            `/staff/security/incidents/${reported.id}/notes`,
+            leaving.token,
+            { body: WORDS },
+          )
+          .expect(200)
+      ).body as { notes: { id: string }[] };
+      const noteId = noted.notes[0].id;
+      await x
+        .http(
+          'post',
+          `/staff/security/incidents/${reported.id}/close`,
+          leaving.token,
+          { reasonCode: 'resolved', note: WORDS },
+        )
+        .expect(200);
+      const unit = await x.unit(s.c, 'AE1');
+      const appellant = await x.family(
+        s.c,
+        unit.id,
+        await x.owner(s.c, unit.id),
+      );
+      const v = (
+        await x
+          .http('post', '/staff/violations', s.manager.token, {
+            kind: 'noise',
+            unitCode: unit.code,
+            occurredOn: today(),
+          })
+          .expect(201)
+      ).body as { id: string };
+      await x
+        .http('post', `/violations/${v.id}/appeal`, appellant.token, {
+          reason: WORDS,
+          photoFileId: await x.photo(appellant, 'violation_appeal_photo'),
+        })
+        .expect(200);
+      await x
+        .http('patch', `/accounts/${leaving.id}/status`, s.manager.token, {
+          status: 'inactive',
+        })
+        .expect(200);
+      await eraseNow(h, s.c, leaving.id);
+      await eraseNow(h, s.c, appellant.id);
+      const cleared = await single('incident.text_cleared', reported.id);
+      expect(cleared.targetType).toBe('incident');
+      expect(cleared.metadata).toEqual({
+        description: true,
+        closingNote: true,
+      });
+      const note = await single('incident_note.text_cleared', noteId);
+      expect(note.targetType).toBe('incident_note');
+      expect(note.metadata).toEqual({ incidentId: reported.id });
+      const appeal = await single('violation.appeal_cleared', v.id);
+      expect(appeal.targetType).toBe('unit_violation');
+      expect(appeal.metadata).toEqual({ unitId: unit.id, photo: true });
     });
   });
 

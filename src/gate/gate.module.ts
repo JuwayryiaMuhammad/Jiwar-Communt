@@ -108,6 +108,8 @@ import {
 import { IdLookupService } from './blocklist/id-lookup.service';
 import { StaffBlocklistController } from './blocklist/staff-blocklist.controller';
 import { GateIncidentsController } from './incidents/gate-incidents.controller';
+import { IncidentExportSections } from './incidents/incident-export-sections';
+import { IncidentLifecycle } from './incidents/incident-lifecycle';
 import { IncidentsService } from './incidents/incidents.service';
 import { StaffIncidentsController } from './incidents/staff-incidents.controller';
 import { GateLockdownsController } from './lockdown/gate-lockdowns.controller';
@@ -116,6 +118,8 @@ import {
   StaffViolationsController,
   UnitViolationsController,
 } from './violations/violations.controller';
+import { ViolationExportSections } from './violations/violation-export-sections';
+import { ViolationLifecycle } from './violations/violation-lifecycle';
 import { ViolationPaymentsController } from './violations/violation-payments.controller';
 import { ViolationPaymentsService } from './violations/violation-payments.service';
 import { ViolationsService } from './violations/violations.service';
@@ -367,8 +371,12 @@ import { RosterService } from './roster/roster.service';
     BlocklistMatcher,
     IdLookupService,
     IncidentsService,
+    IncidentLifecycle,
+    IncidentExportSections,
     ViolationsService,
     ViolationPaymentsService,
+    ViolationLifecycle,
+    ViolationExportSections,
     GateServiceRecords,
     GateServicesService,
     GateServiceHandlersService,

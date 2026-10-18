@@ -1193,6 +1193,11 @@ export const AUDIT_ACTIONS = {
   'incident.acknowledged': { log: 'tenant', target: 'incident' },
   // metadata: outcome, from (the status).
   'incident.closed': { log: 'tenant', target: 'incident' },
+  // An erasure (ADR 0053): what the account wrote goes, once. metadata:
+  // description, closingNote (booleans: which went).
+  'incident.text_cleared': { log: 'tenant', target: 'incident' },
+  // An erasure: an internal note's words. metadata: incidentId.
+  'incident_note.text_cleared': { log: 'tenant', target: 'incident_note' },
   // Violations (ADR 0053), as the fines. metadata: unitId, permitId,
   // placeId, number, kind, amount (or null: a warning), currency,
   // occurredOn, shiftId, photo and note (booleans).
@@ -1214,6 +1219,9 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'unit_violation_payment',
   },
+  // An erasure (ADR 0053): the appellant's words and photo go, once.
+  // metadata: unitId, photo (a boolean).
+  'violation.appeal_cleared': { log: 'tenant', target: 'unit_violation' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -132,6 +132,9 @@ export const REASON_CODES = {
   incidentType: ['injury', 'near_miss', 'hazard', 'security_breach', 'property_damage', 'fire', 'other'],
   incidentSeverity: ['low', 'medium', 'high', 'critical'],
   incidentOutcome: ['resolved', 'referred_to_police', 'referred_to_management', 'no_action_needed', 'unfounded', 'other'],
+  violationKind: ['noise', 'waste', 'pets', 'contractor_hours', 'other'],
+  violationCancel: ['appeal_accepted', 'issued_in_error', 'duplicate', 'other'],
+  violationPaymentReverse: ['entered_in_error', 'refunded', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

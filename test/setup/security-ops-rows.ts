@@ -221,3 +221,48 @@ export async function incidentAckRow(
   await tx.incidentAcknowledgement.create({ data: { ...r, role: 'author' } });
   return r.incidentId;
 }
+
+let violations = 0;
+
+/** An open noise warning to a unit, from the office. */
+export async function violationRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; unitId: string; issuedById: string; amount?: string },
+): Promise<string> {
+  const id = newId();
+  await tx.unitViolation.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      number: 900_000 + ++violations,
+      kind: 'noise',
+      unitId: r.unitId,
+      occurredOn: new Date(),
+      issuedById: r.issuedById,
+      ...(r.amount ? { amount: r.amount, currency: 'EGP' } : {}),
+    },
+  });
+  return id;
+}
+
+/** A payment of a violation's whole amount. */
+export async function violationPaymentRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; violationId: string; recordedById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.unitViolationPayment.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      violationId: r.violationId,
+      kind: 'payment',
+      amount: '100',
+      currency: 'EGP',
+      receiptNumber: `ROW-${id.slice(-12)}`,
+      paidOn: new Date(),
+      recordedById: r.recordedById,
+    },
+  });
+  return id;
+}

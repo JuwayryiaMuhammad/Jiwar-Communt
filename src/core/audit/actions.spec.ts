@@ -132,6 +132,7 @@ describe('audit catalog', () => {
         'gate_lockdown',
         'blocklist_entry',
         'incident',
+        'unit_violation',
       ]).toContain(def.target);
     }
   });

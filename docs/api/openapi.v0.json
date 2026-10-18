@@ -804,6 +804,25 @@
         ],
         "type": "object"
       },
+      "AppealViolationDto": {
+        "properties": {
+          "photoFileId": {
+            "description": "A finalized `violation_appeal_photo` upload of the caller.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why: the appellant’s words.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "ApplyInstructionDto": {
         "properties": {
           "instructionId": {
@@ -3153,6 +3172,18 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "CancelViolationDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `violationCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
         "type": "object"
       },
       "CancelVisitorPassDto": {
@@ -8556,6 +8587,26 @@
           },
           "reasonCode": {
             "description": "On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "type": "object"
+      },
+      "DecideViolationAppealDto": {
+        "properties": {
+          "decision": {
+            "description": "`upheld`: open again. `cancelled`: it is cancelled.",
+            "enum": [
+              "upheld",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "With `cancelled` only, from `violationCancel` (default `appeal_accepted`).",
             "type": "string"
           }
         },
@@ -15309,6 +15360,53 @@
         ],
         "type": "object"
       },
+      "GuardViolationView": {
+        "properties": {
+          "amount": {
+            "nullable": true,
+            "type": "string"
+          },
+          "date": {
+            "description": "`YYYY-MM-DD`.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationKind"
+              }
+            ]
+          },
+          "reference": {
+            "example": "V-0042",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "unitCode",
+          "date",
+          "amount",
+          "status"
+        ],
+        "type": "object"
+      },
       "GuardVisitorParkingView": {
         "properties": {
           "areaName": {
@@ -17117,6 +17215,57 @@
           "kind",
           "dueOn",
           "lines"
+        ],
+        "type": "object"
+      },
+      "IssueViolationDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, at most 100,000. None: a warning, never paid.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,6}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "What the unit’s people read.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "occurredOn": {
+            "description": "The local day it happened: not ahead, at most 90 days ago (DAY_OUT_OF_RANGE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "permitId": {
+            "description": "`contractor_hours` only: the unit’s works permit; the unit is the permit’s.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A finalized `violation_photo` upload of the caller.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "placeId": {
+            "description": "Where: a place in service.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The unit’s code (UNIT_CODE_UNKNOWN). Contractor hours may give the works permit instead.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "occurredOn"
         ],
         "type": "object"
       },
@@ -26945,6 +27094,140 @@
         ],
         "type": "object"
       },
+      "ResidentViolationView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, two decimals; null: a warning.",
+            "example": "500.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "appeal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationAppealView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "canAppeal": {
+            "description": "The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary.",
+            "type": "boolean"
+          },
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationCancel"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "date": {
+            "description": "The local day, `YYYY-MM-DD`.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isWarning": {
+            "description": "No amount: a warning, never paid.",
+            "type": "boolean"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "Words the unit reads.",
+            "nullable": true,
+            "type": "string"
+          },
+          "permitReference": {
+            "description": "Contractor hours: the works permit.",
+            "example": "W-0042",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "place": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "example": "V-0042",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "date",
+          "permitReference",
+          "place",
+          "amount",
+          "currency",
+          "isWarning",
+          "status",
+          "note",
+          "photoUrl",
+          "appeal",
+          "cancelReason",
+          "canAppeal",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ResidentViolationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentViolationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ResidentVisitView": {
         "properties": {
           "absenceEntry": {
@@ -35186,6 +35469,213 @@
         ],
         "type": "object"
       },
+      "StaffViolationView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, two decimals; null: a warning.",
+            "example": "500.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "appeal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationAppealView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "appealedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "canAppeal": {
+            "description": "The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary.",
+            "type": "boolean"
+          },
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationCancel"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "date": {
+            "description": "The local day, `YYYY-MM-DD`.",
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isWarning": {
+            "description": "No amount: a warning, never paid.",
+            "type": "boolean"
+          },
+          "issuedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "Words the unit reads.",
+            "nullable": true,
+            "type": "string"
+          },
+          "payments": {
+            "items": {
+              "$ref": "#/components/schemas/ViolationPaymentView"
+            },
+            "type": "array"
+          },
+          "permitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "permitReference": {
+            "description": "Contractor hours: the works permit.",
+            "example": "W-0042",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "place": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "A guard’s: the post of their shift.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "example": "V-0042",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "date",
+          "permitReference",
+          "place",
+          "amount",
+          "currency",
+          "isWarning",
+          "status",
+          "note",
+          "photoUrl",
+          "appeal",
+          "cancelReason",
+          "canAppeal",
+          "createdAt",
+          "unitId",
+          "unitCode",
+          "permitId",
+          "issuedBy",
+          "post",
+          "appealedBy",
+          "decidedBy",
+          "cancelledBy",
+          "cancelledAt",
+          "payments"
+        ],
+        "type": "object"
+      },
+      "StaffViolationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffViolationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffVisitorParkingBookingView": {
         "properties": {
           "areaId": {
@@ -39434,6 +39924,158 @@
           "display"
         ],
         "type": "object"
+      },
+      "ViolationAppealView": {
+        "properties": {
+          "appealedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationDecision"
+              }
+            ],
+            "nullable": true
+          },
+          "photoUrl": {
+            "description": "A presigned URL, valid for minutes.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "The appellant’s words; null once the appellant was erased.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "photoUrl",
+          "appealedAt",
+          "decision",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
+      "ViolationCancel": {
+        "enum": [
+          "appeal_accepted",
+          "issued_in_error",
+          "duplicate",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ViolationDecision": {
+        "enum": [
+          "upheld",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "ViolationKind": {
+        "enum": [
+          "noise",
+          "waste",
+          "pets",
+          "contractor_hours",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ViolationPaymentReverse": {
+        "enum": [
+          "entered_in_error",
+          "refunded",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ViolationPaymentView": {
+        "properties": {
+          "amount": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "payment",
+              "reversal"
+            ],
+            "type": "string"
+          },
+          "paidOn": {
+            "description": "`YYYY-MM-DD`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationPaymentReverse"
+              }
+            ],
+            "nullable": true
+          },
+          "receiptNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "reversesId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "violationId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "violationId",
+          "kind",
+          "amount",
+          "currency",
+          "receiptNumber",
+          "paidOn",
+          "reversesId",
+          "reasonCode",
+          "recordedBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ViolationStatus": {
+        "enum": [
+          "open",
+          "under_appeal",
+          "paid",
+          "cancelled"
+        ],
+        "type": "string"
       },
       "VisitCreatedView": {
         "properties": {
@@ -48354,6 +48996,56 @@
         "summary": "Verify a code or QR at the gate",
         "tags": [
           "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/violations": {
+      "post": {
+        "description": "Inside a shift, at a gate or in a zone; as the office issues one. The unit’s keepers and its primary are told.",
+        "operationId": "GateViolationsController_issue",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueViolationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue a violation to a unit",
+        "tags": [
+          "violations"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -70718,6 +71410,279 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/violations": {
+      "get": {
+        "description": "`status=under_appeal` is the appeals queue, oldest first.",
+        "operationId": "StaffViolationsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`under_appeal` is the appeals queue, oldest first; anything else newest first.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "under_appeal",
+                "paid",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "enum": [
+                "noise",
+                "waste",
+                "pets",
+                "contractor_hours",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitCode",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffViolationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the violations",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A kind, the unit (or a works permit for contractor hours), where, the day, a note and a photo, and an amount, or none: a warning. The unit’s keepers and its primary are told.",
+        "operationId": "StaffViolationsController_issue",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueViolationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue a violation to a unit",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/violations/{id}": {
+      "get": {
+        "operationId": "StaffViolationsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a violation",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/violations/{id}/cancel": {
+      "post": {
+        "description": "An open one, not under appeal (VIOLATION_NOT_CANCELLABLE), with a reason code. Final.",
+        "operationId": "StaffViolationsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelViolationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a violation",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/violations/{id}/decide-appeal": {
+      "post": {
+        "description": "`upheld`: open again; `cancelled`: cancelled with a reason code. The appellant is told. Not under appeal: VIOLATION_NOT_UNDER_APPEAL.",
+        "operationId": "StaffViolationsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideViolationAppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decide a violation’s appeal",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/visitor-parking-areas": {
       "get": {
         "operationId": "VisitorAreasController_list",
@@ -75330,6 +76295,79 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{unitId}/violations": {
+      "get": {
+        "description": "For its keepers and whoever sees its money (VIOLATIONS_NOT_ALLOWED). Newest first.",
+        "operationId": "UnitViolationsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "under_appeal",
+                "paid",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentViolationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s violations",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{unitId}/visitor-parking-bookings": {
       "get": {
         "description": "The primary sees every one; anyone else who may invite, their own.",
@@ -75963,6 +77001,93 @@
         "summary": "Edit a vehicle",
         "tags": [
           "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/violations/{id}": {
+      "get": {
+        "operationId": "UnitViolationsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of the unit’s violations",
+        "tags": [
+          "violations"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/violations/{id}/appeal": {
+      "post": {
+        "description": "A keeper of the unit or its primary (VIOLATION_APPEAL_NOT_ALLOWED): open, never appealed (VIOLATION_APPEAL_CLOSED), within 30 days of its issue (VIOLATION_APPEAL_WINDOW_PASSED).",
+        "operationId": "UnitViolationsController_appeal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealViolationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentViolationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Appeal a violation, once",
+        "tags": [
+          "violations"
         ],
         "x-no-store": true,
         "x-stability": "draft"

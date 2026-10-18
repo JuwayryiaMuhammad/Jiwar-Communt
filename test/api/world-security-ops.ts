@@ -1,5 +1,7 @@
 import { BlocklistService } from '../../src/gate/blocklist/blocklist.service';
 import { IncidentsService } from '../../src/gate/incidents/incidents.service';
+import { ViolationsService } from '../../src/gate/violations/violations.service';
+import { today } from '../setup/compound-clock';
 import { LockdownService } from '../../src/gate/lockdown/lockdown.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
@@ -13,6 +15,8 @@ export interface SecurityOpsWorld {
   bBlocklistEntryId: string;
   /** An incident B's manager reported. */
   bIncidentId: string;
+  /** A warning B's office issued to B's home. */
+  bViolationId: string;
 }
 
 export async function securityOpsWorld(
@@ -43,23 +47,30 @@ export async function securityOpsWorld(
       reasonCode: 'other',
     }),
   );
-  const incident = await helpers.asManager(b, async () =>
+  const incident = await helpers.asManager(b, () =>
     h.moduleRef.get(IncidentsService).report(
       {
         type: 'other',
         severity: 'low',
-        unitCode: (
-          await helpers.prisma.tenant.unit.findUniqueOrThrow({
-            where: { id: b.homeUnitId },
-          })
-        ).code,
+        unitCode: b.homeUnitCode,
         occurredAt: new Date(),
         description: 'World incident',
       },
       'staff',
     ),
   );
+  const violation = await helpers.asManager(b, () =>
+    h.moduleRef.get(ViolationsService).issue(
+      {
+        kind: 'noise',
+        unitCode: b.homeUnitCode,
+        occurredOn: today(),
+      },
+      'staff',
+    ),
+  );
   return {
+    bViolationId: violation.violation.id,
     bLockdownId: record.lockdown.id,
     bBlocklistEntryId: entry.entry.id,
     bIncidentId: incident.incident.id,

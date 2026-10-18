@@ -1093,6 +1093,18 @@ describe('API v0 — PII leak scan', () => {
         type: 'car',
       },
     );
+    const piiViolation = await idOf(
+      'POST',
+      '/staff/violations',
+      a.tokens.manager,
+      {
+        kind: 'noise',
+        unitCode: unit.code,
+        note: 'Loud after midnight',
+        amount: '100',
+        occurredOn: day(0),
+      },
+    );
     const piiFine = await idOf(
       'POST',
       '/staff/vehicle-fines',
@@ -1425,6 +1437,10 @@ describe('API v0 — PII leak scan', () => {
       // B's incident, not found for everyone of A.
       '/gate/incidents/{id}': w.bIncidentId,
       '/staff/security/incidents/{id}': w.bIncidentId,
+      // ADR 0053: A's violation, the unit's and the office's.
+      '/units/{unitId}/violations': unit.id,
+      '/violations/{id}': piiViolation,
+      '/staff/violations/{id}': piiViolation,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

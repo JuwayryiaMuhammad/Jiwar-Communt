@@ -1193,6 +1193,16 @@ export const AUDIT_ACTIONS = {
   'incident.acknowledged': { log: 'tenant', target: 'incident' },
   // metadata: outcome, from (the status).
   'incident.closed': { log: 'tenant', target: 'incident' },
+  // Violations (ADR 0053), as the fines. metadata: unitId, permitId,
+  // placeId, number, kind, amount (or null: a warning), currency,
+  // occurredOn, shiftId, photo and note (booleans).
+  'violation.issued': { log: 'tenant', target: 'unit_violation' },
+  // metadata: unitId, photo (a boolean). Never the appeal's words.
+  'violation.appealed': { log: 'tenant', target: 'unit_violation' },
+  // metadata: unitId, decision, reasonCode (or null).
+  'violation.appeal_decided': { log: 'tenant', target: 'unit_violation' },
+  // metadata: unitId, reasonCode.
+  'violation.cancelled': { log: 'tenant', target: 'unit_violation' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

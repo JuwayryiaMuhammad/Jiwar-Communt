@@ -511,4 +511,8 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'incident.note_added',
   'incident.acknowledged',
   'incident.closed',
+  'violation.issued',
+  'violation.appealed',
+  'violation.appeal_decided',
+  'violation.cancelled',
 ];

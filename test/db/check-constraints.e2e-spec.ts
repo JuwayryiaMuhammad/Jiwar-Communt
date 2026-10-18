@@ -1452,6 +1452,45 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   incident_notes_body: { guarded: 'body IS NULL is tested first' },
   incident_acknowledgements_role: {},
+  // Violations (ADR 0053), as the fines.
+  unit_violations_number_positive: {},
+  unit_violations_kind: {},
+  unit_violations_permit: {
+    guarded: 'permit_id IS NULL is tested first; kind is NOT NULL',
+  },
+  unit_violations_note_length: { guarded: 'note IS NULL is tested first' },
+  unit_violations_amount: {
+    guarded: 'amount and currency are compared only once NOT NULL',
+  },
+  unit_violations_post: {
+    guarded:
+      'num_nonnulls counts the NULLs and is never NULL; the rest are IS NULL tests',
+  },
+  unit_violations_appeal_shape: {},
+  unit_violations_appeal_text_length: {
+    guarded: 'appeal_text IS NULL is tested first',
+  },
+  unit_violations_decision_shape: {
+    guarded: 'appeal_decision IS NULL is tested first',
+  },
+  unit_violations_state_shape: {},
+  unit_violations_accepted_cancels: {
+    guarded: 'appeal_decision IS NULL is tested first',
+  },
+  unit_violations_cancel_reason: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  unit_violation_payments_kind_shape: {},
+  unit_violation_payments_amount: { guarded: 'amount IS NULL is tested first' },
+  unit_violation_payments_currency: {
+    guarded: 'currency IS NULL is tested first',
+  },
+  unit_violation_payments_receipt_shape: {
+    guarded: 'receipt_number IS NULL is tested first',
+  },
+  unit_violation_payments_reason: {
+    guarded: 'reason_code IS NULL is tested first',
+  },
 };
 
 interface Check {

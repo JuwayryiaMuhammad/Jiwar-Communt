@@ -392,6 +392,15 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   incident_photos_tenant_id_id_key: null,
   incident_photos_file_key: null,
   incident_notes_tenant_id_id_key: null,
+  // Violations (ADR 0053), as the fines: a receipt once among the
+  // compound's violation payments.
+  unit_violations_tenant_id_id_key: null,
+  unit_violations_number_key: null,
+  unit_violations_photo_key: null,
+  unit_violations_appeal_photo_key: null,
+  unit_violation_payments_tenant_id_id_key: null,
+  unit_violation_payments_one_reversal: null,
+  unit_violation_payments_receipt_key: ['receiptNumber'],
   gate_service_requests_tenant_id_id_key: null,
   // Numbers come from the counter under its row lock: a collision is a bug.
   gate_service_requests_number_key: null,

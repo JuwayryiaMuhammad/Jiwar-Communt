@@ -517,3 +517,164 @@ export const INCIDENT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Violations (ADR 0053): the unit's people, the office, the guard. */
+export const VIOLATION_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/units/{unitId}/violations',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { status: 'owed' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'under_appeal', 'paid', 'cancelled'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/violations/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bViolationId }),
+      code: 'VIOLATION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/violations/{id}/appeal',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bViolationId }),
+      code: 'VIOLATION_NOT_FOUND',
+      body: () => ({ reason: 'Not us' }),
+    },
+    invalid: {
+      body: { reason: 7 },
+      fields: [{ field: 'reason', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/violations',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: {
+        kind: 'noise',
+        unitCode: 'U-1',
+        amount: '0',
+        occurredOn: '2026-10-15',
+      },
+      fields: [{ field: 'amount', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/violations',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { kind: 'jaywalking' },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: ['noise', 'waste', 'pets', 'contractor_hours', 'other'],
+          },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/violations/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bViolationId }),
+      code: 'VIOLATION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/violations/{id}/decide-appeal',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bViolationId }),
+      code: 'VIOLATION_NOT_FOUND',
+      body: () => ({ decision: 'upheld' }),
+    },
+    invalid: {
+      body: { decision: 'maybe' },
+      fields: [
+        {
+          field: 'decision',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['upheld', 'cancelled'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/violations/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bViolationId }),
+      code: 'VIOLATION_NOT_FOUND',
+      body: () => ({ reasonCode: 'duplicate' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/violations',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { kind: 'noise', unitCode: 'U-1', occurredOn: 'yesterday' },
+      fields: [{ field: 'occurredOn', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+];

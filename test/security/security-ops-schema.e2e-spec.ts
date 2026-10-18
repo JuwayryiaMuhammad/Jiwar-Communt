@@ -15,6 +15,8 @@ import {
   overrideRow,
   personRow,
   refusalRow,
+  violationPaymentRow,
+  violationRow,
   workStopRow,
 } from '../setup/security-ops-rows';
 import { dutyFileRow, gateRow, shiftRow } from '../setup/security-rows';
@@ -43,6 +45,7 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
   let stopId: string;
   let incidentId: string;
   let noteId: string;
+  let violationId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -105,6 +108,17 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
           uploadedById: guardId,
         });
         await incidentAckRow(tx, { tenantId, incidentId, accountId: guardId });
+        violationId = await violationRow(tx, {
+          tenantId,
+          unitId,
+          issuedById: managerId,
+          amount: '100',
+        });
+        await violationPaymentRow(tx, {
+          tenantId,
+          violationId,
+          recordedById: managerId,
+        });
         await overrideRow(tx, {
           tenantId,
           lockdownId: liveId,
@@ -162,6 +176,7 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'permit_work_stops',
       'incidents',
       'incident_notes',
+      'unit_violations',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -180,6 +195,7 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'security_refusals',
       'incident_photos',
       'incident_acknowledgements',
+      'unit_violation_payments',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -204,6 +220,8 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       'incident_photos',
       'incident_notes',
       'incident_acknowledgements',
+      'unit_violations',
+      'unit_violation_payments',
     ]) {
       // A row to refuse: a row trigger never fires on a DELETE of none.
       const found = await attempt(
@@ -581,6 +599,87 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
         await expect(
           asApp(clear, `UPDATE incident_notes SET ${again} WHERE ${at}`),
         ).rejects.toThrow(/cleared once/);
+    });
+  });
+
+  describe('unit_violations', () => {
+    const where = () => `id = '${violationId}'`;
+    const appeal = () =>
+      `UPDATE unit_violations SET status = 'under_appeal', appeal_text = 'Not us', appealed_by_account_id = '${guardId}', appealed_at = now() WHERE `;
+
+    it('its terms never change; one appeal, written once and cleared once; a decision and a cancellation are final', async () => {
+      for (const set of [
+        `kind = 'pets'`,
+        `amount = 200`,
+        `note = 'Other words'`,
+        `occurred_on = '2026-01-01'`,
+      ])
+        await expect(
+          asApp(`UPDATE unit_violations SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/keeps its terms/);
+      await expect(
+        asApp(
+          `${appeal()}${where()}`,
+          `UPDATE unit_violations SET appeal_text = 'Changed' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps its terms/);
+      const clear = `UPDATE unit_violations SET appeal_text = NULL, appeal_cleared_at = now() WHERE ${where()}`;
+      await expect(
+        asApp(`${appeal()}${where()}`, clear),
+      ).resolves.toMatchObject({
+        rowCount: 1,
+      });
+      // Cleared once: not again at another moment, never written back.
+      for (const again of [
+        `appeal_cleared_at = appeal_cleared_at + interval '1 second'`,
+        `appeal_text = 'Back', appeal_cleared_at = NULL`,
+      ])
+        await expect(
+          asApp(
+            `${appeal()}${where()}`,
+            clear,
+            `UPDATE unit_violations SET ${again} WHERE ${where()}`,
+          ),
+        ).rejects.toThrow(/keeps its terms/);
+      const cancel = `UPDATE unit_violations SET status = 'cancelled', cancel_reason = 'duplicate', cancelled_by_account_id = '${managerId}', cancelled_at = now() WHERE ${where()}`;
+      await expect(
+        asApp(
+          cancel,
+          `UPDATE unit_violations SET status = 'open', cancel_reason = NULL, cancelled_by_account_id = NULL, cancelled_at = NULL WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps its terms/);
+    });
+
+    it('the shapes: a warning is never paid; a permit only for contractor hours; the amount in EGP', async () => {
+      const insert = (cols: string, values: string) =>
+        `INSERT INTO unit_violations (id, tenant_id, number, kind, unit_id, occurred_on, issued_by_account_id, updated_at, ${cols})
+         VALUES ('${newId()}', '${tenantId}', 888001, 'noise', (SELECT unit_id FROM unit_violations WHERE ${where()}), now(), '${managerId}', now(), ${values})`;
+      await expect(asApp(insert('status', `'paid'`))).rejects.toThrow(
+        /unit_violations_state_shape/,
+      );
+      await expect(asApp(insert('permit_id', `'${permitId}'`))).rejects.toThrow(
+        /unit_violations_permit/,
+      );
+      await expect(asApp(insert('amount', `100`))).rejects.toThrow(
+        /unit_violations_amount/,
+      );
+      await expect(
+        asApp(insert('amount, currency', `100, 'USD'`)),
+      ).rejects.toThrow(/unit_violations_amount/);
+    });
+
+    it('payments: a receipt once, one reversal, never changed', async () => {
+      const pay = (receipt: string) =>
+        `INSERT INTO unit_violation_payments (id, tenant_id, violation_id, kind, amount, currency, receipt_number, paid_on, recorded_by_account_id)
+         VALUES ('${newId()}', '${tenantId}', '${violationId}', 'payment', 100, 'EGP', '${receipt}', now(), '${managerId}')`;
+      await expect(asApp(pay('RCPT-1'), pay('RCPT-1'))).rejects.toThrow(
+        /unit_violation_payments_receipt_key/,
+      );
+      await expect(
+        asApp(
+          `UPDATE unit_violation_payments SET receipt_number = 'X' WHERE violation_id = '${violationId}'`,
+        ),
+      ).rejects.toThrow(/append-only|permission denied/);
     });
   });
 

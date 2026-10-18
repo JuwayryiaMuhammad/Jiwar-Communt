@@ -106,6 +106,8 @@ const TYPES: Record<Persona, AccountType> = {
 export interface Side extends Compound {
   /** Owned and lived in by `owner`, its primary; `family` is a member. */
   homeUnitId: string;
+  /** Its code, as a guard or the office names it (ADR 0053). */
+  homeUnitCode: string;
   /** Owned by `landlord` (not residing), rented and lived in by `tenant`. */
   rentedUnitId: string;
   ids: Record<Persona, string>;
@@ -340,6 +342,7 @@ async function side(
   return {
     ...compound,
     homeUnitId: home.id,
+    homeUnitCode: home.code,
     rentedUnitId: rented.id,
     ids,
     tokens,

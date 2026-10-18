@@ -25,6 +25,7 @@ import {
 } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { leakText } from '../setup/leak-text';
+import { today } from '../setup/compound-clock';
 import { day, permitHelpers } from '../setup/permits';
 import { securityOpsHelpers, type Who } from '../setup/security-ops';
 
@@ -337,6 +338,79 @@ describe('Audit coverage — security (ADR 0053)', () => {
         outcome: 'referred_to_police',
         from: 'investigating',
       });
+    });
+  });
+
+  describe('violations', () => {
+    it('issued, appealed, decided and cancelled: ids, codes, amounts and booleans; never the note or the appeal’s words', async () => {
+      const guard = await x.guardOnDuty(s.c);
+      const issued = (
+        await x
+          .http('post', '/gate/violations', guard.token, {
+            kind: 'waste',
+            unitCode: s.home.code,
+            note: WORDS,
+            amount: '75.5',
+            occurredOn: today(),
+          })
+          .expect(201)
+      ).body as { id: string };
+      const row = await single('violation.issued', issued.id);
+      expect(row).toMatchObject(by(guard, 'unit_violation'));
+      expect(row.metadata).toEqual({
+        unitId: s.home.id,
+        permitId: null,
+        placeId: null,
+        number: expect.any(Number) as number,
+        kind: 'waste',
+        amount: '75.50',
+        currency: 'EGP',
+        occurredOn: today(),
+        shiftId: guard.shiftId,
+        photo: false,
+        note: true,
+      });
+      await x
+        .http('post', `/violations/${issued.id}/appeal`, s.alice.token, {
+          reason: WORDS,
+        })
+        .expect(200);
+      const appealed = await single('violation.appealed', issued.id);
+      expect(appealed).toMatchObject(by(s.alice, 'unit_violation'));
+      expect(appealed.metadata).toEqual({ unitId: s.home.id, photo: false });
+      await x
+        .http(
+          'post',
+          `/staff/violations/${issued.id}/decide-appeal`,
+          s.manager.token,
+          {
+            decision: 'upheld',
+          },
+        )
+        .expect(200);
+      expect(
+        (await single('violation.appeal_decided', issued.id)).metadata,
+      ).toEqual({
+        unitId: s.home.id,
+        decision: 'upheld',
+        reasonCode: null,
+      });
+      await x
+        .http(
+          'post',
+          `/staff/violations/${issued.id}/cancel`,
+          s.manager.token,
+          {
+            reasonCode: 'issued_in_error',
+          },
+        )
+        .expect(200);
+      expect((await single('violation.cancelled', issued.id)).metadata).toEqual(
+        {
+          unitId: s.home.id,
+          reasonCode: 'issued_in_error',
+        },
+      );
     });
   });
 

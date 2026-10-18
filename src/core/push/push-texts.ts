@@ -1701,6 +1701,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أُسند إليك التحقيق في حادث. افتحه.',
     },
   },
+  'violation.issued': {
+    en: {
+      title: 'A violation',
+      body: 'Your unit was given a violation notice. Open it to see why.',
+    },
+    ar: {
+      title: 'مخالفة',
+      body: 'صدر إخطار مخالفة لوحدتك. افتحه لمعرفة السبب.',
+    },
+  },
+  'violation.appeal_upheld': {
+    en: {
+      title: 'Appeal decided',
+      body: 'Your appeal of the violation was not accepted.',
+    },
+    ar: {
+      title: 'تم البت في الطعن',
+      body: 'لم يُقبل طعنك على المخالفة.',
+    },
+  },
+  'violation.appeal_accepted': {
+    en: {
+      title: 'Appeal accepted',
+      body: 'Your appeal was accepted: the violation is cancelled.',
+    },
+    ar: {
+      title: 'قُبل الطعن',
+      body: 'قُبل طعنك وأُلغيت المخالفة.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -1,4 +1,5 @@
 import type { Response } from 'supertest';
+import { today } from '../setup/compound-clock';
 import { call } from './request';
 import type { World } from './world';
 
@@ -22,6 +23,11 @@ export function securityOpsCalls(
   const guard = (method: 'GET' | 'POST', path: string, payload?: object) =>
     call(world(), method, path, {
       token: world().a.tokens.guard,
+      body: payload,
+    });
+  const owner = (method: 'GET' | 'POST', path: string, payload?: object) =>
+    call(world(), method, path, {
+      token: world().a.tokens.owner,
       body: payload,
     });
   const id = (res: Response) => (res.body as { id: string }).id;
@@ -69,7 +75,52 @@ export function securityOpsCalls(
         description: 'No-store incident',
       }),
     );
+  /** A noise violation of 50 to A's home: its id. */
+  const aViolation = async () =>
+    id(
+      await manager('POST', '/staff/violations', {
+        kind: 'noise',
+        placeId: world().aPlaceId,
+        unitCode: world().a.homeUnitCode,
+        amount: '50',
+        occurredOn: today(),
+      }),
+    );
   return {
+    'GET /units/{unitId}/violations': () =>
+      owner('GET', `/units/${world().a.homeUnitId}/violations`),
+    'GET /violations/{id}': async () =>
+      owner('GET', `/violations/${await aViolation()}`),
+    'POST /violations/{id}/appeal': async () =>
+      owner('POST', `/violations/${await aViolation()}/appeal`, {
+        reason: 'No-store appeal',
+      }),
+    'POST /staff/violations': () =>
+      manager('POST', '/staff/violations', {
+        kind: 'waste',
+        unitCode: world().a.homeUnitCode,
+        occurredOn: today(),
+      }),
+    'GET /staff/violations': () => manager('GET', '/staff/violations'),
+    'GET /staff/violations/{id}': async () =>
+      manager('GET', `/staff/violations/${await aViolation()}`),
+    'POST /staff/violations/{id}/decide-appeal': async () => {
+      const v = await aViolation();
+      await owner('POST', `/violations/${v}/appeal`, { reason: 'No-store' });
+      return manager('POST', `/staff/violations/${v}/decide-appeal`, {
+        decision: 'upheld',
+      });
+    },
+    'POST /staff/violations/{id}/cancel': async () =>
+      manager('POST', `/staff/violations/${await aViolation()}/cancel`, {
+        reasonCode: 'duplicate',
+      }),
+    'POST /gate/violations': () =>
+      guard('POST', '/gate/violations', {
+        kind: 'pets',
+        unitCode: world().a.homeUnitCode,
+        occurredOn: today(),
+      }),
     'POST /gate/incidents': () =>
       guard('POST', '/gate/incidents', {
         type: 'hazard',

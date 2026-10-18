@@ -12,6 +12,8 @@ import {
   matchRow,
   overrideRow,
   refusalRow,
+  violationPaymentRow,
+  violationRow,
   workStopRow,
 } from '../setup/security-ops-rows';
 import { dutyFileRow, gateRow, shiftRow } from '../setup/security-rows';
@@ -26,6 +28,7 @@ interface Side {
   entryId: string;
   unitId: string;
   incidentId: string;
+  violationId: string;
 }
 
 /**
@@ -146,6 +149,24 @@ const TABLES: Table[] = [
         accountId: link.accountId,
       }),
   },
+  {
+    table: 'unit_violations',
+    insert: (tx, own, link) =>
+      violationRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        issuedById: link.accountId,
+      }),
+  },
+  {
+    table: 'unit_violation_payments',
+    insert: (tx, own, link) =>
+      violationPaymentRow(tx, {
+        tenantId: own.tenantId,
+        violationId: link.violationId,
+        recordedById: link.accountId,
+      }),
+  },
 ];
 
 describe('RLS isolation — security tables (ADR 0053)', () => {
@@ -170,6 +191,7 @@ describe('RLS isolation — security tables (ADR 0053)', () => {
       entryId: '',
       unitId: (await createUnit(h, tenantId)).id,
       incidentId: '',
+      violationId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -192,6 +214,12 @@ describe('RLS isolation — security tables (ADR 0053)', () => {
         tenantId,
         unitId: s.unitId,
         reportedById: s.accountId,
+      });
+      s.violationId = await violationRow(tx, {
+        tenantId,
+        unitId: s.unitId,
+        issuedById: s.accountId,
+        amount: '100',
       });
     });
     return s;

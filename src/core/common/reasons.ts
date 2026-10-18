@@ -620,4 +620,9 @@ export const REASON_CODES = {
     'unfounded',
     'other',
   ],
+  // Violations (ADR 0053): what the unit did, why one was cancelled, and why
+  // a payment of one was reversed.
+  violationKind: ['noise', 'waste', 'pets', 'contractor_hours', 'other'],
+  violationCancel: ['appeal_accepted', 'issued_in_error', 'duplicate', 'other'],
+  violationPaymentReverse: ['entered_in_error', 'refunded', 'other'],
 } as const;

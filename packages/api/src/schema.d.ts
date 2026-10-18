@@ -2829,6 +2829,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/violations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Issue a violation to a unit
+         * @description Inside a shift, at a gate or in a zone; as the office issues one. The unit’s keepers and its primary are told.
+         */
+        post: operations["GateViolationsController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/visitor-parking": {
         parameters: {
             query?: never;
@@ -10333,6 +10353,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/violations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the violations
+         * @description `status=under_appeal` is the appeals queue, oldest first.
+         */
+        get: operations["StaffViolationsController_list"];
+        put?: never;
+        /**
+         * Issue a violation to a unit
+         * @description A kind, the unit (or a works permit for contractor hours), where, the day, a note and a photo, and an amount, or none: a warning. The unit’s keepers and its primary are told.
+         */
+        post: operations["StaffViolationsController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/violations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a violation */
+        get: operations["StaffViolationsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/violations/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a violation
+         * @description An open one, not under appeal (VIOLATION_NOT_CANCELLABLE), with a reason code. Final.
+         */
+        post: operations["StaffViolationsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/violations/{id}/decide-appeal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide a violation’s appeal
+         * @description `upheld`: open again; `cancelled`: cancelled with a reason code. The appellant is told. Not under appeal: VIOLATION_NOT_UNDER_APPEAL.
+         */
+        post: operations["StaffViolationsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/visitor-parking-areas": {
         parameters: {
             query?: never;
@@ -11870,6 +11971,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/violations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unit’s violations
+         * @description For its keepers and whoever sees its money (VIOLATIONS_NOT_ALLOWED). Newest first.
+         */
+        get: operations["UnitViolationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/visitor-parking-bookings": {
         parameters: {
             query?: never;
@@ -12027,6 +12148,43 @@ export interface paths {
          * @description Its registrant or the unit’s primary (VEHICLE_ACTION_NOT_ALLOWED). A new plate sends it back to `pending` and voids its sticker; colour, model, type and the photo keep its status.
          */
         patch: operations["VehiclesController_update"];
+        trace?: never;
+    };
+    "/api/v1/violations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of the unit’s violations */
+        get: operations["UnitViolationsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/violations/{id}/appeal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Appeal a violation, once
+         * @description A keeper of the unit or its primary (VIOLATION_APPEAL_NOT_ALLOWED): open, never appealed (VIOLATION_APPEAL_CLOSED), within 30 days of its issue (VIOLATION_APPEAL_WINDOW_PASSED).
+         */
+        post: operations["UnitViolationsController_appeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/visitor-passes/{id}": {
@@ -12630,6 +12788,15 @@ export interface components {
             /**
              * Format: uuid
              * @description A finalized `parking_photo` upload of the caller.
+             */
+            photoFileId?: string;
+            /** @description Why: the appellant’s words. */
+            reason: string;
+        };
+        AppealViolationDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `violation_appeal_photo` upload of the caller.
              */
             photoFileId?: string;
             /** @description Why: the appellant’s words. */
@@ -13344,6 +13511,10 @@ export interface components {
              * @enum {string}
              */
             reasonCode?: "not_needed" | "post_closed" | "other";
+        };
+        CancelViolationDto: {
+            /** @description From the closed list `violationCancel`. */
+            reasonCode: string;
         };
         CancelVisitorPassDto: {
             /** @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`. */
@@ -15224,6 +15395,15 @@ export interface components {
             /** @description On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject). */
             reasonCode?: string;
         };
+        DecideViolationAppealDto: {
+            /**
+             * @description `upheld`: open again. `cancelled`: it is cancelled.
+             * @enum {string}
+             */
+            decision: "upheld" | "cancelled";
+            /** @description With `cancelled` only, from `violationCancel` (default `appeal_accepted`). */
+            reasonCode?: string;
+        };
         DecisionResponse: {
             decisionSource: components["schemas"]["GateDecisionSource"] | null;
             /** Format: uuid */
@@ -17088,6 +17268,18 @@ export interface components {
             /** @description As it read when ticked. */
             label: string;
         };
+        GuardViolationView: {
+            amount: string | null;
+            /** @description `YYYY-MM-DD`. */
+            date: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ViolationKind"];
+            /** @example V-0042 */
+            reference: string;
+            status: components["schemas"]["ViolationStatus"];
+            unitCode: string;
+        };
         GuardVisitorParkingView: {
             areaName: string;
             /** Format: date-time */
@@ -17685,6 +17877,32 @@ export interface components {
             target: "unit" | "building" | "all";
             /** Format: uuid */
             unitId?: string;
+        };
+        IssueViolationDto: {
+            /** @description EGP, at most 100,000. None: a warning, never paid. */
+            amount?: string;
+            kind: components["schemas"]["ViolationKind"];
+            /** @description What the unit’s people read. */
+            note?: string;
+            /** @description The local day it happened: not ahead, at most 90 days ago (DAY_OUT_OF_RANGE). */
+            occurredOn: string;
+            /**
+             * Format: uuid
+             * @description `contractor_hours` only: the unit’s works permit; the unit is the permit’s.
+             */
+            permitId?: string;
+            /**
+             * Format: uuid
+             * @description A finalized `violation_photo` upload of the caller.
+             */
+            photoFileId?: string;
+            /**
+             * Format: uuid
+             * @description Where: a place in service.
+             */
+            placeId?: string;
+            /** @description The unit’s code (UNIT_CODE_UNKNOWN). Contractor hours may give the works permit instead. */
+            unitCode?: string;
         };
         IssuedEntryCredentialView: {
             /** Format: uuid */
@@ -20794,6 +21012,44 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
+        ResidentViolationView: {
+            /**
+             * @description EGP, two decimals; null: a warning.
+             * @example 500.00
+             */
+            amount: string | null;
+            appeal: components["schemas"]["ViolationAppealView"] | null;
+            /** @description The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary. */
+            canAppeal: boolean;
+            cancelReason: components["schemas"]["ViolationCancel"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string|null} */
+            currency: "EGP" | null;
+            /** @description The local day, `YYYY-MM-DD`. */
+            date: string;
+            /** Format: uuid */
+            id: string;
+            /** @description No amount: a warning, never paid. */
+            isWarning: boolean;
+            kind: components["schemas"]["ViolationKind"];
+            /** @description Words the unit reads. */
+            note: string | null;
+            /**
+             * @description Contractor hours: the works permit.
+             * @example W-0042
+             */
+            permitReference: string | null;
+            photoUrl: string | null;
+            place: components["schemas"]["PlaceView"] | null;
+            /** @example V-0042 */
+            reference: string;
+            status: components["schemas"]["ViolationStatus"];
+        };
+        ResidentViolationViewList: {
+            data: components["schemas"]["ResidentViolationView"][];
+            nextCursor: string | null;
+        };
         ResidentVisitView: {
             absenceEntry: components["schemas"]["AbsenceEntryView"];
             /**
@@ -23127,6 +23383,58 @@ export interface components {
             data: components["schemas"]["StaffVehicleView"][];
             nextCursor: string | null;
         };
+        StaffViolationView: {
+            /**
+             * @description EGP, two decimals; null: a warning.
+             * @example 500.00
+             */
+            amount: string | null;
+            appeal: components["schemas"]["ViolationAppealView"] | null;
+            appealedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary. */
+            canAppeal: boolean;
+            cancelReason: components["schemas"]["ViolationCancel"] | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            cancelledBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string|null} */
+            currency: "EGP" | null;
+            /** @description The local day, `YYYY-MM-DD`. */
+            date: string;
+            decidedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description No amount: a warning, never paid. */
+            isWarning: boolean;
+            issuedBy: components["schemas"]["AccountRefView"];
+            kind: components["schemas"]["ViolationKind"];
+            /** @description Words the unit reads. */
+            note: string | null;
+            payments: components["schemas"]["ViolationPaymentView"][];
+            /** Format: uuid */
+            permitId: string | null;
+            /**
+             * @description Contractor hours: the works permit.
+             * @example W-0042
+             */
+            permitReference: string | null;
+            photoUrl: string | null;
+            place: components["schemas"]["PlaceView"] | null;
+            /** @description A guard’s: the post of their shift. */
+            post: components["schemas"]["PostView"] | null;
+            /** @example V-0042 */
+            reference: string;
+            status: components["schemas"]["ViolationStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        StaffViolationViewList: {
+            data: components["schemas"]["StaffViolationView"][];
+            nextCursor: string | null;
+        };
         StaffVisitorParkingBookingView: {
             /** Format: uuid */
             areaId: string;
@@ -24435,6 +24743,46 @@ export interface components {
              */
             subjectId: string | null;
         };
+        ViolationAppealView: {
+            /** Format: date-time */
+            appealedAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decision: components["schemas"]["ViolationDecision"] | null;
+            /** @description A presigned URL, valid for minutes. */
+            photoUrl: string | null;
+            /** @description The appellant’s words; null once the appellant was erased. */
+            reason: string | null;
+        };
+        /** @enum {string} */
+        ViolationCancel: "appeal_accepted" | "issued_in_error" | "duplicate" | "other";
+        /** @enum {string} */
+        ViolationDecision: "upheld" | "cancelled";
+        /** @enum {string} */
+        ViolationKind: "noise" | "waste" | "pets" | "contractor_hours" | "other";
+        /** @enum {string} */
+        ViolationPaymentReverse: "entered_in_error" | "refunded" | "other";
+        ViolationPaymentView: {
+            amount: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            currency: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "payment" | "reversal";
+            /** @description `YYYY-MM-DD`. */
+            paidOn: string | null;
+            reasonCode: components["schemas"]["ViolationPaymentReverse"] | null;
+            receiptNumber: string | null;
+            recordedBy: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            reversesId: string | null;
+            /** Format: uuid */
+            violationId: string;
+        };
+        /** @enum {string} */
+        ViolationStatus: "open" | "under_appeal" | "paid" | "cancelled";
         VisitCreatedView: {
             /** Format: date-time */
             endsAt: string;
@@ -28876,6 +29224,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VerifyView"];
+                };
+            };
+        };
+    };
+    GateViolationsController_issue: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueViolationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardViolationView"];
                 };
             };
         };
@@ -40309,6 +40683,130 @@ export interface operations {
             };
         };
     };
+    StaffViolationsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `under_appeal` is the appeals queue, oldest first; anything else newest first. */
+                status?: "open" | "under_appeal" | "paid" | "cancelled";
+                kind?: "noise" | "waste" | "pets" | "contractor_hours" | "other";
+                unitCode?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffViolationViewList"];
+                };
+            };
+        };
+    };
+    StaffViolationsController_issue: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueViolationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffViolationView"];
+                };
+            };
+        };
+    };
+    StaffViolationsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffViolationView"];
+                };
+            };
+        };
+    };
+    StaffViolationsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelViolationDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffViolationView"];
+                };
+            };
+        };
+    };
+    StaffViolationsController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideViolationAppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffViolationView"];
+                };
+            };
+        };
+    };
     VisitorAreasController_list: {
         parameters: {
             query?: never;
@@ -42697,6 +43195,32 @@ export interface operations {
             };
         };
     };
+    UnitViolationsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "open" | "under_appeal" | "paid" | "cancelled";
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentViolationViewList"];
+                };
+            };
+        };
+    };
     UnitParkingController_list: {
         parameters: {
             query?: {
@@ -43007,6 +43531,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VehicleView"];
+                };
+            };
+        };
+    };
+    UnitViolationsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentViolationView"];
+                };
+            };
+        };
+    };
+    UnitViolationsController_appeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealViolationDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentViolationView"];
                 };
             };
         };

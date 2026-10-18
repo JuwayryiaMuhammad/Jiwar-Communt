@@ -1573,6 +1573,33 @@ export const NOTIFICATION_KINDS = {
     target: 'incident',
     params: {},
   },
+  /**
+   * A violation to the unit (ADR 0053): its keepers and its primary, as a
+   * fine is. params.violationKind only: never a place, an amount or a name.
+   */
+  'violation.issued': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'unit_violation',
+    params: { violationKind: {} },
+  },
+  /** The appeal was turned down: the appellant. */
+  'violation.appeal_upheld': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'unit_violation',
+    params: {},
+  },
+  /** The appeal was accepted, the violation cancelled: the appellant. */
+  'violation.appeal_accepted': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'unit_violation',
+    params: {},
+  },
   /** A guest of the event, or the move's truck, was refused by security. */
   'unit_permit.refused_by_security': {
     priority: 'normal',

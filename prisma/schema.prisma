@@ -7317,3 +7317,68 @@ model IncidentAcknowledgement {
   @@id([tenantId, incidentId, role])
   @@map("incident_acknowledgements")
 }
+
+/// A violation issued to a unit (ADR 0053), as a fine is (ADR 0045): noise,
+/// waste, pets, contractor hours (a works permit), other; an amount or none
+/// (a warning). One appeal within 30 days; paid at the office.
+model UnitViolation {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  number            Int
+  kind              String
+  unitId            String    @map("unit_id") @db.Uuid
+  permitId          String?   @map("permit_id") @db.Uuid
+  permitKind        UnitPermitKind @default(works) @map("permit_kind")
+  placeId           String?   @map("place_id") @db.Uuid
+  note              String?
+  photoFileId       String?   @unique(map: "unit_violations_photo_key") @map("photo_file_id") @db.Uuid
+  amount            Decimal?  @db.Decimal(10, 2)
+  currency          String?
+  occurredOn        DateTime  @map("occurred_on") @db.Date
+  issuedById        String    @map("issued_by_account_id") @db.Uuid
+  issuedShiftId     String?   @map("issued_shift_id") @db.Uuid
+  postGateId        String?   @map("post_gate_id") @db.Uuid
+  postPlaceId       String?   @map("post_place_id") @db.Uuid
+  /// open | under_appeal | paid | cancelled.
+  status            String    @default("open")
+  appealText        String?   @map("appeal_text")
+  appealPhotoFileId String?   @unique(map: "unit_violations_appeal_photo_key") @map("appeal_photo_file_id") @db.Uuid
+  appealedById      String?   @map("appealed_by_account_id") @db.Uuid
+  appealedAt        DateTime? @map("appealed_at") @db.Timestamptz(3)
+  appealClearedAt   DateTime? @map("appeal_cleared_at") @db.Timestamptz(3)
+  appealDecision    String?   @map("appeal_decision")
+  decidedById       String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(3)
+  cancelReason      String?   @map("cancel_reason")
+  cancelledById     String?   @map("cancelled_by_account_id") @db.Uuid
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "unit_violations_number_key")
+  @@index([tenantId, status, createdAt, id], map: "unit_violations_status_idx")
+  @@map("unit_violations")
+}
+
+/// A violation's payment at the office, or a payment's reversal (ADR 0053).
+/// Append-only.
+model UnitViolationPayment {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  violationId   String    @map("violation_id") @db.Uuid
+  /// payment | reversal.
+  kind          String
+  amount        Decimal?  @db.Decimal(10, 2)
+  currency      String?
+  receiptNumber String?   @map("receipt_number")
+  paidOn        DateTime? @map("paid_on") @db.Date
+  reversesId    String?   @map("reverses_id") @db.Uuid
+  reasonCode    String?   @map("reason_code")
+  recordedById  String    @map("recorded_by_account_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, violationId, createdAt, id], map: "unit_violation_payments_violation_idx")
+  @@map("unit_violation_payments")
+}

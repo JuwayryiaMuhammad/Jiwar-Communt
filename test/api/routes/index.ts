@@ -135,6 +135,7 @@ import {
   INCIDENT_ROUTES,
   LOCKDOWN_ROUTES,
   STOP_WORK_ROUTES,
+  VIOLATION_ROUTES,
 } from './security-ops';
 
 /** Every endpoint of the API, one row each (ADR 0025). */
@@ -224,6 +225,7 @@ export const ROUTES: Row[] = [
   ...BLOCKLIST_ROUTES,
   ...STOP_WORK_ROUTES,
   ...INCIDENT_ROUTES,
+  ...VIOLATION_ROUTES,
   ...GATE_SERVICE_ROUTES,
   ...GATE_SERVICE_HANDLER_ROUTES,
   ...PERMIT_SETTINGS_ROUTES,

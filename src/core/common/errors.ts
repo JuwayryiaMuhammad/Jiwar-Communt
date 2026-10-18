@@ -883,6 +883,23 @@ export const ErrorCode = {
    * params.field).
    */
   INCIDENT_LINK_NOT_FOUND: 'INCIDENT_LINK_NOT_FOUND',
+  /** Unknown, another compound's, or not the caller's to see. */
+  VIOLATION_NOT_FOUND: 'VIOLATION_NOT_FOUND',
+  /** The caller does not see this unit's violations (403). */
+  VIOLATIONS_NOT_ALLOWED: 'VIOLATIONS_NOT_ALLOWED',
+  /** The violation is not under appeal (409, params.status). */
+  VIOLATION_NOT_UNDER_APPEAL: 'VIOLATION_NOT_UNDER_APPEAL',
+  /**
+   * Only an open violation not under appeal is cancelled (409,
+   * params.status).
+   */
+  VIOLATION_NOT_CANCELLABLE: 'VIOLATION_NOT_CANCELLABLE',
+  /** The violation takes no appeal: appealed already, or not open (409). */
+  VIOLATION_APPEAL_CLOSED: 'VIOLATION_APPEAL_CLOSED',
+  /** The 30 days to appeal have passed (409, params.days). */
+  VIOLATION_APPEAL_WINDOW_PASSED: 'VIOLATION_APPEAL_WINDOW_PASSED',
+  /** Only the unit's keepers or its primary appeal a violation (403). */
+  VIOLATION_APPEAL_NOT_ALLOWED: 'VIOLATION_APPEAL_NOT_ALLOWED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

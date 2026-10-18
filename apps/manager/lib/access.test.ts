@@ -92,3 +92,9 @@ test('the patrols’ keepers enter; a guard walking a route does not (ADR 0052)'
   assert.equal(mayEnter({ type: 'staff', permissions: ['patrols.manage'] }), true);
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle', 'parking_reports.handle'] }), false);
 });
+
+test('the security keepers enter; a guard on shift does not (ADR 0053)', () => {
+  for (const p of ['incidents.manage', 'blocklist.manage', 'violations.manage', 'violations.issue', 'lockdown.end'])
+    assert.equal(mayEnter({ type: 'staff', permissions: [p] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle', 'parking_reports.handle'] }), false);
+});

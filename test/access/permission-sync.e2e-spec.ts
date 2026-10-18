@@ -1360,12 +1360,16 @@ describe('Permission sync', () => {
       expect(
         [...(await role(t, 'security_supervisor')).permissions].sort(),
       ).toEqual([
+        // Created from today's catalog: G5's patrols (ADR 0052) and G6b's
+        // security permissions (ADR 0053) too, sorted with the G4 four.
+        'blocklist.manage',
         'guard_instructions.manage',
         'guard_reports.read',
         'guard_roster.manage',
         'guard_tasks.manage',
-        // Created from today's catalog: G5's patrols (ADR 0052) too.
+        'incidents.manage',
         'patrols.manage',
+        'violations.manage',
       ]);
       // parking_reports.handle was offered with G2: the sync never grants
       // an offered permission again.
@@ -1579,6 +1583,72 @@ describe('Permission sync', () => {
         expect((await role(t, key)).permissions).not.toContain(
           'patrols.manage',
         );
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase G6b (ADR 0053)', () => {
+    const g6b = [
+      'incidents.manage',
+      'blocklist.manage',
+      'violations.manage',
+      'violations.issue',
+      'lockdown.end',
+    ];
+    /** The catalog before G6b: none of its five permissions anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !g6b.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !g6b.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: all five for the manager, three for the security supervisor, nothing for anyone else', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync G6b ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...g6b].sort());
+      expect(report.rolesCreated).toEqual([]);
+      expect((await role(t, 'manager')).permissions).toEqual(
+        expect.arrayContaining(g6b),
+      );
+      const supervisor = (await role(t, 'security_supervisor')).permissions;
+      expect(supervisor.filter((p) => g6b.includes(p)).sort()).toEqual([
+        'blocklist.manage',
+        'incidents.manage',
+        'violations.manage',
+      ]);
+      // A guard reports, issues and locks down with gate.operate, inside a
+      // shift; the accountant takes violations' payments with fines.billing.
+      for (const key of [
+        'guard',
+        'resident',
+        'family_member',
+        'technician',
+        'maintenance_supervisor',
+        'accountant',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => g6b.includes(p)),
+        ).toEqual([]);
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

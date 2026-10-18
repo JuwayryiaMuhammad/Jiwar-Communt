@@ -197,6 +197,18 @@ export const PERMISSIONS = {
   // them with `gate.operate`, inside a shift. Runs and the patrol report
   // are read with `patrols.manage` or `guard_reports.read`.
   'patrols.manage': { kinds: ['staff', 'manager'] },
+  // Security (ADR 0053). `incidents.manage` investigates and closes the
+  // incidents guards report; `blocklist.manage` keeps the bans and the
+  // watchlist; `violations.manage` decides the appeals of the violations
+  // and cancels them, `violations.issue` issues them from the office (a
+  // guard issues inside a shift with `gate.operate`). `lockdown.end` ends a
+  // lockdown a guard started: the manager only. Payments of violations are
+  // `fines.billing`, as the fines' are.
+  'incidents.manage': { kinds: ['staff', 'manager'] },
+  'blocklist.manage': { kinds: ['staff', 'manager'] },
+  'violations.manage': { kinds: ['staff', 'manager'] },
+  'violations.issue': { kinds: ['staff', 'manager'] },
+  'lockdown.end': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

@@ -69,6 +69,7 @@ import {
   TriangleAlert,
   FileExclamationPoint,
   ChartPie,
+  Baby,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -443,6 +444,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <ChartPie aria-hidden />,
           show: can('incidents.manage') || can('violations.manage') || can('guard_reports.read'),
         },
+        // Children (ADR 0054): unauthorized pickups, for the keepers.
+        { href: '/security/child-alerts', label: 'Child alerts', icon: <Baby aria-hidden />, show: can('guard_roster.manage') },
       ],
     },
     {

@@ -204,3 +204,10 @@ test('the security notices of ADR 0053 say what happened by code, and lead to th
   assert.equal(notificationHref(n('violation.issued', { violationKind: 'noise' }, 'unit_violation', 'v-1'), (p) => p === 'fines.billing'), '/violations?violation=v-1');
   assert.equal(notificationHref(n('violation.issued', { violationKind: 'noise' }, 'unit_violation', 'v-1'), () => false), null);
 });
+
+test('an unauthorized child pickup reads as a code and leads to the keepers’ alert (ADR 0054)', () => {
+  const alert = { kind: 'child.unauthorized_pickup', targetType: 'child_pickup', targetId: 'p1', params: {} };
+  assert.equal(notificationText(alert), 'Someone not allowed tried to collect a child at the gate');
+  assert.equal(notificationHref(alert, (p) => p === 'guard_roster.manage'), '/security/child-alerts?open=p1');
+  assert.equal(notificationHref(alert, () => false), null);
+});

@@ -137,6 +137,8 @@ const TEXT: Record<string, (p: P) => string> = {
   'violation.issued': (p) => `A ${words(p.violationKind)} violation was issued to your unit`,
   'violation.appeal_upheld': () => 'Your appeal of a violation was not accepted',
   'violation.appeal_accepted': () => 'Your appeal of a violation was accepted: it is cancelled',
+  // Children (ADR 0054): the keepers are told of an unauthorized pickup only.
+  'child.unauthorized_pickup': () => 'Someone not allowed tried to collect a child at the gate',
   'ticket.assigned': (p) => `${ticket(p)} is assigned to you · ${words(p.priority)} · ${words(p.categoryKey)}${inUnit(p)}`,
   'ticket.unassigned': (p) => `${ticket(p)} was given to someone else${inUnit(p)}`,
   'ticket.status_changed': (p) =>
@@ -283,6 +285,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('incidents.manage') ? `/security/incidents?incident=${n.targetId}` : null;
   if (n.targetType === 'unit_violation' && n.targetId)
     return can('violations.manage') || can('violations.issue') || can('fines.billing') ? `/violations?violation=${n.targetId}` : null;
+  // Children (ADR 0054): an unauthorized pickup's alert, for the keepers.
+  if (n.targetType === 'child_pickup' && n.targetId)
+    return can('guard_roster.manage') ? `/security/child-alerts?open=${n.targetId}` : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

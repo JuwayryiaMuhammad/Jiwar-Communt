@@ -14,6 +14,7 @@ export function FacilityBadges({ facility }: { facility: Facility }) {
       {!facility.active ? <Badge tone="beige">Retired</Badge> : null}
       {facility.rules?.requiresApproval ? <Badge tone="terracotta">Approval</Badge> : null}
       {facility.rules?.requiresMembership ? <Badge tone="dark">Members</Badge> : null}
+      {facility.rules?.childOccasions ? <Badge tone="beige">Children’s occasions</Badge> : null}
     </span>
   );
 }

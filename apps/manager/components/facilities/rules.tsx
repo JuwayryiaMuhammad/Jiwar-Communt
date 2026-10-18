@@ -8,13 +8,19 @@ import { api } from '@/lib/api';
 import { keys, type CapacityUnit, type Facility, type FacilityRules } from '@/lib/queries';
 import { inRange, minutesText, numberChanges, peakProblem, RULE_FIELDS, RULE_RANGES, type RuleField } from './logic';
 
-type Form = Record<RuleField, string> & { capacityUnit: CapacityUnit; requiresApproval: boolean; requiresMembership: boolean };
+type Form = Record<RuleField, string> & {
+  capacityUnit: CapacityUnit;
+  requiresApproval: boolean;
+  requiresMembership: boolean;
+  childOccasions: boolean;
+};
 
 const toForm = (r: FacilityRules): Form => ({
   ...(Object.fromEntries(RULE_FIELDS.map((k) => [k, String(r[k])])) as Record<RuleField, string>),
   capacityUnit: r.capacityUnit,
   requiresApproval: r.requiresApproval,
   requiresMembership: r.requiresMembership,
+  childOccasions: r.childOccasions,
 });
 
 const COPY: Record<RuleField, { label: string; hint: string }> = {
@@ -41,6 +47,7 @@ export function Rules({ facility, rules }: { facility: Facility; rules: Facility
     ...(form.capacityUnit !== rules.capacityUnit ? { capacityUnit: form.capacityUnit } : {}),
     ...(form.requiresApproval !== rules.requiresApproval ? { requiresApproval: form.requiresApproval } : {}),
     ...(form.requiresMembership !== rules.requiresMembership ? { requiresMembership: form.requiresMembership } : {}),
+    ...(form.childOccasions !== rules.childOccasions ? { childOccasions: form.childOccasions } : {}),
   };
   const dirty = Object.keys(changes).length > 0;
   const save = useAction(() => unwrap(api.PATCH('/api/v1/staff/facilities/{id}', { params: { path: { id: facility.id } }, body: changes })), {
@@ -129,6 +136,11 @@ export function Rules({ facility, rules }: { facility: Facility; rules: Facility
               label="For club members only: the unit’s membership must be active and cover the booker"
               checked={form.requiresMembership}
               onChange={(e) => setForm({ ...form, requiresMembership: e.target.checked })}
+            />
+            <Checkbox
+              label="A booking may name one of the unit’s children as its occasion (a birthday space). The staff see only that there is one, never who."
+              checked={form.childOccasions}
+              onChange={(e) => setForm({ ...form, childOccasions: e.target.checked })}
             />
           </div>
         </CardBody>

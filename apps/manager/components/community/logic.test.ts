@@ -4,6 +4,7 @@ import {
   announcementActions,
   audienceBody,
   audienceText,
+  childAges,
   hiddenText,
   languagesReady,
   needsResponse,
@@ -85,4 +86,18 @@ test('a poll’s options: two to ten, each in exactly the question’s languages
   assert.equal(optionsReady([o('Yes', 'نعم'), o('No')], true, true), false);
   assert.equal(optionsReady([o('Yes', 'نعم'), o('No', 'لا')], true, true), true);
   assert.equal(optionsReady([o('Yes', 'نعم'), o('No', 'لا')], true, false), false);
+});
+
+test('an event for children takes whole years from 0 to 17, the youngest first (ADR 0054)', () => {
+  assert.deepEqual(childAges('5', '12'), { min: 5, max: 12 });
+  assert.deepEqual(childAges('0', '17'), { min: 0, max: 17 });
+  const wrong: [string, string][] = [
+    ['', '12'],
+    ['5', ''],
+    ['12', '5'],
+    ['-1', '5'],
+    ['5', '18'],
+    ['5.5', '9'],
+  ];
+  for (const [a, b] of wrong) assert.equal(childAges(a, b), null);
 });

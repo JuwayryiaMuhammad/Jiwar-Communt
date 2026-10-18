@@ -2,12 +2,12 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, useToast } from '@jiwar/ui';
+import { Button, Checkbox, Dialog, Field, Input, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type CommunityEventDetail } from '@/lib/queries';
 import { AttachmentPicker, AudiencePicker, DateTimeField, EVERYONE, TextFields, type AudienceValue, type TwoTexts } from './bits';
-import { audienceBody, languagesReady, textOrNull, toIso, toLocalInput } from './logic';
+import { audienceBody, childAges, languagesReady, textOrNull, toIso, toLocalInput } from './logic';
 
 /** Writes an event, or changes one that has not started. */
 export function EventDialog({
@@ -36,6 +36,11 @@ export function EventDialog({
   const [kept, setKept] = useState<string[]>(event?.attachments.map((x) => x.id) ?? []);
   const [added, setAdded] = useState<string[]>([]);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
+  // For children (ADR 0054): fixed once the event is saved.
+  const [forChildren, setForChildren] = useState(false);
+  const [ageMin, setAgeMin] = useState('5');
+  const [ageMax, setAgeMax] = useState('12');
+  const ages = childAges(ageMin, ageMax);
 
   const seats = capacity === '' ? null : Number(capacity);
   const body = () => ({
@@ -58,7 +63,11 @@ export function EventDialog({
       const created = await unwrap(
         api.POST('/api/v1/community/events', {
           params: { header: { 'Idempotency-Key': idempotencyKey } },
-          body: { ...body(), audience: audienceBody(audience.occupancy, audience.buildings) },
+          body: {
+            ...body(),
+            audience: audienceBody(audience.occupancy, audience.buildings),
+            ...(forChildren && ages ? { forChildren: true, childAgeMin: ages.min, childAgeMax: ages.max } : {}),
+          },
         }),
       );
       return created.id;
@@ -76,7 +85,8 @@ export function EventDialog({
     place.trim() !== '' &&
     startsAt !== '' &&
     endsAt !== '' &&
-    (seats === null || (Number.isInteger(seats) && seats >= 1));
+    (seats === null || (Number.isInteger(seats) && seats >= 1)) &&
+    (event !== null || !forChildren || ages !== null);
 
   return (
     <Dialog
@@ -116,6 +126,25 @@ export function EventDialog({
           {(p) => <Input {...p} type="number" min={1} step={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} />}
         </Field>
         {event ? null : <AudiencePicker value={audience} onChange={setAudience} hint="Fixed once the event is saved." />}
+        {event ? null : (
+          <>
+            <Checkbox
+              label="For children: households register their children of these ages, each a seat (fixed once saved)"
+              checked={forChildren}
+              onChange={(e) => setForChildren(e.target.checked)}
+            />
+            {forChildren ? (
+              <div className="form__row">
+                <Field label="Youngest, years" error={fieldError(save.error, 'childAgeMin') ?? (ages ? undefined : 'Ages from 0 to 17, youngest first.')}>
+                  {(p) => <Input {...p} type="number" min={0} max={17} step={1} value={ageMin} onChange={(e) => setAgeMin(e.target.value)} />}
+                </Field>
+                <Field label="Oldest, years" error={fieldError(save.error, 'childAgeMax')}>
+                  {(p) => <Input {...p} type="number" min={0} max={17} step={1} value={ageMax} onChange={(e) => setAgeMax(e.target.value)} />}
+                </Field>
+              </div>
+            ) : null}
+          </>
+        )}
         <AttachmentPicker existing={event?.attachments ?? []} kept={kept} onKeptChange={setKept} added={added} onAddedChange={setAdded} />
         <ErrorAlert error={save.error} />
       </div>

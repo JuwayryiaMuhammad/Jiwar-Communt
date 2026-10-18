@@ -45,6 +45,8 @@ function Attendees({ id }: { id: string }) {
             { key: 'name', header: 'Resident', cell: (a) => a.fullName ?? <span className="t-secondary">Erased account</span> },
             { key: 'unit', header: 'Unit', cell: (a) => a.unitCode ?? '' },
             { key: 'guests', header: 'Guests', cell: (a) => (a.response === 'going' ? a.guests : '') },
+            // ADR 0054: how many of the unit's children are registered, never who.
+            { key: 'children', header: 'Children', cell: (a) => (a.children ? a.children : '') },
             { key: 'when', header: 'Answered', cell: (a) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(a.answeredAt)}</span> },
           ]}
         />
@@ -127,6 +129,13 @@ export default function EventPage() {
               />
               <Stat label="Going" value={e.counts.going} hint="People, before their guests" />
               <Stat label="Not going" value={e.counts.notGoing} />
+              {e.forChildren ? (
+                <Stat
+                  label="Children"
+                  value={e.counts.children}
+                  hint={`Registered by their households, aged ${e.childAgeMin}–${e.childAgeMax}`}
+                />
+              ) : null}
             </div>
             <Attendees id={e.id} />
           </div>

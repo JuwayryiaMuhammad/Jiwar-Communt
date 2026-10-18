@@ -118,3 +118,16 @@ export function optionsReady(options: readonly { labelEn: string; labelAr: strin
   if (options.length < 2 || options.length > 10) return false;
   return options.every((o) => (o.labelEn.trim() !== '') === hasEn && (o.labelAr.trim() !== '') === hasAr);
 }
+
+/**
+ * An event for children's age range (ADR 0054): whole years from 0 to 17,
+ * the youngest first; null otherwise.
+ */
+export function childAges(min: string, max: string): { min: number; max: number } | null {
+  const a = Number(min);
+  const b = Number(max);
+  if (min.trim() === '' || max.trim() === '') return null;
+  if (!Number.isInteger(a) || !Number.isInteger(b)) return null;
+  if (a < 0 || b > 17 || a > b) return null;
+  return { min: a, max: b };
+}

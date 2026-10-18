@@ -170,6 +170,8 @@ export type CheckpointSecret = Schema<'CheckpointSecretView'>;
 export type PatrolRoute = Schema<'RouteView'>;
 export type PatrolRouteDetail = Schema<'RouteDetailView'>;
 export type PatrolRun = Schema<'RunView'>;
+/** An unauthorized child pickup, as the keepers read it (ADR 0054). */
+export type ChildAlert = Schema<'ChildAlertView'>;
 export type PatrolRunDetail = Schema<'RunDetailView'>;
 export type PatrolRunStatus = Schema<'PatrolRunStatus'>;
 export type PatrolReport = Schema<'PatrolReportView'>;
@@ -585,6 +587,9 @@ export const keys = {
   violation: (id: string) => ['violations', 'detail', id] as const,
   incidentReport: (f: object) => ['security', 'incident-report', f] as const,
   violationReport: (f: object) => ['security', 'violation-report', f] as const,
+  // Children (ADR 0054).
+  childAlerts: ['children', 'alerts'] as const,
+  childAlert: (id: string) => ['children', 'alerts', id] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -972,6 +977,10 @@ export const fetchers = {
   violation: (id: string) => unwrap(api.GET('/api/v1/staff/violations/{id}', { params: { path: { id } } })),
   incidentReport: (f: RosterPeriod) => unwrap(api.GET('/api/v1/staff/security/reports/incidents', { params: { query: clean(f) } })),
   violationReport: (f: RosterPeriod) => unwrap(api.GET('/api/v1/staff/security/reports/violations', { params: { query: clean(f) } })),
+  // Children (ADR 0054).
+  childAlerts: (cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/security/child-alerts', { params: { query: { cursor, limit } } })),
+  childAlert: (id: string) => unwrap(api.GET('/api/v1/staff/security/child-alerts/{id}', { params: { path: { id } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

@@ -1,7 +1,7 @@
 'use client';
 
 import { ErrorAlert } from '@jiwar/api/react';
-import { AppShell, Button, EmptyState, SkeletonRows, type NavGroup, type NavItem } from '@jiwar/ui';
+import { Alert, AppShell, Button, EmptyState, SkeletonRows, type NavGroup, type NavItem } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import {
   Ban,
@@ -64,10 +64,17 @@ import {
   Route,
   Footprints,
   ChartNoAxesColumn,
+  ShieldAlert,
+  ShieldBan,
+  TriangleAlert,
+  FileExclamationPoint,
+  ChartPie,
 } from 'lucide-react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { NotificationBell } from '@/components/notification-bell';
+import { lockdownBanner } from '@/components/security/ops-logic';
 import { mayEnter } from '@/lib/access';
 import { bffAuth } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
@@ -182,6 +189,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     keys.bookings({ status: 'pending' }),
     () => fetchers.bookings({ status: 'pending' }, undefined, 100),
     can('bookings.handle'),
+  );
+
+  // A lockdown in force (ADR 0053): a banner on every page for whoever may
+  // end it, polled as the emergencies are.
+  const liveLockdowns =
+    useQuery({
+      queryKey: [...keys.lockdowns('live'), 'banner'],
+      queryFn: () => fetchers.lockdowns('live', undefined, 100),
+      refetchInterval: 10_000,
+      retry: false,
+      enabled: can('lockdown.end'),
+    }).data?.data ?? [];
+  const lockdownLine = lockdownBanner(liveLockdowns);
+  // Violation appeals waiting for a decision (ADR 0053).
+  const violationAppeals = useQueueSize(
+    keys.violations({ status: 'under_appeal' }),
+    () => fetchers.violations({ status: 'under_appeal' }, undefined, 100),
+    can('violations.manage'),
+  );
+  // Incidents nobody investigates yet.
+  const openIncidents = useQueueSize(
+    keys.securityIncidents({ status: 'open' }),
+    () => fetchers.securityIncidents({ status: 'open' }, undefined, 100),
+    can('incidents.manage'),
   );
 
   // Shift swaps the colleague accepted, to decide (ADR 0050).
@@ -383,6 +414,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <ChartNoAxesColumn aria-hidden />,
           show: can('patrols.manage') || can('guard_reports.read'),
         },
+        // Incidents, the blocklist, the lockdown and violations (ADR 0053).
+        {
+          href: '/security/lockdowns',
+          label: 'Lockdown',
+          icon: <ShieldAlert aria-hidden />,
+          count: liveLockdowns.length,
+          show: can('lockdown.end'),
+        },
+        { href: '/security/blocklist', label: 'Blocklist', icon: <ShieldBan aria-hidden />, show: can('blocklist.manage') },
+        {
+          href: '/security/incidents',
+          label: 'Incidents',
+          icon: <TriangleAlert aria-hidden />,
+          count: openIncidents,
+          show: can('incidents.manage'),
+        },
+        {
+          href: '/violations',
+          label: 'Violations',
+          icon: <FileExclamationPoint aria-hidden />,
+          count: violationAppeals,
+          show: can('violations.manage') || can('violations.issue') || can('fines.billing'),
+        },
+        {
+          href: '/security/summary',
+          label: 'Incidents & violations report',
+          icon: <ChartPie aria-hidden />,
+          show: can('incidents.manage') || can('violations.manage') || can('guard_reports.read'),
+        },
       ],
     },
     {
@@ -502,7 +562,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </EmptyState>
     );
   } else {
-    body = children;
+    body = (
+      <>
+        {lockdownLine && pathname !== '/security/lockdowns' ? (
+          <Alert tone="error">
+            {lockdownLine}. <Link href="/security/lockdowns">End it or read its overrides</Link>
+          </Alert>
+        ) : null}
+        {children}
+      </>
+    );
   }
 
   return (

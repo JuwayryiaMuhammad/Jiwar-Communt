@@ -188,3 +188,19 @@ test('a patrol run’s notice leads to the runs, for whoever reads them (ADR 005
   assert.equal(notificationHref(missed, (p) => p === 'guard_reports.read'), '/security/patrols/runs');
   assert.equal(notificationHref(missed, () => false), null);
 });
+
+test('the security notices of ADR 0053 say what happened by code, and lead to the keeper’s page', () => {
+  assert.equal(notificationText(n('gate_lockdown.started', { scope: 'all' })), 'Every gate is locked down');
+  assert.equal(notificationText(n('incident.reported', { severity: 'high', incidentType: 'near_miss' })), 'A high near miss incident was reported');
+  assert.equal(
+    notificationText(n('blocklist.ban_matched', { source: 'visitor_pass' })),
+    'A banned plate or person was refused at the gate (visitor pass)',
+  );
+  const lockdown = n('gate_lockdown.started', { scope: 'gate' }, 'gate_lockdown', 'l-1');
+  assert.equal(notificationHref(lockdown, (p) => p === 'lockdown.end'), '/security/lockdowns');
+  assert.equal(notificationHref(lockdown, () => false), null);
+  assert.equal(notificationHref(n('incident.assigned', {}, 'incident', 'i-1'), (p) => p === 'incidents.manage'), '/security/incidents?incident=i-1');
+  assert.equal(notificationHref(n('blocklist.watch_matched', { source: 'verify' }, 'blocklist_entry', 'b-1'), (p) => p === 'blocklist.manage'), '/security/blocklist?entry=b-1');
+  assert.equal(notificationHref(n('violation.issued', { violationKind: 'noise' }, 'unit_violation', 'v-1'), (p) => p === 'fines.billing'), '/violations?violation=v-1');
+  assert.equal(notificationHref(n('violation.issued', { violationKind: 'noise' }, 'unit_violation', 'v-1'), () => false), null);
+});

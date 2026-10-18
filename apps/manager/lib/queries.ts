@@ -179,6 +179,36 @@ export interface RunFilters extends RosterPeriod {
   routeId?: string;
 }
 
+// Security (ADR 0053): the lockdown, the blocklist, incidents, violations.
+export type StaffLockdown = Schema<'StaffLockdownView'>;
+export type LockdownOverride = Schema<'LockdownOverrideView'>;
+export type BlocklistEntry = Schema<'StaffBlocklistEntryView'>;
+export type BlocklistMatch = Schema<'BlocklistMatchView'>;
+export type StaffIncident = Schema<'StaffIncidentView'>;
+export type IncidentInvestigator = Schema<'IncidentInvestigatorView'>;
+export type StaffViolation = Schema<'StaffViolationView'>;
+export type ViolationPayment = Schema<'ViolationPaymentView'>;
+export type IncidentReport = Schema<'IncidentReportView'>;
+export type ViolationReport = Schema<'ViolationReportView'>;
+export type LockdownState = 'live' | 'ended';
+export interface BlocklistFilters {
+  status?: 'active' | 'expired' | 'lifted' | '';
+  kind?: 'ban' | 'watch' | '';
+}
+export interface IncidentFilters {
+  status?: 'open' | 'investigating' | 'closed' | '';
+  type?: StaffIncident['type'] | '';
+  severity?: StaffIncident['severity'] | '';
+  /** Instants (the API's `from`/`to`), from the page's local days. */
+  from?: string;
+  to?: string;
+}
+export interface ViolationFilters {
+  status?: 'open' | 'under_appeal' | 'paid' | 'cancelled' | '';
+  kind?: StaffViolation['kind'] | '';
+  unitCode?: string;
+}
+
 // Emergencies and gate services (ADR 0047).
 export type StaffEmergency = Schema<'StaffEmergencyView'>;
 export type StaffGateService = Schema<'StaffGateServiceView'>;
@@ -539,6 +569,22 @@ export const keys = {
   run: (id: string) => ['patrols', 'runs', 'detail', id] as const,
   runTrack: (id: string) => ['patrols', 'runs', 'track', id] as const,
   patrolReport: (f: object) => ['patrols', 'report', f] as const,
+  // Security (ADR 0053).
+  lockdownsAll: ['lockdowns'] as const,
+  lockdowns: (state: string) => ['lockdowns', 'list', state] as const,
+  blocklistAll: ['blocklist'] as const,
+  blocklist: (f: object) => ['blocklist', 'list', f] as const,
+  blocklistEntry: (id: string) => ['blocklist', 'detail', id] as const,
+  blocklistMatches: (id: string) => ['blocklist', 'matches', id] as const,
+  securityIncidentsAll: ['security-incidents'] as const,
+  securityIncidents: (f: object) => ['security-incidents', 'list', f] as const,
+  securityIncident: (id: string) => ['security-incidents', 'detail', id] as const,
+  investigators: ['security-incidents', 'investigators'] as const,
+  violationsAll: ['violations'] as const,
+  violations: (f: object) => ['violations', 'list', f] as const,
+  violation: (id: string) => ['violations', 'detail', id] as const,
+  incidentReport: (f: object) => ['security', 'incident-report', f] as const,
+  violationReport: (f: object) => ['security', 'violation-report', f] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -897,6 +943,35 @@ export const fetchers = {
   runTrack: (id: string) => unwrap(api.GET('/api/v1/staff/security/patrols/runs/{id}/track', { params: { path: { id } } })),
   patrolReport: (f: RosterPeriod & { routeId?: string }) =>
     unwrap(api.GET('/api/v1/staff/security/patrols/report', { params: { query: clean(f) } })),
+  // Security (ADR 0053).
+  lockdowns: (state: LockdownState | '', cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/security/lockdowns', { params: { query: { status: state || undefined, cursor, limit } } })),
+  blocklist: (f: BlocklistFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/blocklist', {
+        params: { query: { ...(clean(f) as { status?: 'active' | 'expired' | 'lifted'; kind?: 'ban' | 'watch' }), cursor, limit } },
+      }),
+    ),
+  blocklistEntry: (id: string) => unwrap(api.GET('/api/v1/staff/security/blocklist/{id}', { params: { path: { id } } })),
+  blocklistMatches: (id: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/security/blocklist/{id}/matches', { params: { path: { id }, query: { cursor, limit } } })),
+  securityIncidents: (f: IncidentFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/incidents', {
+        params: { query: { ...(clean(f) as { [K in keyof IncidentFilters]?: Exclude<IncidentFilters[K], ''> }), cursor, limit } },
+      }),
+    ),
+  securityIncident: (id: string) => unwrap(api.GET('/api/v1/staff/security/incidents/{id}', { params: { path: { id } } })),
+  investigators: () => unwrap(api.GET('/api/v1/staff/security/incidents/investigators')),
+  violations: (f: ViolationFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/violations', {
+        params: { query: { ...(clean(f) as { [K in keyof ViolationFilters]?: Exclude<ViolationFilters[K], ''> }), cursor, limit } },
+      }),
+    ),
+  violation: (id: string) => unwrap(api.GET('/api/v1/staff/violations/{id}', { params: { path: { id } } })),
+  incidentReport: (f: RosterPeriod) => unwrap(api.GET('/api/v1/staff/security/reports/incidents', { params: { query: clean(f) } })),
+  violationReport: (f: RosterPeriod) => unwrap(api.GET('/api/v1/staff/security/reports/violations', { params: { query: clean(f) } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

@@ -121,6 +121,22 @@ const TEXT: Record<string, (p: P) => string> = {
   'patrol.late': () => 'A patrol at your post has not started',
   'patrol.missed': () => 'A scheduled patrol was not started',
   'patrol.incomplete': (p) => `A patrol ended with checkpoints not scanned (${words(p.reason)})`,
+  // Security (ADR 0053): codes only, never a plate, a name, a unit or a word.
+  'gate_lockdown.started': (p) => (p.scope === 'all' ? 'Every gate is locked down' : 'A gate is locked down'),
+  'gate_lockdown.resident_notice': () => 'The compound’s gates are locked down for now',
+  'gate_lockdown.ended': (p) => (p.scope === 'all' ? 'The lockdown of every gate ended' : 'A gate’s lockdown ended'),
+  'blocklist.ban_matched': (p) => `A banned plate or person was refused at the gate (${words(p.source)})`,
+  'blocklist.watch_matched': (p) => `A watched plate or person came to the gate (${words(p.source)})`,
+  'unit_permit.work_stopped': (p) => `Security stopped the work on a permit (${words(p.reason)})`,
+  'unit_permit.work_resumed': () => 'The work on a permit may go on',
+  'unit_permit.refused_by_security': () => 'Security refused a guest or the truck of a permit',
+  'visitor_pass.refused_by_security': () => 'Security refused your visitor at the gate',
+  'incident.reported': (p) => `A ${words(p.severity)} ${words(p.incidentType)} incident was reported`,
+  'incident.critical': (p) => `A critical ${words(p.incidentType)} incident was reported`,
+  'incident.assigned': () => 'An incident was given to you to investigate',
+  'violation.issued': (p) => `A ${words(p.violationKind)} violation was issued to your unit`,
+  'violation.appeal_upheld': () => 'Your appeal of a violation was not accepted',
+  'violation.appeal_accepted': () => 'Your appeal of a violation was accepted: it is cancelled',
   'ticket.assigned': (p) => `${ticket(p)} is assigned to you · ${words(p.priority)} · ${words(p.categoryKey)}${inUnit(p)}`,
   'ticket.unassigned': (p) => `${ticket(p)} was given to someone else${inUnit(p)}`,
   'ticket.status_changed': (p) =>
@@ -259,6 +275,14 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('governance.manage') ? `/governance/polls/${n.targetId}` : null;
   // Patrols (ADR 0052): a run's page for whoever reads the runs.
   if (n.targetType === 'patrol_run') return can('patrols.manage') || can('guard_reports.read') ? '/security/patrols/runs' : null;
+  // Security (ADR 0053): each keeper's page.
+  if (n.targetType === 'gate_lockdown') return can('lockdown.end') ? '/security/lockdowns' : null;
+  if (n.targetType === 'blocklist_entry' && n.targetId)
+    return can('blocklist.manage') ? `/security/blocklist?entry=${n.targetId}` : null;
+  if (n.targetType === 'incident' && n.targetId)
+    return can('incidents.manage') ? `/security/incidents?incident=${n.targetId}` : null;
+  if (n.targetType === 'unit_violation' && n.targetId)
+    return can('violations.manage') || can('violations.issue') || can('fines.billing') ? `/violations?violation=${n.targetId}` : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

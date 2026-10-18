@@ -38,6 +38,9 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
   neighbour_post_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 5 MB.' },
   // A vehicle fine's photo (ADR 0045).
   vehicle_fine_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 5 MB.' },
+  // Security (ADR 0053): a banned person's or plate's photo, a violation's.
+  blocklist_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 5 MB.' },
+  violation_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 5 MB.' },
 };
 
 /**

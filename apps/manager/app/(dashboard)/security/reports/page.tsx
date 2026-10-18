@@ -37,7 +37,7 @@ export default function SecurityReportsPage() {
     );
   return (
     <>
-      <PageHeader title="Daily security report" description="Per gate and zone: shifts, lateness and absence, tasks, emergencies, gate services, visitors and patrols." />
+      <PageHeader title="Daily security report" description="Per gate and zone: shifts, lateness and absence, tasks, emergencies, gate services, visitors, patrols, and the incidents and violations of the guards on shift there." />
       <div className="toolbar">
         <Field label="Day">{(p) => <Input {...p} type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} />}</Field>
         <Field label="Gate">{(p) => <PostPicker {...p} gatesOnly placeholder="Every gate and zone" value={gate} onChange={(e) => setGate(e.target.value)} />}</Field>
@@ -87,6 +87,8 @@ export default function SecurityReportsPage() {
                   ),
                 },
                 { key: 'pmissed', header: 'Missed / incomplete', cell: (p) => <span className="t-num">{p.patrols.missed} / {p.patrols.incomplete}</span> },
+                { key: 'incidents', header: 'Incidents', cell: (p) => <span className="t-num">{p.counts.incidents}</span> },
+                { key: 'violations', header: 'Violations', cell: (p) => <span className="t-num">{p.counts.violations}</span> },
               ]}
             />
           </Card>

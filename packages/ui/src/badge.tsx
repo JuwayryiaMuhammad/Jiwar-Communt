@@ -142,6 +142,11 @@ const STATUS_TONE: Record<string, Tone> = {
   incomplete: 'terracotta',
   timed_out: 'error',
   missed: 'error',
+  // Security (ADR 0053): a lockdown in force, a lifted blocklist entry, an
+  // incident under investigation.
+  live: 'error',
+  lifted: 'beige',
+  investigating: 'terracotta',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

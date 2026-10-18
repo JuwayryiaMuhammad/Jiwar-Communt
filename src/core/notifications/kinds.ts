@@ -1461,6 +1461,40 @@ export const NOTIFICATION_KINDS = {
     target: 'patrol_run',
     params: { reason: {} },
   },
+  // Security (ADR 0053).
+  /**
+   * A guard locked one gate or all down. To the guards on shift and the
+   * management (`lockdown.end`). params.scope: gate or all.
+   */
+  'gate_lockdown.started': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'gate_lockdown',
+    params: { scope: {} },
+  },
+  /**
+   * The compound's gates are locked down: every resident, a generic text
+   * (no gate, no reason). Sent when the first lockdown starts.
+   */
+  'gate_lockdown.resident_notice': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'gate_lockdown',
+    params: {},
+  },
+  /**
+   * The management ended a lockdown: the guards on shift and the
+   * management; the residents too once none is left.
+   */
+  'gate_lockdown.ended': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'gate_lockdown',
+    params: { scope: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

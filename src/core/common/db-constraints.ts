@@ -370,6 +370,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // like the unit's.
   emergencies_one_open_at_gate: null,
   emergencies_one_open_in_zone: null,
+  // The lockdown (ADR 0053): one live per scope is checked under the
+  // compound's lockdown row first: a violation is a race.
+  gate_lockdowns_tenant_id_id_key: null,
+  gate_lockdowns_one_live: null,
+  gate_lockdown_overrides_tenant_id_id_key: null,
   gate_service_requests_tenant_id_id_key: null,
   // Numbers come from the counter under its row lock: a collision is a bug.
   gate_service_requests_number_key: null,

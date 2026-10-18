@@ -1986,6 +1986,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/lockdowns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lock one gate or all down
+         * @description A guard on shift (at a gate or in a zone), with a reason code and the typed confirmation `LOCKDOWN`. Immediate. While it is live every entry in but a resident’s is refused (LOCKDOWN_ACTIVE). The guards on shift and the management get a critical push, every resident a generic one. One live per scope: a repeat answers 200 with it.
+         */
+        post: operations["GateLockdownsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/lockdowns/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The live lockdowns
+         * @description Each gate’s own, and the one of every gate.
+         */
+        get: operations["GateLockdownsController_active"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/lockdowns/{id}/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Let an emergency vehicle through a locked gate
+         * @description At the gate of your shift, which the lockdown must hold (LOCKDOWN_NOT_AT_GATE), with what came through. Recorded and audited.
+         */
+        post: operations["GateLockdownsController_override"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/material-entries": {
         parameters: {
             query?: never;
@@ -8839,6 +8899,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/lockdowns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the lockdowns
+         * @description Newest first; `status=live` for those still holding.
+         */
+        get: operations["StaffLockdownsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/lockdowns/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a lockdown, with its overrides */
+        get: operations["StaffLockdownsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/lockdowns/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End a lockdown
+         * @description The management only, with a reason code and a note of its own. The guards on shift and the management are told; the residents too once no lockdown is left.
+         */
+        post: operations["StaffLockdownsController_end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/patrols/checkpoints": {
         parameters: {
             query?: never;
@@ -15043,6 +15160,12 @@ export interface components {
             /** @description From the closed list `boardMemberEnd`. */
             reasonCode: string;
         };
+        EndLockdownDto: {
+            /** @description The management’s own words; nobody else reads them. */
+            note?: string;
+            /** @description From the closed list `gateLockdownEnd`. */
+            reasonCode: string;
+        };
         EndShiftDto: {
             /** @description The ids of the checklist items ticked: every active one (422 HANDOVER_CHECKLIST_INCOMPLETE, params.missing). A retired one is ignored. */
             checklist?: string[];
@@ -15661,6 +15784,12 @@ export interface components {
         };
         /** @enum {string} */
         GateKind: "pedestrian" | "vehicle" | "mixed";
+        /** @enum {string} */
+        GateLockdownEnd: "threat_cleared" | "false_alarm" | "drill_over" | "other";
+        /** @enum {string} */
+        GateLockdownOverride: "ambulance" | "fire_truck" | "police" | "civil_defense";
+        /** @enum {string} */
+        GateLockdownStart: "security_threat" | "intruder" | "violence" | "fire" | "police_request" | "drill" | "other";
         GateMaterialExitView: {
             items: components["schemas"]["MaterialItemView"][] | null;
             photo: components["schemas"]["PresignedReadView"] | null;
@@ -16206,6 +16335,17 @@ export interface components {
             description: string;
             /** Format: uuid */
             id: string;
+        };
+        GuardLockdownView: {
+            /** @description Null for every gate. */
+            gate: components["schemas"]["LockdownGateView"] | null;
+            /** Format: uuid */
+            id: string;
+            reasonCode: components["schemas"]["GateLockdownStart"];
+            scope: components["schemas"]["LockdownScope"];
+            /** Format: date-time */
+            startedAt: string;
+            startedBy: components["schemas"]["FirstNameRefView"];
         };
         GuardParkingView: {
             areaName: string;
@@ -17068,6 +17208,43 @@ export interface components {
         LocaleView: {
             preferredLocale: components["schemas"]["Locale"];
         };
+        LockdownGateView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        LockdownOverrideDto: {
+            /**
+             * Format: uuid
+             * @description The emergency it answers, when there is one.
+             */
+            emergencyId?: string;
+            /**
+             * Format: uuid
+             * @description The lane a resident asked for (ADR 0047), when there is one.
+             */
+            gateServiceRequestId?: string;
+            /** @description What came through, from the closed list `gateLockdownOverride`: ambulance, fire_truck, police, civil_defense. */
+            reasonCode: string;
+        };
+        LockdownOverrideView: {
+            /** Format: uuid */
+            emergencyId: string | null;
+            gate: components["schemas"]["LockdownGateView"];
+            /** Format: uuid */
+            gateServiceRequestId: string | null;
+            /** @description The guard. */
+            guard: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            lockdownId: string;
+            /** Format: date-time */
+            occurredAt: string;
+            reasonCode: components["schemas"]["GateLockdownOverride"];
+        };
+        /** @enum {string} */
+        LockdownScope: "gate" | "all";
         LogMaterialEntryDto: {
             /** @example 20 bags of cement, 4 boxes of tiles */
             description: string;
@@ -18739,7 +18916,7 @@ export interface components {
              * @description Why not, when it does not.
              * @enum {string|null}
              */
-            refusal: "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | null;
+            refusal: "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "lockdown_active" | null;
             /** @description The pass lets its visitor in now. */
             valid: boolean;
             /** Format: date-time */
@@ -18757,7 +18934,7 @@ export interface components {
             /** @example M-0007 */
             reference: string;
             /** @enum {string|null} */
-            refusal: "not_yet_valid" | "expired" | "not_approved" | "cancelled" | "revoked" | "outside_work_hours" | "day_off" | "guest_removed" | null;
+            refusal: "not_yet_valid" | "expired" | "not_approved" | "cancelled" | "revoked" | "outside_work_hours" | "day_off" | "guest_removed" | "lockdown_active" | null;
             /** Format: date-time */
             startsAt: string;
             /** Format: uuid */
@@ -21628,6 +21805,26 @@ export interface components {
             data: components["schemas"]["StaffGuardTaskView"][];
             nextCursor: string | null;
         };
+        StaffLockdownView: {
+            endNote: string | null;
+            endReason: components["schemas"]["GateLockdownEnd"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            endedBy: components["schemas"]["AccountRefView"] | null;
+            gate: components["schemas"]["LockdownGateView"] | null;
+            /** Format: uuid */
+            id: string;
+            overrides: components["schemas"]["LockdownOverrideView"][];
+            reasonCode: components["schemas"]["GateLockdownStart"];
+            scope: components["schemas"]["LockdownScope"];
+            /** Format: date-time */
+            startedAt: string;
+            startedBy: components["schemas"]["AccountRefView"];
+        };
+        StaffLockdownViewList: {
+            data: components["schemas"]["StaffLockdownView"][];
+            nextCursor: string | null;
+        };
         StaffMessageDto: {
             body: string;
             /**
@@ -22279,6 +22476,25 @@ export interface components {
         StandingInstructionViewList: {
             data: components["schemas"]["StandingInstructionView"][];
             nextCursor: string | null;
+        };
+        StartLockdownDto: {
+            /**
+             * @description The confirmation the guard types: exactly `LOCKDOWN`. Nothing starts without it.
+             * @enum {string}
+             */
+            confirmation: "LOCKDOWN";
+            /**
+             * Format: uuid
+             * @description The gate, for `scope: gate`; never with `all`.
+             */
+            gateId?: string;
+            /** @description From the closed list `gateLockdownStart`. */
+            reasonCode: string;
+            /**
+             * @description `gate`: one gate (`gateId`); `all`: every gate.
+             * @enum {string}
+             */
+            scope: "gate" | "all";
         };
         StartShiftDto: {
             /** Format: uuid */
@@ -23466,7 +23682,7 @@ export interface components {
             /** @enum {string|null} */
             next: "in" | "out" | null;
             /** @enum {string|null} */
-            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | "outside_work_hours" | "day_off" | "id_mismatch" | "worker_removed" | "guest_removed" | null;
+            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | "outside_work_hours" | "day_off" | "id_mismatch" | "worker_removed" | "guest_removed" | "lockdown_active" | null;
             /** @enum {string} */
             result: "valid" | "invalid";
             /** @enum {string|null} */
@@ -26819,6 +27035,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InsideViewList"];
+                };
+            };
+        };
+    };
+    GateLockdownsController_start: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartLockdownDto"];
+            };
+        };
+        responses: {
+            /** @description The live one. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardLockdownView"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardLockdownView"];
+                };
+            };
+        };
+    };
+    GateLockdownsController_active: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardLockdownView"][];
+                };
+            };
+        };
+    };
+    GateLockdownsController_override: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LockdownOverrideDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LockdownOverrideView"];
                 };
             };
         };
@@ -37229,6 +37527,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGuardInstructionView"];
+                };
+            };
+        };
+    };
+    StaffLockdownsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "live" | "ended";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffLockdownViewList"];
+                };
+            };
+        };
+    };
+    StaffLockdownsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffLockdownView"];
+                };
+            };
+        };
+    };
+    StaffLockdownsController_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EndLockdownDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffLockdownView"];
                 };
             };
         };

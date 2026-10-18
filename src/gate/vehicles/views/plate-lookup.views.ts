@@ -21,6 +21,8 @@ const PASS_REFUSALS = [
   'host_inactive',
   'used',
   'cancelled',
+  // Lockdown (ADR 0053).
+  'lockdown_active',
 ];
 
 /** Why a permit does not let its truck or guest in now (ADR 0049). */
@@ -33,6 +35,8 @@ const PERMIT_REFUSALS = [
   'outside_work_hours',
   'day_off',
   'guest_removed',
+  // Lockdown (ADR 0053).
+  'lockdown_active',
 ];
 
 /** A move's truck or an event guest's car (ADR 0049): never a name. */

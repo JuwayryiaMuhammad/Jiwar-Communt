@@ -36,6 +36,8 @@ const REASONS = [
   'id_mismatch',
   'worker_removed',
   'guest_removed',
+  // Lockdown (ADR 0053).
+  'lockdown_active',
 ];
 
 export class VerifyDisplayView {

@@ -25,6 +25,7 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { ApprovalsService } from '../approvals/approvals.service';
 import { permitReference } from '../permits/permit-core';
 import { PermitIdCheck } from '../permits/permit-id-check';
+import { LockdownCore } from '../lockdown/lockdown-core';
 import { ShiftsService } from '../shifts/shifts.service';
 import { GateSubjects, unknownType, type GateSubject } from './subjects';
 
@@ -166,6 +167,7 @@ export class EntriesService implements OnModuleInit {
     private readonly approvals: ApprovalsService,
     private readonly notifier: Notifier,
     private readonly ids: PermitIdCheck,
+    private readonly lockdown: LockdownCore,
     config: ConfigService<Env, true>,
   ) {
     this.unconfirmedAfterMs =
@@ -252,6 +254,11 @@ export class EntriesService implements OnModuleInit {
         }
       }
       await this.idempotency.claim(tx, { type: ENTRY_RESOURCE, id });
+      // A lockdown (ADR 0053): the compound's lockdown row FOR SHARE before
+      // anything of the subject, so a start waits for this entry or this
+      // entry sees it. Exits are always recorded.
+      if (input.direction === 'in')
+        await this.lockdown.refuseIn(tx, shift.gateId, occurredAt);
       // On a household's approval: the request under its lock (a deny
       // racing this entry waits for it, or wins before it), its timeout
       // applied first. A worker let in off schedule stays the worker.

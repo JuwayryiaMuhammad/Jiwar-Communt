@@ -9778,6 +9778,24 @@
         ],
         "type": "object"
       },
+      "EndLockdownDto": {
+        "properties": {
+          "note": {
+            "description": "The management’s own words; nobody else reads them.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `gateLockdownEnd`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "EndShiftDto": {
         "properties": {
           "checklist": {
@@ -11858,6 +11876,36 @@
         ],
         "type": "string"
       },
+      "GateLockdownEnd": {
+        "enum": [
+          "threat_cleared",
+          "false_alarm",
+          "drill_over",
+          "other"
+        ],
+        "type": "string"
+      },
+      "GateLockdownOverride": {
+        "enum": [
+          "ambulance",
+          "fire_truck",
+          "police",
+          "civil_defense"
+        ],
+        "type": "string"
+      },
+      "GateLockdownStart": {
+        "enum": [
+          "security_threat",
+          "intruder",
+          "violence",
+          "fire",
+          "police_request",
+          "drill",
+          "other"
+        ],
+        "type": "string"
+      },
       "GateMaterialExitView": {
         "properties": {
           "items": {
@@ -13904,6 +13952,54 @@
           "id",
           "description",
           "action"
+        ],
+        "type": "object"
+      },
+      "GuardLockdownView": {
+        "properties": {
+          "gate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockdownGateView"
+              }
+            ],
+            "description": "Null for every gate.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateLockdownStart"
+              }
+            ]
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockdownScope"
+              }
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startedBy": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "gate",
+          "reasonCode",
+          "startedAt",
+          "startedBy"
         ],
         "type": "object"
       },
@@ -16636,6 +16732,106 @@
           "preferredLocale"
         ],
         "type": "object"
+      },
+      "LockdownGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "LockdownOverrideDto": {
+        "properties": {
+          "emergencyId": {
+            "description": "The emergency it answers, when there is one.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "gateServiceRequestId": {
+            "description": "The lane a resident asked for (ADR 0047), when there is one.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "What came through, from the closed list `gateLockdownOverride`: ambulance, fire_truck, police, civil_defense.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "LockdownOverrideView": {
+        "properties": {
+          "emergencyId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "gate": {
+            "$ref": "#/components/schemas/LockdownGateView"
+          },
+          "gateServiceRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "The guard."
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lockdownId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateLockdownOverride"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "lockdownId",
+          "gate",
+          "reasonCode",
+          "guard",
+          "emergencyId",
+          "gateServiceRequestId",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "LockdownScope": {
+        "enum": [
+          "gate",
+          "all"
+        ],
+        "type": "string"
       },
       "LogMaterialEntryDto": {
         "properties": {
@@ -21899,7 +22095,8 @@
               "outside_schedule",
               "host_inactive",
               "used",
-              "cancelled"
+              "cancelled",
+              "lockdown_active"
             ],
             "nullable": true,
             "type": "string"
@@ -21957,7 +22154,8 @@
               "revoked",
               "outside_work_hours",
               "day_off",
-              "guest_removed"
+              "guest_removed",
+              "lockdown_active"
             ],
             "nullable": true,
             "type": "string"
@@ -31649,6 +31847,109 @@
         ],
         "type": "object"
       },
+      "StaffLockdownView": {
+        "properties": {
+          "endNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateLockdownEnd"
+              }
+            ],
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "gate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockdownGateView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "overrides": {
+            "items": {
+              "$ref": "#/components/schemas/LockdownOverrideView"
+            },
+            "type": "array"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateLockdownStart"
+              }
+            ]
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockdownScope"
+              }
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "gate",
+          "reasonCode",
+          "startedAt",
+          "startedBy",
+          "endedAt",
+          "endedBy",
+          "endReason",
+          "endNote",
+          "overrides"
+        ],
+        "type": "object"
+      },
+      "StaffLockdownViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffLockdownView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffMessageDto": {
         "properties": {
           "body": {
@@ -33903,6 +34204,40 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StartLockdownDto": {
+        "properties": {
+          "confirmation": {
+            "description": "The confirmation the guard types: exactly `LOCKDOWN`. Nothing starts without it.",
+            "enum": [
+              "LOCKDOWN"
+            ],
+            "type": "string"
+          },
+          "gateId": {
+            "description": "The gate, for `scope: gate`; never with `all`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `gateLockdownStart`.",
+            "type": "string"
+          },
+          "scope": {
+            "description": "`gate`: one gate (`gateId`); `all`: every gate.",
+            "enum": [
+              "gate",
+              "all"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "reasonCode",
+          "confirmation"
         ],
         "type": "object"
       },
@@ -37812,7 +38147,8 @@
               "day_off",
               "id_mismatch",
               "worker_removed",
-              "guest_removed"
+              "guest_removed",
+              "lockdown_active"
             ],
             "nullable": true,
             "type": "string"
@@ -44664,6 +45000,157 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/lockdowns": {
+      "post": {
+        "description": "A guard on shift (at a gate or in a zone), with a reason code and the typed confirmation `LOCKDOWN`. Immediate. While it is live every entry in but a resident’s is refused (LOCKDOWN_ACTIVE). The guards on shift and the management get a critical push, every resident a generic one. One live per scope: a repeat answers 200 with it.",
+        "operationId": "GateLockdownsController_start",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartLockdownDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardLockdownView"
+                }
+              }
+            },
+            "description": "The live one."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardLockdownView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lock one gate or all down",
+        "tags": [
+          "lockdown"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/lockdowns/active": {
+      "get": {
+        "description": "Each gate’s own, and the one of every gate.",
+        "operationId": "GateLockdownsController_active",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GuardLockdownView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The live lockdowns",
+        "tags": [
+          "lockdown"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/lockdowns/{id}/overrides": {
+      "post": {
+        "description": "At the gate of your shift, which the lockdown must hold (LOCKDOWN_NOT_AT_GATE), with what came through. Recorded and audited.",
+        "operationId": "GateLockdownsController_override",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LockdownOverrideDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LockdownOverrideView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Let an emergency vehicle through a locked gate",
+        "tags": [
+          "lockdown"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -64638,6 +65125,156 @@
         "summary": "Archive an instruction",
         "tags": [
           "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/lockdowns": {
+      "get": {
+        "description": "Newest first; `status=live` for those still holding.",
+        "operationId": "StaffLockdownsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "live",
+                "ended"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffLockdownViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the lockdowns",
+        "tags": [
+          "lockdown"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/lockdowns/{id}": {
+      "get": {
+        "operationId": "StaffLockdownsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffLockdownView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a lockdown, with its overrides",
+        "tags": [
+          "lockdown"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/lockdowns/{id}/end": {
+      "post": {
+        "description": "The management only, with a reason code and a note of its own. The guards on shift and the management are told; the residents too once no lockdown is left.",
+        "operationId": "StaffLockdownsController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndLockdownDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffLockdownView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a lockdown",
+        "tags": [
+          "lockdown"
         ],
         "x-no-store": true,
         "x-stability": "draft"

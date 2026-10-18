@@ -1395,6 +1395,8 @@ describe('API v0 — PII leak scan', () => {
       '/gate/patrols/runs/{id}': w.bRunId,
       '/gate/patrols/runs/{id}/track': w.bRunId,
       '/staff/security/patrols/runs/{id}/track': w.bRunId,
+      // ADR 0053: B's lockdown, not found for everyone of A.
+      '/staff/security/lockdowns/{id}': w.bLockdownId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

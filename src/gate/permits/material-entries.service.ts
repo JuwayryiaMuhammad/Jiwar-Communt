@@ -17,6 +17,7 @@ import { permitReference } from './permit-core';
 import { permitNotFound } from './permit-records';
 import { clean } from './permits.service';
 import { MaterialEntryView } from './views/material-entry.views';
+import { LockdownCore } from '../lockdown/lockdown-core';
 
 export const MATERIAL_ENTRY_RESOURCE = 'material_entry';
 const PAGE = keysetCursor('occurredAt');
@@ -44,6 +45,7 @@ export class MaterialEntriesService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly shifts: ShiftsService,
     private readonly community: CommunityGatePort,
+    private readonly lockdown: LockdownCore,
   ) {}
 
   onModuleInit(): void {
@@ -67,6 +69,8 @@ export class MaterialEntriesService implements OnModuleInit {
   }): Promise<MaterialEntryRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const shift = await this.shifts.requireOpen(tx);
+      // A lockdown (ADR 0053): nothing comes in.
+      await this.lockdown.refuseIn(tx, shift.gateId, new Date());
       const unit = await this.community.unitByCode(tx, input.unitCode);
       if (!unit)
         throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');

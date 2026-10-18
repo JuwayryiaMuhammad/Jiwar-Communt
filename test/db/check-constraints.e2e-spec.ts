@@ -1384,6 +1384,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   patrol_track_points_accuracy_range: {
     guarded: 'accuracy_m IS NULL is tested first',
   },
+  // The lockdown (ADR 0053).
+  gate_lockdowns_reason: {},
+  gate_lockdowns_end_shape: {
+    guarded:
+      'ended_at is compared to started_at only when it is not NULL (the OR); the rest are IS NULL tests',
+  },
+  gate_lockdowns_end_reason: { guarded: 'end_reason IS NULL is tested first' },
+  gate_lockdowns_end_note_length: {
+    guarded: 'end_note IS NULL is tested first',
+  },
+  gate_lockdown_overrides_kind: {},
 };
 
 interface Check {

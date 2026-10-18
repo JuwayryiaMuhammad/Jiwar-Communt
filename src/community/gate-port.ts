@@ -14,6 +14,7 @@ import {
   HouseholdAuthority,
   isPrimary,
 } from './households/household-authority';
+import { CommunityEngagementPort } from './engagement-port';
 import { lockUnits } from './units/unit-lock';
 import { WorkersAuthority } from './workers/workers-authority';
 import {
@@ -66,7 +67,21 @@ export class CommunityGatePort {
     private readonly household: HouseholdAuthority,
     private readonly hasher: IdentifierHasher,
     private readonly workers: WorkersAuthority,
+    private readonly engagement: CommunityEngagementPort,
   ) {}
+
+  /**
+   * Every active account with a place in the compound now (ADR 0053, the
+   * lockdown's notice): the people of every household and the landlords,
+   * as a whole-compound announcement reaches them (ADR 0040). Ids only.
+   */
+  async everyone(tx: TenantTxClient): Promise<string[]> {
+    const places = await this.engagement.members(tx, {
+      buildings: null,
+      occupancy: 'everyone',
+    });
+    return [...new Set(places.map((p) => p.accountId))].sort();
+  }
 
   /**
    * Whether the caller may follow this engagement: its requester, the

@@ -840,6 +840,20 @@ export const ErrorCode = {
   PATROL_SCAN_OUT_OF_WINDOW: 'PATROL_SCAN_OUT_OF_WINDOW',
   /** That scan has its note already (409). */
   PATROL_NOTE_EXISTS: 'PATROL_NOTE_EXISTS',
+  /**
+   * The gate is locked down (ADR 0053): nobody but a resident comes in (409,
+   * params.scope: gate or all).
+   */
+  LOCKDOWN_ACTIVE: 'LOCKDOWN_ACTIVE',
+  /** Unknown, or another compound's lockdown. */
+  LOCKDOWN_NOT_FOUND: 'LOCKDOWN_NOT_FOUND',
+  /** The lockdown was ended already (409). */
+  LOCKDOWN_ENDED: 'LOCKDOWN_ENDED',
+  /**
+   * No lockdown holds the gate of your shift: there is nothing to override
+   * (409).
+   */
+  LOCKDOWN_NOT_AT_GATE: 'LOCKDOWN_NOT_AT_GATE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

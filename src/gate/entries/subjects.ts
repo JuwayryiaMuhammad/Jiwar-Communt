@@ -43,7 +43,9 @@ export type Refusal =
   | 'day_off'
   | 'id_mismatch'
   | 'worker_removed'
-  | 'guest_removed';
+  | 'guest_removed'
+  // The gate is locked down (ADR 0053): nobody but a resident comes in.
+  | 'lockdown_active';
 
 /** Who comes through the gate, resolved in this compound (ADR 0028). */
 export interface GateSubject {

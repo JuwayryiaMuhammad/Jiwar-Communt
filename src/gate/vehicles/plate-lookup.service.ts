@@ -24,6 +24,7 @@ import {
 import { ShiftsService } from '../shifts/shifts.service';
 import { VehicleCore } from './vehicle-core';
 import { dayOf, permitStatus, type PermitStatus } from './vehicle-rules';
+import { LockdownCore } from '../lockdown/lockdown-core';
 
 const DAY = 86_400_000;
 
@@ -89,6 +90,7 @@ export class PlateLookupService {
     private readonly rateLimit: RateLimitService,
     private readonly core: VehicleCore,
     private readonly parking: VisitorParkingService,
+    private readonly lockdown: LockdownCore,
     config: ConfigService<Env, true>,
   ) {
     this.perMinute = config.get('GATE_VERIFY_RATE_LIMIT_PER_MINUTE', {
@@ -122,6 +124,8 @@ export class PlateLookupService {
       const now = await dbNow(tx);
       const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
       const today = localDate(now, timezone);
+      // A lockdown (ADR 0053): nobody a plate names may come in now.
+      const locked = (await this.lockdown.live(tx, shift.gateId)) !== null;
       const vehicles = await tx.vehicle.findMany({
         where: { plateKey: key, status: { in: ['pending', 'active'] } },
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -195,7 +199,9 @@ export class PlateLookupService {
           unitCode: codes.get(pass.unitId) ?? '',
           pass,
           plate: visitorDetails?.vehiclePlate ?? plate,
-          refusal: await this.subjects.refusal(tx, subject, now, timezone),
+          refusal: locked
+            ? 'lockdown_active'
+            : await this.subjects.refusal(tx, subject, now, timezone),
           parking: await this.parking.forPass(tx, pass.id, now),
         });
       }
@@ -221,9 +227,11 @@ export class PlateLookupService {
           plate: shown,
           subjectType: type,
           subjectId: id,
-          refusal: subject
-            ? await this.subjects.refusal(tx, subject, now, timezone)
-            : 'unknown_code',
+          refusal: !subject
+            ? 'unknown_code'
+            : locked
+              ? 'lockdown_active'
+              : await this.subjects.refusal(tx, subject, now, timezone),
         });
       }
       await this.audit.record(tx, {

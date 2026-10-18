@@ -29,6 +29,7 @@ import {
   type GuardInstruction,
 } from '../visitors/standing-instructions.service';
 import { VISITOR_DATA_DAYS } from '../visitors/visitor-passes.service';
+import { LockdownCore } from '../lockdown/lockdown-core';
 
 export const REQUEST_RESOURCE = 'gate_approval_request';
 export const REQUEST_TIMEOUTS_SWEEP = 'gate.request_timeouts';
@@ -124,6 +125,7 @@ export class ApprovalsService implements OnModuleInit {
     private readonly sweep: SweepRunner,
     private readonly standing: StandingInstructionsService,
     private readonly files: FilesService,
+    private readonly lockdown: LockdownCore,
   ) {}
 
   onModuleInit(): void {
@@ -171,6 +173,9 @@ export class ApprovalsService implements OnModuleInit {
     const guardId = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const shift = await this.shifts.requireOpen(tx);
+      // A lockdown (ADR 0053): nobody is asked about someone who may not
+      // come in.
+      await this.lockdown.refuseIn(tx, shift.gateId, new Date());
       const id = newId();
       await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });
       const now = new Date();

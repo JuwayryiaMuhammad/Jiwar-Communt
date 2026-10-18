@@ -489,3 +489,13 @@ export const PATROL_COVERAGE: readonly string[] = [
   'patrol_note.text_cleared',
   'patrol_track.erased',
 ];
+
+/**
+ * Security (ADR 0053): the lockdown, the blocklist, stop work, incidents and
+ * violations. test/security/security-ops-audit-coverage.
+ */
+export const SECURITY_OPS_COVERAGE: readonly string[] = [
+  'gate_lockdown.started',
+  'gate_lockdown.ended',
+  'gate_lockdown.override',
+];

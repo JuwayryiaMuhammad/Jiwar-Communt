@@ -7093,3 +7093,54 @@ model PatrolTrackPoint {
   @@index([tenantId, guardAccountId], map: "patrol_track_points_guard_idx")
   @@map("patrol_track_points")
 }
+
+/// One row per compound (ADR 0053): what every lockdown decision locks. A
+/// start and an end take it FOR UPDATE; a verify, an entry in, a gate
+/// request and a material entry FOR SHARE. Never changed (a trigger).
+model GateLockdownState {
+  tenantId  String   @id @map("tenant_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("gate_lockdown_states")
+}
+
+/// A lockdown of one gate, or of all (`gateId` null), started by a guard on
+/// shift and ended by the management (ADR 0053). One live per scope.
+model GateLockdown {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  gateId         String?   @map("gate_id") @db.Uuid
+  reasonCode     String    @map("reason_code")
+  startedById    String    @map("started_by_account_id") @db.Uuid
+  startedShiftId String    @map("started_shift_id") @db.Uuid
+  startedAt      DateTime  @map("started_at") @db.Timestamptz(3)
+  endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
+  endedById      String?   @map("ended_by_account_id") @db.Uuid
+  endReason      String?   @map("end_reason")
+  /// The manager's words on ending it: the management's only.
+  endNote        String?   @map("end_note")
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, startedAt, id], map: "gate_lockdowns_started_idx")
+  @@map("gate_lockdowns")
+}
+
+/// An emergency vehicle a guard let through a locked gate (ADR 0053), with
+/// its code. Append-only.
+model GateLockdownOverride {
+  id                   String   @id @db.Uuid
+  tenantId             String   @map("tenant_id") @db.Uuid
+  lockdownId           String   @map("lockdown_id") @db.Uuid
+  gateId               String   @map("gate_id") @db.Uuid
+  shiftId              String   @map("shift_id") @db.Uuid
+  guardAccountId       String   @map("guard_account_id") @db.Uuid
+  kind                 String
+  emergencyId          String?  @map("emergency_id") @db.Uuid
+  gateServiceRequestId String?  @map("gate_service_request_id") @db.Uuid
+  occurredAt           DateTime @map("occurred_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, lockdownId, occurredAt, id], map: "gate_lockdown_overrides_lockdown_idx")
+  @@map("gate_lockdown_overrides")
+}

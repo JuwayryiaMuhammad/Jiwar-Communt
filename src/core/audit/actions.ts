@@ -1148,6 +1148,17 @@ export const AUDIT_ACTIONS = {
   // they walked is deleted. metadata: points (how many).
   'patrol_note.text_cleared': { log: 'tenant', target: 'patrol_note' },
   'patrol_track.erased': { log: 'tenant', target: 'account' },
+  // Security (ADR 0053).
+  // A guard locked one gate or all down. metadata: scope (gate | all),
+  // gateId (or null), reasonCode, shiftId, recipients (staff told),
+  // residents (how many residents were told; 0 when one was live already).
+  'gate_lockdown.started': { log: 'tenant', target: 'gate_lockdown' },
+  // The management ended it. metadata: scope, gateId, reasonCode, note (a
+  // boolean), recipients, residents.
+  'gate_lockdown.ended': { log: 'tenant', target: 'gate_lockdown' },
+  // An emergency vehicle let through a locked gate. metadata: overrideId,
+  // gateId, shiftId, kind, emergencyId, gateServiceRequestId (or nulls).
+  'gate_lockdown.override': { log: 'tenant', target: 'gate_lockdown' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

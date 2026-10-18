@@ -121,6 +121,10 @@ export const REASON_CODES = {
   patrolRunEnd: ['guard', 'shift_ended'],
   patrolManualScan: ['qr_damaged', 'qr_missing', 'nfc_unreadable', 'other'],
   patrolNoteOutcome: ['all_clear', 'issue_found'],
+  // Security (ADR 0053).
+  gateLockdownStart: ['security_threat', 'intruder', 'violence', 'fire', 'police_request', 'drill', 'other'],
+  gateLockdownEnd: ['threat_cleared', 'false_alarm', 'drill_over', 'other'],
+  gateLockdownOverride: ['ambulance', 'fire_truck', 'police', 'civil_defense'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

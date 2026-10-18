@@ -1581,6 +1581,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'انتهت جولة دون مسح كل نقاط التفتيش. افتح جولات الحراسة.',
     },
   },
+  'gate_lockdown.started': {
+    en: {
+      title: 'Lockdown',
+      body: 'The gates are locked down. Let nobody in but residents.',
+    },
+    ar: {
+      title: 'إغلاق أمني',
+      body: 'البوابات مغلقة. لا تُدخل أحدًا غير السكان.',
+    },
+  },
+  'gate_lockdown.resident_notice': {
+    en: {
+      title: 'Security notice',
+      body: 'Security has closed the compound’s gates to visitors for now.',
+    },
+    ar: {
+      title: 'تنبيه أمني',
+      body: 'أغلق الأمن بوابات الكمبوند أمام الزوار مؤقتًا.',
+    },
+  },
+  'gate_lockdown.ended': {
+    en: {
+      title: 'Lockdown ended',
+      body: 'The gates are open again as usual.',
+    },
+    ar: {
+      title: 'انتهى الإغلاق',
+      body: 'عادت البوابات إلى العمل كالمعتاد.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

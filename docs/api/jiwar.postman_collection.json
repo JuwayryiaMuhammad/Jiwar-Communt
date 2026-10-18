@@ -14346,6 +14346,236 @@
     {
       "item": [
         {
+          "name": "Lock one gate or all down",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"scope\": \"gate\",\n  \"reasonCode\": \"\",\n  \"confirmation\": \"LOCKDOWN\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `confirmation` | `LOCKDOWN` | yes | The confirmation the guard types: exactly `LOCKDOWN`. Nothing starts without it. |\n| `gateId` | string (uuid) |  | The gate, for `scope: gate`; never with `all`. |\n| `reasonCode` | string | yes | From the closed list `gateLockdownStart`. |\n| `scope` | `gate` \\| `all` | yes | `gate`: one gate (`gateId`); `all`: every gate. |\n\n**Responses:** 200, 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "lockdowns"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/lockdowns"
+            }
+          }
+        },
+        {
+          "name": "The live lockdowns",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "lockdowns",
+                "active"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/lockdowns/active"
+            }
+          }
+        },
+        {
+          "name": "Let an emergency vehicle through a locked gate",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `emergencyId` | string (uuid) |  | The emergency it answers, when there is one. |\n| `gateServiceRequestId` | string (uuid) |  | The lane a resident asked for (ADR 0047), when there is one. |\n| `reasonCode` | string | yes | What came through, from the closed list `gateLockdownOverride`: ambulance, fire_truck, police, civil_defense. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "lockdowns",
+                ":id",
+                "overrides"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/lockdowns/:id/overrides",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the lockdowns",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "lockdowns"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/lockdowns"
+            }
+          }
+        },
+        {
+          "name": "Get a lockdown, with its overrides",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "lockdowns",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/lockdowns/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End a lockdown",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  | The management’s own words; nobody else reads them. |\n| `reasonCode` | string | yes | From the closed list `gateLockdownEnd`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "lockdowns",
+                ":id",
+                "end"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/lockdowns/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "lockdown"
+    },
+    {
+      "item": [
+        {
           "name": "List ticket categories",
           "request": {
             "description": "**Responses:** 200",

@@ -563,4 +563,17 @@ export const REASON_CODES = {
   patrolManualScan: ['qr_damaged', 'qr_missing', 'nfc_unreadable', 'other'],
   // What a guard found at a checkpoint (ADR 0052).
   patrolNoteOutcome: ['all_clear', 'issue_found'],
+  // Lockdown (ADR 0053): why a guard starts one, why the manager ends it,
+  // and the emergency vehicle a guard lets through a locked gate.
+  gateLockdownStart: [
+    'security_threat',
+    'intruder',
+    'violence',
+    'fire',
+    'police_request',
+    'drill',
+    'other',
+  ],
+  gateLockdownEnd: ['threat_cleared', 'false_alarm', 'drill_over', 'other'],
+  gateLockdownOverride: ['ambulance', 'fire_truck', 'police', 'civil_defense'],
 } as const;

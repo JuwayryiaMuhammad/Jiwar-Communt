@@ -128,6 +128,8 @@ describe('audit catalog', () => {
         'patrol_route',
         'patrol_run',
         'patrol_note',
+        // ADR 0053.
+        'gate_lockdown',
       ]).toContain(def.target);
     }
   });

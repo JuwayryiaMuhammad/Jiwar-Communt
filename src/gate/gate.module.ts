@@ -98,6 +98,11 @@ import { EmergencyEscalation } from './emergencies/emergency-escalation';
 import { EmergencyRecords } from './emergencies/emergency-records';
 import { GuardSosController } from './emergencies/guard-sos.controller';
 import { GuardSosService } from './emergencies/guard-sos.service';
+import { GateLockdownsController } from './lockdown/gate-lockdowns.controller';
+import { LockdownCore } from './lockdown/lockdown-core';
+import { LockdownProvisioning } from './lockdown/lockdown-provisioning';
+import { LockdownService } from './lockdown/lockdown.service';
+import { StaffLockdownsController } from './lockdown/staff-lockdowns.controller';
 import { SafetyCore } from './safety/safety-core';
 import { SafetyExportSections } from './safety/safety-export-sections';
 import { SafetyLifecycle } from './safety/safety-lifecycle';
@@ -237,6 +242,8 @@ import { RosterService } from './roster/roster.service';
     EmergenciesController,
     EmergencyRespondersController,
     GuardSosController,
+    GateLockdownsController,
+    StaffLockdownsController,
     GateServicesController,
     GateServiceHandlersController,
     PermitRulesController,
@@ -315,6 +322,9 @@ import { RosterService } from './roster/roster.service';
     EmergenciesService,
     EmergencyRespondersService,
     GuardSosService,
+    LockdownCore,
+    LockdownService,
+    LockdownProvisioning,
     GateServiceRecords,
     GateServicesService,
     GateServiceHandlersService,

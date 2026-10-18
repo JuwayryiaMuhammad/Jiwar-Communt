@@ -15,6 +15,7 @@ import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { parseEntryQr } from '../entry/entry-secrets';
 import { ResidentVerifier } from '../entry/resident-verifier';
+import { LockdownCore } from '../lockdown/lockdown-core';
 import {
   VisitorParkingService,
   type GuardParking,
@@ -91,7 +92,8 @@ const UNKNOWN: VerifyResult = {
  * A scanned QR (`JWR1.<token>`, ADR 0030) is looked up by the token's
  * compound-bound HMAC and then follows the same path: same answers, same
  * rate limit. A resident's rotating QR (`JWR2.…`, ADR 0031) is checked by
- * `ResidentVerifier`, which writes nothing at all.
+ * `ResidentVerifier`, which writes nothing at all, and comes in through a
+ * lockdown (ADR 0053); everyone else is refused while one holds the gate.
  */
 @Injectable()
 export class VerifyService {
@@ -111,6 +113,7 @@ export class VerifyService {
     private readonly files: FilesService,
     private readonly residents: ResidentVerifier,
     private readonly parking: VisitorParkingService,
+    private readonly lockdown: LockdownCore,
     config: ConfigService<Env, true>,
   ) {
     this.perMinute = config.get('GATE_VERIFY_RATE_LIMIT_PER_MINUTE', {
@@ -122,7 +125,9 @@ export class VerifyService {
   async verify(input: { code?: string; qr?: string }): Promise<VerifyResult> {
     const tenantId = this.ctx.tenantId;
     // The shift first: a guard off duty learns nothing about any code.
-    await this.tenantTx.withTenantTx((tx) => this.shifts.requireOpen(tx));
+    const shift = await this.tenantTx.withTenantTx((tx) =>
+      this.shifts.requireOpen(tx),
+    );
     // One budget for both inputs: a QR is no way around the code's limit.
     await this.rateLimit.consume(
       `gate-verify:account:${this.ctx.accountId}`,
@@ -141,6 +146,10 @@ export class VerifyService {
           ? await this.byQr(tx, tenantId, input.qr)
           : await this.byCode(tx, tenantId, (input.code ?? '').trim());
       if (!subject) return { ...UNKNOWN };
+      // A lockdown (ADR 0053) refuses everyone coming in but a resident,
+      // decided under the compound's lockdown row like the entry itself.
+      await this.lockdown.lockState(tx, 'share');
+      const locked = await this.lockdown.live(tx, shift.gateId);
       const tz = (await this.settings.inTx(tx, tenantId)).timezone;
       const inside = await this.entries.insideCount(
         tx,
@@ -152,7 +161,9 @@ export class VerifyService {
       // inside may always leave.
       const entryRefusal =
         inside < capacityOf(subject)
-          ? await this.subjects.refusal(tx, subject, new Date(), tz)
+          ? locked
+            ? 'lockdown_active'
+            : await this.subjects.refusal(tx, subject, new Date(), tz)
           : null;
       const canEnter = inside < capacityOf(subject) && entryRefusal === null;
       const refusal = canEnter || inside > 0 ? null : entryRefusal;

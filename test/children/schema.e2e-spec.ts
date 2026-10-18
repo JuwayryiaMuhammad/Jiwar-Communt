@@ -4,11 +4,12 @@ import {
   controlRow,
   escortRow,
   minorRow,
+  pickupRow,
   unitRow,
 } from '../setup/children-rows';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { dutyFileRow } from '../setup/security-rows';
+import { dutyFileRow, gateRow, shiftRow } from '../setup/security-rows';
 import { required } from '../setup/test-env';
 
 /**
@@ -32,6 +33,9 @@ describe('Children tables — CHECKs, triggers and privileges', () => {
   let photoId: string;
   let escortId: string;
   let revokedEscortId: string;
+  let pickupId: string;
+  let gateId: string;
+  let shiftId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -83,6 +87,16 @@ describe('Children tables — CHECKs, triggers and privileges', () => {
           });
         escortId = await escort();
         revokedEscortId = await escort();
+        gateId = await gateRow(tx, tenantId);
+        shiftId = await shiftRow(tx, { tenantId, guardId: otherId, gateId });
+        pickupId = await pickupRow(tx, {
+          tenantId,
+          controlId,
+          unitId,
+          guardId: otherId,
+          shiftId,
+          gateId,
+        });
         await tx.childEscort.update({
           where: { id: revokedEscortId },
           data: {
@@ -381,6 +395,67 @@ describe('Children tables — CHECKs, triggers and privileges', () => {
           `UPDATE child_escorts SET photo_file_id = '${photoId}' WHERE ${revoked()}`,
         ),
       ).rejects.toThrow(/never changes|child_escorts_photo_while_live/);
+    });
+  });
+
+  describe('child_pickups', () => {
+    it('the app adds, reads and deletes (the purge); nobody changes or truncates one', async () => {
+      expect(await privileges('child_pickups')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: true,
+        truncate: false,
+      });
+      await expect(
+        attempt(
+          migrator,
+          `UPDATE child_pickups SET outcome = 'refused', refusal_reason = 'no_credential' WHERE id = '${pickupId}'`,
+        ),
+      ).rejects.toThrow(/append-only/);
+      await expect(attempt(migrator, 'TRUNCATE child_pickups')).rejects.toThrow(
+        /append-only/,
+      );
+      await asApp(`DELETE FROM child_pickups WHERE id = '${pickupId}'`);
+    });
+
+    it('the shapes hold: a refusal has its reason, alone is left or held, a pickup names its escort, one post', async () => {
+      const insert = (cols: string, values: string) =>
+        asApp(
+          `INSERT INTO child_pickups (id, tenant_id, control_id, unit_id, guard_account_id, shift_id, at, ${cols})
+           VALUES (gen_random_uuid(), '${tenantId}', '${controlId}', '${unitId}', '${otherId}', '${shiftId}', now(), ${values})`,
+        );
+      for (const [cols, values, check] of [
+        [
+          'outcome, method, gate_id',
+          `'refused', 'unidentified', '${gateId}'`,
+          'refusal_shape',
+        ],
+        [
+          'outcome, method, refusal_reason, gate_id',
+          `'left_alone', 'alone', 'no_credential', '${gateId}'`,
+          'refusal_shape',
+        ],
+        [
+          'outcome, method, refusal_reason, gate_id',
+          `'refused', 'unidentified', 'bored', '${gateId}'`,
+          'refusal_reason',
+        ],
+        [
+          'outcome, method, gate_id',
+          `'left_alone', 'pickup_code', '${gateId}'`,
+          'method_shape',
+        ],
+        [
+          'outcome, method, gate_id',
+          `'picked_up', 'pickup_code', '${gateId}'`,
+          'escort_shape',
+        ],
+        ['outcome, method', `'left_alone', 'alone'`, 'one_post'],
+      ] as const)
+        await expect(insert(cols, values)).rejects.toThrow(
+          new RegExp(`child_pickups_${check}`),
+        );
     });
   });
 });

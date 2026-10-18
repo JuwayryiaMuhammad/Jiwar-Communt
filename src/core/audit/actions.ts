@@ -1248,6 +1248,14 @@ export const AUDIT_ACTIONS = {
   // metadata: reasonCode (household, left_household, control_off).
   'child_escort.revoked': { log: 'tenant', target: 'child_escort' },
   'child_escort.code_reissued': { log: 'tenant', target: 'child_escort' },
+  // The 30-day purge of a revoked outside escort's name and phone.
+  'child_escort.pii_cleared': { log: 'tenant', target: 'child_escort' },
+  // An exit at the gate: the record's id and its outcome, method and
+  // reason codes only, never the child, the control, the unit or the
+  // escort, so the trail keeps no child's movements once the record goes.
+  'child_pickup.recorded': { log: 'tenant', target: 'child_pickup' },
+  // The 30-day purge: metadata records (how many), no target.
+  'child_pickup.purged': { log: 'tenant', target: 'child_pickup' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

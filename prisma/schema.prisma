@@ -7483,3 +7483,52 @@ model ChildPickupLink {
   @@index([escortId])
   @@map("child_pickup_links")
 }
+
+/// How a child's exit ended (ADR 0054).
+enum ChildPickupOutcome {
+  picked_up
+  left_alone
+  refused
+  alone_refused
+
+  @@map("child_pickup_outcome")
+}
+
+/// How the guard knew the escort (ADR 0054).
+enum ChildPickupMethod {
+  resident_qr
+  worker_qr
+  worker_code
+  pickup_qr
+  pickup_code
+  alone
+  unidentified
+
+  @@map("child_pickup_method")
+}
+
+/// A child's exit recorded at the gate (ADR 0054): only for children under
+/// exit control, the household's to read, an alert for the management only
+/// when refused; deleted 30 days after it was recorded. Never changed.
+model ChildPickup {
+  id             String             @id @db.Uuid
+  tenantId       String             @map("tenant_id") @db.Uuid
+  controlId      String             @map("control_id") @db.Uuid
+  unitId         String             @map("unit_id") @db.Uuid
+  escortId       String?            @map("escort_id") @db.Uuid
+  escortKind     ChildEscortKind?   @map("escort_kind")
+  outcome        ChildPickupOutcome
+  method         ChildPickupMethod
+  refusalReason  String?            @map("refusal_reason")
+  guardAccountId String             @map("guard_account_id") @db.Uuid
+  shiftId        String             @map("shift_id") @db.Uuid
+  gateId         String?            @map("gate_id") @db.Uuid
+  placeId        String?            @map("place_id") @db.Uuid
+  at             DateTime           @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, controlId, at], map: "child_pickups_control_idx")
+  @@index([tenantId, unitId, at, id], map: "child_pickups_unit_idx")
+  @@index([tenantId, at], map: "child_pickups_age_idx")
+  @@map("child_pickups")
+}

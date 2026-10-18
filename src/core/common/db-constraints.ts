@@ -139,6 +139,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   child_escorts_live_engagement: null,
   child_escorts_live_code: null,
   child_escorts_live_qr: null,
+  child_pickups_tenant_id_id_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

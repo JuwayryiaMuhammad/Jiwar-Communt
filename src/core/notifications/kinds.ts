@@ -1608,6 +1608,36 @@ export const NOTIFICATION_KINDS = {
     target: 'unit_permit',
     params: {},
   },
+  // Children (ADR 0054), in the `household` category. Ids only: never the
+  // child's name, the escort's, or where.
+  /**
+   * Someone tried to collect a child who may not go with them, or a guard
+   * held a child for a person who could not be identified: the household
+   * adults and the roster's keepers. Critical: never muted.
+   */
+  'child.unauthorized_pickup': {
+    priority: 'critical',
+    category: 'household',
+    critical: true,
+    target: 'child_pickup',
+    params: {},
+  },
+  /** A child who may not leave alone tried to: the household adults. */
+  'child.exit_alone': {
+    priority: 'critical',
+    category: 'household',
+    critical: true,
+    target: 'child_pickup',
+    params: {},
+  },
+  /** A child left (collected, or alone as allowed), when the household asks to know. */
+  'child.picked_up': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'child_pickup',
+    params: { outcome: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

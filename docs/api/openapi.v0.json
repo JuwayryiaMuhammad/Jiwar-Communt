@@ -4152,6 +4152,89 @@
         ],
         "type": "object"
       },
+      "ChildAlertView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "escortKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildEscortKind"
+              }
+            ],
+            "nullable": true
+          },
+          "guard": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildPickupMethod"
+              }
+            ]
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "refusalReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "example": "A-101",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "post",
+          "guard",
+          "unitCode",
+          "method",
+          "escortKind",
+          "refusalReason"
+        ],
+        "type": "object"
+      },
+      "ChildAlertViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ChildAlertView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ChildCardDto": {
+        "properties": {
+          "card": {
+            "description": "The child card's QR, `JWC1.<token>`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "card"
+        ],
+        "type": "object"
+      },
       "ChildCardView": {
         "properties": {
           "compoundName": {
@@ -4485,6 +4568,67 @@
         ],
         "type": "object"
       },
+      "ChildExitDto": {
+        "properties": {
+          "card": {
+            "description": "The child card's QR, `JWC1.<token>`.",
+            "type": "string"
+          },
+          "escort": {
+            "$ref": "#/components/schemas/ExitEscortDto"
+          }
+        },
+        "required": [
+          "card",
+          "escort"
+        ],
+        "type": "object"
+      },
+      "ChildExitView": {
+        "properties": {
+          "escort": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExitEscortView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildPickupOutcome"
+              }
+            ]
+          },
+          "pickupId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it was refused: `not_an_escort`, `outside_validity`, `wrong_post`, `escort_inactive`, `no_credential`, `alone_not_allowed`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "result": {
+            "description": "`refused`: hold the child; the household has been alerted.",
+            "enum": [
+              "authorized",
+              "refused"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "pickupId",
+          "result",
+          "outcome",
+          "reason",
+          "escort"
+        ],
+        "type": "object"
+      },
       "ChildPhotoDto": {
         "properties": {
           "fileId": {
@@ -4495,6 +4639,133 @@
         },
         "required": [
           "fileId"
+        ],
+        "type": "object"
+      },
+      "ChildPickupMethod": {
+        "enum": [
+          "resident_qr",
+          "worker_qr",
+          "worker_code",
+          "pickup_qr",
+          "pickup_code",
+          "alone",
+          "unidentified"
+        ],
+        "type": "string"
+      },
+      "ChildPickupOutcome": {
+        "enum": [
+          "picked_up",
+          "left_alone",
+          "refused",
+          "alone_refused"
+        ],
+        "type": "string"
+      },
+      "ChildPickupView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "escort": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExitEscortView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "firstName": {
+            "example": "Omar",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildPickupMethod"
+              }
+            ]
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildPickupOutcome"
+              }
+            ]
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "refusalReason": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "memberId",
+          "firstName",
+          "outcome",
+          "method",
+          "refusalReason",
+          "escort",
+          "post",
+          "at"
+        ],
+        "type": "object"
+      },
+      "ChildPickupViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ChildPickupView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ChildVerifyView": {
+        "properties": {
+          "child": {
+            "$ref": "#/components/schemas/GateChildView"
+          },
+          "escorts": {
+            "items": {
+              "$ref": "#/components/schemas/GateEscortView"
+            },
+            "type": "array"
+          },
+          "result": {
+            "enum": [
+              "valid"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "result",
+          "child",
+          "escorts"
         ],
         "type": "object"
       },
@@ -11379,6 +11650,47 @@
         ],
         "type": "object"
       },
+      "ExitEscortDto": {
+        "properties": {
+          "alone": {
+            "description": "The child is leaving alone.",
+            "type": "boolean"
+          },
+          "code": {
+            "description": "A worker's 8-digit code, or a pickup code's 6 digits.",
+            "type": "string"
+          },
+          "qr": {
+            "description": "A resident's entry QR (`JWR2…`), a worker's card (`JWR1…`) or a pickup QR (`JWP1…`).",
+            "type": "string"
+          },
+          "unidentified": {
+            "description": "Someone with nothing to scan wants to take the child: refused, and the household and the keepers are alerted.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ExitEscortView": {
+        "properties": {
+          "firstName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildEscortKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "firstName"
+        ],
+        "type": "object"
+      },
       "ExportDownloadDto": {
         "properties": {
           "code": {
@@ -12524,6 +12836,29 @@
         ],
         "type": "object"
       },
+      "GateChildView": {
+        "properties": {
+          "firstName": {
+            "example": "Omar",
+            "type": "string"
+          },
+          "mayLeaveAlone": {
+            "description": "Whether the child may leave alone.",
+            "type": "boolean"
+          },
+          "photoUrl": {
+            "description": "A presigned URL of the child's photo (minutes), or null: ask the escort.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstName",
+          "photoUrl",
+          "mayLeaveAlone"
+        ],
+        "type": "object"
+      },
       "GateContactView": {
         "properties": {
           "gateId": {
@@ -12595,6 +12930,42 @@
           "permit"
         ],
         "type": "string"
+      },
+      "GateEscortView": {
+        "properties": {
+          "firstName": {
+            "example": "Mona",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChildEscortKind"
+              }
+            ]
+          },
+          "photoUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "validNow": {
+            "description": "Whether they may collect the child now and at this post: otherwise, at another hour or post today.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "firstName",
+          "photoUrl",
+          "validNow"
+        ],
+        "type": "object"
       },
       "GateEventView": {
         "properties": {
@@ -46812,6 +47183,106 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/children/exits": {
+      "post": {
+        "description": "Scan the child's card, then who takes them (a resident's QR, a worker's card or code, a pickup QR or code), or say the child leaves alone, or that the person cannot be identified. Refused: hold the child; the household (and, for a pickup, the security supervisors) are alerted. A credential nobody can be told from is 422 CHILD_ESCORT_UNKNOWN and records nothing. Within five minutes of an exit, the same escort replays it (200) and anyone else is 409 CHILD_JUST_PICKED_UP.",
+        "operationId": "ChildGateController_exit",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildExitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildExitView"
+                }
+              }
+            },
+            "description": "A replay of the exit."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildExitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a child's exit",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/children/verify": {
+      "post": {
+        "description": "The child's first name and photo, whether they may leave alone, and who may collect them today. Writes nothing; one rate limit with `/gate/verify`. Anything that is not a live card of this compound is 404 CHILD_CARD_UNKNOWN.",
+        "operationId": "ChildGateController_verify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildCardDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildVerifyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check a child's card",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/emergencies": {
       "get": {
         "description": "`status=open` is the queue, oldest first. A guard needs an open shift (NO_OPEN_SHIFT).",
@@ -68175,6 +68646,95 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/security/child-alerts": {
+      "get": {
+        "description": "The last 30 days, newest first: when, where, which guard, which unit, how the person was known.",
+        "operationId": "ChildAlertsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildAlertViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unauthorized child pickups",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/child-alerts/{id}": {
+      "get": {
+        "operationId": "ChildAlertsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildAlertView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read an unauthorized child pickup",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/security/found-items": {
       "get": {
         "description": "Newest first.",
@@ -76506,6 +77066,75 @@
           }
         ],
         "summary": "List the unit's children and their exit control",
+        "tags": [
+          "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/children/pickups": {
+      "get": {
+        "description": "For the people who live in the unit: each exit recorded at the gate in the last 30 days (who took the child, or alone, or refused), newest first.",
+        "operationId": "ChildPickupsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "One child's exits only.",
+            "in": "query",
+            "name": "memberId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildPickupViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the children's exits",
         "tags": [
           "children"
         ],

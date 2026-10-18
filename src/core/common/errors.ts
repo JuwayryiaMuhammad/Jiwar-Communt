@@ -926,6 +926,21 @@ export const ErrorCode = {
   CHILD_ESCORT_LIMIT_REACHED: 'CHILD_ESCORT_LIMIT_REACHED',
   /** The public pickup page: one answer for every token that is not a live link (404). */
   CHILD_PICKUP_NOT_FOUND: 'CHILD_PICKUP_NOT_FOUND',
+  /**
+   * At the gate: not a live child card of this compound (404), whatever the
+   * reason — unknown, malformed, reissued, ended, another compound's.
+   */
+  CHILD_CARD_UNKNOWN: 'CHILD_CARD_UNKNOWN',
+  /**
+   * At the gate: a credential nobody can be told from (422): unknown,
+   * malformed or no longer valid. Nothing is recorded; scan again, or
+   * record the person as unidentified.
+   */
+  CHILD_ESCORT_UNKNOWN: 'CHILD_ESCORT_UNKNOWN',
+  /** The child left with someone else within params.minutes (409). */
+  CHILD_JUST_PICKED_UP: 'CHILD_JUST_PICKED_UP',
+  /** Not an unauthorized pickup of the last 30 days (404). */
+  CHILD_ALERT_NOT_FOUND: 'CHILD_ALERT_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

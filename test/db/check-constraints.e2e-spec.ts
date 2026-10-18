@@ -1533,6 +1533,15 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'revoke_reason IS NULL is tested first',
   },
   child_escorts_pii_cleared_shape: {},
+  child_pickups_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  child_pickups_refusal_shape: {},
+  child_pickups_refusal_reason: {
+    guarded: 'refusal_reason IS NULL is tested first',
+  },
+  child_pickups_method_shape: {},
+  child_pickups_escort_shape: {},
 };
 
 interface Check {

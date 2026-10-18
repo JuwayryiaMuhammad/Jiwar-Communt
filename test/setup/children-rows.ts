@@ -99,3 +99,33 @@ export async function escortRow(
   });
   return id;
 }
+
+/** An exit of the control's child, left alone, at a gate during a shift. */
+export async function pickupRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    controlId: string;
+    unitId: string;
+    guardId: string;
+    shiftId: string;
+    gateId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.childPickup.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      controlId: r.controlId,
+      unitId: r.unitId,
+      outcome: 'left_alone',
+      method: 'alone',
+      guardAccountId: r.guardId,
+      shiftId: r.shiftId,
+      gateId: r.gateId,
+      at: new Date(),
+    },
+  });
+  return id;
+}

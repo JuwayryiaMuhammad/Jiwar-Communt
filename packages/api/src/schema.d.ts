@@ -1561,6 +1561,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/children/exits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a child's exit
+         * @description Scan the child's card, then who takes them (a resident's QR, a worker's card or code, a pickup QR or code), or say the child leaves alone, or that the person cannot be identified. Refused: hold the child; the household (and, for a pickup, the security supervisors) are alerted. A credential nobody can be told from is 422 CHILD_ESCORT_UNKNOWN and records nothing. Within five minutes of an exit, the same escort replays it (200) and anyone else is 409 CHILD_JUST_PICKED_UP.
+         */
+        post: operations["ChildGateController_exit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/children/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check a child's card
+         * @description The child's first name and photo, whether they may leave alone, and who may collect them today. Writes nothing; one rate limit with `/gate/verify`. Anything that is not a live card of this compound is 404 CHILD_CARD_UNKNOWN.
+         */
+        post: operations["ChildGateController_verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/emergencies": {
         parameters: {
             query?: never;
@@ -8905,6 +8945,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/child-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unauthorized child pickups
+         * @description The last 30 days, newest first: when, where, which guard, which unit, how the person was known.
+         */
+        get: operations["ChildAlertsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/child-alerts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an unauthorized child pickup */
+        get: operations["ChildAlertsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/found-items": {
         parameters: {
             query?: never;
@@ -11717,6 +11794,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/children/pickups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the children's exits
+         * @description For the people who live in the unit: each exit recorded at the gate in the last 30 days (who took the child, or alone, or refused), newest first.
+         */
+        get: operations["ChildPickupsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/children/{memberId}/control": {
         parameters: {
             query?: never;
@@ -14151,6 +14248,27 @@ export interface components {
             data: components["schemas"]["CheckpointView"][];
             nextCursor: string | null;
         };
+        ChildAlertView: {
+            /** Format: date-time */
+            at: string;
+            escortKind: components["schemas"]["ChildEscortKind"] | null;
+            guard: components["schemas"]["FirstNameRefView"];
+            /** Format: uuid */
+            id: string;
+            method: components["schemas"]["ChildPickupMethod"];
+            post: components["schemas"]["PostView"];
+            refusalReason: string | null;
+            /** @example A-101 */
+            unitCode: string;
+        };
+        ChildAlertViewList: {
+            data: components["schemas"]["ChildAlertView"][];
+            nextCursor: string | null;
+        };
+        ChildCardDto: {
+            /** @description The child card's QR, `JWC1.<token>`. */
+            card: string;
+        };
         ChildCardView: {
             compoundName: string;
             /** @example Omar */
@@ -14269,12 +14387,59 @@ export interface components {
             /** Format: date */
             validUntil: string | null;
         };
+        ChildExitDto: {
+            /** @description The child card's QR, `JWC1.<token>`. */
+            card: string;
+            escort: components["schemas"]["ExitEscortDto"];
+        };
+        ChildExitView: {
+            escort: components["schemas"]["ExitEscortView"] | null;
+            outcome: components["schemas"]["ChildPickupOutcome"];
+            /** Format: uuid */
+            pickupId: string;
+            /** @description Why it was refused: `not_an_escort`, `outside_validity`, `wrong_post`, `escort_inactive`, `no_credential`, `alone_not_allowed`. */
+            reason: string | null;
+            /**
+             * @description `refused`: hold the child; the household has been alerted.
+             * @enum {string}
+             */
+            result: "authorized" | "refused";
+        };
         ChildPhotoDto: {
             /**
              * Format: uuid
              * @description One of your finalized `child_photo` files.
              */
             fileId: string;
+        };
+        /** @enum {string} */
+        ChildPickupMethod: "resident_qr" | "worker_qr" | "worker_code" | "pickup_qr" | "pickup_code" | "alone" | "unidentified";
+        /** @enum {string} */
+        ChildPickupOutcome: "picked_up" | "left_alone" | "refused" | "alone_refused";
+        ChildPickupView: {
+            /** Format: date-time */
+            at: string;
+            escort: components["schemas"]["ExitEscortView"] | null;
+            /** @example Omar */
+            firstName: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            memberId: string;
+            method: components["schemas"]["ChildPickupMethod"];
+            outcome: components["schemas"]["ChildPickupOutcome"];
+            post: components["schemas"]["PostView"];
+            refusalReason: string | null;
+        };
+        ChildPickupViewList: {
+            data: components["schemas"]["ChildPickupView"][];
+            nextCursor: string | null;
+        };
+        ChildVerifyView: {
+            child: components["schemas"]["GateChildView"];
+            escorts: components["schemas"]["GateEscortView"][];
+            /** @enum {string} */
+            result: "valid";
         };
         ChildView: {
             /**
@@ -16557,6 +16722,20 @@ export interface components {
             /** @description Written by the staff. A language is whole or absent; at least one is there. */
             titleEn: string | null;
         };
+        ExitEscortDto: {
+            /** @description The child is leaving alone. */
+            alone?: boolean;
+            /** @description A worker's 8-digit code, or a pickup code's 6 digits. */
+            code?: string;
+            /** @description A resident's entry QR (`JWR2…`), a worker's card (`JWR1…`) or a pickup QR (`JWP1…`). */
+            qr?: string;
+            /** @description Someone with nothing to scan wants to take the child: refused, and the household and the keepers are alerted. */
+            unidentified?: boolean;
+        };
+        ExitEscortView: {
+            firstName: string | null;
+            kind: components["schemas"]["ChildEscortKind"];
+        };
         ExportDownloadDto: {
             /** @description The code sent to the account’s email for this link. */
             code: string;
@@ -16902,6 +17081,14 @@ export interface components {
             data: components["schemas"]["FoundItemView"][];
             nextCursor: string | null;
         };
+        GateChildView: {
+            /** @example Omar */
+            firstName: string;
+            /** @description Whether the child may leave alone. */
+            mayLeaveAlone: boolean;
+            /** @description A presigned URL of the child's photo (minutes), or null: ask the escort. */
+            photoUrl: string | null;
+        };
         GateContactView: {
             /** Format: uuid */
             gateId: string;
@@ -16925,6 +17112,16 @@ export interface components {
         GateDirection: "in" | "out";
         /** @enum {string} */
         GateEntryMethod: "code" | "qr" | "approval" | "guard" | "system" | "permit";
+        GateEscortView: {
+            /** @example Mona */
+            firstName: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ChildEscortKind"];
+            photoUrl: string | null;
+            /** @description Whether they may collect the child now and at this post: otherwise, at another hour or post today. */
+            validNow: boolean;
+        };
         GateEventView: {
             guestCount: number;
             /** @description The names to check, from half an hour before the start to the end; null otherwise. */
@@ -28280,6 +28477,64 @@ export interface operations {
             };
         };
     };
+    ChildGateController_exit: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChildExitDto"];
+            };
+        };
+        responses: {
+            /** @description A replay of the exit. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildExitView"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildExitView"];
+                };
+            };
+        };
+    };
+    ChildGateController_verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChildCardDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildVerifyView"];
+                };
+            };
+        };
+    };
     EmergencyRespondersController_list: {
         parameters: {
             query?: {
@@ -39379,6 +39634,50 @@ export interface operations {
             };
         };
     };
+    ChildAlertsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildAlertViewList"];
+                };
+            };
+        };
+    };
+    ChildAlertsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildAlertView"];
+                };
+            };
+        };
+    };
     StaffFoundItemsController_list: {
         parameters: {
             query?: {
@@ -43489,6 +43788,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChildView"][];
+                };
+            };
+        };
+    };
+    ChildPickupsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description One child's exits only. */
+                memberId?: string;
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildPickupViewList"];
                 };
             };
         };

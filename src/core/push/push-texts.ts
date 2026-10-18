@@ -1731,6 +1731,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'قُبل طعنك وأُلغيت المخالفة.',
     },
   },
+  'child.unauthorized_pickup': {
+    en: {
+      title: 'Child pickup refused',
+      body: 'Someone not allowed tried to collect a child of your home at the gate. Open the app.',
+    },
+    ar: {
+      title: 'رُفض استلام طفل',
+      body: 'حاول شخص غير مصرح له استلام طفل من منزلكم عند البوابة. افتح التطبيق.',
+    },
+  },
+  'child.exit_alone': {
+    en: {
+      title: 'Child held at the gate',
+      body: 'A child of your home tried to leave alone and was held at the gate. Open the app.',
+    },
+    ar: {
+      title: 'طفل عند البوابة',
+      body: 'حاول طفل من منزلكم الخروج وحده واستوقفه الأمن عند البوابة. افتح التطبيق.',
+    },
+  },
+  'child.picked_up': {
+    en: {
+      title: 'Child left the compound',
+      body: 'A child of your home has left the compound. Open the app for details.',
+    },
+    ar: {
+      title: 'خروج طفل',
+      body: 'خرج طفل من منزلكم من الكمبوند. افتح التطبيق للتفاصيل.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

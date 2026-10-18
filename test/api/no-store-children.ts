@@ -33,18 +33,23 @@ export function childrenCalls(
         })
       ).body as { id: string }
     ).id;
-  /** A minor of A's home whose control is on: their member id. */
-  const aControlled = async () => {
-    const memberId = await aMinor();
-    await owner('POST', `/units/${home()}/children/${memberId}/control`, {
-      mayLeaveAlone: false,
-      notifyPickups: true,
-    });
-    return memberId;
-  };
+  /**
+   * One minor of A's home whose control is on, shared by the calls: a
+   * household holds ten members at most.
+   */
+  let shared: Promise<string> | null = null;
+  const aControlled = () =>
+    (shared ??= (async () => {
+      const memberId = await aMinor();
+      await owner('POST', `/units/${home()}/children/${memberId}/control`, {
+        mayLeaveAlone: false,
+        notifyPickups: true,
+      });
+      return memberId;
+    })());
   const escorts = (memberId: string) =>
     `/units/${home()}/children/${memberId}/control/escorts`;
-  /** An outside escort of a new controlled child: the child and the response. */
+  /** An outside escort of the shared child: the child, the escort, its token. */
   const anEscort = async () => {
     const memberId = await aControlled();
     const res = await owner('POST', escorts(memberId), {
@@ -59,7 +64,55 @@ export function childrenCalls(
       )[1],
     };
   };
+  const guard = (path: string, payload: object) =>
+    call(world(), 'POST', path, {
+      token: world().a.tokens.guard,
+      body: payload,
+    });
+  /** A fresh card of the shared child (each reissue kills the last). */
+  const aCard = async () => {
+    const memberId = await aControlled();
+    const res = await owner(
+      'POST',
+      `/units/${home()}/children/${memberId}/control/card`,
+    );
+    return {
+      memberId,
+      card: (res.body as { card: { qrPayload: string } }).card.qrPayload,
+    };
+  };
+  /** An unauthorized pickup of the shared child at A's gate: its id. */
+  const anAlert = async () =>
+    (
+      (
+        await guard('/gate/children/exits', {
+          card: (await aCard()).card,
+          escort: { unidentified: true },
+        })
+      ).body as { pickupId: string }
+    ).pickupId;
   return {
+    'POST /gate/children/verify': async () =>
+      guard('/gate/children/verify', { card: (await aCard()).card }),
+    'POST /gate/children/exits': async () =>
+      guard('/gate/children/exits', {
+        card: (await aCard()).card,
+        escort: { alone: true },
+      }),
+    'GET /units/{unitId}/children/pickups': async () => {
+      await anAlert();
+      return owner('GET', `/units/${home()}/children/pickups`);
+    },
+    'GET /staff/security/child-alerts': async () => {
+      await anAlert();
+      return call(world(), 'GET', '/staff/security/child-alerts', {
+        token: world().a.tokens.manager,
+      });
+    },
+    'GET /staff/security/child-alerts/{id}': async () =>
+      call(world(), 'GET', `/staff/security/child-alerts/${await anAlert()}`, {
+        token: world().a.tokens.manager,
+      }),
     'GET /units/{unitId}/children/{memberId}/control/escorts': async () => {
       const e = await anEscort();
       return owner('GET', escorts(e.memberId));

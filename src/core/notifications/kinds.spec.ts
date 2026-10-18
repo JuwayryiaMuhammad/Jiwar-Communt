@@ -11,14 +11,18 @@ import {
 /**
  * Security (a new device, a new entry device), emergency tickets, staff
  * work (a ticket assigned to me, a gate approval request and its reversal),
- * the deletion notices (its confirmation, reminder and delay), and
- * emergencies (ADR 0047).
+ * the deletion notices (its confirmation, reminder and delay),
+ * emergencies (ADR 0047), and a child's unauthorized pickup or exit alone
+ * (ADR 0054).
  */
 const CRITICAL_KINDS = [
   'account.deletion_delayed',
   'account.deletion_reminder',
   'account.deletion_requested',
   'account.new_device_login',
+  // ADR 0054.
+  'child.exit_alone',
+  'child.unauthorized_pickup',
   // ADR 0047.
   'emergency.cancelled',
   'emergency.escalated',

@@ -216,3 +216,81 @@ export const CHILD_ESCORT_ROUTES: Row[] = [
     },
   },
 ];
+
+/** A child at the gate, and the records (ADR 0054). */
+export const CHILD_GATE_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/children/verify',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { card: 5 },
+      fields: [{ field: 'card', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/children/exits',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { card: 'JWC1.x', escort: { code: '123456', alone: true } },
+      fields: [{ field: 'escort.code', code: 'FIELD_NOT_ALLOWED' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/children/pickups',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { memberId: 'x' },
+      fields: [{ field: 'memberId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/child-alerts',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/child-alerts/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bAlertId }),
+      code: 'CHILD_ALERT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

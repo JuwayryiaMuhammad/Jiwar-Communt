@@ -589,6 +589,26 @@ describe('API v0 — PII leak scan', () => {
         },
       },
     ).expect(201);
+    // An unauthorized pickup of the child at A's gate (ADR 0054): the
+    // household reads its record; the keepers read the alert, without the
+    // child.
+    const childCard = (
+      await call(
+        w,
+        'POST',
+        `/units/${unit.id}/children/${child.id}/control/card`,
+        { token: childToken },
+      ).expect(200)
+    ).body as { card: { qrPayload: string } };
+    const childAlert = (
+      await call(w, 'POST', '/gate/children/exits', {
+        token: a.tokens.guard,
+        body: {
+          card: childCard.card.qrPayload,
+          escort: { unidentified: true },
+        },
+      }).expect(201)
+    ).body as { pickupId: string };
 
     // A ticket the family member opened on the primary's unit (ADR 0032).
     const asFamily = <T>(fn: () => Promise<T>) =>
@@ -1323,6 +1343,8 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/household': unit.id,
       '/units/{unitId}/household/minors-ready': unit.id,
       '/units/{unitId}/children': unit.id,
+      '/units/{unitId}/children/pickups': unit.id,
+      '/staff/security/child-alerts/{id}': childAlert.pickupId,
       '/units/{unitId}/children/{memberId}/control/escorts': {
         unitId: unit.id,
         memberId: child.id,
@@ -2252,6 +2274,17 @@ describe('API v0 — PII leak scan', () => {
       if (!childNameViews.has(key) && text.includes(childName))
         leaks.push(`${key}: a child's name`);
     expect(seen.get('resident /units/{unitId}/children')).toContain(childName);
+    // The pickup's record: the household's list, and the keepers' alert,
+    // which never names the child (the name rule above holds for both).
+    expect(seen.get('resident /units/{unitId}/children/pickups')).toContain(
+      childAlert.pickupId,
+    );
+    expect(seen.get('manager /staff/security/child-alerts/{id}')).toContain(
+      childAlert.pickupId,
+    );
+    expect(seen.get('manager /staff/security/child-alerts')).toContain(
+      childAlert.pickupId,
+    );
     // An outside escort's name and phone (ADR 0054): the household's list of
     // the child's escorts, nothing else.
     const escortViews = new Set([

@@ -3,8 +3,10 @@ import {
   controlRow,
   escortRow,
   minorRow,
+  pickupRow,
   unitRow,
 } from '../setup/children-rows';
+import { gateRow, shiftRow } from '../setup/security-rows';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 
@@ -15,6 +17,8 @@ interface Side {
   unitId: string;
   /** A live control of one of its minors. */
   controlId: string;
+  gateId: string;
+  shiftId: string;
   /** Minors with no control yet, one taken per insert that links here. */
   spareMinors: string[];
 }
@@ -64,6 +68,18 @@ const TABLES: Table[] = [
         createdById: link.accountId,
       }),
   },
+  {
+    table: 'child_pickups',
+    insert: (tx, own, link) =>
+      pickupRow(tx, {
+        tenantId: own.tenantId,
+        controlId: link.controlId,
+        unitId: link.unitId,
+        guardId: link.accountId,
+        shiftId: link.shiftId,
+        gateId: link.gateId,
+      }),
+  },
 ];
 
 describe('RLS isolation — children tables', () => {
@@ -84,10 +100,18 @@ describe('RLS isolation — children tables', () => {
       accountId: (await createAccountRow(h, tenantId)).id,
       unitId: '',
       controlId: '',
+      gateId: '',
+      shiftId: '',
       spareMinors: [],
     };
     await inTenant(s, async (tx) => {
       s.unitId = await unitRow(tx, tenantId);
+      s.gateId = await gateRow(tx, tenantId);
+      s.shiftId = await shiftRow(tx, {
+        tenantId,
+        guardId: s.accountId,
+        gateId: s.gateId,
+      });
       s.controlId = await controlRow(tx, {
         tenantId,
         unitId: s.unitId,

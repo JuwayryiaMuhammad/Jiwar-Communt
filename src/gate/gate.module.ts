@@ -230,6 +230,14 @@ import { ChildCore } from './children/child-core';
 import { ChildEscortsController } from './children/child-escorts.controller';
 import { ChildEscortsService } from './children/child-escorts.service';
 import { PickupPageController } from './children/pickup-page.controller';
+import { ChildGateController } from './children/child-gate.controller';
+import { ChildGateService } from './children/child-gate.service';
+import {
+  ChildAlertsController,
+  ChildPickupsController,
+} from './children/child-records.controller';
+import { ChildRecordsService } from './children/child-records.service';
+import { ChildExportSections } from './children/child-export-sections';
 import { PickupPageService } from './children/pickup-page.service';
 
 /**
@@ -322,6 +330,9 @@ import { PickupPageService } from './children/pickup-page.service';
     ChildControlsController,
     ChildEscortsController,
     PickupPageController,
+    ChildPickupsController,
+    ChildGateController,
+    ChildAlertsController,
   ],
   providers: [
     GatesService,
@@ -438,6 +449,9 @@ import { PickupPageService } from './children/pickup-page.service';
     ChildControlsService,
     ChildEscortsService,
     PickupPageService,
+    ChildGateService,
+    ChildRecordsService,
+    ChildExportSections,
   ],
 })
 export class GateModule {}

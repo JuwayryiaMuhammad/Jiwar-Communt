@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import type { Server } from 'node:http';
 import request from 'supertest';
 import { WorkersService } from '../../src/community/workers/workers.service';
@@ -46,6 +47,26 @@ export interface EscortBody {
   pickupIssuedAt: string | null;
   createdAt: string;
   pickup?: PickupBody | null;
+}
+
+export interface ExitBody {
+  pickupId: string;
+  result: 'authorized' | 'refused';
+  outcome: string;
+  reason: string | null;
+  escort: { kind: string; firstName: string | null } | null;
+}
+
+export interface VerifyBody {
+  result: 'valid';
+  child: { firstName: string; photoUrl: string | null; mayLeaveAlone: boolean };
+  escorts: {
+    id: string;
+    kind: string;
+    firstName: string | null;
+    photoUrl: string | null;
+    validNow: boolean;
+  }[];
 }
 
 export interface ChildBody {
@@ -234,9 +255,74 @@ export function childrenHelpers(h: HttpHarness) {
     return { engagementId: reg.engagementId, fullName: p.fullName, approved };
   }
 
+  /**
+   * A resident's entry QR for now (ADR 0031): a credential registered on
+   * `as`'s phone, and the mac the phone computes for the current step.
+   */
+  async function entryQr(as: Who): Promise<string> {
+    const res = await http('post', '/me/entry-credentials', as.token, {
+      deviceName: 'Child test phone',
+    });
+    if (res.status !== 201)
+      throw new Error(`entry: ${res.status} ${JSON.stringify(res.body)}`);
+    const c = res.body as { id: string; secret: string };
+    const step = Math.floor(Date.now() / 30_000);
+    const mac = createHmac('sha256', Buffer.from(c.secret, 'base64url'))
+      .update(`${c.id}.${step}`)
+      .digest()
+      .subarray(0, 16)
+      .toString('base64url');
+    return `JWR2.${c.id}.${step}.${mac}`;
+  }
+
+  /** `POST /gate/children/verify` as a guard: the response. */
+  function verifyRaw(guard: Who, card: string) {
+    return http('post', '/gate/children/verify', guard.token, { card });
+  }
+
+  /** `POST /gate/children/exits` as a guard: the response. */
+  function exitRaw(
+    guard: Who,
+    card: string,
+    escort: Record<string, unknown>,
+    headers: Record<string, string> = {},
+  ) {
+    return http(
+      'post',
+      '/gate/children/exits',
+      guard.token,
+      { card, escort },
+      headers,
+    );
+  }
+
+  /** An exit that must be recorded (201): its body. */
+  async function exit(
+    guard: Who,
+    card: string,
+    escort: Record<string, unknown>,
+  ): Promise<ExitBody> {
+    const res = await exitRaw(guard, card, escort);
+    if (res.status !== 201)
+      throw new Error(`exit: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as ExitBody;
+  }
+
+  /** The pickup's row. */
+  function pickupRow(c: Compound, id: string) {
+    return s.inTx(c, (tx) =>
+      tx.childPickup.findUniqueOrThrow({ where: { id } }),
+    );
+  }
+
   return {
     ...s,
     s,
+    entryQr,
+    verifyRaw,
+    exitRaw,
+    exit,
+    pickupRow,
     escortsPath,
     addEscortRaw,
     addEscort,

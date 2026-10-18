@@ -1,6 +1,7 @@
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { ChildControlsService } from '../../src/gate/children/child-controls.service';
 import { ChildEscortsService } from '../../src/gate/children/child-escorts.service';
+import { ChildGateService } from '../../src/gate/children/child-gate.service';
 import type { communityHelpers } from '../setup/community';
 import { bornYearsAgo, nationalIdFor } from '../setup/fixtures';
 import type { HttpHarness } from '../setup/http-app';
@@ -12,6 +13,8 @@ export interface ChildrenWorld {
   bMinorId: string;
   /** An outside escort of that child. */
   bEscortId: string;
+  /** An unauthorized pickup of that child at B's gate (an alert). */
+  bAlertId: string;
 }
 
 export async function childrenWorld(
@@ -41,5 +44,18 @@ export async function childrenWorld(
       outside: { fullName: 'World Escort', phone: '+201001234567' },
     }),
   );
-  return { bMinorId: minor.id, bEscortId: escort.id };
+  const card = await asOwner(() =>
+    h.moduleRef.get(ChildControlsService).reissueCard(b.homeUnitId, minor.id),
+  );
+  const alert = await helpers.as(b, { id: b.ids.guard, type: 'staff' }, () =>
+    h.moduleRef.get(ChildGateService).exit({
+      card: card.card!.qrPayload,
+      escort: { unidentified: true },
+    }),
+  );
+  return {
+    bMinorId: minor.id,
+    bEscortId: escort.id,
+    bAlertId: alert.view.pickupId,
+  };
 }

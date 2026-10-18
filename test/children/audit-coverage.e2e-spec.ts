@@ -1,8 +1,10 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { HouseholdsService } from '../../src/community/households/households.service';
+import { CHILD_RECORDS_PURGE_SWEEP } from '../../src/gate/children/child-records.service';
 import * as split from '../setup/audit-coverage-split';
 import { auditReaders } from '../setup/audit';
 import { childrenHelpers, type Who } from '../setup/children';
+import { at, day } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 /**
@@ -31,7 +33,7 @@ describe('Audit coverage — children', () => {
 
   async function rows(
     action: string,
-    targetId: string,
+    targetId: string | null,
     secrets: string[] = [],
   ) {
     const found = await read.tenant(s.c.tenantId, { action, targetId });
@@ -209,6 +211,58 @@ describe('Audit coverage — children', () => {
     expect(off.metadata).toMatchObject({ reasonCode: 'control_off' });
     const ended = await single('child_control.ended', control.id);
     expect(ended.metadata).toMatchObject({ escortsRevoked: 1 });
+  });
+
+  it("an exit recorded (the record's id and codes only), then purged with the escort's name and phone", async () => {
+    const { home, primary, memberId, control } = await x.controlled(
+      s.c,
+      undefined,
+      { fullName: CHILD_NAME },
+    );
+    const escort = await x.addEscort(primary, home.id, memberId, x.outside());
+    const guard = await x.guardOnDuty(s.c);
+    const exit = await x.exit(guard, control.card.qrPayload, {
+      unidentified: true,
+    });
+    const recorded = await single('child_pickup.recorded', exit.pickupId, [
+      control.id,
+      memberId,
+      home.id,
+      escort.id,
+    ]);
+    expect(recorded).toMatchObject({
+      actorType: 'account',
+      actorId: guard.id,
+      targetType: 'child_pickup',
+    });
+    expect(recorded.metadata).toEqual({
+      outcome: 'refused',
+      method: 'unidentified',
+      reasonCode: 'no_credential',
+    });
+
+    await x
+      .http(
+        'post',
+        `${x.escortsPath(home.id, memberId)}/${escort.id}/revoke`,
+        primary.token,
+      )
+      .expect(204);
+    await x.sweep(CHILD_RECORDS_PURGE_SWEEP, at(day(31), 12, 0));
+    const purged = await rows('child_pickup.purged', null);
+    expect(purged.length).toBeGreaterThanOrEqual(1);
+    expect(purged[0]).toMatchObject({
+      actorType: 'system',
+      targetType: 'child_pickup',
+      targetId: null,
+    });
+    expect(Object.keys(purged[0].metadata as object)).toEqual(['records']);
+    const cleared = await single('child_escort.pii_cleared', escort.id);
+    expect(cleared).toMatchObject({
+      actorType: 'system',
+      targetType: 'child_escort',
+    });
+    expect(cleared.metadata).toBeNull();
   });
 
   describe('catalog completeness', () => {

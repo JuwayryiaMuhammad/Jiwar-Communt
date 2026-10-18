@@ -138,6 +138,7 @@ describe('audit catalog', () => {
         // ADR 0054.
         'child_control',
         'child_escort',
+        'child_pickup',
       ]).toContain(def.target);
     }
   });

@@ -170,6 +170,34 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['gate.operate'],
   },
+  // An incident's photo (ADR 0053): what a guard or the management saw.
+  // Staff only, never a resident's; it stays when its author is erased.
+  incident_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate', 'incidents.manage'],
+  },
+  // A banned or watched person's face (ADR 0053), for the guards on shift;
+  // deleted with the entry's other personal data 30 days after it ends.
+  blocklist_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['blocklist.manage'],
+  },
+  // A violation's photo (ADR 0053), the guard's or the office's; the unit
+  // sees it.
+  violation_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate', 'violations.issue'],
+  },
+  // A resident's photo backing a violation's appeal (ADR 0053). Any
+  // resident may upload one; only a keeper or the primary attaches it.
+  violation_appeal_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['units.read'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

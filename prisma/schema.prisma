@@ -2200,6 +2200,14 @@ enum FilePurpose {
   found_item_photo
   /// A patrol note's photo of a place (ADR 0052), the guard's.
   patrol_photo
+  /// An incident's photo (ADR 0053), the guard's or the management's.
+  incident_photo
+  /// A banned or watched person's face (ADR 0053), the management's.
+  blocklist_photo
+  /// A violation's photo (ADR 0053), the guard's or the office's.
+  violation_photo
+  /// A resident's photo backing a violation's appeal (ADR 0053).
+  violation_appeal_photo
 
   @@map("file_purpose")
 }
@@ -5874,6 +5882,8 @@ enum SafetyCounterSeries {
   emergency
   accessibility
   service
+  incident
+  violation
 
   @@map("safety_counter_series")
 }

@@ -4,12 +4,12 @@ import { FILE_PURPOSES, FILE_TYPES } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0052 recreated both, with every purpose). */
+/** Both CHECKs as they stand now (ADR 0053 recreated both, with every purpose). */
 const sizeCheck = readFileSync(
   join(
     __dirname,
     migrations,
-    '20261030090400_patrol_photo_purposes/migration.sql',
+    '20261031090100_security_photo_purposes/migration.sql',
   ),
   'utf8',
 );
@@ -62,6 +62,18 @@ describe('file purposes', () => {
     );
     expect(sizeCheck).toContain(
       `WHEN 'patrol_photo' THEN ${FILE_PURPOSES.patrol_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'incident_photo' THEN ${FILE_PURPOSES.incident_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'blocklist_photo' THEN ${FILE_PURPOSES.blocklist_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'violation_photo' THEN ${FILE_PURPOSES.violation_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'violation_appeal_photo' THEN ${FILE_PURPOSES.violation_appeal_photo.maxBytes}`,
     );
     expect(sizeCheck).toContain(
       `WHEN 'data_export' THEN ${FILE_PURPOSES.data_export.maxBytes}`,
@@ -145,6 +157,18 @@ describe('file purposes', () => {
       FILE_PURPOSES.worker_photo.types,
     );
     expect(FILE_PURPOSES.patrol_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(FILE_PURPOSES.incident_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(FILE_PURPOSES.blocklist_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(FILE_PURPOSES.violation_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(FILE_PURPOSES.violation_appeal_photo.types).toEqual(
       FILE_PURPOSES.worker_photo.types,
     );
     expect(FILE_PURPOSES.data_export.types).toEqual(['application/zip']);

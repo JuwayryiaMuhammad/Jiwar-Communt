@@ -8,12 +8,23 @@ export const GATE_SETTING_LIMITS = {
   exceptionAnswerMinutes: { min: 1, max: 60, default: 10 },
   /** Minutes an approved field exception lets its one entry in. */
   exceptionEntryMinutes: { min: 5, max: 120, default: 15 },
+  /**
+   * Minutes a visit is expected to last when its pass gives none; null
+   * turns the overstay alert off. At most 12 hours: a visitor inside
+   * longer gets the system's unconfirmed exit.
+   */
+  visitExpectedMinutes: { min: 15, max: 720, default: 240, nullable: true },
 } as const;
 
-export type GateSettingName = keyof typeof GATE_SETTING_LIMITS;
+type Limits = typeof GATE_SETTING_LIMITS;
+export type GateSettingName = keyof Limits;
 
-/** The values as the management reads and sets them. */
-export type GateSettingsValues = Record<GateSettingName, number>;
+/** The values as the management reads and sets them: null where allowed. */
+export type GateSettingsValues = {
+  [K in GateSettingName]: Limits[K] extends { nullable: true }
+    ? number | null
+    : number;
+};
 
 export const GATE_SETTING_NAMES = Object.keys(
   GATE_SETTING_LIMITS,

@@ -23,7 +23,11 @@ export const GATE_SETTINGS_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      body: { exceptionAnswerMinutes: 0, exceptionEntryMinutes: 121 },
+      body: {
+        exceptionAnswerMinutes: 0,
+        exceptionEntryMinutes: 121,
+        visitExpectedMinutes: 14,
+      },
       fields: [
         {
           field: 'exceptionAnswerMinutes',
@@ -34,6 +38,11 @@ export const GATE_SETTINGS_ROUTES: Row[] = [
           field: 'exceptionEntryMinutes',
           code: 'INVALID_NUMBER',
           params: { min: 5, max: 120 },
+        },
+        {
+          field: 'visitExpectedMinutes',
+          code: 'INVALID_NUMBER',
+          params: { min: 15, max: 720 },
         },
       ],
     },

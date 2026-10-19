@@ -20,10 +20,20 @@ export class GateSettingsResponse {
   })
   exceptionEntryMinutes: number;
 
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: L.visitExpectedMinutes.default,
+    description:
+      'Minutes a visit is expected to last when its pass gives none; null: no overstay alert.',
+  })
+  visitExpectedMinutes: number | null;
+
   static from(s: GateSettingsValues): GateSettingsResponse {
     return {
       exceptionAnswerMinutes: s.exceptionAnswerMinutes,
       exceptionEntryMinutes: s.exceptionEntryMinutes,
+      visitExpectedMinutes: s.visitExpectedMinutes,
     };
   }
 }

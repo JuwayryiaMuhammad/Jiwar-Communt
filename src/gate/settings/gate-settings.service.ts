@@ -9,7 +9,6 @@ import {
 } from '../../core/database/tenant-tx.service';
 import {
   GATE_SETTING_NAMES,
-  type GateSettingName,
   type GateSettingsValues,
 } from './gate-settings-rules';
 
@@ -54,9 +53,7 @@ export class GateSettingsService {
   }
 
   /** Changes what was given; the bounds are the DTO's and the table's. */
-  update(
-    input: Partial<Record<GateSettingName, number>>,
-  ): Promise<GateSettingsValues> {
+  update(input: Partial<GateSettingsValues>): Promise<GateSettingsValues> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const tenantId = this.ctx.txTenantId;
       await tx.$queryRaw`

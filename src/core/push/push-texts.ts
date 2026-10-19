@@ -1882,6 +1882,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يرد أحد على طلب الاستثناء الخاص بالوحدة {unitCode}. لا تسمح بالدخول.',
     },
   },
+  'visit.overstayed': {
+    en: {
+      title: 'A visitor is still inside',
+      body: 'A visitor for unit {unitCode} is still inside after {minutes} minutes.',
+    },
+    ar: {
+      title: 'زائر ما زال بالداخل',
+      body: 'زائر الوحدة {unitCode} ما زال بالداخل بعد {minutes} دقيقة.',
+    },
+  },
+  'visit.overstayed_host': {
+    en: {
+      title: 'Your visitor is still inside',
+      body: 'Your visitor is still in the compound after {minutes} minutes.',
+    },
+    ar: {
+      title: 'زائرك ما زال بالداخل',
+      body: 'زائرك ما زال داخل المجمع بعد {minutes} دقيقة.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

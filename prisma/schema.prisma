@@ -1106,6 +1106,7 @@ model Unit {
   financePayments            FinancePayment[]
   paymentSessions            PaymentSession[]
   fieldExceptions        GateFieldException[]
+  overstayAlerts         VisitOverstayAlert[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -1960,6 +1961,7 @@ model Gate {
   requests GateApprovalRequest[]
   works    Announcement[]
   fieldExceptions        GateFieldException[]
+  overstayAlerts         VisitOverstayAlert[]
 
   @@unique([tenantId, name])
   @@unique([tenantId, id])
@@ -2057,6 +2059,8 @@ model VisitorPass {
   host           Account         @relation("PassHost", fields: [tenantId, hostAccountId], references: [tenantId, id], onUpdate: Restrict)
   cancelledBy    Account?        @relation("PassCancelledBy", fields: [tenantId, cancelledById], references: [tenantId, id], onUpdate: Restrict)
   visitorDetails VisitorDetails? @relation(fields: [tenantId, visitorDetailsId], references: [tenantId, id], onUpdate: Restrict)
+  /// Minutes a visit on it is expected to last (ADR 0056); else the compound's.
+  expectedMinutes  Int?              @map("expected_minutes") @db.SmallInt
 
   @@unique([tenantId, id])
   @@unique([tenantId, hostAccountId, idempotencyKey])
@@ -2185,6 +2189,8 @@ model GateSettings {
   updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  /// A visit's expected minutes when its pass gives none; null: no overstay alert.
+  visitExpectedMinutes   Int?     @default(240) @map("visit_expected_minutes") @db.SmallInt
 
   @@map("gate_settings")
 }
@@ -2238,6 +2244,27 @@ model GateFieldException {
   @@index([tenantId, raisedAt(sort: Desc), id(sort: Desc)], map: "gate_field_exceptions_list_idx")
   @@index([tenantId, shiftId], map: "gate_field_exceptions_shift_idx")
   @@map("gate_field_exceptions")
+}
+
+/// A visitor still inside past their visit's expected length (ADR 0056):
+/// the guards and the host were told, once per `in` entry. Never changed.
+model VisitOverstayAlert {
+  tenantId        String          @map("tenant_id") @db.Uuid
+  entryId         String          @map("entry_id") @db.Uuid
+  subjectType     GateSubjectType @map("subject_type")
+  subjectId       String          @map("subject_id") @db.Uuid
+  gateId          String          @map("gate_id") @db.Uuid
+  unitId          String          @map("unit_id") @db.Uuid
+  enteredAt       DateTime        @map("entered_at") @db.Timestamptz(3)
+  expectedMinutes Int             @map("expected_minutes") @db.SmallInt
+  alertedAt       DateTime        @map("alerted_at") @db.Timestamptz(3)
+
+  gate Gate @relation(fields: [tenantId, gateId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  unit Unit @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, entryId])
+  @@index([tenantId, alertedAt(sort: Desc)], map: "visit_overstay_alerts_alerted_idx")
+  @@map("visit_overstay_alerts")
 }
 
 // ============================================================================

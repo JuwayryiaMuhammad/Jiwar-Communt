@@ -464,6 +464,17 @@ describe('Gate — field exceptions (ADR 0056)', () => {
   });
 
   describe('the settings', () => {
+    it('what may not be off is never null; what may is', async () => {
+      const res = await g
+        .http('patch', '/staff/gate/settings', s.manager.token, {
+          exceptionAnswerMinutes: null,
+        })
+        .expect(400);
+      expect((res.body as { fields: { field: string }[] }).fields).toEqual([
+        expect.objectContaining({ field: 'exceptionAnswerMinutes' }),
+      ]);
+    });
+
     it('the management sets the minutes; what was asked keeps its own', async () => {
       const before = await g.visitor(s.guard, s.unitCode);
       await g

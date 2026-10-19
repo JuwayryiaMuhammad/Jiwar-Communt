@@ -17057,6 +17057,8 @@ export interface components {
             visitorPassId?: string | null;
         };
         CreateVisitorPassDto: {
+            /** @description How long a visit on it is expected to last, in minutes (ADR 0056). A visitor still inside past it alerts the guards on shift and the host, once; nothing else. Without it, the compound’s setting applies. */
+            expectedMinutes?: number;
             kind: components["schemas"]["VisitorPassKind"];
             /** @description How many people the code lets in (ADR 0043). One-time: one per entry, at any gate, until all came in or `validUntil`. Recurring: how many may be inside at once, on every visit. */
             partySize: number;
@@ -18701,6 +18703,11 @@ export interface components {
              * @example 15
              */
             exceptionEntryMinutes: number;
+            /**
+             * @description Minutes a visit is expected to last when its pass gives none; null: no overstay alert.
+             * @example 240
+             */
+            visitExpectedMinutes: number | null;
         };
         /** @enum {string} */
         GateStatus: "active" | "inactive";
@@ -20104,6 +20111,8 @@ export interface components {
         IssuedPassView: {
             /** @description 6 digits. Null only on a replay of a pass no longer active. */
             code: string | null;
+            /** @description Minutes a visit on it is expected to last; null: the compound’s setting. Past it, the guards and the host are alerted once. */
+            expectedMinutes: number | null;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["VisitorPassKind"];
@@ -21276,6 +21285,8 @@ export interface components {
              * @description The latest exit, once everyone who came in on the pass has left; null while anyone is inside.
              */
             exitedAt: string | null;
+            /** @description Minutes a visit on it is expected to last; null: the compound’s setting. Past it, the guards and the host are alerted once. */
+            expectedMinutes: number | null;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["VisitorPassKind"];
@@ -21331,6 +21342,8 @@ export interface components {
              * @description The latest exit, once everyone who came in on the pass has left; null while anyone is inside.
              */
             exitedAt: string | null;
+            /** @description Minutes a visit on it is expected to last; null: the compound’s setting. Past it, the guards and the host are alerted once. */
+            expectedMinutes: number | null;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["VisitorPassKind"];
@@ -26871,6 +26884,8 @@ export interface components {
             exceptionAnswerMinutes?: number;
             /** @description Minutes an approved field exception lets its one entry in, at its gate. */
             exceptionEntryMinutes?: number;
+            /** @description Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. */
+            visitExpectedMinutes?: number | null;
         };
         UpdateGovernanceElectionDto: {
             bodyAr?: string | null;

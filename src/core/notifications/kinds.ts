@@ -1739,6 +1739,26 @@ export const NOTIFICATION_KINDS = {
     target: 'gate_field_exception',
     params: { unitCode: {} },
   },
+  /**
+   * A visitor still inside past their visit's expected length (ADR 0056),
+   * once per visit: the guards on shift at the gate they came in by. The
+   * target is their `in` entry; `minutes` the expected length.
+   */
+  'visit.overstayed': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'gate_entry',
+    params: { unitCode: {}, minutes: {} },
+  },
+  /** The same, to the host: their visitor is still inside. */
+  'visit.overstayed_host': {
+    priority: 'normal',
+    category: 'gate_visitors',
+    critical: false,
+    target: 'gate_entry',
+    params: { unitCode: {}, minutes: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

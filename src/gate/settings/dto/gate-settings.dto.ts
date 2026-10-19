@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, Max, Min, ValidateIf } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { GATE_SETTING_LIMITS as L } from '../gate-settings-rules';
 
@@ -18,7 +18,8 @@ export class UpdateGateSettingsDto {
     description:
       'Minutes the management has to answer a field exception before it expires.',
   })
-  @IsOptional()
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
   @IsInt(withParams(bounds(L.exceptionAnswerMinutes)))
   @Min(
     L.exceptionAnswerMinutes.min,
@@ -38,9 +39,25 @@ export class UpdateGateSettingsDto {
     description:
       'Minutes an approved field exception lets its one entry in, at its gate.',
   })
-  @IsOptional()
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
   @IsInt(withParams(bounds(L.exceptionEntryMinutes)))
   @Min(L.exceptionEntryMinutes.min, withParams(bounds(L.exceptionEntryMinutes)))
   @Max(L.exceptionEntryMinutes.max, withParams(bounds(L.exceptionEntryMinutes)))
   exceptionEntryMinutes?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    nullable: true,
+    minimum: L.visitExpectedMinutes.min,
+    maximum: L.visitExpectedMinutes.max,
+    description:
+      'Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off.',
+  })
+  @IsOptional()
+  @IsInt(withParams(bounds(L.visitExpectedMinutes)))
+  @Min(L.visitExpectedMinutes.min, withParams(bounds(L.visitExpectedMinutes)))
+  @Max(L.visitExpectedMinutes.max, withParams(bounds(L.visitExpectedMinutes)))
+  visitExpectedMinutes?: number | null;
 }

@@ -60,3 +60,25 @@ export async function visitorDetailsRow(
   });
   return id;
 }
+
+/** A visitor pass's overstay alert, its entry a made-up id (entries have no keys). */
+export async function overstayAlertRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; gateId: string; unitId: string },
+): Promise<string> {
+  const entryId = newId();
+  await tx.visitOverstayAlert.create({
+    data: {
+      tenantId: r.tenantId,
+      entryId,
+      subjectType: 'visitor_pass',
+      subjectId: newId(),
+      gateId: r.gateId,
+      unitId: r.unitId,
+      enteredAt: ROW_T0,
+      expectedMinutes: 15,
+      alertedAt: rowAt(20),
+    },
+  });
+  return entryId;
+}

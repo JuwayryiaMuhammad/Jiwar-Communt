@@ -27,6 +27,8 @@ import { DESCRIPTION_LENGTH } from '../standing-instructions.service';
 import { PLATE_MAX } from '../../../core/common/vehicle-plate';
 
 const PARTY = { min: 1, max: 50 };
+/** A visit's expected minutes (ADR 0056): within the unconfirmed exit's 12 hours. */
+const VISIT_MINUTES = { min: 15, max: 720 };
 
 /** A time of day in the compound's time zone (ADR 0028), like a worker's. */
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -149,6 +151,20 @@ export class CreateVisitorPassDto {
   @IsOptional()
   @IsString()
   vehiclePlate?: string;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: VISIT_MINUTES.min,
+    maximum: VISIT_MINUTES.max,
+    description:
+      'How long a visit on it is expected to last, in minutes (ADR 0056). A visitor still inside past it alerts the guards on shift and the host, once; nothing else. Without it, the compound’s setting applies.',
+  })
+  @IsOptional()
+  @IsInt(withParams(VISIT_MINUTES))
+  @Min(VISIT_MINUTES.min, withParams(VISIT_MINUTES))
+  @Max(VISIT_MINUTES.max, withParams(VISIT_MINUTES))
+  expectedMinutes?: number;
 }
 
 export class CancelVisitorPassDto {

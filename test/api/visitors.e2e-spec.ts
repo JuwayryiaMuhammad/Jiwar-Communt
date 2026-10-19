@@ -20,6 +20,8 @@ import { leakText } from '../setup/leak-text';
 
 const ISSUED = [
   'code',
+  // A visit's expected length (ADR 0056).
+  'expectedMinutes',
   'id',
   'kind',
   'link',
@@ -35,6 +37,7 @@ const LISTED = [
   'enteredAt',
   'entriesUsed',
   'exitedAt',
+  'expectedMinutes',
   'id',
   'kind',
   'mine',

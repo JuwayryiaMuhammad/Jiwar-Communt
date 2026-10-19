@@ -10098,6 +10098,12 @@
       },
       "CreateVisitorPassDto": {
         "properties": {
+          "expectedMinutes": {
+            "description": "How long a visit on it is expected to last, in minutes (ADR 0056). A visitor still inside past it alerts the guards on shift and the host, once; nothing else. Without it, the compound’s setting applies.",
+            "maximum": 720,
+            "minimum": 15,
+            "type": "number"
+          },
           "kind": {
             "allOf": [
               {
@@ -15662,11 +15668,18 @@
             "description": "Minutes an approved field exception lets its entry in.",
             "example": 15,
             "type": "number"
+          },
+          "visitExpectedMinutes": {
+            "description": "Minutes a visit is expected to last when its pass gives none; null: no overstay alert.",
+            "example": 240,
+            "nullable": true,
+            "type": "number"
           }
         },
         "required": [
           "exceptionAnswerMinutes",
-          "exceptionEntryMinutes"
+          "exceptionEntryMinutes",
+          "visitExpectedMinutes"
         ],
         "type": "object"
       },
@@ -20369,6 +20382,11 @@
             "nullable": true,
             "type": "string"
           },
+          "expectedMinutes": {
+            "description": "Minutes a visit on it is expected to last; null: the compound’s setting. Past it, the guards and the host are alerted once.",
+            "nullable": true,
+            "type": "number"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -20431,7 +20449,8 @@
           "validFrom",
           "validUntil",
           "schedule",
-          "status"
+          "status",
+          "expectedMinutes"
         ],
         "type": "object"
       },
@@ -24101,6 +24120,11 @@
             "nullable": true,
             "type": "string"
           },
+          "expectedMinutes": {
+            "description": "Minutes a visit on it is expected to last; null: the compound’s setting. Past it, the guards and the host are alerted once.",
+            "nullable": true,
+            "type": "number"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -24185,6 +24209,7 @@
           "validUntil",
           "schedule",
           "status",
+          "expectedMinutes",
           "mine",
           "visitorName",
           "vehiclePlate",
@@ -24223,6 +24248,11 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "expectedMinutes": {
+            "description": "Minutes a visit on it is expected to last; null: the compound’s setting. Past it, the guards and the host are alerted once.",
+            "nullable": true,
+            "type": "number"
           },
           "id": {
             "format": "uuid",
@@ -24286,6 +24316,7 @@
           "validUntil",
           "schedule",
           "status",
+          "expectedMinutes",
           "mine",
           "visitorName",
           "vehiclePlate",
@@ -42745,6 +42776,13 @@
             "description": "Minutes an approved field exception lets its one entry in, at its gate.",
             "maximum": 120,
             "minimum": 5,
+            "type": "number"
+          },
+          "visitExpectedMinutes": {
+            "description": "Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off.",
+            "maximum": 720,
+            "minimum": 15,
+            "nullable": true,
             "type": "number"
           }
         },

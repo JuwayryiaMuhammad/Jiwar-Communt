@@ -1,6 +1,7 @@
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { FIELD_EXCEPTIONS_SWEEP } from '../../src/gate/exceptions/field-exceptions.service';
+import { VISIT_OVERSTAY_SWEEP } from '../../src/gate/visitors/visit-overstay.sweep';
 import type { Compound } from './community';
 import { aroundTheClock, dbClock, hhmm, localMinute } from './compound-clock';
 import { nationalIdFor, uniqueSuffix } from './fixtures';
@@ -195,6 +196,63 @@ export function gateCompletionHelpers(h: HttpHarness) {
       [id, new Date(dbClock().getTime() - minutes * 60_000)],
     );
 
+  /**
+   * A visitor pass of the unit by `host`, valid from now for six hours by
+   * the database's clock: its id and code.
+   */
+  async function pass(
+    host: Who,
+    unitId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<{ id: string; code: string }> {
+    const now = dbClock();
+    const res = await x.http(
+      'post',
+      `/units/${unitId}/visitor-passes`,
+      host.token,
+      {
+        kind: 'one_time',
+        partySize: 1,
+        // A minute back: dbClock() is the runner's clock plus a skew
+        // measured once, and may run a few ms ahead of the server's, which
+        // dates an entry; a pass valid from "now" could be not yet valid.
+        validFrom: new Date(now.getTime() - 60_000).toISOString(),
+        validUntil: new Date(now.getTime() + 6 * 3_600_000).toISOString(),
+        ...over,
+      },
+    );
+    if (res.status !== 201)
+      throw new Error(`pass: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as { id: string; code: string };
+  }
+
+  /** An entry that must be recorded: its id. */
+  async function enter(
+    as: Who,
+    subjectType: string,
+    subjectId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<string> {
+    const res = await x.entryRaw(as, subjectType, subjectId, over);
+    if (res.status !== 201)
+      throw new Error(`entry: ${res.status} ${JSON.stringify(res.body)}`);
+    return (res.body as { id: string }).id;
+  }
+
+  /** An entry moved `minutes` into the past: time travel past its trigger. */
+  const backdate = (entryId: string, minutes: number) =>
+    superuserSql(
+      `UPDATE gate_entries SET occurred_at = $2, recorded_at = $2 WHERE id = $1`,
+      [entryId, new Date(dbClock().getTime() - minutes * 60_000)],
+    );
+
+  /** One run of the overstay sweep. */
+  const sweepOverstay = () => x.sweep(VISIT_OVERSTAY_SWEEP, dbClock());
+
+  /** The gate's settings, changed by the manager. */
+  const settings = (manager: Who, body: Record<string, unknown>) =>
+    x.http('patch', '/staff/gate/settings', manager.token, body).expect(200);
+
   /** One run of the exceptions' sweep, at `now` (the database's clock). */
   const sweepExceptions = (now: Date = dbClock()) =>
     x.sweep(FIELD_EXCEPTIONS_SWEEP, now);
@@ -216,5 +274,10 @@ export function gateCompletionHelpers(h: HttpHarness) {
     pastDeadline,
     pastEntryWindow,
     sweepExceptions,
+    pass,
+    enter,
+    backdate,
+    sweepOverstay,
+    settings,
   };
 }

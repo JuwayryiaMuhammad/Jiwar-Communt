@@ -1675,6 +1675,15 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'used_at IS NULL is tested first; decided_at and entry_until are tested NOT NULL before the comparisons',
   },
   gate_entries_exception_shape: {},
+  visitor_passes_expected_minutes: {
+    guarded: 'expected_minutes IS NULL is tested first',
+  },
+  gate_settings_visit_expected: {
+    guarded: 'visit_expected_minutes IS NULL is tested first',
+  },
+  visit_overstay_alerts_subject: {},
+  visit_overstay_alerts_minutes: {},
+  visit_overstay_alerts_after_due: {},
 };
 
 interface Check {

@@ -11,6 +11,7 @@ import { FieldExceptionsService } from './exceptions/field-exceptions.service';
 import { GateSettingsController } from './settings/gate-settings.controller';
 import { GateSettingsProvisioning } from './settings/gate-settings-provisioning';
 import { GateSettingsService } from './settings/gate-settings.service';
+import { VisitOverstaySweep } from './visitors/visit-overstay.sweep';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -356,6 +357,7 @@ import { PickupPageService } from './children/pickup-page.service';
     GateSettingsService,
     GateSettingsProvisioning,
     FieldExceptionsService,
+    VisitOverstaySweep,
     GatesService,
     ShiftsService,
     VisitorPassesService,

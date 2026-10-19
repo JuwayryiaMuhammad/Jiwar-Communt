@@ -4,18 +4,20 @@ import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
   fieldExceptionRow,
+  overstayAlertRow,
   rowAt,
   visitorDetailsRow,
 } from '../setup/gate-completion-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
 /**
- * The field exceptions' and the gate settings' tables (ADR 0056) at the
- * database: what the app may write; what was asked never changes; an
- * exception is decided once and used once, within its window; the shapes
- * the CHECKs hold whatever the services do. Every instant is written out.
+ * The tables of the gate's completion (ADR 0056) at the database: what the
+ * app may write; what was asked never changes; an exception is decided
+ * once and used once, within its window; an overstay alert is written once
+ * and never changed; the shapes the CHECKs hold whatever the services do.
+ * Every instant is written out.
  */
-describe('Field exceptions and gate settings — CHECKs, triggers and privileges', () => {
+describe('The gate’s completion tables — CHECKs, triggers and privileges', () => {
   let h: DbHarness;
   let app: Client;
   let tenantId: string;
@@ -28,6 +30,7 @@ describe('Field exceptions and gate settings — CHECKs, triggers and privileges
   let exceptionId: string;
   let withDetailsId: string;
   let detailsId: string;
+  let alertId: string;
 
   const inTx = <T>(fn: (tx: TenantTxClient) => Promise<T>) =>
     h.asTenant(tenantId, () => h.tenantTx.withTenantTx(fn));
@@ -49,6 +52,7 @@ describe('Field exceptions and gate settings — CHECKs, triggers and privileges
         ...r,
         visitorDetailsId: detailsId,
       });
+      alertId = await overstayAlertRow(tx, { tenantId, gateId, unitId });
     });
     app = new Client({ connectionString: process.env.DATABASE_URL });
     await app.connect();
@@ -245,18 +249,60 @@ describe('Field exceptions and gate settings — CHECKs, triggers and privileges
     ).rejects.toThrow(/gate_entries_exception_shape/);
   });
 
+  describe('an overstay alert', () => {
+    it('is only ever added: never changed, deleted or truncated', async () => {
+      expect(await privileges('visit_overstay_alerts')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: false,
+        truncate: false,
+      });
+    });
+
+    it('once per entry; visitors only; never before its visit was due', async () => {
+      const insert = (entry: string, subject: string, alerted: number) =>
+        asApp(
+          `INSERT INTO visit_overstay_alerts (tenant_id, entry_id, subject_type, subject_id, gate_id,
+              unit_id, entered_at, expected_minutes, alerted_at)
+           VALUES ('${tenantId}', ${entry}, '${subject}', gen_random_uuid(), '${gateId}',
+              '${unitId}', ${at(0)}, 15, ${at(alerted)})`,
+        );
+      await expect(
+        insert('gen_random_uuid()', 'visitor_pass', 15),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(insert(`'${alertId}'`, 'visitor_pass', 20)).rejects.toThrow(
+        /visit_overstay_alerts_pkey/,
+      );
+      await expect(
+        insert('gen_random_uuid()', 'worker_engagement', 20),
+      ).rejects.toThrow(/visit_overstay_alerts_subject/);
+      await expect(
+        insert('gen_random_uuid()', 'visitor_pass', 14),
+      ).rejects.toThrow(/visit_overstay_alerts_after_due/);
+    });
+  });
+
   it('the settings stay within their bounds', async () => {
     for (const set of [
       'exception_answer_minutes = 0',
       'exception_answer_minutes = 61',
       'exception_entry_minutes = 4',
       'exception_entry_minutes = 121',
+      'visit_expected_minutes = 14',
+      'visit_expected_minutes = 721',
     ])
       await expect(
         asApp(
           `UPDATE gate_settings SET ${set} WHERE tenant_id = '${tenantId}'`,
         ),
-      ).rejects.toThrow(/gate_settings_exception/);
+      ).rejects.toThrow(/gate_settings_(exception|visit)/);
+    // The overstay alert may be off.
+    await expect(
+      asApp(
+        `UPDATE gate_settings SET visit_expected_minutes = NULL WHERE tenant_id = '${tenantId}'`,
+      ),
+    ).resolves.toMatchObject({ rowCount: 1 });
     await expect(
       asApp(`DELETE FROM gate_settings WHERE tenant_id = '${tenantId}'`),
     ).rejects.toThrow(/permission denied/);

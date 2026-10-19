@@ -18,6 +18,14 @@ import { STANDING_ACTION_DOC, VisitorScheduleDto } from '../dto/visitors.dto';
 
 const STATUSES: PassStatus[] = ['active', 'used', 'cancelled', 'expired'];
 
+/** A visit's expected length (ADR 0056), on every view of a pass. */
+const EXPECTED_MINUTES = {
+  type: Number,
+  nullable: true,
+  description:
+    'Minutes a visit on it is expected to last; null: the compound’s setting. Past it, the guards and the host are alerted once.',
+};
+
 /** One enum for every view of a pass, each value said (ADR 0043). */
 const STATUS = {
   enum: STATUSES,
@@ -77,6 +85,9 @@ export class IssuedPassView {
   @ApiProperty(STATUS)
   status: PassStatus;
 
+  @ApiProperty(EXPECTED_MINUTES)
+  expectedMinutes: number | null;
+
   static from(p: IssuedPass): IssuedPassView {
     return {
       id: p.id,
@@ -89,6 +100,7 @@ export class IssuedPassView {
       validUntil: p.validUntil,
       schedule: p.schedule,
       status: p.status,
+      expectedMinutes: p.expectedMinutes,
     };
   }
 }
@@ -114,6 +126,9 @@ export class PassView {
 
   @ApiProperty(STATUS)
   status: PassStatus;
+
+  @ApiProperty(EXPECTED_MINUTES)
+  expectedMinutes: number | null;
 
   @ApiProperty({ type: Boolean, description: 'The caller is the host.' })
   mine: boolean;
@@ -169,6 +184,7 @@ export class PassView {
       validUntil: p.validUntil,
       schedule: p.schedule,
       status: p.status,
+      expectedMinutes: p.expectedMinutes,
       mine: p.mine,
       visitorName: p.visitorName,
       vehiclePlate: p.vehiclePlate,

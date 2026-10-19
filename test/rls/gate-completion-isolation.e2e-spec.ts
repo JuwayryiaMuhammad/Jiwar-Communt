@@ -1,7 +1,10 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { fieldExceptionRow } from '../setup/gate-completion-rows';
+import {
+  fieldExceptionRow,
+  overstayAlertRow,
+} from '../setup/gate-completion-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
@@ -39,6 +42,16 @@ const TABLES: Table[] = [
         gateId: link.gateId,
         shiftId: link.shiftId,
         guardId: link.accountId,
+        unitId: link.unitId,
+      }),
+  },
+  {
+    table: 'visit_overstay_alerts',
+    key: 'entry_id',
+    insert: (tx, own, link) =>
+      overstayAlertRow(tx, {
+        tenantId: own.tenantId,
+        gateId: link.gateId,
         unitId: link.unitId,
       }),
   },

@@ -39,6 +39,8 @@ export interface NewPass {
   visitorName?: string;
   visitorPhone?: string;
   vehiclePlate?: string;
+  /** How long a visit on it is expected to last (ADR 0056). */
+  expectedMinutes?: number;
 }
 
 /**
@@ -60,6 +62,8 @@ export interface IssuedPass {
   validUntil: Date;
   schedule: GateSchedule | null;
   status: PassStatus;
+  /** Minutes a visit is expected to last; null: the compound's (ADR 0056). */
+  expectedMinutes: number | null;
 }
 
 export type PassStatus = 'active' | 'used' | 'cancelled' | 'expired';
@@ -72,6 +76,8 @@ export interface PassListItem {
   validUntil: Date;
   schedule: GateSchedule | null;
   status: PassStatus;
+  /** Minutes a visit is expected to last; null: the compound's (ADR 0056). */
+  expectedMinutes: number | null;
   mine: boolean;
   /** The caller's own passes only. */
   visitorName: string | null;
@@ -294,6 +300,7 @@ export class VisitorPassesService implements OnModuleInit {
         qrTokenHash: secret.qrHash,
         tokenSeq: secret.seq,
         visitorDetailsId: detailsId,
+        expectedMinutes: input.expectedMinutes ?? null,
         idempotencyKey: key ?? null,
         requestHash: hash,
       },
@@ -540,6 +547,7 @@ export class VisitorPassesService implements OnModuleInit {
       validUntil: p.validUntil,
       schedule: (p.schedule as GateSchedule | null) ?? null,
       status: passStatus(p),
+      expectedMinutes: p.expectedMinutes,
       mine,
       visitorName: mine ? (p.visitorDetails?.fullName ?? null) : null,
       vehiclePlate: mine ? (p.visitorDetails?.vehiclePlate ?? null) : null,
@@ -686,6 +694,7 @@ export class VisitorPassesService implements OnModuleInit {
       validUntil: p.validUntil,
       schedule: (p.schedule as GateSchedule | null) ?? null,
       status: passStatus(p),
+      expectedMinutes: p.expectedMinutes,
     };
   }
 

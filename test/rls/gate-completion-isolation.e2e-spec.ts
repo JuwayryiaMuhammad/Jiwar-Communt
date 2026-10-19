@@ -4,6 +4,7 @@ import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
   fieldExceptionRow,
   overstayAlertRow,
+  serviceVehicleRow,
 } from '../setup/gate-completion-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
@@ -43,6 +44,16 @@ const TABLES: Table[] = [
         shiftId: link.shiftId,
         guardId: link.accountId,
         unitId: link.unitId,
+      }),
+  },
+  {
+    table: 'service_vehicle_visits',
+    insert: (tx, own, link) =>
+      serviceVehicleRow(tx, {
+        tenantId: own.tenantId,
+        gateId: link.gateId,
+        shiftId: link.shiftId,
+        guardId: link.accountId,
       }),
   },
   {

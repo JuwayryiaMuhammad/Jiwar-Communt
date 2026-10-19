@@ -6,6 +6,7 @@ import {
   fieldExceptionRow,
   overstayAlertRow,
   rowAt,
+  serviceVehicleRow,
   visitorDetailsRow,
 } from '../setup/gate-completion-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
@@ -31,6 +32,7 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
   let withDetailsId: string;
   let detailsId: string;
   let alertId: string;
+  let visitId: string;
 
   const inTx = <T>(fn: (tx: TenantTxClient) => Promise<T>) =>
     h.asTenant(tenantId, () => h.tenantTx.withTenantTx(fn));
@@ -53,6 +55,12 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
         visitorDetailsId: detailsId,
       });
       alertId = await overstayAlertRow(tx, { tenantId, gateId, unitId });
+      visitId = await serviceVehicleRow(tx, {
+        tenantId,
+        gateId,
+        shiftId,
+        guardId,
+      });
     });
     app = new Client({ connectionString: process.env.DATABASE_URL });
     await app.connect();
@@ -280,6 +288,95 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
       await expect(
         insert('gen_random_uuid()', 'visitor_pass', 14),
       ).rejects.toThrow(/visit_overstay_alerts_after_due/);
+    });
+  });
+
+  describe('a service vehicle’s visit', () => {
+    const at2 = (minutes: number) => `'${rowAt(minutes).toISOString()}'`;
+    const visit = () => `id = '${visitId}'`;
+    const out = (minutes: number, by = `'${guardId}'`) =>
+      `UPDATE service_vehicle_visits SET exited_at = ${at2(minutes)}, exited_gate_id = '${gateId}',
+         exited_shift_id = ${by === 'NULL' ? 'NULL' : `'${shiftId}'`}, exited_by_account_id = ${by}
+       WHERE ${visit()}`;
+
+    it('the app reads, adds and closes them; it never deletes or truncates', async () => {
+      expect(await privileges('service_vehicle_visits')).toEqual({
+        select: true,
+        insert: true,
+        update: true,
+        delete: false,
+        truncate: false,
+      });
+    });
+
+    it('its entry never changes; its exit is written once', async () => {
+      for (const set of [
+        `plate = 'OTHER 1'`,
+        `kind = 'waste'`,
+        `company = 'Other'`,
+        `entered_at = ${at2(1)}`,
+        `entered_by_account_id = '${otherId}'`,
+      ])
+        await expect(
+          asApp(`UPDATE service_vehicle_visits SET ${set} WHERE ${visit()}`),
+        ).rejects.toThrow(/an entry never changes/);
+      await expect(asApp(out(30))).resolves.toMatchObject({ rowCount: 1 });
+      for (const set of [
+        `exited_at = ${at2(31)}`,
+        `exited_by_account_id = '${otherId}'`,
+        `exited_at = NULL, exited_gate_id = NULL, exited_shift_id = NULL, exited_by_account_id = NULL`,
+      ])
+        await expect(
+          asApp(
+            out(30),
+            `UPDATE service_vehicle_visits SET ${set} WHERE ${visit()}`,
+          ),
+        ).rejects.toThrow(/its exit is written once/);
+    });
+
+    it('the shapes of an exit: by a guard, or the system’s unconfirmed one; never before the entry', async () => {
+      await expect(
+        asApp(
+          `UPDATE service_vehicle_visits SET exited_at = ${at2(30)} WHERE ${visit()}`,
+        ),
+      ).rejects.toThrow(/service_vehicle_visits_exit_shape/);
+      await expect(asApp(out(30, 'NULL'))).rejects.toThrow(
+        /service_vehicle_visits_exit_shape/,
+      );
+      await expect(
+        asApp(
+          `UPDATE service_vehicle_visits SET exited_at = ${at2(30)}, exited_gate_id = '${gateId}',
+             exit_unconfirmed = true WHERE ${visit()}`,
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(asApp(out(-1))).rejects.toThrow(
+        /service_vehicle_visits_exit_shape/,
+      );
+    });
+
+    it('a plate is inside once at a time, however typed; a unit or a facility, never both', async () => {
+      const insert = (plate: string, served = 'NULL, NULL') =>
+        asApp(
+          `INSERT INTO service_vehicle_visits (id, tenant_id, plate, kind, company, unit_id, facility_id,
+              entered_at, entered_gate_id, entered_shift_id, entered_by_account_id)
+           VALUES (gen_random_uuid(), '${tenantId}', '${plate}', 'tanker', 'Co', ${served},
+              ${at2(0)}, '${gateId}', '${shiftId}', '${guardId}')`,
+        );
+      await expect(insert('ش ط ١٢')).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(
+          `INSERT INTO service_vehicle_visits (id, tenant_id, plate, kind, company, entered_at,
+              entered_gate_id, entered_shift_id, entered_by_account_id)
+           VALUES (gen_random_uuid(), '${tenantId}', 'ش ط ١٢', 'tanker', 'Co', ${at2(0)},
+              '${gateId}', '${shiftId}', '${guardId}'),
+                  (gen_random_uuid(), '${tenantId}', 'شط 12', 'waste', 'Co', ${at2(0)},
+              '${gateId}', '${shiftId}', '${guardId}')`,
+        ),
+      ).rejects.toThrow(/service_vehicle_visits_one_inside/);
+      await expect(
+        insert('ش ط ١٣', `'${unitId}', gen_random_uuid()`),
+      ).rejects.toThrow(/service_vehicle_visits_served|foreign key/);
+      await expect(insert('ش ط ١٤')).resolves.toMatchObject({ rowCount: 1 });
     });
   });
 

@@ -212,6 +212,7 @@ describe('Gate — plate lookup and visitor parking', () => {
     expect((await lookup('QQ 0000').expect(200)).body).toEqual({
       plate: 'QQ 0000',
       matches: [],
+      serviceVehicles: [],
       blocklist: [],
     });
     expect((await lookup('AB-12').expect(400)).body).toMatchObject({

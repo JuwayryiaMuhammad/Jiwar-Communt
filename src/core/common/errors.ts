@@ -1064,6 +1064,15 @@ export const ErrorCode = {
   GATE_EXCEPTION_DECIDED: 'GATE_EXCEPTION_DECIDED',
   /** The worker may come in as they are: there is nothing to ask (409). */
   GATE_EXCEPTION_NOT_NEEDED: 'GATE_EXCEPTION_NOT_NEEDED',
+  /** Unknown, or another compound's service vehicle visit. */
+  SERVICE_VEHICLE_NOT_FOUND: 'SERVICE_VEHICLE_NOT_FOUND',
+  /**
+   * The plate is inside already (409, params.id its visit): record its exit
+   * first.
+   */
+  SERVICE_VEHICLE_INSIDE: 'SERVICE_VEHICLE_INSIDE',
+  /** Its exit was recorded already (409). */
+  SERVICE_VEHICLE_NOT_INSIDE: 'SERVICE_VEHICLE_NOT_INSIDE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

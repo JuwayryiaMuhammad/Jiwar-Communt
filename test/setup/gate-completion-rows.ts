@@ -82,3 +82,27 @@ export async function overstayAlertRow(
   });
   return entryId;
 }
+
+let plates = 0;
+
+/** A tanker inside, come in at T0 at the gate. */
+export async function serviceVehicleRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; gateId: string; shiftId: string; guardId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.serviceVehicleVisit.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      plate: `ROW ${++plates}`,
+      kind: 'tanker',
+      company: 'Row Water',
+      enteredAt: ROW_T0,
+      enteredGateId: r.gateId,
+      enteredShiftId: r.shiftId,
+      enteredById: r.guardId,
+    },
+  });
+  return id;
+}

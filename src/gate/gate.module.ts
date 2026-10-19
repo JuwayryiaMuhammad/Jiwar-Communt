@@ -12,6 +12,11 @@ import { GateSettingsController } from './settings/gate-settings.controller';
 import { GateSettingsProvisioning } from './settings/gate-settings-provisioning';
 import { GateSettingsService } from './settings/gate-settings.service';
 import { VisitOverstaySweep } from './visitors/visit-overstay.sweep';
+import {
+  GuardServiceVehiclesController,
+  StaffServiceVehiclesController,
+} from './service-vehicles/service-vehicles.controller';
+import { ServiceVehiclesService } from './service-vehicles/service-vehicles.service';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -271,6 +276,8 @@ import { PickupPageService } from './children/pickup-page.service';
     GateSettingsController,
     GuardFieldExceptionsController,
     StaffFieldExceptionsController,
+    GuardServiceVehiclesController,
+    StaffServiceVehiclesController,
     GatesController,
     ShiftsController,
     VisitorsController,
@@ -358,6 +365,7 @@ import { PickupPageService } from './children/pickup-page.service';
     GateSettingsProvisioning,
     FieldExceptionsService,
     VisitOverstaySweep,
+    ServiceVehiclesService,
     GatesService,
     ShiftsService,
     VisitorPassesService,

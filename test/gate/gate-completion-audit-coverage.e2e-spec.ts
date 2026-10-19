@@ -109,6 +109,36 @@ describe('Audit coverage — the gate’s completion (ADR 0056)', () => {
     expect(withdrawn).toMatchObject(by(s.guard, 'gate_field_exception'));
   });
 
+  it('service_vehicle.entered, .exited and .exit_unconfirmed: never the plate nor the company', async () => {
+    const v = await g.serviceIn(s.guard, PLATE, { company: NAME });
+    const entered = await single('service_vehicle.entered', v.id);
+    expect(entered).toMatchObject(by(s.guard, 'service_vehicle_visit'));
+    expect(entered.metadata).toEqual({
+      kind: 'tanker',
+      unitId: null,
+      facilityId: null,
+      gateId: s.guard.gateId,
+      shiftId: s.guard.shiftId,
+    });
+    await g.serviceOutRaw(s.guard, v.id).expect(200);
+    const exited = await single('service_vehicle.exited', v.id);
+    expect(exited).toMatchObject(by(s.guard, 'service_vehicle_visit'));
+    expect(exited.metadata).toEqual({
+      gateId: s.guard.gateId,
+      shiftId: s.guard.shiftId,
+    });
+    const left = await g.serviceIn(s.guard, PLATE);
+    await g.backdateService(left.id, 13 * 60);
+    await g.sweepServiceExits();
+    const closed = await single('service_vehicle.exit_unconfirmed', left.id);
+    expect(closed).toMatchObject({
+      actorType: 'system',
+      actorId: null,
+      targetType: 'service_vehicle_visit',
+    });
+    expect(closed.metadata).toEqual({ gateId: s.guard.gateId });
+  });
+
   describe('catalog completeness', () => {
     it('every entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
@@ -126,7 +156,9 @@ describe('Audit coverage — the gate’s completion (ADR 0056)', () => {
       expect(
         all
           .filter(
-            (k) => /^gate_exception\./.test(k) || k === 'gate_settings.changed',
+            (k) =>
+              /^(gate_exception|service_vehicle)\./.test(k) ||
+              k === 'gate_settings.changed',
           )
           .sort(),
       ).toEqual([...split.GATE_COMPLETION_COVERAGE].sort());

@@ -588,4 +588,7 @@ export const GATE_COMPLETION_COVERAGE: readonly string[] = [
   'gate_exception.decided',
   'gate_exception.expired',
   'gate_exception.withdrawn',
+  'service_vehicle.entered',
+  'service_vehicle.exited',
+  'service_vehicle.exit_unconfirmed',
 ];

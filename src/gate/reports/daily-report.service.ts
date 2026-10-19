@@ -46,6 +46,8 @@ interface Counts {
   materialExits: number | null;
   incidents: number;
   violations: number;
+  /** Service vehicles that came in at the gate (ADR 0056); null for a zone. */
+  serviceVehicles: number | null;
 }
 
 /** G3's gate counts (ADR 0049), each its own: never inside `visitors`. */
@@ -77,6 +79,7 @@ const zero = (gate: boolean): Counts => ({
   materialExits: gate ? 0 : null,
   incidents: 0,
   violations: 0,
+  serviceVehicles: gate ? 0 : null,
 });
 
 /** The CSV's columns, one row per post. Numbers are ours; names are text. */
@@ -109,6 +112,8 @@ export const DAILY_COLUMNS: readonly CsvColumn[] = [
   { header: 'patrols_incomplete', kind: 'number' },
   { header: 'incidents', kind: 'number' },
   { header: 'violations', kind: 'number' },
+  // ADR 0056: the last, so the columns before it keep their places.
+  { header: 'service_vehicles', kind: 'number' },
 ];
 
 /** The patrols' counts (ADR 0052), in the CSV's order. */
@@ -186,6 +191,9 @@ export class DailyReportService {
       ...PATROL_COUNTS.map((k) => String(p.patrols[k])),
       String(p.counts.incidents),
       String(p.counts.violations),
+      p.counts.serviceVehicles === null
+        ? null
+        : String(p.counts.serviceVehicles),
     ]);
     return {
       name: `security-daily-${report.date}.csv`,
@@ -490,6 +498,18 @@ export class DailyReportService {
       const c = of(r.gate_id, r.place_id);
       c.incidents += r.incidents;
       c.violations += r.violations;
+    }
+
+    // The service vehicles that came in (ADR 0056): their own log.
+    const service = await tx.$queryRaw<{ gate_id: string; n: number }[]>`
+      SELECT entered_gate_id AS gate_id, count(*)::int AS n
+        FROM service_vehicle_visits
+       WHERE entered_at >= ${start} AND entered_at < ${end}
+         ${onlyGate ? Prisma.sql`AND entered_gate_id = ${onlyGate}::uuid` : Prisma.empty}
+       GROUP BY entered_gate_id`;
+    for (const r of service) {
+      const c = of(r.gate_id, null);
+      c.serviceVehicles = (c.serviceVehicles ?? 0) + r.n;
     }
 
     // Names, and the order: gates by name, then zones in the places' order.

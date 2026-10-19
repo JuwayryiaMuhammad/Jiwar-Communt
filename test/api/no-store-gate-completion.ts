@@ -26,7 +26,21 @@ export function gateCompletionCalls(
       reasonCode: 'resident_unreachable',
       unitCode: world().a.homeUnitCode,
     });
+  let plates = 0;
+  /** A tanker A's guard lets in: a plate no other call uses. */
+  const enter = () =>
+    guard('POST', '/gate/service-vehicles', {
+      plate: `NS ${1000 + ++plates}`,
+      kind: 'tanker',
+      company: 'No Store Water',
+    });
   return {
+    'POST /gate/service-vehicles': enter,
+    'POST /gate/service-vehicles/{id}/exit': async () =>
+      guard('POST', `/gate/service-vehicles/${id(await enter())}/exit`),
+    'GET /gate/service-vehicles': () => guard('GET', '/gate/service-vehicles'),
+    'GET /staff/gate/service-vehicles': () =>
+      manager('GET', '/staff/gate/service-vehicles'),
     'GET /staff/gate/settings': () => manager('GET', '/staff/gate/settings'),
     'PATCH /staff/gate/settings': () =>
       manager('PATCH', '/staff/gate/settings', { exceptionAnswerMinutes: 10 }),

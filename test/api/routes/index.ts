@@ -41,6 +41,7 @@ import { GATE_ROUTES } from './gate';
 import {
   FIELD_EXCEPTION_ROUTES,
   GATE_SETTINGS_ROUTES,
+  SERVICE_VEHICLE_ROUTES,
 } from './gate-completion';
 import {
   DAILY_REPORT_ROUTES,
@@ -284,4 +285,5 @@ export const ROUTES: Row[] = [
   ...CHILD_EVENT_ROUTES,
   ...GATE_SETTINGS_ROUTES,
   ...FIELD_EXCEPTION_ROUTES,
+  ...SERVICE_VEHICLE_ROUTES,
 ];

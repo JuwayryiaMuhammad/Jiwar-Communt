@@ -2829,6 +2829,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/service-vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The service vehicles inside now, newest first */
+        get: operations["GuardServiceVehiclesController_inside"];
+        put?: never;
+        /**
+         * Record a service vehicle coming in at my gate
+         * @description Inside a shift at a gate. Refused during a lockdown (LOCKDOWN_ACTIVE) and for a banned plate (ENTRY_BLOCKED); a watched one comes in, flagged. A plate is inside once at a time (SERVICE_VEHICLE_INSIDE).
+         */
+        post: operations["GuardServiceVehiclesController_enter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/service-vehicles/{id}/exit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a service vehicle leaving, at my gate */
+        post: operations["GuardServiceVehiclesController_exit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/shifts/current": {
         parameters: {
             query?: never;
@@ -8703,6 +8741,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/gate/service-vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The service vehicles that came in on the days asked, newest first */
+        get: operations["StaffServiceVehiclesController_log"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/gate/settings": {
         parameters: {
             query?: never;
@@ -14463,10 +14518,10 @@ export interface components {
          */
         BlocklistMatchOutcome: "refused" | "flagged" | "noted";
         /**
-         * @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056).
+         * @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056).
          * @enum {string}
          */
-        BlocklistMatchSource: "visitor_pass" | "move_permit" | "event_guest" | "gate_request" | "verify" | "entry" | "plate_lookup" | "id_lookup" | "field_exception";
+        BlocklistMatchSource: "visitor_pass" | "move_permit" | "event_guest" | "gate_request" | "verify" | "entry" | "plate_lookup" | "id_lookup" | "field_exception" | "service_vehicle";
         BlocklistMatchView: {
             /** @description Who recorded or looked it up. */
             actor: components["schemas"]["AccountRefView"];
@@ -14479,12 +14534,12 @@ export interface components {
             kind: components["schemas"]["BlocklistKind"];
             /** @description `refused`: kept out; `flagged`: let in and watched; `noted`: met on a record or a lookup. */
             outcome: components["schemas"]["BlocklistMatchOutcome"];
-            /** @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056). */
+            /** @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056). */
             source: components["schemas"]["BlocklistMatchSource"];
             /** Format: uuid */
             subjectId: string | null;
             /** @enum {string|null} */
-            subjectType: "visitor_pass" | "gate_request" | "event_guest" | "move_permit" | "field_exception" | null;
+            subjectType: "visitor_pass" | "gate_request" | "event_guest" | "move_permit" | "field_exception" | "service_vehicle" | null;
         };
         BlocklistMatchViewList: {
             data: components["schemas"]["BlocklistMatchView"][];
@@ -17202,6 +17257,8 @@ export interface components {
             overtimeMinutes: number;
             /** @description Slots starting this day. */
             scheduledSlots: number;
+            /** @description Service vehicles that came in at this gate (ADR 0056): tankers, waste, deliveries and others; null for a zone. */
+            serviceVehicles: number | null;
             tasksCreated: number;
             tasksDone: number;
             /** @description Open at the day’s end. */
@@ -17805,6 +17862,22 @@ export interface components {
         EngagementSettingsResponse: {
             /** @description Guests one "going" answer to an event may bring, at most. */
             eventMaxGuests: number;
+        };
+        EnterServiceVehicleDto: {
+            company: string;
+            /**
+             * Format: uuid
+             * @description The facility served, if one; never with `unitCode`.
+             */
+            facilityId?: string;
+            kind: components["schemas"]["ServiceVehicleKind"];
+            /**
+             * @description As every plate (ADR 0045): letters, digits and spaces, at most 12 after tidying (INVALID_FORMAT). Matched against the blocklist.
+             * @example ن ق ل 4521
+             */
+            plate: string;
+            /** @description The unit served, if one; never with `facilityId`. */
+            unitCode?: string;
         };
         EntryCredentialView: {
             /** Format: date-time */
@@ -22001,6 +22074,8 @@ export interface components {
             matches: components["schemas"]["PlateMatchView"][];
             /** @description The plate looked up, tidied. */
             plate: string;
+            /** @description Service vehicles inside now with the plate (ADR 0056): `POST /gate/service-vehicles/{id}/exit` records the exit. Empty for none. */
+            serviceVehicles: components["schemas"]["PlateServiceVehicleView"][];
         };
         PlateMatchView: {
             /** @enum {string} */
@@ -22050,6 +22125,14 @@ export interface components {
             subjectType: "move_permit" | "event_guest";
             /** @description The permit lets them in now. */
             valid: boolean;
+        };
+        PlateServiceVehicleView: {
+            company: string;
+            /** Format: date-time */
+            enteredAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ServiceVehicleKind"];
         };
         PlateVehicleView: {
             color: string;
@@ -23994,6 +24077,41 @@ export interface components {
             firstName: string | null;
             /** Format: uuid */
             id: string;
+        };
+        ServiceVehicleFacilityView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        ServiceVehicleGateView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        /** @enum {string} */
+        ServiceVehicleKind: "tanker" | "waste" | "delivery" | "other";
+        ServiceVehicleResponse: {
+            company: string;
+            /** Format: date-time */
+            enteredAt: string;
+            enteredGate: components["schemas"]["ServiceVehicleGateView"];
+            /** @description Closed by the system after GATE_UNCONFIRMED_EXIT_HOURS, not by a guard. */
+            exitUnconfirmed: boolean;
+            /** Format: date-time */
+            exitedAt: string | null;
+            exitedGate: components["schemas"]["ServiceVehicleGateView"] | null;
+            facility: components["schemas"]["ServiceVehicleFacilityView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ServiceVehicleKind"];
+            /** @description As typed, tidied. */
+            plate: string;
+            unitCode: string | null;
+        };
+        ServiceVehicleResponseList: {
+            data: components["schemas"]["ServiceVehicleResponse"][];
+            nextCursor: string | null;
         };
         SessionInvoiceView: {
             /** @description What it owed when the checkout opened. */
@@ -31859,6 +31977,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardAttendanceView"];
+                };
+            };
+        };
+    };
+    GuardServiceVehiclesController_inside: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceVehicleResponseList"];
+                };
+            };
+        };
+    };
+    GuardServiceVehiclesController_enter: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnterServiceVehicleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceVehicleResponse"];
+                };
+            };
+        };
+    };
+    GuardServiceVehiclesController_exit: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceVehicleResponse"];
                 };
             };
         };
@@ -40907,6 +41098,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffFieldExceptionResponse"];
+                };
+            };
+        };
+    };
+    StaffServiceVehiclesController_log: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description The compound’s first day: today by default; 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceVehicleResponseList"];
                 };
             };
         };

@@ -116,6 +116,13 @@ export class DailyCountsView {
       'Violations a guard on shift here issued this day (ADR 0053); at gates and in zones.',
   })
   violations: number;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      'Service vehicles that came in at this gate (ADR 0056): tankers, waste, deliveries and others; null for a zone.',
+  })
+  serviceVehicles: number | null;
 }
 
 /** The post's patrol runs planned this day (ADR 0052), gates and zones alike. */

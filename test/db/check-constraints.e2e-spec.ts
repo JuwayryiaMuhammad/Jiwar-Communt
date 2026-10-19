@@ -1684,6 +1684,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   visit_overstay_alerts_subject: {},
   visit_overstay_alerts_minutes: {},
   visit_overstay_alerts_after_due: {},
+  service_vehicle_visits_kind: {},
+  service_vehicle_visits_plate: {},
+  service_vehicle_visits_company: {},
+  service_vehicle_visits_served: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  service_vehicle_visits_exit_shape: {
+    guarded:
+      'exited_at IS NULL is tested before it is compared with entered_at; the rest are IS [NOT] NULL tests and a NOT NULL boolean',
+  },
 };
 
 interface Check {

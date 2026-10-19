@@ -2325,7 +2325,7 @@
         "type": "string"
       },
       "BlocklistMatchSource": {
-        "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056).",
+        "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056).",
         "enum": [
           "visitor_pass",
           "move_permit",
@@ -2335,7 +2335,8 @@
           "entry",
           "plate_lookup",
           "id_lookup",
-          "field_exception"
+          "field_exception",
+          "service_vehicle"
         ],
         "type": "string"
       },
@@ -2388,7 +2389,7 @@
                 "$ref": "#/components/schemas/BlocklistMatchSource"
               }
             ],
-            "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056)."
+            "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056)."
           },
           "subjectId": {
             "format": "uuid",
@@ -2401,7 +2402,8 @@
               "gate_request",
               "event_guest",
               "move_permit",
-              "field_exception"
+              "field_exception",
+              "service_vehicle"
             ],
             "nullable": true,
             "type": "string"
@@ -10510,6 +10512,11 @@
             "description": "Slots starting this day.",
             "type": "number"
           },
+          "serviceVehicles": {
+            "description": "Service vehicles that came in at this gate (ADR 0056): tankers, waste, deliveries and others; null for a zone.",
+            "nullable": true,
+            "type": "number"
+          },
           "tasksCreated": {
             "type": "number"
           },
@@ -10553,7 +10560,8 @@
           "materialEntries",
           "materialExits",
           "incidents",
-          "violations"
+          "violations",
+          "serviceVehicles"
         ],
         "type": "object"
       },
@@ -12582,6 +12590,42 @@
         },
         "required": [
           "eventMaxGuests"
+        ],
+        "type": "object"
+      },
+      "EnterServiceVehicleDto": {
+        "properties": {
+          "company": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "facilityId": {
+            "description": "The facility served, if one; never with `unitCode`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceVehicleKind"
+              }
+            ]
+          },
+          "plate": {
+            "description": "As every plate (ADR 0045): letters, digits and spaces, at most 12 after tidying (INVALID_FORMAT). Matched against the blocklist.",
+            "example": "ن ق ل 4521",
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The unit served, if one; never with `facilityId`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plate",
+          "kind",
+          "company"
         ],
         "type": "object"
       },
@@ -26245,11 +26289,19 @@
           "plate": {
             "description": "The plate looked up, tidied.",
             "type": "string"
+          },
+          "serviceVehicles": {
+            "description": "Service vehicles inside now with the plate (ADR 0056): `POST /gate/service-vehicles/{id}/exit` records the exit. Empty for none.",
+            "items": {
+              "$ref": "#/components/schemas/PlateServiceVehicleView"
+            },
+            "type": "array"
           }
         },
         "required": [
           "plate",
           "matches",
+          "serviceVehicles",
           "blocklist"
         ],
         "type": "object"
@@ -26434,6 +26486,35 @@
           "refusal",
           "startsAt",
           "endsAt"
+        ],
+        "type": "object"
+      },
+      "PlateServiceVehicleView": {
+        "properties": {
+          "company": {
+            "type": "string"
+          },
+          "enteredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceVehicleKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "company",
+          "enteredAt"
         ],
         "type": "object"
       },
@@ -32617,6 +32698,144 @@
         "required": [
           "id",
           "firstName"
+        ],
+        "type": "object"
+      },
+      "ServiceVehicleFacilityView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "ServiceVehicleGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "ServiceVehicleKind": {
+        "enum": [
+          "tanker",
+          "waste",
+          "delivery",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ServiceVehicleResponse": {
+        "properties": {
+          "company": {
+            "type": "string"
+          },
+          "enteredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "enteredGate": {
+            "$ref": "#/components/schemas/ServiceVehicleGateView"
+          },
+          "exitUnconfirmed": {
+            "description": "Closed by the system after GATE_UNCONFIRMED_EXIT_HOURS, not by a guard.",
+            "type": "boolean"
+          },
+          "exitedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "exitedGate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceVehicleGateView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "facility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceVehicleFacilityView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceVehicleKind"
+              }
+            ]
+          },
+          "plate": {
+            "description": "As typed, tidied.",
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "plate",
+          "kind",
+          "company",
+          "unitCode",
+          "facility",
+          "enteredAt",
+          "enteredGate",
+          "exitedAt",
+          "exitedGate",
+          "exitUnconfirmed"
+        ],
+        "type": "object"
+      },
+      "ServiceVehicleResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ServiceVehicleResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -53356,6 +53575,151 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/service-vehicles": {
+      "get": {
+        "operationId": "GuardServiceVehiclesController_inside",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceVehicleResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The service vehicles inside now, newest first",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Inside a shift at a gate. Refused during a lockdown (LOCKDOWN_ACTIVE) and for a banned plate (ENTRY_BLOCKED); a watched one comes in, flagged. A plate is inside once at a time (SERVICE_VEHICLE_INSIDE).",
+        "operationId": "GuardServiceVehiclesController_enter",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnterServiceVehicleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceVehicleResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a service vehicle coming in at my gate",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/service-vehicles/{id}/exit": {
+      "post": {
+        "operationId": "GuardServiceVehiclesController_exit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceVehicleResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a service vehicle leaving, at my gate",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/shifts/current": {
       "get": {
         "operationId": "ShiftsController_current",
@@ -70490,6 +70854,75 @@
           }
         ],
         "summary": "Approve or reject a field exception",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/service-vehicles": {
+      "get": {
+        "operationId": "StaffServiceVehiclesController_log",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "The compound’s first day: today by default; 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-04",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-04",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceVehicleResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The service vehicles that came in on the days asked, newest first",
         "tags": [
           "gate"
         ],

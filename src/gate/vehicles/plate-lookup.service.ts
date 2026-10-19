@@ -59,9 +59,19 @@ export interface PermitMatch {
   refusal: Refusal | null;
 }
 
+/** A service vehicle inside now with the plate (ADR 0056): its exit is the guard's. */
+export interface ServiceVehicleInside {
+  id: string;
+  kind: string;
+  company: string;
+  enteredAt: Date;
+}
+
 export interface PlateLookup {
   plate: string;
   matches: (VehicleMatch | PassMatch | PermitMatch)[];
+  /** Service vehicles inside now with the plate (ADR 0056). */
+  serviceVehicles: ServiceVehicleInside[];
   /** The live blocklist entries for the plate (ADR 0053). */
   blocklist: { entryId: string; kind: 'ban' | 'watch' }[];
 }
@@ -178,6 +188,12 @@ export class PlateLookupService {
         },
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       });
+      // A service vehicle inside with the plate (ADR 0056): to record its exit.
+      const serviceVehicles = await tx.serviceVehicleVisit.findMany({
+        where: { plateKey: key, exitedAt: null },
+        select: { id: true, kind: true, company: true, enteredAt: true },
+        orderBy: [{ enteredAt: 'asc' }, { id: 'asc' }],
+      });
       const events = new Map(
         (
           await tx.unitPermit.findMany({
@@ -251,6 +267,7 @@ export class PlateLookupService {
           passIds: passes.map((p) => p.id),
           permitIds: moves.map((m) => m.id),
           guestIds: guests.map((g) => g.id),
+          serviceVehicleIds: serviceVehicles.map((v) => v.id),
           matches: matches.length,
         },
       });
@@ -263,6 +280,7 @@ export class PlateLookupService {
       return {
         plate,
         matches,
+        serviceVehicles,
         blocklist: met.entries.map((e) => ({
           entryId: e.id,
           kind: e.kind as 'ban' | 'watch',

@@ -347,6 +347,7 @@ describe('Audit coverage — vehicles and parking', () => {
         passIds: [],
         permitIds: [],
         guestIds: [],
+        serviceVehicleIds: [],
         matches: 0,
       });
     });

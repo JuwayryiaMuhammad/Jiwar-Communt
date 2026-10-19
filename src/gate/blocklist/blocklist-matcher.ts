@@ -21,8 +21,9 @@ export type MatchSource =
   | 'entry'
   | 'plate_lookup'
   | 'id_lookup'
-  // A field exception's visitor or vehicle (ADR 0056).
-  | 'field_exception';
+  // A field exception's visitor or vehicle, a service vehicle (ADR 0056).
+  | 'field_exception'
+  | 'service_vehicle';
 
 /** The gate subject it met, when there is one. */
 export interface MatchSubject {
@@ -31,7 +32,8 @@ export interface MatchSubject {
     | 'gate_request'
     | 'event_guest'
     | 'move_permit'
-    | 'field_exception';
+    | 'field_exception'
+    | 'service_vehicle';
   id: string;
 }
 

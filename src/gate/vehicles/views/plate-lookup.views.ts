@@ -216,11 +216,32 @@ export class PlateBlocklistView {
   kind: 'ban' | 'watch';
 }
 
+/** A service vehicle inside now with the plate (ADR 0056): record its exit. */
+export class PlateServiceVehicleView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    enum: ['tanker', 'waste', 'delivery', 'other'],
+    enumName: 'ServiceVehicleKind',
+  })
+  kind: string;
+  @ApiProperty({ type: String })
+  company: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  enteredAt: Date;
+}
+
 export class PlateLookupView {
   @ApiProperty({ type: String, description: 'The plate looked up, tidied.' })
   plate: string;
   @ApiProperty({ type: [PlateMatchView] })
   matches: PlateMatchView[];
+  @ApiProperty({
+    type: [PlateServiceVehicleView],
+    description:
+      'Service vehicles inside now with the plate (ADR 0056): `POST /gate/service-vehicles/{id}/exit` records the exit. Empty for none.',
+  })
+  serviceVehicles: PlateServiceVehicleView[];
   @ApiProperty({
     type: [PlateBlocklistView],
     description:
@@ -232,6 +253,7 @@ export class PlateLookupView {
     return {
       plate: l.plate,
       matches: l.matches.map((m) => PlateMatchView.from(m)),
+      serviceVehicles: l.serviceVehicles.map((v) => ({ ...v })),
       blocklist: l.blocklist.map((b) => ({ ...b })),
     };
   }

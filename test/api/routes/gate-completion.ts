@@ -175,3 +175,76 @@ export const FIELD_EXCEPTION_ROUTES: Row[] = [
     },
   },
 ];
+
+/** Service vehicles at the gate (ADR 0056). */
+export const SERVICE_VEHICLE_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/service-vehicles',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({
+        plate: 'FRGN 1',
+        kind: 'delivery',
+        company: 'Foreign Co',
+        facilityId: w.bFacilityId,
+      }),
+      code: 'FACILITY_NOT_FOUND',
+    },
+    invalid: {
+      body: { plate: 'ABC 1', kind: 'bus', company: '' },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['tanker', 'waste', 'delivery', 'other'] },
+        },
+        {
+          field: 'company',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/gate/service-vehicles/{id}/exit',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bServiceVehicleId }),
+      code: 'SERVICE_VEHICLE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/gate/service-vehicles',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/gate/service-vehicles',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { from: 'yesterday' },
+      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+    },
+  },
+];

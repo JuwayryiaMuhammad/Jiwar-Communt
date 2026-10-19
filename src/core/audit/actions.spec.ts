@@ -149,6 +149,7 @@ describe('audit catalog', () => {
         'governance_board_appeal',
         // ADR 0056.
         'gate_field_exception',
+        'service_vehicle_visit',
       ]).toContain(def.target);
     }
   });

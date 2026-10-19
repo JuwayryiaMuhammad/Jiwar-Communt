@@ -331,7 +331,7 @@ describe('The daily report', () => {
     expect(text.startsWith('﻿')).toBe(true);
     const lines = text.slice(1).trimEnd().split('\r\n');
     expect(lines[0]).toBe(
-      'date,post_type,post,shifts,scheduled_slots,filled_slots,late,absent,unscheduled_shifts,overtime_minutes,tasks_created,tasks_done,tasks_open,emergencies,gate_services,visitors,contractor_workers,event_guests,move_trucks,material_entries,material_exits,patrols_scheduled,patrols_done,patrols_late,patrols_missed,patrols_incomplete,incidents,violations',
+      'date,post_type,post,shifts,scheduled_slots,filled_slots,late,absent,unscheduled_shifts,overtime_minutes,tasks_created,tasks_done,tasks_open,emergencies,gate_services,visitors,contractor_workers,event_guests,move_trucks,material_entries,material_exits,patrols_scheduled,patrols_done,patrols_late,patrols_missed,patrols_incomplete,incidents,violations,service_vehicles',
     );
     expect(lines).toHaveLength(2);
     expect(lines[1].startsWith(`${today},gate,`)).toBe(true);

@@ -126,6 +126,7 @@ describe('Permits — the plate lookup finds moves and guests’ cars (ADR 0049)
         passIds: [],
         permitIds: [move.id],
         guestIds: [],
+        serviceVehicleIds: [],
         matches: 1,
       },
       {
@@ -133,6 +134,7 @@ describe('Permits — the plate lookup finds moves and guests’ cars (ADR 0049)
         passIds: [],
         permitIds: [],
         guestIds: [event.event!.guests[0].id],
+        serviceVehicleIds: [],
         matches: 1,
       },
     ]);

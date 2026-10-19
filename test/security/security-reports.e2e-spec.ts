@@ -306,7 +306,12 @@ describe('Security reports — incidents and violations', () => {
       `/staff/security/reports/daily/export?gateId=${guard.gateId}`,
       supervisor,
     );
-    expect(file.keys.slice(-2)).toEqual(['incidents', 'violations']);
+    // Before G7's service vehicles, the last (ADR 0056).
+    expect(file.keys.slice(-3)).toEqual([
+      'incidents',
+      'violations',
+      'service_vehicles',
+    ]);
     expect(file.rows[0]).toMatchObject({ incidents: '2', violations: '1' });
   });
 

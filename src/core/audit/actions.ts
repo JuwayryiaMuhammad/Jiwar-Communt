@@ -1390,6 +1390,16 @@ export const AUDIT_ACTIONS = {
   // By the system: nobody answered by its deadline.
   'gate_exception.expired': { log: 'tenant', target: 'gate_field_exception' },
   'gate_exception.withdrawn': { log: 'tenant', target: 'gate_field_exception' },
+  // A service vehicle at the gate. metadata: kind, unitId, facilityId,
+  // gateId, shiftId — never the plate nor the company.
+  'service_vehicle.entered': { log: 'tenant', target: 'service_vehicle_visit' },
+  // metadata: gateId, shiftId.
+  'service_vehicle.exited': { log: 'tenant', target: 'service_vehicle_visit' },
+  // By the system, after GATE_UNCONFIRMED_EXIT_HOURS. metadata: gateId.
+  'service_vehicle.exit_unconfirmed': {
+    log: 'tenant',
+    target: 'service_vehicle_visit',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

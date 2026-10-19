@@ -504,6 +504,8 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
       'parking_reports',
       // A move's truck and an event's guests (ADR 0049).
       'permit_guests',
+      // A service vehicle at the gate (ADR 0056).
+      'service_vehicle_visits',
       'unit_permits',
       'vehicle_fines',
       'vehicles',

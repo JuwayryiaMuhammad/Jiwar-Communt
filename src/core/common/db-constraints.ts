@@ -522,4 +522,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_field_exceptions_tenant_id_id_key: null,
   gate_field_exceptions_number_key: null,
   gate_field_exceptions_used_entry_key: null,
+  // Service vehicles (ADR 0056): the service checks the plate under its
+  // lock first (SERVICE_VEHICLE_INSIDE); a violation is a race.
+  service_vehicle_visits_tenant_id_id_key: null,
+  service_vehicle_visits_one_inside: ['plate'],
 };

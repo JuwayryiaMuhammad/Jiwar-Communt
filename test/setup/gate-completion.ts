@@ -2,6 +2,7 @@ import { WorkersService } from '../../src/community/workers/workers.service';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { FIELD_EXCEPTIONS_SWEEP } from '../../src/gate/exceptions/field-exceptions.service';
 import { VISIT_OVERSTAY_SWEEP } from '../../src/gate/visitors/visit-overstay.sweep';
+import { SERVICE_VEHICLE_EXITS_SWEEP } from '../../src/gate/service-vehicles/service-vehicles.service';
 import type { Compound } from './community';
 import { aroundTheClock, dbClock, hhmm, localMinute } from './compound-clock';
 import { nationalIdFor, uniqueSuffix } from './fixtures';
@@ -249,6 +250,48 @@ export function gateCompletionHelpers(h: HttpHarness) {
   /** One run of the overstay sweep. */
   const sweepOverstay = () => x.sweep(VISIT_OVERSTAY_SWEEP, dbClock());
 
+  /** `POST /gate/service-vehicles` as `as`. */
+  function serviceInRaw(
+    as: Who,
+    body: Record<string, unknown>,
+    headers: Record<string, string> = {},
+  ) {
+    return x.http(
+      'post',
+      '/gate/service-vehicles',
+      as.token,
+      { kind: 'tanker', company: 'Nile Water Co', ...body },
+      headers,
+    );
+  }
+
+  /** A service vehicle that must come in: its body. */
+  async function serviceIn(
+    as: Who,
+    plate: string,
+    over: Record<string, unknown> = {},
+  ): Promise<{ id: string; plate: string; exitedAt: string | null }> {
+    const res = await serviceInRaw(as, { plate, ...over });
+    if (res.status !== 201)
+      throw new Error(`service in: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as { id: string; plate: string; exitedAt: string | null };
+  }
+
+  /** `POST /gate/service-vehicles/:id/exit` as `as`. */
+  const serviceOutRaw = (as: Who, id: string) =>
+    x.http('post', `/gate/service-vehicles/${id}/exit`, as.token);
+
+  /** A service vehicle's entry moved `minutes` into the past. */
+  const backdateService = (id: string, minutes: number) =>
+    superuserSql(
+      `UPDATE service_vehicle_visits SET entered_at = $2, created_at = $2 WHERE id = $1`,
+      [id, new Date(dbClock().getTime() - minutes * 60_000)],
+    );
+
+  /** One run of the service vehicles' unconfirmed exits. */
+  const sweepServiceExits = () =>
+    x.sweep(SERVICE_VEHICLE_EXITS_SWEEP, dbClock());
+
   /** The gate's settings, changed by the manager. */
   const settings = (manager: Who, body: Record<string, unknown>) =>
     x.http('patch', '/staff/gate/settings', manager.token, body).expect(200);
@@ -279,5 +322,10 @@ export function gateCompletionHelpers(h: HttpHarness) {
     backdate,
     sweepOverstay,
     settings,
+    serviceInRaw,
+    serviceIn,
+    serviceOutRaw,
+    backdateService,
+    sweepServiceExits,
   };
 }

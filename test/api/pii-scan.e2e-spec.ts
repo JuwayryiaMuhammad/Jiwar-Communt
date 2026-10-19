@@ -45,6 +45,7 @@ const born = (y: number, m: number, d: number) =>
 const iso = ofDbDate;
 import { at, day } from '../setup/facilities';
 import { BlocklistService } from '../../src/gate/blocklist/blocklist.service';
+import { FieldExceptionsService } from '../../src/gate/exceptions/field-exceptions.service';
 /** A name's first word: what first-name views show. */
 const first = (fullName?: string) => fullName?.split(' ')[0] ?? '';
 
@@ -414,6 +415,16 @@ describe('API v0 — PII leak scan', () => {
         kind: 'uninvited_visitor',
         unitCode,
         visitorName: 'PII-ASKED-name',
+      }),
+    );
+    // A field exception the guard raises (ADR 0056): the visitor's name is
+    // for the management deciding it, never back to the gate or the home.
+    const piiException = await c.as(a, { id: a.ids.guard, type: 'staff' }, () =>
+      h.moduleRef.get(FieldExceptionsService).raise({
+        kind: 'visitor_without_pass',
+        reasonCode: 'resident_unreachable',
+        unitCode,
+        visitorName: 'PII-EXCEPTION-name',
       }),
     );
     // A parcel for the unit (ADR 0035): the label's name is for the unit's
@@ -1521,6 +1532,16 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/violations': unit.id,
       '/violations/{id}': piiViolation,
       '/staff/violations/{id}': piiViolation,
+      // ADR 0056: A's field exception, the gate's and the deciders'.
+      '/gate/field-exceptions/{id}': piiException.id,
+      '/staff/gate/field-exceptions/{id}': piiException.id,
+      // B's entry, incident and run: not found for everyone of A.
+      '/gate/entries/{id}/photo': w.bEntryId,
+      '/gate/incidents/{id}/evidence': w.bIncidentId,
+      '/staff/security/incidents/{id}/evidence': w.bIncidentId,
+      '/gate/incidents/{id}/signatures': w.bIncidentId,
+      '/staff/security/incidents/{id}/signatures': w.bIncidentId,
+      '/staff/security/patrols/runs/{id}/geofence-exits': w.bRunId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented
@@ -2373,9 +2394,25 @@ describe('API v0 — PII leak scan', () => {
       if (!household.has(key) && text.includes('PII-ASKED-name'))
         leaks.push(`${key}: asked visitor name`);
     }
+    // A field exception's visitor (ADR 0056): the deciders' inbox only.
+    const exceptionReaders = new Set([
+      'manager /staff/gate/field-exceptions',
+      'manager /staff/gate/field-exceptions/{id}',
+    ]);
+    for (const [key, text] of seen)
+      if (!exceptionReaders.has(key) && text.includes('PII-EXCEPTION-name'))
+        leaks.push(`${key}: a field exception's visitor`);
     expect(leaks).toEqual([]);
     for (const key of household)
       expect(seen.get(key)).toContain('PII-ASKED-name');
+    // (The list's positive case is the exceptions suite's: the scan may
+    // read it after the exception expired out of the pending filter.)
+    expect(seen.get('manager /staff/gate/field-exceptions/{id}')).toContain(
+      'PII-EXCEPTION-name',
+    );
+    expect(seen.get('guard /gate/field-exceptions/{id}')).toContain(
+      piiException.id,
+    );
     for (const key of hostViews)
       expect(seen.get(key)).toContain('PII-VISITOR-name');
     // The pass's code, again, to its host and the primary only (ADR 0043).

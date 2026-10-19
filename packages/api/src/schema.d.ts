@@ -16002,6 +16002,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             method: components["schemas"]["ChildPickupMethod"];
+            /** @description `refused` at the gate, or `left_unverified`: released offline with an escort or leave the server could not verify at sync (ADR 0057). */
+            outcome: components["schemas"]["ChildPickupOutcome"];
             post: components["schemas"]["PostView"];
             refusalReason: string | null;
             /** @example A-101 */
@@ -16161,7 +16163,7 @@ export interface components {
         /** @enum {string} */
         ChildPickupMethod: "resident_qr" | "worker_qr" | "worker_code" | "pickup_qr" | "pickup_code" | "alone" | "unidentified";
         /** @enum {string} */
-        ChildPickupOutcome: "picked_up" | "left_alone" | "refused" | "alone_refused";
+        ChildPickupOutcome: "picked_up" | "left_alone" | "refused" | "alone_refused" | "left_unverified";
         ChildPickupView: {
             /** Format: date-time */
             at: string;
@@ -16175,6 +16177,7 @@ export interface components {
             method: components["schemas"]["ChildPickupMethod"];
             outcome: components["schemas"]["ChildPickupOutcome"];
             post: components["schemas"]["PostView"];
+            /** @description A refusal’s or an unverified release’s reason; offline (ADR 0057) also `escort_qr_invalid` (the adult’s QR did not verify at sync) and `offline_unverified` (an escort the device may not release offline). */
             refusalReason: string | null;
         };
         ChildPickupViewList: {
@@ -22075,7 +22078,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        OfflineFlagKind: "lockdown_entered" | "blocklist_ban_entered" | "credential_banned" | "once_only_reused" | "action_rejected" | "device_revoked_upload" | "contractor_unresolved" | "credential_revoked" | "invalid_at_time" | "capacity_exceeded" | "clock_skew" | "bundle_expired" | "shift_ended" | "patrol_scan_refused" | "blocklist_watch_entered" | "already_inside" | "exit_without_entry" | "duplicate_inside";
+        OfflineFlagKind: "lockdown_entered" | "blocklist_ban_entered" | "credential_banned" | "once_only_reused" | "action_rejected" | "device_revoked_upload" | "contractor_unresolved" | "child_exit_unverified" | "credential_revoked" | "invalid_at_time" | "capacity_exceeded" | "clock_skew" | "bundle_expired" | "shift_ended" | "patrol_scan_refused" | "blocklist_watch_entered" | "already_inside" | "exit_without_entry" | "duplicate_inside";
         OfflineFlagResponse: {
             /** Format: uuid */
             actionId: string | null;

@@ -6,12 +6,14 @@ import { AppException } from '../../core/common/errors';
 import { plateKey } from '../../core/common/vehicle-plate';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
+import { ChildGateService } from '../children/child-gate.service';
 import { PatrolScansService } from '../patrols/patrol-scans.service';
 import { PermitIdCheck } from '../permits/permit-id-check';
 import { clean } from '../permits/permits.service';
 import type { NewFlag } from './offline-flags.service';
 import { OfflineEntries } from './offline-entries';
 import type {
+  ChildExitAction,
   ContractorAction,
   FlagKind,
   MaterialEntryAction,
@@ -40,6 +42,7 @@ export interface Recorded {
   serviceVehicleVisitId?: string;
   materialEntryId?: string;
   patrolScanId?: string;
+  childPickupId?: string;
 }
 
 export type FlagDraft = Omit<NewFlag, 'batchId' | 'deviceId'>;
@@ -66,6 +69,7 @@ export class OfflineHandlers {
     private readonly community: CommunityGatePort,
     private readonly audit: AuditService,
     private readonly patrols: PatrolScansService,
+    private readonly children: ChildGateService,
   ) {}
 
   async handle(
@@ -86,7 +90,36 @@ export class OfflineHandlers {
         return this.material(tx, a, c);
       case 'patrol_scan':
         return this.patrol(tx, a, c);
+      case 'child_exit':
+        return this.childExit(tx, a, c);
     }
+  }
+
+  /**
+   * A child's exit (ADR 0054), as ChildGateService.recordOffline decides
+   * it; a release it could not verify is a security flag too.
+   */
+  private async childExit(
+    tx: TenantTxClient,
+    a: ChildExitAction,
+    c: HandlerContext,
+  ): Promise<HandlerOutcome> {
+    const out = await this.children.recordOffline(tx, a, c);
+    if ('rejection' in out) return out;
+    return {
+      recorded: { childPickupId: out.pickupId },
+      flags: out.unverified
+        ? [
+            {
+              kind: 'child_exit_unverified',
+              subject: { type: 'child_control', id: a.controlId },
+              gateId: c.gateId,
+              shiftId: c.shiftId,
+              params: { reason: out.unverified },
+            },
+          ]
+        : [],
+    };
   }
 
   private async entry(

@@ -413,9 +413,11 @@ describe('Children tables — CHECKs, triggers and privileges', () => {
           `UPDATE child_pickups SET outcome = 'refused', refusal_reason = 'no_credential' WHERE id = '${pickupId}'`,
         ),
       ).rejects.toThrow(/append-only/);
-      await expect(attempt(migrator, 'TRUNCATE child_pickups')).rejects.toThrow(
-        /append-only/,
-      );
+      // CASCADE: an offline exit's action references its pickup (ADR 0057),
+      // and without it Postgres refuses before any trigger runs.
+      await expect(
+        attempt(migrator, 'TRUNCATE child_pickups CASCADE'),
+      ).rejects.toThrow(/append-only/);
       await asApp(`DELETE FROM child_pickups WHERE id = '${pickupId}'`);
     });
 

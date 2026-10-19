@@ -29,6 +29,7 @@ export const ACTION_TYPES = [
   'service_vehicle_out',
   'material_entry',
   'patrol_scan',
+  'child_exit',
 ] as const;
 export type ActionType = (typeof ACTION_TYPES)[number];
 
@@ -134,7 +135,24 @@ export interface PatrolScanAction extends ActionBase {
   accuracyM: number | null;
 }
 
+/**
+ * A child under exit control leaving (ADR 0054): offline, alone with leave
+ * or with a household adult whose ID the guard checked; anyone else the
+ * device refuses (`released: false`).
+ */
+export interface ChildExitAction extends ActionBase {
+  type: 'child_exit';
+  controlId: string;
+  escort: 'alone' | 'adult' | 'other';
+  released: boolean;
+  /** The adult's resident QR as scanned: checked at sync. */
+  qr: string | null;
+  /** The guard attests they checked the adult's ID (required to release). */
+  idChecked: boolean;
+}
+
 export type OfflineAction =
+  | ChildExitAction
   | EntryAction
   | ContractorAction
   | ServiceVehicleInAction
@@ -323,6 +341,35 @@ export function parseUpload(
           };
         break;
       }
+      case 'child_exit': {
+        if (!uuid(x.controlId)) add(at('controlId'), 'INVALID_FORMAT');
+        if (!oneOf(['alone', 'adult', 'other'] as const, x.escort))
+          add(at('escort'), 'INVALID_VALUE');
+        if (typeof x.released !== 'boolean')
+          add(at('released'), 'INVALID_VALUE');
+        if (x.idChecked !== undefined && typeof x.idChecked !== 'boolean')
+          add(at('idChecked'), 'INVALID_VALUE');
+        const adult = x.escort === 'adult';
+        if (adult && (typeof x.qr !== 'string' || !x.qr.startsWith('JWR2.')))
+          add(at('qr'), 'INVALID_FORMAT');
+        // Released with an adult only on the guard's word that they checked
+        // the ID; anyone else is never released offline.
+        if (x.released === true && adult && x.idChecked !== true)
+          add(at('idChecked'), 'INVALID_VALUE');
+        if (x.released === true && x.escort === 'other')
+          add(at('released'), 'INVALID_VALUE');
+        if (problems.length === before)
+          action = {
+            ...base(),
+            type: 'child_exit',
+            controlId: x.controlId as string,
+            escort: x.escort as ChildExitAction['escort'],
+            released: x.released as boolean,
+            qr: adult ? (x.qr as string) : null,
+            idChecked: x.idChecked === true,
+          };
+        break;
+      }
       case 'patrol_scan': {
         if (!uuid(x.runId)) add(at('runId'), 'INVALID_FORMAT');
         if (!oneOf(PATROL_METHODS, x.method))
@@ -452,6 +499,9 @@ export const FLAG_KINDS = [
   'device_revoked_upload',
   // A contractor in on a permit, no worker of it matching the last four.
   'contractor_unresolved',
+  // A child released offline whose escort, or leave, the server could not
+  // verify (the household and the keepers alerted too).
+  'child_exit_unverified',
   // The management's: told, not critically.
   'credential_revoked',
   'invalid_at_time',
@@ -480,6 +530,7 @@ export const FLAG_CLASS: Record<FlagKind, FlagClass> = {
   action_rejected: 'security',
   device_revoked_upload: 'security',
   contractor_unresolved: 'security',
+  child_exit_unverified: 'security',
   credential_revoked: 'manager',
   invalid_at_time: 'manager',
   capacity_exceeded: 'manager',

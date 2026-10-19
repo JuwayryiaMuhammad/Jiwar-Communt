@@ -20,7 +20,12 @@ export class ChildPickupView {
   outcome: ChildPickupOutcome;
   @ApiProperty({ enum: ChildPickupMethod, enumName: 'ChildPickupMethod' })
   method: ChildPickupMethod;
-  @ApiProperty({ type: String, nullable: true })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'A refusal’s or an unverified release’s reason; offline (ADR 0057) also `escort_qr_invalid` (the adult’s QR did not verify at sync) and `offline_unverified` (an escort the device may not release offline).',
+  })
   refusalReason: string | null;
   @ApiProperty({ type: ExitEscortView, nullable: true })
   escort: ExitEscortView | null;
@@ -46,6 +51,13 @@ export class ChildAlertView {
   guard: FirstNameRefView;
   @ApiProperty({ type: String, example: 'A-101' })
   unitCode: string;
+  @ApiProperty({
+    enum: ChildPickupOutcome,
+    enumName: 'ChildPickupOutcome',
+    description:
+      '`refused` at the gate, or `left_unverified`: released offline with an escort or leave the server could not verify at sync (ADR 0057).',
+  })
+  outcome: ChildPickupOutcome;
   @ApiProperty({ enum: ChildPickupMethod, enumName: 'ChildPickupMethod' })
   method: ChildPickupMethod;
   @ApiProperty({

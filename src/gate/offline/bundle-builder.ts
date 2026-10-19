@@ -97,6 +97,28 @@ export interface BundleEvent {
   guests: { ref: string; name: string | null; plate: string | null }[];
 }
 
+/**
+ * A child under exit control (ADR 0054): its card as a tag, whether it may
+ * leave alone, and the household adults who may collect it — by their
+ * resident credentials' tags, with their days, hours and post. Never a
+ * name or a photo. Worker and outside escorts are not carried: the device
+ * refuses them offline.
+ */
+export interface BundleChild {
+  ref: string;
+  card: string;
+  mayLeaveAlone: boolean;
+  adults: {
+    ref: string;
+    credentials: string[];
+    validFrom: string;
+    validUntil: string | null;
+    schedule: unknown;
+    gateId: string | null;
+    placeId: string | null;
+  }[];
+}
+
 /** A service vehicle inside at download, for its exit. */
 export interface BundleServiceVehicle {
   ref: string;
@@ -121,6 +143,7 @@ export interface BundleSections {
   moves: BundleMove[];
   events: BundleEvent[];
   serviceVehicles: BundleServiceVehicle[];
+  children: BundleChild[];
 }
 
 export interface BuildContext {
@@ -198,6 +221,7 @@ export class BundleBuilder {
       })
     ).map((c) => longTag(b.bundleId, 'resident-credential', c.id));
     const permits = await this.permits(tx, b);
+    const children = await this.children(tx, b);
     const serviceVehicles = (
       await tx.serviceVehicleVisit.findMany({
         where: { exitedAt: null, plateKey: { not: null } },
@@ -225,6 +249,7 @@ export class BundleBuilder {
         ),
         ...permits,
         serviceVehicles,
+        children,
       },
       counts: {
         passes: passes.items.length,
@@ -237,6 +262,7 @@ export class BundleBuilder {
         moves: permits.moves.length,
         events: permits.events.length,
         serviceVehicles: serviceVehicles.length,
+        children: children.length,
       },
     };
   }
@@ -414,6 +440,56 @@ export class BundleBuilder {
       }
     }
     return { works, moves, events };
+  }
+
+  /** The live exit controls, their cards and household adults (ADR 0054). */
+  private async children(
+    tx: TenantTxClient,
+    b: BuildContext,
+  ): Promise<BundleChild[]> {
+    const controls = await tx.childControl.findMany({
+      where: { endedAt: null, cardTokenHash: { not: null } },
+      select: { id: true, cardTokenHash: true, mayLeaveAlone: true },
+      orderBy: { id: 'asc' },
+    });
+    const out: BundleChild[] = [];
+    for (const k of controls) {
+      const escorts = await tx.childEscort.findMany({
+        where: { controlId: k.id, kind: 'adult', revokedAt: null },
+        orderBy: { id: 'asc' },
+      });
+      const adults: BundleChild['adults'] = [];
+      for (const e of escorts) {
+        const credentials = await tx.entryCredential.findMany({
+          where: {
+            accountId: e.accountId!,
+            revokedAt: null,
+            account: { status: 'active' },
+          },
+          select: { id: true },
+          orderBy: { id: 'asc' },
+        });
+        if (!credentials.length) continue;
+        adults.push({
+          ref: e.id,
+          credentials: credentials.map((x) =>
+            longTag(b.bundleId, 'resident-credential', x.id),
+          ),
+          validFrom: e.validFrom.toISOString().slice(0, 10),
+          validUntil: e.validUntil?.toISOString().slice(0, 10) ?? null,
+          schedule: e.schedule ?? null,
+          gateId: e.gateId,
+          placeId: e.placeId,
+        });
+      }
+      out.push({
+        ref: k.id,
+        card: longTag(b.bundleId, 'child-card', k.cardTokenHash!),
+        mayLeaveAlone: k.mayLeaveAlone,
+        adults,
+      });
+    }
+    return out;
   }
 
   /** In less out per subject, over the whole log (ADR 0043: inside is a count). */

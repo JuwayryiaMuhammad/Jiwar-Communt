@@ -26,10 +26,18 @@ export const CHILD_RECORDS_PURGE_SWEEP = 'gate.child_records_purge';
 const DAY = 86_400_000;
 const CURSOR = keysetCursor('at');
 
-/** The keepers' alerts: refused, and not by a lockdown. */
+/**
+ * The keepers' alerts: refused, and not by a lockdown nor offline by the
+ * rule; and a release offline the server could not verify (ADR 0057).
+ */
 const ALERTS = {
-  outcome: 'refused',
-  NOT: { refusalReason: 'lockdown' },
+  OR: [
+    {
+      outcome: 'refused',
+      refusalReason: { notIn: ['lockdown', 'offline_unverified'] },
+    },
+    { outcome: 'left_unverified' },
+  ],
 } satisfies Prisma.ChildPickupWhereInput;
 
 const alertNotFound = () =>
@@ -268,6 +276,7 @@ export class ChildRecordsService implements OnModuleInit {
         },
       ),
       unitCode: units.get(r.unitId) ?? '',
+      outcome: r.outcome,
       method: r.method,
       escortKind: r.escortKind,
       refusalReason: r.refusalReason,

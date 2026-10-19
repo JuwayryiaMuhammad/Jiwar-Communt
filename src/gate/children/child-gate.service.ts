@@ -14,6 +14,7 @@ import { RequestContext } from '../../core/common/cls/request-context';
 import { isAdult } from '../../core/common/egyptian-national-id';
 import { appError, ErrorCode } from '../../core/common/errors';
 import { firstNameOf } from '../../core/common/http/personal';
+import { localParts } from '../../core/common/slots/day-slots';
 import type { WeeklySchedule } from '../../core/common/slots/weekly-schedule';
 import { newId } from '../../core/common/uuid';
 import type { Env } from '../../core/config/env.schema';
@@ -284,6 +285,155 @@ export class ChildGateService implements OnModuleInit {
     });
   }
 
+  /**
+   * A child's exit a guard device recorded offline (ADR 0057), at sync, in
+   * the upload's transaction (the account, the bundle's shift, the device
+   * and the lockdown row held): recorded at its device time by the bundle's
+   * guard, never refused for being late, as it happened.
+   *
+   * - Held offline (`released: false`): alone without leave is
+   *   `alone_refused`; anyone else the device would not release is refused
+   *   `offline_unverified`, the household told (not the keepers: it is the
+   *   rule offline).
+   * - Released alone: `left_alone`, unless leave was revoked since.
+   * - Released with a household adult (the guard checked their ID): their
+   *   resident QR is checked now, against the exit's instant (its step
+   *   within one either way), and they must be this child's escort, valid
+   *   then and there. Then `picked_up`.
+   * - Otherwise `left_unverified` with why (`escort_qr_invalid`,
+   *   `not_an_escort`, `escort_inactive`, `outside_validity`, `wrong_post`,
+   *   `alone_not_allowed`): the household and the keepers alerted, and a
+   *   security flag for the batch.
+   *
+   * Lock order after the caller's: the accounts that may be told (FOR KEY
+   * SHARE, in id order), the control (FOR UPDATE), the escort (FOR SHARE).
+   */
+  async recordOffline(
+    tx: TenantTxClient,
+    a: {
+      clientId: string;
+      controlId: string;
+      escort: 'alone' | 'adult' | 'other';
+      released: boolean;
+      qr: string | null;
+    },
+    c: { occurredAt: Date; gateId: string; shiftId: string; guardId: string },
+  ): Promise<
+    | { pickupId: string; unverified: string | null }
+    | { rejection: 'subject_unknown' }
+  > {
+    const seen = await tx.childControl.findUnique({
+      where: { id: a.controlId },
+      select: { id: true, unitId: true },
+    });
+    if (!seen) return { rejection: 'subject_unknown' };
+    const told = await this.lockRecipients(tx, seen.unitId);
+    const control = (await this.core.lock(tx, seen.id))!;
+    const tenantId = this.ctx.txTenantId;
+    let outcome: ChildPickupOutcome;
+    let reason: string | null = null;
+    let method: ChildPickupMethod =
+      a.escort === 'alone'
+        ? 'alone'
+        : a.escort === 'adult'
+          ? 'resident_qr'
+          : 'unidentified';
+    let escort: ChildEscort | null = null;
+    if (!a.released) {
+      if (a.escort === 'alone') {
+        outcome = 'alone_refused';
+        reason = 'alone_not_allowed';
+      } else {
+        outcome = 'refused';
+        reason = 'offline_unverified';
+        method = 'unidentified';
+      }
+    } else if (a.escort === 'alone') {
+      outcome = control.mayLeaveAlone ? 'left_alone' : 'left_unverified';
+      if (!control.mayLeaveAlone) reason = 'alone_not_allowed';
+    } else {
+      const qr = a.qr ? parseEntryQr(a.qr) : null;
+      const found = qr
+        ? await this.residents.identify(
+            tx,
+            tenantId,
+            qr,
+            c.occurredAt.getTime(),
+          )
+        : ({ kind: 'unknown' } as const);
+      if (found.kind === 'unknown') reason = 'escort_qr_invalid';
+      else if (found.kind === 'refused')
+        reason =
+          found.reason === 'expired_qr'
+            ? 'escort_qr_invalid'
+            : 'escort_inactive';
+      else {
+        escort = await this.matching(tx, control, {
+          kind: 'account',
+          accountId: found.accountId,
+          method: 'resident_qr',
+        });
+        const decided = await this.decide(
+          tx,
+          control,
+          {
+            kind: 'account',
+            accountId: found.accountId,
+            method: 'resident_qr',
+          },
+          escort,
+          {
+            now: c.occurredAt,
+            shift: {
+              id: c.shiftId,
+              guardAccountId: c.guardId,
+              gateId: c.gateId,
+              placeId: null,
+              startedAt: c.occurredAt,
+            },
+            // Its own compound day: the escort's days are judged then.
+            today: localParts(c.occurredAt, await this.core.timeZone(tx)).date,
+          },
+        );
+        if (decided.outcome !== 'picked_up') reason = decided.reason;
+      }
+      outcome = reason === null ? 'picked_up' : 'left_unverified';
+    }
+    const pickup = await tx.childPickup.create({
+      data: {
+        id: a.clientId,
+        tenantId,
+        controlId: control.id,
+        unitId: control.unitId,
+        escortId: escort?.id ?? null,
+        escortKind: escort?.kind ?? null,
+        outcome,
+        method,
+        refusalReason: reason,
+        guardAccountId: c.guardId,
+        shiftId: c.shiftId,
+        gateId: c.gateId,
+        placeId: null,
+        at: c.occurredAt,
+      },
+    });
+    await this.audit.record(tx, {
+      action: 'child_pickup.recorded',
+      targetId: pickup.id,
+      metadata: {
+        outcome: pickup.outcome,
+        method: pickup.method,
+        ...(pickup.refusalReason ? { reasonCode: pickup.refusalReason } : {}),
+        offline: true,
+      },
+    });
+    await this.tell(tx, control, pickup, told);
+    return {
+      pickupId: pickup.id,
+      unverified: outcome === 'left_unverified' ? reason : null,
+    };
+  }
+
   // --------------------------------------------------------------------------
 
   /** One budget with `/gate/verify`: the guard's scans per minute. */
@@ -451,7 +601,7 @@ export class ChildGateService implements OnModuleInit {
     control: ChildControl,
     credential: Credential,
     escort: ChildEscort | null,
-    at: { now: Date; shift: DutyShift },
+    at: { now: Date; shift: DutyShift; today?: string },
   ): Promise<{
     outcome: ChildPickupOutcome;
     reason: string | null;
@@ -477,7 +627,7 @@ export class ChildGateService implements OnModuleInit {
     if (!who.eligible)
       return { outcome: 'refused', reason: 'escort_inactive', escort };
     const verdict = validNow(validityOf(escort), {
-      today: ofDate(await this.core.today(tx)),
+      today: at.today ?? ofDate(await this.core.today(tx)),
       instant: at.now,
       timeZone: await this.core.timeZone(tx),
       post: at.shift,
@@ -583,12 +733,14 @@ export class ChildGateService implements OnModuleInit {
   ): Promise<void> {
     const guard = this.ctx.accountId;
     const { outcome, id: pickupId } = pickup;
-    if (outcome === 'refused')
-      // A refusal under a lockdown is the gate doing what the lockdown
-      // asks: the household is told, the keepers already know.
+    if (outcome === 'refused' || outcome === 'left_unverified')
+      // A refusal under a lockdown, or offline by the rule (ADR 0057), is
+      // the gate doing what it must: the household is told, not the
+      // keepers. A release the server could not verify alerts both.
       await this.safety.notify(
         tx,
-        pickup.refusalReason === 'lockdown'
+        pickup.refusalReason === 'lockdown' ||
+          pickup.refusalReason === 'offline_unverified'
           ? to.adults
           : [...to.adults, ...to.keepers],
         'child.unauthorized_pickup',

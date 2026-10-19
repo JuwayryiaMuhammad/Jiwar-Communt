@@ -591,6 +591,7 @@ export class OfflineUploadsService implements OnModuleInit {
       serviceVehicleVisitId: outcome.recorded.serviceVehicleVisitId ?? null,
       materialEntryId: outcome.recorded.materialEntryId ?? null,
       patrolScanId: outcome.recorded.patrolScanId ?? null,
+      childPickupId: outcome.recorded.childPickupId ?? null,
     });
     const where = { gateId: own.gateId, shiftId: own.shiftId };
     await this.flags.raise(tx, [

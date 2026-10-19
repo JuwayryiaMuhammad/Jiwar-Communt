@@ -427,6 +427,7 @@ describe('Children — at the gate', () => {
       'guard',
       'id',
       'method',
+      'outcome',
       'post',
       'refusalReason',
       'unitCode',

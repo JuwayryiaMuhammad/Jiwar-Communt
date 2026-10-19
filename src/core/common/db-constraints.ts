@@ -569,4 +569,5 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   material_entries_tenant_id_id_key: null,
   gate_offline_actions_material_entry_key: null,
   gate_offline_actions_patrol_scan_key: null,
+  gate_offline_actions_child_pickup_key: null,
 };

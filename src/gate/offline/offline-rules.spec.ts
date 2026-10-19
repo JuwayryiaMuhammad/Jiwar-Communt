@@ -208,6 +208,48 @@ describe('an upload’s payload (ADR 0057)', () => {
     });
   });
 
+  it('a child’s exit: released with an adult only on the guard’s word, never with anyone else', () => {
+    const exit = (x: Record<string, unknown>) =>
+      parseUpload({
+        batchId: BATCH,
+        actions: [
+          {
+            clientId: id(1),
+            seq: 1,
+            deviceTime: T0.toISOString(),
+            bundleId: BUNDLE,
+            type: 'child_exit',
+            controlId: SUBJECT,
+            ...x,
+          },
+        ],
+      });
+    const qr = 'JWR2.x.1.y';
+    expect(
+      exit({ escort: 'adult', released: true, qr, idChecked: true }),
+    ).toEqual({
+      batchId: BATCH,
+      actions: [
+        expect.objectContaining({ escort: 'adult', qr, idChecked: true }),
+      ],
+    });
+    expect(exit({ escort: 'alone', released: true })).toEqual({
+      batchId: BATCH,
+      actions: [expect.objectContaining({ qr: null, idChecked: false })],
+    });
+    expect(exit({ escort: 'adult', released: true, qr })).toEqual({
+      problems: [{ field: 'actions.0.idChecked', code: 'INVALID_VALUE' }],
+    });
+    expect(exit({ escort: 'other', released: true })).toEqual({
+      problems: [{ field: 'actions.0.released', code: 'INVALID_VALUE' }],
+    });
+    expect(exit({ escort: 'adult', released: false, qr: 'JWR1.card' })).toEqual(
+      {
+        problems: [{ field: 'actions.0.qr', code: 'INVALID_FORMAT' }],
+      },
+    );
+  });
+
   it('a quarantined contractor kept no last four: it parses again without', () => {
     const body = {
       clientId: id(1),

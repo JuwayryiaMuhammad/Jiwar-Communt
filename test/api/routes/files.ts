@@ -59,6 +59,7 @@ export const FILES_ROUTES: Row[] = [
               'patrol_note_video',
               'incident_audio',
               'incident_video',
+              'incident_signature',
             ],
           },
         },

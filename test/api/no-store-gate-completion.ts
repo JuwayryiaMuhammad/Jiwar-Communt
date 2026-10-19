@@ -101,6 +101,30 @@ export function gateCompletionCalls(
       entryId,
     });
   };
+  /** A signature's PNG of the caller's, ready (the row written directly). */
+  const signatureFile = async (owner: 'manager' | 'guard') => {
+    const w = world();
+    const fileId = newId();
+    await w.helpers.asManager(w.a, () =>
+      w.h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+        const at = dbClock();
+        await tx.storedFile.create({
+          data: {
+            id: fileId,
+            tenantId: w.a.tenantId,
+            ownerAccountId: w.a.ids[owner],
+            purpose: 'incident_signature',
+            contentType: 'image/png',
+            sizeBytes: 100,
+            status: 'ready',
+            uploadExpiresAt: new Date(at.getTime() + 600_000),
+            finalizedAt: at,
+          },
+        });
+      }),
+    );
+    return fileId;
+  };
   let plates = 0;
   /** A tanker A's guard lets in: a plate no other call uses. */
   const enter = () =>
@@ -140,6 +164,24 @@ export function gateCompletionCalls(
     ),
     'GET /staff/security/incidents/{id}/evidence': async () =>
       manager('GET', `/staff/security/incidents/${await incident()}/evidence`),
+    'POST /gate/incidents/{id}/signatures': async () =>
+      guard('POST', `/gate/incidents/${await incident()}/signatures`, {
+        role: 'author',
+        fileId: await signatureFile('guard'),
+      }),
+    'GET /gate/incidents/{id}/signatures': async () =>
+      guard('GET', `/gate/incidents/${await incident()}/signatures`),
+    'POST /staff/security/incidents/{id}/signatures': async () =>
+      manager(
+        'POST',
+        `/staff/security/incidents/${await incident()}/signatures`,
+        { role: 'reviewer', fileId: await signatureFile('manager') },
+      ),
+    'GET /staff/security/incidents/{id}/signatures': async () =>
+      manager(
+        'GET',
+        `/staff/security/incidents/${await incident()}/signatures`,
+      ),
     'POST /gate/service-vehicles': enter,
     'POST /gate/service-vehicles/{id}/exit': async () =>
       guard('POST', `/gate/service-vehicles/${id(await enter())}/exit`),

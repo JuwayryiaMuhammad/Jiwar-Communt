@@ -23,6 +23,11 @@ import {
   StaffIncidentEvidenceController,
 } from './incidents/incident-evidence.controller';
 import { IncidentEvidenceService } from './incidents/incident-evidence.service';
+import {
+  GateIncidentSignaturesController,
+  StaffIncidentSignaturesController,
+} from './incidents/incident-signatures.controller';
+import { IncidentSignaturesService } from './incidents/incident-signatures.service';
 import { GateDirectoryController } from './directory/gate-directory.controller';
 import { GateDirectoryService } from './directory/gate-directory.service';
 import { TrafficReportController } from './reports/traffic-report.controller';
@@ -296,6 +301,8 @@ import { PickupPageService } from './children/pickup-page.service';
     StaffServiceVehiclesController,
     GateIncidentEvidenceController,
     StaffIncidentEvidenceController,
+    GateIncidentSignaturesController,
+    StaffIncidentSignaturesController,
     GateDirectoryController,
     TrafficReportController,
     VehicleCountsController,
@@ -390,6 +397,7 @@ import { PickupPageService } from './children/pickup-page.service';
     ServiceVehiclesService,
     EntryPhotosSweep,
     IncidentEvidenceService,
+    IncidentSignaturesService,
     GateDirectoryService,
     TrafficReportService,
     VehicleCountsService,

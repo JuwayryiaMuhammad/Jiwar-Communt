@@ -543,4 +543,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   patrol_note_media_file_key: null,
   incident_media_tenant_id_id_key: null,
   incident_media_file_key: null,
+  // A signature once per role and content (checked first under the
+  // incident's lock, INCIDENT_ALREADY_SIGNED); its file once (claimed).
+  incident_signatures_tenant_id_id_key: null,
+  incident_signatures_once_key: null,
+  incident_signatures_file_key: null,
 };

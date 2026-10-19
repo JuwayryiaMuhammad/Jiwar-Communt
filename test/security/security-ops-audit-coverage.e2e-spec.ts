@@ -585,6 +585,28 @@ describe('Audit coverage — security (ADR 0053)', () => {
           photoFileId: await x.photo(appellant, 'violation_appeal_photo'),
         })
         .expect(200);
+      // Signed as its author (ADR 0056): the hash's content never shows.
+      const signed = (
+        await x
+          .http(
+            'post',
+            `/staff/security/incidents/${reported.id}/signatures`,
+            leaving.token,
+            {
+              role: 'author',
+              fileId: await x.photo(leaving, 'incident_signature'),
+            },
+          )
+          .expect(201)
+      ).body as { id: string; contentSha256: string };
+      const sign = await single('incident.signed', reported.id);
+      expect(sign).toMatchObject(by(leaving, 'incident'));
+      expect(sign.metadata).toEqual({
+        signatureId: signed.id,
+        role: 'author',
+        canonicalVersion: 1,
+      });
+      expect(leakText(sign)).not.toContain(signed.contentSha256);
       await x
         .http('patch', `/accounts/${leaving.id}/status`, s.manager.token, {
           status: 'inactive',
@@ -601,6 +623,9 @@ describe('Audit coverage — security (ADR 0053)', () => {
       const note = await single('incident_note.text_cleared', noteId);
       expect(note.targetType).toBe('incident_note');
       expect(note.metadata).toEqual({ incidentId: reported.id });
+      const image = await single('incident_signature.image_cleared', signed.id);
+      expect(image.targetType).toBe('incident_signature');
+      expect(image.metadata).toEqual({ incidentId: reported.id });
       const appeal = await single('violation.appeal_cleared', v.id);
       expect(appeal.targetType).toBe('unit_violation');
       expect(appeal.metadata).toEqual({ unitId: unit.id, photo: true });

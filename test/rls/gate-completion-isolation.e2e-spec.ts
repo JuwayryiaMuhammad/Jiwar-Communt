@@ -9,6 +9,7 @@ import {
   incidentMediaRow,
   noteMediaRow,
   patrolNoteRow,
+  signatureRow,
   overstayAlertRow,
   patrolRunRow,
   serviceVehicleRow,
@@ -115,6 +116,15 @@ const TABLES: Table[] = [
         tenantId: own.tenantId,
         incidentId: link.incidentId,
         byId: link.accountId,
+      }),
+  },
+  {
+    table: 'incident_signatures',
+    insert: (tx, own, link) =>
+      signatureRow(tx, {
+        tenantId: own.tenantId,
+        incidentId: link.incidentId,
+        signerId: link.accountId,
       }),
   },
   {

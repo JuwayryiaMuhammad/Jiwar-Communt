@@ -150,6 +150,7 @@ describe('audit catalog', () => {
         // ADR 0056.
         'gate_field_exception',
         'service_vehicle_visit',
+        'incident_signature',
       ]).toContain(def.target);
     }
   });

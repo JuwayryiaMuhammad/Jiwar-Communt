@@ -277,6 +277,13 @@ export const FILE_PURPOSES = {
     uploaders: ['gate.operate', 'incidents.manage'],
     media: 'video',
   },
+  // A drawn signature on an incident report (ADR 0056): a PNG of it, by
+  // the author or a reviewer. Its image goes at its signer's erasure.
+  incident_signature: {
+    types: ['image/png'],
+    maxBytes: 256 * 1024,
+    uploaders: ['gate.operate', 'incidents.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

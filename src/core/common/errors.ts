@@ -1090,6 +1090,13 @@ export const ErrorCode = {
    * truncated or malformed. The file was deleted.
    */
   FILE_MEDIA_UNREADABLE: 'FILE_MEDIA_UNREADABLE',
+  /**
+   * Not this signer for this role (403, params.role): the author signs as
+   * `author`, a keeper who did not report it as `reviewer`.
+   */
+  INCIDENT_SIGNER_NOT_ELIGIBLE: 'INCIDENT_SIGNER_NOT_ELIGIBLE',
+  /** This content is signed in this role already (409, params.role). */
+  INCIDENT_ALREADY_SIGNED: 'INCIDENT_ALREADY_SIGNED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

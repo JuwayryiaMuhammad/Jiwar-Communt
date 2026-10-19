@@ -14382,7 +14382,8 @@
           "patrol_note_audio",
           "patrol_note_video",
           "incident_audio",
-          "incident_video"
+          "incident_video",
+          "incident_signature"
         ],
         "type": "string"
       },
@@ -19615,6 +19616,92 @@
           "critical"
         ],
         "type": "string"
+      },
+      "IncidentSignatureRole": {
+        "description": "`author`: who reported it (INCIDENT_SIGNER_NOT_ELIGIBLE otherwise). `reviewer`: a keeper who did not.",
+        "enum": [
+          "author",
+          "reviewer"
+        ],
+        "type": "string"
+      },
+      "IncidentSignatureView": {
+        "properties": {
+          "canonicalVersion": {
+            "description": "Which canonical form: 1.",
+            "type": "number"
+          },
+          "contentSha256": {
+            "description": "The SHA-256, in hex, of the report’s canonical content for its role when signed.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "image": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "The drawn signature; null once its signer was erased.",
+            "nullable": true,
+            "type": "object"
+          },
+          "imageCleared": {
+            "type": "boolean"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentSignatureRole"
+              }
+            ]
+          },
+          "signedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "signer": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "superseded": {
+            "description": "The content of its role changed since: a new signature is needed. Closing the incident supersedes a reviewer’s, never the author’s.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "signer",
+          "signedAt",
+          "contentSha256",
+          "canonicalVersion",
+          "superseded",
+          "image",
+          "imageCleared"
+        ],
+        "type": "object"
+      },
+      "IncidentSignatureViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentSignatureView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "IncidentStatus": {
         "enum": [
@@ -33915,6 +34002,28 @@
           "scheduledEnd",
           "lateMinutes",
           "pendingHandovers"
+        ],
+        "type": "object"
+      },
+      "SignIncidentDto": {
+        "properties": {
+          "fileId": {
+            "description": "A finalized `incident_signature` upload of the caller’s: a PNG of the drawn signature, 256 KB at most.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentSignatureRole"
+              }
+            ],
+            "description": "`author`: who reported it (INCIDENT_SIGNER_NOT_ELIGIBLE otherwise). `reviewer`: a keeper who did not."
+          }
+        },
+        "required": [
+          "role",
+          "fileId"
         ],
         "type": "object"
       },
@@ -53552,6 +53661,91 @@
           }
         ],
         "summary": "Keep a visitor’s photo at entry, or a patrol’s track, with the incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/incidents/{id}/signatures": {
+      "get": {
+        "operationId": "GateIncidentSignaturesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentSignatureViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The signatures on my incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A drawn signature (`incident_signature` PNG) over the SHA-256 of the report’s canonical content for the role (ADR 0056). `author`: its fields, photos, recordings and evidence; `reviewer`: that and its status, outcome and closing note. Once per role and content (INCIDENT_ALREADY_SIGNED). Never changes: after a change inside its scope it reads `superseded`, and a new one is needed.",
+        "operationId": "GateIncidentSignaturesController_sign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentSignatureView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sign the incident report",
         "tags": [
           "incidents"
         ],
@@ -76514,6 +76708,91 @@
           }
         ],
         "summary": "Write an internal note",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/{id}/signatures": {
+      "get": {
+        "operationId": "StaffIncidentSignaturesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentSignatureViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The signatures on an incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A drawn signature (`incident_signature` PNG) over the SHA-256 of the report’s canonical content for the role (ADR 0056). `author`: its fields, photos, recordings and evidence; `reviewer`: that and its status, outcome and closing note. Once per role and content (INCIDENT_ALREADY_SIGNED). Never changes: after a change inside its scope it reads `superseded`, and a new one is needed.",
+        "operationId": "StaffIncidentSignaturesController_sign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentSignatureView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sign the incident report",
         "tags": [
           "incidents"
         ],

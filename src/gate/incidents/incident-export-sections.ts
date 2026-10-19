@@ -51,6 +51,11 @@ export class IncidentExportSections implements OnModuleInit {
         where: { accountId: me },
         orderBy: [{ acknowledgedAt: 'asc' }, { incidentId: 'asc' }],
       });
+      // What it signed (ADR 0056): the role and the time, never the image.
+      const signatures = await tx.incidentSignature.findMany({
+        where: { signerAccountId: me },
+        orderBy: [{ signedAt: 'asc' }, { id: 'asc' }],
+      });
       const photos = new Map<string, number>();
       for (const p of reported.length
         ? await tx.incidentPhoto.findMany({
@@ -75,6 +80,7 @@ export class IncidentExportSections implements OnModuleInit {
         ...new Set([
           ...notes.map((n) => n.incidentId),
           ...acks.map((a) => a.incidentId),
+          ...signatures.map((x) => x.incidentId),
         ]),
       ].filter((id) => !known.has(id));
       for (const i of missing.length
@@ -105,6 +111,7 @@ export class IncidentExportSections implements OnModuleInit {
         closed,
         notes,
         acks,
+        signatures,
         photos,
         media,
         known,
@@ -157,6 +164,15 @@ export class IncidentExportSections implements OnModuleInit {
         incident: ref(a.incidentId),
         role: a.role,
         acknowledgedAt: a.acknowledgedAt,
+      })),
+    };
+    yield {
+      path: 'incidents/signatures.json',
+      json: d.signatures.map((x) => ({
+        incident: ref(x.incidentId),
+        role: x.role,
+        signedAt: x.signedAt,
+        contentSha256: x.contentSha256,
       })),
     };
   }

@@ -6,7 +6,11 @@ import { matchesSignature } from './signatures';
 const migrations = '../../../prisma/migrations';
 /** Both CHECKs as they stand now (ADR 0056 recreated both, with every purpose). */
 const sizeCheck = readFileSync(
-  join(__dirname, migrations, '20261104091300_media/migration.sql'),
+  join(
+    __dirname,
+    migrations,
+    '20261104091500_incident_signatures/migration.sql',
+  ),
   'utf8',
 );
 const typeCheck = sizeCheck;
@@ -85,6 +89,7 @@ describe('file purposes', () => {
       'patrol_note_video',
       'incident_audio',
       'incident_video',
+      'incident_signature',
     ] as const)
       expect(sizeCheck).toContain(
         `WHEN '${purpose}' THEN ${FILE_PURPOSES[purpose].maxBytes}`,
@@ -207,8 +212,13 @@ describe('file purposes', () => {
         'video/mp4',
         'video/quicktime',
       ]);
+    // A signature (ADR 0056): a PNG only.
+    expect(FILE_PURPOSES.incident_signature.types).toEqual(['image/png']);
     expect(typeCheck).toContain(
-      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video'))`,
+      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature'))`,
+    );
+    expect(typeCheck).toContain(
+      `("content_type" = 'image/png' AND "purpose" = 'incident_signature')`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'audio/mp4' AND "purpose" IN ('patrol_note_audio', 'incident_audio'))`,

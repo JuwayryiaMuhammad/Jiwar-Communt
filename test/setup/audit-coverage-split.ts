@@ -553,6 +553,9 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'incident_note.text_cleared',
   // The visitor's photo an incident keeps (ADR 0056).
   'incident.evidence_linked',
+  // A drawn signature on the report, and its image at erasure (ADR 0056).
+  'incident.signed',
+  'incident_signature.image_cleared',
   'violation.issued',
   'violation.appealed',
   'violation.appeal_decided',

@@ -1396,6 +1396,14 @@ export const AUDIT_ACTIONS = {
   // An incident keeps a visitor's photo at entry (ADR 0056), past its 30
   // days. metadata: evidenceId, kind, entryId.
   'incident.evidence_linked': { log: 'tenant', target: 'incident' },
+  // An incident report signed (ADR 0056). metadata: signatureId, role,
+  // canonicalVersion — never the hash's content.
+  'incident.signed': { log: 'tenant', target: 'incident' },
+  // At its signer's erasure: the image goes. metadata: incidentId.
+  'incident_signature.image_cleared': {
+    log: 'tenant',
+    target: 'incident_signature',
+  },
   // A service vehicle at the gate. metadata: kind, unitId, facilityId,
   // gateId, shiftId — never the plate nor the company.
   'service_vehicle.entered': { log: 'tenant', target: 'service_vehicle_visit' },

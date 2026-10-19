@@ -1726,6 +1726,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   patrol_note_media_duration: {},
   incident_media_kind: {},
   incident_media_duration: {},
+  incident_signatures_role: {},
+  incident_signatures_sha256: {},
+  incident_signatures_version: {},
+  incident_signatures_image_shape: {},
 };
 
 interface Check {

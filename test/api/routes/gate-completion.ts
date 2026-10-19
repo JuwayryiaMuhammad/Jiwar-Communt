@@ -319,6 +319,47 @@ export const VISITOR_PHOTO_ROUTES: Row[] = [
         },
         invalid: 'none',
       },
+      // Its drawn signatures (ADR 0056).
+      {
+        method: 'POST',
+        path: `${base}/{id}/signatures`,
+        auth: 'tenant',
+        noStore: true,
+        as: persona,
+        denied,
+        foreign: {
+          params: (w) => ({ id: w.bGateIncidentId }),
+          body: () => ({
+            role: side === 'gate' ? 'author' : 'reviewer',
+            fileId: ID,
+          }),
+          code: 'INCIDENT_NOT_FOUND',
+        },
+        invalid: {
+          body: { role: 'witness', fileId: 'nope' },
+          fields: [
+            {
+              field: 'role',
+              code: 'INVALID_VALUE',
+              params: { allowed: ['author', 'reviewer'] },
+            },
+            { field: 'fileId', code: 'INVALID_UUID' },
+          ],
+        },
+      },
+      {
+        method: 'GET',
+        path: `${base}/{id}/signatures`,
+        auth: 'tenant',
+        noStore: true,
+        as: persona,
+        denied,
+        foreign: {
+          params: (w) => ({ id: w.bGateIncidentId }),
+          code: 'INCIDENT_NOT_FOUND',
+        },
+        invalid: 'none',
+      },
     ];
   }),
 ];

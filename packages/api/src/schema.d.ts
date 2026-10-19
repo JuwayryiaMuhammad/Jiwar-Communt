@@ -2446,6 +2446,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/incidents/{id}/signatures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signatures on my incident */
+        get: operations["GateIncidentSignaturesController_list"];
+        put?: never;
+        /**
+         * Sign the incident report
+         * @description A drawn signature (`incident_signature` PNG) over the SHA-256 of the report’s canonical content for the role (ADR 0056). `author`: its fields, photos, recordings and evidence; `reviewer`: that and its status, outcome and closing note. Once per role and content (INCIDENT_ALREADY_SIGNED). Never changes: after a change inside its scope it reads `superseded`, and a new one is needed.
+         */
+        post: operations["GateIncidentSignaturesController_sign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/inside": {
         parameters: {
             query?: never;
@@ -10289,6 +10310,27 @@ export interface paths {
          * @description The management’s only: never the author’s to read.
          */
         post: operations["StaffIncidentsController_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incidents/{id}/signatures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signatures on an incident */
+        get: operations["StaffIncidentSignaturesController_list"];
+        put?: never;
+        /**
+         * Sign the incident report
+         * @description A drawn signature (`incident_signature` PNG) over the SHA-256 of the report’s canonical content for the role (ADR 0056). `author`: its fields, photos, recordings and evidence; `reviewer`: that and its status, outcome and closing note. Once per role and content (INCIDENT_ALREADY_SIGNED). Never changes: after a change inside its scope it reads `superseded`, and a new one is needed.
+         */
+        post: operations["StaffIncidentSignaturesController_sign"];
         delete?: never;
         options?: never;
         head?: never;
@@ -18597,7 +18639,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -20110,6 +20152,32 @@ export interface components {
          * @enum {string}
          */
         IncidentSeverity: "low" | "medium" | "high" | "critical";
+        /**
+         * @description `author`: who reported it (INCIDENT_SIGNER_NOT_ELIGIBLE otherwise). `reviewer`: a keeper who did not.
+         * @enum {string}
+         */
+        IncidentSignatureRole: "author" | "reviewer";
+        IncidentSignatureView: {
+            /** @description Which canonical form: 1. */
+            canonicalVersion: number;
+            /** @description The SHA-256, in hex, of the report’s canonical content for its role when signed. */
+            contentSha256: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The drawn signature; null once its signer was erased. */
+            image: components["schemas"]["PresignedReadView"] | null;
+            imageCleared: boolean;
+            role: components["schemas"]["IncidentSignatureRole"];
+            /** Format: date-time */
+            signedAt: string;
+            signer: components["schemas"]["FirstNameRefView"];
+            /** @description The content of its role changed since: a new signature is needed. Closing the incident supersedes a reviewer’s, never the author’s. */
+            superseded: boolean;
+        };
+        IncidentSignatureViewList: {
+            data: components["schemas"]["IncidentSignatureView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         IncidentStatus: "open" | "investigating" | "closed";
         /** @enum {string} */
@@ -24686,6 +24754,15 @@ export interface components {
             startedAt: string;
             /** @description The zone, for a shift that is not at a gate (ADR 0050); the gate actions refuse it. */
             zone: components["schemas"]["PlaceView"] | null;
+        };
+        SignIncidentDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `incident_signature` upload of the caller’s: a PNG of the drawn signature, 256 KB at most.
+             */
+            fileId: string;
+            /** @description `author`: who reported it (INCIDENT_SIGNER_NOT_ELIGIBLE otherwise). `reviewer`: a keeper who did not. */
+            role: components["schemas"]["IncidentSignatureRole"];
         };
         /** @enum {string} */
         SlaClock: "response" | "resolution";
@@ -32010,6 +32087,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IncidentEvidenceView"];
+                };
+            };
+        };
+    };
+    GateIncidentSignaturesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentSignatureViewList"];
+                };
+            };
+        };
+    };
+    GateIncidentSignaturesController_sign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignIncidentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentSignatureView"];
                 };
             };
         };
@@ -43883,6 +44006,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentSignaturesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentSignatureViewList"];
+                };
+            };
+        };
+    };
+    StaffIncidentSignaturesController_sign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignIncidentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentSignatureView"];
                 };
             };
         };

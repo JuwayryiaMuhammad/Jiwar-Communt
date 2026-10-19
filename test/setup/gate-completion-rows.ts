@@ -343,3 +343,39 @@ export async function incidentMediaRow(
   });
   return id;
 }
+
+/** An incident's author signature, its PNG made in the row's own compound. */
+export async function signatureRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; incidentId: string; signerId: string },
+): Promise<string> {
+  const fileId = newId();
+  await tx.storedFile.create({
+    data: {
+      id: fileId,
+      tenantId: r.tenantId,
+      purpose: 'incident_signature',
+      contentType: 'image/png',
+      sizeBytes: 100,
+      status: 'ready',
+      uploadExpiresAt: ROW_T0,
+      finalizedAt: ROW_T0,
+      attachedAt: ROW_T0,
+    },
+  });
+  const id = newId();
+  await tx.incidentSignature.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      incidentId: r.incidentId,
+      role: 'author',
+      signerAccountId: r.signerId,
+      fileId,
+      contentSha256: 'a'.repeat(64),
+      canonicalVersion: 1,
+      signedAt: rowAt(5),
+    },
+  });
+  return id;
+}

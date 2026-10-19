@@ -628,12 +628,13 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'approval_attachment',
       'board_appeal_attachment',
       'expense_invoice',
-      // G7 (ADR 0056) recreated both after R7b, twice.
+      // G7 (ADR 0056) recreated both after R7b, three times.
       'visitor_photo',
       'patrol_note_audio',
       'patrol_note_video',
       'incident_audio',
       'incident_video',
+      'incident_signature',
     ])
       expect(purposes).toContain(purpose);
     for (const purpose of purposes) {

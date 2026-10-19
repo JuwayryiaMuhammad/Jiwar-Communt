@@ -2447,6 +2447,8 @@ enum FilePurpose {
   incident_audio
   /// An incident's video (ADR 0056): video/mp4 or QuickTime.
   incident_video
+  /// A drawn signature on an incident report (ADR 0056): PNG, 256 KB.
+  incident_signature
 
   @@map("file_purpose")
 }
@@ -7890,6 +7892,29 @@ model IncidentMedia {
   @@unique([tenantId, fileId], map: "incident_media_file_key")
   @@index([tenantId, incidentId], map: "incident_media_parent_idx")
   @@map("incident_media")
+}
+
+/// A drawn signature on an incident report (ADR 0056): its signer as
+/// author or reviewer, and the SHA-256 of the report's canonical content
+/// for that role when signed. Never changes, but its image goes once at
+/// its signer's erasure; superseded is computed when read.
+model IncidentSignature {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  incidentId       String    @map("incident_id") @db.Uuid
+  /// author | reviewer
+  role             String
+  signerAccountId  String    @map("signer_account_id") @db.Uuid
+  fileId           String?   @map("file_id") @db.Uuid
+  contentSha256    String    @map("content_sha256") @db.Char(64)
+  canonicalVersion Int       @map("canonical_version") @db.SmallInt
+  signedAt         DateTime  @map("signed_at") @db.Timestamptz(3)
+  imageClearedAt   DateTime? @map("image_cleared_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, incidentId, role, contentSha256], map: "incident_signatures_once_key")
+  @@index([tenantId, incidentId, signedAt], map: "incident_signatures_incident_idx")
+  @@map("incident_signatures")
 }
 
 /// The management's internal note on an incident (ADR 0053).

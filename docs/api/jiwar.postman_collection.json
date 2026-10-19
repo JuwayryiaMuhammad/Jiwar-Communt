@@ -12009,6 +12009,91 @@
           }
         },
         {
+          "name": "Read the gate’s traffic",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "reports",
+                "traffic"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "One gate only.",
+                  "disabled": true,
+                  "key": "gateId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/reports/traffic"
+            }
+          }
+        },
+        {
+          "name": "Export the gate’s traffic as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "reports",
+                "traffic",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "One gate only.",
+                  "disabled": true,
+                  "key": "gateId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/reports/traffic/export"
+            }
+          }
+        },
+        {
           "name": "The service vehicles that came in on the days asked, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -31129,6 +31214,46 @@
     },
     {
       "item": [
+        {
+          "name": "Count a resident vehicle in or out at my gate",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"vehicleId\": \"\",\n  \"direction\": \"in\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `direction` | `in` \\| `out` | yes |  |\n| `vehicleId` | string (uuid) | yes | A vehicle the plate lookup found (`matches[].vehicle`): registered, pending or active. Checked, never kept. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "vehicle-passages"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/vehicle-passages"
+            }
+          }
+        },
         {
           "name": "Get the vehicle and parking settings",
           "request": {

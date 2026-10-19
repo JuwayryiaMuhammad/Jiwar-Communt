@@ -1694,6 +1694,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_entry_photos_purge_after: {},
   incident_evidence_kind: {},
   incident_evidence_shape: {},
+  gate_vehicle_counts_positive: {},
   service_vehicle_visits_exit_shape: {
     guarded:
       'exited_at IS NULL is tested before it is compared with entered_at; the rest are IS [NOT] NULL tests and a NOT NULL boolean',

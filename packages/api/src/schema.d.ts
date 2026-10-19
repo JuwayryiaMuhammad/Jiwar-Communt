@@ -3220,6 +3220,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/vehicle-passages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Count a resident vehicle in or out at my gate
+         * @description Inside a shift at a gate, for a vehicle the plate lookup found. Only the day’s count for the gate and the direction grows: the vehicle is checked, never kept, and nothing logs who came or went.
+         */
+        post: operations["VehicleCountsController_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/verify": {
         parameters: {
             query?: never;
@@ -8796,6 +8816,46 @@ export interface paths {
          * @description The first answer wins (GATE_EXCEPTION_DECIDED with params.status otherwise; `expired` when its deadline passed first). An approval lets one entry in at its gate for `gate_settings.exceptionEntryMinutes`.
          */
         post: operations["StaffFieldExceptionsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/reports/traffic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the gate’s traffic
+         * @description Per compound day and gate: visitors by how they came in, service vehicles by kind, resident vehicles counted in and out. Counts only. The last seven days by default, 31 at most.
+         */
+        get: operations["TrafficReportController_traffic"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/reports/traffic/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the gate’s traffic as CSV
+         * @description One row per day and gate, the totals last; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.
+         */
+        get: operations["TrafficReportController_export"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -16301,6 +16361,14 @@ export interface components {
         ConvertToOwnerDto: {
             /** @description False: they let the unit (a landlord). */
             resides?: boolean;
+        };
+        CountVehicleDto: {
+            direction: components["schemas"]["GateDirection"];
+            /**
+             * Format: uuid
+             * @description A vehicle the plate lookup found (`matches[].vehicle`): registered, pending or active. Checked, never kept.
+             */
+            vehicleId: string;
         };
         CreateAccessibilityRequestDto: {
             assistanceKind: components["schemas"]["AssistanceKind"];
@@ -26755,6 +26823,57 @@ export interface components {
             data: components["schemas"]["TrackPointView"][];
             nextCursor: string | null;
         };
+        TrafficCountsView: {
+            /** @description Resident vehicles the guards counted, in and out. */
+            residentVehicles: components["schemas"]["TrafficResidentVehiclesView"];
+            /** @description Service vehicles that came in, by kind. */
+            serviceVehicles: components["schemas"]["TrafficServiceVehiclesView"];
+            /** @description Who came in. */
+            visitors: components["schemas"]["TrafficVisitorsView"];
+        };
+        TrafficGateView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        TrafficReportView: {
+            /** @example 2026-11-01 */
+            from: string;
+            /** @description By day, then gate by name. */
+            rows: components["schemas"]["TrafficRowView"][];
+            /** @example 2026-11-07 */
+            to: string;
+            totals: components["schemas"]["TrafficCountsView"];
+        };
+        TrafficResidentVehiclesView: {
+            in: number;
+            out: number;
+        };
+        TrafficRowView: {
+            /** @example 2026-11-04 */
+            date: string;
+            gate: components["schemas"]["TrafficGateView"];
+            /** @description Resident vehicles the guards counted, in and out. */
+            residentVehicles: components["schemas"]["TrafficResidentVehiclesView"];
+            /** @description Service vehicles that came in, by kind. */
+            serviceVehicles: components["schemas"]["TrafficServiceVehiclesView"];
+            /** @description Who came in. */
+            visitors: components["schemas"]["TrafficVisitorsView"];
+        };
+        TrafficServiceVehiclesView: {
+            delivery: number;
+            other: number;
+            tanker: number;
+            waste: number;
+        };
+        TrafficVisitorsView: {
+            /** @description On a field exception the management approved (ADR 0056). */
+            fieldException: number;
+            /** @description On a household’s approval. */
+            gateRequest: number;
+            /** @description On a visitor pass. */
+            visitorPass: number;
+        };
         TransferOwnershipDto: {
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
@@ -27420,6 +27539,10 @@ export interface components {
             method: "PUT";
             /** @description Presigned; shown once. */
             url: string;
+        };
+        VehicleCountedView: {
+            /** @enum {boolean} */
+            counted: true;
         };
         /** @enum {string} */
         VehicleFineDecision: "upheld" | "cancelled";
@@ -32642,6 +32765,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GatePermitView"];
+                };
+            };
+        };
+    };
+    VehicleCountsController_count: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountVehicleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleCountedView"];
                 };
             };
         };
@@ -41328,6 +41477,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffFieldExceptionResponse"];
+                };
+            };
+        };
+    };
+    TrafficReportController_traffic: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+                /** @description One gate only. */
+                gateId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrafficReportView"];
+                };
+            };
+        };
+    };
+    TrafficReportController_export: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+                /** @description One gate only. */
+                gateId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

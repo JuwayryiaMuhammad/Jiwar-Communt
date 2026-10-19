@@ -112,6 +112,15 @@ export function gateCompletionCalls(
   return {
     'GET /gate/inside': () => guard('GET', '/gate/inside'),
     'GET /gate/directory': () => guard('GET', '/gate/directory'),
+    'POST /gate/vehicle-passages': () =>
+      guard('POST', '/gate/vehicle-passages', {
+        vehicleId: world().aVehicleId,
+        direction: 'in',
+      }),
+    'GET /staff/gate/reports/traffic': () =>
+      manager('GET', '/staff/gate/reports/traffic'),
+    'GET /staff/gate/reports/traffic/export': () =>
+      manager('GET', '/staff/gate/reports/traffic/export'),
     'GET /gate/entries/{id}/photo': async () =>
       manager('GET', `/gate/entries/${await photographed()}/photo`),
     'POST /gate/incidents/{id}/evidence': evidence(

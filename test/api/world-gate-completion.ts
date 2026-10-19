@@ -5,6 +5,7 @@ import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { EntriesService } from '../../src/gate/entries/entries.service';
 import { photoPurgeAfter } from '../../src/gate/entries/entry-photo-rules';
 import { IncidentsService } from '../../src/gate/incidents/incidents.service';
+import { VehiclesService } from '../../src/gate/vehicles/vehicles.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
 import type { Side } from './world';
@@ -22,13 +23,27 @@ export interface GateCompletionWorld {
    * card incident: another table).
    */
   bGateIncidentId: string;
+  /** A car A's owner registered (pending): for the guard to count. */
+  aVehicleId: string;
 }
 
 export async function gateCompletionWorld(
   h: HttpHarness,
   helpers: ReturnType<typeof communityHelpers>,
+  a: Side,
   b: Side,
 ): Promise<GateCompletionWorld> {
+  const aVehicle = await helpers.as(
+    a,
+    { id: a.ids.owner, type: 'resident' },
+    () =>
+      h.moduleRef.get(VehiclesService).create(a.homeUnitId, {
+        plate: 'ع د 5521',
+        makeAndModel: 'Counted car',
+        color: 'Blue',
+        type: 'car',
+      }),
+  );
   const exception = await helpers.as(
     b,
     { id: b.ids.guard, type: 'staff' },
@@ -114,5 +129,6 @@ export async function gateCompletionWorld(
     bServiceVehicleId: visit.id,
     bEntryId: entry.id,
     bGateIncidentId: incident.incident.id,
+    aVehicleId: aVehicle.vehicle.id,
   };
 }

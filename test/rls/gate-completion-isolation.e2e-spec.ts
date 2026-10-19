@@ -7,6 +7,7 @@ import {
   fieldExceptionRow,
   overstayAlertRow,
   serviceVehicleRow,
+  vehicleCountRow,
 } from '../setup/gate-completion-rows';
 import { incidentRow } from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
@@ -73,6 +74,13 @@ const TABLES: Table[] = [
         entryId: link.photoEntryId,
         byId: link.accountId,
       }),
+  },
+  {
+    // One row per day, gate and direction: its gate names it here.
+    table: 'gate_vehicle_counts',
+    key: 'gate_id',
+    insert: (tx, own, link) =>
+      vehicleCountRow(tx, { tenantId: own.tenantId, gateId: link.gateId }),
   },
   {
     table: 'service_vehicle_visits',

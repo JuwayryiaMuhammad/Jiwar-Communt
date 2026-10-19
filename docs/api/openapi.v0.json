@@ -7881,6 +7881,27 @@
         },
         "type": "object"
       },
+      "CountVehicleDto": {
+        "properties": {
+          "direction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDirection"
+              }
+            ]
+          },
+          "vehicleId": {
+            "description": "A vehicle the plate lookup found (`matches[].vehicle`): registered, pending or active. Checked, never kept.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vehicleId",
+          "direction"
+        ],
+        "type": "object"
+      },
       "CreateAccessibilityRequestDto": {
         "properties": {
           "assistanceKind": {
@@ -41898,6 +41919,188 @@
         ],
         "type": "object"
       },
+      "TrafficCountsView": {
+        "properties": {
+          "residentVehicles": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrafficResidentVehiclesView"
+              }
+            ],
+            "description": "Resident vehicles the guards counted, in and out."
+          },
+          "serviceVehicles": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrafficServiceVehiclesView"
+              }
+            ],
+            "description": "Service vehicles that came in, by kind."
+          },
+          "visitors": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrafficVisitorsView"
+              }
+            ],
+            "description": "Who came in."
+          }
+        },
+        "required": [
+          "visitors",
+          "serviceVehicles",
+          "residentVehicles"
+        ],
+        "type": "object"
+      },
+      "TrafficGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "TrafficReportView": {
+        "properties": {
+          "from": {
+            "example": "2026-11-01",
+            "type": "string"
+          },
+          "rows": {
+            "description": "By day, then gate by name.",
+            "items": {
+              "$ref": "#/components/schemas/TrafficRowView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-11-07",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TrafficCountsView"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "rows",
+          "totals"
+        ],
+        "type": "object"
+      },
+      "TrafficResidentVehiclesView": {
+        "properties": {
+          "in": {
+            "type": "number"
+          },
+          "out": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "in",
+          "out"
+        ],
+        "type": "object"
+      },
+      "TrafficRowView": {
+        "properties": {
+          "date": {
+            "example": "2026-11-04",
+            "type": "string"
+          },
+          "gate": {
+            "$ref": "#/components/schemas/TrafficGateView"
+          },
+          "residentVehicles": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrafficResidentVehiclesView"
+              }
+            ],
+            "description": "Resident vehicles the guards counted, in and out."
+          },
+          "serviceVehicles": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrafficServiceVehiclesView"
+              }
+            ],
+            "description": "Service vehicles that came in, by kind."
+          },
+          "visitors": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrafficVisitorsView"
+              }
+            ],
+            "description": "Who came in."
+          }
+        },
+        "required": [
+          "visitors",
+          "serviceVehicles",
+          "residentVehicles",
+          "date",
+          "gate"
+        ],
+        "type": "object"
+      },
+      "TrafficServiceVehiclesView": {
+        "properties": {
+          "delivery": {
+            "type": "number"
+          },
+          "other": {
+            "type": "number"
+          },
+          "tanker": {
+            "type": "number"
+          },
+          "waste": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "tanker",
+          "waste",
+          "delivery",
+          "other"
+        ],
+        "type": "object"
+      },
+      "TrafficVisitorsView": {
+        "properties": {
+          "fieldException": {
+            "description": "On a field exception the management approved (ADR 0056).",
+            "type": "number"
+          },
+          "gateRequest": {
+            "description": "On a household’s approval.",
+            "type": "number"
+          },
+          "visitorPass": {
+            "description": "On a visitor pass.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "visitorPass",
+          "gateRequest",
+          "fieldException"
+        ],
+        "type": "object"
+      },
       "TransferOwnershipDto": {
         "properties": {
           "reason": {
@@ -43970,6 +44173,20 @@
           "method",
           "headers",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "VehicleCountedView": {
+        "properties": {
+          "counted": {
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "counted"
         ],
         "type": "object"
       },
@@ -54749,6 +54966,56 @@
         "summary": "Let a material exit’s goods out, once",
         "tags": [
           "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/vehicle-passages": {
+      "post": {
+        "description": "Inside a shift at a gate, for a vehicle the plate lookup found. Only the day’s count for the gate and the direction grows: the vehicle is checked, never kept, and nothing logs who came or went.",
+        "operationId": "VehicleCountsController_count",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CountVehicleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleCountedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Count a resident vehicle in or out at my gate",
+        "tags": [
+          "vehicles"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -71205,6 +71472,126 @@
           }
         ],
         "summary": "Approve or reject a field exception",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/reports/traffic": {
+      "get": {
+        "description": "Per compound day and gate: visitors by how they came in, service vehicles by kind, resident vehicles counted in and out. Counts only. The last seven days by default, 31 at most.",
+        "operationId": "TrafficReportController_traffic",
+        "parameters": [
+          {
+            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One gate only.",
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrafficReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the gate’s traffic",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/reports/traffic/export": {
+      "get": {
+        "description": "One row per day and gate, the totals last; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.",
+        "operationId": "TrafficReportController_export",
+        "parameters": [
+          {
+            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One gate only.",
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the gate’s traffic as CSV",
         "tags": [
           "gate"
         ],

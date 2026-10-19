@@ -2352,6 +2352,20 @@ model IncidentEvidence {
   @@map("incident_evidence")
 }
 
+/// Resident vehicles through the gate, counted (ADR 0056): per compound
+/// day, gate and direction, nothing else — no vehicle, no unit, no time.
+/// A count only grows, by one.
+model GateVehicleCount {
+  tenantId  String        @map("tenant_id") @db.Uuid
+  day       DateTime      @db.Date
+  gateId    String        @map("gate_id") @db.Uuid
+  direction GateDirection
+  count     Int
+
+  @@id([tenantId, day, gateId, direction])
+  @@map("gate_vehicle_counts")
+}
+
 // ============================================================================
 // AUDIT (ADR 0014) — immutable: SELECT/INSERT only for jiwar_app, triggers
 // reject UPDATE/DELETE/TRUNCATE for every role. No foreign keys on purpose:

@@ -163,3 +163,20 @@ export async function evidenceRow(
   });
   return id;
 }
+
+/** The resident vehicles counted in at a gate on T0's day: the gate's id. */
+export async function vehicleCountRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; gateId: string },
+): Promise<string> {
+  await tx.gateVehicleCount.create({
+    data: {
+      tenantId: r.tenantId,
+      day: new Date('2026-11-04T00:00:00.000Z'),
+      gateId: r.gateId,
+      direction: 'in',
+      count: 3,
+    },
+  });
+  return r.gateId;
+}

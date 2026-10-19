@@ -1117,7 +1117,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const securityOps = await securityOpsWorld(h, helpers, b);
   const children = await childrenWorld(h, helpers, b);
   const boardMatters = await boardMattersWorld(h, helpers, a, b);
-  const gateCompletion = await gateCompletionWorld(h, helpers, b);
+  const gateCompletion = await gateCompletionWorld(h, helpers, a, b);
   return {
     ...gateCompletion,
     ...guardDuty,

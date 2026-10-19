@@ -324,3 +324,46 @@ export const GATE_DIRECTORY_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+/** Resident vehicles counted, and the gate's traffic (ADR 0056). */
+export const TRAFFIC_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/vehicle-passages',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({ vehicleId: w.bVehicleId, direction: 'in' }),
+      code: 'VEHICLE_NOT_FOUND',
+    },
+    invalid: {
+      body: { vehicleId: 'nope', direction: 'sideways' },
+      fields: [
+        { field: 'vehicleId', code: 'INVALID_UUID' },
+        {
+          field: 'direction',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['in', 'out'] },
+        },
+      ],
+    },
+  },
+  ...['/staff/gate/reports/traffic', '/staff/gate/reports/traffic/export'].map(
+    (path): Row => ({
+      method: 'GET',
+      path,
+      auth: 'tenant',
+      noStore: true,
+      as: 'manager',
+      denied: 'guard',
+      foreign: 'none',
+      invalid: {
+        query: { from: 'last week' },
+        fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+      },
+    }),
+  ),
+];

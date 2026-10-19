@@ -9,6 +9,7 @@ import {
   overstayAlertRow,
   rowAt,
   serviceVehicleRow,
+  vehicleCountRow,
   visitorDetailsRow,
 } from '../setup/gate-completion-rows';
 import { incidentRow } from '../setup/security-ops-rows';
@@ -75,6 +76,7 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
         unitId,
         reportedById: guardId,
       });
+      await vehicleCountRow(tx, { tenantId, gateId });
       await evidenceRow(tx, {
         tenantId,
         incidentId,
@@ -485,6 +487,45 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
         /incident_evidence_entry_key/,
       );
       await expect(add('NULL')).rejects.toThrow(/incident_evidence_shape/);
+    });
+  });
+
+  describe('a resident vehicles’ count', () => {
+    // Read when a test runs: the ids are set in beforeAll.
+    const counted = () =>
+      `tenant_id = '${tenantId}' AND gate_id = '${gateId}' AND direction = 'in'`;
+
+    it('the app adds and grows it, never deletes it', async () => {
+      expect(await privileges('gate_vehicle_counts')).toEqual({
+        select: true,
+        insert: true,
+        update: true,
+        delete: false,
+        truncate: false,
+      });
+    });
+
+    it('only grows, by one; its day, gate and direction never change', async () => {
+      await expect(
+        asApp(
+          `UPDATE gate_vehicle_counts SET count = count + 1 WHERE ${counted()}`,
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      for (const set of [
+        'count = count + 2',
+        'count = count - 1',
+        `day = day + 1`,
+        `direction = 'out'`,
+      ])
+        await expect(
+          asApp(`UPDATE gate_vehicle_counts SET ${set} WHERE ${counted()}`),
+        ).rejects.toThrow(/a count only grows, by one/);
+      await expect(
+        asApp(
+          `INSERT INTO gate_vehicle_counts (tenant_id, day, gate_id, direction, count)
+           VALUES ('${tenantId}', '2026-11-05', '${gateId}', 'in', 0)`,
+        ),
+      ).rejects.toThrow(/gate_vehicle_counts_positive/);
     });
   });
 

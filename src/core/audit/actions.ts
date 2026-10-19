@@ -1145,6 +1145,36 @@ export const AUDIT_ACTIONS = {
   'board_motion.closed': { log: 'tenant', target: 'board_motion' },
   // A member's vote. metadata: memberId, voteId. Never the choice.
   'board_vote.cast': { log: 'tenant', target: 'board_motion' },
+  // An appeal to the board. changes: number, kind, subjectId, unitId,
+  // decisionAt, deadlineAt, attachments (how many), the grounds as changed.
+  'governance_board_appeal.lodged': {
+    log: 'tenant',
+    target: 'governance_board_appeal',
+    sensitive: ['grounds'],
+  },
+  // The appellant withdrew it. metadata: motionId (the open motion it
+  // closed, or null).
+  'governance_board_appeal.withdrawn': {
+    log: 'tenant',
+    target: 'governance_board_appeal',
+  },
+  // A carried motion decided it. metadata: outcome (upheld | overturned),
+  // motionId, effect (applied | follow_up | none).
+  'governance_board_appeal.decided': {
+    log: 'tenant',
+    target: 'governance_board_appeal',
+  },
+  // The manager followed an overturn up. No metadata.
+  'governance_board_appeal.followed_up': {
+    log: 'tenant',
+    target: 'governance_board_appeal',
+  },
+  // The appellant's erasure: its grounds and attachments went. metadata:
+  // attachments (how many files were marked deleted).
+  'governance_board_appeal.grounds_cleared': {
+    log: 'tenant',
+    target: 'governance_board_appeal',
+  },
   // The budget and expenses (ADR 0055): ids, codes, amounts and days; a
   // line's note, a vendor and a reference as changed.
   // metadata: fiscalYear, startsOn, endsOn, copiedFrom (a budget id or null).

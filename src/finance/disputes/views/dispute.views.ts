@@ -57,6 +57,21 @@ export class DisputeView {
   status: DisputeStatus;
   @ApiProperty({ type: DisputeDecisionView, nullable: true })
   decision: DisputeDecisionView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Rejected and not yet taken to the board: until when an owner or the primary may (POST /governance/board-appeals, ADR 0055).',
+  })
+  boardAppealUntil: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'When it was taken to the board.',
+  })
+  boardAppealAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 }

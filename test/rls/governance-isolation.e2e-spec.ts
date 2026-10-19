@@ -3,6 +3,7 @@ import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import { newId } from '../../src/core/common/uuid';
 import {
+  appealRow,
   approvalRequestRow,
   boardMemberRow,
   boardTermRow,
@@ -43,6 +44,31 @@ interface Table {
 /** Requests' numbers: unique in each compound, whatever inserts them. */
 let number = 1;
 
+/**
+ * A seat of `accountId` on the term: the one it holds already (one live
+ * seat per account), or a new one (refused when the term is another
+ * compound's).
+ */
+async function seatOn(
+  tx: TenantTxClient,
+  own: Side,
+  termId: string,
+  accountId: string,
+): Promise<string> {
+  const held = await tx.boardMember.findFirst({
+    where: { termId, accountId, endedAt: null },
+  });
+  return (
+    held?.id ??
+    boardMemberRow(tx, {
+      tenantId: own.tenantId,
+      termId,
+      accountId,
+      addedById: own.accountId,
+    })
+  );
+}
+
 /** A request of `own`'s and an open motion on it by a seat of `link`'s term. */
 async function motionOf(tx: TenantTxClient, own: Side, link: Side) {
   const requestId = await approvalRequestRow(tx, {
@@ -50,12 +76,7 @@ async function motionOf(tx: TenantTxClient, own: Side, link: Side) {
     raisedById: own.accountId,
     number: number++,
   });
-  const memberId = await boardMemberRow(tx, {
-    tenantId: own.tenantId,
-    termId: link.termId,
-    accountId: link.accountId,
-    addedById: own.accountId,
-  });
+  const memberId = await seatOn(tx, own, link.termId, link.accountId);
   return motionRow(tx, {
     tenantId: own.tenantId,
     requestId,
@@ -257,6 +278,51 @@ const TABLES: Table[] = [
       });
       return id;
     },
+  },
+  {
+    table: 'governance_board_appeals',
+    insert: (tx, own, link) =>
+      appealRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        appellantId: own.accountId,
+        number: number++,
+      }),
+  },
+  {
+    table: 'board_motion_recusals',
+    insert: async (tx, own, link) => {
+      const appealId = await appealRow(tx, {
+        tenantId: own.tenantId,
+        unitId: own.unitId,
+        appellantId: own.accountId,
+        number: number++,
+      });
+      const memberId = await seatOn(tx, own, own.termId, own.accountId);
+      const motionId = newId();
+      await tx.boardMotion.create({
+        data: {
+          id: motionId,
+          tenantId: own.tenantId,
+          boardAppealId: appealId,
+          termId: own.termId,
+          proposedByMemberId: memberId,
+          proposedById: own.accountId,
+          outcome: 'uphold',
+          rationale: 'A row',
+          openedAt: new Date(),
+        },
+      });
+      await tx.boardMotionRecusal.create({
+        data: {
+          tenantId: own.tenantId,
+          motionId,
+          accountId: link.accountId,
+        },
+      });
+      return motionId;
+    },
+    key: 'motion_id',
   },
   {
     table: 'board_publications',

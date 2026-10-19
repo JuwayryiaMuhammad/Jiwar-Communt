@@ -863,6 +863,13 @@
         ],
         "type": "object"
       },
+      "AppealMotionOutcome": {
+        "enum": [
+          "uphold",
+          "overturn"
+        ],
+        "type": "string"
+      },
       "AppealViolationDto": {
         "properties": {
           "photoFileId": {
@@ -2459,6 +2466,310 @@
         ],
         "type": "string"
       },
+      "BoardAppealAttachmentView": {
+        "properties": {
+          "fileId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A short-lived read URL; null once the file is gone.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "url"
+        ],
+        "type": "object"
+      },
+      "BoardAppealBoardView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/BoardAppealAttachmentView"
+            },
+            "type": "array"
+          },
+          "deadlineAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "effect": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealEffect"
+              }
+            ],
+            "description": "What the decision did: applied by its domain (a fine or violation cancelled, a suspension lifted), left to the management to follow up, or nothing.",
+            "nullable": true
+          },
+          "followedUpAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "grounds": {
+            "description": "The appellant’s words; null once cleared by their erasure.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealKind"
+              }
+            ]
+          },
+          "lodgedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "motions": {
+            "items": {
+              "$ref": "#/components/schemas/BoardMotionView"
+            },
+            "type": "array"
+          },
+          "overdue": {
+            "description": "Pending past its deadline.",
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "BA-0001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealStatus"
+              }
+            ]
+          },
+          "subject": {
+            "nullable": true,
+            "type": "object"
+          },
+          "subjectId": {
+            "description": "The decision appealed: a fine, a violation, a suspension or a dispute.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "subjectId",
+          "unitCode",
+          "status",
+          "lodgedAt",
+          "deadlineAt",
+          "withdrawnAt",
+          "decision",
+          "overdue",
+          "effect",
+          "followedUpAt",
+          "grounds",
+          "attachments",
+          "subject",
+          "motions"
+        ],
+        "type": "object"
+      },
+      "BoardAppealDecisionView": {
+        "properties": {
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealOutcome"
+              }
+            ]
+          },
+          "rationale": {
+            "description": "The board’s reasons.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "decidedAt",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "BoardAppealEffect": {
+        "description": "What the decision did: applied by its domain (a fine or violation cancelled, a suspension lifted), left to the management to follow up, or nothing.",
+        "enum": [
+          "applied",
+          "follow_up",
+          "none"
+        ],
+        "type": "string"
+      },
+      "BoardAppealKind": {
+        "enum": [
+          "vehicle_fine",
+          "unit_violation",
+          "booking_suspension",
+          "invoice_dispute"
+        ],
+        "type": "string"
+      },
+      "BoardAppealOutcome": {
+        "enum": [
+          "upheld",
+          "overturned"
+        ],
+        "type": "string"
+      },
+      "BoardAppealStatus": {
+        "enum": [
+          "pending",
+          "upheld",
+          "overturned",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "BoardAppealView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/BoardAppealAttachmentView"
+            },
+            "type": "array"
+          },
+          "deadlineAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "grounds": {
+            "description": "The appellant’s words, to the appellant only; null once cleared.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealKind"
+              }
+            ]
+          },
+          "lodgedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller appealed.",
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "BA-0001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealStatus"
+              }
+            ]
+          },
+          "subject": {
+            "description": "The decision appealed, as its domain describes it: codes, amounts, dates.",
+            "nullable": true,
+            "type": "object"
+          },
+          "subjectId": {
+            "description": "The decision appealed: a fine, a violation, a suspension or a dispute.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "subjectId",
+          "unitCode",
+          "status",
+          "lodgedAt",
+          "deadlineAt",
+          "withdrawnAt",
+          "decision",
+          "mine",
+          "grounds",
+          "attachments",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "BoardAppealViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BoardAppealView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BoardApprovalView": {
         "properties": {
           "alternatives": {
@@ -2635,6 +2946,10 @@
             "format": "uuid",
             "type": "string"
           },
+          "myRecusal": {
+            "description": "The caller is recused: no vote, no close (BOARD_MEMBER_RECUSED).",
+            "type": "boolean"
+          },
           "myVote": {
             "allOf": [
               {
@@ -2670,6 +2985,10 @@
           "rationale": {
             "type": "string"
           },
+          "recused": {
+            "description": "Accounts recused from it (an appeal’s: its unit’s people and the appellant), fixed when it opened.",
+            "type": "number"
+          },
           "status": {
             "allOf": [
               {
@@ -2700,6 +3019,8 @@
           "votes",
           "tally",
           "myVote",
+          "recused",
+          "myRecusal",
           "proposedByMe"
         ],
         "type": "object"
@@ -11516,6 +11837,18 @@
       },
       "DisputeView": {
         "properties": {
+          "boardAppealAt": {
+            "description": "When it was taken to the board.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "boardAppealUntil": {
+            "description": "Rejected and not yet taken to the board: until when an owner or the primary may (POST /governance/board-appeals, ADR 0055).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -11583,6 +11916,8 @@
           "mine",
           "status",
           "decision",
+          "boardAppealUntil",
+          "boardAppealAt",
           "createdAt"
         ],
         "type": "object"
@@ -20166,6 +20501,41 @@
         ],
         "type": "string"
       },
+      "LodgeBoardAppealDto": {
+        "properties": {
+          "attachmentIds": {
+            "description": "The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE).",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "grounds": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealKind"
+              }
+            ]
+          },
+          "subjectId": {
+            "description": "The decision: a vehicle fine or a violation whose appeal the staff upheld, a facility suspension in force, a rejected invoice dispute.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "subjectId",
+          "grounds"
+        ],
+        "type": "object"
+      },
       "LogMaterialEntryDto": {
         "properties": {
           "description": {
@@ -26629,6 +26999,28 @@
         "required": [
           "priority",
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ProposeAppealMotionDto": {
+        "properties": {
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppealMotionOutcome"
+              }
+            ]
+          },
+          "rationale": {
+            "description": "The board’s reasoned decision, as the appellant and the management will read it. Write no one’s name.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "rationale"
         ],
         "type": "object"
       },
@@ -33123,6 +33515,115 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffBlocklistEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffBoardAppealView": {
+        "properties": {
+          "deadlineAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "effect": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealEffect"
+              }
+            ],
+            "description": "What the decision did: applied by its domain (a fine or violation cancelled, a suspension lifted), left to the management to follow up, or nothing.",
+            "nullable": true
+          },
+          "followedUpAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealKind"
+              }
+            ]
+          },
+          "lodgedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "overdue": {
+            "description": "Pending past its deadline.",
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "BA-0001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardAppealStatus"
+              }
+            ]
+          },
+          "subjectId": {
+            "description": "The decision appealed: a fine, a violation, a suspension or a dispute.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "subjectId",
+          "unitCode",
+          "status",
+          "lodgedAt",
+          "deadlineAt",
+          "withdrawnAt",
+          "decision",
+          "overdue",
+          "effect",
+          "followedUpAt"
+        ],
+        "type": "object"
+      },
+      "StaffBoardAppealViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffBoardAppealView"
             },
             "type": "array"
           },
@@ -45782,6 +46283,161 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/board/appeals": {
+      "get": {
+        "description": "What awaits the board (`status=pending`) and the rest.",
+        "operationId": "BoardAppealsBoardController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BoardAppealStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardAppealViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The appeals to the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/appeals/{id}": {
+      "get": {
+        "operationId": "BoardAppealsBoardController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardAppealBoardView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read an appeal with its grounds, its subject and the board’s motions",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/appeals/{id}/motions": {
+      "post": {
+        "description": "Uphold or overturn, with the reasons. A member living in or owning the unit, or who appealed, is recused (BOARD_MEMBER_RECUSED); too few left for the quorum: BOARD_QUORUM_UNAVAILABLE.",
+        "operationId": "BoardAppealsBoardController_propose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeAppealMotionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardMotionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Propose a motion on an appeal",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/board/approvals": {
       "get": {
         "description": "What awaits the board (`status=pending`), what waits to be implemented (`approved`), and the rest. A sitting member only.",
@@ -52894,6 +53550,182 @@
           }
         ],
         "summary": "Get the board sitting now",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/board-appeals": {
+      "get": {
+        "description": "And the caller’s own; newest first.",
+        "operationId": "BoardAppealsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardAppealViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The board appeals of the caller’s units",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "An owner of the decision’s unit, or its primary (BOARD_APPEAL_NOT_ALLOWED), within 15 days of the staff’s decision (BOARD_APPEAL_WINDOW_PASSED), once per decision (BOARD_APPEAL_EXISTS); BOARD_APPEAL_NOT_ELIGIBLE when it no longer stands against the unit. A fine or a violation waits for the board: no payment until it decides.",
+        "operationId": "BoardAppealsController_lodge",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LodgeBoardAppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Appeal a staff decision to the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/board-appeals/{id}": {
+      "get": {
+        "operationId": "BoardAppealsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a board appeal",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/board-appeals/{id}/withdraw": {
+      "post": {
+        "description": "The appellant only (BOARD_APPEAL_NOT_YOURS).",
+        "operationId": "BoardAppealsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a pending board appeal",
         "tags": [
           "governance"
         ],
@@ -69023,6 +69855,142 @@
           }
         ],
         "summary": "Get the board’s open term",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board-appeals": {
+      "get": {
+        "description": "Newest first: where each stands, the decision and its reasons, the follow-up. Never the grounds or the board’s deliberation.",
+        "operationId": "StaffBoardAppealsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BoardAppealStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardAppealViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The appeals to the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board-appeals/{id}": {
+      "get": {
+        "operationId": "StaffBoardAppealsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read an appeal to the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board-appeals/{id}/followed-up": {
+      "post": {
+        "description": "An overturn its domain left to the management (a dispute: credit the invoice), once (BOARD_APPEAL_NO_FOLLOW_UP).",
+        "operationId": "StaffBoardAppealsController_followedUp",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark an overturn followed up",
         "tags": [
           "governance"
         ],

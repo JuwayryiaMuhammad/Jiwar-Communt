@@ -1,8 +1,9 @@
 import { Client } from 'pg';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
-import { createAccountRow, createTenant } from '../setup/fixtures';
+import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
+  appealRow,
   approvalRequestRow,
   boardMemberRow,
   boardTermRow,
@@ -115,6 +116,9 @@ describe('Board matters’ tables — CHECKs, triggers and privileges', () => {
       governance_approval_attachments: append,
       board_motions: write,
       board_votes: append,
+      governance_board_appeals: write,
+      governance_board_appeal_attachments: append,
+      board_motion_recusals: append,
     };
     for (const [table, p] of Object.entries(expected))
       expect({ table, ...(await privileges(table)) }).toEqual({
@@ -258,5 +262,104 @@ describe('Board matters’ tables — CHECKs, triggers and privileges', () => {
         `DELETE FROM governance_approval_settings WHERE type = 'major_contract'`,
       ),
     ).rejects.toThrow(/permission denied/);
+  });
+
+  describe('appeals (ADR 0055)', () => {
+    let unitId: string;
+    beforeAll(async () => {
+      unitId = (await createUnit(h, tenantId)).id;
+    });
+    const appeal = () =>
+      inTx((tx) =>
+        appealRow(tx, {
+          tenantId,
+          unitId,
+          appellantId: accountId,
+          number: n++,
+        }),
+      );
+    const motionOn = (appealId: string) =>
+      `INSERT INTO board_motions (id, tenant_id, board_appeal_id, term_id, proposed_by_member_id,
+         proposed_by_account_id, outcome, rationale, opened_at)
+       VALUES (gen_random_uuid(), '${tenantId}', '${appealId}', '${termId}', '${memberId}',
+         '${accountId}', 'overturn', 'r', now())`;
+
+    it('an appeal is kept as lodged; its grounds are cleared once; it moves from pending once', async () => {
+      const id = await appeal();
+      await expect(
+        asApp(
+          `UPDATE governance_board_appeals SET kind = 'vehicle_fine' WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/kept as lodged/);
+      await asApp(
+        `UPDATE governance_board_appeals SET grounds = NULL, grounds_cleared_at = now() WHERE id = '${id}'`,
+      );
+      await expect(
+        asApp(
+          `UPDATE governance_board_appeals SET status = 'withdrawn', withdrawn_at = now(), effect = 'none' WHERE id = '${id}'`,
+          `UPDATE governance_board_appeals SET status = 'pending', withdrawn_at = NULL, effect = NULL WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/moves forward once/);
+      // A follow-up only of an overturn left to the management.
+      await expect(
+        asApp(
+          `UPDATE governance_board_appeals SET status = 'withdrawn', withdrawn_at = now(), effect = 'follow_up' WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/governance_board_appeals_state_shape/);
+    });
+
+    it('one appeal per decision, ever', async () => {
+      const id = await appeal();
+      await expect(
+        asApp(
+          `INSERT INTO governance_board_appeals (id, tenant_id, number, kind, subject_id, unit_id,
+             appellant_account_id, grounds, decision_at, lodged_at, deadline_at)
+           SELECT gen_random_uuid(), tenant_id, number + 1, kind, subject_id, unit_id,
+             appellant_account_id, 'again', decision_at, lodged_at, deadline_at
+             FROM governance_board_appeals WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/governance_board_appeals_one_per_decision/);
+    });
+
+    it('a motion names one matter, with an appeal’s outcomes; at commit an appeal is decided only by it', async () => {
+      const id = await appeal();
+      await expect(
+        asApp(motionOn(id).replace("'overturn'", "'approve'")),
+      ).rejects.toThrow(/board_motions_outcome/);
+      await expect(
+        asApp(
+          `UPDATE governance_board_appeals SET status = 'upheld', decided_at = now(),
+             decided_motion_id = (SELECT id FROM board_motions LIMIT 1), effect = 'none' WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/exactly by one carried motion|foreign key/);
+    });
+
+    it('recusals are written when a motion opens, before any vote, and never change', async () => {
+      const id = await appeal();
+      await inTx(async (tx) => {
+        await tx.$executeRawUnsafe(motionOn(id));
+      });
+      const [{ id: motionId }] = await inTx(
+        (tx) =>
+          tx.$queryRaw<{ id: string }[]>`
+          SELECT id FROM board_motions WHERE board_appeal_id = ${id}::uuid`,
+      );
+      const recuse = `INSERT INTO board_motion_recusals (tenant_id, motion_id, account_id)
+                      VALUES ('${tenantId}', '${motionId}', '${accountId}')`;
+      await asApp(recuse);
+      await expect(
+        asApp(
+          `INSERT INTO board_votes (id, tenant_id, motion_id, member_id, account_id, choice, cast_at)
+             VALUES (gen_random_uuid(), '${tenantId}', '${motionId}', '${memberId}', '${accountId}', 'for', now())`,
+          recuse,
+        ),
+      ).rejects.toThrow(/before any vote/);
+      await expect(
+        asApp(
+          recuse,
+          `DELETE FROM board_motion_recusals WHERE motion_id = '${motionId}'`,
+        ),
+      ).rejects.toThrow(/permission denied/);
+    });
   });
 });

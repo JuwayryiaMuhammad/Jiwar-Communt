@@ -11,6 +11,7 @@ import { BudgetReportService } from './budgets/budget-report.service';
 import { BudgetsController } from './budgets/budgets.controller';
 import { BudgetsService } from './budgets/budgets.service';
 import { ExpensesService } from './budgets/expenses.service';
+import { DisputeBoardAppeals } from './disputes/dispute-board-appeals';
 import { BillingPlansController } from './billing-plans/billing-plans.controller';
 import { BillingPlansService } from './billing-plans/billing-plans.service';
 import { CredentialVault } from './gateway/credential-vault';
@@ -107,6 +108,7 @@ import { PaymentsService } from './payments/payments.service';
     BudgetMatters,
     ExpensesService,
     BudgetReportService,
+    DisputeBoardAppeals,
     FinanceNotices,
     InvoicesService,
     InstalmentsService,

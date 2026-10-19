@@ -42,7 +42,9 @@ export interface MotionRecord {
   votes: (BoardVote & { fullName: string | null })[];
   /** Live while open (the seats that count now), as stored once closed. */
   tally: Tally;
-  mine: { voted: Choice | null; proposed: boolean };
+  /** How many accounts are recused from it (an appeal's). */
+  recused: number;
+  mine: { voted: Choice | null; recused: boolean; proposed: boolean };
 }
 
 export interface NewMotion {
@@ -61,17 +63,21 @@ const seatRequired = () =>
   );
 
 /** The motions of a matter. */
-const ofMatterWhere = (_name: MatterKindName, matterId: string) => ({
-  approvalRequestId: matterId,
-});
+const ofMatterWhere = (name: MatterKindName, matterId: string) =>
+  name === 'approval'
+    ? { approvalRequestId: matterId }
+    : { boardAppealId: matterId };
 
 /** The matter a motion names. */
 const matterOfMotion = (
   m: BoardMotion,
-): { name: MatterKindName; matterId: string } => ({
-  name: 'approval',
-  matterId: m.approvalRequestId!,
-});
+): { name: MatterKindName; matterId: string } =>
+  m.approvalRequestId
+    ? { name: 'approval', matterId: m.approvalRequestId }
+    : { name: 'appeal', matterId: m.boardAppealId! };
+
+/** The board's quorum: a majority of its seats now. */
+const boardQuorum = (seats: number) => Math.floor(seats / 2) + 1;
 
 interface Entered {
   seat: { memberId: string; termId: string };
@@ -172,6 +178,13 @@ export class MotionsService implements OnModuleInit {
           'The matter has an open motion',
           { params: { motionId: open.id } },
         );
+      // Recusal (ADR 0055): the snapshot of who may not act on it, taken
+      // now; the members left must be able to make the board's quorum.
+      const recused = await kind.recusals(tx, matter);
+      if (recused.includes(this.ctx.accountId)) throw memberRecused();
+      const eligible = seats.filter((s) => !recused.includes(s.accountId));
+      if (eligible.length < boardQuorum(seats.length))
+        throw quorumUnavailable(eligible.length, boardQuorum(seats.length));
       const id = newId();
       await this.idempotency.claim(tx, { type: BOARD_MOTION_RESOURCE, id });
       const motion = await tx.boardMotion.create({
@@ -188,6 +201,14 @@ export class MotionsService implements OnModuleInit {
           openedAt: now,
         },
       });
+      if (recused.length)
+        await tx.boardMotionRecusal.createMany({
+          data: recused.map((accountId) => ({
+            tenantId: this.ctx.txTenantId,
+            motionId: id,
+            accountId,
+          })),
+        });
       await this.audit.record(tx, {
         action: 'board_motion.proposed',
         targetId: id,
@@ -204,10 +225,13 @@ export class MotionsService implements OnModuleInit {
           },
           'board_motion.proposed',
         ),
+        metadata: { recused: recused.length },
       });
       await this.notices.send(
         tx,
-        seats.map((s) => s.accountId).filter((a) => a !== this.ctx.accountId),
+        eligible
+          .map((s) => s.accountId)
+          .filter((a) => a !== this.ctx.accountId),
         'governance_motion.proposed',
         id,
         { matter: name },
@@ -221,6 +245,8 @@ export class MotionsService implements OnModuleInit {
       const { kind, matterId } = await this.matterOf(tx, motionId);
       const { seat, seats, matter } = await this.enter(tx, kind, matterId);
       const motion = await this.lockOpen(tx, motionId, seat.termId);
+      const recused = await this.recusedOf(tx, motion.id);
+      if (recused.includes(this.ctx.accountId)) throw memberRecused();
       const already = await tx.boardVote.findFirst({
         where: { motionId, memberId: seat.memberId },
       });
@@ -249,7 +275,9 @@ export class MotionsService implements OnModuleInit {
         metadata: { memberId: seat.memberId, voteId: id },
       });
       const count = await this.countOf(tx, motion, seats);
-      const result = decided(count);
+      // Too few may act (seats ended since it opened): it cannot carry.
+      const result =
+        count.seats.length >= boardQuorum(seats.length) ? decided(count) : null;
       if (result)
         await this.conclude(
           tx,
@@ -277,8 +305,12 @@ export class MotionsService implements OnModuleInit {
       const { kind, matterId } = await this.matterOf(tx, motionId);
       const { seat, seats, matter } = await this.enter(tx, kind, matterId);
       const motion = await this.lockOpen(tx, motionId, seat.termId);
+      if ((await this.recusedOf(tx, motion.id)).includes(this.ctx.accountId))
+        throw memberRecused();
       const now = await dbNow(tx);
       const count = await this.countOf(tx, motion, seats);
+      if (count.seats.length < boardQuorum(seats.length))
+        throw quorumUnavailable(count.seats.length, boardQuorum(seats.length));
       let result: CountResult | null = decided(count);
       if (!result) {
         if (now < matter.deadlineAt)
@@ -478,17 +510,19 @@ export class MotionsService implements OnModuleInit {
     });
   }
 
-  /** The count now, over the seats locked. */
+  /** The count now: the seats locked, less the motion's recused. */
   private async countOf(
     tx: TenantTxClient,
     motion: BoardMotion,
     seats: Entered['seats'],
   ): Promise<Count> {
+    const recused = new Set(await this.recusedOf(tx, motion.id));
+    const counting = seats.filter((s) => !recused.has(s.accountId));
     const votes = await tx.boardVote.findMany({
       where: { motionId: motion.id },
     });
     return {
-      seats: seats.map((s) => s.memberId),
+      seats: counting.map((s) => s.memberId),
       chair: seats.find((s) => s.role === 'chair')?.memberId ?? null,
       votes: new Map(votes.map((v) => [v.memberId, v.choice as Choice])),
     };
@@ -585,6 +619,19 @@ export class MotionsService implements OnModuleInit {
     );
   }
 
+  /** The accounts recused from a motion (none but on an appeal's). */
+  private async recusedOf(
+    tx: TenantTxClient,
+    motionId: string,
+  ): Promise<string[]> {
+    return (
+      await tx.boardMotionRecusal.findMany({
+        where: { motionId },
+        select: { accountId: true },
+      })
+    ).map((r) => r.accountId);
+  }
+
   /** A motion as the board reads it. */
   async record(tx: TenantTxClient, motion: BoardMotion): Promise<MotionRecord> {
     const { name } = matterOfMotion(motion);
@@ -596,6 +643,7 @@ export class MotionsService implements OnModuleInit {
       motion.proposedById,
       ...votes.map((v) => v.accountId),
     ]);
+    const recused = await this.recusedOf(tx, motion.id);
     let t: Tally;
     if (motion.closedAt && motion.sitting !== null)
       t = {
@@ -636,13 +684,28 @@ export class MotionsService implements OnModuleInit {
         fullName: names.get(v.accountId) ?? null,
       })),
       tally: t,
+      recused: recused.length,
       mine: {
         voted: (mine?.choice as Choice | undefined) ?? null,
+        recused: recused.includes(this.ctx.accountId),
         proposed: motion.proposedById === this.ctx.accountId,
       },
     };
   }
 }
+
+const memberRecused = () =>
+  appError.forbidden(
+    ErrorCode.BOARD_MEMBER_RECUSED,
+    'The member is recused from this matter: they live in or own its unit, or appealed',
+  );
+
+const quorumUnavailable = (eligible: number, quorum: number) =>
+  appError.conflict(
+    ErrorCode.BOARD_QUORUM_UNAVAILABLE,
+    'Too few members may act on this matter for the board’s quorum',
+    { params: { eligible, quorum } },
+  );
 
 const matterDecided = (status: string) =>
   appError.conflict(

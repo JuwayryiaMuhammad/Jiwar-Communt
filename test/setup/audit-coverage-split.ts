@@ -483,6 +483,11 @@ export const BOARD_MATTERS_COVERAGE: readonly string[] = [
   'board_motion.proposed',
   'board_motion.closed',
   'board_vote.cast',
+  'governance_board_appeal.lodged',
+  'governance_board_appeal.withdrawn',
+  'governance_board_appeal.decided',
+  'governance_board_appeal.followed_up',
+  'governance_board_appeal.grounds_cleared',
 ];
 
 /**

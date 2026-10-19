@@ -66,6 +66,18 @@ export class BoardMotionView {
   })
   myVote: (typeof VOTE_CHOICES)[number] | null;
   @ApiProperty({
+    type: Number,
+    description:
+      'Accounts recused from it (an appeal’s: its unit’s people and the appellant), fixed when it opened.',
+  })
+  recused: number;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'The caller is recused: no vote, no close (BOARD_MEMBER_RECUSED).',
+  })
+  myRecusal: boolean;
+  @ApiProperty({
     type: Boolean,
     description: 'The caller proposed it: only they withdraw it.',
   })
@@ -96,6 +108,8 @@ export class BoardMotionView {
         against: r.tally.against,
       },
       myVote: r.mine.voted,
+      recused: r.recused,
+      myRecusal: r.mine.recused,
       proposedByMe: r.mine.proposed,
     };
   }

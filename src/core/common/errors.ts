@@ -833,6 +833,39 @@ export const ErrorCode = {
   BOARD_QUORUM_NOT_MET: 'BOARD_QUORUM_NOT_MET',
   /** The matter was decided or withdrawn already (409, params.status). */
   BOARD_MATTER_DECIDED: 'BOARD_MATTER_DECIDED',
+  /**
+   * The member lives in or owns the appeal's unit, or appealed (403): no
+   * motion, no vote, no close on it.
+   */
+  BOARD_MEMBER_RECUSED: 'BOARD_MEMBER_RECUSED',
+  /**
+   * Too few members may act on the appeal for the board's quorum (409,
+   * params.eligible, params.quorum): it waits; past its deadline the
+   * management hears.
+   */
+  BOARD_QUORUM_UNAVAILABLE: 'BOARD_QUORUM_UNAVAILABLE',
+  /** Unknown, another compound's, or not the caller's to see. */
+  BOARD_APPEAL_NOT_FOUND: 'BOARD_APPEAL_NOT_FOUND',
+  /** No such decision of that kind (404). */
+  BOARD_APPEAL_SUBJECT_NOT_FOUND: 'BOARD_APPEAL_SUBJECT_NOT_FOUND',
+  /** Only an owner of the decision's unit, or its primary, appeals (403). */
+  BOARD_APPEAL_NOT_ALLOWED: 'BOARD_APPEAL_NOT_ALLOWED',
+  /**
+   * The decision does not stand against the unit now (409, params.reason:
+   * not_decided | not_against_unit | paid | cancelled | not_in_force |
+   * appealed).
+   */
+  BOARD_APPEAL_NOT_ELIGIBLE: 'BOARD_APPEAL_NOT_ELIGIBLE',
+  /** More than 15 days after the staff decided (409, params.until). */
+  BOARD_APPEAL_WINDOW_PASSED: 'BOARD_APPEAL_WINDOW_PASSED',
+  /** The decision was taken to the board already: one appeal each (409). */
+  BOARD_APPEAL_EXISTS: 'BOARD_APPEAL_EXISTS',
+  /** Decided or withdrawn already (409, params.status). */
+  BOARD_APPEAL_NOT_PENDING: 'BOARD_APPEAL_NOT_PENDING',
+  /** Only the appellant withdraws an appeal (403). */
+  BOARD_APPEAL_NOT_YOURS: 'BOARD_APPEAL_NOT_YOURS',
+  /** Not an overturn left to the management, or followed up already (409). */
+  BOARD_APPEAL_NO_FOLLOW_UP: 'BOARD_APPEAL_NO_FOLLOW_UP',
   // the budget and expenses (ADR 0055)
   /** Unknown, or another compound's. */
   BUDGET_NOT_FOUND: 'BUDGET_NOT_FOUND',

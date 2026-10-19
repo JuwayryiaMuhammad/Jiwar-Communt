@@ -146,6 +146,7 @@ describe('audit catalog', () => {
         'budget_line',
         'expense',
         'expense_authorization',
+        'governance_board_appeal',
       ]).toContain(def.target);
     }
   });

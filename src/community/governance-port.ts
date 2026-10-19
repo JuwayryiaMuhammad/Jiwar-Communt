@@ -26,6 +26,61 @@ export class CommunityGovernancePort {
     return this.capabilities.unitsWhere(tx, accountId, 'governanceVote');
   }
 
+  /**
+   * Who may take a staff decision about a unit to the board (ADR 0055): an
+   * active account that owns the unit now (landlords too), or its primary
+   * occupant (who may be a tenant).
+   */
+  async mayAppealFor(
+    tx: TenantTxClient,
+    accountId: string,
+    unitId: string,
+  ): Promise<boolean> {
+    const account = await tx.account.findUnique({
+      where: { id: accountId },
+      select: { status: true },
+    });
+    if (account?.status !== 'active') return false;
+    return (
+      (await tx.unitOccupancy.count({
+        where: {
+          accountId,
+          unitId,
+          status: 'active',
+          OR: [{ occupancyType: 'owner' }, { isPrimary: true }],
+        },
+      })) > 0
+    );
+  }
+
+  /** The units the account may appeal for now (owned, or its primary's). */
+  async appealUnits(tx: TenantTxClient, accountId: string): Promise<string[]> {
+    const rows = await tx.unitOccupancy.findMany({
+      where: {
+        accountId,
+        status: 'active',
+        OR: [{ occupancyType: 'owner' }, { isPrimary: true }],
+      },
+      select: { unitId: true },
+      distinct: ['unitId'],
+    });
+    return rows.map((r) => r.unitId);
+  }
+
+  /**
+   * Everyone living in or owning the unit now (every active occupancy:
+   * owners, landlords, tenants): who is recused from the board's motion on
+   * an appeal about it (ADR 0055).
+   */
+  async unitPeople(tx: TenantTxClient, unitId: string): Promise<string[]> {
+    const rows = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active' },
+      select: { accountId: true },
+      distinct: ['accountId'],
+    });
+    return rows.map((r) => r.accountId).sort();
+  }
+
   /** Whether the account may sit on the board or stand: it owns a unit. */
   async isOwner(tx: TenantTxClient, accountId: string): Promise<boolean> {
     const account = await tx.account.findUnique({

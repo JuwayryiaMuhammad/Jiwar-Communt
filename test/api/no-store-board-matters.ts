@@ -1,5 +1,5 @@
 import type { Response } from 'supertest';
-import { today } from '../setup/compound-clock';
+import { day, today } from '../setup/compound-clock';
 import { fileHelpers } from '../setup/files';
 import { superuserSql } from '../setup/governance';
 import { call } from './request';
@@ -266,6 +266,113 @@ export function budgetCalls(
     'GET /staff/finance/reports/budget-vs-actual/export': async () => {
       await anActive();
       return manager('GET', '/staff/finance/reports/budget-vs-actual/export');
+    },
+  };
+}
+
+/**
+ * A real call for each appeal-to-the-board route (ADR 0055): a rejected
+ * invoice dispute of A's home appealed by A's owner (its primary), the
+ * board's routes as A's landlord.
+ */
+export function appealCalls(
+  world: () => World,
+  sitting: () => Promise<void>,
+): Record<string, () => Promise<Response>> {
+  const as =
+    (persona: 'manager' | 'landlord' | 'owner') =>
+    (method: 'GET' | 'POST', path: string, payload?: object) =>
+      call(world(), method, path, {
+        token: world().a.tokens[persona],
+        body: payload,
+      });
+  const manager = as('manager');
+  const owner = as('owner');
+  const member = as('landlord');
+  const id = (res: Response) => (res.body as { id: string }).id;
+
+  /** A rejected dispute of an invoice to A's home: its id. */
+  const aRejectedDispute = async () => {
+    const batch = id(
+      await manager('POST', '/staff/invoices', {
+        target: 'unit',
+        unitId: world().a.homeUnitId,
+        kind: 'service_charge',
+        dueOn: day(10),
+        lines: [
+          {
+            descriptionEn: 'Service charge',
+            descriptionAr: 'رسوم الخدمات',
+            amount: '100',
+          },
+        ],
+      }).expect(201),
+    );
+    const invoiceId = (
+      (await manager('GET', `/staff/invoices?batchId=${batch}`).expect(200))
+        .body as { data: { id: string }[] }
+    ).data[0].id;
+    const disputeId = id(
+      await owner('POST', `/invoices/${invoiceId}/disputes`, {
+        reasonCode: 'wrong_amount',
+      }).expect(201),
+    );
+    await manager('POST', `/staff/invoice-disputes/${disputeId}/decide`, {
+      decision: 'reject',
+      reasonCode: 'charge_is_correct',
+    }).expect(201);
+    return disputeId;
+  };
+  const lodgeOne = async () =>
+    owner('POST', '/governance/board-appeals', {
+      kind: 'invoice_dispute',
+      subjectId: await aRejectedDispute(),
+      grounds: 'No-store grounds',
+    });
+  const anAppeal = async () => id(created(await lodgeOne()));
+  /** Overturned and left to the management: written straight in (no vote). */
+  const anOverturned = async () => {
+    const appealId = await anAppeal();
+    await superuserSql(
+      `UPDATE governance_board_appeals SET status = 'overturned', decided_at = now(),
+              decided_motion_id = gen_random_uuid(), effect = 'follow_up'
+        WHERE id = $1`,
+      [appealId],
+    );
+    return appealId;
+  };
+
+  return {
+    'POST /governance/board-appeals': () => lodgeOne(),
+    'GET /governance/board-appeals': () =>
+      owner('GET', '/governance/board-appeals'),
+    'GET /governance/board-appeals/{id}': async () =>
+      owner('GET', `/governance/board-appeals/${await anAppeal()}`),
+    'POST /governance/board-appeals/{id}/withdraw': async () =>
+      owner('POST', `/governance/board-appeals/${await anAppeal()}/withdraw`),
+    'GET /staff/governance/board-appeals': () =>
+      manager('GET', '/staff/governance/board-appeals'),
+    'GET /staff/governance/board-appeals/{id}': async () =>
+      manager('GET', `/staff/governance/board-appeals/${await anAppeal()}`),
+    'POST /staff/governance/board-appeals/{id}/followed-up': async () =>
+      manager(
+        'POST',
+        `/staff/governance/board-appeals/${await anOverturned()}/followed-up`,
+      ),
+    'GET /board/appeals': async () => {
+      await sitting();
+      return member('GET', '/board/appeals');
+    },
+    'GET /board/appeals/{id}': async () => {
+      await sitting();
+      return member('GET', `/board/appeals/${await anAppeal()}`);
+    },
+    'POST /board/appeals/{id}/motions': async () => {
+      await sitting();
+      return member('POST', `/board/appeals/${await anAppeal()}/motions`, {
+        outcome: 'uphold',
+        rationale: 'The charge stands.',
+      });
     },
   };
 }

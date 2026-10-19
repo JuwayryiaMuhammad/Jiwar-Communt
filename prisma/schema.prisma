@@ -5462,20 +5462,22 @@ enum InvoiceDisputeStatus {
 /// words and photo (cleared on the opener's erasure), and the staff's
 /// decision, made once. One open dispute per invoice.
 model InvoiceDispute {
-  id                 String               @id @db.Uuid
-  tenantId           String               @map("tenant_id") @db.Uuid
-  invoiceId          String               @map("invoice_id") @db.Uuid
-  unitId             String               @map("unit_id") @db.Uuid
-  openedById         String               @map("opened_by_account_id") @db.Uuid
-  reasonCode         String               @map("reason_code")
-  text               String?
-  photoFileId        String?              @map("photo_file_id") @db.Uuid
-  textClearedAt      DateTime?            @map("text_cleared_at") @db.Timestamptz(3)
-  status             InvoiceDisputeStatus @default(open)
-  decidedById        String?              @map("decided_by_account_id") @db.Uuid
-  decidedAt          DateTime?            @map("decided_at") @db.Timestamptz(3)
-  decisionReasonCode String?              @map("decision_reason_code")
-  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  id                  String               @id @db.Uuid
+  tenantId            String               @map("tenant_id") @db.Uuid
+  invoiceId           String               @map("invoice_id") @db.Uuid
+  unitId              String               @map("unit_id") @db.Uuid
+  openedById          String               @map("opened_by_account_id") @db.Uuid
+  reasonCode          String               @map("reason_code")
+  text                String?
+  photoFileId         String?              @map("photo_file_id") @db.Uuid
+  textClearedAt       DateTime?            @map("text_cleared_at") @db.Timestamptz(3)
+  status              InvoiceDisputeStatus @default(open)
+  decidedById         String?              @map("decided_by_account_id") @db.Uuid
+  decidedAt           DateTime?            @map("decided_at") @db.Timestamptz(3)
+  decisionReasonCode  String?              @map("decision_reason_code")
+  boardAppealAt       DateTime?            @map("board_appeal_at") @db.Timestamptz(3)
+  boardAppealClosedAt DateTime?            @map("board_appeal_closed_at") @db.Timestamptz(3)
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
 
   invoice    Invoice     @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   unit       Unit        @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
@@ -6969,6 +6971,7 @@ model BoardMotion {
   id                 String    @id @db.Uuid
   tenantId           String    @map("tenant_id") @db.Uuid
   approvalRequestId  String?   @map("approval_request_id") @db.Uuid
+  boardAppealId      String?   @map("board_appeal_id") @db.Uuid
   termId             String    @map("term_id") @db.Uuid
   proposedByMemberId String    @map("proposed_by_member_id") @db.Uuid
   proposedById       String    @map("proposed_by_account_id") @db.Uuid
@@ -6985,6 +6988,7 @@ model BoardMotion {
 
   @@unique([tenantId, id])
   @@index([tenantId, approvalRequestId, openedAt, id], map: "board_motions_request_idx")
+  @@index([tenantId, boardAppealId, openedAt, id], map: "board_motions_appeal_idx")
   @@map("board_motions")
 }
 
@@ -7002,6 +7006,63 @@ model BoardVote {
   @@unique([tenantId, motionId, memberId], map: "board_votes_once")
   @@index([tenantId, accountId, castAt, id], map: "board_votes_account_idx")
   @@map("board_votes")
+}
+
+/// An appeal to the board of a staff decision (ADR 0055): kept as lodged
+/// (but its grounds, cleared once on the appellant's erasure); pending, then
+/// upheld or overturned by a carried motion, or withdrawn; one per decision.
+model GovernanceBoardAppeal {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  number            Int
+  kind              String
+  subjectId         String    @map("subject_id") @db.Uuid
+  unitId            String    @map("unit_id") @db.Uuid
+  appellantId       String    @map("appellant_account_id") @db.Uuid
+  grounds           String?
+  groundsClearedAt  DateTime? @map("grounds_cleared_at") @db.Timestamptz(3)
+  decisionAt        DateTime  @map("decision_at") @db.Timestamptz(3)
+  lodgedAt          DateTime  @map("lodged_at") @db.Timestamptz(3)
+  deadlineAt        DateTime  @map("deadline_at") @db.Timestamptz(3)
+  status            String    @default("pending")
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedMotionId   String?   @map("decided_motion_id") @db.Uuid
+  withdrawnAt       DateTime? @map("withdrawn_at") @db.Timestamptz(3)
+  effect            String?
+  followedUpAt      DateTime? @map("followed_up_at") @db.Timestamptz(3)
+  followedUpById    String?   @map("followed_up_by_account_id") @db.Uuid
+  overdueNotifiedAt DateTime? @map("overdue_notified_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "governance_board_appeals_number_key")
+  @@unique([tenantId, kind, subjectId], map: "governance_board_appeals_one_per_decision")
+  @@index([tenantId, status, lodgedAt, id], map: "governance_board_appeals_status_idx")
+  @@index([tenantId, unitId, lodgedAt, id], map: "governance_board_appeals_unit_idx")
+  @@index([tenantId, appellantId], map: "governance_board_appeals_appellant_idx")
+  @@map("governance_board_appeals")
+}
+
+/// An appeal's attached file, in order (ADR 0055). Never changed.
+model GovernanceBoardAppealAttachment {
+  tenantId String @map("tenant_id") @db.Uuid
+  appealId String @map("appeal_id") @db.Uuid
+  fileId   String @map("file_id") @db.Uuid
+  position Int    @db.SmallInt
+
+  @@id([tenantId, appealId, position])
+  @@unique([tenantId, fileId], map: "governance_board_appeal_attachments_file_key")
+  @@map("governance_board_appeal_attachments")
+}
+
+/// An account recused from a motion on an appeal (ADR 0055): written when
+/// it opens. Never changed.
+model BoardMotionRecusal {
+  tenantId  String @map("tenant_id") @db.Uuid
+  motionId  String @map("motion_id") @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+
+  @@id([tenantId, motionId, accountId])
+  @@map("board_motion_recusals")
 }
 
 // ============================================================================

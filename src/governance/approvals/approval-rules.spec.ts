@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { BOARD_APPEAL_KINDS } from '../../core/board-matters/board-matters';
 import { REASON_CODES } from '../../core/common/reasons';
 import {
   APPROVAL_TYPES,
@@ -32,6 +33,12 @@ describe('board matters’ lists (ADR 0055)', () => {
       expect(settings).toContain(
         `(t."id", '${type}', ${DEFAULT_DEADLINE_DAYS[type]})`,
       );
+  });
+
+  it('the appeal kinds are their CHECK’s', () => {
+    expect(
+      read('prisma/migrations/20261102090700_board_appeals/migration.sql'),
+    ).toContain(`"kind" IN (${quoted(BOARD_APPEAL_KINDS)})`);
   });
 
   it('a withdrawal’s codes are its CHECK’s and the mirror’s', () => {

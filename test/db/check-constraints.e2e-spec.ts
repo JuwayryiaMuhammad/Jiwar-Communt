@@ -1264,7 +1264,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'num_nonnulls() counts NULLs: never NULL',
   },
   board_motions_outcome: {
-    guarded: 'approval_request_id IS NULL is tested first; outcome is NOT NULL',
+    guarded:
+      'approval_request_id IS NULL and board_appeal_id IS NULL are tested first; outcome is NOT NULL',
   },
   board_motions_texts: {
     guarded:
@@ -1275,6 +1276,20 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'CASE treats a NULL result as the ELSE branch; votes_for IS NULL is tested first and the others under IS NOT NULL; closed_at IS NULL before its comparison',
   },
   board_votes_choice: {},
+  governance_board_appeals_kind: {},
+  governance_board_appeals_number_positive: {},
+  governance_board_appeals_grounds: {
+    guarded: 'grounds IS NULL is tested first; its length runs only on a value',
+  },
+  governance_board_appeals_state_shape: {
+    guarded:
+      'effect and overdue_notified_at are tested IS NULL first (IS DISTINCT FROM for effect); deadline_at, lodged_at and decision_at are NOT NULL',
+  },
+  governance_board_appeal_attachments_position: {},
+  invoice_disputes_board_appeal: {
+    guarded:
+      'board_appeal_at and board_appeal_closed_at only under IS [NOT] NULL; status is NOT NULL',
+  },
   finance_settings_fiscal_year_start_month: {},
   finance_budgets_period: {},
   // Nullable columns only under IS [NOT] NULL.

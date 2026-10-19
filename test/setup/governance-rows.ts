@@ -322,3 +322,33 @@ export async function motionRow(
   });
   return id;
 }
+
+/** A pending appeal to the board of a made-up decision about a unit; its id. */
+export async function appealRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    unitId: string;
+    appellantId: string;
+    number?: number;
+  },
+): Promise<string> {
+  const id = newId();
+  const lodgedAt = new Date(Date.now() - DAY);
+  await tx.governanceBoardAppeal.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      number: r.number ?? 9000,
+      kind: 'invoice_dispute',
+      subjectId: newId(),
+      unitId: r.unitId,
+      appellantId: r.appellantId,
+      grounds: 'A row',
+      decisionAt: new Date(lodgedAt.getTime() - DAY),
+      lodgedAt,
+      deadlineAt: new Date(lodgedAt.getTime() + 30 * DAY),
+    },
+  });
+  return id;
+}

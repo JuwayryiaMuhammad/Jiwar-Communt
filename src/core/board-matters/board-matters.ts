@@ -105,7 +105,6 @@ export interface ApprovalKindHandler {
 
 /** Why a decision may not be taken to the board, as `params.reason`. */
 export type AppealRefusal =
-  | 'not_found'
   | 'not_decided'
   | 'not_against_unit'
   | 'paid'
@@ -119,14 +118,20 @@ export type AppealRefusal =
  */
 export interface AppealKindHandler {
   /**
-   * Locks the decision's row (or its unit's lock) and says whether it
-   * stands against the unit now: its unit and when the staff decided, or
-   * why not. Read again after the lock.
+   * Locks the decision's row (or its unit's lock), reads it again, and says
+   * whose it is and whether it stands against the unit now: its unit, when
+   * the staff decided, or why not. Null when there is no such decision.
+   * The unit comes with a refusal too: governance first checks the caller
+   * may appeal for it, then says why not.
    */
   resolve(
     tx: TenantTxClient,
     subjectId: string,
-  ): Promise<{ unitId: string; decidedAt: Date } | { refused: AppealRefusal }>;
+  ): Promise<{
+    unitId: string;
+    decidedAt: Date | null;
+    refused: AppealRefusal | null;
+  } | null>;
   /** Marks the decision appealed (the domain refuses what would moot it). */
   lodged(tx: TenantTxClient, subjectId: string, now: Date): Promise<void>;
   /**

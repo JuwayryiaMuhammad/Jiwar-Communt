@@ -5,6 +5,12 @@ import { FilesModule } from '../core/files/files.module';
 import { EngagementModule } from '../engagement';
 import { GovernanceAccess } from './access';
 import {
+  BoardAppealsBoardController,
+  BoardAppealsController,
+  StaffBoardAppealsController,
+} from './appeals/appeals.controller';
+import { BoardAppealsService } from './appeals/appeals.service';
+import {
   BoardApprovalsController,
   StaffApprovalsController,
 } from './approvals/approvals.controller';
@@ -44,7 +50,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
 /**
  * Governance (ADR 0051, 0055): the owners' board, its polls and elections,
  * its decisions and minutes, and what the board decides by motions:
- * approval requests. Reads community through its index, and engagement for
+ * approval requests and appeals to the board. Reads community through its index, and engagement for
  * the board's notices; nothing imports it. What a decision does in another
  * domain is that domain's, registered with core's BoardMatters.
  */
@@ -68,6 +74,9 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     BoardApprovalsController,
     BoardMotionsController,
     GovernanceSettingsController,
+    BoardAppealsController,
+    StaffBoardAppealsController,
+    BoardAppealsBoardController,
   ],
   providers: [
     GovernanceAccess,
@@ -86,6 +95,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     GovernanceSettingsService,
     MotionsService,
     ApprovalsService,
+    BoardAppealsService,
     MatterSweeps,
   ],
 })

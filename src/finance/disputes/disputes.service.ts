@@ -40,6 +40,9 @@ import type {
 } from './views/dispute.views';
 
 export const DISPUTE_RESOURCE = 'invoice_dispute';
+/** A rejected dispute is taken to the board within this many days (ADR 0055). */
+const BOARD_APPEAL_DAYS = 15;
+const DAY_MS = 86_400_000;
 export const DISPUTE_DECISION_RESOURCE = 'invoice_dispute_decision';
 /** How many disputes one invoice may have, in all (ADR 0048). */
 export const MAX_DISPUTES_PER_INVOICE = 3;
@@ -454,8 +457,20 @@ export class DisputesService implements OnModuleInit {
       mine,
       status: d.status,
       decision: await this.decision(tx, d),
+      boardAppealUntil: await this.boardAppealUntil(tx, d),
+      boardAppealAt: d.boardAppealAt,
       createdAt: d.createdAt,
     };
+  }
+
+  /** A rejected dispute not yet taken to the board, within its 15 days (ADR 0055). */
+  private async boardAppealUntil(
+    tx: TenantTxClient,
+    d: InvoiceDispute,
+  ): Promise<Date | null> {
+    if (d.status !== 'rejected' || d.boardAppealAt || !d.decidedAt) return null;
+    const until = new Date(d.decidedAt.getTime() + BOARD_APPEAL_DAYS * DAY_MS);
+    return (await dbNow(tx)) < until ? until : null;
   }
 
   private async staffView(

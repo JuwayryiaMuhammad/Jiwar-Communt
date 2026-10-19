@@ -437,6 +437,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/board/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The appeals to the board
+         * @description What awaits the board (`status=pending`) and the rest.
+         */
+        get: operations["BoardAppealsBoardController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/appeals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an appeal with its grounds, its subject and the board’s motions */
+        get: operations["BoardAppealsBoardController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/appeals/{id}/motions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Propose a motion on an appeal
+         * @description Uphold or overturn, with the reasons. A member living in or owning the unit, or who appealed, is recused (BOARD_MEMBER_RECUSED); too few left for the quorum: BOARD_QUORUM_UNAVAILABLE.
+         */
+        post: operations["BoardAppealsBoardController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/board/approvals": {
         parameters: {
             query?: never;
@@ -3110,6 +3167,67 @@ export interface paths {
         get: operations["GovernanceBoardController_now"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/board-appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The board appeals of the caller’s units
+         * @description And the caller’s own; newest first.
+         */
+        get: operations["BoardAppealsController_list"];
+        put?: never;
+        /**
+         * Appeal a staff decision to the board
+         * @description An owner of the decision’s unit, or its primary (BOARD_APPEAL_NOT_ALLOWED), within 15 days of the staff’s decision (BOARD_APPEAL_WINDOW_PASSED), once per decision (BOARD_APPEAL_EXISTS); BOARD_APPEAL_NOT_ELIGIBLE when it no longer stands against the unit. A fine or a violation waits for the board: no payment until it decides.
+         */
+        post: operations["BoardAppealsController_lodge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/board-appeals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a board appeal */
+        get: operations["BoardAppealsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/board-appeals/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw a pending board appeal
+         * @description The appellant only (BOARD_APPEAL_NOT_YOURS).
+         */
+        post: operations["BoardAppealsController_withdraw"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8561,6 +8679,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/board-appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The appeals to the board
+         * @description Newest first: where each stands, the decision and its reasons, the follow-up. Never the grounds or the board’s deliberation.
+         */
+        get: operations["StaffBoardAppealsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/board-appeals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an appeal to the board */
+        get: operations["StaffBoardAppealsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/board-appeals/{id}/followed-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark an overturn followed up
+         * @description An overturn its domain left to the management (a dispute: credit the invoice), once (BOARD_APPEAL_NO_FOLLOW_UP).
+         */
+        post: operations["StaffBoardAppealsController_followedUp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/governance/board/appoint": {
         parameters: {
             query?: never;
@@ -13704,6 +13879,8 @@ export interface components {
             /** @description Why: the appellant’s words. */
             reason: string;
         };
+        /** @enum {string} */
+        AppealMotionOutcome: "uphold" | "overturn";
         AppealViolationDto: {
             /**
              * Format: uuid
@@ -14170,6 +14347,94 @@ export interface components {
         BlocklistStatus: "active" | "expired" | "lifted";
         /** @enum {string} */
         BlocklistSubject: "plate" | "person";
+        BoardAppealAttachmentView: {
+            /** Format: uuid */
+            fileId: string;
+            /** @description A short-lived read URL; null once the file is gone. */
+            url: string | null;
+        };
+        BoardAppealBoardView: {
+            attachments: components["schemas"]["BoardAppealAttachmentView"][];
+            /** Format: date-time */
+            deadlineAt: string;
+            decision: components["schemas"]["BoardAppealDecisionView"] | null;
+            /** @description What the decision did: applied by its domain (a fine or violation cancelled, a suspension lifted), left to the management to follow up, or nothing. */
+            effect: components["schemas"]["BoardAppealEffect"] | null;
+            /** Format: date-time */
+            followedUpAt: string | null;
+            /** @description The appellant’s words; null once cleared by their erasure. */
+            grounds: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BoardAppealKind"];
+            /** Format: date-time */
+            lodgedAt: string;
+            motions: components["schemas"]["BoardMotionView"][];
+            /** @description Pending past its deadline. */
+            overdue: boolean;
+            /** @example BA-0001 */
+            reference: string;
+            status: components["schemas"]["BoardAppealStatus"];
+            subject: Record<string, never> | null;
+            /**
+             * Format: uuid
+             * @description The decision appealed: a fine, a violation, a suspension or a dispute.
+             */
+            subjectId: string;
+            unitCode: string;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        BoardAppealDecisionView: {
+            /** Format: date-time */
+            decidedAt: string;
+            outcome: components["schemas"]["BoardAppealOutcome"];
+            /** @description The board’s reasons. */
+            rationale: string;
+        };
+        /**
+         * @description What the decision did: applied by its domain (a fine or violation cancelled, a suspension lifted), left to the management to follow up, or nothing.
+         * @enum {string}
+         */
+        BoardAppealEffect: "applied" | "follow_up" | "none";
+        /** @enum {string} */
+        BoardAppealKind: "vehicle_fine" | "unit_violation" | "booking_suspension" | "invoice_dispute";
+        /** @enum {string} */
+        BoardAppealOutcome: "upheld" | "overturned";
+        /** @enum {string} */
+        BoardAppealStatus: "pending" | "upheld" | "overturned" | "withdrawn";
+        BoardAppealView: {
+            attachments: components["schemas"]["BoardAppealAttachmentView"][];
+            /** Format: date-time */
+            deadlineAt: string;
+            decision: components["schemas"]["BoardAppealDecisionView"] | null;
+            /** @description The appellant’s words, to the appellant only; null once cleared. */
+            grounds: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BoardAppealKind"];
+            /** Format: date-time */
+            lodgedAt: string;
+            /** @description The caller appealed. */
+            mine: boolean;
+            /** @example BA-0001 */
+            reference: string;
+            status: components["schemas"]["BoardAppealStatus"];
+            /** @description The decision appealed, as its domain describes it: codes, amounts, dates. */
+            subject: Record<string, never> | null;
+            /**
+             * Format: uuid
+             * @description The decision appealed: a fine, a violation, a suspension or a dispute.
+             */
+            subjectId: string;
+            unitCode: string;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        BoardAppealViewList: {
+            data: components["schemas"]["BoardAppealView"][];
+            nextCursor: string | null;
+        };
         BoardApprovalView: {
             alternatives: components["schemas"]["ApprovalAlternativeView"][];
             attachments: components["schemas"]["ApprovalAttachmentView"][];
@@ -14217,6 +14482,8 @@ export interface components {
             closedAt: string | null;
             /** Format: uuid */
             id: string;
+            /** @description The caller is recused: no vote, no close (BOARD_MEMBER_RECUSED). */
+            myRecusal: boolean;
             /** @description The caller’s vote, if any. */
             myVote: components["schemas"]["BoardVoteChoice"] | null;
             /** Format: date-time */
@@ -14228,6 +14495,8 @@ export interface components {
             proposedByMemberId: string;
             proposedByName: string | null;
             rationale: string;
+            /** @description Accounts recused from it (an appeal’s: its unit’s people and the appellant), fixed when it opened. */
+            recused: number;
             status: components["schemas"]["BoardMotionStatus"];
             tally: components["schemas"]["BoardTallyView"];
             votes: components["schemas"]["BoardVoteView"][];
@@ -17145,6 +17414,16 @@ export interface components {
             reasonCode: string | null;
         };
         DisputeView: {
+            /**
+             * Format: date-time
+             * @description When it was taken to the board.
+             */
+            boardAppealAt: string | null;
+            /**
+             * Format: date-time
+             * @description Rejected and not yet taken to the board: until when an owner or the primary may (POST /governance/board-appeals, ADR 0055).
+             */
+            boardAppealUntil: string | null;
             /** Format: date-time */
             createdAt: string;
             decision: components["schemas"]["DisputeDecisionView"] | null;
@@ -19718,6 +19997,17 @@ export interface components {
         };
         /** @enum {string} */
         LockdownScope: "gate" | "all";
+        LodgeBoardAppealDto: {
+            /** @description The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE). */
+            attachmentIds?: string[];
+            grounds: string;
+            kind: components["schemas"]["BoardAppealKind"];
+            /**
+             * Format: uuid
+             * @description The decision: a vehicle fine or a violation whose appeal the staff upheld, a facility suspension in force, a rejected invoice dispute.
+             */
+            subjectId: string;
+        };
         LogMaterialEntryDto: {
             /** @example 20 bags of cement, 4 boxes of tiles */
             description: string;
@@ -21768,6 +22058,11 @@ export interface components {
             /** @description From the closed list `ticketPriority`. */
             reasonCode: string;
         };
+        ProposeAppealMotionDto: {
+            outcome: components["schemas"]["AppealMotionOutcome"];
+            /** @description The board’s reasoned decision, as the appellant and the management will read it. Write no one’s name. */
+            rationale: string;
+        };
         ProposeApprovalMotionDto: {
             /** @description Why the package’s alternatives were not taken. */
             alternativesNote?: string;
@@ -23782,6 +24077,37 @@ export interface components {
         };
         StaffBlocklistEntryViewList: {
             data: components["schemas"]["StaffBlocklistEntryView"][];
+            nextCursor: string | null;
+        };
+        StaffBoardAppealView: {
+            /** Format: date-time */
+            deadlineAt: string;
+            decision: components["schemas"]["BoardAppealDecisionView"] | null;
+            /** @description What the decision did: applied by its domain (a fine or violation cancelled, a suspension lifted), left to the management to follow up, or nothing. */
+            effect: components["schemas"]["BoardAppealEffect"] | null;
+            /** Format: date-time */
+            followedUpAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BoardAppealKind"];
+            /** Format: date-time */
+            lodgedAt: string;
+            /** @description Pending past its deadline. */
+            overdue: boolean;
+            /** @example BA-0001 */
+            reference: string;
+            status: components["schemas"]["BoardAppealStatus"];
+            /**
+             * Format: uuid
+             * @description The decision appealed: a fine, a violation, a suspension or a dispute.
+             */
+            subjectId: string;
+            unitCode: string;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        StaffBoardAppealViewList: {
+            data: components["schemas"]["StaffBoardAppealView"][];
             nextCursor: string | null;
         };
         StaffBoardNowView: {
@@ -27811,6 +28137,79 @@ export interface operations {
             };
         };
     };
+    BoardAppealsBoardController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["BoardAppealStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardAppealViewList"];
+                };
+            };
+        };
+    };
+    BoardAppealsBoardController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardAppealBoardView"];
+                };
+            };
+        };
+    };
+    BoardAppealsBoardController_propose: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeAppealMotionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardMotionView"];
+                };
+            };
+        };
+    };
     BoardApprovalsController_list: {
         parameters: {
             query?: {
@@ -31533,6 +31932,97 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardNowView"];
+                };
+            };
+        };
+    };
+    BoardAppealsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardAppealViewList"];
+                };
+            };
+        };
+    };
+    BoardAppealsController_lodge: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LodgeBoardAppealDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardAppealView"];
+                };
+            };
+        };
+    };
+    BoardAppealsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardAppealView"];
+                };
+            };
+        };
+    };
+    BoardAppealsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardAppealView"];
                 };
             };
         };
@@ -40025,6 +40515,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffBoardNowView"];
+                };
+            };
+        };
+    };
+    StaffBoardAppealsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["BoardAppealStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardAppealViewList"];
+                };
+            };
+        };
+    };
+    StaffBoardAppealsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardAppealView"];
+                };
+            };
+        };
+    };
+    StaffBoardAppealsController_followedUp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardAppealView"];
                 };
             };
         };

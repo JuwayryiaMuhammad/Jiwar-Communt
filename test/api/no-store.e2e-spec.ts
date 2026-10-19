@@ -24,7 +24,11 @@ import {
   CONTEST_CLOSE_SWEEP,
   CONTEST_OPEN_SWEEP,
 } from '../../src/governance/contests/contest-sweeps';
-import { boardMatterCalls, budgetCalls } from './no-store-board-matters';
+import {
+  appealCalls,
+  boardMatterCalls,
+  budgetCalls,
+} from './no-store-board-matters';
 import { call } from './request';
 import { ROUTES } from './routes';
 import { inviteBody, minorBody } from './routes/household';
@@ -3078,6 +3082,7 @@ describe('API v0 — no-store', () => {
     ...childrenCalls(() => w),
     ...boardMatterCalls(() => w, aSittingBoard),
     ...budgetCalls(() => w, aSittingBoard),
+    ...appealCalls(() => w, aSittingBoard),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

@@ -2,6 +2,7 @@ import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
 import { budgetLineRow, budgetRow, expenseRow } from '../setup/finance-rows';
 import {
+  appealRow,
   approvalRequestRow,
   boardMemberRow,
   boardTermRow,
@@ -23,6 +24,8 @@ export interface BoardMattersWorld {
   /** A draft budget of B's, and an expense on its line (ADR 0055). */
   bBudgetId: string;
   bExpenseId: string;
+  /** A pending appeal of B's owner about B's home. */
+  bBoardAppealId: string;
 }
 
 export async function boardMattersWorld(
@@ -69,6 +72,11 @@ export async function boardMattersWorld(
       });
       return {
         bApprovalId,
+        bBoardAppealId: await appealRow(tx, {
+          tenantId: b.tenantId,
+          unitId: b.homeUnitId,
+          appellantId: b.ids.owner,
+        }),
         bBudgetId,
         bExpenseId: await expenseRow(tx, {
           tenantId: b.tenantId,

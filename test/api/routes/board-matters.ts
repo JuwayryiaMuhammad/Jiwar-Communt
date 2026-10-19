@@ -434,3 +434,165 @@ export const BUDGET_REPORT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+const APPEAL_KINDS = [
+  'vehicle_fine',
+  'unit_violation',
+  'booking_suspension',
+  'invoice_dispute',
+];
+const APPEAL_STATUSES = ['pending', 'upheld', 'overturned', 'withdrawn'];
+
+/** Appeals to the board (ADR 0055): the owners', the management's, the board's. */
+export const BOARD_APPEAL_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/governance/board-appeals',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: {
+        kind: 'king',
+        subjectId: '0193b8a4-0000-7000-8000-000000000000',
+        grounds: 'g',
+      },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: APPEAL_KINDS },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/governance/board-appeals',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: pageInvalid,
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/governance/board-appeals/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBoardAppealId }),
+      code: 'BOARD_APPEAL_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/board-appeals/{id}/withdraw',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBoardAppealId }),
+      code: 'BOARD_APPEAL_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/governance/board-appeals',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'king' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: APPEAL_STATUSES },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/governance/board-appeals/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bBoardAppealId }),
+      code: 'BOARD_APPEAL_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/governance/board-appeals/{id}/followed-up',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bBoardAppealId }),
+      code: 'BOARD_APPEAL_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/board/appeals',
+    auth: 'tenant',
+    as: 'landlord',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: pageInvalid,
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/board/appeals/{id}',
+    auth: 'tenant',
+    as: 'landlord',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bBoardAppealId }),
+      code: 'BOARD_APPEAL_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/board/appeals/{id}/motions',
+    auth: 'tenant',
+    as: 'landlord',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bBoardAppealId }),
+      body: () => ({ outcome: 'uphold', rationale: 'Sound.' }),
+      code: 'BOARD_APPEAL_NOT_FOUND',
+    },
+    invalid: {
+      body: { outcome: 'approve', rationale: 'Sound.' },
+      fields: [
+        {
+          field: 'outcome',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['uphold', 'overturn'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+];

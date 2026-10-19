@@ -156,6 +156,7 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
             SELECT id FROM governance_approval_requests
              WHERE id = ${id}::uuid FOR UPDATE SKIP LOCKED`
         ).length > 0,
+      recusals: () => Promise.resolve([]),
       decide: (tx, ev) => this.decide(tx, ev),
     });
   }

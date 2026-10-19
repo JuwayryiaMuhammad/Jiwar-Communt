@@ -494,6 +494,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   board_motions_one_open_per_request: null,
   board_votes_tenant_id_id_key: null,
   board_votes_once: null,
+  // One appeal per decision, decided under the decision's lock (the service
+  // answers BOARD_APPEAL_EXISTS); one open motion per appeal.
+  governance_board_appeals_tenant_id_id_key: null,
+  governance_board_appeals_number_key: null,
+  governance_board_appeals_one_per_decision: null,
+  governance_board_appeals_motion_key: null,
+  governance_board_appeal_attachments_file_key: null,
+  board_motions_one_open_per_appeal: null,
   // The budget and expenses (ADR 0055): one active and one budget in the
   // making per year, decided under the year's drafting lock; one line per
   // category, checked in the input; an increase and an authorization once

@@ -1611,6 +1611,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'اقترح عضو في المجلس قرارًا. افتح لوحة التحكم للتصويت.',
     },
   },
+  'governance_appeal.lodged': {
+    en: {
+      title: 'An appeal to the board',
+      body: 'An owner appealed a decision of the management to the board. Open the dashboard.',
+    },
+    ar: {
+      title: 'تظلم إلى المجلس',
+      body: 'تظلم أحد الملاك إلى المجلس من قرار للإدارة. افتح لوحة التحكم.',
+    },
+  },
+  'governance_appeal.decided': {
+    en: {
+      title: 'The board decided an appeal',
+      body: 'The board decided an appeal. Open the app to see the decision.',
+    },
+    ar: {
+      title: 'قرر المجلس في تظلم',
+      body: 'قرر المجلس في تظلم. افتح التطبيق لعرض القرار.',
+    },
+  },
+  'governance_appeal.overdue': {
+    en: {
+      title: 'An appeal is overdue',
+      body: 'An appeal to the board passed its deadline undecided. Open the dashboard.',
+    },
+    ar: {
+      title: 'تظلم متأخر',
+      body: 'تجاوز تظلم إلى المجلس موعده دون قرار. افتح لوحة التحكم.',
+    },
+  },
   'patrol.late': {
     en: {
       title: 'Patrol late',

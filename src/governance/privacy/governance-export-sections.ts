@@ -7,7 +7,7 @@ import {
   type ExportSubject,
 } from '../../core/exports/export-sections';
 
-const reference = (prefix: 'GP' | 'GE' | 'AR', n: number) =>
+const reference = (prefix: 'GP' | 'GE' | 'AR' | 'BA', n: number) =>
   `${prefix}-${String(n).padStart(4, '0')}`;
 
 /**
@@ -99,6 +99,30 @@ export class GovernanceExportSections implements OnModuleInit {
       const motionsById = new Map(
         [...proposed, ...votedOn].map((m) => [m.id, m]),
       );
+      const appeals = await tx.governanceBoardAppeal.findMany({
+        where: {
+          OR: [
+            { appellantId: me },
+            {
+              id: {
+                in: [...motionsById.values()].flatMap((m) =>
+                  m.boardAppealId ? [m.boardAppealId] : [],
+                ),
+              },
+            },
+          ],
+        },
+        orderBy: [{ lodgedAt: 'asc' }, { id: 'asc' }],
+      });
+      const decisions = await tx.boardMotion.findMany({
+        where: {
+          id: {
+            in: appeals.flatMap((x) =>
+              x.decidedMotionId ? [x.decidedMotionId] : [],
+            ),
+          },
+        },
+      });
       const requests = await tx.governanceApprovalRequest.findMany({
         where: {
           id: {
@@ -113,6 +137,9 @@ export class GovernanceExportSections implements OnModuleInit {
         proposed,
         cast,
         motionsById,
+        appeals,
+        appealsById: new Map(appeals.map((x) => [x.id, x])),
+        decisions: new Map(decisions.map((m) => [m.id, m])),
         requests: new Map(requests.map((r) => [r.id, r])),
         seats,
         terms: new Map(terms.map((t) => [t.id, t])),
@@ -165,17 +192,47 @@ export class GovernanceExportSections implements OnModuleInit {
         };
       }),
     };
-    const matterOf = (m: { approvalRequestId: string | null }) => {
+    const matterOf = (m: {
+      approvalRequestId: string | null;
+      boardAppealId: string | null;
+    }) => {
       const r = m.approvalRequestId
         ? data.requests.get(m.approvalRequestId)
         : undefined;
-      return r
-        ? {
-            kind: 'approval',
-            reference: reference('AR', r.number),
-            type: r.type,
-          }
+      if (r)
+        return {
+          kind: 'approval',
+          reference: reference('AR', r.number),
+          type: r.type,
+        };
+      const x = m.boardAppealId
+        ? data.appealsById.get(m.boardAppealId)
+        : undefined;
+      return x
+        ? { kind: 'appeal', reference: reference('BA', x.number), type: x.kind }
         : null;
+    };
+    // Its appeals to the board (ADR 0055): its own grounds while they last.
+    yield {
+      path: 'governance/board-appeals.json',
+      json: data.appeals
+        .filter((x) => x.appellantId === me)
+        .map((x) => {
+          const d = x.decidedMotionId
+            ? data.decisions.get(x.decidedMotionId)
+            : undefined;
+          return {
+            reference: reference('BA', x.number),
+            kind: x.kind,
+            subjectId: x.subjectId,
+            grounds: x.grounds,
+            lodgedAt: x.lodgedAt,
+            status: x.status,
+            decidedAt: x.decidedAt,
+            rationale: d?.rationale ?? null,
+            withdrawnAt: x.withdrawnAt,
+          };
+        }),
     };
     yield {
       path: 'governance/board-votes.json',

@@ -2,7 +2,8 @@ import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
 import * as split from '../setup/audit-coverage-split';
 import { BOARD_MATTERS_COVERAGE } from '../setup/audit-coverage-split';
-import { boardMatterHelpers } from '../setup/board-matters';
+import { boardAppealHelpers } from '../setup/board-appeals';
+import { eraseNow } from '../setup/erasure';
 import { lapse } from '../setup/governance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
@@ -15,13 +16,13 @@ const covered = new Set<string>();
 
 describe('Audit coverage — board matters (ADR 0055)', () => {
   let h: HttpHarness;
-  let b: ReturnType<typeof boardMatterHelpers>;
-  let s: Awaited<ReturnType<ReturnType<typeof boardMatterHelpers>['setUp']>>;
+  let b: ReturnType<typeof boardAppealHelpers>;
+  let s: Awaited<ReturnType<ReturnType<typeof boardAppealHelpers>['setUp']>>;
   let read: ReturnType<typeof auditReaders>;
 
   beforeAll(async () => {
     h = await createHttpHarness();
-    b = boardMatterHelpers(h);
+    b = boardAppealHelpers(h);
     s = await b.setUp(4, 3);
     read = auditReaders(h);
   }, 180_000);
@@ -155,6 +156,67 @@ describe('Audit coverage — board matters (ADR 0055)', () => {
     });
   });
 
+  it('an appeal lodged, decided, followed up; another withdrawn; an erasure clears the grounds', async () => {
+    const o3 = o(3);
+    const d = await b.rejectedDispute(s.manager, o3, o3.unitId);
+    const x = await b.appeal(o3, d, { grounds: 'AUDIT-GROUNDS words' });
+    const lodged = await single('governance_board_appeal.lodged', x.id);
+    expect(lodged).toMatchObject({
+      actorId: o3.id,
+      targetType: 'governance_board_appeal',
+      changes: {
+        kind: { from: null, to: 'invoice_dispute' },
+        subjectId: { from: null, to: d },
+        unitId: { from: null, to: o3.unitId },
+        attachments: { from: null, to: 0 },
+        grounds: { changed: true },
+      },
+    });
+    expect(JSON.stringify(lodged)).not.toContain('AUDIT-');
+    const m = await b.proposeOn(o(0), x.id).expect(201);
+    const motionId = (m.body as { id: string }).id;
+    await b.vote(o(0), motionId, 'for').expect(201);
+    await b.vote(o(1), motionId, 'for').expect(201);
+    expect(
+      (await single('governance_board_appeal.decided', x.id)).metadata,
+    ).toEqual({
+      outcome: 'overturned',
+      motionId,
+      effect: 'follow_up',
+    });
+    await b
+      .http(
+        'post',
+        `/staff/governance/board-appeals/${x.id}/followed-up`,
+        s.manager.token,
+        {},
+      )
+      .expect(200);
+    await single('governance_board_appeal.followed_up', x.id);
+
+    // A co-owner (not the primary: erasable) appeals another decision.
+    const coOwner = await b.owner(s.c, o3.unitId);
+    const d2 = await b.rejectedDispute(s.manager, o3, o3.unitId);
+    const y = await b.appeal(coOwner, d2);
+    await b
+      .http(
+        'post',
+        `/governance/board-appeals/${y.id}/withdraw`,
+        coOwner.token,
+        {},
+      )
+      .expect(200);
+    expect(
+      (await single('governance_board_appeal.withdrawn', y.id)).metadata,
+    ).toEqual({
+      motionId: null,
+    });
+    await eraseNow(h, s.c, coOwner.id);
+    expect(
+      (await single('governance_board_appeal.grounds_cleared', y.id)).metadata,
+    ).toEqual({ attachments: 0 });
+  });
+
   it('a lapse is the system’s', async () => {
     const r = await b.raise(s.accountant);
     const m = await b.motion(o(2), r.id);
@@ -185,7 +247,7 @@ describe('Audit coverage — board matters (ADR 0055)', () => {
       expect(
         all
           .filter((k) =>
-            /^(governance_approval|governance_settings|board_motion|board_vote)\./.test(
+            /^(governance_approval|governance_settings|board_motion|board_vote|governance_board_appeal)\./.test(
               k,
             ),
           )

@@ -5,6 +5,7 @@ import { AuditService } from '../../core/audit/audit.service';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { BoardService } from '../board/board.service';
 import { dbNow } from '../db-clock';
+import { BoardAppealsService } from '../appeals/appeals.service';
 import { GovernanceElectionsService } from '../elections/elections.service';
 
 /**
@@ -19,7 +20,8 @@ import { GovernanceElectionsService } from '../elections/elections.service';
  *   checked at the certification. An elector keeps the unit's vote in a
  *   contest already open: the electorate is that snapshot.
  * - **Erased**: its candidate statements go, once each
- *   (`statement_cleared_at`). Its votes stay: a participation names the
+ *   (`statement_cleared_at`), and its appeals' grounds and attachments
+ *   (ADR 0055). Its votes stay: a participation names the
  *   account by id, and a secret ballot never named it at all.
  *
  * Locks: the board lock (seats), the contests' rows shared (candidacies).
@@ -31,6 +33,7 @@ export class GovernanceLifecycle implements OnModuleInit {
     private readonly community: CommunityGovernancePort,
     private readonly board: BoardService,
     private readonly elections: GovernanceElectionsService,
+    private readonly appeals: BoardAppealsService,
     private readonly audit: AuditService,
   ) {}
 
@@ -46,6 +49,8 @@ export class GovernanceLifecycle implements OnModuleInit {
     this.lifecycle.onErasing(async (tx, account) => {
       await this.gone(tx, account.id, 'account_closed');
       await this.forget(tx, account.id);
+      // Its appeals' grounds and attachments (ADR 0055); the appeals stay.
+      await this.appeals.forget(tx, account.id);
       return [];
     });
   }

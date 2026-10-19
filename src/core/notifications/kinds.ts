@@ -1482,6 +1482,30 @@ export const NOTIFICATION_KINDS = {
     target: 'board_motion',
     params: { matter: {} },
   },
+  /** A staff decision was appealed to the board: the sitting board; `kind` its kind. */
+  'governance_appeal.lodged': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_board_appeal',
+    params: { kind: {} },
+  },
+  /** The board decided an appeal: the appellant, the `governance.manage` holders and the sitting board; `outcome` upheld | overturned. */
+  'governance_appeal.decided': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_board_appeal',
+    params: { kind: {}, outcome: {} },
+  },
+  /** An appeal passed its deadline undecided, once: the sitting board and the `governance.manage` holders. */
+  'governance_appeal.overdue': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_board_appeal',
+    params: { kind: {} },
+  },
   // Patrols (ADR 0052). None critical; params are codes at most.
   /** A scheduled run nobody started 15 minutes after its start. To the guards on shift at its post. */
   'patrol.late': {

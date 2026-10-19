@@ -85,4 +85,6 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'lockdown.end': 'End a lockdown of the gates',
   'governance.approvals': 'Raise matters for the owners’ board to decide, with their reasons, costs and attachments',
   'finance.budget': 'Draft the annual budget, record expenses against it, and void them',
+  'gate_exceptions.decide': 'Answer the guards’ field exceptions: let in, once, someone the gate refused (the first answer wins)',
+  'gate_log.search': 'Search the gate log by a visitor’s exact full name (audited)',
 };

@@ -75,6 +75,13 @@ const DEVICE_TEXT: Record<string, string> = {
   mobile_web: 'phone browser',
 };
 
+/** A field exception's kind, inside a sentence (ADR 0056). */
+const EXCEPTION_KIND_TEXT: Record<string, string> = {
+  worker_outside_hours: 'a worker outside their hours',
+  visitor_without_pass: 'a visitor without a pass',
+  unregistered_vehicle: 'an unregistered vehicle',
+};
+
 const TEXT: Record<string, (p: P) => string> = {
   'gate.approval_requested': (p) => `The gate asks to let a ${words(p.requestKind)} in for unit ${p.unitCode}`,
   'gate.approval_reversed': (p) => `Unit ${p.unitCode} withdrew its approval of a ${words(p.requestKind)}`,
@@ -142,6 +149,10 @@ const TEXT: Record<string, (p: P) => string> = {
   'patrol.late': () => 'A patrol at your post has not started',
   'patrol.missed': () => 'A scheduled patrol was not started',
   'patrol.incomplete': (p) => `A patrol ended with checkpoints not scanned (${words(p.reason)})`,
+  // The gate's completion (ADR 0056): codes only, never a name or a plate.
+  'patrol.geofence_exit': (p) => `A guard on patrol was outside the route’s area for ${p.minutes} minutes or more`,
+  'gate_exception.requested': (p) =>
+    `A guard at ${p.gateName} asks to let ${EXCEPTION_KIND_TEXT[String(p.exceptionKind)] ?? 'someone'} in for unit ${p.unitCode}`,
   // Security (ADR 0053): codes only, never a plate, a name, a unit or a word.
   'gate_lockdown.started': (p) => (p.scope === 'all' ? 'Every gate is locked down' : 'A gate is locked down'),
   'gate_lockdown.resident_notice': () => 'The compound’s gates are locked down for now',
@@ -317,6 +328,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('incidents.manage') ? `/security/incidents?incident=${n.targetId}` : null;
   if (n.targetType === 'unit_violation' && n.targetId)
     return can('violations.manage') || can('violations.issue') || can('fines.billing') ? `/violations?violation=${n.targetId}` : null;
+  // A field exception to answer (ADR 0056), for the on-duty management.
+  if (n.targetType === 'gate_field_exception' && n.targetId)
+    return can('gate_exceptions.decide') ? `/security/field-exceptions?exception=${n.targetId}` : null;
   // Children (ADR 0054): an unauthorized pickup's alert, for the keepers.
   if (n.targetType === 'child_pickup' && n.targetId)
     return can('guard_roster.manage') ? `/security/child-alerts?open=${n.targetId}` : null;

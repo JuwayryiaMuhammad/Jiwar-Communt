@@ -218,6 +218,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     can('incidents.manage'),
   );
 
+  // Field exceptions waiting for an answer (ADR 0056): minutes count here.
+  const exceptionsWaiting =
+    useQuery({
+      queryKey: [...keys.fieldExceptions('pending'), 'count'],
+      queryFn: () => fetchers.fieldExceptions('pending', undefined, 100),
+      refetchInterval: 10_000,
+      retry: false,
+      enabled: can('gate_exceptions.decide'),
+    }).data?.data.length ?? 0;
+
   // Shift swaps the colleague accepted, to decide (ADR 0050).
   const swapsToDecide = useQueueSize(
     keys.swaps('accepted'),
@@ -448,6 +458,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         },
         // Children (ADR 0054): unauthorized pickups, for the keepers.
         { href: '/security/child-alerts', label: 'Child alerts', icon: <Baby aria-hidden />, show: can('guard_roster.manage') },
+        // The gate's completion (ADR 0056).
+        {
+          href: '/security/field-exceptions',
+          label: 'Field exceptions',
+          icon: <DoorOpen aria-hidden />,
+          count: exceptionsWaiting,
+          show: can('gate_exceptions.decide'),
+        },
+        { href: '/security/gate-settings', label: 'Gate settings', icon: <SlidersHorizontal aria-hidden />, show: can('gate.manage') },
       ],
     },
     {

@@ -248,3 +248,13 @@ test('a board matter opens the board’s page for a member, the management’s f
   assert.equal(notificationHref(n('governance_motion.proposed', { matter: 'appeal' }, 'board_motion', 'm1'), () => true), '/board/appeals');
   assert.equal(notificationHref(n('governance_motion.proposed', { matter: 'approval' }, 'board_motion', 'm1'), () => false), null);
 });
+
+test('a field exception to answer, and a patrol out of its area, read as codes and lead to their pages (ADR 0056)', () => {
+  const asked = n('gate_exception.requested', { exceptionKind: 'visitor_without_pass', unitCode: 'B7', gateName: 'North gate' }, 'gate_field_exception', 'x-1');
+  assert.equal(notificationText(asked), 'A guard at North gate asks to let a visitor without a pass in for unit B7');
+  assert.equal(notificationHref(asked, (p) => p === 'gate_exceptions.decide'), '/security/field-exceptions?exception=x-1');
+  assert.equal(notificationHref(asked, () => false), null);
+  const exit = n('patrol.geofence_exit', { minutes: 3 }, 'patrol_run', 'r-1');
+  assert.equal(notificationText(exit), 'A guard on patrol was outside the route’s area for 3 minutes or more');
+  assert.equal(notificationHref(exit, (p) => p === 'patrols.manage'), '/security/patrols/runs');
+});

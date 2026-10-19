@@ -193,6 +193,10 @@ export type ViolationPayment = Schema<'ViolationPaymentView'>;
 export type IncidentReport = Schema<'IncidentReportView'>;
 export type ViolationReport = Schema<'ViolationReportView'>;
 export type LockdownState = 'live' | 'ended';
+// The gate's completion (ADR 0056).
+export type FieldException = Schema<'StaffFieldExceptionResponse'>;
+export type GateSettings = Schema<'GateSettingsResponse'>;
+export type FieldExceptionFilter = 'pending' | 'decided' | 'all';
 export interface BlocklistFilters {
   status?: 'active' | 'expired' | 'lifted' | '';
   kind?: 'ban' | 'watch' | '';
@@ -631,6 +635,11 @@ export const keys = {
   // Children (ADR 0054).
   childAlerts: ['children', 'alerts'] as const,
   childAlert: (id: string) => ['children', 'alerts', id] as const,
+  // The gate's completion (ADR 0056).
+  fieldExceptionsAll: ['field-exceptions'] as const,
+  fieldExceptions: (status: string) => ['field-exceptions', 'list', status] as const,
+  fieldException: (id: string) => ['field-exceptions', 'detail', id] as const,
+  gateSettings: ['gate-settings'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -1068,6 +1077,11 @@ export const fetchers = {
   childAlerts: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/security/child-alerts', { params: { query: { cursor, limit } } })),
   childAlert: (id: string) => unwrap(api.GET('/api/v1/staff/security/child-alerts/{id}', { params: { path: { id } } })),
+  // The gate's completion (ADR 0056).
+  fieldExceptions: (status: FieldExceptionFilter, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/gate/field-exceptions', { params: { query: { status, cursor, limit } } })),
+  fieldException: (id: string) => unwrap(api.GET('/api/v1/staff/gate/field-exceptions/{id}', { params: { path: { id } } })),
+  gateSettings: () => unwrap(api.GET('/api/v1/staff/gate/settings')),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

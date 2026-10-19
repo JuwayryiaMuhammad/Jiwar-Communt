@@ -383,6 +383,9 @@ const ERROR_TEXT: Record<string, string> = {
   PATROL_ROUTE_RETIRED: 'This route is retired: nothing changes any more.',
   PATROL_RUN_NOT_FOUND: 'This patrol run does not exist.',
   PATROL_RUN_CLOSED: 'This run is not scheduled any more: it started, or it is over.',
+  // The gate's completion (ADR 0056).
+  GATE_EXCEPTION_NOT_FOUND: 'This field exception does not exist.',
+  GATE_EXCEPTION_DECIDED: 'This exception was answered already, withdrawn or expired: the first answer stands.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

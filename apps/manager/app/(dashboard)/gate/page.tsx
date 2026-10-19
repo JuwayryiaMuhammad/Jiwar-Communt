@@ -41,6 +41,8 @@ const SUBJECT_TEXT: Record<Entry['subjectType'], string> = {
   permit_worker: 'Contractor',
   event_guest: 'Event guest',
   move_permit: 'Moving truck',
+  // A field exception the management approved (ADR 0056).
+  field_exception: 'Field exception',
 };
 
 const EMPTY = { gateId: '', direction: '', subjectType: '', from: '', to: '' };

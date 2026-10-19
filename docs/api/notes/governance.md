@@ -4,9 +4,10 @@ What was built for the owners' association:
 - the board, with its term and offices;
 - binding polls of the owners, one vote per unit, with a quorum and a pass threshold, secret or open;
 - elections of the board, with nominations, a secret vote and a certified result;
-- the board's decisions and minutes, as announcements.
+- the board's decisions and minutes, as announcements;
+- appeals to the board against four staff decisions, and the board's own matters (ADR 0055).
 
-The design decisions are in [ADR 0051](../../decisions/0051-governance-board-votes-elections.md). The contract is `docs/api/openapi.v0.json` (regenerated), with the Postman collection.
+The design decisions are in [ADR 0051](../../decisions/0051-governance-board-votes-elections.md) and [ADR 0055](../../decisions/0055-board-approvals-budget-expenses-appeals.md). The contract is `docs/api/openapi.v0.json` (regenerated), with the Postman collection.
 
 Conventions, as everywhere in API v0:
 
@@ -26,10 +27,12 @@ Conventions, as everywhere in API v0:
 5. [Elections](#elections)
 6. [For board members](#for-board-members)
 7. [Decisions and minutes](#decisions-and-minutes)
-8. [Push notifications](#push-notifications)
-9. [Value lists](#value-lists)
-10. [Errors](#errors)
-11. [Not built](#not-built)
+8. [Appeals to the board](#appeals-to-the-board)
+9. [The board's matters](#the-boards-matters)
+10. [Push notifications](#push-notifications)
+11. [Value lists](#value-lists)
+12. [Errors](#errors)
+13. [Not built](#not-built)
 
 ---
 
@@ -282,7 +285,85 @@ The board's decisions and minutes, newest first, archived ones left out:
 - `decidedOn` is today or up to a year ago (`DAY_OUT_OF_RANGE`).
 - Only while a board sits (`409 BOARD_NOT_SITTING`).
 
-## Push notifications
+## Appeals to the board
+
+A unit may take four staff decisions to the owners' board, **within 15 days** of the decision, **once per decision**:
+
+| Kind | What it is | Where the app shows it | Appealable when |
+|---|---|---|---|
+| `vehicle_fine` | a vehicle fine | `GET /vehicle-fines/{id}` | its first appeal was **upheld**, and it is unpaid and not cancelled |
+| `unit_violation` | a violation | `GET /violations/{id}` | the same |
+| `booking_suspension` | the unit's booking suspension | `GET /units/{unitId}/booking-standing` (`suspension.id`) | in force |
+| `invoice_dispute` | a dispute of an invoice | `GET /invoice-disputes/{id}` | **rejected** |
+
+Each of those views gains two fields. Use them to show the button:
+- `boardAppealUntil` is the last instant to appeal, or `null` when it cannot be appealed now. Show "Appeal to the board" while it is in the future.
+- `boardAppealAt` is when it was appealed, or `null`.
+
+Who may appeal: an owner of the unit, landlords included, or the unit's primary occupant. Anyone else gets `403 BOARD_APPEAL_NOT_ALLOWED`.
+
+### `POST /governance/board-appeals` → `201`
+
+Send an `Idempotency-Key`.
+
+```json
+{ "kind": "vehicle_fine", "subjectId": "…", "grounds": "The car was not mine that day: the sticker was moved.", "attachmentIds": ["…"] }
+```
+
+- `grounds` is 1–2000 characters. Up to 3 attachments, uploaded first as `board_appeal_attachment` (images or a PDF, 10 MB).
+- Refusals:
+  - `409 BOARD_APPEAL_EXISTS`: appealed already;
+  - `409 BOARD_APPEAL_WINDOW_PASSED`: after the 15 days;
+  - `409 BOARD_APPEAL_NOT_ELIGIBLE`, with `params.reason` one of `not_decided`, `not_against_unit`, `paid`, `cancelled`, `not_in_force`, `appealed`;
+  - `404 BOARD_APPEAL_SUBJECT_NOT_FOUND`.
+- **While the board has a fine or a violation, it cannot be paid**: the office gets `FINE_UNDER_APPEAL` / `VIOLATION_UNDER_APPEAL` with `params.level: "board"`. Say so after lodging. A suspension stays in force, and an invoice stays payable.
+
+### `GET /governance/board-appeals` → `200` · `GET /governance/board-appeals/{id}` → `200`
+
+The caller's appeals and their units'.
+
+```json
+{
+  "id": "…", "reference": "BA-000004", "kind": "vehicle_fine", "subjectId": "…", "unitCode": "A-12",
+  "status": "overturned", "lodgedAt": "…", "deadlineAt": "…", "withdrawnAt": null,
+  "decision": { "outcome": "overturned", "decidedAt": "…", "rationale": "The photo shows another car." },
+  "mine": true, "grounds": "…", "attachments": [{ "fileId": "…", "url": "…" }], "subject": { "reference": "F-000031", "amount": "500.00", "…": "…" }
+}
+```
+
+- `grounds` and `attachments` are shown to the appellant alone (`mine: true`). The unit's other owners see the appeal, its status and the decision.
+- `decision.rationale` is the board's reasons. **The app never sees the board's votes or who voted.**
+- `deadlineAt` is the board's own deadline, not the appellant's.
+
+### `POST /governance/board-appeals/{id}/withdraw` → `200`
+
+Only the appellant, while it is pending (`BOARD_APPEAL_NOT_YOURS`, `BOARD_APPEAL_NOT_PENDING`). Afterwards the fine or violation can be paid. It cannot be appealed again.
+
+### What an outcome does
+
+- **Upheld:** the decision stands, and a fine or a violation can be paid again.
+- **Overturned:** a fine or a violation is cancelled (`cancelReason: "board_overturned"`), and a suspension is lifted (`liftReasonCode: "board_overturned"`), at once and by the system. An overturned dispute is followed up by the management (a credit to the invoice).
+- The appellant gets `governance_appeal.decided` either way.
+
+## The board's matters
+
+A sitting board member (`governance.board` in `/me`) decides the management's requests and the appeals. The full tools are in the manager dashboard (*The board*). An app showing them uses these routes; every one is `no-store`.
+
+| Route | What |
+|---|---|
+| `GET /board/approvals?status=pending` · `GET /board/approvals/{id}` | the inbox; a request with its package, its subject, its motions and named votes |
+| `GET /board/appeals?status=pending` · `GET /board/appeals/{id}` | the appeals; one with its grounds, the decision appealed (by unit code, no names) and its motions |
+| `POST /board/approvals/{id}/motions` | propose: `{ "outcome": "approve" \| "reject", "rationale", "alternativesNote"? }` |
+| `POST /board/appeals/{id}/motions` | propose: `{ "outcome": "uphold" \| "overturn", "rationale" }` |
+| `POST /board/motions/{id}/votes` | `{ "choice": "for" \| "against" }`, once; send an `Idempotency-Key` |
+| `POST /board/motions/{id}/close` | when decided, or past the deadline with a quorum |
+| `POST /board/motions/{id}/withdraw` | its proposer (`proposedByMe`), while open |
+| `GET /board/overview?from&to` | totals for up to 31 days: the money, the budget, incidents and violations |
+
+- **The count.** A motion counts the board's sitting seats, less the recused (`tally.seats`). Quorum is a majority of those seats; the majority of the votes cast wins; the chair breaks a tie. The vote that decides a motion closes it.
+- **Recusal.** On an appeal, a member who lives in or owns its unit, or who appealed, may not propose, vote or close (`403 BOARD_MEMBER_RECUSED`; `myRecusal: true`).
+- **The rationale is the board's record.** It is shown to the management and the appellant. Tell members to write no names in it.
+
 
 Category `governance`; none is critical. The lock-screen texts are generic, in Arabic and English: no title, no name, no choice.
 
@@ -298,8 +379,15 @@ Category `governance`; none is critical. The lock-screen texts are generic, in A
 | `governance_election.awaiting_certification` | the management and the board | `governance_election` | `tied` (`yes` / `no`) |
 | `governance_election.cancelled` | the board | `governance_election` | `reason` |
 | `governance_election.result` | the electors and the candidates | `governance_election` | |
+| `governance_appeal.decided` | the appellant (and the board) | `governance_board_appeal` | `kind`, `outcome` |
+| `governance_appeal.lodged` · `.overdue` | the board | `governance_board_appeal` | `kind` |
+| `governance_approval.raised` · `.decided` · `.overdue` · `.implemented` · `.withdrawn` | the board | `governance_approval` | `type` (`decision` on `.decided`) |
+| `governance_motion.proposed` | the other sitting members | `board_motion` | `matter` (`approval` / `appeal`) |
 
-Open the target with `GET /governance/polls/{targetId}`, `GET /governance/elections/{targetId}` or `GET /governance/board`.
+Open the target with:
+- `GET /governance/polls/{targetId}`, `GET /governance/elections/{targetId}` or `GET /governance/board`;
+- for an appellant, `GET /governance/board-appeals/{targetId}`;
+- for a board member, `GET /board/appeals/{targetId}` or `GET /board/approvals/{targetId}`. A motion's notice opens the list its `matter` names.
 
 ---
 
@@ -324,6 +412,12 @@ Open the target with `GET /governance/polls/{targetId}`, `GET /governance/electi
 | `governanceTieBreak` (the management) | `board_decision`, `lot_drawn` |
 | `boardMemberEnd` (the management) | `resigned`, `removed`, `misconduct`, `other` |
 | `boardMemberSystemEnd` | `no_longer_owner`, `account_closed` |
+| `BoardAppealKind` | `vehicle_fine`, `unit_violation`, `booking_suspension`, `invoice_dispute` |
+| `BoardAppealStatus` | `pending`, `upheld`, `overturned`, `withdrawn` |
+| `ApprovalType` | `annual_budget`, `budget_increase`, `major_contract`, `exceptional_fee`, `waiver_above_limit`, `payment_plan_above_limit`, `legal_escalation` |
+| `BoardMotionOutcome` | `approve`, `reject`, `uphold`, `overturn` |
+| `BoardMotionStatus` | `open`, `carried`, `failed`, `withdrawn`, `lapsed` |
+| `BoardVoteChoice` | `for`, `against` |
 
 ## Errors
 
@@ -342,8 +436,17 @@ Open the target with `GET /governance/polls/{targetId}`, `GET /governance/electi
 | `GOVERNANCE_LIMIT_REACHED` (409, `params.max`) | too many under way |
 | `BOARD_SEAT_REQUIRED` (403) | a board action without a seat |
 | `BOARD_NOT_SITTING` (409) | publishing while no board sits |
+| `BOARD_APPEAL_NOT_ALLOWED` (403) | not an owner or the primary of the decision's unit |
+| `BOARD_APPEAL_EXISTS`, `BOARD_APPEAL_WINDOW_PASSED`, `BOARD_APPEAL_NOT_ELIGIBLE` (409) | see [Appeals to the board](#appeals-to-the-board) |
+| `BOARD_APPEAL_NOT_FOUND`, `BOARD_APPEAL_SUBJECT_NOT_FOUND` (404) | unknown, or not the caller's |
+| `BOARD_APPEAL_NOT_YOURS` (403), `BOARD_APPEAL_NOT_PENDING` (409) | withdrawing another's, or a decided one |
+| `BOARD_MEMBER_RECUSED` (403) | a board action on an appeal the member is recused from |
+| `BOARD_MOTION_OPEN`, `BOARD_MOTION_CLOSED`, `BOARD_MOTION_LAPSED`, `BOARD_ALREADY_VOTED`, `BOARD_MATTER_DECIDED` (409) | a second motion, a vote too late or twice |
+| `BOARD_VOTE_NOT_DUE`, `BOARD_QUORUM_NOT_MET`, `BOARD_QUORUM_UNAVAILABLE` (409) | a close too early or without a quorum; too few unrecused members |
+| `GOVERNANCE_BUSY` (409, retry) | an account it tells was being erased at that instant |
 
 ## Not built
 
-- Budgets, expenses and appeals to the board (R7b).
+- The annual budget and expenses are the management's: the owners see an approved budget as the board's announcement.
+- A second appeal of a decision the board upheld.
 - Choosing among co-owners who casts a unit's vote: the rule above decides for now.

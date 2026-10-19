@@ -191,3 +191,12 @@ The full notes for the household app and the guard app are in [`notes/children.m
 - The keepers: `GET /staff/security/child-alerts` and `…/{id}` (unauthorized pickups, never the child).
 - Events gain `forChildren` with an age range and `PUT/DELETE /events/{id}/children/{memberId}`; a booking may name `occasionMemberId` on a facility with `childOccasions`.
 - New file purposes `child_photo` and `child_escort_photo`, an export section `children/`, three notification kinds `child.*` (category `household`, two critical).
+
+### Governance — board matters (ADR 0055)
+
+The owners' side is in [`notes/governance.md`](notes/governance.md#appeals-to-the-board).
+
+- Owners and primaries: appeals to the board (`POST /governance/board-appeals`, `GET` list and detail, `POST …/{id}/withdraw`), within 15 days of a staff decision and once per decision: a fine or a violation whose first appeal was upheld, the unit's booking suspension in force, or a rejected invoice dispute. Those four views gain `boardAppealUntil` and `boardAppealAt`. While the board has a fine or a violation it cannot be paid (`FINE_UNDER_APPEAL` / `VIOLATION_UNDER_APPEAL`, `params.level: "board"`). Overturned, a fine or a violation is cancelled and a suspension lifted as `board_overturned`.
+- A sitting board member (`governance.board`): `/board/approvals`, `/board/appeals`, motions (`POST …/{id}/motions`, `/board/motions/{id}/votes`, `…/close`, `…/withdraw`) and `GET /board/overview`. Recused members get `403 BOARD_MEMBER_RECUSED`.
+- The management: `/staff/governance/approvals` (`governance.approvals`), `/staff/governance/settings` and `/staff/governance/board-appeals` (`governance.manage`), `/staff/finance/budget-settings`, `/staff/finance/budgets`, `/staff/finance/expenses` and `/staff/finance/expense-authorizations` (`finance.budget`), and `GET /staff/finance/reports/budget-vs-actual` with its CSV (`finance.reports`).
+- Three new file purposes (`approval_attachment`, `board_appeal_attachment`, `expense_invoice`), the export's `governance/board-appeals.json` and `governance/board-votes.json`, nine notification kinds (`governance_approval.*`, `governance_motion.proposed`, `governance_appeal.*`; category `governance`), and two new permissions.

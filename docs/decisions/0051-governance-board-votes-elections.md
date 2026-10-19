@@ -195,5 +195,5 @@ Category `governance`; nothing is critical; params are codes only.
 ## Open
 
 - A voting-owner designation for co-owners (above), if they ask for one.
-- Budgets and expenses, appeals to the board: R7b.
-- A member's poll that opens at once tells the electorate while their seat is locked shared, against step 1 of the lock order. With an erasure of an owner (that account, then the board lock) and an end of that seat (the board lock, then the seat), the three can deadlock; PostgreSQL aborts one. The fix: key-share the electorate's accounts before the seat when the poll opens at once.
+- Budgets and expenses, appeals to the board: R7b. *Built in [ADR 0055](0055-board-approvals-budget-expenses-appeals.md).*
+- A member's poll that opens at once tells the electorate while their seat is locked shared, against step 1 of the lock order. With an erasure of an owner (that account, then the board lock) and an end of that seat (the board lock, then the seat), the three can deadlock; PostgreSQL aborts one. The fix: key-share the electorate's accounts before the seat when the poll opens at once. *Closed by [ADR 0055](0055-board-approvals-budget-expenses-appeals.md#the-deadlock-fixes-adr-0051s-open).*

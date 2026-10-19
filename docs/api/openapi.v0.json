@@ -16003,6 +16003,11 @@
             "example": 3,
             "type": "number"
           },
+          "offlineSyncAlertMinutes": {
+            "description": "Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057).",
+            "example": 15,
+            "type": "number"
+          },
           "videoMaxMb": {
             "description": "The largest video, in megabytes (100 at most).",
             "example": 100,
@@ -16028,7 +16033,8 @@
           "audioMaxSeconds",
           "videoMaxSeconds",
           "audioMaxMb",
-          "videoMaxMb"
+          "videoMaxMb",
+          "offlineSyncAlertMinutes"
         ],
         "type": "object"
       },
@@ -19095,6 +19101,28 @@
           "recipient",
           "handedBy",
           "handedAt"
+        ],
+        "type": "object"
+      },
+      "HeartbeatResponse": {
+        "properties": {
+          "ackedThroughSeq": {
+            "description": "Every action of the device up to this one was received.",
+            "type": "number"
+          },
+          "refreshBundle": {
+            "description": "Download a new bundle now: it is over 15 minutes old, or a lockdown or the blocklist changed since.",
+            "type": "boolean"
+          },
+          "serverTime": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "serverTime",
+          "ackedThroughSeq",
+          "refreshBundle"
         ],
         "type": "object"
       },
@@ -24258,6 +24286,21 @@
           "fullName",
           "phone",
           "capacity"
+        ],
+        "type": "object"
+      },
+      "NotCarriedView": {
+        "properties": {
+          "passes": {
+            "type": "number"
+          },
+          "workers": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "passes",
+          "workers"
         ],
         "type": "object"
       },
@@ -36401,6 +36444,16 @@
       },
       "StaffDeviceResponse": {
         "properties": {
+          "ackedSeq": {
+            "description": "Every action up to this one was received.",
+            "type": "number"
+          },
+          "bundleValidUntil": {
+            "description": "Until when its last bundle decides entries.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "bundleVersion": {
             "description": "Its last bundle’s number; 0 before the first.",
             "type": "number"
@@ -36424,6 +36477,46 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "lastSeenAt": {
+            "description": "Its last call of any kind.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "lastUploadAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "maxSeq": {
+            "description": "The highest action received.",
+            "type": "number"
+          },
+          "missingActions": {
+            "description": "Actions up to the highest that never arrived.",
+            "type": "number"
+          },
+          "notCarried": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotCarriedView"
+              }
+            ],
+            "description": "What its last bundle could not carry: passes from before ADR 0043 and worker cards from before ADR 0057, which work online only until reissued."
+          },
+          "onShift": {
+            "description": "Its last bundle’s shift is open.",
+            "type": "boolean"
+          },
+          "openFlags": {
+            "description": "Its flags to look at: neither reviewed nor cleared.",
+            "type": "number"
+          },
+          "pendingCount": {
+            "description": "Actions it still holds, as its last heartbeat said.",
+            "nullable": true,
+            "type": "number"
           },
           "revokeReasonCode": {
             "enum": [
@@ -36469,7 +36562,17 @@
           "revokedBy",
           "revokeReasonCode",
           "bundleVersion",
-          "lastBundleAt"
+          "lastBundleAt",
+          "bundleValidUntil",
+          "onShift",
+          "lastSeenAt",
+          "lastUploadAt",
+          "pendingCount",
+          "ackedSeq",
+          "maxSeq",
+          "missingActions",
+          "openFlags",
+          "notCarried"
         ],
         "type": "object"
       },
@@ -44837,6 +44940,12 @@
             "description": "Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once.",
             "maximum": 60,
             "minimum": 1,
+            "type": "number"
+          },
+          "offlineSyncAlertMinutes": {
+            "description": "Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage.",
+            "maximum": 240,
+            "minimum": 5,
             "type": "number"
           },
           "videoMaxMb": {
@@ -54884,6 +54993,46 @@
           }
         ],
         "summary": "Download the gate bundle for this device, shift and gate",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/offline/heartbeat": {
+      "post": {
+        "description": "A signed envelope (`purpose: heartbeat`, `pendingCount`), every few minutes while online. Answers what the server acknowledged and whether to download a new bundle (`refreshBundle`: old, or a lockdown or the blocklist changed since).",
+        "operationId": "GuardOfflineController_heartbeat",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceEnvelopeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say this device is alive and what it still holds",
         "tags": [
           "gate"
         ],

@@ -1783,6 +1783,30 @@ export const NOTIFICATION_KINDS = {
     params: {},
   },
   /**
+   * A guard device on an open shift, its bundle live, not seen for
+   * `minutes` (ADR 0057): the `gate_devices.manage` holders, once per
+   * outage. The gate may have lost its network: check on it.
+   */
+  'gate_device.sync_overdue': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'gate_device',
+    params: { minutes: {} },
+  },
+  /**
+   * A device's sequence still misses `missing` actions that long after its
+   * last upload (ADR 0057): the same holders, once per gap. Actions may be
+   * lost, or deleted on the device.
+   */
+  'gate_device.sequence_gap': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'gate_device',
+    params: { missing: {} },
+  },
+  /**
    * An upload's batch the server took held what it knew better (ADR 0057):
    * someone let in during a lockdown, a banned plate, a worker banned or
    * work stopped, a once-only code used twice, an action that cannot have

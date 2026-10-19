@@ -113,6 +113,31 @@ export const GATE_BUNDLE_ROUTES: Row[] = [
 export const OFFLINE_UPLOAD_ROUTES: Row[] = [
   {
     method: 'POST',
+    path: '/gate/offline/heartbeat',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({
+        deviceId: w.bGateDeviceId,
+        payload: 'e30',
+        signature: 'A'.repeat(86),
+      }),
+      code: 'GATE_DEVICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { deviceId: 'nope', payload: 'not base64url!', signature: 'short' },
+      fields: [
+        { field: 'deviceId', code: 'INVALID_UUID' },
+        { field: 'payload', code: 'INVALID_FORMAT' },
+        { field: 'signature', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+  {
+    method: 'POST',
     path: '/gate/offline/uploads',
     auth: 'tenant',
     noStore: true,

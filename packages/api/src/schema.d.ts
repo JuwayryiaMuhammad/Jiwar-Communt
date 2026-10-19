@@ -2624,6 +2624,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/offline/heartbeat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Say this device is alive and what it still holds
+         * @description A signed envelope (`purpose: heartbeat`, `pendingCount`), every few minutes while online. Answers what the server acknowledged and whether to download a new bundle (`refreshBundle`: old, or a lockdown or the blocklist changed since).
+         */
+        post: operations["GuardOfflineController_heartbeat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/offline/keys": {
         parameters: {
             query?: never;
@@ -19351,6 +19371,11 @@ export interface components {
              */
             geofenceExitMinutes: number;
             /**
+             * @description Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057).
+             * @example 15
+             */
+            offlineSyncAlertMinutes: number;
+            /**
              * @description The largest video, in megabytes (100 at most).
              * @example 100
              */
@@ -20251,6 +20276,14 @@ export interface components {
             handedAt: string;
             handedBy: components["schemas"]["AccountRefView"];
             recipient: components["schemas"]["AccountRefView"];
+        };
+        HeartbeatResponse: {
+            /** @description Every action of the device up to this one was received. */
+            ackedThroughSeq: number;
+            /** @description Download a new bundle now: it is over 15 minutes old, or a lockdown or the blocklist changed since. */
+            refreshBundle: boolean;
+            /** Format: date-time */
+            serverTime: string;
         };
         HoldDto: {
             holdReason: components["schemas"]["TicketHoldReason"];
@@ -21899,6 +21932,10 @@ export interface components {
              * @description Required for `temporary`.
              */
             validUntil?: string;
+        };
+        NotCarriedView: {
+            passes: number;
+            workers: number;
         };
         NoteDto: {
             /**
@@ -25699,6 +25736,13 @@ export interface components {
             nextCursor: string | null;
         };
         StaffDeviceResponse: {
+            /** @description Every action up to this one was received. */
+            ackedSeq: number;
+            /**
+             * Format: date-time
+             * @description Until when its last bundle decides entries.
+             */
+            bundleValidUntil: string | null;
             /** @description Its last bundle’s number; 0 before the first. */
             bundleVersion: number;
             /** Format: date-time */
@@ -25709,6 +25753,25 @@ export interface components {
             label: string | null;
             /** Format: date-time */
             lastBundleAt: string | null;
+            /**
+             * Format: date-time
+             * @description Its last call of any kind.
+             */
+            lastSeenAt: string | null;
+            /** Format: date-time */
+            lastUploadAt: string | null;
+            /** @description The highest action received. */
+            maxSeq: number;
+            /** @description Actions up to the highest that never arrived. */
+            missingActions: number;
+            /** @description What its last bundle could not carry: passes from before ADR 0043 and worker cards from before ADR 0057, which work online only until reissued. */
+            notCarried: components["schemas"]["NotCarriedView"];
+            /** @description Its last bundle’s shift is open. */
+            onShift: boolean;
+            /** @description Its flags to look at: neither reviewed nor cleared. */
+            openFlags: number;
+            /** @description Actions it still holds, as its last heartbeat said. */
+            pendingCount: number | null;
             /** @enum {string|null} */
             revokeReasonCode: "lost" | "stolen" | "replaced" | "retired" | "compromised" | "other" | null;
             /** Format: date-time */
@@ -28086,6 +28149,8 @@ export interface components {
             exceptionEntryMinutes?: number;
             /** @description Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. */
             geofenceExitMinutes?: number;
+            /** @description Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. */
+            offlineSyncAlertMinutes?: number;
             /** @description The largest video, in megabytes; checked when attached. */
             videoMaxMb?: number;
             /** @description The longest video, in seconds; checked when attached. */
@@ -32800,6 +32865,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateBundleResponse"];
+                };
+            };
+        };
+    };
+    GuardOfflineController_heartbeat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceEnvelopeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeartbeatResponse"];
                 };
             };
         };

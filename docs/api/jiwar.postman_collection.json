@@ -11658,6 +11658,42 @@
           }
         },
         {
+          "name": "Say this device is alive and what it still holds",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"deviceId\": \"\",\n  \"payload\": \"\",\n  \"signature\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `deviceId` | string (uuid) | yes |  |\n| `payload` | string | yes | The payload’s UTF-8 JSON in base64url, as signed. |\n| `signature` | string | yes | The device’s Ed25519 signature, base64url. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "offline",
+                "heartbeat"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/offline/heartbeat"
+            }
+          }
+        },
+        {
           "name": "The keys gate bundles are signed with",
           "request": {
             "description": "**Responses:** 200",
@@ -12719,9 +12755,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"audioMaxMb\": 1,\n  \"audioMaxSeconds\": 10,\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"geofenceExitMinutes\": 1,\n  \"videoMaxMb\": 1,\n  \"videoMaxSeconds\": 10,\n  \"visitExpectedMinutes\": 15\n}"
+              "raw": "{\n  \"audioMaxMb\": 1,\n  \"audioMaxSeconds\": 10,\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"geofenceExitMinutes\": 1,\n  \"offlineSyncAlertMinutes\": 5,\n  \"videoMaxMb\": 1,\n  \"videoMaxSeconds\": 10,\n  \"visitExpectedMinutes\": 15\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audioMaxMb` | number |  | The largest sound, in megabytes; checked when attached. |\n| `audioMaxSeconds` | number |  | The longest sound a patrol note or an incident takes, in seconds; checked when attached. |\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `videoMaxMb` | number |  | The largest video, in megabytes; checked when attached. |\n| `videoMaxSeconds` | number |  | The longest video, in seconds; checked when attached. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audioMaxMb` | number |  | The largest sound, in megabytes; checked when attached. |\n| `audioMaxSeconds` | number |  | The longest sound a patrol note or an incident takes, in seconds; checked when attached. |\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `offlineSyncAlertMinutes` | number |  | Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. |\n| `videoMaxMb` | number |  | The largest video, in megabytes; checked when attached. |\n| `videoMaxSeconds` | number |  | The longest video, in seconds; checked when attached. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",

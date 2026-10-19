@@ -1748,6 +1748,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_offline_bundles_counts: {},
   gate_device_envelopes_sha256: {},
   gate_devices_seq_shape: {},
+  gate_devices_health_shape: {
+    guarded:
+      'pending_count IS NULL and last_upload_at IS NULL are tested before the comparison and the other test',
+  },
+  gate_settings_offline_sync_alert: {},
   gate_offline_batches_sha256: {},
   gate_offline_batches_action_count: {},
   gate_offline_batches_status: {},

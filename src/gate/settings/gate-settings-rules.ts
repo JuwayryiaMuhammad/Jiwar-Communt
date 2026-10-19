@@ -25,6 +25,11 @@ export const GATE_SETTING_LIMITS = {
   videoMaxSeconds: { min: 10, max: 300, default: 120 },
   audioMaxMb: { min: 1, max: 20, default: 20 },
   videoMaxMb: { min: 1, max: 100, default: 100 },
+  /**
+   * Minutes a guard device on an open shift may go without calling before
+   * the management is told (ADR 0057), once per outage.
+   */
+  offlineSyncAlertMinutes: { min: 5, max: 240, default: 15 },
 } as const;
 
 type Limits = typeof GATE_SETTING_LIMITS;

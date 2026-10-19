@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import { REASON_CODES } from '../../../core/common/reasons';
 import type { FlagView } from '../offline-flags.service';
+import type { HeartbeatResult } from '../offline-health';
 import { FLAG_KINDS, REJECTIONS, type FlagKind } from '../offline-rules';
 import type {
   ActionResult,
@@ -193,5 +194,26 @@ export class OfflineBatchResponse {
       uploadedBy: accountRef(v.uploadedBy),
       reviewedBy: v.reviewedBy ? accountRef(v.reviewedBy) : null,
     };
+  }
+}
+
+/** What a heartbeat answers (ADR 0057). */
+export class HeartbeatResponse {
+  @ApiProperty({ type: String, format: 'date-time' })
+  serverTime: Date;
+  @ApiProperty({
+    type: Number,
+    description: 'Every action of the device up to this one was received.',
+  })
+  ackedThroughSeq: number;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Download a new bundle now: it is over 15 minutes old, or a lockdown or the blocklist changed since.',
+  })
+  refreshBundle: boolean;
+
+  static from(r: HeartbeatResult): HeartbeatResponse {
+    return { ...r };
   }
 }

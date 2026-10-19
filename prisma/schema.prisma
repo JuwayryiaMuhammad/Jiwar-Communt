@@ -2211,6 +2211,8 @@ model GateSettings {
   videoMaxSeconds        Int      @default(120) @map("video_max_seconds") @db.SmallInt
   audioMaxMb             Int      @default(20) @map("audio_max_mb") @db.SmallInt
   videoMaxMb             Int      @default(100) @map("video_max_mb") @db.SmallInt
+  /// Minutes a device on shift may go unseen before the management is told (ADR 0057).
+  offlineSyncAlertMinutes Int @default(15) @map("offline_sync_alert_minutes") @db.SmallInt
 
   @@map("gate_settings")
 }
@@ -2407,6 +2409,14 @@ model GateDevice {
   maxSeq             Int       @default(0) @map("max_seq")
   /// When the management was last told of an upload it refused.
   rejectionAlertedAt DateTime? @map("rejection_alerted_at") @db.Timestamptz(3)
+
+  /// Sync health: when it last called, last uploaded, what it holds, and
+  /// when the management was told of an outage or a gap.
+  lastSeenAt       DateTime? @map("last_seen_at") @db.Timestamptz(3)
+  lastUploadAt     DateTime? @map("last_upload_at") @db.Timestamptz(3)
+  pendingCount     Int?      @map("pending_count")
+  overdueAlertedAt DateTime? @map("overdue_alerted_at") @db.Timestamptz(3)
+  gapAlertedAt     DateTime? @map("gap_alerted_at") @db.Timestamptz(3)
 
   @@unique([tenantId, id])
   @@unique([tenantId, publicKey], map: "gate_devices_public_key_key")

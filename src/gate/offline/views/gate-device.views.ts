@@ -30,6 +30,13 @@ export class GuardDeviceResponse {
   }
 }
 
+export class NotCarriedView {
+  @ApiProperty({ type: Number })
+  passes: number;
+  @ApiProperty({ type: Number })
+  workers: number;
+}
+
 /** A device as the management reads it (ADR 0057). */
 export class StaffDeviceResponse {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -55,6 +62,56 @@ export class StaffDeviceResponse {
   bundleVersion: number;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   lastBundleAt: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Until when its last bundle decides entries.',
+  })
+  bundleValidUntil: Date | null;
+  @ApiProperty({
+    type: Boolean,
+    description: 'Its last bundle’s shift is open.',
+  })
+  onShift: boolean;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Its last call of any kind.',
+  })
+  lastSeenAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  lastUploadAt: Date | null;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Actions it still holds, as its last heartbeat said.',
+  })
+  pendingCount: number | null;
+  @ApiProperty({
+    type: Number,
+    description: 'Every action up to this one was received.',
+  })
+  ackedSeq: number;
+  @ApiProperty({ type: Number, description: 'The highest action received.' })
+  maxSeq: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Actions up to the highest that never arrived.',
+  })
+  missingActions: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Its flags to look at: neither reviewed nor cleared.',
+  })
+  openFlags: number;
+  @ApiProperty({
+    type: NotCarriedView,
+    description:
+      'What its last bundle could not carry: passes from before ADR 0043 and worker cards from before ADR 0057, which work online only until reissued.',
+  })
+  notCarried: NotCarriedView;
 
   static from(v: StaffDeviceView): StaffDeviceResponse {
     return {
@@ -68,6 +125,16 @@ export class StaffDeviceResponse {
       revokeReasonCode: v.revokeReasonCode,
       bundleVersion: v.bundleVersion,
       lastBundleAt: v.lastBundleAt,
+      bundleValidUntil: v.bundleValidUntil,
+      onShift: v.onShift,
+      lastSeenAt: v.lastSeenAt,
+      lastUploadAt: v.lastUploadAt,
+      pendingCount: v.pendingCount,
+      ackedSeq: v.ackedSeq,
+      maxSeq: v.maxSeq,
+      missingActions: v.missingActions,
+      openFlags: v.openFlags,
+      notCarried: v.notCarried,
     };
   }
 }

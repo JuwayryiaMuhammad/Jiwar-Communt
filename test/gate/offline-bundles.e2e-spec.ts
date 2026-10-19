@@ -216,6 +216,10 @@ describe('Gate offline — the bundle (ADR 0057)', () => {
       expect(
         (row.counts as Record<string, number>).workersNotDerivable,
       ).toBeGreaterThanOrEqual(1);
+      // The management sees it on the device.
+      expect(
+        (await o.deviceView(s.manager, row.deviceId)).notCarried.workers,
+      ).toBe((row.counts as Record<string, number>).workersNotDerivable);
       const text = Buffer.from(signed.body, 'base64url').toString('utf8');
       for (const secret of [w.fullName, w.code, oldCode, oldToken])
         expect(text).not.toContain(secret);

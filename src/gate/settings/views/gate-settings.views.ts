@@ -67,6 +67,14 @@ export class GateSettingsResponse {
   })
   videoMaxMb: number;
 
+  @ApiProperty({
+    type: Number,
+    example: L.offlineSyncAlertMinutes.default,
+    description:
+      'Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057).',
+  })
+  offlineSyncAlertMinutes: number;
+
   static from(s: GateSettingsValues): GateSettingsResponse {
     return {
       exceptionAnswerMinutes: s.exceptionAnswerMinutes,
@@ -77,6 +85,7 @@ export class GateSettingsResponse {
       videoMaxSeconds: s.videoMaxSeconds,
       audioMaxMb: s.audioMaxMb,
       videoMaxMb: s.videoMaxMb,
+      offlineSyncAlertMinutes: s.offlineSyncAlertMinutes,
     };
   }
 }

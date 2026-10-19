@@ -1,4 +1,7 @@
 import { newId } from '../../src/core/common/uuid';
+import { OFFLINE_SYNC_HEALTH_SWEEP } from '../../src/gate/offline/offline-health';
+import { dbClock } from '../setup/compound-clock';
+import { superuserSql } from '../setup/governance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { entryAction, envelope, offlineHelpers } from '../setup/offline';
 
@@ -23,6 +26,8 @@ const ROUNDS = 5;
  *   and the entry stays as it was;
  * - an offline and an online entry of one service vehicle's plate share
  *   the plate's lock: one visit is left inside, the other closed;
+ * - the health sweep and a heartbeat: the sweep skips a device a call
+ *   holds; an outage is told once at most;
  * - an upload and the device's revocation serialize on the device: every
  *   action received before the revocation is recorded, every one after is
  *   quarantined, none both.
@@ -251,4 +256,25 @@ describe('Gate offline — concurrently (ADR 0057)', () => {
       ).toBe(1);
     }
   });
+
+  it('the health sweep and a heartbeat at once: an outage told once at most', async () => {
+    for (let round = 0; round < ROUNDS; round++) {
+      const { d } = await o.deviceWithBundle(s.guard, s.c);
+      await superuserSql(
+        `UPDATE gate_devices SET last_seen_at = $2 WHERE id = $1`,
+        [d.id, new Date(dbClock().getTime() - 20 * 60_000)],
+      );
+      await Promise.all([
+        o.sweep(OFFLINE_SYNC_HEALTH_SWEEP, dbClock()),
+        o.heartbeatRaw(s.guard, s.c, d).expect(200),
+      ]);
+      await o.sweep(OFFLINE_SYNC_HEALTH_SWEEP, dbClock());
+      const told = (await o.told(s.c, s.manager.id, d.id)).filter(
+        (n) => n.kind === 'gate_device.sync_overdue',
+      );
+      expect(told.length).toBeLessThanOrEqual(1);
+    }
+    // Ten sweeps, each a transaction per compound in the shared test
+    // database (160 and more late in a long run): longer than the default.
+  }, 120_000);
 });

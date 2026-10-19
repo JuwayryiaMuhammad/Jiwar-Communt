@@ -47,6 +47,18 @@ export interface StaffDeviceBody {
   revokedAt: string | null;
   revokedBy: { id: string; fullName?: string | null; erased?: true } | null;
   revokeReasonCode: string | null;
+  bundleVersion: number;
+  lastBundleAt: string | null;
+  bundleValidUntil: string | null;
+  onShift: boolean;
+  lastSeenAt: string | null;
+  lastUploadAt: string | null;
+  pendingCount: number | null;
+  ackedSeq: number;
+  maxSeq: number;
+  missingActions: number;
+  openFlags: number;
+  notCarried: { passes: number; workers: number };
 }
 
 /** A gate bundle as the device reads it (ADR 0057): the header and sections. */
@@ -339,6 +351,21 @@ export function offlineHelpers(h: HttpHarness) {
     return res.body as UploadBody;
   }
 
+  /** `POST /gate/offline/heartbeat` as `as`, signed by `d`. */
+  function heartbeatRaw(
+    as: Who,
+    c: Compound,
+    d: TestDevice,
+    pendingCount: unknown = 0,
+  ) {
+    return g.http(
+      'post',
+      '/gate/offline/heartbeat',
+      as.token,
+      envelope(d, c.tenantId, 'heartbeat', { pendingCount }),
+    );
+  }
+
   /** The device's flags, oldest first. */
   const flagsOf = (c: Compound, deviceId: string) =>
     g.inTx(c, (tx) =>
@@ -404,6 +431,7 @@ export function offlineHelpers(h: HttpHarness) {
     passFull,
     uploadRaw,
     upload,
+    heartbeatRaw,
     flagsOf,
     deviceWithBundle,
   };

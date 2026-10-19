@@ -22,8 +22,10 @@ import {
   ReviewOfflineFlagDto,
 } from './dto/offline-flags.dto';
 import { OfflineFlags } from './offline-flags.service';
+import { OfflineHealth } from './offline-health';
 import { OfflineUploadsService } from './offline-uploads.service';
 import {
+  HeartbeatResponse,
   OfflineBatchResponse,
   OfflineFlagResponse,
   OfflineUploadResponse,
@@ -34,7 +36,23 @@ import {
 @RequirePermissions('gate.operate')
 @Controller('gate/offline')
 export class GuardOfflineController {
-  constructor(private readonly uploads: OfflineUploadsService) {}
+  constructor(
+    private readonly uploads: OfflineUploadsService,
+    private readonly health: OfflineHealth,
+  ) {}
+
+  @Post('heartbeat')
+  @NoStore()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Say this device is alive and what it still holds',
+    description:
+      'A signed envelope (`purpose: heartbeat`, `pendingCount`), every few minutes while online. Answers what the server acknowledged and whether to download a new bundle (`refreshBundle`: old, or a lockdown or the blocklist changed since).',
+  })
+  @ApiOkResponse({ type: HeartbeatResponse })
+  async heartbeat(@Body() dto: DeviceEnvelopeDto): Promise<HeartbeatResponse> {
+    return HeartbeatResponse.from(await this.health.heartbeat(dto));
+  }
 
   @Post('uploads')
   @NoStore()

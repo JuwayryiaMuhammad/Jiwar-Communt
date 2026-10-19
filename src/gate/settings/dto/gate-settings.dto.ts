@@ -132,4 +132,25 @@ export class UpdateGateSettingsDto {
   @Min(L.videoMaxMb.min, withParams(bounds(L.videoMaxMb)))
   @Max(L.videoMaxMb.max, withParams(bounds(L.videoMaxMb)))
   videoMaxMb?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.offlineSyncAlertMinutes.min,
+    maximum: L.offlineSyncAlertMinutes.max,
+    description:
+      'Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage.',
+  })
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.offlineSyncAlertMinutes)))
+  @Min(
+    L.offlineSyncAlertMinutes.min,
+    withParams(bounds(L.offlineSyncAlertMinutes)),
+  )
+  @Max(
+    L.offlineSyncAlertMinutes.max,
+    withParams(bounds(L.offlineSyncAlertMinutes)),
+  )
+  offlineSyncAlertMinutes?: number;
 }

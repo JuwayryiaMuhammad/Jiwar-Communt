@@ -13,6 +13,7 @@ import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { SafetyCore } from '../safety/safety-core';
 import { devicePublicKey, enrolMessage, signedBy } from './device-envelope';
+import { missingActions } from './offline-sequence';
 
 /** Live devices a compound may have at once (ADR 0057). */
 export const DEVICE_LIMIT = 50;
@@ -61,6 +62,24 @@ export interface StaffDeviceView {
   /** Its last bundle's number (0: none yet) and when. */
   bundleVersion: number;
   lastBundleAt: Date | null;
+  /** Until when its last bundle decides, and whether its shift is open. */
+  bundleValidUntil: Date | null;
+  onShift: boolean;
+  /** Its sync health (ADR 0057). */
+  lastSeenAt: Date | null;
+  lastUploadAt: Date | null;
+  pendingCount: number | null;
+  ackedSeq: number;
+  maxSeq: number;
+  missingActions: number;
+  /** Its flags neither reviewed nor cleared, info aside. */
+  openFlags: number;
+  /**
+   * What its last bundle could not carry: passes from before ADR 0043 and
+   * worker cards from before ADR 0057 (random), which open the gate online
+   * only until reissued.
+   */
+  notCarried: { passes: number; workers: number };
 }
 
 export const deviceNotFound = () =>
@@ -171,6 +190,8 @@ export class GateDevicesService implements OnModuleInit {
           label,
           enrolledById: this.ctx.accountId,
           enrolledAt: now,
+          // Seen at its enrolment: the sync-health sweep counts from here.
+          lastSeenAt: now,
         },
       });
       await this.audit.record(tx, {
@@ -314,17 +335,62 @@ export class GateDevicesService implements OnModuleInit {
     );
     const ref = (id: string): AccountRef =>
       people.get(id) ?? { id, fullName: null, status: 'erased' };
-    return rows.map((r) => ({
-      id: r.id,
-      label: r.label,
-      status: r.revokedAt ? 'revoked' : 'active',
-      enrolledBy: ref(r.enrolledById),
-      enrolledAt: r.enrolledAt,
-      revokedAt: r.revokedAt,
-      revokedBy: r.revokedById ? ref(r.revokedById) : null,
-      revokeReasonCode: r.revokeReason,
-      bundleVersion: r.bundleVersion,
-      lastBundleAt: r.lastBundleAt,
-    }));
+    const views: StaffDeviceView[] = [];
+    for (const r of rows) {
+      const bundle = r.bundleVersion
+        ? await tx.gateOfflineBundle.findFirst({
+            where: { deviceId: r.id, version: r.bundleVersion },
+            select: { validUntil: true, shiftId: true, counts: true },
+          })
+        : null;
+      const shift = bundle
+        ? await tx.guardShift.findUnique({
+            where: { id: bundle.shiftId },
+            select: { endedAt: true },
+          })
+        : null;
+      views.push({
+        id: r.id,
+        label: r.label,
+        status: r.revokedAt ? 'revoked' : 'active',
+        enrolledBy: ref(r.enrolledById),
+        enrolledAt: r.enrolledAt,
+        revokedAt: r.revokedAt,
+        revokedBy: r.revokedById ? ref(r.revokedById) : null,
+        revokeReasonCode: r.revokeReason,
+        bundleVersion: r.bundleVersion,
+        lastBundleAt: r.lastBundleAt,
+        bundleValidUntil: bundle?.validUntil ?? null,
+        onShift: !!shift && !shift.endedAt,
+        lastSeenAt: r.lastSeenAt,
+        lastUploadAt: r.lastUploadAt,
+        pendingCount: r.pendingCount,
+        ackedSeq: r.ackedSeq,
+        maxSeq: r.maxSeq,
+        missingActions: await missingActions(tx, r),
+        notCarried: {
+          passes: countOf(bundle?.counts, 'passesNotDerivable'),
+          workers: countOf(bundle?.counts, 'workersNotDerivable'),
+        },
+        openFlags: await tx.gateOfflineFlag.count({
+          where: {
+            deviceId: r.id,
+            reviewedAt: null,
+            clearedAt: null,
+            class: { not: 'info' },
+          },
+        }),
+      });
+    }
+    return views;
   }
+}
+
+/** A count kept in a bundle's counts; 0 when it is not there. */
+function countOf(counts: unknown, name: string): number {
+  const value =
+    counts && typeof counts === 'object'
+      ? (counts as Record<string, unknown>)[name]
+      : undefined;
+  return typeof value === 'number' ? value : 0;
 }

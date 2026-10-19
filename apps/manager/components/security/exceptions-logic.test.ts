@@ -56,6 +56,7 @@ const values = {
   videoMaxSeconds: 120,
   audioMaxMb: 20,
   videoMaxMb: 100,
+  offlineSyncAlertMinutes: 15,
 };
 
 test('the settings form: whole numbers within each bound; only the visit length may be off', () => {

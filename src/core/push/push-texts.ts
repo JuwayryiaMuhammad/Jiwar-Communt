@@ -1952,6 +1952,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'رُفض رفع بيانات العمل دون اتصال من جهاز بوابة. افحص الجهاز وألغِه إن لم يكن تابعاً لكم.',
     },
   },
+  'gate_device.sync_overdue': {
+    en: {
+      title: 'Gate device not syncing',
+      body: 'A gate device on shift has not been seen for {minutes} minutes. Check the gate’s network.',
+    },
+    ar: {
+      title: 'جهاز بوابة لا يزامن',
+      body: 'لم يظهر جهاز بوابة في وردية منذ {minutes} دقيقة. تحقّق من شبكة البوابة.',
+    },
+  },
+  'gate_device.sequence_gap': {
+    en: {
+      title: 'Gate device: actions missing',
+      body: '{missing} action(s) recorded offline on a gate device never arrived. Check the device.',
+    },
+    ar: {
+      title: 'جهاز بوابة: إجراءات ناقصة',
+      body: 'لم يصل {missing} إجراء سُجّل دون اتصال على جهاز بوابة. افحص الجهاز.',
+    },
+  },
   'gate_device.enrolled': {
     en: {
       title: 'New gate device',

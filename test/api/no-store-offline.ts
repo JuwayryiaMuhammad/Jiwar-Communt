@@ -105,6 +105,14 @@ export function offlineCalls(
         envelope(await device(), world().a.tenantId, 'bundle'),
       ),
     'POST /gate/offline/uploads': () => uploaded(),
+    'POST /gate/offline/heartbeat': async () =>
+      guard(
+        'POST',
+        '/gate/offline/heartbeat',
+        envelope(await device(), world().a.tenantId, 'heartbeat', {
+          pendingCount: 0,
+        }),
+      ),
     'GET /staff/gate/offline/batches': () =>
       manager('GET', '/staff/gate/offline/batches'),
     'GET /staff/gate/offline/batches/{id}': async () =>

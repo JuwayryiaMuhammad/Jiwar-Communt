@@ -15,6 +15,7 @@ import { GateBundlesService } from './offline/gate-bundles.service';
 import { OfflineEntries } from './offline/offline-entries';
 import { OfflineFlags } from './offline/offline-flags.service';
 import { OfflineHandlers } from './offline/offline-handlers';
+import { OfflineHealth } from './offline/offline-health';
 import { OfflineUploadsService } from './offline/offline-uploads.service';
 import {
   GuardOfflineController,
@@ -423,6 +424,7 @@ import { PickupPageService } from './children/pickup-page.service';
     OfflineFlags,
     OfflineEntries,
     OfflineHandlers,
+    OfflineHealth,
     OfflineUploadsService,
     GateSettingsService,
     GateSettingsProvisioning,

@@ -160,7 +160,7 @@ export class GateBundlesService {
       });
       await tx.gateDevice.update({
         where: { id: device.id },
-        data: { bundleVersion: version, lastBundleAt: now },
+        data: { bundleVersion: version, lastBundleAt: now, lastSeenAt: now },
       });
       return {
         keyVersion: this.signer.keyVersion,

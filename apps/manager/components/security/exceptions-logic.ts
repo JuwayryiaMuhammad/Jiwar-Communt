@@ -77,6 +77,7 @@ export const GATE_SETTINGS = [
   { name: 'videoMaxSeconds', label: 'Longest video recording, in seconds', min: 10, max: 300 },
   { name: 'audioMaxMb', label: 'Largest sound recording, in MB', min: 1, max: 20 },
   { name: 'videoMaxMb', label: 'Largest video recording, in MB', min: 1, max: 100 },
+  { name: 'offlineSyncAlertMinutes', label: 'Minutes a gate device on shift may go unseen before you are told', min: 5, max: 240 },
 ] as const;
 
 export type GateSettingName = (typeof GATE_SETTINGS)[number]['name'];

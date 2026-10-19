@@ -181,6 +181,11 @@ export class OfflineUploadsService implements OnModuleInit {
         if (why) return { refused: why, error: e as AppException };
         throw e;
       }
+      // Seen, and uploading: whatever the batch turns out to hold.
+      await tx.gateDevice.update({
+        where: { id: o.device.id },
+        data: { lastSeenAt: o.now, lastUploadAt: o.now },
+      });
       const parsed = parseUpload(o.payload);
       if ('problems' in parsed)
         return {

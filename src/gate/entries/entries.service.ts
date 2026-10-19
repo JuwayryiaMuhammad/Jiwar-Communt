@@ -279,6 +279,10 @@ export class EntriesService implements OnModuleInit {
               ErrorCode.IDEMPOTENCY_CONFLICT,
               'This entry id was used for another entry',
             );
+          // A retry under a key of its own: the key names the entry it
+          // found, so the key's next replay answers it too (unclaimed, the
+          // interceptor would refuse the route as never claiming).
+          await this.idempotency.claim(tx, { type: ENTRY_RESOURCE, id });
           return this.render(tx, known);
         }
       }

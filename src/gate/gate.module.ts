@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { FineBoardAppeals } from './fines/fine-board-appeals';
+import { ViolationBoardAppeals } from './violations/violation-board-appeals';
 import { GateExportSections } from './export/export-sections';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
@@ -335,6 +337,8 @@ import { PickupPageService } from './children/pickup-page.service';
     ChildAlertsController,
   ],
   providers: [
+    FineBoardAppeals,
+    ViolationBoardAppeals,
     GatesService,
     ShiftsService,
     VisitorPassesService,

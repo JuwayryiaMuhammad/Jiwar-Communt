@@ -29231,6 +29231,18 @@
             "nullable": true,
             "type": "object"
           },
+          "boardAppealAt": {
+            "description": "When it was taken to the board; no payment until the board decides.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "boardAppealUntil": {
+            "description": "Its appeal upheld: until when an owner or the primary may take it to the board (POST /governance/board-appeals, ADR 0055).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "canAppeal": {
             "description": "The caller may appeal it now: unpaid, never appealed, within 30 days, a vehicle keeper of the unit or its primary.",
             "type": "boolean"
@@ -29302,6 +29314,8 @@
           "appeal",
           "cancelReason",
           "canAppeal",
+          "boardAppealUntil",
+          "boardAppealAt",
           "createdAt"
         ],
         "type": "object"
@@ -30342,6 +30356,18 @@
             "nullable": true,
             "type": "object"
           },
+          "boardAppealAt": {
+            "description": "When it was taken to the board; no payment until the board decides.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "boardAppealUntil": {
+            "description": "Its appeal upheld: until when an owner or the primary may take it to the board (POST /governance/board-appeals, ADR 0055).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "canAppeal": {
             "description": "The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary.",
             "type": "boolean"
@@ -30436,6 +30462,8 @@
           "appeal",
           "cancelReason",
           "canAppeal",
+          "boardAppealUntil",
+          "boardAppealAt",
           "createdAt"
         ],
         "type": "object"
@@ -38882,6 +38910,18 @@
             "nullable": true,
             "type": "object"
           },
+          "boardAppealAt": {
+            "description": "When it was taken to the board; no payment until the board decides.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "boardAppealUntil": {
+            "description": "Its appeal upheld: until when an owner or the primary may take it to the board (POST /governance/board-appeals, ADR 0055).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "canAppeal": {
             "description": "The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary.",
             "type": "boolean"
@@ -39030,6 +39070,8 @@
           "appeal",
           "cancelReason",
           "canAppeal",
+          "boardAppealUntil",
+          "boardAppealAt",
           "createdAt",
           "unitId",
           "unitCode",
@@ -43440,7 +43482,8 @@
           "appeal_accepted",
           "issued_in_error",
           "duplicate",
-          "other"
+          "other",
+          "board_overturned"
         ],
         "type": "string"
       },

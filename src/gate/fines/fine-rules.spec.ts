@@ -32,3 +32,32 @@ describe('the fines’ reason codes', () => {
     expect(dashboards).toContain(`${list}: [${quoted(codes)}]`);
   });
 });
+
+describe('the board’s overturn (ADR 0055)', () => {
+  const read = (path: string) =>
+    readFileSync(join(__dirname, '../../..', path), 'utf8').replace(
+      /\s+/g,
+      ' ',
+    );
+  const migration = read(
+    'prisma/migrations/20261102090900_fine_violation_board_appeals/migration.sql',
+  );
+  const dashboards = read('packages/api/src/reasons.ts');
+  const quoted = (codes: readonly string[]) =>
+    codes.map((c) => `'${c}'`).join(', ');
+
+  it.each([
+    ['vehicleFineCancel', 'vehicleFineSystemCancel'],
+    ['violationCancel', 'violationSystemCancel'],
+  ] as const)(
+    '%s and %s are the recreated CHECK’s; the system’s in the mirror',
+    (staff, system) => {
+      expect(migration).toContain(
+        `IN (${quoted([...REASON_CODES[staff], ...REASON_CODES[system]])})`,
+      );
+      expect(dashboards).toContain(
+        `${system}: [${quoted(REASON_CODES[system])}]`,
+      );
+    },
+  );
+});

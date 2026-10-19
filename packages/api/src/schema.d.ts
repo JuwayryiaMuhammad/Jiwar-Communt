@@ -22794,6 +22794,16 @@ export interface components {
              */
             amount: string;
             appeal: components["schemas"]["FineAppealView"] | null;
+            /**
+             * Format: date-time
+             * @description When it was taken to the board; no payment until the board decides.
+             */
+            boardAppealAt: string | null;
+            /**
+             * Format: date-time
+             * @description Its appeal upheld: until when an owner or the primary may take it to the board (POST /governance/board-appeals, ADR 0055).
+             */
+            boardAppealUntil: string | null;
             /** @description The caller may appeal it now: unpaid, never appealed, within 30 days, a vehicle keeper of the unit or its primary. */
             canAppeal: boolean;
             /** @description Why it was cancelled: `vehicleFineCancel`. */
@@ -23115,6 +23125,16 @@ export interface components {
              */
             amount: string | null;
             appeal: components["schemas"]["ViolationAppealView"] | null;
+            /**
+             * Format: date-time
+             * @description When it was taken to the board; no payment until the board decides.
+             */
+            boardAppealAt: string | null;
+            /**
+             * Format: date-time
+             * @description Its appeal upheld: until when an owner or the primary may take it to the board (POST /governance/board-appeals, ADR 0055).
+             */
+            boardAppealUntil: string | null;
             /** @description The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary. */
             canAppeal: boolean;
             cancelReason: components["schemas"]["ViolationCancel"] | null;
@@ -25532,6 +25552,16 @@ export interface components {
             amount: string | null;
             appeal: components["schemas"]["ViolationAppealView"] | null;
             appealedBy: components["schemas"]["AccountRefView"] | null;
+            /**
+             * Format: date-time
+             * @description When it was taken to the board; no payment until the board decides.
+             */
+            boardAppealAt: string | null;
+            /**
+             * Format: date-time
+             * @description Its appeal upheld: until when an owner or the primary may take it to the board (POST /governance/board-appeals, ADR 0055).
+             */
+            boardAppealUntil: string | null;
             /** @description The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary. */
             canAppeal: boolean;
             cancelReason: components["schemas"]["ViolationCancel"] | null;
@@ -26921,7 +26951,7 @@ export interface components {
             reason: string | null;
         };
         /** @enum {string} */
-        ViolationCancel: "appeal_accepted" | "issued_in_error" | "duplicate" | "other";
+        ViolationCancel: "appeal_accepted" | "issued_in_error" | "duplicate" | "other" | "board_overturned";
         /** @enum {string} */
         ViolationDecision: "upheld" | "cancelled";
         /** @enum {string} */

@@ -84,6 +84,13 @@ export class FinePaymentsService implements OnModuleInit {
           ErrorCode.FINE_UNDER_APPEAL,
           'The fine is under appeal: it is paid once decided',
         );
+      // Appealed to the board (ADR 0055): paid once the board decides.
+      if (fine.boardAppealAt && !fine.boardAppealClosedAt)
+        throw appError.conflict(
+          ErrorCode.FINE_UNDER_APPEAL,
+          'The fine is appealed to the board: it is paid once decided',
+          { params: { level: 'board' } },
+        );
       if (fine.status !== 'unpaid')
         throw appError.conflict(
           ErrorCode.FINE_NOT_PAYABLE,

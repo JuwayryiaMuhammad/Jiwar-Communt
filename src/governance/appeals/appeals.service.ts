@@ -44,9 +44,14 @@ const DAY = 86_400_000;
 
 /**
  * The kinds that must have their domain's handler (ADR 0055): a rejected
- * invoice dispute's (finance). The gate and facilities add theirs.
+ * invoice dispute's (finance), a fine's and a violation's (the gate).
+ * Facilities adds its own.
  */
-const REQUIRED_KINDS: BoardAppealKind[] = ['invoice_dispute'];
+const REQUIRED_KINDS: BoardAppealKind[] = [
+  'invoice_dispute',
+  'vehicle_fine',
+  'unit_violation',
+];
 
 export interface NewAppeal {
   kind: BoardAppealKind;

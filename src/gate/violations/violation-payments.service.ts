@@ -115,6 +115,13 @@ export class ViolationPaymentsService implements OnModuleInit {
           ErrorCode.VIOLATION_UNDER_APPEAL,
           'The violation is under appeal: it is paid once decided',
         );
+      // Appealed to the board (ADR 0055): paid once the board decides.
+      if (v.boardAppealAt && !v.boardAppealClosedAt)
+        throw appError.conflict(
+          ErrorCode.VIOLATION_UNDER_APPEAL,
+          'The violation is appealed to the board: it is paid once decided',
+          { params: { level: 'board' } },
+        );
       if (v.status !== 'open' || v.amount === null)
         throw appError.conflict(
           ErrorCode.VIOLATION_NOT_PAYABLE,

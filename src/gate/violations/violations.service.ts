@@ -88,6 +88,8 @@ export interface ViolationFile {
   people: Map<string, Person>;
   /** A resident's view: the caller may appeal it now. */
   canAppeal: boolean;
+  /** Its upheld appeal may go to the board until then (ADR 0055), or null. */
+  boardAppealUntil: Date | null;
 }
 
 const invalid = (fields: FieldError[]) =>
@@ -406,6 +408,12 @@ export class ViolationsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.safety.lockSelf(tx);
       const v = await this.lockRow(tx, id);
+      if (v.boardAppealAt && !v.boardAppealClosedAt)
+        throw appError.conflict(
+          ErrorCode.VIOLATION_UNDER_APPEAL,
+          'The violation is appealed to the board: the board decides it',
+          { params: { level: 'board' } },
+        );
       if (v.status !== 'open')
         throw appError.conflict(
           ErrorCode.VIOLATION_NOT_CANCELLABLE,
@@ -648,6 +656,7 @@ export class ViolationsService implements OnModuleInit {
       list.map((v) => ({ gateId: v.postGateId, placeId: v.postPlaceId })),
     );
     const me = this.ctx.accountId;
+    const now = await dbNow(tx);
     const out: ViolationFile[] = [];
     for (const v of list) {
       let canAppeal = false;
@@ -684,6 +693,7 @@ export class ViolationsService implements OnModuleInit {
         payments: payments.filter((p) => p.violationId === v.id),
         people: names.people,
         canAppeal,
+        boardAppealUntil: boardAppealUntil(v, now),
       });
     }
     return out;
@@ -691,3 +701,25 @@ export class ViolationsService implements OnModuleInit {
 }
 
 export const asDate = (d: LocalDate): Date => new Date(`${d}T00:00:00.000Z`);
+
+/**
+ * Until when a violation whose appeal the staff upheld may be taken to the
+ * board (ADR 0055): open, not yet taken, within 15 days of the decision.
+ */
+export function boardAppealUntil(
+  v: Pick<
+    UnitViolation,
+    'status' | 'appealDecision' | 'decidedAt' | 'boardAppealAt'
+  >,
+  now: Date,
+): Date | null {
+  if (
+    v.status !== 'open' ||
+    v.appealDecision !== 'upheld' ||
+    v.boardAppealAt ||
+    !v.decidedAt
+  )
+    return null;
+  const until = new Date(v.decidedAt.getTime() + 15 * 86_400_000);
+  return now < until ? until : null;
+}

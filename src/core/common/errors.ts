@@ -501,7 +501,11 @@ export const ErrorCode = {
   FINE_NOT_UNDER_APPEAL: 'FINE_NOT_UNDER_APPEAL',
   /** Only an unpaid fine not under appeal is cancelled (409, params.status). */
   FINE_NOT_CANCELLABLE: 'FINE_NOT_CANCELLABLE',
-  /** It is under appeal: it is paid once the appeal is decided (409). */
+  /**
+   * It is under appeal: it is paid once the appeal is decided (409);
+   * params.level `board` while the board has it (ADR 0055), when the staff
+   * do not cancel it either.
+   */
   FINE_UNDER_APPEAL: 'FINE_UNDER_APPEAL',
   /** Paid already, or cancelled (409, params.status). */
   FINE_NOT_PAYABLE: 'FINE_NOT_PAYABLE',
@@ -1004,7 +1008,9 @@ export const ErrorCode = {
   /** Only the unit's keepers or its primary appeal a violation (403). */
   VIOLATION_APPEAL_NOT_ALLOWED: 'VIOLATION_APPEAL_NOT_ALLOWED',
   /**
-   * The violation waits for its appeal's decision before it is paid (409).
+   * The violation waits for its appeal's decision before it is paid (409);
+   * params.level `board` while the board has it (ADR 0055), when the staff
+   * do not cancel it either.
    */
   VIOLATION_UNDER_APPEAL: 'VIOLATION_UNDER_APPEAL',
   /**

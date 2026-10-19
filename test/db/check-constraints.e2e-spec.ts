@@ -839,7 +839,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   vehicle_fines_decision_shape: {},
   // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
-  vehicle_fines_state_shape: {},
+  // Recreated in ADR 0055: cancel_reason compared only once cancelled_at
+  // IS NOT NULL, when the conjunct before holds it NOT NULL.
+  vehicle_fines_state_shape: {
+    guarded:
+      'cancelled_at IS NULL is tested first; cancel_reason is then NOT NULL by the conjunct before',
+  },
+  vehicle_fines_board_appeal: {
+    guarded:
+      'board_appeal_at IS NULL is tested first; appeal_decision under IS NOT DISTINCT FROM',
+  },
   vehicle_fines_accepted_cancels: {
     guarded:
       'appeal_decision IS NULL is tested first; the comparison runs only on a value',
@@ -1554,7 +1563,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   unit_violations_decision_shape: {
     guarded: 'appeal_decision IS NULL is tested first',
   },
-  unit_violations_state_shape: {},
+  unit_violations_state_shape: {
+    guarded:
+      'cancelled_at IS NULL is tested first; cancel_reason is then NOT NULL by the conjunct before',
+  },
+  unit_violations_board_appeal: {
+    guarded:
+      'board_appeal_at IS NULL is tested first; appeal_decision under IS NOT DISTINCT FROM',
+  },
   unit_violations_accepted_cancels: {
     guarded: 'appeal_decision IS NULL is tested first',
   },

@@ -76,6 +76,7 @@ export const REASON_CODES = {
   visitorParkingSystemCancel: ['pass_cancelled', 'booker_left'],
   vehicleFineReason: ['parked_in_visitor_slot', 'parked_in_others_slot', 'blocking', 'no_permit', 'fire_lane', 'other'],
   vehicleFineCancel: ['appeal_accepted', 'issued_in_error', 'duplicate', 'other'],
+  vehicleFineSystemCancel: ['board_overturned'],
   vehicleFinePaymentReverse: ['entered_in_error', 'refunded', 'other'],
   parkingReportClose: ['resolved', 'vehicle_not_found', 'duplicate', 'not_a_violation'],
   // Emergencies and gate services (ADR 0047).
@@ -136,6 +137,7 @@ export const REASON_CODES = {
   incidentOutcome: ['resolved', 'referred_to_police', 'referred_to_management', 'no_action_needed', 'unfounded', 'other'],
   violationKind: ['noise', 'waste', 'pets', 'contractor_hours', 'other'],
   violationCancel: ['appeal_accepted', 'issued_in_error', 'duplicate', 'other'],
+  violationSystemCancel: ['board_overturned'],
   violationPaymentReverse: ['entered_in_error', 'refunded', 'other'],
 } as const;
 

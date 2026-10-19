@@ -204,6 +204,9 @@ describe('Fines', () => {
           'appeal',
           'cancelReason',
           'canAppeal',
+          // ADR 0055: an appeal to the board, after the first one.
+          'boardAppealUntil',
+          'boardAppealAt',
           'createdAt',
         ].sort(),
       );

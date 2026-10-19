@@ -5165,6 +5165,8 @@ model VehicleFine {
   cancelReason      String?              @map("cancel_reason")
   cancelledById     String?              @map("cancelled_by_account_id") @db.Uuid
   cancelledAt       DateTime?            @map("cancelled_at") @db.Timestamptz(3)
+  boardAppealAt     DateTime?            @map("board_appeal_at") @db.Timestamptz(3)
+  boardAppealClosedAt DateTime?            @map("board_appeal_closed_at") @db.Timestamptz(3)
   createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -7650,6 +7652,8 @@ model UnitViolation {
   cancelReason      String?   @map("cancel_reason")
   cancelledById     String?   @map("cancelled_by_account_id") @db.Uuid
   cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  boardAppealAt     DateTime? @map("board_appeal_at") @db.Timestamptz(3)
+  boardAppealClosedAt DateTime? @map("board_appeal_closed_at") @db.Timestamptz(3)
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 

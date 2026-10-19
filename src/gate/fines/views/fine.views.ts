@@ -93,6 +93,22 @@ export class ResidentFineView {
       'The caller may appeal it now: unpaid, never appealed, within 30 days, a vehicle keeper of the unit or its primary.',
   })
   canAppeal: boolean;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Its appeal upheld: until when an owner or the primary may take it to the board (POST /governance/board-appeals, ADR 0055).',
+  })
+  boardAppealUntil: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'When it was taken to the board; no payment until the board decides.',
+  })
+  boardAppealAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -120,6 +136,8 @@ export class ResidentFineView {
         : null,
       cancelReason: v.cancelReason,
       canAppeal: f.canAppeal,
+      boardAppealUntil: f.boardAppealUntil,
+      boardAppealAt: v.boardAppealAt,
       createdAt: v.createdAt,
     };
   }

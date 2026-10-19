@@ -650,6 +650,83 @@ describe('Security tables (ADR 0053) — CHECKs, triggers and privileges', () =>
       ).rejects.toThrow(/keeps its terms/);
     });
 
+    describe('cancelled, by the board (no actor) or by the office (ADR 0055)', () => {
+      // Its first appeal upheld: each instant set explicitly, in order.
+      const upheld = () => [
+        `UPDATE unit_violations SET status = 'under_appeal', appeal_text = 'Not us', appealed_by_account_id = '${guardId}', appealed_at = now() - interval '3 days' WHERE ${where()}`,
+        `UPDATE unit_violations SET status = 'open', appeal_decision = 'upheld', decided_at = now() - interval '2 days', decided_by_account_id = '${managerId}' WHERE ${where()}`,
+      ];
+      const byBoard = () => [
+        ...upheld(),
+        `UPDATE unit_violations SET board_appeal_at = now() - interval '1 day' WHERE ${where()}`,
+        `UPDATE unit_violations SET status = 'cancelled', cancel_reason = 'board_overturned', cancelled_at = now() - interval '1 hour', cancelled_by_account_id = NULL, board_appeal_closed_at = now() - interval '1 hour' WHERE ${where()}`,
+      ];
+      const byOffice = () => [
+        ...upheld(),
+        `UPDATE unit_violations SET status = 'cancelled', cancel_reason = 'issued_in_error', cancelled_at = now() - interval '1 hour', cancelled_by_account_id = '${managerId}' WHERE ${where()}`,
+      ];
+      const clear = () =>
+        `UPDATE unit_violations SET appeal_text = NULL, appeal_cleared_at = now() WHERE ${where()}`;
+
+      it('still takes its later allowed change: the appeal’s words cleared, once', async () => {
+        for (const cancelled of [byBoard(), byOffice()]) {
+          await expect(asApp(...cancelled, clear())).resolves.toMatchObject({
+            rowCount: 1,
+          });
+          await expect(
+            asApp(
+              ...cancelled,
+              clear(),
+              `UPDATE unit_violations SET appeal_cleared_at = appeal_cleared_at + interval '1 second' WHERE ${where()}`,
+            ),
+          ).rejects.toThrow(/keeps its terms/);
+        }
+      });
+
+      it('keeps its terms and its cancellation, whether an actor or none cancelled it', async () => {
+        const always = [
+          `kind = 'pets'`,
+          `note = 'Other words'`,
+          `cancel_reason = 'duplicate'`,
+          `cancelled_at = cancelled_at - interval '1 second'`,
+          `status = 'open', cancel_reason = NULL, cancelled_at = NULL, cancelled_by_account_id = NULL`,
+        ];
+        for (const set of [
+          ...always,
+          // The board's: no actor is ever written in afterwards.
+          `cancelled_by_account_id = '${managerId}'`,
+          `board_appeal_closed_at = board_appeal_closed_at + interval '1 second'`,
+        ])
+          await expect(
+            asApp(
+              ...byBoard(),
+              `UPDATE unit_violations SET ${set} WHERE ${where()}`,
+            ),
+          ).rejects.toThrow(/keeps its terms/);
+        for (const set of [
+          ...always,
+          // The office's: its actor is never removed nor replaced.
+          `cancelled_by_account_id = NULL`,
+          `cancelled_by_account_id = '${guardId}'`,
+        ])
+          await expect(
+            asApp(
+              ...byOffice(),
+              `UPDATE unit_violations SET ${set} WHERE ${where()}`,
+            ),
+          ).rejects.toThrow(/keeps its terms/);
+      });
+
+      it('only the board’s reason goes without an actor', async () => {
+        await expect(
+          asApp(
+            ...upheld(),
+            `UPDATE unit_violations SET status = 'cancelled', cancel_reason = 'duplicate', cancelled_at = now() WHERE ${where()}`,
+          ),
+        ).rejects.toThrow(/unit_violations_state_shape/);
+      });
+    });
+
     it('the shapes: a warning is never paid; a permit only for contractor hours; the amount in EGP', async () => {
       const insert = (cols: string, values: string) =>
         `INSERT INTO unit_violations (id, tenant_id, number, kind, unit_id, occurred_on, issued_by_account_id, updated_at, ${cols})

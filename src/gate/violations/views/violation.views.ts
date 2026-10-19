@@ -89,7 +89,10 @@ export class ResidentViolationView {
   @ApiProperty({ type: ViolationAppealView, nullable: true })
   appeal: ViolationAppealView | null;
   @ApiProperty({
-    enum: [...REASON_CODES.violationCancel],
+    enum: [
+      ...REASON_CODES.violationCancel,
+      ...REASON_CODES.violationSystemCancel,
+    ],
     enumName: 'ViolationCancel',
     nullable: true,
   })
@@ -100,6 +103,22 @@ export class ResidentViolationView {
       'The caller may appeal it now: open, never appealed, within 30 days, a keeper of the unit or its primary.',
   })
   canAppeal: boolean;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Its appeal upheld: until when an owner or the primary may take it to the board (POST /governance/board-appeals, ADR 0055).',
+  })
+  boardAppealUntil: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'When it was taken to the board; no payment until the board decides.',
+  })
+  boardAppealAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -129,6 +148,8 @@ export class ResidentViolationView {
         : null,
       cancelReason: v.cancelReason,
       canAppeal: f.canAppeal,
+      boardAppealUntil: f.boardAppealUntil,
+      boardAppealAt: v.boardAppealAt,
       createdAt: v.createdAt,
     };
   }

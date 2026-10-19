@@ -396,6 +396,8 @@ export const REASON_CODES = {
     'duplicate',
     'other',
   ],
+  // The system's: the board overturned the decision (ADR 0055).
+  vehicleFineSystemCancel: ['board_overturned'],
   vehicleFinePaymentReverse: ['entered_in_error', 'refunded', 'other'],
   // Why security closes a parking report without a fine.
   parkingReportClose: [
@@ -632,5 +634,7 @@ export const REASON_CODES = {
   // a payment of one was reversed.
   violationKind: ['noise', 'waste', 'pets', 'contractor_hours', 'other'],
   violationCancel: ['appeal_accepted', 'issued_in_error', 'duplicate', 'other'],
+  // The system's: the board overturned the decision (ADR 0055).
+  violationSystemCancel: ['board_overturned'],
   violationPaymentReverse: ['entered_in_error', 'refunded', 'other'],
 } as const;

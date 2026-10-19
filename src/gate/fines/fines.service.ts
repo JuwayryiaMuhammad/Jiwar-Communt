@@ -26,6 +26,7 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import { dbNow } from '../db-clock';
 import { unitNotFound, VehicleCore } from '../vehicles/vehicle-core';
 import { asDate } from '../vehicles/vehicle-rules';
 import {
@@ -68,6 +69,8 @@ export interface FineFile {
   people: Map<string, Person>;
   /** Resident views: the caller may appeal it now. */
   canAppeal: boolean;
+  /** Its upheld appeal may go to the board until then (ADR 0055), or null. */
+  boardAppealUntil: Date | null;
 }
 
 const invalid = (fields: FieldError[]) =>
@@ -302,7 +305,8 @@ export class FinesService implements OnModuleInit {
           'The fine is not under appeal',
           { params: { status: fine.status } },
         );
-      const now = new Date();
+      // The database's clock: an appeal to the board counts 15 days from it.
+      const now = await dbNow(tx);
       await tx.vehicleFine.update({
         where: { id },
         data: {
@@ -349,6 +353,12 @@ export class FinesService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.core.lockSelf(tx);
       const fine = await this.lockRow(tx, id);
+      if (fine.boardAppealAt && !fine.boardAppealClosedAt)
+        throw appError.conflict(
+          ErrorCode.FINE_UNDER_APPEAL,
+          'The fine is appealed to the board: the board decides it',
+          { params: { level: 'board' } },
+        );
       if (fine.status !== 'unpaid')
         throw appError.conflict(
           ErrorCode.FINE_NOT_CANCELLABLE,
@@ -589,6 +599,7 @@ export class FinesService implements OnModuleInit {
         )
       : new Map<string, Person>();
     const me = this.ctx.accountId;
+    const now = await dbNow(tx);
     const out: FineFile[] = [];
     for (const fine of fines) {
       let canAppeal = false;
@@ -612,8 +623,31 @@ export class FinesService implements OnModuleInit {
         payments: payments.filter((p) => p.fineId === fine.id),
         people,
         canAppeal,
+        boardAppealUntil: boardAppealUntil(fine, now),
       });
     }
     return out;
   }
+}
+
+/**
+ * Until when a fine whose appeal the staff upheld may be taken to the
+ * board (ADR 0055): unpaid, not yet taken, within 15 days of the decision.
+ */
+export function boardAppealUntil(
+  fine: Pick<
+    VehicleFine,
+    'status' | 'appealDecision' | 'decidedAt' | 'boardAppealAt'
+  >,
+  now: Date,
+): Date | null {
+  if (
+    fine.status !== 'unpaid' ||
+    fine.appealDecision !== 'upheld' ||
+    fine.boardAppealAt ||
+    !fine.decidedAt
+  )
+    return null;
+  const until = new Date(fine.decidedAt.getTime() + 15 * 86_400_000);
+  return now < until ? until : null;
 }

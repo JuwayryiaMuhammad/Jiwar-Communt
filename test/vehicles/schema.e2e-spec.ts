@@ -33,6 +33,7 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
   let migrator: Client;
   let tenantId: string;
   let accountId: string;
+  let otherId: string;
   let unitId: string;
   let vehicleId: string;
   let stickerId: string;
@@ -49,6 +50,7 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
     h = await createDbHarness();
     tenantId = await createTenant(h, 'Vehicles schema');
     accountId = (await createAccountRow(h, tenantId)).id;
+    otherId = (await createAccountRow(h, tenantId)).id;
     unitId = (await createUnit(h, tenantId)).id;
     await h.asTenant(tenantId, () =>
       h.tenantTx.withTenantTx(async (tx: TenantTxClient) => {
@@ -309,6 +311,84 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
           `UPDATE vehicle_fines SET status = 'unpaid', cancel_reason = NULL, cancelled_at = NULL, cancelled_by_account_id = NULL WHERE id = '${fineId}'`,
         ),
       ).rejects.toThrow(/keeps its terms/);
+    });
+
+    describe('cancelled, by the board (no actor) or by the office (ADR 0055)', () => {
+      const at = () => `id = '${fineId}'`;
+      // Its first appeal upheld: each instant set explicitly, in order.
+      const upheld = () => [
+        `UPDATE vehicle_fines SET status = 'under_appeal', appeal_text = 'Words', appealed_by_account_id = '${accountId}', appealed_at = now() - interval '3 days' WHERE ${at()}`,
+        `UPDATE vehicle_fines SET status = 'unpaid', appeal_decision = 'upheld', decided_at = now() - interval '2 days', decided_by_account_id = '${accountId}' WHERE ${at()}`,
+      ];
+      const byBoard = () => [
+        ...upheld(),
+        `UPDATE vehicle_fines SET board_appeal_at = now() - interval '1 day' WHERE ${at()}`,
+        `UPDATE vehicle_fines SET status = 'cancelled', cancel_reason = 'board_overturned', cancelled_at = now() - interval '1 hour', cancelled_by_account_id = NULL, board_appeal_closed_at = now() - interval '1 hour' WHERE ${at()}`,
+      ];
+      const byOffice = () => [
+        ...upheld(),
+        `UPDATE vehicle_fines SET status = 'cancelled', cancel_reason = 'issued_in_error', cancelled_at = now() - interval '1 hour', cancelled_by_account_id = '${accountId}' WHERE ${at()}`,
+      ];
+      const clear = () =>
+        `UPDATE vehicle_fines SET appeal_text = NULL, appeal_cleared_at = now() WHERE ${at()}`;
+
+      it('still takes its later allowed change: the appeal’s words cleared, once', async () => {
+        for (const cancelled of [byBoard(), byOffice()]) {
+          await expect(asApp(...cancelled, clear())).resolves.toMatchObject({
+            rowCount: 1,
+          });
+          await expect(
+            asApp(
+              ...cancelled,
+              clear(),
+              `UPDATE vehicle_fines SET appeal_cleared_at = appeal_cleared_at + interval '1 second' WHERE ${at()}`,
+            ),
+          ).rejects.toThrow(/keeps its terms/);
+        }
+      });
+
+      it('keeps its terms and its cancellation, whether an actor or none cancelled it', async () => {
+        const always = [
+          `amount = 1`,
+          `reason = 'other'`,
+          `cancel_reason = 'duplicate'`,
+          `cancelled_at = cancelled_at - interval '1 second'`,
+          `status = 'unpaid', cancel_reason = NULL, cancelled_at = NULL, cancelled_by_account_id = NULL`,
+        ];
+        for (const set of [
+          ...always,
+          // The board's: no actor is ever written in afterwards.
+          `cancelled_by_account_id = '${accountId}'`,
+          `board_appeal_closed_at = board_appeal_closed_at + interval '1 second'`,
+        ])
+          await expect(
+            asApp(
+              ...byBoard(),
+              `UPDATE vehicle_fines SET ${set} WHERE ${at()}`,
+            ),
+          ).rejects.toThrow(/keeps its terms/);
+        for (const set of [
+          ...always,
+          // The office's: its actor is never removed nor replaced.
+          `cancelled_by_account_id = NULL`,
+          `cancelled_by_account_id = '${otherId}'`,
+        ])
+          await expect(
+            asApp(
+              ...byOffice(),
+              `UPDATE vehicle_fines SET ${set} WHERE ${at()}`,
+            ),
+          ).rejects.toThrow(/keeps its terms/);
+      });
+
+      it('only the board’s reason goes without an actor', async () => {
+        await expect(
+          asApp(
+            ...upheld(),
+            `UPDATE vehicle_fines SET status = 'cancelled', cancel_reason = 'duplicate', cancelled_at = now() WHERE ${at()}`,
+          ),
+        ).rejects.toThrow(/vehicle_fines_state_shape/);
+      });
     });
 
     it('under appeal exactly while appealed and undecided; an accepted appeal cancels', async () => {

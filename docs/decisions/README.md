@@ -8,7 +8,7 @@
 | [0004](0004-login.md) | Login by email or phone, OTP by email | Accepted |
 | [0005](0005-rls-mechanics.md) | Postgres RLS with transaction-local tenant setting | Accepted |
 | [0006](0006-client-generated-ids.md) | Client-generated UUIDv7 IDs | Accepted |
-| [0007](0007-offline.md) | Offline: shared mechanics, domain-owned conflict rules | Accepted (not implemented) |
+| [0007](0007-offline.md) | Offline: shared mechanics, domain-owned conflict rules | Accepted (implemented for the gate by 0057) |
 | [0008](0008-numbering.md) | Numbering: server sequences + reserved ranges | Accepted (not implemented) |
 | [0009](0009-open-questions.md) | Open questions | Open |
 | [0010](0010-permissions-and-roles.md) | Per-tenant roles, code-defined permissions, sync | Accepted |
@@ -58,3 +58,4 @@
 | [0054](0054-children.md) | Children: exit control per minor with a card shown once and kept as a plain SHA-256, escorts with days, hours and a post, an outside person's pickup code and page, a two-scan exit at the gate with alerts to the household and the keepers, records kept 30 days that only the household reads, events for children and a child as a booking's occasion | Accepted |
 | [0055](0055-board-approvals-budget-expenses-appeals.md) | Board matters: requests the board decides by motions with a reasoned record and a recused set, the annual budget and expenses held to its lines and the manager's limit, appeals to the board against four staff decisions, and the board's overview | Accepted |
 | [0056](0056-guard-completion.md) | Guard completion: field exceptions the on-duty management answers first-wins, visit overstay alerts, service vehicles and resident vehicles counted, the visitor's photo kept 30 days or with an incident, the gate directory, the traffic report, an exact-name log search that keeps no name, instructions for set days, the patrol geofence flagged once per exit, MP4 recordings with their length read from the container, and incident reports signed per role over their canonical content | Accepted |
+| [0057](0057-guard-offline.md) | The gate offline: guard devices enrolled with an Ed25519 key, a bundle signed per device and shift with tags it can check but not reverse, signed ordered uploads recorded at their device time and never refused, conflicts flagged and told per batch, a revoked device's batches quarantined for the management, children's exits with the guard's ID check, and the devices' sync health | Accepted |

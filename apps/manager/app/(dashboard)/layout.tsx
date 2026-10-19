@@ -72,6 +72,8 @@ import {
   Baby,
   PiggyBank,
   Wallet,
+  CloudOff,
+  Smartphone,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -227,6 +229,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       retry: false,
       enabled: can('gate_exceptions.decide'),
     }).data?.data.length ?? 0;
+
+  // The gate offline (ADR 0057): security flags to look at, and
+  // quarantined batches to decide.
+  const offlineToLookAt =
+    useQueueSize(
+      keys.offlineFlags('open', 'security'),
+      () => fetchers.offlineFlags('open', 'security', undefined, undefined, 100),
+      can('gate_devices.manage'),
+    ) +
+    useQueueSize(
+      keys.offlineBatches('pending'),
+      () => fetchers.offlineBatches('pending', undefined, 100),
+      can('gate_devices.manage'),
+    );
 
   // Shift swaps the colleague accepted, to decide (ADR 0050).
   const swapsToDecide = useQueueSize(
@@ -467,6 +483,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           show: can('gate_exceptions.decide'),
         },
         { href: '/security/gate-settings', label: 'Gate settings', icon: <SlidersHorizontal aria-hidden />, show: can('gate.manage') },
+        // The gate offline (ADR 0057).
+        { href: '/security/gate-devices', label: 'Gate devices', icon: <Smartphone aria-hidden />, show: can('gate_devices.manage') },
+        {
+          href: '/security/offline-flags',
+          label: 'Offline flags',
+          icon: <CloudOff aria-hidden />,
+          count: offlineToLookAt,
+          show: can('gate_devices.manage'),
+        },
       ],
     },
     {

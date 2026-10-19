@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { REASON_CODES } from '../../core/common/reasons';
 import { GATE_SETTING_LIMITS } from '../settings/gate-settings-rules';
+import { FLAG_KINDS } from './offline-rules';
 
 /**
  * The gate offline's closed lists (ADR 0057) match their CHECKs and the
@@ -23,6 +24,14 @@ const dashboard = readFileSync(
   ),
   'utf8',
 );
+const flagWords = readFileSync(
+  join(
+    __dirname,
+    '../../..',
+    'apps/manager/components/security/offline-logic.ts',
+  ),
+  'utf8',
+);
 const mirror = readFileSync(
   join(__dirname, '../../..', 'packages/api/src/reasons.ts'),
   'utf8',
@@ -31,7 +40,13 @@ const quoted = (list: readonly string[]) =>
   list.map((c) => `'${c}'`).join(', ');
 
 describe('the gate offline’s lists, their CHECKs and the mirror', () => {
-  it.each([['gateDeviceRevoke', devices]] as const)('%s', (list, sql) => {
+  it.each([
+    ['gateDeviceRevoke', devices],
+    [
+      'offlineFlagReview',
+      read('prisma/migrations/20261106090300_offline_uploads/migration.sql'),
+    ],
+  ] as const)('%s', (list, sql) => {
     const q = quoted(REASON_CODES[list]);
     expect(sql).toContain(`IN (${q})`);
     expect(mirror).toContain(`${list}: [${q}]`);
@@ -50,5 +65,9 @@ describe('the gate offline’s lists, their CHECKs and the mirror', () => {
         `name: 'offlineSyncAlertMinutes'.*min: ${l.min}, max: ${l.max}`,
       ),
     );
+  });
+
+  it('every flag the uploads raise has its words on the dashboard', () => {
+    for (const kind of FLAG_KINDS) expect(flagWords).toContain(`  ${kind}: '`);
   });
 });

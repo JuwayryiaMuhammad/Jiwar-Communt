@@ -153,11 +153,21 @@ const TEXT: Record<string, (p: P) => string> = {
   'patrol.geofence_exit': (p) => `A guard on patrol was outside the route’s area for ${p.minutes} minutes or more`,
   'gate_exception.requested': (p) =>
     `A guard at ${p.gateName} asks to let ${EXCEPTION_KIND_TEXT[String(p.exceptionKind)] ?? 'someone'} in for unit ${p.unitCode}`,
+  // The gate offline (ADR 0057): counts and codes only.
+  'gate_device.enrolled': () => 'A guard enrolled a device for the gate offline',
+  'gate_device.sync_overdue': (p) => `A gate device on shift has not been seen for ${p.minutes} minutes`,
+  'gate_device.sequence_gap': (p) => `${p.missing} action(s) recorded offline on a gate device never arrived`,
+  'gate_device.upload_rejected': (p) => `A gate device’s offline upload was refused (${words(p.reason)})`,
+  'gate_offline.security_conflict': (p) => `A gate device synced ${p.flags} security conflict(s) from offline`,
+  'gate_offline.conflicts': (p) => `A gate device synced ${p.flags} entry conflict(s) to review`,
   // Security (ADR 0053): codes only, never a plate, a name, a unit or a word.
   'gate_lockdown.started': (p) => (p.scope === 'all' ? 'Every gate is locked down' : 'A gate is locked down'),
   'gate_lockdown.resident_notice': () => 'The compound’s gates are locked down for now',
   'gate_lockdown.ended': (p) => (p.scope === 'all' ? 'The lockdown of every gate ended' : 'A gate’s lockdown ended'),
-  'blocklist.ban_matched': (p) => `A banned plate or person was refused at the gate (${words(p.source)})`,
+  'blocklist.ban_matched': (p) =>
+    p.source === 'offline_sync'
+      ? 'A banned plate was let in while the gate was offline'
+      : `A banned plate or person was refused at the gate (${words(p.source)})`,
   'blocklist.watch_matched': (p) => `A watched plate or person came to the gate (${words(p.source)})`,
   'unit_permit.work_stopped': (p) => `Security stopped the work on a permit (${words(p.reason)})`,
   'unit_permit.work_resumed': () => 'The work on a permit may go on',
@@ -328,6 +338,11 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('incidents.manage') ? `/security/incidents?incident=${n.targetId}` : null;
   if (n.targetType === 'unit_violation' && n.targetId)
     return can('violations.manage') || can('violations.issue') || can('fines.billing') ? `/violations?violation=${n.targetId}` : null;
+  // The gate offline (ADR 0057): a device, or an uploaded batch's flags.
+  if (n.targetType === 'gate_device' && n.targetId)
+    return can('gate_devices.manage') ? `/security/gate-devices?device=${n.targetId}` : null;
+  if (n.targetType === 'gate_offline_batch' && n.targetId)
+    return can('gate_devices.manage') ? `/security/offline-flags?batch=${n.targetId}` : null;
   // A field exception to answer (ADR 0056), for the on-duty management.
   if (n.targetType === 'gate_field_exception' && n.targetId)
     return can('gate_exceptions.decide') ? `/security/field-exceptions?exception=${n.targetId}` : null;

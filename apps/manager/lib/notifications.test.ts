@@ -258,3 +258,17 @@ test('a field exception to answer, and a patrol out of its area, read as codes a
   assert.equal(notificationText(exit), 'A guard on patrol was outside the route’s area for 3 minutes or more');
   assert.equal(notificationHref(exit, (p) => p === 'patrols.manage'), '/security/patrols/runs');
 });
+
+test('the gate offline (ADR 0057): its kinds read as sentences and lead to its pages', () => {
+  assert.equal(notificationText(n('gate_device.sync_overdue', { minutes: 15 })), 'A gate device on shift has not been seen for 15 minutes');
+  assert.equal(notificationText(n('gate_offline.security_conflict', { flags: 2 })), 'A gate device synced 2 security conflict(s) from offline');
+  assert.equal(notificationText(n('gate_device.upload_rejected', { reason: 'signature' })), 'A gate device’s offline upload was refused (signature)');
+  assert.equal(
+    notificationText(n('blocklist.ban_matched', { source: 'offline_sync' })),
+    'A banned plate was let in while the gate was offline',
+  );
+  const manages = (p: string) => p === 'gate_devices.manage';
+  assert.equal(notificationHref(n('gate_device.enrolled', {}, 'gate_device', 'd1'), manages), '/security/gate-devices?device=d1');
+  assert.equal(notificationHref(n('gate_offline.conflicts', { flags: 1 }, 'gate_offline_batch', 'b1'), manages), '/security/offline-flags?batch=b1');
+  assert.equal(notificationHref(n('gate_offline.conflicts', { flags: 1 }, 'gate_offline_batch', 'b1'), () => false), null);
+});

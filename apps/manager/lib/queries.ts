@@ -197,6 +197,14 @@ export type LockdownState = 'live' | 'ended';
 export type FieldException = Schema<'StaffFieldExceptionResponse'>;
 export type GateSettings = Schema<'GateSettingsResponse'>;
 export type FieldExceptionFilter = 'pending' | 'decided' | 'all';
+// The gate offline (ADR 0057).
+export type GateDevice = Schema<'StaffDeviceResponse'>;
+export type OfflineFlag = Schema<'OfflineFlagResponse'>;
+export type OfflineBatch = Schema<'OfflineBatchResponse'>;
+export type GateDeviceFilter = 'active' | 'revoked' | 'all';
+export type OfflineFlagFilter = 'open' | 'cleared' | 'reviewed' | 'all';
+export type OfflineFlagClass = 'security' | 'manager' | 'info';
+export type OfflineBatchFilter = 'pending' | 'reviewed' | 'all';
 export interface BlocklistFilters {
   status?: 'active' | 'expired' | 'lifted' | '';
   kind?: 'ban' | 'watch' | '';
@@ -640,6 +648,14 @@ export const keys = {
   fieldExceptions: (status: string) => ['field-exceptions', 'list', status] as const,
   fieldException: (id: string) => ['field-exceptions', 'detail', id] as const,
   gateSettings: ['gate-settings'] as const,
+  // The gate offline (ADR 0057).
+  gateDevicesAll: ['gate-devices'] as const,
+  gateDevices: (status: string) => ['gate-devices', 'list', status] as const,
+  gateDevice: (id: string) => ['gate-devices', 'detail', id] as const,
+  offlineAll: ['offline'] as const,
+  offlineFlags: (status: string, klass: string, deviceId = '') => ['offline', 'flags', status, klass, deviceId] as const,
+  offlineBatches: (status: string) => ['offline', 'batches', status] as const,
+  offlineBatch: (id: string) => ['offline', 'batch', id] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -1082,6 +1098,15 @@ export const fetchers = {
     unwrap(api.GET('/api/v1/staff/gate/field-exceptions', { params: { query: { status, cursor, limit } } })),
   fieldException: (id: string) => unwrap(api.GET('/api/v1/staff/gate/field-exceptions/{id}', { params: { path: { id } } })),
   gateSettings: () => unwrap(api.GET('/api/v1/staff/gate/settings')),
+  // The gate offline (ADR 0057).
+  gateDevices: (status: GateDeviceFilter, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/gate/devices', { params: { query: { status, cursor, limit } } })),
+  gateDevice: (id: string) => unwrap(api.GET('/api/v1/staff/gate/devices/{id}', { params: { path: { id } } })),
+  offlineFlags: (status: OfflineFlagFilter, klass?: OfflineFlagClass, deviceId?: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/gate/offline/flags', { params: { query: { status, class: klass, deviceId, cursor, limit } } })),
+  offlineBatches: (status: OfflineBatchFilter, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/gate/offline/batches', { params: { query: { status, cursor, limit } } })),
+  offlineBatch: (id: string) => unwrap(api.GET('/api/v1/staff/gate/offline/batches/{id}', { params: { path: { id } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

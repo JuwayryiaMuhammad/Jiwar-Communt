@@ -48,6 +48,8 @@ export const ENTRY_PERMISSIONS = [
   'incidents.manage',
   'blocklist.manage',
   'violations.manage',
+  // The gate offline's devices and flags (ADR 0057).
+  'gate_devices.manage',
   'violations.issue',
   'lockdown.end',
   'governance.approvals',

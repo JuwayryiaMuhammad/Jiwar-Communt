@@ -4,6 +4,7 @@ import { AuthModule } from '../../core/auth/auth.module';
 import { FilesModule } from '../../core/files/files.module';
 import { HouseholdsModule } from '../households/households.module';
 import { NoticesModule } from '../notices/notices.module';
+import { EngagementTokens } from './engagement-tokens';
 import { WorkerPhotoRetention } from './photo-retention';
 import { WorkerWagesService } from './worker-wages.service';
 import { WorkersAuthority } from './workers-authority';
@@ -16,9 +17,10 @@ import { WorkersService } from './workers.service';
   providers: [
     WorkersAuthority,
     WorkersService,
+    EngagementTokens,
     WorkerWagesService,
     WorkerPhotoRetention,
   ],
-  exports: [WorkersService, WorkersAuthority],
+  exports: [WorkersService, WorkersAuthority, EngagementTokens],
 })
 export class WorkersModule {}

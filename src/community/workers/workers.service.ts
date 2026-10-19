@@ -15,6 +15,7 @@ import { StaffRecipients } from '../../core/access/staff-recipients';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { AccessTokens } from '../../core/auth/access-token';
+import { EngagementTokens } from './engagement-tokens';
 import { IdentifierHasher, normalizePhone } from '../../core/auth/identifier';
 import type { AppClsStore } from '../../core/common/cls/app-cls';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -126,6 +127,9 @@ interface NewCode {
   code: string;
   hash: string;
   qrHash: string;
+  /** The derivation's number and key version (ADR 0057). */
+  seq: number;
+  keyVersion: number;
 }
 
 export interface CardIncidentView {
@@ -266,6 +270,7 @@ export class WorkersService {
     private readonly notifier: CommunityNotifier,
     private readonly staff: StaffRecipients,
     private readonly tokens: AccessTokens,
+    private readonly cards: EngagementTokens,
     private readonly globalDb: GlobalDbService,
     private readonly settings: TenantSettingsService,
     private readonly files: FilesService,
@@ -753,7 +758,7 @@ export class WorkersService {
             },
           })
         : 1;
-      const replacement = taken ? await this.newCode(tx, e.tenantId) : null;
+      const replacement = taken ? await this.newCode(tx, e) : null;
       await tx.workerEngagement.update({
         where: { id: e.id },
         data: {
@@ -985,7 +990,7 @@ export class WorkersService {
       actingFor: string | null;
     },
   ): Promise<IssuedCode> {
-    const code = await this.newCode(tx, e.tenantId);
+    const code = await this.newCode(tx, e);
     await tx.workerEngagement.update({
       where: { id: e.id },
       data: codeFields(code),
@@ -1132,7 +1137,7 @@ export class WorkersService {
         return { underage: true as const };
       }
 
-      const code = await this.newCode(tx, e.tenantId);
+      const code = await this.newCode(tx, e);
       await tx.workerEngagement.update({
         where: { id: e.id },
         data: { status: 'active', ...codeFields(code), reviewedById },
@@ -1697,23 +1702,37 @@ export class WorkersService {
   }
 
   /**
-   * A new token whose 8-digit code is free among the compound's active
-   * engagements. A taken code is a new token (ADR 0030).
+   * A new card for the engagement: its token derived with the current key
+   * and the next number (ADR 0057), its 8-digit code free among the
+   * compound's active engagements. A taken code is the next number, never
+   * a code of its own (ADR 0030).
    */
   private async newCode(
     tx: TenantTxClient,
-    tenantId: string,
+    e: Pick<WorkerEngagement, 'id' | 'tenantId' | 'tokenSeq'>,
   ): Promise<NewCode> {
-    const hashOf = (code: string) => this.hasher.hashWorkerCode(tenantId, code);
-    const t = await this.tokens.issue(
-      tenantId,
-      8,
-      async (code) =>
-        (await tx.workerEngagement.count({
-          where: { accessCodeHash: hashOf(code), status: 'active' },
-        })) > 0,
-    );
-    return { ...t, hash: hashOf(t.code) };
+    let seq = e.tokenSeq ?? 0;
+    for (let i = 0; i < 10; i++) {
+      const secret = this.cards.secretOf(e.tenantId, e.id, ++seq)!;
+      const taken = await tx.workerEngagement.count({
+        where: {
+          accessCodeHash: secret.codeHash,
+          status: 'active',
+          id: { not: e.id },
+        },
+      });
+      if (taken) continue;
+      return {
+        token: secret.token,
+        code: secret.code,
+        hash: secret.codeHash,
+        qrHash: secret.qrHash,
+        seq: secret.seq,
+        keyVersion: secret.keyVersion,
+      };
+    }
+    // 10 collisions in a row among 10^8 codes: something is wrong.
+    throw new Error('No free access code after 10 numbers');
   }
 
   /** The code and the card's data, once (ADR 0030). */
@@ -1896,11 +1915,16 @@ function workerNotFound() {
   return appError.notFound(ErrorCode.WORKER_NOT_FOUND, 'Worker not found');
 }
 
-/** A new code and its token, written together (the trigger insists). */
+/**
+ * A new code and its token, written together (the trigger insists), with
+ * how the token was derived (ADR 0057).
+ */
 function codeFields(code: NewCode) {
   return {
     accessCodeHash: code.hash,
     qrTokenHash: code.qrHash,
+    tokenSeq: code.seq,
+    tokenKeyVersion: code.keyVersion,
     codeIssuedAt: new Date(),
   };
 }

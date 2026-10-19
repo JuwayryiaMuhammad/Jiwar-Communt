@@ -1740,6 +1740,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_devices_revoke_reason: {
     guarded: 'revoke_reason IS NULL is tested first',
   },
+  worker_engagements_token_derivation: {
+    guarded:
+      'token_seq IS NULL and token_key_version IS NULL are tested before each comparison',
+  },
 };
 
 interface Check {

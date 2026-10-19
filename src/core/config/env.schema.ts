@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { fcmServiceAccount } from './fcm-service-account';
 import {
+  ENGAGEMENT_KEY_VERSION_MAX,
+  parseEngagementTokenKeys,
+} from './engagement-token-keys';
+import {
   decodePaymentKey,
   PAYMENT_KEY_VERSION_MAX,
   parsePreviousPaymentKeys,
@@ -190,6 +194,28 @@ export const envSchema = z
       })
       .min(32, 'must be at least 32 characters'),
     /**
+     * Derives the token behind every worker card's code and QR (ADR 0057),
+     * so the gate's offline bundle can carry what a device needs to know a
+     * card while the server stores only their HMACs: `ver:key[,ver:key]`,
+     * each key at least 32 characters. Whoever holds a key and an
+     * engagement id can compute that card. A rotation adds a version and
+     * raises ENGAGEMENT_TOKEN_KEY_VERSION: new and reissued cards take it,
+     * printed ones keep theirs, so an old key leaves the ring only once no
+     * live card was derived with it. Every key differs from the other
+     * secrets, and from environment to environment.
+     */
+    ENGAGEMENT_TOKEN_KEYS: z.string({
+      error:
+        'is required (ADR 0057): `1:<key>`, a key from `openssl rand -base64 48`',
+    }),
+    /** The version new and reissued worker cards are derived with. */
+    ENGAGEMENT_TOKEN_KEY_VERSION: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(ENGAGEMENT_KEY_VERSION_MAX)
+      .default(1),
+    /**
      * Seals every compound's Paymob credentials and open checkout secrets
      * (ADR 0046): base64 of exactly 32 bytes (`openssl rand -base64 32`).
      * Optional while no compound takes online payment; the app refuses to
@@ -331,6 +357,39 @@ export const envSchema = z
           message: `must differ from ${other}`,
         });
       }
+    }
+    // The worker card's keys (ADR 0057): a ring that parses, holds the
+    // current version, and shares no key with the other secrets.
+    const ring = parseEngagementTokenKeys(env.ENGAGEMENT_TOKEN_KEYS);
+    if (!(ring instanceof Map)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ENGAGEMENT_TOKEN_KEYS'],
+        message: ring.invalid,
+      });
+    } else {
+      if (!ring.has(env.ENGAGEMENT_TOKEN_KEY_VERSION))
+        ctx.addIssue({
+          code: 'custom',
+          path: ['ENGAGEMENT_TOKEN_KEY_VERSION'],
+          message: 'must name a version of ENGAGEMENT_TOKEN_KEYS',
+        });
+      for (const other of [
+        'JWT_ACCESS_SECRET',
+        'PLATFORM_JWT_SECRET',
+        'IDENTIFIER_PEPPER',
+        'ENTRY_CREDENTIAL_KEY',
+        'PARCEL_TOKEN_KEY',
+        'ENGAGEMENT_REF_SECRET',
+        'VISITOR_PASS_TOKEN_KEY',
+        'PAYMENT_CREDENTIALS_KEY',
+      ] as const)
+        if ([...ring.values()].includes(env[other] ?? ''))
+          ctx.addIssue({
+            code: 'custom',
+            path: ['ENGAGEMENT_TOKEN_KEYS'],
+            message: `must not hold ${other}`,
+          });
     }
     // The payment vault (ADR 0046): one key of 32 bytes, shared with
     // nothing; retired keys parse and never reuse the current version.

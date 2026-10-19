@@ -1,6 +1,7 @@
 import { Client } from 'pg';
 import { AccessTokens } from '../../src/core/auth/access-token';
 import { IdentifierHasher } from '../../src/core/auth/identifier';
+import { EngagementTokens } from '../../src/community/workers/engagement-tokens';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { required } from '../setup/test-env';
 import { keyPaths, listKeys } from './keys';
@@ -349,6 +350,7 @@ describe('API v0 — workers', () => {
 
   const tokens = () => h.moduleRef.get(AccessTokens);
   const hasher = () => h.moduleRef.get(IdentifierHasher);
+  const cards = () => h.moduleRef.get(EngagementTokens);
   const engagementRow = (id: string) =>
     w.helpers.asManager(w.a, () =>
       w.helpers.prisma.tenant.workerEngagement.findUniqueOrThrow({
@@ -478,11 +480,21 @@ describe('API v0 — workers', () => {
       token: owner(),
       body: { reasonCode: 'leave', reason: 'Away' },
     }).expect(204);
-    // Another engagement takes the same code while this one is suspended.
+    // Another engagement takes the same code while this one is suspended:
+    // its derivation answers the first one's code once (ADR 0057's cards
+    // are derived, so a collision is forced there).
     const second = await register();
-    const spy = jest.spyOn(tokens(), 'newToken');
+    const firstRow = await engagementRow(first);
+    const derive = cards();
+    const real = derive.secretOf.bind(derive);
+    const spy = jest
+      .spyOn(derive, 'secretOf')
+      .mockImplementationOnce((...args) => ({
+        ...real(...args)!,
+        code: firstCard.code,
+        codeHash: firstRow.accessCodeHash!,
+      }));
     try {
-      spy.mockReturnValueOnce(tokenOf({ card: firstCard }));
       await approve(second);
     } finally {
       spy.mockRestore();
@@ -501,28 +513,25 @@ describe('API v0 — workers', () => {
     expect(card.code).toBe(tokens().codeOf(tokenOf(resumed.body), 8));
   });
 
-  it('a derived code already in use draws a new token', async () => {
-    const byCode = new Map<string, string>();
-    let pair: [string, string] | null = null;
-    while (!pair) {
-      const t = tokens().newToken();
-      const code = tokens().codeOf(t, 8);
-      const seen = byCode.get(code);
-      if (seen) pair = [seen, t];
-      else byCode.set(code, t);
-    }
-    const third = tokens().newToken();
-    const spy = jest.spyOn(tokens(), 'newToken');
-    try {
-      spy.mockReturnValueOnce(pair[0]);
-      const a = await approve(await register());
-      expect(tokenOf(a.body)).toBe(pair[0]);
-      spy.mockReturnValueOnce(pair[1]).mockReturnValueOnce(third);
-      const b = await approve(await register());
-      expect(tokenOf(b.body)).toBe(third);
-    } finally {
-      spy.mockRestore();
-    }
+  it('a derived code already in use takes the next number', async () => {
+    const a = await register();
+    await approve(a);
+    const taken = await engagementRow(a);
+    const b = await register();
+    const derive = cards();
+    const real = derive.secretOf.bind(derive);
+    // Its first number derives the code `a` holds; the next one is free.
+    const spy = jest
+      .spyOn(derive, 'secretOf')
+      .mockImplementationOnce((...args) => ({
+        ...real(...args)!,
+        codeHash: taken.accessCodeHash!,
+      }));
+    const res = await approve(b);
+    spy.mockRestore();
+    const row = await engagementRow(b);
+    expect(row.tokenSeq).toBe(2);
+    expect(tokenOf(res.body)).toBe(real(row.tenantId, b, 2)!.token);
   });
 
   it('the database refuses an access code rotated without its token', async () => {

@@ -1,6 +1,8 @@
 import { Client } from 'pg';
 import type { Response } from 'supertest';
+import { EngagementTokens } from '../../src/community/workers/engagement-tokens';
 import { AccessTokens } from '../../src/core/auth/access-token';
+import { IdentifierHasher } from '../../src/core/auth/identifier';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { VISITOR_DATA_SWEEP } from '../../src/gate/visitors/visitor-data.sweep';
 import { keyPaths } from '../api/keys';
@@ -397,9 +399,20 @@ describe('Gate — QR entry (ADR 0030)', () => {
     }).expect(204);
     // Another engagement gets the very same token (so code and QR) while
     // the first is suspended: allowed, uniqueness covers active ones only.
+    // Cards are derived (ADR 0057), so the derivation answers the first
+    // one's token, code and hashes once.
+    const derive = h.moduleRef.get(EngagementTokens);
+    const hasher = h.moduleRef.get(IdentifierHasher);
+    const real = derive.secretOf.bind(derive);
     const spy = jest
-      .spyOn(tokens(), 'newToken')
-      .mockReturnValueOnce(first.token);
+      .spyOn(derive, 'secretOf')
+      .mockImplementationOnce((...args) => ({
+        ...real(...args)!,
+        token: first.token,
+        code: first.code,
+        codeHash: hasher.hashWorkerCode(w.a.tenantId, first.code),
+        qrHash: hasher.hashQrToken(w.a.tenantId, first.token),
+      }));
     let second: Issued;
     try {
       second = await worker();

@@ -1358,6 +1358,10 @@ model WorkerEngagement {
   /// NULL on engagements whose code predates 4.1.
   qrTokenHash           String?                @map("qr_token_hash") @db.Char(64)
   codeIssuedAt          DateTime?              @map("code_issued_at") @db.Timestamptz(3)
+  /// The card's derivation (ADR 0057): its number and key version, both or
+  /// neither (a card issued before is random).
+  tokenSeq              Int?                   @map("token_seq")
+  tokenKeyVersion       Int?                   @map("token_key_version") @db.SmallInt
   reviewedById          String?                @map("reviewed_by") @db.Uuid
   /// What the household agreed to pay a month (ADR 0037); null until set.
   monthlyWage           Decimal?               @map("monthly_wage") @db.Decimal(10, 2)

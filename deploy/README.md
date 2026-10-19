@@ -316,6 +316,17 @@ or `ENGAGEMENT_REF_SECRET`** (boot refuses an equal value). Changing it hides
 the codes of the passes active at the time (their codes keep opening the
 gate; the host reissues the link to see one again).
 
+`app.env` must set `ENGAGEMENT_TOKEN_KEYS` (ADR 0057; the app refuses to
+boot without it, and says so): `1:<key>`, the key that derives each worker
+card's token, so the gate's offline bundle can carry what a guard device needs
+to know a card. Generate the key with `openssl rand -base64 48`. The rule:
+**different per environment, and never equal to any other key** (boot
+refuses). To rotate, append `,2:<new key>` and set
+`ENGAGEMENT_TOKEN_KEY_VERSION=2`: new and reissued cards take the new key,
+printed ones keep theirs; drop the old version only once no live card was
+derived with it (`SELECT count(*) FROM worker_engagements WHERE
+token_key_version = 1 AND qr_token_hash IS NOT NULL`, per compound).
+
 Staging stores files on its own MinIO (`minio.env`, the `/jiwar/` nginx
 location). `app.env` must set `S3_*` (ADR 0029; the app refuses to boot
 without them): `S3_ENDPOINT=http://191.218.163.45` (the public address the

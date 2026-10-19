@@ -50,6 +50,11 @@ export function applyTestEnv(): void {
   // The payment vault and Paymob (ADR 0046): a test key of 32 bytes, never
   // a developer's, a webhook origin, and a base URL nothing answers on (the
   // suites put a fake transport in front of Paymob).
+  // The worker card's ring (ADR 0057), fixed: two versions, the second
+  // current, so a suite can hold a card derived with the first (a rotation).
+  process.env.ENGAGEMENT_TOKEN_KEYS =
+    '1:test-engagement-token-key-one-0123456789abcdef,2:test-engagement-token-key-two-0123456789abcdef';
+  process.env.ENGAGEMENT_TOKEN_KEY_VERSION = '2';
   process.env.PAYMENT_CREDENTIALS_KEY = Buffer.from(
     'jiwar-test-payment-credentials!!',
   ).toString('base64');

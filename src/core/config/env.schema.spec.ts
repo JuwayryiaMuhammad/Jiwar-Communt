@@ -18,6 +18,7 @@ const base = {
   PARCEL_TOKEN_KEY: 'e'.repeat(32),
   ENGAGEMENT_REF_SECRET: 'f'.repeat(32),
   VISITOR_PASS_TOKEN_KEY: 'g'.repeat(32),
+  ENGAGEMENT_TOKEN_KEYS: `1:${'h'.repeat(32)}`,
   PLATFORM_JWT_SECRET: 'c'.repeat(32),
   PUBLIC_APP_URL: 'https://app.jiwar.test',
 };
@@ -194,6 +195,64 @@ describe('validateEnv', () => {
         expect(() =>
           validateEnv({ ...base, VISITOR_PASS_TOKEN_KEY: base[other] }),
         ).toThrow(new RegExp(`must differ from ${other}`));
+      }
+    });
+  });
+
+  describe('worker card keys (ADR 0057)', () => {
+    it('are required, with a message that says how to make one', () => {
+      const { ENGAGEMENT_TOKEN_KEYS: _omit, ...without } = base;
+      void _omit;
+      expect(() => validateEnv(without)).toThrow(
+        /ENGAGEMENT_TOKEN_KEYS[\s\S]*openssl rand|openssl rand[\s\S]*ENGAGEMENT_TOKEN_KEYS/,
+      );
+    });
+
+    it('a ring of versions, the current one in it, version 1 by default', () => {
+      expect(validateEnv(base).ENGAGEMENT_TOKEN_KEY_VERSION).toBe(1);
+      const two = `1:${'h'.repeat(32)},2:${'i'.repeat(32)}`;
+      expect(
+        validateEnv({
+          ...base,
+          ENGAGEMENT_TOKEN_KEYS: two,
+          ENGAGEMENT_TOKEN_KEY_VERSION: '2',
+        }).ENGAGEMENT_TOKEN_KEY_VERSION,
+      ).toBe(2);
+      expect(() =>
+        validateEnv({ ...base, ENGAGEMENT_TOKEN_KEY_VERSION: '2' }),
+      ).toThrow(/ENGAGEMENT_TOKEN_KEY_VERSION/);
+      for (const bad of [
+        'h'.repeat(32),
+        `1:short`,
+        `1:${'h'.repeat(32)},1:${'i'.repeat(32)}`,
+        `1:${'h'.repeat(32)},2:${'h'.repeat(32)}`,
+      ])
+        expect(() =>
+          validateEnv({ ...base, ENGAGEMENT_TOKEN_KEYS: bad }),
+        ).toThrow(/ENGAGEMENT_TOKEN_KEYS/);
+    });
+
+    it('holds no other secret, never quoting one', () => {
+      for (const other of [
+        'JWT_ACCESS_SECRET',
+        'PLATFORM_JWT_SECRET',
+        'IDENTIFIER_PEPPER',
+        'ENTRY_CREDENTIAL_KEY',
+        'PARCEL_TOKEN_KEY',
+        'ENGAGEMENT_REF_SECRET',
+        'VISITOR_PASS_TOKEN_KEY',
+      ] as const) {
+        const run = () =>
+          validateEnv({
+            ...base,
+            ENGAGEMENT_TOKEN_KEYS: `1:${'h'.repeat(32)},2:${base[other]}`,
+          });
+        expect(run).toThrow(new RegExp(`must not hold ${other}`));
+        try {
+          run();
+        } catch (e) {
+          expect(String(e)).not.toContain(base[other]);
+        }
       }
     });
   });

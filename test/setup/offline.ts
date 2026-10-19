@@ -1,10 +1,12 @@
 import { generateKeyPairSync, sign, type KeyObject } from 'node:crypto';
+import { WorkersService } from '../../src/community/workers/workers.service';
 import { newId } from '../../src/core/common/uuid';
 import {
   enrolMessage,
   envelopeMessage,
 } from '../../src/gate/offline/device-envelope';
 import type { Compound } from './community';
+import { aroundTheClock } from './compound-clock';
 import { gateCompletionHelpers, type Who } from './gate-completion';
 import type { HttpHarness } from './http-app';
 
@@ -129,6 +131,42 @@ export function offlineHelpers(h: HttpHarness) {
     (await g.http('get', `/staff/gate/devices/${id}`, as.token).expect(200))
       .body as StaffDeviceBody;
 
+  /** As an account of the compound, in a request's context. */
+  const as = <T>(
+    c: Compound,
+    who: { id: string; type: 'resident' | 'staff' | 'manager' },
+    fn: () => Promise<T>,
+  ): Promise<T> => g.x.x.x.as(c, who, fn);
+  const asManager = <T>(c: Compound, fn: () => Promise<T>): Promise<T> =>
+    g.x.x.x.asManager(c, fn);
+
+  /**
+   * An approved household worker of the unit, open around the clock,
+   * registered by its primary: the engagement and its card, once.
+   */
+  async function workerWithCard(c: Compound, primary: Who, unitId: string) {
+    const p = g.x.x.x.person('worker');
+    const reg = await as(c, { id: primary.id, type: 'resident' }, () =>
+      h.moduleRef.get(WorkersService).register(unitId, {
+        fullName: p.fullName,
+        idDocumentType: 'national_id',
+        idDocumentNumber: p.idDocumentNumber,
+        phone: p.phone,
+        capacity: 'nanny',
+        schedule: aroundTheClock(),
+      }),
+    );
+    const issued = await asManager(c, () =>
+      h.moduleRef.get(WorkersService).review(reg.engagementId, 'approve'),
+    );
+    return {
+      engagementId: reg.engagementId,
+      fullName: p.fullName,
+      code: issued!.accessCode,
+      qr: issued!.card.qrPayload,
+    };
+  }
+
   /** The device's row. */
   const deviceRow = (c: Compound, id: string) =>
     g.inTx(c, (tx) => tx.gateDevice.findUnique({ where: { id } }));
@@ -141,5 +179,8 @@ export function offlineHelpers(h: HttpHarness) {
     revokeRaw,
     deviceView,
     deviceRow,
+    as,
+    asManager,
+    workerWithCard,
   };
 }

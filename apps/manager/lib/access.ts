@@ -10,7 +10,9 @@
  * emergencies or works the gate service requests (ADR 0047), reads
  * the finance reports (ADR 0048), decides the units' permits (ADR 0049),
  * or keeps the guards' roster, tasks, instructions, daily report or found
- * items (ADR 0050). Closing parking reports admits nobody since every
+ * items (ADR 0050), raises matters for the board or keeps the budget and
+ * its expenses, or sits on the owners' board (its derived `governance.board`,
+ * ADR 0055). Closing parking reports admits nobody since every
  * guard does it from the app (ADR 0050).
  * Decided from `GET /me`, by the BFF at sign-in and by the shell on every
  * load; the API still checks each call.
@@ -48,6 +50,9 @@ export const ENTRY_PERMISSIONS = [
   'violations.manage',
   'violations.issue',
   'lockdown.end',
+  'governance.approvals',
+  'finance.budget',
+  'governance.board',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

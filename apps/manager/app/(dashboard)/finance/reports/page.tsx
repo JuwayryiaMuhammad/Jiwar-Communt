@@ -5,22 +5,25 @@ import { QueryState } from '@jiwar/api/react';
 import { Alert, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented, Stat } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { egp } from '@/components/club/logic';
 import { firstOfMonth, METHOD_TEXT } from '@/components/finance/logic';
+import { CATEGORY_TEXT } from '@/components/governance/matters';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import {
   fetchers,
   keys,
   type AgingReport,
+  type BudgetVsActual,
   type CollectionsReport,
   type DailyCashReport,
   type OutstandingReport,
   type UnitReportFilters,
 } from '@/lib/queries';
 
-type Tab = 'aging' | 'collections' | 'outstanding' | 'daily-cash';
+type Tab = 'aging' | 'collections' | 'outstanding' | 'daily-cash' | 'budget-vs-actual';
 const today = () => new Date().toLocaleDateString('en-CA');
 
 /** A report's CSV, saved under the server's name. */
@@ -243,10 +246,69 @@ function DailyCash() {
   );
 }
 
+/**
+ * Budget vs actual (ADR 0055): per line of a budget, the budgeted amount,
+ * the approved increases, what was spent and what is left; totals last.
+ * By default the active budget of the year under way.
+ */
+function BudgetVsActualReport({ budgetId }: { budgetId: string }) {
+  const report = useQuery({ queryKey: keys.budgetVsActual(budgetId), queryFn: () => fetchers.budgetVsActual(budgetId) });
+  type Row = BudgetVsActual['rows'][number];
+  const r = report.data;
+  return (
+    <div className="stack">
+      <div className="toolbar">
+        <ExportButton name="budget-vs-actual" query={{ budgetId: budgetId || undefined }} />
+      </div>
+      <QueryState query={report}>
+        {r ? (
+          <>
+            <p className="t-secondary">
+              Budget {r.fiscalYear} ({r.startsOn} – {r.endsOn}) · as of {r.asOf}
+            </p>
+            <div className="row" style={{ gap: 16, flexWrap: 'wrap' }}>
+              <Stat label="Allowance" value={egp(r.totals.allowance)} />
+              <Stat label="Actual" value={egp(r.totals.actual)} />
+              <Stat label="Remaining" value={egp(r.totals.remaining)} />
+              <Stat label="Used" value={`${r.totals.usedPct} %`} />
+            </div>
+            <Card flush>
+              <DataTable<Row>
+                rows={r.rows}
+                rowKey={(x) => x.category}
+                empty="No lines"
+                columns={[
+                  { key: 'c', header: 'Line', cell: (x) => CATEGORY_TEXT[x.category] },
+                  { key: 'b', header: 'Budgeted', cell: (x) => egp(x.budgeted) },
+                  { key: 'i', header: 'Increases', cell: (x) => egp(x.increases) },
+                  { key: 'w', header: 'Allowance', cell: (x) => egp(x.allowance) },
+                  { key: 'a', header: 'Actual', cell: (x) => egp(x.actual) },
+                  { key: 'r', header: 'Remaining', cell: (x) => egp(x.remaining) },
+                  { key: 'u', header: 'Used', cell: (x) => `${x.usedPct} %` },
+                ]}
+              />
+            </Card>
+          </>
+        ) : null}
+      </QueryState>
+    </div>
+  );
+}
+
 /** The finance reports (ADR 0048), each with its CSV. */
 export default function ReportsPage() {
+  return (
+    <Suspense>
+      <Reports />
+    </Suspense>
+  );
+}
+
+function Reports() {
   const { ready, can } = usePermissions();
-  const [tab, setTab] = useState<Tab>('aging');
+  // A budget's page links here with its id: that report, for that budget.
+  const budgetId = useSearchParams().get('budget') ?? '';
+  const [tab, setTab] = useState<Tab>(budgetId ? 'budget-vs-actual' : 'aging');
   if (ready && !can('finance.reports'))
     return (
       <>
@@ -256,7 +318,10 @@ export default function ReportsPage() {
     );
   return (
     <>
-      <PageHeader title="Finance reports" description="What is owed and since when, what came in, and the office’s day for its closing." />
+      <PageHeader
+        title="Finance reports"
+        description="What is owed and since when, what came in, the office’s day for its closing, and the budget against what was spent."
+      />
       <div className="toolbar">
         <Segmented<Tab>
           label="Report"
@@ -267,10 +332,21 @@ export default function ReportsPage() {
             { value: 'collections', label: 'Collections' },
             { value: 'outstanding', label: 'Outstanding' },
             { value: 'daily-cash', label: 'Daily cash' },
+            { value: 'budget-vs-actual', label: 'Budget vs actual' },
           ]}
         />
       </div>
-      {tab === 'aging' ? <Aging /> : tab === 'collections' ? <Collections /> : tab === 'outstanding' ? <Outstanding /> : <DailyCash />}
+      {tab === 'aging' ? (
+        <Aging />
+      ) : tab === 'collections' ? (
+        <Collections />
+      ) : tab === 'outstanding' ? (
+        <Outstanding />
+      ) : tab === 'daily-cash' ? (
+        <DailyCash />
+      ) : (
+        <BudgetVsActualReport budgetId={budgetId} />
+      )}
     </>
   );
 }

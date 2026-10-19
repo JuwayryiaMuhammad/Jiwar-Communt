@@ -70,6 +70,8 @@ import {
   FileExclamationPoint,
   ChartPie,
   Baby,
+  PiggyBank,
+  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -461,6 +463,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           show: can('governance.manage'),
         },
         { href: '/governance/decisions', label: 'Decisions', icon: <ScrollText aria-hidden />, show: can('governance.manage') },
+        // Board matters (ADR 0055): the management's side; never a motion or a vote.
+        { href: '/governance/approvals', label: 'Approvals', icon: <ClipboardCheck aria-hidden />, show: can('governance.approvals') },
+        { href: '/governance/board-appeals', label: 'Appeals to the board', icon: <Scale aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/settings', label: 'Board settings', icon: <SlidersHorizontal aria-hidden />, show: can('governance.manage') },
+      ],
+    },
+    {
+      // A sitting member's own (ADR 0055): what the board decides.
+      label: 'The board',
+      items: [
+        { href: '/board/approvals', label: 'Inbox', icon: <Inbox aria-hidden />, show: can('governance.board') },
+        { href: '/board/appeals', label: 'Appeals', icon: <Scale aria-hidden />, show: can('governance.board') },
+        { href: '/board/overview', label: 'Overview', icon: <LayoutDashboard aria-hidden />, show: can('governance.board') },
       ],
     },
     {
@@ -474,6 +489,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/finance/refunds', label: 'Refunds', icon: <Undo2 aria-hidden />, show: can('finance.refund') },
         { href: '/finance/ledger', label: 'Ledger', icon: <BookOpen aria-hidden />, show: can('finance.reports') },
         { href: '/finance/reports', label: 'Reports', icon: <ChartColumn aria-hidden />, show: can('finance.reports') },
+        { href: '/finance/budgets', label: 'Budgets', icon: <PiggyBank aria-hidden />, show: can('finance.budget') },
+        { href: '/finance/expenses', label: 'Expenses', icon: <Wallet aria-hidden />, show: can('finance.budget') },
         { href: '/finance/gateway', label: 'Online payments', icon: <CreditCard aria-hidden />, show: can('finance.gateway') },
       ],
     },

@@ -245,6 +245,29 @@ export type StaffGovernanceElection = Schema<'StaffGovernanceElectionView'>;
 export type GovernanceElectionPhase = Schema<'GovernanceElectionPhase'>;
 export type BoardPublication = Schema<'BoardPublicationView'>;
 
+// Board matters (ADR 0055).
+export type ApprovalType = Schema<'ApprovalType'>;
+export type Approval = Schema<'ApprovalView'>;
+export type BoardApproval = Schema<'BoardApprovalView'>;
+export type BoardMotion = Schema<'BoardMotionView'>;
+export type ApprovalFilter = 'pending' | 'approved' | 'implemented' | 'rejected' | 'withdrawn';
+export type GovernanceSetting = Schema<'GovernanceSettingResponse'>;
+export type BoardAppealStatus = Schema<'BoardAppealStatus'>;
+export type StaffBoardAppeal = Schema<'StaffBoardAppealView'>;
+export type BoardAppealForBoard = Schema<'BoardAppealBoardView'>;
+export type BoardOverview = Schema<'BoardOverviewView'>;
+export type Budget = Schema<'BudgetView'>;
+export type BudgetStatus = Schema<'BudgetStatus'>;
+export type BudgetCategory = Schema<'BudgetCategory'>;
+export type Expense = Schema<'ExpenseView'>;
+export type ExpenseAuthorization = Schema<'ExpenseAuthorizationView'>;
+export type BudgetVsActual = Schema<'BudgetVsActualView'>;
+export interface ExpenseFilters {
+  budgetId?: string;
+  from?: string;
+  to?: string;
+}
+
 // Finance (ADR 0046).
 export type GatewayView = Schema<'GatewayView'>;
 export type GatewayEvent = Schema<'GatewayEventView'>;
@@ -560,6 +583,24 @@ export const keys = {
   governanceElections: (phase: string) => ['governance', 'elections', phase] as const,
   governanceElection: (id: string) => ['governance', 'election', id] as const,
   boardPublications: ['governance', 'publications'] as const,
+  // Board matters (ADR 0055): under governance, so its writes refresh them.
+  approvals: (status: string) => ['governance', 'approvals', status] as const,
+  approval: (id: string) => ['governance', 'approval', id] as const,
+  governanceSettings: ['governance', 'settings'] as const,
+  staffBoardAppeals: (status: string) => ['governance', 'board-appeals', status] as const,
+  staffBoardAppeal: (id: string) => ['governance', 'board-appeal', id] as const,
+  boardInbox: (status: string) => ['governance', 'inbox', status] as const,
+  boardApproval: (id: string) => ['governance', 'inbox', 'approval', id] as const,
+  boardAppeals: (status: string) => ['governance', 'board', 'appeals', status] as const,
+  boardAppeal: (id: string) => ['governance', 'board', 'appeal', id] as const,
+  boardOverview: (from: string, to: string) => ['governance', 'overview', from, to] as const,
+  budgetsAll: ['budgets'] as const,
+  budgets: (status: string) => ['budgets', 'list', status] as const,
+  budget: (id: string) => ['budgets', 'detail', id] as const,
+  budgetSettings: ['budgets', 'settings'] as const,
+  expenses: (filters: ExpenseFilters) => ['budgets', 'expenses', filters] as const,
+  expenseAuthorizations: ['budgets', 'authorizations'] as const,
+  budgetVsActual: (budgetId: string) => ['budgets', 'vs-actual', budgetId] as const,
   // Patrols (ADR 0052).
   checkpointsAll: ['patrols', 'checkpoints'] as const,
   checkpoints: (status: string) => ['patrols', 'checkpoints', status] as const,
@@ -924,6 +965,52 @@ export const fetchers = {
     unwrap(api.GET('/api/v1/staff/governance/elections/{id}', { params: { path: { id } } })),
   boardPublications: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/governance/publications', { params: { query: { cursor, limit } } })),
+  // Board matters (ADR 0055).
+  approvals: (status: ApprovalFilter | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/governance/approvals', {
+        params: { query: { ...(clean({ status }) as { status?: ApprovalFilter }), cursor, limit } },
+      }),
+    ),
+  approval: (id: string) => unwrap(api.GET('/api/v1/staff/governance/approvals/{id}', { params: { path: { id } } })),
+  governanceSettings: () => unwrap(api.GET('/api/v1/staff/governance/settings')),
+  staffBoardAppeals: (status: BoardAppealStatus | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/governance/board-appeals', {
+        params: { query: { ...(clean({ status }) as { status?: BoardAppealStatus }), cursor, limit } },
+      }),
+    ),
+  staffBoardAppeal: (id: string) =>
+    unwrap(api.GET('/api/v1/staff/governance/board-appeals/{id}', { params: { path: { id } } })),
+  boardInbox: (status: ApprovalFilter | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/board/approvals', {
+        params: { query: { ...(clean({ status }) as { status?: ApprovalFilter }), cursor, limit } },
+      }),
+    ),
+  boardApproval: (id: string) => unwrap(api.GET('/api/v1/board/approvals/{id}', { params: { path: { id } } })),
+  boardAppeals: (status: BoardAppealStatus | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/board/appeals', {
+        params: { query: { ...(clean({ status }) as { status?: BoardAppealStatus }), cursor, limit } },
+      }),
+    ),
+  boardAppeal: (id: string) => unwrap(api.GET('/api/v1/board/appeals/{id}', { params: { path: { id } } })),
+  boardOverview: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/board/overview', { params: { query: clean({ from, to }) } })),
+  budgets: (status: BudgetStatus | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/finance/budgets', {
+        params: { query: { ...(clean({ status }) as { status?: BudgetStatus }), cursor, limit } },
+      }),
+    ),
+  budget: (id: string) => unwrap(api.GET('/api/v1/staff/finance/budgets/{id}', { params: { path: { id } } })),
+  budgetSettings: () => unwrap(api.GET('/api/v1/staff/finance/budget-settings')),
+  expenses: (filters: ExpenseFilters, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/finance/expenses', { params: { query: { ...clean(filters), cursor, limit } } })),
+  expenseAuthorizations: () => unwrap(api.GET('/api/v1/staff/finance/expense-authorizations')),
+  budgetVsActual: (budgetId: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/reports/budget-vs-actual', { params: { query: clean({ budgetId }) } })),
   // Patrols (ADR 0052).
   checkpoints: (status: 'active' | 'retired' | '', cursor?: string, limit = 100) =>
     unwrap(

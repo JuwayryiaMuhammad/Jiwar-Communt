@@ -83,4 +83,6 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'violations.manage': 'Decide the appeals of residents’ violations and cancel violations',
   'violations.issue': 'Issue violations to units from the office',
   'lockdown.end': 'End a lockdown of the gates',
+  'governance.approvals': 'Raise matters for the owners’ board to decide, with their reasons, costs and attachments',
+  'finance.budget': 'Draft the annual budget, record expenses against it, and void them',
 };

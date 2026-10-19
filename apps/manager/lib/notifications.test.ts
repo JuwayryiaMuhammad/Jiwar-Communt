@@ -211,3 +211,40 @@ test('an unauthorized child pickup reads as a code and leads to the keepers’ a
   assert.equal(notificationHref(alert, (p) => p === 'guard_roster.manage'), '/security/child-alerts?open=p1');
   assert.equal(notificationHref(alert, () => false), null);
 });
+
+const BOARD_KINDS = [
+  'governance_approval.raised',
+  'governance_approval.decided',
+  'governance_approval.overdue',
+  'governance_approval.implemented',
+  'governance_approval.withdrawn',
+  'governance_motion.proposed',
+  'governance_appeal.lodged',
+  'governance_appeal.decided',
+  'governance_appeal.overdue',
+];
+
+test('every board matters kind has its own sentence from codes only (ADR 0055)', () => {
+  const params = { type: 'major_contract', decision: 'approved', matter: 'approval', kind: 'vehicle_fine', outcome: 'overturned' };
+  const texts = BOARD_KINDS.map((kind) => {
+    const text = notificationText(n(kind, params));
+    assert.notEqual(text, kind.replace(/[._]/g, ' ').replace(/^./, (c) => c.toUpperCase()), kind);
+    assert.doesNotMatch(text, /undefined/, kind);
+    return text;
+  });
+  assert.equal(new Set(texts).size, BOARD_KINDS.length);
+  assert.equal(notificationText(n('governance_approval.raised', { type: 'major_contract' })), 'A major contract request awaits the board’s decision');
+  assert.equal(notificationText(n('governance_approval.decided', { type: 'annual_budget', decision: 'rejected' })), 'The board rejected an annual budget request');
+});
+
+test('a board matter opens the board’s page for a member, the management’s for staff', () => {
+  const approval = n('governance_approval.decided', {}, 'governance_approval', 'r1');
+  assert.equal(notificationHref(approval, (p) => p === 'governance.board'), '/board/approvals/r1');
+  assert.equal(notificationHref(approval, (p) => p === 'governance.approvals'), '/governance/approvals/r1');
+  assert.equal(notificationHref(approval, () => false), null);
+  const appeal = n('governance_appeal.overdue', {}, 'governance_board_appeal', 'a1');
+  assert.equal(notificationHref(appeal, (p) => p === 'governance.board'), '/board/appeals/a1');
+  assert.equal(notificationHref(appeal, (p) => p === 'governance.manage'), '/governance/board-appeals/a1');
+  assert.equal(notificationHref(n('governance_motion.proposed', { matter: 'appeal' }, 'board_motion', 'm1'), () => true), '/board/appeals');
+  assert.equal(notificationHref(n('governance_motion.proposed', { matter: 'approval' }, 'board_motion', 'm1'), () => false), null);
+});

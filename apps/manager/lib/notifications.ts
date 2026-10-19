@@ -20,6 +20,16 @@ function words(value: string | number | undefined): string {
   return value === undefined ? '' : String(value).replace(/[._]/g, ' ');
 }
 
+/** "a major contract", "an annual budget": the code in words, with its article. */
+function aWords(value: string | number | undefined): string {
+  const w = words(value);
+  return `${/^[aeiou]/i.test(w) ? 'an' : 'a'} ${w}`;
+}
+
+function cap(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function when(value: string | number | undefined): string {
   const d = new Date(String(value));
   return value === undefined || Number.isNaN(d.getTime()) ? '' : dateTime.format(d);
@@ -101,6 +111,17 @@ const TEXT: Record<string, (p: P) => string> = {
     p.tied === 'yes' ? 'An election closed with a tie: record the board’s choice and certify it' : 'An election closed: certify its result',
   'governance_election.cancelled': (p) => `An election of the board was cancelled (${words(p.reason)})`,
   'governance_poll.result': (p) => `A poll of the owners closed: ${words(p.result)}`,
+  // Board matters (ADR 0055): codes only, never a name, a vote or a reason.
+  'governance_approval.raised': (p) => `${cap(aWords(p.type))} request awaits the board’s decision`,
+  'governance_approval.decided': (p) => `The board ${p.decision === 'approved' ? 'approved' : 'rejected'} ${aWords(p.type)} request`,
+  'governance_approval.overdue': (p) => `${cap(aWords(p.type))} request is past its deadline, undecided`,
+  'governance_approval.implemented': (p) => `The management implemented an approved ${words(p.type)} request`,
+  'governance_approval.withdrawn': (p) => `${cap(aWords(p.type))} request was withdrawn`,
+  'governance_motion.proposed': (p) =>
+    p.matter === 'appeal' ? 'A motion on an appeal awaits your vote' : 'A motion on a request awaits your vote',
+  'governance_appeal.lodged': (p) => `${cap(aWords(p.kind))} was appealed to the board`,
+  'governance_appeal.decided': (p) => `The board ${p.outcome === 'overturned' ? 'overturned' : 'upheld'} ${aWords(p.kind)} on appeal`,
+  'governance_appeal.overdue': (p) => `An appeal of ${aWords(p.kind)} is past its deadline, undecided`,
   'gate_service.accepted': () => 'Security accepted your request',
   'gate_service.closed': (p) => `Security closed your request (${words(p.reason)})`,
   // Guard shifts and tasks (ADR 0050): codes only, never a name or a post.
@@ -275,6 +296,17 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('governance.manage') ? `/governance/elections/${n.targetId}` : null;
   if (n.targetType === 'governance_poll' && n.targetId)
     return can('governance.manage') ? `/governance/polls/${n.targetId}` : null;
+  // Board matters (ADR 0055): a member to the board's page, the management to its own.
+  if (n.targetType === 'governance_approval' && n.targetId) {
+    if (can('governance.board')) return `/board/approvals/${n.targetId}`;
+    return can('governance.approvals') ? `/governance/approvals/${n.targetId}` : null;
+  }
+  if (n.targetType === 'board_motion')
+    return can('governance.board') ? (n.params.matter === 'appeal' ? '/board/appeals' : '/board/approvals') : null;
+  if (n.targetType === 'governance_board_appeal' && n.targetId) {
+    if (can('governance.board')) return `/board/appeals/${n.targetId}`;
+    return can('governance.manage') ? `/governance/board-appeals/${n.targetId}` : null;
+  }
   // Patrols (ADR 0052): a run's page for whoever reads the runs.
   if (n.targetType === 'patrol_run') return can('patrols.manage') || can('guard_reports.read') ? '/security/patrols/runs' : null;
   // Security (ADR 0053): each keeper's page.

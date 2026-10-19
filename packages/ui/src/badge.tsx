@@ -147,6 +147,16 @@ const STATUS_TONE: Record<string, Tone> = {
   live: 'error',
   lifted: 'beige',
   investigating: 'terracotta',
+  // Board matters (ADR 0055): a request carried out, a motion carried, an
+  // appeal decided, an expense on the record or voided. `pending`,
+  // `approved`, `rejected`, `withdrawn`, `draft`, `submitted`, `active`,
+  // `open`, `failed` and `lapsed` are above.
+  implemented: 'green',
+  carried: 'green',
+  upheld: 'beige',
+  overturned: 'green',
+  recorded: 'green',
+  voided: 'beige',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

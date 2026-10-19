@@ -69,7 +69,7 @@ export class ChildExitView {
     type: String,
     nullable: true,
     description:
-      'Why it was refused: `not_an_escort`, `outside_validity`, `wrong_post`, `escort_inactive`, `no_credential`, `alone_not_allowed`.',
+      'Why it was refused: `not_an_escort`, `outside_validity`, `wrong_post`, `escort_inactive`, `no_credential`, `alone_not_allowed`, `lockdown` (an outside escort while the gate is locked down).',
   })
   reason: string | null;
   @ApiProperty({ type: ExitEscortView, nullable: true })

@@ -1,5 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import type { ChildPickup } from '@prisma/client';
+import type { ChildPickup, Prisma } from '@prisma/client';
 import { CommunityGatePort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
 import { keysetCursor, type Page } from '../../core/common/cursor';
@@ -25,6 +25,12 @@ export const CHILD_RECORDS_PURGE_SWEEP = 'gate.child_records_purge';
 
 const DAY = 86_400_000;
 const CURSOR = keysetCursor('at');
+
+/** The keepers' alerts: refused, and not by a lockdown. */
+const ALERTS = {
+  outcome: 'refused',
+  NOT: { refusalReason: 'lockdown' },
+} satisfies Prisma.ChildPickupWhereInput;
 
 const alertNotFound = () =>
   appError.notFound(ErrorCode.CHILD_ALERT_NOT_FOUND, 'Alert not found');
@@ -86,14 +92,18 @@ export class ChildRecordsService implements OnModuleInit {
     });
   }
 
-  /** The unauthorized pickups of the last 30 days, newest first. */
+  /**
+   * The unauthorized pickups of the last 30 days, newest first. A refusal
+   * under a lockdown is not one (ADR 0053): the household is told, and the
+   * keepers ran the lockdown.
+   */
   alerts(q: { cursor?: string; limit: number }): Promise<Page<ChildAlertView>> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const rows = await tx.childPickup.findMany({
         where: {
           AND: [
             ...CURSOR.after(q.cursor),
-            { outcome: 'refused', at: { gte: await this.since(tx) } },
+            { ...ALERTS, at: { gte: await this.since(tx) } },
           ],
         },
         orderBy: CURSOR.orderBy,
@@ -110,7 +120,7 @@ export class ChildRecordsService implements OnModuleInit {
   alert(id: string): Promise<ChildAlertView> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const row = await tx.childPickup.findFirst({
-        where: { id, outcome: 'refused', at: { gte: await this.since(tx) } },
+        where: { id, ...ALERTS, at: { gte: await this.since(tx) } },
       });
       if (!row) throw alertNotFound();
       const [view] = await this.alertViews(tx, [row]);

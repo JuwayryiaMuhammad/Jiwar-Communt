@@ -56,6 +56,7 @@
   "test/children/escorts.e2e-spec.ts": 13,
   "test/children/exits.e2e-spec.ts": 17,
   "test/children/lifecycle.e2e-spec.ts": 11,
+  "test/children/lockdown.e2e-spec.ts": 8,
   "test/children/races.e2e-spec.ts": 30,
   "test/children/schema.e2e-spec.ts": 3,
   "test/community/audit-coverage-2-2.e2e-spec.ts": 5,

@@ -27,6 +27,7 @@ import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { dbNow } from '../db-clock';
 import { parseEntryQr } from '../entry/entry-secrets';
 import { ResidentVerifier } from '../entry/resident-verifier';
+import { LockdownCore } from '../lockdown/lockdown-core';
 import { SafetyCore } from '../safety/safety-core';
 import { ShiftsService, type DutyShift } from '../shifts/shifts.service';
 import { ChildCore } from './child-core';
@@ -90,7 +91,8 @@ const ofDate = (d: Date) => d.toISOString().slice(0, 10);
  *    told to them when the household asks (`child.picked_up`).
  *
  * **Lock order of an exit:** the guard's account (FOR SHARE), their open
- * shift (FOR SHARE); then the escort's credential is resolved with plain
+ * shift (FOR SHARE), the compound's lockdown row (FOR SHARE); then the
+ * escort's credential is resolved with plain
  * reads; then the accounts that may be told (the household adults and the
  * roster's keepers, FOR KEY SHARE in id order: what a notification's row
  * would take); then the child's control (FOR UPDATE, read again), the
@@ -98,6 +100,10 @@ const ofDate = (d: Date) => d.toISOString().slice(0, 10);
  * plainly. No account row and no unit row is locked after the control: the
  * hooks that revoke an escort hold the account first and the control after
  * it.
+ *
+ * Under a live lockdown of the guard's gate, or of all (ADR 0053), an
+ * outside escort is refused (`lockdown`): the household is told, not the
+ * keepers. The exit takes the lockdown row FOR SHARE after the shift.
  *
  * Two exits of one child at once serialize on the control: within five
  * minutes of an authorized exit, the same escort replays it and any other
@@ -122,6 +128,7 @@ export class ChildGateService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly lockdown: LockdownCore,
   ) {
     this.perMinute = config.get('GATE_VERIFY_RATE_LIMIT_PER_MINUTE', {
       infer: true,
@@ -156,6 +163,11 @@ export class ChildGateService implements OnModuleInit {
         where: { controlId: control.id, revokedAt: null },
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       });
+      // A live lockdown of the guard's gate (ADR 0053): an outside escort
+      // takes no child out now (a plain read: verify decides nothing).
+      const lockedDown =
+        shift.gateId !== null &&
+        (await this.lockdown.live(tx, shift.gateId)) !== null;
       const shown: ChildVerifyView['escorts'] = [];
       for (const e of escorts) {
         const v = validityOf(e);
@@ -169,8 +181,9 @@ export class ChildGateService implements OnModuleInit {
           photoUrl:
             (await this.files.readUrl(tx, who.photoFileId))?.url ?? null,
           validNow:
+            !(lockedDown && e.kind === 'outside') &&
             validNow(v, { today, instant: now, timeZone, post: shift }) ===
-            'ok',
+              'ok',
         });
       }
       return {
@@ -193,6 +206,10 @@ export class ChildGateService implements OnModuleInit {
       await this.idempotency.claim(tx, { type: CHILD_EXIT_RESOURCE, id });
       await this.safety.lockSelf(tx);
       const shift = await this.lockShift(tx);
+      // The compound's lockdown row, FOR SHARE (ADR 0053's order: the
+      // account, the shift, this row, then the subject's): a lockdown start
+      // waits for this exit, or this exit sees it.
+      await this.lockdown.lockState(tx, 'share');
       await this.budget();
       // The credential first, with plain reads: no lock on anyone's account.
       const credential = await this.credential(tx, input.escort);
@@ -262,7 +279,7 @@ export class ChildGateService implements OnModuleInit {
           ...(pickup.refusalReason ? { reasonCode: pickup.refusalReason } : {}),
         },
       });
-      await this.tell(tx, control, pickup.outcome, pickup.id, told);
+      await this.tell(tx, control, pickup, told);
       return { view: await this.exitView(tx, pickup), replay: false };
     });
   }
@@ -467,6 +484,15 @@ export class ChildGateService implements OnModuleInit {
     });
     if (verdict !== 'ok')
       return { outcome: 'refused', reason: verdict, escort };
+    // A live lockdown of this gate, or of all (ADR 0053): nobody from
+    // outside takes a child out. The household's adults and the unit's
+    // workers live or work here and still may.
+    if (
+      escort.kind === 'outside' &&
+      at.shift.gateId !== null &&
+      (await this.lockdown.live(tx, at.shift.gateId))
+    )
+      return { outcome: 'refused', reason: 'lockdown', escort };
     return { outcome: 'picked_up', reason: null, escort };
   }
 
@@ -548,15 +574,23 @@ export class ChildGateService implements OnModuleInit {
   private async tell(
     tx: TenantTxClient,
     control: ChildControl,
-    outcome: ChildPickupOutcome,
-    pickupId: string,
+    pickup: {
+      id: string;
+      outcome: ChildPickupOutcome;
+      refusalReason: string | null;
+    },
     to: { adults: string[]; keepers: string[] },
   ): Promise<void> {
     const guard = this.ctx.accountId;
+    const { outcome, id: pickupId } = pickup;
     if (outcome === 'refused')
+      // A refusal under a lockdown is the gate doing what the lockdown
+      // asks: the household is told, the keepers already know.
       await this.safety.notify(
         tx,
-        [...to.adults, ...to.keepers],
+        pickup.refusalReason === 'lockdown'
+          ? to.adults
+          : [...to.adults, ...to.keepers],
         'child.unauthorized_pickup',
         pickupId,
         {},

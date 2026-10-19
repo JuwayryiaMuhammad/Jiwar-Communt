@@ -8975,7 +8975,7 @@ export interface paths {
         };
         /**
          * List the unauthorized child pickups
-         * @description The last 30 days, newest first: when, where, which guard, which unit, how the person was known.
+         * @description The last 30 days, newest first: when, where, which guard, which unit, how the person was known. A refusal under a lockdown is not one.
          */
         get: operations["ChildAlertsController_list"];
         put?: never;
@@ -14428,7 +14428,7 @@ export interface components {
             outcome: components["schemas"]["ChildPickupOutcome"];
             /** Format: uuid */
             pickupId: string;
-            /** @description Why it was refused: `not_an_escort`, `outside_validity`, `wrong_post`, `escort_inactive`, `no_credential`, `alone_not_allowed`. */
+            /** @description Why it was refused: `not_an_escort`, `outside_validity`, `wrong_post`, `escort_inactive`, `no_credential`, `alone_not_allowed`, `lockdown` (an outside escort while the gate is locked down). */
             reason: string | null;
             /**
              * @description `refused`: hold the child; the household has been alerted.

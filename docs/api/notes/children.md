@@ -1,6 +1,7 @@
 # Children: backend notes for the household app and the guard app
 
 What was built for a child's exit control:
+
 - the household turns it on for one of its minors and prints the child's card;
 - it names who may collect the child: adults of the home, its workers, or an outside person who gets a personal pickup code;
 - at the gate, a guard scans the child's card, then whoever takes the child;
@@ -33,6 +34,7 @@ Conventions, as everywhere in API v0:
 ## The household app
 
 Who may:
+
 - The unit's **primary or a household delegate** changes everything here (403 `NOT_PRIMARY_RESIDENT` for anyone else who lives there).
 - **The adults who live in the unit** read it.
 - A landlord gets 403 `NOT_A_RESIDENT`.
@@ -49,6 +51,7 @@ Who may:
 - `POST …/control/off` (204): the card, the photo and every escort end at once.
 
 **A control also ends by itself:**
+
 - when the child leaves the household;
 - when the same member becomes an adult with an account;
 - on the 18th birthday.
@@ -73,6 +76,7 @@ Who may:
 ### The records
 
 `GET /units/{unitId}/children/pickups?memberId=&cursor=` lists the exits of the last 30 days, newest first:
+
 - `outcome`: `picked_up`, `left_alone`, `refused` or `alone_refused`;
 - `method`: how the escort was known;
 - `refusalReason`;
@@ -82,6 +86,7 @@ Who may:
 ## The outside person's page
 
 `POST /public/child-pickups/lookup { token }` (no account; the token from the link's fragment):
+
 - returns the compound, the unit, `validFrom`, `validUntil`, `schedule`, `post` and `status` (`active`, `not_yet`, `expired`);
 - returns `code` and `qrPayload` only while `active`, plus the compound's directions and emergency phone;
 - never names the child or anyone else;
@@ -105,6 +110,7 @@ A guard on shift at a gate or a zone (`gate.operate`).
    The answer is `{ pickupId, result: 'authorized' | 'refused', outcome, reason, escort }`. **`refused`: hold the child.** The household has been alerted, and the security supervisors too for a pickup.
    - 422 `CHILD_ESCORT_UNKNOWN`: the credential could not be read. Nothing was recorded; scan again, or use `unidentified`.
    - 409 `CHILD_JUST_PICKED_UP`: the child left with someone else within the last minutes.
+   - Under a lockdown of your gate (or of every gate, ADR 0053), an outside escort is refused with reason `lockdown`: the household is told, and it is not a keepers' child alert. The household's adults and the unit's workers still collect the child. On the card's check, an outside escort reads `validNow: false` while the lockdown lasts.
    - The same escort again replays the exit (200).
 
 Both calls share the guard's scan budget with `/gate/verify`.
@@ -120,30 +126,31 @@ Both calls share the guard's scan budget with `/gate/verify`.
 
 All are in the `household` category. Ids only: open the record by `targetId` (a pickup id).
 
-| Kind | Who | Critical |
-|---|---|---|
-| `child.unauthorized_pickup` | the adults who live in the unit, and the security supervisors | yes |
-| `child.exit_alone` | the adults who live in the unit | yes |
-| `child.picked_up` (`outcome`) | the adults who live in the unit, when `notifyPickups` | no |
+| Kind                          | Who                                                           | Critical |
+| ----------------------------- | ------------------------------------------------------------- | -------- |
+| `child.unauthorized_pickup`   | the adults who live in the unit, and the security supervisors | yes      |
+| `child.exit_alone`            | the adults who live in the unit                               | yes      |
+| `child.picked_up` (`outcome`) | the adults who live in the unit, when `notifyPickups`         | no       |
 
 ## Errors
 
-| Code | Status | When |
-|---|---|---|
-| `CHILD_NOT_FOUND` | 404 | not one of the unit's minors under 18 |
-| `CHILD_CONTROL_ACTIVE` | 409 | the control is on already |
-| `CHILD_CONTROL_NOT_FOUND` | 404 | the control is not on |
-| `CHILD_ESCORT_NOT_FOUND` | 404 | not a live escort of this child (a reissue is for outside escorts only) |
-| `CHILD_ESCORT_DUPLICATE` | 409 | that person or worker is already an escort |
-| `CHILD_ESCORT_LIMIT_REACHED` | 409 | ten live escorts (`params.max`) |
-| `CHILD_PICKUP_NOT_FOUND` | 404 | the pickup page's one answer |
-| `CHILD_CARD_UNKNOWN` | 404 | not a live card here |
-| `CHILD_ESCORT_UNKNOWN` | 422 | an unreadable credential; nothing recorded |
-| `CHILD_JUST_PICKED_UP` | 409 | another exit within `params.minutes` |
-| `CHILD_ALERT_NOT_FOUND` | 404 | the keepers' alert does not exist (or is older than 30 days) |
-| `COMMUNITY_EVENT_NOT_FOR_CHILDREN` | 409 | a child for an event that is not for children |
-| `COMMUNITY_EVENT_AGE_MISMATCH` | 409 | not of the event's ages (`params.min`, `params.max`) |
+| Code                               | Status | When                                                                    |
+| ---------------------------------- | ------ | ----------------------------------------------------------------------- |
+| `CHILD_NOT_FOUND`                  | 404    | not one of the unit's minors under 18                                   |
+| `CHILD_CONTROL_ACTIVE`             | 409    | the control is on already                                               |
+| `CHILD_CONTROL_NOT_FOUND`          | 404    | the control is not on                                                   |
+| `CHILD_ESCORT_NOT_FOUND`           | 404    | not a live escort of this child (a reissue is for outside escorts only) |
+| `CHILD_ESCORT_DUPLICATE`           | 409    | that person or worker is already an escort                              |
+| `CHILD_ESCORT_LIMIT_REACHED`       | 409    | ten live escorts (`params.max`)                                         |
+| `CHILD_PICKUP_NOT_FOUND`           | 404    | the pickup page's one answer                                            |
+| `CHILD_CARD_UNKNOWN`               | 404    | not a live card here                                                    |
+| `CHILD_ESCORT_UNKNOWN`             | 422    | an unreadable credential; nothing recorded                              |
+| `CHILD_JUST_PICKED_UP`             | 409    | another exit within `params.minutes`                                    |
+| `CHILD_ALERT_NOT_FOUND`            | 404    | the keepers' alert does not exist (or is older than 30 days)            |
+| `COMMUNITY_EVENT_NOT_FOR_CHILDREN` | 409    | a child for an event that is not for children                           |
+| `COMMUNITY_EVENT_AGE_MISMATCH`     | 409    | not of the event's ages (`params.min`, `params.max`)                    |
 
 Field codes:
+
 - `ESCORT_NOT_ELIGIBLE`: not someone who lives in the unit, or not an active engagement of it.
 - `PERSON_NOT_OF_UNIT`: a booking's `occasionMemberId` that is not a child of the unit.

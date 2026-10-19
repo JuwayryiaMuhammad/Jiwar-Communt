@@ -56,7 +56,7 @@ export class ChildAlertsController {
   @ApiOperation({
     summary: 'List the unauthorized child pickups',
     description:
-      'The last 30 days, newest first: when, where, which guard, which unit, how the person was known.',
+      'The last 30 days, newest first: when, where, which guard, which unit, how the person was known. A refusal under a lockdown is not one.',
   })
   @ApiOkResponse({ type: ListOf(ChildAlertView) })
   async list(

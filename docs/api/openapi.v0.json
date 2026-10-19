@@ -3696,6 +3696,18 @@
       },
       "BookingStandingView": {
         "properties": {
+          "boardAppealAt": {
+            "description": "When it was taken to the board.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "boardAppealUntil": {
+            "description": "Until when an owner or the primary may take the suspension to the board (POST /governance/board-appeals, ADR 0055), or null.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "suspension": {
             "allOf": [
               {
@@ -3708,7 +3720,9 @@
           }
         },
         "required": [
-          "suspension"
+          "suspension",
+          "boardAppealUntil",
+          "boardAppealAt"
         ],
         "type": "object"
       },
@@ -3756,7 +3770,7 @@
             "type": "string"
           },
           "liftReasonCode": {
-            "description": "A code of `bookingSuspensionLift`.",
+            "description": "A code of `bookingSuspensionLift`, or the system’s `board_overturned` (ADR 0055).",
             "nullable": true,
             "type": "string"
           },

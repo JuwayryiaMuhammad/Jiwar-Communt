@@ -9,6 +9,7 @@ import { StaffRecipients } from '../../core/access/staff-recipients';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import {
+  BOARD_APPEAL_KINDS,
   BoardMatters,
   type BoardAppealKind,
 } from '../../core/board-matters/board-matters';
@@ -43,15 +44,11 @@ const PAGE = keysetCursor('lodgedAt', 'desc');
 const DAY = 86_400_000;
 
 /**
- * The kinds that must have their domain's handler (ADR 0055): a rejected
- * invoice dispute's (finance), a fine's and a violation's (the gate).
- * Facilities adds its own.
+ * Every kind must have its domain's handler (ADR 0055): a rejected
+ * invoice dispute's (finance), a fine's and a violation's (the gate), a
+ * suspension's (facilities).
  */
-const REQUIRED_KINDS: BoardAppealKind[] = [
-  'invoice_dispute',
-  'vehicle_fine',
-  'unit_violation',
-];
+const REQUIRED_KINDS: readonly BoardAppealKind[] = BOARD_APPEAL_KINDS;
 
 export interface NewAppeal {
   kind: BoardAppealKind;

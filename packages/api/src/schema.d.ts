@@ -14702,6 +14702,16 @@ export interface components {
         /** @enum {string} */
         BookingSide: "resident" | "staff" | "system";
         BookingStandingView: {
+            /**
+             * Format: date-time
+             * @description When it was taken to the board.
+             */
+            boardAppealAt: string | null;
+            /**
+             * Format: date-time
+             * @description Until when an owner or the primary may take the suspension to the board (POST /governance/board-appeals, ADR 0055), or null.
+             */
+            boardAppealUntil: string | null;
             /** @description The suspension in force, or null: the unit may book. */
             suspension: components["schemas"]["BookingSuspensionNoticeView"] | null;
         };
@@ -14723,7 +14733,7 @@ export interface components {
             endsAt: string;
             /** Format: uuid */
             id: string;
-            /** @description A code of `bookingSuspensionLift`. */
+            /** @description A code of `bookingSuspensionLift`, or the system’s `board_overturned` (ADR 0055). */
             liftReasonCode: string | null;
             /** Format: date-time */
             liftedAt: string | null;

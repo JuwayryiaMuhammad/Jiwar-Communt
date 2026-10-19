@@ -678,7 +678,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   facility_settings_ranges: {},
   booking_suspensions_window: {},
   booking_suspensions_count: {},
-  booking_suspensions_lifted_shape: {},
+  // Recreated in ADR 0055.
+  booking_suspensions_lifted_shape: {
+    guarded:
+      'lifted_at IS NULL is tested first; lift_reason_code is then NOT NULL by the conjunct before',
+  },
+  booking_suspensions_board_appeal: {
+    guarded: 'board_appeal_at IS NULL is tested first; starts_at is NOT NULL',
+  },
   booking_suspensions_lift_reason: {
     guarded:
       'lift_reason_code IS NULL is tested first; the list runs only on a value',

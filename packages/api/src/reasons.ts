@@ -66,6 +66,7 @@ export const REASON_CODES = {
   facilityClosure: ['maintenance', 'cleaning', 'private_event', 'weather', 'other'],
   facilityClosureLift: ['reopened_early', 'created_in_error', 'other'],
   bookingSuspensionLift: ['staff_error', 'exception_granted', 'other'],
+  bookingSuspensionSystemLift: ['board_overturned'],
   clubPaymentReverse: ['entered_in_error', 'duplicate', 'refunded', 'other'],
   vehicleReject: ['licence_missing', 'licence_unreadable', 'plate_mismatch', 'not_resident_vehicle', 'other'],
   vehicleRemove: ['sold', 'no_longer_used', 'registered_in_error', 'other'],

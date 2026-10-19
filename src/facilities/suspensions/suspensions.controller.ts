@@ -40,9 +40,15 @@ export class BookingStandingController {
   async get(
     @Param('unitId', parseId('unitId')) unitId: string,
   ): Promise<BookingStandingView> {
-    const suspension = await this.suspensions.standing(unitId);
+    const { suspension, now } = await this.suspensions.standing(unitId);
+    const until =
+      suspension && !suspension.boardAppealAt
+        ? new Date(suspension.startsAt.getTime() + 15 * 86_400_000)
+        : null;
     return {
       suspension: suspension && BookingSuspensionNoticeView.from(suspension),
+      boardAppealUntil: until && now < until ? until : null,
+      boardAppealAt: suspension?.boardAppealAt ?? null,
     };
   }
 }

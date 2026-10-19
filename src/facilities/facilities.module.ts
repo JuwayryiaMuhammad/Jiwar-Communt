@@ -36,6 +36,7 @@ import {
   BookingSuspensionsController,
 } from './suspensions/suspensions.controller';
 import { SuspensionsService } from './suspensions/suspensions.service';
+import { SuspensionBoardAppeals } from './suspensions/suspension-board-appeals';
 import {
   FacilitiesController,
   StaffFacilitiesController,
@@ -67,6 +68,7 @@ import { FacilitiesService } from './setup/facilities.service';
   ],
   providers: [
     FacilitiesAccess,
+    SuspensionBoardAppeals,
     FacilitiesService,
     BookingsService,
     StaffBookingsService,

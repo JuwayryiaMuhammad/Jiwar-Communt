@@ -28,6 +28,21 @@ export class BookingStandingView {
     description: 'The suspension in force, or null: the unit may book.',
   })
   suspension: BookingSuspensionNoticeView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Until when an owner or the primary may take the suspension to the board (POST /governance/board-appeals, ADR 0055), or null.',
+  })
+  boardAppealUntil: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'When it was taken to the board.',
+  })
+  boardAppealAt: Date | null;
 }
 
 /** A suspension as the staff see it. */
@@ -55,7 +70,8 @@ export class BookingSuspensionView {
   @ApiProperty({
     type: String,
     nullable: true,
-    description: 'A code of `bookingSuspensionLift`.',
+    description:
+      'A code of `bookingSuspensionLift`, or the system’s `board_overturned` (ADR 0055).',
   })
   liftReasonCode: string | null;
 

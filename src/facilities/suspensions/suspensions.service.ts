@@ -125,13 +125,16 @@ export class SuspensionsService {
     return suspension;
   }
 
-  /** The unit's suspension in force, for its people. */
-  standing(unitId: string): Promise<BookingSuspension | null> {
+  /** The unit's suspension in force, for its people, and the clock it was read by. */
+  standing(
+    unitId: string,
+  ): Promise<{ suspension: BookingSuspension | null; now: Date }> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const caps = await this.community.placeIn(tx, this.ctx.accountId, unitId);
       if (!caps?.unitView)
         throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
-      return this.current(tx, unitId, await dbNow(tx));
+      const now = await dbNow(tx);
+      return { suspension: await this.current(tx, unitId, now), now };
     });
   }
 

@@ -354,6 +354,8 @@ export const REASON_CODES = {
   facilityClosureLift: ['reopened_early', 'created_in_error', 'other'],
   // Why the staff lift a unit's suspension from booking.
   bookingSuspensionLift: ['staff_error', 'exception_granted', 'other'],
+  // The system's: the board overturned the suspension (ADR 0055).
+  bookingSuspensionSystemLift: ['board_overturned'],
   // Why the accountant reverses a club payment recorded by mistake.
   clubPaymentReverse: ['entered_in_error', 'duplicate', 'refunded', 'other'],
   // Vehicles and parking (ADR 0045). Why the staff reject a vehicle, why a

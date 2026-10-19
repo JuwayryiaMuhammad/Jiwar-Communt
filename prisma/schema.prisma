@@ -4745,6 +4745,8 @@ model BookingSuspension {
   /// The no-show that reached the threshold.
   triggerBookingId String    @map("trigger_booking_id") @db.Uuid
   noShowCount      Int       @map("no_show_count")
+  boardAppealAt    DateTime? @map("board_appeal_at") @db.Timestamptz(3)
+  boardAppealClosedAt DateTime? @map("board_appeal_closed_at") @db.Timestamptz(3)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   liftedAt         DateTime? @map("lifted_at") @db.Timestamptz(3)
   liftedById       String?   @map("lifted_by_account_id") @db.Uuid

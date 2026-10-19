@@ -8309,6 +8309,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/reports/budget-vs-actual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read budget vs actual
+         * @description Per line: budgeted, approved increases, the allowance, live expenses and what is left, with the totals. By default the active budget of the fiscal year under way (BUDGET_NOT_FOUND without one).
+         */
+        get: operations["BudgetReportController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/budget-vs-actual/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export budget vs actual as CSV
+         * @description The same rows, the totals last (`all`).
+         */
+        get: operations["BudgetReportController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/reports/collections": {
         parameters: {
             query?: never;
@@ -14596,6 +14636,57 @@ export interface components {
         BudgetViewList: {
             data: components["schemas"]["BudgetView"][];
             nextCursor: string | null;
+        };
+        BudgetVsActualRowView: {
+            /** @example 1200.00 */
+            actual: string;
+            /** @example 1200.00 */
+            allowance: string;
+            /** @example 1200.00 */
+            budgeted: string;
+            category: components["schemas"]["BudgetCategory"];
+            /** @example 1200.00 */
+            increases: string;
+            /** @example 1200.00 */
+            remaining: string;
+            /**
+             * @description actual ÷ allowance, %.
+             * @example 42.5
+             */
+            usedPct: string;
+        };
+        BudgetVsActualTotalsView: {
+            /** @example 1200.00 */
+            actual: string;
+            /** @example 1200.00 */
+            allowance: string;
+            /** @example 1200.00 */
+            budgeted: string;
+            /** @example 1200.00 */
+            increases: string;
+            /** @example 1200.00 */
+            remaining: string;
+            /**
+             * @description actual ÷ allowance, %.
+             * @example 42.5
+             */
+            usedPct: string;
+        };
+        BudgetVsActualView: {
+            /** @example 2027-03-14 */
+            asOf: string;
+            /** Format: uuid */
+            budgetId: string;
+            /** @example EGP */
+            currency: string;
+            /** @example 2027-12-31 */
+            endsOn: string;
+            fiscalYear: number;
+            rows: components["schemas"]["BudgetVsActualRowView"][];
+            /** @example 2027-01-01 */
+            startsOn: string;
+            status: string;
+            totals: components["schemas"]["BudgetVsActualTotalsView"];
         };
         BuildingsView: {
             /** @description The buildings the compound’s units name, in order. */
@@ -39589,6 +39680,54 @@ export interface operations {
                 groupBy?: "unit" | "building";
                 /** @description Units whose building reads exactly this. */
                 building?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    BudgetReportController_get: {
+        parameters: {
+            query?: {
+                /** @description A budget; by default the active one of the year asked. */
+                budgetId?: string;
+                /** @description The fiscal year, by default the one under way. */
+                fiscalYear?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetVsActualView"];
+                };
+            };
+        };
+    };
+    BudgetReportController_export: {
+        parameters: {
+            query?: {
+                /** @description A budget; by default the active one of the year asked. */
+                budgetId?: string;
+                /** @description The fiscal year, by default the one under way. */
+                fiscalYear?: number;
             };
             header?: never;
             path?: never;

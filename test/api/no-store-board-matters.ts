@@ -259,5 +259,13 @@ export function budgetCalls(
       }),
     'GET /staff/finance/expense-authorizations': () =>
       manager('GET', '/staff/finance/expense-authorizations'),
+    'GET /staff/finance/reports/budget-vs-actual': async () => {
+      await anActive();
+      return manager('GET', '/staff/finance/reports/budget-vs-actual');
+    },
+    'GET /staff/finance/reports/budget-vs-actual/export': async () => {
+      await anActive();
+      return manager('GET', '/staff/finance/reports/budget-vs-actual/export');
+    },
   };
 }

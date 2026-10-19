@@ -9330,6 +9330,79 @@
           }
         },
         {
+          "name": "Read budget vs actual",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "budget-vs-actual"
+              ],
+              "query": [
+                {
+                  "description": "A budget; by default the active one of the year asked.",
+                  "disabled": true,
+                  "key": "budgetId",
+                  "value": ""
+                },
+                {
+                  "description": "The fiscal year, by default the one under way.",
+                  "disabled": true,
+                  "key": "fiscalYear",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/budget-vs-actual"
+            }
+          }
+        },
+        {
+          "name": "Export budget vs actual as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "budget-vs-actual",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "A budget; by default the active one of the year asked.",
+                  "disabled": true,
+                  "key": "budgetId",
+                  "value": ""
+                },
+                {
+                  "description": "The fiscal year, by default the one under way.",
+                  "disabled": true,
+                  "key": "fiscalYear",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/budget-vs-actual/export"
+            }
+          }
+        },
+        {
           "name": "Read the money received in a period by channel and method",
           "request": {
             "description": "**Responses:** 200",

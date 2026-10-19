@@ -6,6 +6,8 @@ import { AuthModule } from '../core/auth/auth.module';
 import { PlatformModule } from '../core/platform/platform.module';
 import { FinanceAccess } from './access';
 import { BudgetMatters } from './budgets/budget-matters';
+import { BudgetReportController } from './budgets/budget-report.controller';
+import { BudgetReportService } from './budgets/budget-report.service';
 import { BudgetsController } from './budgets/budgets.controller';
 import { BudgetsService } from './budgets/budgets.service';
 import { ExpensesService } from './budgets/expenses.service';
@@ -96,6 +98,7 @@ import { PaymentsService } from './payments/payments.service';
     GatewayEventsController,
     ReceiptPageController,
     BudgetsController,
+    BudgetReportController,
   ],
   providers: [
     FinanceProvisioning,
@@ -103,6 +106,7 @@ import { PaymentsService } from './payments/payments.service';
     BudgetsService,
     BudgetMatters,
     ExpensesService,
+    BudgetReportService,
     FinanceNotices,
     InvoicesService,
     InstalmentsService,

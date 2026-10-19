@@ -404,3 +404,33 @@ export const BUDGET_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Budget vs actual (ADR 0055): finance.reports. */
+export const BUDGET_REPORT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/finance/reports/budget-vs-actual',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { budgetId: 'x' },
+      fields: [{ field: 'budgetId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/finance/reports/budget-vs-actual/export',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { budgetId: 'x' },
+      fields: [{ field: 'budgetId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+];

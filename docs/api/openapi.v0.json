@@ -4007,6 +4007,141 @@
         ],
         "type": "object"
       },
+      "BudgetVsActualRowView": {
+        "properties": {
+          "actual": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "allowance": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "budgeted": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BudgetCategory"
+              }
+            ]
+          },
+          "increases": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "remaining": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "usedPct": {
+            "description": "actual ÷ allowance, %.",
+            "example": "42.5",
+            "type": "string"
+          }
+        },
+        "required": [
+          "budgeted",
+          "increases",
+          "allowance",
+          "actual",
+          "remaining",
+          "usedPct",
+          "category"
+        ],
+        "type": "object"
+      },
+      "BudgetVsActualTotalsView": {
+        "properties": {
+          "actual": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "allowance": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "budgeted": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "increases": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "remaining": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "usedPct": {
+            "description": "actual ÷ allowance, %.",
+            "example": "42.5",
+            "type": "string"
+          }
+        },
+        "required": [
+          "budgeted",
+          "increases",
+          "allowance",
+          "actual",
+          "remaining",
+          "usedPct"
+        ],
+        "type": "object"
+      },
+      "BudgetVsActualView": {
+        "properties": {
+          "asOf": {
+            "example": "2027-03-14",
+            "type": "string"
+          },
+          "budgetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "currency": {
+            "example": "EGP",
+            "type": "string"
+          },
+          "endsOn": {
+            "example": "2027-12-31",
+            "type": "string"
+          },
+          "fiscalYear": {
+            "type": "number"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetVsActualRowView"
+            },
+            "type": "array"
+          },
+          "startsOn": {
+            "example": "2027-01-01",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/BudgetVsActualTotalsView"
+          }
+        },
+        "required": [
+          "budgetId",
+          "fiscalYear",
+          "startsOn",
+          "endsOn",
+          "status",
+          "asOf",
+          "currency",
+          "rows",
+          "totals"
+        ],
+        "type": "object"
+      },
       "BuildingsView": {
         "properties": {
           "buildings": {
@@ -68181,6 +68316,106 @@
           }
         ],
         "summary": "Export the aging report as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/budget-vs-actual": {
+      "get": {
+        "description": "Per line: budgeted, approved increases, the allowance, live expenses and what is left, with the totals. By default the active budget of the fiscal year under way (BUDGET_NOT_FOUND without one).",
+        "operationId": "BudgetReportController_get",
+        "parameters": [
+          {
+            "description": "A budget; by default the active one of the year asked.",
+            "in": "query",
+            "name": "budgetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The fiscal year, by default the one under way.",
+            "in": "query",
+            "name": "fiscalYear",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetVsActualView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read budget vs actual",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/budget-vs-actual/export": {
+      "get": {
+        "description": "The same rows, the totals last (`all`).",
+        "operationId": "BudgetReportController_export",
+        "parameters": [
+          {
+            "description": "A budget; by default the active one of the year asked.",
+            "in": "query",
+            "name": "budgetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The fiscal year, by default the one under way.",
+            "in": "query",
+            "name": "fiscalYear",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export budget vs actual as CSV",
         "tags": [
           "finance"
         ],

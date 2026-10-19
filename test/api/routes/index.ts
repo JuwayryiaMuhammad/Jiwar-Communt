@@ -89,6 +89,7 @@ import {
 } from './governance';
 import {
   BOARD_APPROVAL_ROUTES,
+  BUDGET_REPORT_ROUTES,
   BUDGET_ROUTES,
   STAFF_APPROVAL_ROUTES,
 } from './board-matters';
@@ -263,6 +264,7 @@ export const ROUTES: Row[] = [
   ...STAFF_APPROVAL_ROUTES,
   ...BOARD_APPROVAL_ROUTES,
   ...BUDGET_ROUTES,
+  ...BUDGET_REPORT_ROUTES,
   ...CHECKPOINT_ROUTES,
   ...ROUTE_ROUTES,
   ...GUARD_PATROL_ROUTES,

@@ -1390,6 +1390,9 @@ export const AUDIT_ACTIONS = {
   // By the system: nobody answered by its deadline.
   'gate_exception.expired': { log: 'tenant', target: 'gate_field_exception' },
   'gate_exception.withdrawn': { log: 'tenant', target: 'gate_field_exception' },
+  // An incident keeps a visitor's photo at entry (ADR 0056), past its 30
+  // days. metadata: evidenceId, kind, entryId.
+  'incident.evidence_linked': { log: 'tenant', target: 'incident' },
   // A service vehicle at the gate. metadata: kind, unitId, facilityId,
   // gateId, shiftId — never the plate nor the company.
   'service_vehicle.entered': { log: 'tenant', target: 'service_vehicle_visit' },

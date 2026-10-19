@@ -1073,6 +1073,12 @@ export const ErrorCode = {
   SERVICE_VEHICLE_INSIDE: 'SERVICE_VEHICLE_INSIDE',
   /** Its exit was recorded already (409). */
   SERVICE_VEHICLE_NOT_INSIDE: 'SERVICE_VEHICLE_NOT_INSIDE',
+  /** No photo of this entry: none was taken, or it was deleted (30 days). */
+  ENTRY_PHOTO_NOT_FOUND: 'ENTRY_PHOTO_NOT_FOUND',
+  /** The incident names this evidence already (409). */
+  INCIDENT_EVIDENCE_EXISTS: 'INCIDENT_EVIDENCE_EXISTS',
+  /** An incident keeps at most params.max pieces of evidence (409). */
+  INCIDENT_EVIDENCE_LIMIT: 'INCIDENT_EVIDENCE_LIMIT',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

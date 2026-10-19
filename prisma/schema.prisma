@@ -2313,6 +2313,45 @@ model ServiceVehicleVisit {
   @@map("service_vehicle_visits")
 }
 
+/// A visitor's photo at entry (ADR 0056): one per `in` entry, seen by the
+/// guards on shift and the management; deleted 30 days after the entry
+/// unless an incident's evidence keeps it (its key restricts the delete).
+model GateEntryPhoto {
+  tenantId     String          @map("tenant_id") @db.Uuid
+  entryId      String          @map("entry_id") @db.Uuid
+  fileId       String          @map("file_id") @db.Uuid
+  subjectType  GateSubjectType @map("subject_type")
+  subjectId    String          @map("subject_id") @db.Uuid
+  gateId       String          @map("gate_id") @db.Uuid
+  unitId       String          @map("unit_id") @db.Uuid
+  takenById    String          @map("taken_by_account_id") @db.Uuid
+  enteredAt    DateTime        @map("entered_at") @db.Timestamptz(3)
+  purgeAfter   DateTime        @map("purge_after") @db.Timestamptz(3)
+
+  @@id([tenantId, entryId])
+  @@unique([tenantId, fileId], map: "gate_entry_photos_file_key")
+  @@index([tenantId, purgeAfter], map: "gate_entry_photos_purge_idx")
+  @@map("gate_entry_photos")
+}
+
+/// What an incident keeps beyond its own photos (ADR 0056): a visitor's
+/// photo at entry. Added, never removed: the incident is kept, and so is
+/// what it names.
+model IncidentEvidence {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  incidentId  String   @map("incident_id") @db.Uuid
+  /// visitor_photo
+  kind        String
+  entryId     String?  @map("entry_id") @db.Uuid
+  linkedById  String   @map("linked_by_account_id") @db.Uuid
+  linkedAt    DateTime @map("linked_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, incidentId, linkedAt], map: "incident_evidence_incident_idx")
+  @@map("incident_evidence")
+}
+
 // ============================================================================
 // AUDIT (ADR 0014) — immutable: SELECT/INSERT only for jiwar_app, triggers
 // reject UPDATE/DELETE/TRUNCATE for every role. No foreign keys on purpose:
@@ -2374,6 +2413,8 @@ enum FilePurpose {
   board_appeal_attachment
   /// An expense's invoice (ADR 0055), the accountant's.
   expense_invoice
+  /// A visitor's photo at entry (ADR 0056), taken by the guard.
+  visitor_photo
 
   @@map("file_purpose")
 }

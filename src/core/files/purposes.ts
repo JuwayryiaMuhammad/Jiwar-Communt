@@ -235,6 +235,14 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['finance.budget'],
   },
+  // A visitor's photo at entry (ADR 0056), taken by the guard: seen by the
+  // guards on shift and the management only, deleted 30 days after the
+  // entry unless an incident keeps it.
+  visitor_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

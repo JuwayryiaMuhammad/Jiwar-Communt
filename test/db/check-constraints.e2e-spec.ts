@@ -1690,6 +1690,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   service_vehicle_visits_served: {
     guarded: 'num_nonnulls() counts NULLs: never NULL',
   },
+  gate_entry_photos_subject: {},
+  gate_entry_photos_purge_after: {},
+  incident_evidence_kind: {},
+  incident_evidence_shape: {},
   service_vehicle_visits_exit_shape: {
     guarded:
       'exited_at IS NULL is tested before it is compared with entered_at; the rest are IS [NOT] NULL tests and a NOT NULL boolean',

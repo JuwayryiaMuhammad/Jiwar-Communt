@@ -1955,6 +1955,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/entries/{id}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the photo the guard took of a visitor at an entry
+         * @description The management (`gate.read`), or a guard on shift. ENTRY_PHOTO_NOT_FOUND when none was taken, or it was deleted 30 days after the entry.
+         */
+        get: operations["EntriesController_photo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/field-exceptions": {
         parameters: {
             query?: never;
@@ -2376,6 +2396,27 @@ export interface paths {
          * @description Once; again answers the same.
          */
         post: operations["GateIncidentsController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/incidents/{id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What my incident keeps */
+        get: operations["GateIncidentEvidenceController_list"];
+        put?: never;
+        /**
+         * Keep a visitor’s photo at entry with the incident
+         * @description Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.
+         */
+        post: operations["GateIncidentEvidenceController_link"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10104,6 +10145,27 @@ export interface paths {
          * @description With an outcome code (`incidentOutcome`) and a closing note of your own. Closed already: INCIDENT_CLOSED.
          */
         post: operations["StaffIncidentsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incidents/{id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What an incident keeps */
+        get: operations["StaffIncidentEvidenceController_list"];
+        put?: never;
+        /**
+         * Keep a visitor’s photo at entry with the incident
+         * @description Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.
+         */
+        post: operations["StaffIncidentEvidenceController_link"];
         delete?: never;
         options?: never;
         head?: never;
@@ -17896,6 +17958,8 @@ export interface components {
             gateId: string;
             /** @description Null for a system entry (an unconfirmed exit). */
             guard: components["schemas"]["AccountRefView"] | null;
+            /** @description The guard took a photo of the visitor (ADR 0056), still kept: `GET /gate/entries/{id}/photo`. */
+            hasPhoto: boolean;
             /** Format: uuid */
             id: string;
             method: components["schemas"]["GateEntryMethod"];
@@ -18385,7 +18449,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -19677,6 +19741,27 @@ export interface components {
             /** @enum {string} */
             role: "author" | "reviewer";
         };
+        /**
+         * @description `visitor_photo`: the guard’s photo of a visitor at an entry.
+         * @enum {string}
+         */
+        IncidentEvidenceKind: "visitor_photo";
+        IncidentEvidenceView: {
+            /** Format: uuid */
+            entryId: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["IncidentEvidenceKind"];
+            /** Format: date-time */
+            linkedAt: string;
+            linkedBy: components["schemas"]["FirstNameRefView"];
+            /** @description The visitor’s photo, a short-lived presigned URL. */
+            photo: components["schemas"]["PresignedReadView"] | null;
+        };
+        IncidentEvidenceViewList: {
+            data: components["schemas"]["IncidentEvidenceView"][];
+            nextCursor: string | null;
+        };
         IncidentInvestigatorView: {
             fullName: string | null;
             /** Format: uuid */
@@ -19787,6 +19872,8 @@ export interface components {
             permitId: string | null;
             /** @example W-0042 */
             permitReference: string | null;
+            /** @description The guard’s photo of the visitor at their latest entry (ADR 0056), a short-lived presigned URL; null when none was taken or it was deleted. */
+            photo: components["schemas"]["PresignedReadView"] | null;
             /** Format: uuid */
             subjectId: string;
             subjectType: components["schemas"]["GateSubjectType"];
@@ -20285,6 +20372,15 @@ export interface components {
         LiftSuspensionDto: {
             /** @description From the closed list `bookingSuspensionLift`. */
             reasonCode: string;
+        };
+        LinkEvidenceDto: {
+            /**
+             * Format: uuid
+             * @description The entry whose photo the incident keeps.
+             */
+            entryId: string;
+            /** @description `visitor_photo`: the guard’s photo of a visitor at an entry. */
+            kind: components["schemas"]["IncidentEvidenceKind"];
         };
         /** @enum {string} */
         Locale: "ar" | "en";
@@ -22621,6 +22717,11 @@ export interface components {
              * @description When it happened (offline guards): up to 24 h back.
              */
             occurredAt?: string;
+            /**
+             * Format: uuid
+             * @description A visitor’s `in` only (a pass, a gate request, a field exception’s; ADR 0056): the guard’s photo of them, uploaded first as `visitor_photo`. Seen by the guards on shift and the management, never the household; deleted 30 days after the entry unless an incident keeps it.
+             */
+            photoFileId?: string;
             /** Format: uuid */
             subjectId: string;
             subjectType: components["schemas"]["GateSubjectType"];
@@ -30839,6 +30940,27 @@ export interface operations {
             };
         };
     };
+    EntriesController_photo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresignedReadView"];
+                };
+            };
+        };
+    };
     GuardFieldExceptionsController_raise: {
         parameters: {
             query?: never;
@@ -31380,6 +31502,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardIncidentView"];
+                };
+            };
+        };
+    };
+    GateIncidentEvidenceController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentEvidenceViewList"];
+                };
+            };
+        };
+    };
+    GateIncidentEvidenceController_link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkEvidenceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentEvidenceView"];
                 };
             };
         };
@@ -43083,6 +43251,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentEvidenceController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentEvidenceViewList"];
+                };
+            };
+        };
+    };
+    StaffIncidentEvidenceController_link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkEvidenceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentEvidenceView"];
                 };
             };
         };

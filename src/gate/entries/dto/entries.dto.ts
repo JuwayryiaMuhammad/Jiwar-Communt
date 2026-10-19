@@ -109,6 +109,17 @@ export class RecordEntryDto {
   @Type(() => Date)
   @IsDate()
   occurredAt?: Date;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'A visitor’s `in` only (a pass, a gate request, a field exception’s; ADR 0056): the guard’s photo of them, uploaded first as `visitor_photo`. Seen by the guards on shift and the management, never the household; deleted 30 days after the entry unless an incident keeps it.',
+  })
+  @IsOptional()
+  @IsUUID()
+  photoFileId?: string;
 }
 
 export class EntriesQueryDto extends PageQueryDto {

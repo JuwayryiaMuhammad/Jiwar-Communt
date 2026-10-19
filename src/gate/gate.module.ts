@@ -17,6 +17,12 @@ import {
   StaffServiceVehiclesController,
 } from './service-vehicles/service-vehicles.controller';
 import { ServiceVehiclesService } from './service-vehicles/service-vehicles.service';
+import { EntryPhotosSweep } from './entries/entry-photos.sweep';
+import {
+  GateIncidentEvidenceController,
+  StaffIncidentEvidenceController,
+} from './incidents/incident-evidence.controller';
+import { IncidentEvidenceService } from './incidents/incident-evidence.service';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -278,6 +284,8 @@ import { PickupPageService } from './children/pickup-page.service';
     StaffFieldExceptionsController,
     GuardServiceVehiclesController,
     StaffServiceVehiclesController,
+    GateIncidentEvidenceController,
+    StaffIncidentEvidenceController,
     GatesController,
     ShiftsController,
     VisitorsController,
@@ -366,6 +374,8 @@ import { PickupPageService } from './children/pickup-page.service';
     FieldExceptionsService,
     VisitOverstaySweep,
     ServiceVehiclesService,
+    EntryPhotosSweep,
+    IncidentEvidenceService,
     GatesService,
     ShiftsService,
     VisitorPassesService,

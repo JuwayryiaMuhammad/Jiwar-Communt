@@ -3,6 +3,7 @@ import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { FIELD_EXCEPTIONS_SWEEP } from '../../src/gate/exceptions/field-exceptions.service';
 import { VISIT_OVERSTAY_SWEEP } from '../../src/gate/visitors/visit-overstay.sweep';
 import { SERVICE_VEHICLE_EXITS_SWEEP } from '../../src/gate/service-vehicles/service-vehicles.service';
+import { VISITOR_PHOTOS_SWEEP } from '../../src/gate/entries/entry-photos.sweep';
 import type { Compound } from './community';
 import { aroundTheClock, dbClock, hhmm, localMinute } from './compound-clock';
 import { nationalIdFor, uniqueSuffix } from './fixtures';
@@ -292,6 +293,32 @@ export function gateCompletionHelpers(h: HttpHarness) {
   const sweepServiceExits = () =>
     x.sweep(SERVICE_VEHICLE_EXITS_SWEEP, dbClock());
 
+  /** A photo's entry moved 31 days back: past its 30 days. */
+  const photoDue = (entryId: string) =>
+    superuserSql(
+      `UPDATE gate_entry_photos
+          SET entered_at = $2, purge_after = $2::timestamptz + interval '720 hours'
+        WHERE entry_id = $1`,
+      [entryId, new Date(dbClock().getTime() - 31 * 86_400_000)],
+    );
+
+  /** One run of the visitor photos' purge. */
+  const sweepPhotos = () => x.sweep(VISITOR_PHOTOS_SWEEP, dbClock());
+
+  /** An incident `as` reports at the unit: its id. */
+  async function incident(as: Who, unitCode: string): Promise<string> {
+    const res = await x.http('post', '/gate/incidents', as.token, {
+      type: 'security_breach',
+      severity: 'medium',
+      unitCode,
+      occurredAt: dbClock().toISOString(),
+      description: 'Someone forced the side door',
+    });
+    if (res.status !== 201)
+      throw new Error(`incident: ${res.status} ${JSON.stringify(res.body)}`);
+    return (res.body as { id: string }).id;
+  }
+
   /** The gate's settings, changed by the manager. */
   const settings = (manager: Who, body: Record<string, unknown>) =>
     x.http('patch', '/staff/gate/settings', manager.token, body).expect(200);
@@ -327,5 +354,8 @@ export function gateCompletionHelpers(h: HttpHarness) {
     serviceOutRaw,
     backdateService,
     sweepServiceExits,
+    photoDue,
+    sweepPhotos,
+    incident,
   };
 }

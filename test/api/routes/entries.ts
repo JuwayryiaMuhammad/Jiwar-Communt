@@ -83,6 +83,8 @@ export const ENTRIES_ROUTES: Row[] = [
     method: 'GET',
     path: '/gate/inside',
     auth: 'tenant',
+    // A visitor's photo is a presigned URL (ADR 0056).
+    noStore: true,
     as: 'guard',
     denied: 'manager',
     foreign: 'none',

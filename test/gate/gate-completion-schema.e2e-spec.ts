@@ -3,12 +3,15 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
+  entryPhotoRow,
+  evidenceRow,
   fieldExceptionRow,
   overstayAlertRow,
   rowAt,
   serviceVehicleRow,
   visitorDetailsRow,
 } from '../setup/gate-completion-rows';
+import { incidentRow } from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
 /**
@@ -33,6 +36,9 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
   let detailsId: string;
   let alertId: string;
   let visitId: string;
+  let photoEntryId: string;
+  let keptEntryId: string;
+  let incidentId: string;
 
   const inTx = <T>(fn: (tx: TenantTxClient) => Promise<T>) =>
     h.asTenant(tenantId, () => h.tenantTx.withTenantTx(fn));
@@ -60,6 +66,20 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
         gateId,
         shiftId,
         guardId,
+      });
+      const photo = { tenantId, gateId, unitId, guardId };
+      photoEntryId = await entryPhotoRow(tx, photo);
+      keptEntryId = await entryPhotoRow(tx, photo);
+      incidentId = await incidentRow(tx, {
+        tenantId,
+        unitId,
+        reportedById: guardId,
+      });
+      await evidenceRow(tx, {
+        tenantId,
+        incidentId,
+        entryId: keptEntryId,
+        byId: managerId,
       });
     });
     app = new Client({ connectionString: process.env.DATABASE_URL });
@@ -377,6 +397,94 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
         insert('ش ط ١٣', `'${unitId}', gen_random_uuid()`),
       ).rejects.toThrow(/service_vehicle_visits_served|foreign key/);
       await expect(insert('ش ط ١٤')).resolves.toMatchObject({ rowCount: 1 });
+    });
+  });
+
+  describe('a visitor’s photo, and an incident’s evidence', () => {
+    it('a photo is added and purged, never changed; evidence is only ever added', async () => {
+      // UPDATE for the row locks only (the link FOR SHARE, the purge FOR
+      // UPDATE SKIP LOCKED); the trigger refuses the change itself.
+      expect(await privileges('gate_entry_photos')).toEqual({
+        select: true,
+        insert: true,
+        update: true,
+        delete: true,
+        truncate: false,
+      });
+      expect(await privileges('incident_evidence')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: false,
+        truncate: false,
+      });
+    });
+
+    it('kept 30 days by the hour; a visitor’s only; one row per file', async () => {
+      const again = (subject: string, hours: number) =>
+        asApp(
+          `DELETE FROM gate_entry_photos WHERE entry_id = '${photoEntryId}'`,
+          `INSERT INTO gate_entry_photos (tenant_id, entry_id, file_id, subject_type, subject_id, gate_id,
+              unit_id, taken_by_account_id, entered_at, purge_after)
+           SELECT tenant_id, gen_random_uuid(), id, '${subject}', gen_random_uuid(), '${gateId}',
+              '${unitId}', '${guardId}', ${at(0)}, ${at(0)}::timestamptz + interval '${hours} hours'
+             FROM files f
+            WHERE purpose = 'visitor_photo'
+              AND NOT EXISTS (SELECT 1 FROM gate_entry_photos p WHERE p.file_id = f.id)
+            LIMIT 1`,
+        );
+      await expect(again('visitor_pass', 720)).resolves.toMatchObject({
+        rowCount: 1,
+      });
+      await expect(again('worker_engagement', 720)).rejects.toThrow(
+        /gate_entry_photos_subject/,
+      );
+      await expect(again('visitor_pass', 719)).rejects.toThrow(
+        /gate_entry_photos_purge_after/,
+      );
+      await expect(
+        asApp(
+          `INSERT INTO gate_entry_photos (tenant_id, entry_id, file_id, subject_type, subject_id, gate_id,
+              unit_id, taken_by_account_id, entered_at, purge_after)
+           SELECT tenant_id, gen_random_uuid(), file_id, subject_type, subject_id, gate_id, unit_id,
+              taken_by_account_id, entered_at, purge_after
+             FROM gate_entry_photos WHERE entry_id = '${photoEntryId}'`,
+        ),
+      ).rejects.toThrow(/gate_entry_photos_file_key/);
+      await expect(
+        asApp(
+          `UPDATE gate_entry_photos SET purge_after = purge_after + interval '1 hour'
+            WHERE entry_id = '${photoEntryId}'`,
+        ),
+      ).rejects.toThrow(/gate_entry_photos is append-only \(UPDATE\)/);
+    });
+
+    it('a photo an incident keeps cannot be deleted; its evidence never changes', async () => {
+      await expect(
+        asApp(
+          `DELETE FROM gate_entry_photos WHERE entry_id = '${photoEntryId}'`,
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(
+          `DELETE FROM gate_entry_photos WHERE entry_id = '${keptEntryId}'`,
+        ),
+      ).rejects.toThrow(/incident_evidence_entry_photo_fkey/);
+      await expect(
+        asApp(
+          `UPDATE incident_evidence SET linked_at = ${at(61)} WHERE incident_id = '${incidentId}'`,
+        ),
+      ).rejects.toThrow(/permission denied/);
+      const add = (entry: string) =>
+        asApp(
+          `INSERT INTO incident_evidence (id, tenant_id, incident_id, kind, entry_id, linked_by_account_id, linked_at)
+           VALUES (gen_random_uuid(), '${tenantId}', '${incidentId}', 'visitor_photo', ${entry},
+              '${managerId}', ${at(62)})`,
+        );
+      await expect(add(`'${keptEntryId}'`)).rejects.toThrow(
+        /incident_evidence_entry_key/,
+      );
+      await expect(add('NULL')).rejects.toThrow(/incident_evidence_shape/);
     });
   });
 

@@ -250,6 +250,12 @@ export class EntryListView {
   method: GateEntryMethod;
   @ApiProperty({ type: Boolean })
   unconfirmed: boolean;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'The guard took a photo of the visitor (ADR 0056), still kept: `GET /gate/entries/{id}/photo`.',
+  })
+  hasPhoto: boolean;
   @ApiProperty({ type: String, format: 'date-time' })
   occurredAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -270,6 +276,7 @@ export class EntryListView {
       unconfirmed: e.unconfirmed,
       occurredAt: e.occurredAt,
       recordedAt: e.recordedAt,
+      hasPhoto: e.hasPhoto,
     };
   }
 }
@@ -309,6 +316,13 @@ export class InsideView {
   permitId: string | null;
   @ApiProperty({ type: String, nullable: true, example: 'W-0042' })
   permitReference: string | null;
+  @ApiProperty({
+    type: PresignedReadView,
+    nullable: true,
+    description:
+      'The guard’s photo of the visitor at their latest entry (ADR 0056), a short-lived presigned URL; null when none was taken or it was deleted.',
+  })
+  photo: PresignedReadView | null;
 
   static from(i: InsideItem): InsideView {
     return {
@@ -322,6 +336,7 @@ export class InsideView {
       enteredAt: i.enteredAt,
       permitId: i.permitId,
       permitReference: i.permitReference,
+      photo: PresignedReadView.from(i.photo),
     };
   }
 }

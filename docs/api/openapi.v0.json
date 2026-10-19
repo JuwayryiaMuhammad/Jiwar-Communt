@@ -12693,6 +12693,10 @@
             "nullable": true,
             "type": "object"
           },
+          "hasPhoto": {
+            "description": "The guard took a photo of the visitor (ADR 0056), still kept: `GET /gate/entries/{id}/photo`.",
+            "type": "boolean"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -12751,6 +12755,7 @@
           "direction",
           "method",
           "unconfirmed",
+          "hasPhoto",
           "occurredAt",
           "recordedAt"
         ],
@@ -14294,7 +14299,8 @@
           "child_escort_photo",
           "approval_attachment",
           "board_appeal_attachment",
-          "expense_invoice"
+          "expense_invoice",
+          "visitor_photo"
         ],
         "type": "string"
       },
@@ -18936,6 +18942,78 @@
         ],
         "type": "object"
       },
+      "IncidentEvidenceKind": {
+        "description": "`visitor_photo`: the guard’s photo of a visitor at an entry.",
+        "enum": [
+          "visitor_photo"
+        ],
+        "type": "string"
+      },
+      "IncidentEvidenceView": {
+        "properties": {
+          "entryId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentEvidenceKind"
+              }
+            ]
+          },
+          "linkedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "linkedBy": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "The visitor’s photo, a short-lived presigned URL.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "entryId",
+          "linkedAt",
+          "linkedBy",
+          "photo"
+        ],
+        "type": "object"
+      },
+      "IncidentEvidenceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentEvidenceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "IncidentInvestigatorView": {
         "properties": {
           "fullName": {
@@ -19273,6 +19351,16 @@
             "nullable": true,
             "type": "string"
           },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "The guard’s photo of the visitor at their latest entry (ADR 0056), a short-lived presigned URL; null when none was taken or it was deleted.",
+            "nullable": true,
+            "type": "object"
+          },
           "subjectId": {
             "format": "uuid",
             "type": "string"
@@ -19298,7 +19386,8 @@
           "gateName",
           "enteredAt",
           "permitId",
-          "permitReference"
+          "permitReference",
+          "photo"
         ],
         "type": "object"
       },
@@ -20708,6 +20797,28 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "LinkEvidenceDto": {
+        "properties": {
+          "entryId": {
+            "description": "The entry whose photo the incident keeps.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentEvidenceKind"
+              }
+            ],
+            "description": "`visitor_photo`: the guard’s photo of a visitor at an entry."
+          }
+        },
+        "required": [
+          "kind",
+          "entryId"
         ],
         "type": "object"
       },
@@ -28001,6 +28112,11 @@
           "occurredAt": {
             "description": "When it happened (offline guards): up to 24 h back.",
             "format": "date-time",
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A visitor’s `in` only (a pass, a gate request, a field exception’s; ADR 0056): the guard’s photo of them, uploaded first as `visitor_photo`. Seen by the guards on shift and the management, never the household; deleted 30 days after the entry unless an incident keeps it.",
+            "format": "uuid",
             "type": "string"
           },
           "subjectId": {
@@ -51352,6 +51468,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/entries/{id}/photo": {
+      "get": {
+        "description": "The management (`gate.read`), or a guard on shift. ENTRY_PHOTO_NOT_FOUND when none was taken, or it was deleted 30 days after the entry.",
+        "operationId": "EntriesController_photo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignedReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the photo the guard took of a visitor at an entry",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/field-exceptions": {
       "post": {
         "description": "Inside a shift at a gate. Never past a lockdown (LOCKDOWN_ACTIVE) or a ban (ENTRY_BLOCKED). Every holder of `gate_exceptions.decide` is told; nobody answering by `answerBy` expires it.",
@@ -52422,6 +52577,91 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/incidents/{id}/evidence": {
+      "get": {
+        "operationId": "GateIncidentEvidenceController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentEvidenceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What my incident keeps",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.",
+        "operationId": "GateIncidentEvidenceController_link",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkEvidenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentEvidenceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Keep a visitor’s photo at entry with the incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/inside": {
       "get": {
         "operationId": "EntriesController_inside",
@@ -52468,6 +52708,7 @@
         "tags": [
           "gate"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -75032,6 +75273,91 @@
           }
         ],
         "summary": "Close an incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/{id}/evidence": {
+      "get": {
+        "operationId": "StaffIncidentEvidenceController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentEvidenceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What an incident keeps",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.",
+        "operationId": "StaffIncidentEvidenceController_link",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkEvidenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentEvidenceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Keep a visitor’s photo at entry with the incident",
         "tags": [
           "incidents"
         ],

@@ -4,6 +4,7 @@ import {
   Prisma,
   type GateApprovalRequest,
   type GateFieldException,
+  type StoredFile,
   type GateDirection,
   type GateEntry,
   type GateEntryMethod,
@@ -19,6 +20,9 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { PermissionsService } from '../../core/access/permissions.service';
+import { FilesService } from '../../core/files/files.service';
+import type { PresignedRead } from '../../core/files/object-storage';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { Notifier } from '../../core/notifications/notifier';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
@@ -27,6 +31,7 @@ import { ApprovalsService } from '../approvals/approvals.service';
 import { entryRefusal, WAIVABLE } from '../exceptions/field-exception-rules';
 import { FieldExceptionsService } from '../exceptions/field-exceptions.service';
 import { SafetyCore } from '../safety/safety-core';
+import { photoPurgeAfter, VISITOR_PHOTO_SUBJECTS } from './entry-photo-rules';
 import { permitReference } from '../permits/permit-core';
 import { PermitIdCheck } from '../permits/permit-id-check';
 import { BlocklistMatcher, entryBlocked } from '../blocklist/blocklist-matcher';
@@ -58,6 +63,8 @@ export interface NewEntry {
    * show, typed by the guard. Required, offline too.
    */
   idLast4?: string;
+  /** A visitor's `in` (ADR 0056): the guard's photo of them. */
+  photoFileId?: string;
 }
 
 /** A permit's subject: let in against the permit (ADR 0049). */
@@ -84,6 +91,8 @@ export interface EntryListItem extends EntryRecord {
   guard: { id: string; fullName: string | null; status: string } | null;
   unitId: string;
   unconfirmed: boolean;
+  /** The guard's photo of the visitor (ADR 0056), while it is kept. */
+  hasPhoto: boolean;
 }
 
 export interface InsideItem {
@@ -99,6 +108,8 @@ export interface InsideItem {
   /** A permit's subject (ADR 0049): its permit. */
   permitId: string | null;
   permitReference: string | null;
+  /** The guard's photo of the visitor at their latest entry (ADR 0056). */
+  photo: PresignedRead | null;
 }
 
 export interface EntryFilters {
@@ -179,6 +190,8 @@ export class EntriesService implements OnModuleInit {
     private readonly matcher: BlocklistMatcher,
     private readonly exceptions: FieldExceptionsService,
     private readonly safety: SafetyCore,
+    private readonly files: FilesService,
+    private readonly permissions: PermissionsService,
     config: ConfigService<Env, true>,
   ) {
     this.unconfirmedAfterMs =
@@ -434,6 +447,41 @@ export class EntriesService implements OnModuleInit {
           );
         method = 'guard';
       }
+      // A visitor's photo (ADR 0056): an `in` of a visitor only, the
+      // guard's own upload, claimed for the entry.
+      let photo: StoredFile | null = null;
+      if (input.photoFileId) {
+        if (
+          input.direction !== 'in' ||
+          !VISITOR_PHOTO_SUBJECTS.includes(subject.type)
+        )
+          throw appError.badRequest(
+            ErrorCode.VALIDATION_FAILED,
+            'Only a visitor coming in has a photo',
+            {
+              fields: [
+                {
+                  field: 'photoFileId',
+                  code: FieldErrorCode.FIELD_NOT_ALLOWED,
+                },
+              ],
+            },
+          );
+        photo = await this.files.claim(tx, input.photoFileId, 'visitor_photo');
+        if (!photo)
+          throw appError.badRequest(
+            ErrorCode.VALIDATION_FAILED,
+            'The photo is not available',
+            {
+              fields: [
+                {
+                  field: 'photoFileId',
+                  code: FieldErrorCode.FILE_NOT_AVAILABLE,
+                },
+              ],
+            },
+          );
+      }
       const entry = await this.insert(tx, {
         id,
         tenantId,
@@ -453,6 +501,23 @@ export class EntriesService implements OnModuleInit {
       // The approval's one entry, under the lock this entry holds.
       if (input.direction === 'in' && exception)
         await this.exceptions.markUsed(tx, exception.id, entry);
+      if (photo) {
+        await tx.gateEntryPhoto.create({
+          data: {
+            tenantId,
+            entryId: entry.id,
+            fileId: photo.id,
+            subjectType: subject.type,
+            subjectId: subject.id,
+            gateId: shift.gateId,
+            unitId: subject.unitId,
+            takenById: guardId,
+            enteredAt: entry.occurredAt,
+            purgeAfter: photoPurgeAfter(entry.occurredAt),
+          },
+        });
+        await this.files.attach(tx, photo);
+      }
       if (subject.engagement) {
         // The household knows when its worker comes and goes (ADR 0028).
         const holders = await this.community.holders(
@@ -503,6 +568,14 @@ export class EntriesService implements OnModuleInit {
         tx,
         page.items.map((e) => e.unitId),
       );
+      const photographed = new Set(
+        (
+          await tx.gateEntryPhoto.findMany({
+            where: { entryId: { in: page.items.map((e) => e.id) } },
+            select: { entryId: true },
+          })
+        ).map((p) => p.entryId),
+      );
       // Accounts are core's: read directly, never through the community port.
       const guards = new Map(
         (
@@ -540,6 +613,7 @@ export class EntriesService implements OnModuleInit {
           unconfirmed: e.unconfirmed,
           occurredAt: e.occurredAt,
           recordedAt: e.recordedAt,
+          hasPhoto: photographed.has(e.id),
         })),
       };
     });
@@ -579,6 +653,14 @@ export class EntriesService implements OnModuleInit {
         rows.map((r) => ({ ...r, occurredAt: r.occurred_at })),
         limit,
       );
+      const photos = new Map(
+        (
+          await tx.gateEntryPhoto.findMany({
+            where: { entryId: { in: page.items.map((r) => r.id) } },
+            select: { entryId: true, fileId: true },
+          })
+        ).map((p) => [p.entryId, p.fileId]),
+      );
       const items: InsideItem[] = [];
       for (const r of page.items) {
         const s = await this.subjects.byId(tx, r.subject_type, r.subject_id);
@@ -596,9 +678,35 @@ export class EntriesService implements OnModuleInit {
           permitReference: s?.permit
             ? permitReference(s.permit.kind, s.permit.number)
             : null,
+          photo: await this.files.readUrl(tx, photos.get(r.id) ?? null),
         });
       }
       return { items, nextCursor: page.nextCursor };
+    });
+  }
+
+  /**
+   * The guard's photo of a visitor at an entry (ADR 0056): for the
+   * management (`gate.read`), or a guard on shift. 404 when there is none,
+   * or no longer.
+   */
+  async photoOf(entryId: string): Promise<PresignedRead> {
+    const management = (await this.permissions.current()).has('gate.read');
+    return this.tenantTx.withTenantTx(async (tx) => {
+      if (!management) await this.shifts.requireOnDuty(tx);
+      const row = await tx.gateEntryPhoto.findUnique({
+        where: {
+          tenantId_entryId: { tenantId: this.ctx.txTenantId, entryId },
+        },
+        select: { fileId: true },
+      });
+      const url = row ? await this.files.readUrl(tx, row.fileId) : null;
+      if (!url)
+        throw appError.notFound(
+          ErrorCode.ENTRY_PHOTO_NOT_FOUND,
+          'No photo of this entry',
+        );
+      return url;
     });
   }
 

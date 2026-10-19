@@ -4,12 +4,12 @@ import { FILE_PURPOSES, FILE_TYPES } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0055 recreated both after ADR 0054, with every purpose). */
+/** Both CHECKs as they stand now (ADR 0056 recreated both, with every purpose). */
 const sizeCheck = readFileSync(
   join(
     __dirname,
     migrations,
-    '20261102090100_board_matters_purposes/migration.sql',
+    '20261104090600_visitor_photo_purposes/migration.sql',
   ),
   'utf8',
 );
@@ -80,6 +80,9 @@ describe('file purposes', () => {
     );
     expect(sizeCheck).toContain(
       `WHEN 'child_escort_photo' THEN ${FILE_PURPOSES.child_escort_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'visitor_photo' THEN ${FILE_PURPOSES.visitor_photo.maxBytes}`,
     );
     expect(sizeCheck).toContain(
       `WHEN 'data_export' THEN ${FILE_PURPOSES.data_export.maxBytes}`,

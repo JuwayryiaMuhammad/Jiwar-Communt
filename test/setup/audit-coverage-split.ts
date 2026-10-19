@@ -551,6 +551,8 @@ export const SECURITY_OPS_COVERAGE: readonly string[] = [
   'incident.closed',
   'incident.text_cleared',
   'incident_note.text_cleared',
+  // The visitor's photo an incident keeps (ADR 0056).
+  'incident.evidence_linked',
   'violation.issued',
   'violation.appealed',
   'violation.appeal_decided',

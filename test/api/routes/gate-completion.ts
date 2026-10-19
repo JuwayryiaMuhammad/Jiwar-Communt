@@ -248,3 +248,65 @@ export const SERVICE_VEHICLE_ROUTES: Row[] = [
     },
   },
 ];
+
+/** A visitor's photo at entry, and an incident's evidence (ADR 0056). */
+export const VISITOR_PHOTO_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/entries/{id}/photo',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bEntryId }),
+      code: 'ENTRY_PHOTO_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  ...(['gate', 'staff'] as const).flatMap((side): Row[] => {
+    const base =
+      side === 'gate' ? '/gate/incidents' : '/staff/security/incidents';
+    const persona = side === 'gate' ? 'guard' : 'manager';
+    const denied = side === 'gate' ? 'manager' : 'guard';
+    return [
+      {
+        method: 'POST',
+        path: `${base}/{id}/evidence`,
+        auth: 'tenant',
+        noStore: true,
+        as: persona,
+        denied,
+        foreign: {
+          params: (w) => ({ id: w.bGateIncidentId }),
+          body: () => ({ kind: 'visitor_photo', entryId: ID }),
+          code: 'INCIDENT_NOT_FOUND',
+        },
+        invalid: {
+          body: { kind: 'selfie', entryId: 'nope' },
+          fields: [
+            {
+              field: 'kind',
+              code: 'INVALID_VALUE',
+              params: { allowed: ['visitor_photo'] },
+            },
+            { field: 'entryId', code: 'INVALID_UUID' },
+          ],
+        },
+      },
+      {
+        method: 'GET',
+        path: `${base}/{id}/evidence`,
+        auth: 'tenant',
+        noStore: true,
+        as: persona,
+        denied,
+        foreign: {
+          params: (w) => ({ id: w.bGateIncidentId }),
+          code: 'INCIDENT_NOT_FOUND',
+        },
+        invalid: 'none',
+      },
+    ];
+  }),
+];

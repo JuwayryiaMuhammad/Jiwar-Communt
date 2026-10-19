@@ -106,3 +106,60 @@ export async function serviceVehicleRow(
   });
   return id;
 }
+
+/** A visitor's photo at an entry of T0, with its ready, attached file. */
+export async function entryPhotoRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; gateId: string; unitId: string; guardId: string },
+): Promise<string> {
+  const entryId = newId();
+  const fileId = newId();
+  await tx.storedFile.create({
+    data: {
+      id: fileId,
+      tenantId: r.tenantId,
+      purpose: 'visitor_photo',
+      contentType: 'image/png',
+      sizeBytes: 100,
+      status: 'ready',
+      uploadExpiresAt: ROW_T0,
+      finalizedAt: ROW_T0,
+      attachedAt: ROW_T0,
+    },
+  });
+  await tx.gateEntryPhoto.create({
+    data: {
+      tenantId: r.tenantId,
+      entryId,
+      fileId,
+      subjectType: 'visitor_pass',
+      subjectId: newId(),
+      gateId: r.gateId,
+      unitId: r.unitId,
+      takenById: r.guardId,
+      enteredAt: ROW_T0,
+      purgeAfter: rowAt(30 * 24 * 60),
+    },
+  });
+  return entryId;
+}
+
+/** An incident's evidence: the photo of an entry. */
+export async function evidenceRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; incidentId: string; entryId: string; byId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.incidentEvidence.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      incidentId: r.incidentId,
+      kind: 'visitor_photo',
+      entryId: r.entryId,
+      linkedById: r.byId,
+      linkedAt: rowAt(60),
+    },
+  });
+  return id;
+}

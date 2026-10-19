@@ -2,10 +2,13 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
+  entryPhotoRow,
+  evidenceRow,
   fieldExceptionRow,
   overstayAlertRow,
   serviceVehicleRow,
 } from '../setup/gate-completion-rows';
+import { incidentRow } from '../setup/security-ops-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
@@ -15,6 +18,8 @@ interface Side {
   gateId: string;
   shiftId: string;
   unitId: string;
+  incidentId: string;
+  photoEntryId: string;
 }
 
 /**
@@ -44,6 +49,29 @@ const TABLES: Table[] = [
         shiftId: link.shiftId,
         guardId: link.accountId,
         unitId: link.unitId,
+      }),
+  },
+  {
+    table: 'gate_entry_photos',
+    key: 'entry_id',
+    // Its file is made in the row's own compound; its gate, unit and guard
+    // are the link's, which the composite keys refuse.
+    insert: (tx, own, link) =>
+      entryPhotoRow(tx, {
+        tenantId: own.tenantId,
+        gateId: link.gateId,
+        unitId: link.unitId,
+        guardId: link.accountId,
+      }),
+  },
+  {
+    table: 'incident_evidence',
+    insert: (tx, own, link) =>
+      evidenceRow(tx, {
+        tenantId: own.tenantId,
+        incidentId: link.incidentId,
+        entryId: link.photoEntryId,
+        byId: link.accountId,
       }),
   },
   {
@@ -87,6 +115,8 @@ describe('RLS isolation — the gate’s completion (ADR 0056)', () => {
       gateId: '',
       shiftId: '',
       unitId: (await createUnit(h, tenantId)).id,
+      incidentId: '',
+      photoEntryId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -94,6 +124,17 @@ describe('RLS isolation — the gate’s completion (ADR 0056)', () => {
         tenantId,
         guardId: s.accountId,
         gateId: s.gateId,
+      });
+      s.incidentId = await incidentRow(tx, {
+        tenantId,
+        unitId: s.unitId,
+        reportedById: s.accountId,
+      });
+      s.photoEntryId = await entryPhotoRow(tx, {
+        tenantId,
+        gateId: s.gateId,
+        unitId: s.unitId,
+        guardId: s.accountId,
       });
     });
     return s;

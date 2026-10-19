@@ -26,7 +26,7 @@ import {
 import { eraseNow } from '../setup/erasure';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { leakText } from '../setup/leak-text';
-import { today } from '../setup/compound-clock';
+import { dbClock, today } from '../setup/compound-clock';
 import { day, permitHelpers } from '../setup/permits';
 import { securityOpsHelpers, type Who } from '../setup/security-ops';
 
@@ -339,6 +339,58 @@ describe('Audit coverage — security (ADR 0053)', () => {
         outcome: 'referred_to_police',
         from: 'investigating',
       });
+    });
+  });
+
+  describe('an incident’s evidence (ADR 0056)', () => {
+    it('evidence_linked: the evidence, its kind and the entry; never the photo', async () => {
+      const guard = await x.guardOnDuty(s.c);
+      const now = dbClock();
+      const pass = (
+        await x
+          .http('post', `/units/${s.home.id}/visitor-passes`, s.alice.token, {
+            kind: 'one_time',
+            partySize: 1,
+            validFrom: now.toISOString(),
+            validUntil: new Date(now.getTime() + 3_600_000).toISOString(),
+          })
+          .expect(201)
+      ).body as { id: string };
+      const photoFileId = await x.photo(guard, 'visitor_photo');
+      const entry = (
+        await x
+          .entryRaw(guard, 'visitor_pass', pass.id, { photoFileId })
+          .expect(201)
+      ).body as { id: string };
+      const reported = (
+        await x
+          .http('post', '/gate/incidents', guard.token, {
+            type: 'security_breach',
+            severity: 'low',
+            unitCode: s.home.code,
+            occurredAt: now.toISOString(),
+            description: WORDS,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const linked = (
+        await x
+          .http(
+            'post',
+            `/gate/incidents/${reported.id}/evidence`,
+            guard.token,
+            { kind: 'visitor_photo', entryId: entry.id },
+          )
+          .expect(201)
+      ).body as { id: string };
+      const row = await single('incident.evidence_linked', reported.id);
+      expect(row).toMatchObject(by(guard, 'incident'));
+      expect(row.metadata).toEqual({
+        evidenceId: linked.id,
+        kind: 'visitor_photo',
+        entryId: entry.id,
+      });
+      expect(leakText(row)).not.toContain(photoFileId);
     });
   });
 

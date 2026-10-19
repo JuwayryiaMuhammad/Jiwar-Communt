@@ -54,6 +54,7 @@ export const FILES_ROUTES: Row[] = [
               'approval_attachment',
               'board_appeal_attachment',
               'expense_invoice',
+              'visitor_photo',
             ],
           },
         },

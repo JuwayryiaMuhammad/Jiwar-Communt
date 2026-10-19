@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Query,
 } from '@nestjs/common';
@@ -12,7 +13,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   ListOf,
@@ -20,7 +24,9 @@ import {
   toList,
   type ListResponse,
 } from '../../core/common/http/list';
+import { PresignedReadView } from '../../core/files/views/file.views';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { EntriesQueryDto, RecordEntryDto, VerifyDto } from './dto/entries.dto';
 import { EntriesService } from './entries.service';
 import { VerifyService } from './verify.service';
@@ -77,9 +83,30 @@ export class EntriesController {
     return toList(await this.entries.list(q), (e) => EntryListView.from(e));
   }
 
-  /** Who is inside now: an entry with no exit yet. */
+  /**
+   * The guard's photo of a visitor at an entry (ADR 0056): for the
+   * management, or a guard on shift. No-store: a presigned URL.
+   */
+  @RequireAnyPermission('gate.read', 'gate.operate')
+  @Get('entries/:id/photo')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Read the photo the guard took of a visitor at an entry',
+    description:
+      'The management (`gate.read`), or a guard on shift. ENTRY_PHOTO_NOT_FOUND when none was taken, or it was deleted 30 days after the entry.',
+  })
+  @ApiOkResponse({ type: PresignedReadView })
+  async photo(@Param('id', parseId()) id: string): Promise<PresignedReadView> {
+    return PresignedReadView.from(await this.entries.photoOf(id))!;
+  }
+
+  /**
+   * Who is inside now: an entry with no exit yet. No-store: a visitor's
+   * photo is a presigned URL (ADR 0056).
+   */
   @RequirePermissions('gate.operate')
   @Get('inside')
+  @NoStore()
   @ApiOperation({ summary: 'List who is inside now' })
   @ApiOkResponse({ type: ListOf(InsideView) })
   async inside(@Query() q: PageQueryDto): Promise<ListResponse<InsideView>> {

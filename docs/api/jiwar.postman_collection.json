@@ -8027,7 +8027,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -11352,7 +11352,7 @@
               },
               "raw": "{\n  \"subjectType\": \"visitor_pass\",\n  \"subjectId\": \"\",\n  \"direction\": \"in\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `direction` | `in` \\| `out` | yes |  |\n| `id` | string (uuid) |  | Client-generated (UUIDv7): a retry with the same id records once. |\n| `idLast4` | string |  | A contractor worker’s `in` (`permit_worker`, ADR 0049): the last four characters of the ID they show, typed by the guard after matching their face. Required, offline too (FIELD_REQUIRED). A wrong one is refused (`id_mismatch`); five in 15 minutes lock the guard out, ten in a day the worker (PERMIT_ID_LOCKED). Never stored, never shown. |\n| `occurredAt` | string (date-time) |  | When it happened (offline guards): up to 24 h back. |\n| `subjectId` | string (uuid) | yes |  |\n| `subjectType` | `visitor_pass` \\| `worker_engagement` \\| `gate_request` \\| `permit_worker` \\| `event_guest` \\| `move_permit` \\| `field_exception` | yes |  |\n| `via` | `code` \\| `qr` |  | An entry on a pass or a worker code: typed or scanned. Exits and approvals keep their own method. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `direction` | `in` \\| `out` | yes |  |\n| `id` | string (uuid) |  | Client-generated (UUIDv7): a retry with the same id records once. |\n| `idLast4` | string |  | A contractor worker’s `in` (`permit_worker`, ADR 0049): the last four characters of the ID they show, typed by the guard after matching their face. Required, offline too (FIELD_REQUIRED). A wrong one is refused (`id_mismatch`); five in 15 minutes lock the guard out, ten in a day the worker (PERMIT_ID_LOCKED). Never stored, never shown. |\n| `occurredAt` | string (date-time) |  | When it happened (offline guards): up to 24 h back. |\n| `photoFileId` | string (uuid) |  | A visitor’s `in` only (a pass, a gate request, a field exception’s; ADR 0056): the guard’s photo of them, uploaded first as `visitor_photo`. Seen by the guards on shift and the management, never the household; deleted 30 days after the entry unless an incident keeps it. |\n| `subjectId` | string (uuid) | yes |  |\n| `subjectType` | `visitor_pass` \\| `worker_engagement` \\| `gate_request` \\| `permit_worker` \\| `event_guest` \\| `move_permit` \\| `field_exception` | yes |  |\n| `via` | `code` \\| `qr` |  | An entry on a pass or a worker code: typed or scanned. Exits and approvals keep their own method. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -11377,6 +11377,35 @@
                 "entries"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/entries"
+            }
+          }
+        },
+        {
+          "name": "Read the photo the guard took of a visitor at an entry",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "entries",
+                ":id",
+                "photo"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/entries/:id/photo",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -17415,6 +17444,79 @@
           }
         },
         {
+          "name": "What my incident keeps",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "incidents",
+                ":id",
+                "evidence"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/incidents/:id/evidence",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Keep a visitor’s photo at entry with the incident",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"visitor_photo\",\n  \"entryId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `entryId` | string (uuid) | yes | The entry whose photo the incident keeps. |\n| `kind` | `visitor_photo` | yes | `visitor_photo`: the guard’s photo of a visitor at an entry. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "incidents",
+                ":id",
+                "evidence"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/incidents/:id/evidence",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the incidents",
           "request": {
             "description": "**Responses:** 200",
@@ -17696,6 +17798,81 @@
                 "close"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "What an incident keeps",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id",
+                "evidence"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/evidence",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Keep a visitor’s photo at entry with the incident",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"visitor_photo\",\n  \"entryId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `entryId` | string (uuid) | yes | The entry whose photo the incident keeps. |\n| `kind` | `visitor_photo` | yes | `visitor_photo`: the guard’s photo of a visitor at an entry. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id",
+                "evidence"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/evidence",
               "variable": [
                 {
                   "description": "",

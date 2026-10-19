@@ -526,4 +526,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // lock first (SERVICE_VEHICLE_INSIDE); a violation is a race.
   service_vehicle_visits_tenant_id_id_key: null,
   service_vehicle_visits_one_inside: ['plate'],
+  // A visitor's photo at entry, and an incident's evidence (ADR 0056): the
+  // service checks each first, under the incident's lock.
+  gate_entry_photos_file_key: null,
+  incident_evidence_tenant_id_id_key: null,
+  incident_evidence_entry_key: ['entryId'],
 };

@@ -67,6 +67,8 @@ const INSIDE = [
   // A permit's subject names its permit (ADR 0049).
   'permitId',
   'permitReference',
+  // The visitor's photo at entry, or null (ADR 0056).
+  'photo',
   'subjectId',
   'subjectType',
   'unitCode',
@@ -569,6 +571,7 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
           'guard',
           'guard.fullName',
           'guard.id',
+          'hasPhoto',
           'shiftId',
           'unconfirmed',
           'unitId',

@@ -2,6 +2,7 @@ import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
 import * as split from '../setup/audit-coverage-split';
 import { gateCompletionHelpers, type Who } from '../setup/gate-completion';
+import { today } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { leakText } from '../setup/leak-text';
 
@@ -139,6 +140,26 @@ describe('Audit coverage — the gate’s completion (ADR 0056)', () => {
     expect(closed.metadata).toEqual({ gateId: s.guard.gateId });
   });
 
+  it('gate.log_searched: the days, the unit, whether by name and what it found; never the name', async () => {
+    await g
+      .http('post', '/staff/gate/log-search', s.manager.token, {
+        from: today(),
+        to: today(),
+        visitorName: NAME,
+      })
+      .expect(200);
+    const row = await single('gate.log_searched', s.c.tenantId);
+    expect(row).toMatchObject(by(s.manager, 'tenant'));
+    expect(row.metadata).toEqual({
+      from: today(),
+      to: today(),
+      unitId: null,
+      byName: true,
+      results: 0,
+      truncated: false,
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
@@ -158,7 +179,8 @@ describe('Audit coverage — the gate’s completion (ADR 0056)', () => {
           .filter(
             (k) =>
               /^(gate_exception|service_vehicle)\./.test(k) ||
-              k === 'gate_settings.changed',
+              k === 'gate_settings.changed' ||
+              k === 'gate.log_searched',
           )
           .sort(),
       ).toEqual([...split.GATE_COMPLETION_COVERAGE].sort());

@@ -593,4 +593,5 @@ export const GATE_COMPLETION_COVERAGE: readonly string[] = [
   'service_vehicle.entered',
   'service_vehicle.exited',
   'service_vehicle.exit_unconfirmed',
+  'gate.log_searched',
 ];

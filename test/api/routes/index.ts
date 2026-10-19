@@ -45,6 +45,7 @@ import {
   VISITOR_PHOTO_ROUTES,
   GATE_DIRECTORY_ROUTES,
   TRAFFIC_ROUTES,
+  LOG_SEARCH_ROUTES,
 } from './gate-completion';
 import {
   DAILY_REPORT_ROUTES,
@@ -292,4 +293,5 @@ export const ROUTES: Row[] = [
   ...VISITOR_PHOTO_ROUTES,
   ...GATE_DIRECTORY_ROUTES,
   ...TRAFFIC_ROUTES,
+  ...LOG_SEARCH_ROUTES,
 ];

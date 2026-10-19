@@ -225,6 +225,9 @@ export const PERMISSIONS = {
   // on-duty management answers the guards' field exceptions (every holder
   // is asked, the first answer wins).
   'gate_exceptions.decide': { kinds: ['manager'] },
+  // The gate log searched by a visitor's full name, exactly (ADR 0056):
+  // the manager only, audited, rate-limited.
+  'gate_log.search': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

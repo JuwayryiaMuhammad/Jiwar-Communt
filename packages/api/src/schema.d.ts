@@ -8822,6 +8822,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/gate/log-search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search the gate log
+         * @description The compound’s days asked (31 at most), a unit, a visitor named exactly. Every search is audited without the name; 20 searches per 10 minutes (RATE_LIMITED).
+         */
+        post: operations["LogSearchController_find"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/gate/reports/traffic": {
         parameters: {
             query?: never;
@@ -20556,6 +20576,46 @@ export interface components {
             permitId?: string;
             /** @example B-12 */
             unitCode: string;
+        };
+        LogSearchDto: {
+            /**
+             * @description The compound’s first day. 31 days at most (PERIOD_TOO_LONG).
+             * @example 2026-11-01
+             */
+            from: string;
+            /** @example 2026-11-04 */
+            to: string;
+            /** Format: uuid */
+            unitId?: string;
+            /** @description A visitor’s full name, matched exactly (case, Arabic letter forms, short vowels and spaces folded): never a part of it or a likeness. Names are deleted 30 days after their pass or request, so a name finds the last 30 days at most. Never stored, logged or audited. */
+            visitorName?: string;
+        };
+        LogSearchEntryView: {
+            direction: components["schemas"]["GateDirection"];
+            gate: components["schemas"]["LogSearchGateView"];
+            /** Format: uuid */
+            id: string;
+            method: components["schemas"]["GateEntryMethod"];
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: uuid */
+            subjectId: string;
+            subjectType: components["schemas"]["GateSubjectType"];
+            unconfirmed: boolean;
+            unitCode: string;
+        };
+        LogSearchGateView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        LogSearchView: {
+            /** @description Newest first. */
+            entries: components["schemas"]["LogSearchEntryView"][];
+            from: string;
+            to: string;
+            /** @description More matched than the 200 shown: narrow the search. */
+            truncated: boolean;
         };
         LoginAccountView: {
             /** Format: uuid */
@@ -41477,6 +41537,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffFieldExceptionResponse"];
+                };
+            };
+        };
+    };
+    LogSearchController_find: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogSearchDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogSearchView"];
                 };
             };
         };

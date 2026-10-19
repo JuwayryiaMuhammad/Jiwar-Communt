@@ -12009,6 +12009,42 @@
           }
         },
         {
+          "name": "Search the gate log",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"from\": \"2026-11-01\",\n  \"to\": \"2026-11-04\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `from` | string | yes | The compound’s first day. 31 days at most (PERIOD_TOO_LONG). |\n| `to` | string | yes |  |\n| `unitId` | string (uuid) |  |  |\n| `visitorName` | string |  | A visitor’s full name, matched exactly (case, Arabic letter forms, short vowels and spaces folded): never a part of it or a likeness. Names are deleted 30 days after their pass or request, so a name finds the last 30 days at most. Never stored, logged or audited. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "log-search"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/log-search"
+            }
+          }
+        },
+        {
           "name": "Read the gate’s traffic",
           "request": {
             "description": "**Responses:** 200",

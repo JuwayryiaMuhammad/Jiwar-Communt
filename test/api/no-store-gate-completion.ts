@@ -2,7 +2,7 @@ import type { Response } from 'supertest';
 import { newId } from '../../src/core/common/uuid';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { photoPurgeAfter } from '../../src/gate/entries/entry-photo-rules';
-import { dbClock } from '../setup/compound-clock';
+import { dbClock, today } from '../setup/compound-clock';
 import { call } from './request';
 import type { World } from './world';
 
@@ -116,6 +116,11 @@ export function gateCompletionCalls(
       guard('POST', '/gate/vehicle-passages', {
         vehicleId: world().aVehicleId,
         direction: 'in',
+      }),
+    'POST /staff/gate/log-search': () =>
+      manager('POST', '/staff/gate/log-search', {
+        from: today(),
+        to: today(),
       }),
     'GET /staff/gate/reports/traffic': () =>
       manager('GET', '/staff/gate/reports/traffic'),

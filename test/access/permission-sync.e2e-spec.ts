@@ -1712,7 +1712,7 @@ describe('Permission sync', () => {
   });
 
   describe('Phase G7 (ADR 0056)', () => {
-    const g7 = ['gate_exceptions.decide'];
+    const g7 = ['gate_exceptions.decide', 'gate_log.search'];
     /** The catalog before G7: none of its permissions anywhere. */
     const before: AccessCatalog = {
       ...base,

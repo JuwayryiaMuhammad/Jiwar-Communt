@@ -21104,6 +21104,135 @@
         ],
         "type": "object"
       },
+      "LogSearchDto": {
+        "properties": {
+          "from": {
+            "description": "The compound’s first day. 31 days at most (PERIOD_TOO_LONG).",
+            "example": "2026-11-01",
+            "type": "string"
+          },
+          "to": {
+            "example": "2026-11-04",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "A visitor’s full name, matched exactly (case, Arabic letter forms, short vowels and spaces folded): never a part of it or a likeness. Names are deleted 30 days after their pass or request, so a name finds the last 30 days at most. Never stored, logged or audited.",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "LogSearchEntryView": {
+        "properties": {
+          "direction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDirection"
+              }
+            ]
+          },
+          "gate": {
+            "$ref": "#/components/schemas/LogSearchGateView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateEntryMethod"
+              }
+            ]
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateSubjectType"
+              }
+            ]
+          },
+          "unconfirmed": {
+            "type": "boolean"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "gate",
+          "subjectType",
+          "subjectId",
+          "unitCode",
+          "direction",
+          "method",
+          "occurredAt",
+          "unconfirmed"
+        ],
+        "type": "object"
+      },
+      "LogSearchGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "LogSearchView": {
+        "properties": {
+          "entries": {
+            "description": "Newest first.",
+            "items": {
+              "$ref": "#/components/schemas/LogSearchEntryView"
+            },
+            "type": "array"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "truncated": {
+            "description": "More matched than the 200 shown: narrow the search.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "entries",
+          "truncated"
+        ],
+        "type": "object"
+      },
       "LoginAccountView": {
         "properties": {
           "accountId": {
@@ -71472,6 +71601,46 @@
           }
         ],
         "summary": "Approve or reject a field exception",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/log-search": {
+      "post": {
+        "description": "The compound’s days asked (31 at most), a unit, a visitor named exactly. Every search is audited without the name; 20 searches per 10 minutes (RATE_LIMITED).",
+        "operationId": "LogSearchController_find",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogSearchDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogSearchView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search the gate log",
         "tags": [
           "gate"
         ],

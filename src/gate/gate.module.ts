@@ -29,6 +29,8 @@ import { TrafficReportController } from './reports/traffic-report.controller';
 import { TrafficReportService } from './reports/traffic-report.service';
 import { VehicleCountsController } from './vehicles/vehicle-counts.controller';
 import { VehicleCountsService } from './vehicles/vehicle-counts.service';
+import { LogSearchController } from './entries/log-search.controller';
+import { LogSearchService } from './entries/log-search.service';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -295,6 +297,7 @@ import { PickupPageService } from './children/pickup-page.service';
     GateDirectoryController,
     TrafficReportController,
     VehicleCountsController,
+    LogSearchController,
     GatesController,
     ShiftsController,
     VisitorsController,
@@ -388,6 +391,7 @@ import { PickupPageService } from './children/pickup-page.service';
     GateDirectoryService,
     TrafficReportService,
     VehicleCountsService,
+    LogSearchService,
     GatesService,
     ShiftsService,
     VisitorPassesService,

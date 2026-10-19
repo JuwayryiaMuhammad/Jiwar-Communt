@@ -367,3 +367,23 @@ export const TRAFFIC_ROUTES: Row[] = [
     }),
   ),
 ];
+
+/** The gate log search (ADR 0056). */
+export const LOG_SEARCH_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/gate/log-search',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { from: 'monday', to: 'friday' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+];

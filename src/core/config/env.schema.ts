@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { fcmServiceAccount } from './fcm-service-account';
 import {
+  decodeSeed,
+  parsePreviousPublicKeys,
+  SIGNING_KEY_VERSION_MAX,
+} from './bundle-signing-keys';
+import {
   ENGAGEMENT_KEY_VERSION_MAX,
   parseEngagementTokenKeys,
 } from './engagement-token-keys';
@@ -208,6 +213,28 @@ export const envSchema = z
       error:
         'is required (ADR 0057): `1:<key>`, a key from `openssl rand -base64 48`',
     }),
+    /**
+     * Signs every gate bundle a guard device downloads (ADR 0057): the
+     * 32-byte seed of an Ed25519 key, base64url or base64
+     * (`openssl rand -base64 32`). Whoever holds it can make a bundle a
+     * device trusts. Its version is the key id a bundle carries; a rotation
+     * raises it and moves the old key's PUBLIC half to
+     * GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS for a day (a bundle lives 24 h at
+     * most). Differs from every other key, and from environment to
+     * environment.
+     */
+    GATE_BUNDLE_SIGNING_KEY: z.string({
+      error:
+        'is required (ADR 0057): a 32-byte seed from `openssl rand -base64 32`',
+    }),
+    GATE_BUNDLE_SIGNING_KEY_VERSION: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(SIGNING_KEY_VERSION_MAX)
+      .default(1),
+    /** Retired keys' public halves, verify only: `ver:key[,…]`. */
+    GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS: optional(z.string()),
     /** The version new and reissued worker cards are derived with. */
     ENGAGEMENT_TOKEN_KEY_VERSION: z.coerce
       .number()
@@ -358,6 +385,47 @@ export const envSchema = z
         });
       }
     }
+    // The bundle's signing key (ADR 0057): a seed of 32 bytes, shared with
+    // nothing; retired public keys parse and never reuse the version.
+    if (!decodeSeed(env.GATE_BUNDLE_SIGNING_KEY))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['GATE_BUNDLE_SIGNING_KEY'],
+        message: 'must be a 32-byte seed in base64 (`openssl rand -base64 32`)',
+      });
+    for (const other of [
+      'JWT_ACCESS_SECRET',
+      'PLATFORM_JWT_SECRET',
+      'IDENTIFIER_PEPPER',
+      'ENTRY_CREDENTIAL_KEY',
+      'PARCEL_TOKEN_KEY',
+      'ENGAGEMENT_REF_SECRET',
+      'VISITOR_PASS_TOKEN_KEY',
+      'PAYMENT_CREDENTIALS_KEY',
+    ] as const)
+      if (env.GATE_BUNDLE_SIGNING_KEY === env[other])
+        ctx.addIssue({
+          code: 'custom',
+          path: ['GATE_BUNDLE_SIGNING_KEY'],
+          message: `must differ from ${other}`,
+        });
+    if (env.GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS !== undefined) {
+      const previous = parsePreviousPublicKeys(
+        env.GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS,
+      );
+      if (!(previous instanceof Map))
+        ctx.addIssue({
+          code: 'custom',
+          path: ['GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS'],
+          message: previous.invalid,
+        });
+      else if (previous.has(env.GATE_BUNDLE_SIGNING_KEY_VERSION))
+        ctx.addIssue({
+          code: 'custom',
+          path: ['GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS'],
+          message: 'must not reuse GATE_BUNDLE_SIGNING_KEY_VERSION',
+        });
+    }
     // The worker card's keys (ADR 0057): a ring that parses, holds the
     // current version, and shares no key with the other secrets.
     const ring = parseEngagementTokenKeys(env.ENGAGEMENT_TOKEN_KEYS);
@@ -383,6 +451,7 @@ export const envSchema = z
         'ENGAGEMENT_REF_SECRET',
         'VISITOR_PASS_TOKEN_KEY',
         'PAYMENT_CREDENTIALS_KEY',
+        'GATE_BUNDLE_SIGNING_KEY',
       ] as const)
         if ([...ring.values()].includes(env[other] ?? ''))
           ctx.addIssue({

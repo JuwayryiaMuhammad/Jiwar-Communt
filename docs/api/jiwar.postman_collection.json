@@ -11622,6 +11622,63 @@
           }
         },
         {
+          "name": "Download the gate bundle for this device, shift and gate",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"deviceId\": \"\",\n  \"payload\": \"\",\n  \"signature\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `deviceId` | string (uuid) | yes |  |\n| `payload` | string | yes | The payload’s UTF-8 JSON in base64url, as signed. |\n| `signature` | string | yes | The device’s Ed25519 signature, base64url. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "offline",
+                "bundles"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/offline/bundles"
+            }
+          }
+        },
+        {
+          "name": "The keys gate bundles are signed with",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "offline",
+                "keys"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/offline/keys"
+            }
+          }
+        },
+        {
           "name": "Look a plate up: the units’ vehicles and the visitors’ passes carrying it",
           "request": {
             "body": {

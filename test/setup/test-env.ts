@@ -55,6 +55,13 @@ export function applyTestEnv(): void {
   process.env.ENGAGEMENT_TOKEN_KEYS =
     '1:test-engagement-token-key-one-0123456789abcdef,2:test-engagement-token-key-two-0123456789abcdef';
   process.env.ENGAGEMENT_TOKEN_KEY_VERSION = '2';
+  // The bundle's signing key (ADR 0057): a fixed test seed, never a
+  // developer's; no retired key.
+  process.env.GATE_BUNDLE_SIGNING_KEY = Buffer.alloc(32, 0x5a).toString(
+    'base64url',
+  );
+  process.env.GATE_BUNDLE_SIGNING_KEY_VERSION = '1';
+  delete process.env.GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS;
   process.env.PAYMENT_CREDENTIALS_KEY = Buffer.from(
     'jiwar-test-payment-credentials!!',
   ).toString('base64');

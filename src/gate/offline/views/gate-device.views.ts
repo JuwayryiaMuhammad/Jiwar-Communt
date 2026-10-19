@@ -48,6 +48,13 @@ export class StaffDeviceResponse {
   revokedBy: AccountRefView | null;
   @ApiProperty({ enum: [...REASON_CODES.gateDeviceRevoke], nullable: true })
   revokeReasonCode: string | null;
+  @ApiProperty({
+    type: Number,
+    description: 'Its last bundle’s number; 0 before the first.',
+  })
+  bundleVersion: number;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  lastBundleAt: Date | null;
 
   static from(v: StaffDeviceView): StaffDeviceResponse {
     return {
@@ -59,6 +66,8 @@ export class StaffDeviceResponse {
       revokedAt: v.revokedAt,
       revokedBy: v.revokedBy ? accountRef(v.revokedBy) : null,
       revokeReasonCode: v.revokeReasonCode,
+      bundleVersion: v.bundleVersion,
+      lastBundleAt: v.lastBundleAt,
     };
   }
 }

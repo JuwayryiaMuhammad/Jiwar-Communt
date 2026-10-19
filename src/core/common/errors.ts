@@ -1114,6 +1114,20 @@ export const ErrorCode = {
   GATE_DEVICE_SIGNATURE_INVALID: 'GATE_DEVICE_SIGNATURE_INVALID',
   /** Revoked already (409). */
   GATE_DEVICE_ALREADY_REVOKED: 'GATE_DEVICE_ALREADY_REVOKED',
+  /**
+   * The device was revoked (403): it downloads nothing more; what it
+   * uploads is quarantined for the management.
+   */
+  GATE_DEVICE_REVOKED: 'GATE_DEVICE_REVOKED',
+  /**
+   * A signed envelope that says something else (422, params.reason:
+   * payload, purpose, tenant, device or sent_at): not this call's, not
+   * this compound's or this device's, or its `sentAt` a day or more off
+   * the server's clock.
+   */
+  GATE_DEVICE_ENVELOPE_INVALID: 'GATE_DEVICE_ENVELOPE_INVALID',
+  /** This very envelope was received already (409): sign a new one. */
+  GATE_DEVICE_ENVELOPE_REPLAYED: 'GATE_DEVICE_ENVELOPE_REPLAYED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

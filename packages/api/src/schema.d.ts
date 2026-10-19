@@ -2604,6 +2604,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/offline/bundles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Download the gate bundle for this device, shift and gate
+         * @description A signed envelope (`purpose: bundle`), inside a shift at a gate. Valid until the shift’s planned end, a day at most; numbered per device. A revoked device is GATE_DEVICE_REVOKED; the same envelope twice is GATE_DEVICE_ENVELOPE_REPLAYED.
+         */
+        post: operations["GateBundlesController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/offline/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The keys gate bundles are signed with
+         * @description The current one and any retired one a live bundle may carry (a day after a rotation).
+         */
+        get: operations["GateBundlesController_keys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/parcels": {
         parameters: {
             query?: never;
@@ -15484,6 +15524,18 @@ export interface components {
             /** @description The buildings the compound’s units name, in order. */
             buildings: string[];
         };
+        BundleKeyView: {
+            /** @description Signs new bundles. */
+            current: boolean;
+            /** @description The raw 32-byte Ed25519 public key, base64url. */
+            publicKey: string;
+            version: number;
+        };
+        BundleKeysResponse: {
+            keys: components["schemas"]["BundleKeyView"][];
+            /** Format: date-time */
+            serverTime: string;
+        };
         CancelAppointmentByResidentDto: {
             /** @description From the closed list `managementAppointmentCancelByResident`. */
             reasonCode: string;
@@ -17726,6 +17778,14 @@ export interface components {
         DeletionRequestStatus: "pending" | "cancelled" | "completed" | "queued" | "closed";
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DeviceEnvelopeDto: {
+            /** Format: uuid */
+            deviceId: string;
+            /** @description The payload’s UTF-8 JSON in base64url, as signed. */
+            payload: string;
+            /** @description The device’s Ed25519 signature, base64url. */
+            signature: string;
+        };
         DirectoryGateView: {
             /** @description The guards on shift here now, by first name. */
             guards: components["schemas"]["FirstNameRefView"][];
@@ -18853,6 +18913,16 @@ export interface components {
         FoundItemViewList: {
             data: components["schemas"]["FoundItemView"][];
             nextCursor: string | null;
+        };
+        GateBundleResponse: {
+            /** @description The bundle’s UTF-8 JSON in base64url, exactly as signed (ADR 0057 lists its fields). */
+            body: string;
+            /** @description The signing key’s version: the device verifies with that key from `GET /gate/offline/keys`. */
+            keyVersion: number;
+            /** Format: date-time */
+            serverTime: string;
+            /** @description Ed25519 over `jiwar:gate-bundle:v1\n<body>`, base64url. */
+            signature: string;
         };
         GateChildView: {
             /** @example Omar */
@@ -25358,12 +25428,16 @@ export interface components {
             nextCursor: string | null;
         };
         StaffDeviceResponse: {
+            /** @description Its last bundle’s number; 0 before the first. */
+            bundleVersion: number;
             /** Format: date-time */
             enrolledAt: string;
             enrolledBy: components["schemas"]["AccountRefView"];
             /** Format: uuid */
             id: string;
             label: string | null;
+            /** Format: date-time */
+            lastBundleAt: string | null;
             /** @enum {string|null} */
             revokeReasonCode: "lost" | "stolen" | "replaced" | "retired" | "compromised" | "other" | null;
             /** Format: date-time */
@@ -32432,6 +32506,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyWorkView"];
+                };
+            };
+        };
+    };
+    GateBundlesController_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceEnvelopeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateBundleResponse"];
+                };
+            };
+        };
+    };
+    GateBundlesController_keys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleKeysResponse"];
                 };
             };
         };

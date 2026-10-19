@@ -1740,6 +1740,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_devices_revoke_reason: {
     guarded: 'revoke_reason IS NULL is tested first',
   },
+  gate_devices_bundle_shape: {},
+  gate_offline_bundles_version_positive: {},
+  gate_offline_bundles_validity: {},
+  gate_offline_bundles_key_version: {},
+  gate_offline_bundles_sha256: {},
+  gate_offline_bundles_counts: {},
+  gate_device_envelopes_sha256: {},
   worker_engagements_token_derivation: {
     guarded:
       'token_seq IS NULL and token_key_version IS NULL are tested before each comparison',

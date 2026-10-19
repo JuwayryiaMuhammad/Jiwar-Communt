@@ -69,3 +69,42 @@ export const GATE_DEVICE_ROUTES: Row[] = [
     },
   },
 ];
+
+/** The gate bundle a device downloads, and the keys it is signed with (ADR 0057). */
+export const GATE_BUNDLE_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/offline/keys',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/gate/offline/bundles',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({
+        deviceId: w.bGateDeviceId,
+        payload: 'e30',
+        signature: 'A'.repeat(86),
+      }),
+      code: 'GATE_DEVICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { deviceId: 'nope', payload: 'not base64url!', signature: 'short' },
+      fields: [
+        { field: 'deviceId', code: 'INVALID_UUID' },
+        { field: 'payload', code: 'INVALID_FORMAT' },
+        { field: 'signature', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+];

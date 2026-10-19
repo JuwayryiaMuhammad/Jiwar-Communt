@@ -19,6 +19,7 @@ const base = {
   ENGAGEMENT_REF_SECRET: 'f'.repeat(32),
   VISITOR_PASS_TOKEN_KEY: 'g'.repeat(32),
   ENGAGEMENT_TOKEN_KEYS: `1:${'h'.repeat(32)}`,
+  GATE_BUNDLE_SIGNING_KEY: Buffer.alloc(32, 7).toString('base64url'),
   PLATFORM_JWT_SECRET: 'c'.repeat(32),
   PUBLIC_APP_URL: 'https://app.jiwar.test',
 };
@@ -196,6 +197,44 @@ describe('validateEnv', () => {
           validateEnv({ ...base, VISITOR_PASS_TOKEN_KEY: base[other] }),
         ).toThrow(new RegExp(`must differ from ${other}`));
       }
+    });
+  });
+
+  describe('the bundle’s signing key (ADR 0057)', () => {
+    it('is required: a 32-byte seed, version 1 by default', () => {
+      const { GATE_BUNDLE_SIGNING_KEY: _omit, ...without } = base;
+      void _omit;
+      expect(() => validateEnv(without)).toThrow(/GATE_BUNDLE_SIGNING_KEY/);
+      expect(validateEnv(base).GATE_BUNDLE_SIGNING_KEY_VERSION).toBe(1);
+      for (const bad of ['short', 'A'.repeat(44), '!'.repeat(43)])
+        expect(() =>
+          validateEnv({ ...base, GATE_BUNDLE_SIGNING_KEY: bad }),
+        ).toThrow(/GATE_BUNDLE_SIGNING_KEY/);
+    });
+
+    it('retired public keys parse and never reuse the current version', () => {
+      const pub = 'P'.repeat(43);
+      expect(
+        validateEnv({ ...base, GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS: `2:${pub}` })
+          .GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS,
+      ).toBe(`2:${pub}`);
+      expect(() =>
+        validateEnv({ ...base, GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS: `1:${pub}` }),
+      ).toThrow(/must not reuse GATE_BUNDLE_SIGNING_KEY_VERSION/);
+      expect(() =>
+        validateEnv({ ...base, GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS: 'nope' }),
+      ).toThrow(/GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS/);
+    });
+
+    it('is no other key', () => {
+      const seed = Buffer.alloc(32, 9).toString('base64url');
+      expect(() =>
+        validateEnv({
+          ...base,
+          GATE_BUNDLE_SIGNING_KEY: seed,
+          IDENTIFIER_PEPPER: seed,
+        }),
+      ).toThrow(/must differ from IDENTIFIER_PEPPER/);
     });
   });
 

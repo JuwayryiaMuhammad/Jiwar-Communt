@@ -2,7 +2,14 @@ import { Client } from 'pg';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { deviceRow, offlineAt, publicKeyOf } from '../setup/offline-rows';
+import {
+  bundleRow,
+  deviceRow,
+  envelopeRow,
+  offlineAt,
+  publicKeyOf,
+} from '../setup/offline-rows';
+import { gateRow, shiftRow } from '../setup/security-rows';
 
 /**
  * The gate offline's tables (ADR 0057) at the database: what the app may
@@ -16,6 +23,10 @@ describe('The gate offline’s tables — CHECKs, triggers and privileges', () =
   let guardId: string;
   let managerId: string;
   let deviceId: string;
+  let gateId: string;
+  let shiftId: string;
+  let bundleId: string;
+  let envelopeHex: string;
 
   const inTx = <T>(fn: (tx: TenantTxClient) => Promise<T>) =>
     h.asTenant(tenantId, () => h.tenantTx.withTenantTx(fn));
@@ -27,6 +38,16 @@ describe('The gate offline’s tables — CHECKs, triggers and privileges', () =
     managerId = (await createAccountRow(h, tenantId)).id;
     await inTx(async (tx) => {
       deviceId = await deviceRow(tx, { tenantId, enrolledById: guardId });
+      gateId = await gateRow(tx, tenantId);
+      shiftId = await shiftRow(tx, { tenantId, guardId, gateId });
+      bundleId = await bundleRow(tx, {
+        tenantId,
+        deviceId,
+        shiftId,
+        gateId,
+        guardId,
+      });
+      envelopeHex = await envelopeRow(tx, { tenantId, deviceId });
     });
     app = new Client({ connectionString: process.env.DATABASE_URL });
     await app.connect();
@@ -149,6 +170,125 @@ describe('The gate offline’s tables — CHECKs, triggers and privileges', () =
       await expect(asApp(insert(), insert())).rejects.toThrow(
         /gate_devices_public_key_key/,
       );
+    });
+  });
+
+  describe('a device’s bundles', () => {
+    it('what it downloaded only grows, with when', async () => {
+      const set = (sql: string) =>
+        `UPDATE gate_devices SET ${sql} WHERE id = '${deviceId}'`;
+      await expect(
+        asApp(set(`bundle_version = 2, last_bundle_at = ${at(5)}`)),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(
+          set(`bundle_version = 2, last_bundle_at = ${at(5)}`),
+          set(`bundle_version = 1`),
+        ),
+      ).rejects.toThrow(/keeps its key and is revoked once/);
+      await expect(
+        asApp(
+          set(`bundle_version = 2, last_bundle_at = ${at(5)}`),
+          set(`last_bundle_at = ${at(4)}`),
+        ),
+      ).rejects.toThrow(/keeps its key and is revoked once/);
+      await expect(asApp(set(`bundle_version = 1`))).rejects.toThrow(
+        /gate_devices_bundle_shape/,
+      );
+    });
+
+    it('a bundle is append-only: never changed, deleted or truncated', async () => {
+      expect(await privileges('gate_offline_bundles')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: false,
+        truncate: false,
+      });
+      await expect(
+        asApp(
+          `UPDATE gate_offline_bundles SET version = 99 WHERE id = '${bundleId}'`,
+        ),
+      ).rejects.toThrow(/permission denied/);
+    });
+
+    it('the shapes of a bundle', async () => {
+      const insert = (over: Record<string, string>) => {
+        const cols: Record<string, string> = {
+          id: 'gen_random_uuid()',
+          tenant_id: `'${tenantId}'`,
+          device_id: `'${deviceId}'`,
+          version: '1000',
+          shift_id: `'${shiftId}'`,
+          gate_id: `'${gateId}'`,
+          guard_account_id: `'${guardId}'`,
+          issued_at: at(0),
+          valid_until: at(60),
+          key_version: '1',
+          content_sha256: `'${'b'.repeat(64)}'`,
+          counts: `'{}'`,
+          ...over,
+        };
+        return asApp(
+          `INSERT INTO gate_offline_bundles (${Object.keys(cols).join(', ')})
+           VALUES (${Object.values(cols).join(', ')})`,
+        );
+      };
+      await expect(insert({})).resolves.toMatchObject({ rowCount: 1 });
+      await expect(insert({ version: '0' })).rejects.toThrow(
+        /gate_offline_bundles_version_positive/,
+      );
+      await expect(insert({ valid_until: at(0) })).rejects.toThrow(
+        /gate_offline_bundles_validity/,
+      );
+      await expect(insert({ valid_until: at(24 * 60 + 1) })).rejects.toThrow(
+        /gate_offline_bundles_validity/,
+      );
+      await expect(insert({ key_version: '0' })).rejects.toThrow(
+        /gate_offline_bundles_key_version/,
+      );
+      await expect(
+        insert({ content_sha256: `'${'B'.repeat(64)}'` }),
+      ).rejects.toThrow(/gate_offline_bundles_sha256/);
+      await expect(insert({ counts: `'[]'` })).rejects.toThrow(
+        /gate_offline_bundles_counts/,
+      );
+      // Numbered once per device.
+      await expect(
+        asApp(
+          `INSERT INTO gate_offline_bundles
+             SELECT gen_random_uuid(), tenant_id, device_id, version, shift_id, gate_id,
+                    guard_account_id, issued_at, valid_until, key_version, content_sha256, counts
+               FROM gate_offline_bundles WHERE id = '${bundleId}'`,
+        ),
+      ).rejects.toThrow(/gate_offline_bundles_version_key/);
+    });
+
+    it('an envelope is written once, never changed; the sweep deletes it', async () => {
+      expect(await privileges('gate_device_envelopes')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: true,
+        truncate: false,
+      });
+      await expect(
+        asApp(
+          `DELETE FROM gate_device_envelopes WHERE signature_sha256 = '${envelopeHex}'`,
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(
+          `INSERT INTO gate_device_envelopes (tenant_id, device_id, signature_sha256, sent_at, received_at)
+           VALUES ('${tenantId}', '${deviceId}', 'nope', ${at(0)}, ${at(0)})`,
+        ),
+      ).rejects.toThrow(/gate_device_envelopes_sha256/);
+      await expect(
+        asApp(
+          `INSERT INTO gate_device_envelopes (tenant_id, device_id, signature_sha256, sent_at, received_at)
+           VALUES ('${tenantId}', '${deviceId}', '${envelopeHex}', ${at(0)}, ${at(0)})`,
+        ),
+      ).rejects.toThrow(/gate_device_envelopes_pkey/);
     });
   });
 });

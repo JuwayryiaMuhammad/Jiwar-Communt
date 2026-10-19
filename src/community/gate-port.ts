@@ -17,6 +17,7 @@ import {
 import { CommunityEngagementPort } from './engagement-port';
 import { ReviewFlags } from './units/review-flags';
 import { lockUnits } from './units/unit-lock';
+import { EngagementTokens } from './workers/engagement-tokens';
 import { WorkersAuthority } from './workers/workers-authority';
 import {
   checkSchedule,
@@ -78,6 +79,7 @@ export class CommunityGatePort {
     private readonly workers: WorkersAuthority,
     private readonly engagement: CommunityEngagementPort,
     private readonly flags: ReviewFlags,
+    private readonly cardTokens: EngagementTokens,
   ) {}
 
   /**
@@ -368,6 +370,35 @@ export class CommunityGatePort {
       include: ENGAGEMENT,
     });
     return e ? toGate(e) : null;
+  }
+
+  /**
+   * The compound's active engagements whose card the gate's offline bundle
+   * may carry (ADR 0057): those derived with a key still in the ring, with
+   * the card's token and code; and how many active ones are not (a random
+   * card from before, never derivable until it is reissued).
+   */
+  async offlineCards(tx: TenantTxClient): Promise<{
+    cards: { engagement: GateEngagement; token: string; code: string }[];
+    notDerivable: number;
+  }> {
+    const rows = await tx.workerEngagement.findMany({
+      where: { status: 'active' },
+      include: ENGAGEMENT,
+      orderBy: { id: 'asc' },
+    });
+    const cards: { engagement: GateEngagement; token: string; code: string }[] =
+      [];
+    for (const r of rows) {
+      const secret = this.cardTokens.liveSecret(r);
+      if (secret)
+        cards.push({
+          engagement: toGate(r),
+          token: secret.token,
+          code: secret.code,
+        });
+    }
+    return { cards, notDerivable: rows.length - cards.length };
   }
 
   /** Serializes the gate's entries of one worker. */

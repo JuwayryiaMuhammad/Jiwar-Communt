@@ -316,6 +316,15 @@ or `ENGAGEMENT_REF_SECRET`** (boot refuses an equal value). Changing it hides
 the codes of the passes active at the time (their codes keep opening the
 gate; the host reissues the link to see one again).
 
+`app.env` must set `GATE_BUNDLE_SIGNING_KEY` (ADR 0057; the app refuses to
+boot without it): the 32-byte seed of the Ed25519 key that signs the gate
+bundles guard devices download (`openssl rand -base64 32`). Never equal to
+another key. To rotate: generate a new seed, raise
+`GATE_BUNDLE_SIGNING_KEY_VERSION`, and set `GATE_BUNDLE_PREVIOUS_PUBLIC_KEYS`
+to `<old version>:<old public key>` (`GET /api/v1/gate/offline/keys` shows it
+before the change) for 24 hours, the longest a bundle lives; then remove it.
+No old private key is kept anywhere.
+
 `app.env` must set `ENGAGEMENT_TOKEN_KEYS` (ADR 0057; the app refuses to
 boot without it, and says so): `1:<key>`, the key that derives each worker
 card's token, so the gate's offline bundle can carry what a guard device needs

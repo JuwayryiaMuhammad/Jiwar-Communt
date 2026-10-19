@@ -6,7 +6,7 @@ import {
   envelopeMessage,
 } from '../../src/gate/offline/device-envelope';
 import type { Compound } from './community';
-import { aroundTheClock } from './compound-clock';
+import { aroundTheClock, dbClock } from './compound-clock';
 import { gateCompletionHelpers, type Who } from './gate-completion';
 import type { HttpHarness } from './http-app';
 
@@ -30,6 +30,65 @@ export interface StaffDeviceBody {
   revokedBy: { id: string; fullName?: string | null; erased?: true } | null;
   revokeReasonCode: string | null;
 }
+
+/** A gate bundle as the device reads it (ADR 0057): the header and sections. */
+export interface BundleBody {
+  v: 1;
+  bundleId: string;
+  tenantId: string;
+  deviceId: string;
+  version: number;
+  shiftId: string;
+  gateId: string;
+  guardId: string;
+  issuedAt: string;
+  validUntil: string;
+  keyVersion: number;
+  timezone: string;
+  salt: string;
+  lockdown: { scope: 'gate' | 'all'; since: string } | null;
+  passes: {
+    ref: string;
+    unitCode: string;
+    kind: string;
+    partySize: number;
+    entriesUsed: number;
+    inside: number;
+    validFrom: string;
+    validUntil: string;
+    schedule: unknown;
+    code: string;
+    qr: string;
+    plate: string | null;
+  }[];
+  workers: {
+    ref: string;
+    unitCode: string;
+    capacity: string;
+    validUntil: string | null;
+    schedule: unknown;
+    inside: number;
+    code: string;
+    qr: string;
+  }[];
+  blocklist: { ref: string; kind: 'ban' | 'watch'; plate: string }[];
+  residents: string[];
+  [section: string]: unknown;
+}
+
+/** What `POST /gate/offline/bundles` answers. */
+export interface SignedBundle {
+  keyVersion: number;
+  body: string;
+  signature: string;
+  serverTime: string;
+}
+
+/** The bundle's JSON, from its base64url. */
+export const readBundle = (signed: SignedBundle): BundleBody =>
+  JSON.parse(
+    Buffer.from(signed.body, 'base64url').toString('utf8'),
+  ) as BundleBody;
 
 /** A new device: a fresh id and key pair, enrolled nowhere yet. */
 export function newDevice(): TestDevice {
@@ -62,7 +121,7 @@ export function envelope(
       purpose,
       tenantId,
       deviceId: d.id,
-      sentAt: new Date().toISOString(),
+      sentAt: dbClock().toISOString(),
       ...over,
     }),
     'utf8',
@@ -167,6 +226,66 @@ export function offlineHelpers(h: HttpHarness) {
     };
   }
 
+  /** `POST /gate/offline/bundles` as `as`, signed by `d` (`over` breaks the payload). */
+  function bundleRaw(
+    as: Who,
+    c: Compound,
+    d: TestDevice,
+    over: Record<string, unknown> = {},
+    signer: TestDevice = d,
+  ) {
+    return g.http(
+      'post',
+      '/gate/offline/bundles',
+      as.token,
+      envelope(d, c.tenantId, 'bundle', over, signer),
+    );
+  }
+
+  /** A bundle that must be issued: the signed answer and its body. */
+  async function bundle(as: Who, c: Compound, d: TestDevice) {
+    const res = await bundleRaw(as, c, d);
+    if (res.status !== 200)
+      throw new Error(`bundle: ${res.status} ${JSON.stringify(res.body)}`);
+    const signed = res.body as SignedBundle;
+    return { signed, body: readBundle(signed) };
+  }
+
+  /** `GET /gate/offline/keys` as `as`. */
+  const keys = async (as: Who) =>
+    (await g.http('get', '/gate/offline/keys', as.token).expect(200)).body as {
+      keys: { version: number; publicKey: string; current: boolean }[];
+      serverTime: string;
+    };
+
+  /**
+   * A visitor pass of the unit by `host`, valid six hours from four minutes
+   * ago (the most a pass may start back is five): an action at its bundle's
+   * instant, or clamped two minutes before it, finds it valid.
+   */
+  async function passFull(
+    host: Who,
+    unitId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<{ id: string; code: string; qrPayload: string }> {
+    const now = dbClock();
+    const res = await g.http(
+      'post',
+      `/units/${unitId}/visitor-passes`,
+      host.token,
+      {
+        kind: 'one_time',
+        partySize: 1,
+        validFrom: new Date(now.getTime() - 4 * 60_000).toISOString(),
+        validUntil: new Date(now.getTime() + 6 * 3_600_000).toISOString(),
+        ...over,
+      },
+    );
+    if (res.status !== 201)
+      throw new Error(`pass: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as { id: string; code: string; qrPayload: string };
+  }
+
   /** The device's row. */
   const deviceRow = (c: Compound, id: string) =>
     g.inTx(c, (tx) => tx.gateDevice.findUnique({ where: { id } }));
@@ -182,5 +301,9 @@ export function offlineHelpers(h: HttpHarness) {
     as,
     asManager,
     workerWithCard,
+    bundleRaw,
+    bundle,
+    keys,
+    passFull,
   };
 }

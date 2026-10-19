@@ -7,6 +7,11 @@ import {
   StaffDevicesController,
 } from './offline/gate-devices.controller';
 import { GateDevicesService } from './offline/gate-devices.service';
+import { BundleBuilder } from './offline/bundle-builder';
+import { BundleSigner } from './offline/bundle-signer';
+import { DeviceEnvelopes } from './offline/device-envelopes';
+import { GateBundlesController } from './offline/gate-bundles.controller';
+import { GateBundlesService } from './offline/gate-bundles.service';
 import { GateExportSections } from './export/export-sections';
 import {
   GuardFieldExceptionsController,
@@ -301,6 +306,7 @@ import { PickupPageService } from './children/pickup-page.service';
     // The gate offline (ADR 0057).
     GuardDevicesController,
     StaffDevicesController,
+    GateBundlesController,
     // The gate's completion (ADR 0056).
     GateSettingsController,
     GuardFieldExceptionsController,
@@ -400,6 +406,10 @@ import { PickupPageService } from './children/pickup-page.service';
     SecurityOverview,
     // The gate offline (ADR 0057).
     GateDevicesService,
+    DeviceEnvelopes,
+    BundleSigner,
+    BundleBuilder,
+    GateBundlesService,
     GateSettingsService,
     GateSettingsProvisioning,
     FieldExceptionsService,

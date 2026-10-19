@@ -58,6 +58,9 @@ export interface StaffDeviceView {
   revokedAt: Date | null;
   revokedBy: AccountRef | null;
   revokeReasonCode: string | null;
+  /** Its last bundle's number (0: none yet) and when. */
+  bundleVersion: number;
+  lastBundleAt: Date | null;
 }
 
 export const deviceNotFound = () =>
@@ -320,6 +323,8 @@ export class GateDevicesService implements OnModuleInit {
       revokedAt: r.revokedAt,
       revokedBy: r.revokedById ? ref(r.revokedById) : null,
       revokeReasonCode: r.revokeReason,
+      bundleVersion: r.bundleVersion,
+      lastBundleAt: r.lastBundleAt,
     }));
   }
 }

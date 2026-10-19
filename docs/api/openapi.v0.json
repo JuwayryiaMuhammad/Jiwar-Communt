@@ -4518,6 +4518,46 @@
         ],
         "type": "object"
       },
+      "BundleKeyView": {
+        "properties": {
+          "current": {
+            "description": "Signs new bundles.",
+            "type": "boolean"
+          },
+          "publicKey": {
+            "description": "The raw 32-byte Ed25519 public key, base64url.",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "version",
+          "publicKey",
+          "current"
+        ],
+        "type": "object"
+      },
+      "BundleKeysResponse": {
+        "properties": {
+          "keys": {
+            "items": {
+              "$ref": "#/components/schemas/BundleKeyView"
+            },
+            "type": "array"
+          },
+          "serverTime": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "keys",
+          "serverTime"
+        ],
+        "type": "object"
+      },
       "CancelAppointmentByResidentDto": {
         "properties": {
           "reasonCode": {
@@ -11036,6 +11076,30 @@
         ],
         "type": "string"
       },
+      "DeviceEnvelopeDto": {
+        "properties": {
+          "deviceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "payload": {
+            "description": "The payload’s UTF-8 JSON in base64url, as signed.",
+            "maxLength": 96000,
+            "type": "string"
+          },
+          "signature": {
+            "description": "The device’s Ed25519 signature, base64url.",
+            "pattern": "^[A-Za-z0-9_-]{86}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deviceId",
+          "payload",
+          "signature"
+        ],
+        "type": "object"
+      },
       "DirectoryGateView": {
         "properties": {
           "guards": {
@@ -14833,6 +14897,33 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GateBundleResponse": {
+        "properties": {
+          "body": {
+            "description": "The bundle’s UTF-8 JSON in base64url, exactly as signed (ADR 0057 lists its fields).",
+            "type": "string"
+          },
+          "keyVersion": {
+            "description": "The signing key’s version: the device verifies with that key from `GET /gate/offline/keys`.",
+            "type": "number"
+          },
+          "serverTime": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "signature": {
+            "description": "Ed25519 over `jiwar:gate-bundle:v1\\n<body>`, base64url.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "keyVersion",
+          "body",
+          "signature",
+          "serverTime"
         ],
         "type": "object"
       },
@@ -35805,6 +35896,10 @@
       },
       "StaffDeviceResponse": {
         "properties": {
+          "bundleVersion": {
+            "description": "Its last bundle’s number; 0 before the first.",
+            "type": "number"
+          },
           "enrolledAt": {
             "format": "date-time",
             "type": "string"
@@ -35817,6 +35912,11 @@
             "type": "string"
           },
           "label": {
+            "nullable": true,
+            "type": "string"
+          },
+          "lastBundleAt": {
+            "format": "date-time",
             "nullable": true,
             "type": "string"
           },
@@ -35862,7 +35962,9 @@
           "enrolledAt",
           "revokedAt",
           "revokedBy",
-          "revokeReasonCode"
+          "revokeReasonCode",
+          "bundleVersion",
+          "lastBundleAt"
         ],
         "type": "object"
       },
@@ -54239,6 +54341,76 @@
         "summary": "Read my work",
         "tags": [
           "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/offline/bundles": {
+      "post": {
+        "description": "A signed envelope (`purpose: bundle`), inside a shift at a gate. Valid until the shift’s planned end, a day at most; numbered per device. A revoked device is GATE_DEVICE_REVOKED; the same envelope twice is GATE_DEVICE_ENVELOPE_REPLAYED.",
+        "operationId": "GateBundlesController_issue",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceEnvelopeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateBundleResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Download the gate bundle for this device, shift and gate",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/offline/keys": {
+      "get": {
+        "description": "The current one and any retired one a live bundle may carry (a day after a rotation).",
+        "operationId": "GateBundlesController_keys",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleKeysResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The keys gate bundles are signed with",
+        "tags": [
+          "gate"
         ],
         "x-no-store": true,
         "x-stability": "draft"

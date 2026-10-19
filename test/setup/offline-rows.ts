@@ -38,3 +38,56 @@ export async function deviceRow(
   });
   return id;
 }
+
+let bundles = 0;
+
+/** A bundle the device downloaded at T0, valid twelve hours. */
+export async function bundleRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    deviceId: string;
+    shiftId: string;
+    gateId: string;
+    guardId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.gateOfflineBundle.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      deviceId: r.deviceId,
+      version: ++bundles,
+      shiftId: r.shiftId,
+      gateId: r.gateId,
+      guardAccountId: r.guardId,
+      issuedAt: OFFLINE_T0,
+      validUntil: offlineAt(12 * 60),
+      keyVersion: 1,
+      contentSha256: 'a'.repeat(64),
+      counts: { passes: 0 },
+    },
+  });
+  return id;
+}
+
+let envelopes = 0;
+
+/** An envelope the device sent at T0: its signature's hash. */
+export async function envelopeRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; deviceId: string },
+): Promise<string> {
+  const hex = (++envelopes).toString(16).padStart(64, '0');
+  await tx.gateDeviceEnvelope.create({
+    data: {
+      tenantId: r.tenantId,
+      deviceId: r.deviceId,
+      signatureSha256: hex,
+      sentAt: OFFLINE_T0,
+      receivedAt: OFFLINE_T0,
+    },
+  });
+  return hex;
+}

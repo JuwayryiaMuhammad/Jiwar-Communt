@@ -552,4 +552,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // checked first under the enrolment's lock.
   gate_devices_tenant_id_id_key: null,
   gate_devices_public_key_key: ['publicKey'],
+  // A device's bundles are numbered under its row lock.
+  gate_offline_bundles_tenant_id_id_key: null,
+  gate_offline_bundles_version_key: null,
 };

@@ -1,12 +1,16 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { deviceRow } from '../setup/offline-rows';
+import { bundleRow, deviceRow, envelopeRow } from '../setup/offline-rows';
+import { gateRow, shiftRow } from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
   tenantId: string;
   accountId: string;
+  deviceId: string;
+  gateId: string;
+  shiftId: string;
 }
 
 /**
@@ -18,6 +22,8 @@ interface Table {
   table: string;
   insert(tx: TenantTxClient, own: Side, link: Side): Promise<string>;
   key?: string;
+  /** The key's SQL type, `uuid` unless said. */
+  keyType?: string;
   linked?: boolean;
 }
 
@@ -31,6 +37,24 @@ const TABLES: Table[] = [
     table: 'gate_devices',
     insert: (tx, own, link) =>
       deviceRow(tx, { tenantId: own.tenantId, enrolledById: link.accountId }),
+  },
+  {
+    table: 'gate_offline_bundles',
+    insert: (tx, own, link) =>
+      bundleRow(tx, {
+        tenantId: own.tenantId,
+        deviceId: link.deviceId,
+        shiftId: link.shiftId,
+        gateId: link.gateId,
+        guardId: link.accountId,
+      }),
+  },
+  {
+    table: 'gate_device_envelopes',
+    key: 'signature_sha256',
+    keyType: 'text',
+    insert: (tx, own, link) =>
+      envelopeRow(tx, { tenantId: own.tenantId, deviceId: link.deviceId }),
   },
 ];
 
@@ -47,7 +71,26 @@ describe('RLS isolation — the gate offline (ADR 0057)', () => {
 
   const side = async (label: string): Promise<Side> => {
     const tenantId = await createTenant(h, `Gate offline ${label}`);
-    return { tenantId, accountId: (await createAccountRow(h, tenantId)).id };
+    const s: Side = {
+      tenantId,
+      accountId: (await createAccountRow(h, tenantId)).id,
+      deviceId: '',
+      gateId: '',
+      shiftId: '',
+    };
+    await inTenant(s, async (tx) => {
+      s.gateId = await gateRow(tx, tenantId);
+      s.shiftId = await shiftRow(tx, {
+        tenantId,
+        guardId: s.accountId,
+        gateId: s.gateId,
+      });
+      s.deviceId = await deviceRow(tx, {
+        tenantId,
+        enrolledById: s.accountId,
+      });
+    });
+    return s;
   };
 
   beforeAll(async () => {
@@ -62,12 +105,13 @@ describe('RLS isolation — the gate offline (ADR 0057)', () => {
 
   describe.each(TABLES.map((t) => [t.table, t] as const))('%s', (name, t) => {
     const key = t.key ?? 'id';
+    const cast = t.keyType ?? 'uuid';
 
     it('A sees its row; B does not, by its key or in a full scan', async () => {
       const count = (s: Side, all = false) =>
         inTenant(s, async (tx) => {
           const rows = await tx.$queryRawUnsafe<{ n: bigint }[]>(
-            `SELECT count(*) AS n FROM "${name}" WHERE ${all ? `tenant_id = $1::uuid` : `"${key}" = $1::uuid`}`,
+            `SELECT count(*) AS n FROM "${name}" WHERE ${all ? `tenant_id = $1::uuid` : `"${key}" = $1::${cast}`}`,
             all ? a.tenantId : ids[name],
           );
           return Number(rows[0].n);
@@ -88,12 +132,12 @@ describe('RLS isolation — the gate offline (ADR 0057)', () => {
         );
       expect(
         await run(
-          `UPDATE "${name}" SET tenant_id = tenant_id WHERE "${key}" = $1::uuid`,
+          `UPDATE "${name}" SET tenant_id = tenant_id WHERE "${key}" = $1::${cast}`,
         ),
       ).toBe(0);
-      expect(await run(`DELETE FROM "${name}" WHERE "${key}" = $1::uuid`)).toBe(
-        0,
-      );
+      expect(
+        await run(`DELETE FROM "${name}" WHERE "${key}" = $1::${cast}`),
+      ).toBe(0);
     });
 
     it('acting as B, a row with A’s tenant_id is refused', async () => {

@@ -608,4 +608,5 @@ export const OFFLINE_COVERAGE: readonly string[] = [
   'gate_device.revoked',
   'gate_offline.upload_rejected',
   'gate_offline_flag.reviewed',
+  'gate_offline_batch.reviewed',
 ];

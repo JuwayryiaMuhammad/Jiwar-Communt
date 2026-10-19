@@ -154,6 +154,7 @@ describe('audit catalog', () => {
         // ADR 0057.
         'gate_device',
         'gate_offline_flag',
+        'gate_offline_batch',
       ]).toContain(def.target);
     }
   });

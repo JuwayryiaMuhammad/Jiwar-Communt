@@ -190,4 +190,59 @@ export const OFFLINE_UPLOAD_ROUTES: Row[] = [
       fields: [{ field: 'reviewCode', code: 'INVALID_TYPE' }],
     },
   },
+  {
+    method: 'GET',
+    path: '/staff/gate/offline/batches',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'quarantined' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['pending', 'reviewed', 'all'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/gate/offline/batches/{id}',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bOfflineBatchId }),
+      code: 'GATE_OFFLINE_BATCH_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/gate/offline/batches/{id}/review',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bOfflineBatchId }),
+      body: () => ({ decision: 'reject' }),
+      code: 'GATE_OFFLINE_BATCH_NOT_FOUND',
+    },
+    invalid: {
+      body: { decision: 'maybe' },
+      fields: [
+        {
+          field: 'decision',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['accept', 'reject'] },
+        },
+      ],
+    },
+  },
 ];

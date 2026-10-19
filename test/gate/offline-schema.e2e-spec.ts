@@ -314,13 +314,15 @@ describe('The gate offline’s tables — CHECKs, triggers and privileges', () =
   });
 
   describe('uploads', () => {
-    it('batches and actions are append-only; flags move forward', async () => {
+    it('batches and actions are updated only by their review (their triggers); flags move forward', async () => {
+      // UPDATE is granted for a quarantine's review; the triggers below keep
+      // what arrived and allow that review once.
       for (const table of ['gate_offline_batches', 'gate_offline_actions'])
         expect({ table, ...(await privileges(table)) }).toEqual({
           table,
           select: true,
           insert: true,
-          update: false,
+          update: true,
           delete: false,
           truncate: false,
         });
@@ -451,6 +453,74 @@ describe('The gate offline’s tables — CHECKs, triggers and privileges', () =
       await expect(asApp(set(`params = '[1]'`))).rejects.toThrow(
         /told, cleared and reviewed once|gate_offline_flags_params/,
       );
+    });
+  });
+
+  describe('a quarantine', () => {
+    it('a batch is kept as it arrived and reviewed once', async () => {
+      const where = `id = '${batchId}'`;
+      const review = `UPDATE gate_offline_batches SET reviewed_at = ${at(5)},
+        reviewed_by_account_id = '${managerId}', review_decision = 'accepted' WHERE ${where}`;
+      await expect(asApp(review)).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(
+          review,
+          `UPDATE gate_offline_batches SET review_decision = 'rejected' WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/kept as it arrived and reviewed once/);
+      await expect(
+        asApp(
+          `UPDATE gate_offline_batches SET action_count = 2 WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/kept as it arrived and reviewed once/);
+      await expect(
+        asApp(
+          `UPDATE gate_offline_batches SET reviewed_at = ${at(5)} WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/gate_offline_batches_review_shape/);
+      await expect(
+        asApp(`DELETE FROM gate_offline_batches WHERE ${where}`),
+      ).rejects.toThrow(/permission denied/);
+    });
+
+    it('an action is decided once, from quarantine only, and its body goes', async () => {
+      const id = 'f0000000-0000-7000-8000-000000000001';
+      const quarantine = `INSERT INTO gate_offline_actions
+          (id, tenant_id, device_id, batch_id, seq, type, content_sha256, device_time, received_at, status, body)
+        VALUES ('${id}', '${tenantId}', '${deviceId}', '${batchId}', 950, 'entry', '${'e'.repeat(64)}',
+                ${at(1)}, ${at(2)}, 'quarantined', '{"type":"entry"}')`;
+      const decide = (sql: string) =>
+        `UPDATE gate_offline_actions SET ${sql} WHERE id = '${id}'`;
+      const reject = decide(
+        `status = 'rejected', reject_reason = 'quarantine_rejected', body = NULL, reviewed_at = ${at(3)}`,
+      );
+      await expect(asApp(quarantine, reject)).resolves.toMatchObject({
+        rowCount: 1,
+      });
+      // Once only.
+      await expect(
+        asApp(quarantine, reject, decide(`reject_reason = 'subject_unknown'`)),
+      ).rejects.toThrow(/kept as it arrived and decided once/);
+      // With its body gone and a time.
+      await expect(
+        asApp(
+          quarantine,
+          decide(
+            `status = 'rejected', reject_reason = 'quarantine_rejected', reviewed_at = ${at(3)}`,
+          ),
+        ),
+      ).rejects.toThrow(/kept as it arrived and decided once/);
+      // A recorded one never moves.
+      await expect(
+        asApp(
+          `UPDATE gate_offline_actions SET status = 'rejected', reject_reason = 'subject_unknown',
+             reviewed_at = ${at(3)}, entry_id = NULL WHERE id = '${actionId}'`,
+        ),
+      ).rejects.toThrow(/kept as it arrived and decided once/);
+      // Quarantined: a body, nothing recorded.
+      await expect(
+        asApp(quarantine.replace(`'{"type":"entry"}'`, 'NULL')),
+      ).rejects.toThrow(/gate_offline_actions_shape/);
     });
   });
 });

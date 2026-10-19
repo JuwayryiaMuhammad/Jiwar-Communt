@@ -2655,7 +2655,7 @@ export interface paths {
         put?: never;
         /**
          * Upload a batch of what this device recorded offline
-         * @description A signed envelope (`purpose: upload`, `batchId`, `actions`: 1 to 100 in sequence). Any guard of the compound may upload it, on duty or not: each action is the guard’s, shift’s and gate’s of its bundle. A retry answers the same; each action is recorded at its device time and flagged where the server knows more. A signature that does not verify refuses the batch whole (GATE_DEVICE_SIGNATURE_INVALID), audited and told.
+         * @description A signed envelope (`purpose: upload`, `batchId`, `actions`: 1 to 100 in sequence). Any guard of the compound may upload it, on duty or not: each action is the guard’s, shift’s and gate’s of its bundle. A retry answers the same; each action is recorded at its device time and flagged where the server knows more. A signature that does not verify refuses the batch whole (GATE_DEVICE_SIGNATURE_INVALID), audited and told. A revoked device’s batch is quarantined for the management.
          */
         post: operations["GuardOfflineController_upload"];
         delete?: never;
@@ -8994,6 +8994,60 @@ export interface paths {
          * @description The compound’s days asked (31 at most), a unit, a visitor named exactly. Every search is audited without the name; 20 searches per 10 minutes (RATE_LIMITED).
          */
         post: operations["LogSearchController_find"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/offline/batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the devices’ uploaded batches, newest first */
+        get: operations["StaffOfflineController_batches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/offline/batches/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an uploaded batch and what each action did */
+        get: operations["StaffOfflineController_batch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/offline/batches/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide a revoked device’s quarantined batch, once
+         * @description `accept`: each action decided as at its receipt, recorded at its device time with its flags, or rejected; `reject`: each kept, rejected. GATE_OFFLINE_BATCH_REVIEWED after; GATE_OFFLINE_BATCH_NOT_QUARANTINED for a batch with nothing to decide.
+         */
+        post: operations["StaffOfflineController_reviewBatch"];
         delete?: never;
         options?: never;
         head?: never;
@@ -21961,18 +22015,67 @@ export interface components {
             entryId: string | null;
             flags: components["schemas"]["OfflineFlagKind"][];
             /** @enum {string|null} */
-            reason: "bundle_unknown" | "subject_unknown" | "client_id_reused" | "sequence_reused" | null;
+            reason: "bundle_unknown" | "subject_unknown" | "quarantine_rejected" | "client_id_reused" | "sequence_reused" | null;
             seq: number;
-            /** @description `recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number. */
+            /** @description `recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number; `quarantined`: the device was revoked, the management decides. */
             status: components["schemas"]["OfflineActionStatus"];
         };
         /**
-         * @description `recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number.
+         * @description `recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number; `quarantined`: the device was revoked, the management decides.
          * @enum {string}
          */
-        OfflineActionStatus: "recorded" | "duplicate" | "rejected";
+        OfflineActionStatus: "recorded" | "duplicate" | "rejected" | "quarantined";
+        OfflineBatchActionView: {
+            /** Format: uuid */
+            clientId: string;
+            /** Format: date-time */
+            deviceTime: string;
+            direction: string | null;
+            /** Format: uuid */
+            entryId: string | null;
+            /** Format: date-time */
+            occurredAt: string | null;
+            /** @enum {string|null} */
+            reason: "bundle_unknown" | "subject_unknown" | "quarantine_rejected" | null;
+            seq: number;
+            /** @enum {string} */
+            status: "recorded" | "rejected" | "quarantined";
+            /** @description What a quarantined action says it was about. */
+            subject: components["schemas"]["FlagSubjectView"] | null;
+            type: string;
+        };
+        OfflineBatchResponse: {
+            actionCount: number;
+            actions: components["schemas"]["OfflineBatchActionView"][];
+            /** @description The device’s clock less the server’s when it was sent. */
+            clockOffsetMs: number;
+            /** Format: uuid */
+            deviceId: string;
+            /** Format: uuid */
+            id: string;
+            pendingReview: boolean;
+            /** Format: date-time */
+            receivedAt: string;
+            /** @enum {string|null} */
+            reviewDecision: "accepted" | "rejected" | null;
+            /** Format: date-time */
+            reviewedAt: string | null;
+            reviewedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: date-time */
+            sentAt: string;
+            /**
+             * @description `quarantined`: from a device revoked when it arrived.
+             * @enum {string}
+             */
+            status: "accepted" | "quarantined";
+            uploadedBy: components["schemas"]["AccountRefView"];
+        };
+        OfflineBatchResponseList: {
+            data: components["schemas"]["OfflineBatchResponse"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
-        OfflineFlagKind: "lockdown_entered" | "blocklist_ban_entered" | "credential_banned" | "once_only_reused" | "action_rejected" | "credential_revoked" | "invalid_at_time" | "capacity_exceeded" | "clock_skew" | "bundle_expired" | "shift_ended" | "blocklist_watch_entered" | "already_inside" | "exit_without_entry";
+        OfflineFlagKind: "lockdown_entered" | "blocklist_ban_entered" | "credential_banned" | "once_only_reused" | "action_rejected" | "device_revoked_upload" | "credential_revoked" | "invalid_at_time" | "capacity_exceeded" | "clock_skew" | "bundle_expired" | "shift_ended" | "blocklist_watch_entered" | "already_inside" | "exit_without_entry";
         OfflineFlagResponse: {
             /** Format: uuid */
             actionId: string | null;
@@ -24471,6 +24574,13 @@ export interface components {
         ReviewEngagementViewList: {
             data: components["schemas"]["ReviewEngagementView"][];
             nextCursor: string | null;
+        };
+        ReviewOfflineBatchDto: {
+            /**
+             * @description `accept`: each quarantined action decided as at its receipt; `reject`: each kept, rejected.
+             * @enum {string}
+             */
+            decision: "accept" | "reject";
         };
         ReviewOfflineFlagDto: {
             /**
@@ -42419,6 +42529,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogSearchView"];
+                };
+            };
+        };
+    };
+    StaffOfflineController_batches: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `pending`: holding a revoked device’s quarantined actions, to decide. */
+                status?: "pending" | "reviewed" | "all";
+                deviceId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfflineBatchResponseList"];
+                };
+            };
+        };
+    };
+    StaffOfflineController_batch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfflineBatchResponse"];
+                };
+            };
+        };
+    };
+    StaffOfflineController_reviewBatch: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewOfflineBatchDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfflineBatchResponse"];
                 };
             };
         };

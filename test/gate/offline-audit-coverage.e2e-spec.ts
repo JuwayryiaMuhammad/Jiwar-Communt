@@ -107,6 +107,29 @@ describe('Audit coverage — the gate offline (ADR 0057)', () => {
     });
   });
 
+  it('gate_offline_batch.reviewed: the decision and how many, by number', async () => {
+    const { d, b } = await o.deviceWithBundle(s.guard, s.c);
+    await o.revokeRaw(s.manager, d.id).expect(200);
+    const up = await o.upload(s.guard, s.c, d, [
+      entryAction(d, b, { type: 'visitor_pass', id: newId() }),
+    ]);
+    await o
+      .http(
+        'post',
+        `/staff/gate/offline/batches/${up.batchId}/review`,
+        s.manager.token,
+        { decision: 'reject' },
+      )
+      .expect(200);
+    const row = await single('gate_offline_batch.reviewed', up.batchId);
+    expect(row).toMatchObject(by(s.manager, 'gate_offline_batch'));
+    expect(row.metadata).toEqual({
+      decision: 'rejected',
+      actions: 1,
+      recorded: 0,
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

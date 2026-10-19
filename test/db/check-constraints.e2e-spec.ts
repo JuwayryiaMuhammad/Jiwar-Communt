@@ -1751,13 +1751,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_offline_batches_sha256: {},
   gate_offline_batches_action_count: {},
   gate_offline_batches_status: {},
+  gate_offline_batches_review_shape: {
+    guarded:
+      'num_nonnulls is never NULL; review_decision and reviewed_at are tested IS NULL before IN or the comparison',
+  },
   gate_offline_actions_seq_positive: {},
   gate_offline_actions_type: {},
   gate_offline_actions_sha256: {},
   gate_offline_actions_status: {},
   gate_offline_actions_shape: {
     guarded:
-      'num_nonnulls is never NULL; reject_reason and entry_id are tested IS NULL before IN or a comparison',
+      'num_nonnulls is never NULL; reject_reason, entry_id, body and reviewed_at are tested IS NULL before IN, a function or a comparison',
   },
   gate_offline_flags_kind: {},
   gate_offline_flags_subject: {

@@ -24656,6 +24656,7 @@
             "enum": [
               "bundle_unknown",
               "subject_unknown",
+              "quarantine_rejected",
               "client_id_reused",
               "sequence_reused"
             ],
@@ -24671,7 +24672,7 @@
                 "$ref": "#/components/schemas/OfflineActionStatus"
               }
             ],
-            "description": "`recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number."
+            "description": "`recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number; `quarantined`: the device was revoked, the management decides."
           }
         },
         "required": [
@@ -24685,13 +24686,190 @@
         "type": "object"
       },
       "OfflineActionStatus": {
-        "description": "`recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number.",
+        "description": "`recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number; `quarantined`: the device was revoked, the management decides.",
         "enum": [
           "recorded",
           "duplicate",
-          "rejected"
+          "rejected",
+          "quarantined"
         ],
         "type": "string"
+      },
+      "OfflineBatchActionView": {
+        "properties": {
+          "clientId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "deviceTime": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "direction": {
+            "nullable": true,
+            "type": "string"
+          },
+          "entryId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "bundle_unknown",
+              "subject_unknown",
+              "quarantine_rejected"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "recorded",
+              "rejected",
+              "quarantined"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlagSubjectView"
+              }
+            ],
+            "description": "What a quarantined action says it was about.",
+            "nullable": true,
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "clientId",
+          "seq",
+          "type",
+          "status",
+          "reason",
+          "deviceTime",
+          "occurredAt",
+          "entryId",
+          "subject",
+          "direction"
+        ],
+        "type": "object"
+      },
+      "OfflineBatchResponse": {
+        "properties": {
+          "actionCount": {
+            "type": "number"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/OfflineBatchActionView"
+            },
+            "type": "array"
+          },
+          "clockOffsetMs": {
+            "description": "The device’s clock less the server’s when it was sent.",
+            "type": "number"
+          },
+          "deviceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "pendingReview": {
+            "type": "boolean"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reviewDecision": {
+            "enum": [
+              "accepted",
+              "rejected"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "`quarantined`: from a device revoked when it arrived.",
+            "enum": [
+              "accepted",
+              "quarantined"
+            ],
+            "type": "string"
+          },
+          "uploadedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          }
+        },
+        "required": [
+          "id",
+          "deviceId",
+          "uploadedBy",
+          "receivedAt",
+          "sentAt",
+          "clockOffsetMs",
+          "actionCount",
+          "status",
+          "pendingReview",
+          "reviewedAt",
+          "reviewedBy",
+          "reviewDecision",
+          "actions"
+        ],
+        "type": "object"
+      },
+      "OfflineBatchResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/OfflineBatchResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "OfflineFlagKind": {
         "enum": [
@@ -24700,6 +24878,7 @@
           "credential_banned",
           "once_only_reused",
           "action_rejected",
+          "device_revoked_upload",
           "credential_revoked",
           "invalid_at_time",
           "capacity_exceeded",
@@ -32466,6 +32645,22 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReviewOfflineBatchDto": {
+        "properties": {
+          "decision": {
+            "description": "`accept`: each quarantined action decided as at its receipt; `reject`: each kept, rejected.",
+            "enum": [
+              "accept",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
         ],
         "type": "object"
       },
@@ -54709,7 +54904,7 @@
     },
     "/api/v1/gate/offline/uploads": {
       "post": {
-        "description": "A signed envelope (`purpose: upload`, `batchId`, `actions`: 1 to 100 in sequence). Any guard of the compound may upload it, on duty or not: each action is the guard’s, shift’s and gate’s of its bundle. A retry answers the same; each action is recorded at its device time and flagged where the server knows more. A signature that does not verify refuses the batch whole (GATE_DEVICE_SIGNATURE_INVALID), audited and told.",
+        "description": "A signed envelope (`purpose: upload`, `batchId`, `actions`: 1 to 100 in sequence). Any guard of the compound may upload it, on duty or not: each action is the guard’s, shift’s and gate’s of its bundle. A retry answers the same; each action is recorded at its device time and flagged where the server knows more. A signature that does not verify refuses the batch whole (GATE_DEVICE_SIGNATURE_INVALID), audited and told. A revoked device’s batch is quarantined for the management.",
         "operationId": "GuardOfflineController_upload",
         "parameters": [],
         "requestBody": {
@@ -73149,6 +73344,176 @@
           }
         ],
         "summary": "Search the gate log",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/offline/batches": {
+      "get": {
+        "operationId": "StaffOfflineController_batches",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`pending`: holding a revoked device’s quarantined actions, to decide.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "pending",
+                "reviewed",
+                "all"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deviceId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineBatchResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the devices’ uploaded batches, newest first",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/offline/batches/{id}": {
+      "get": {
+        "operationId": "StaffOfflineController_batch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineBatchResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an uploaded batch and what each action did",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/offline/batches/{id}/review": {
+      "post": {
+        "description": "`accept`: each action decided as at its receipt, recorded at its device time with its flags, or rejected; `reject`: each kept, rejected. GATE_OFFLINE_BATCH_REVIEWED after; GATE_OFFLINE_BATCH_NOT_QUARANTINED for a batch with nothing to decide.",
+        "operationId": "StaffOfflineController_reviewBatch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewOfflineBatchDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineBatchResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decide a revoked device’s quarantined batch, once",
         "tags": [
           "gate"
         ],

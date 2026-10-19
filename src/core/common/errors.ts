@@ -1132,6 +1132,12 @@ export const ErrorCode = {
   GATE_OFFLINE_FLAG_NOT_FOUND: 'GATE_OFFLINE_FLAG_NOT_FOUND',
   /** The flag was reviewed already (409). */
   GATE_OFFLINE_FLAG_REVIEWED: 'GATE_OFFLINE_FLAG_REVIEWED',
+  /** Unknown, or another compound's offline batch. */
+  GATE_OFFLINE_BATCH_NOT_FOUND: 'GATE_OFFLINE_BATCH_NOT_FOUND',
+  /** Nothing of the batch waits for a decision (409): it was not quarantined. */
+  GATE_OFFLINE_BATCH_NOT_QUARANTINED: 'GATE_OFFLINE_BATCH_NOT_QUARANTINED',
+  /** The quarantined batch was decided already (409). */
+  GATE_OFFLINE_BATCH_REVIEWED: 'GATE_OFFLINE_BATCH_REVIEWED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

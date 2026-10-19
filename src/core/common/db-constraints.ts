@@ -563,4 +563,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_offline_actions_seq_key: null,
   gate_offline_actions_entry_key: null,
   gate_offline_flags_tenant_id_id_key: null,
+  // One quarantine flag per batch, checked first under the device's lock.
+  gate_offline_flags_quarantine_key: null,
 };

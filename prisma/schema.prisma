@@ -2449,8 +2449,13 @@ model GateOfflineBatch {
   clockOffsetMs Int      @map("clock_offset_ms")
   payloadSha256 String   @map("payload_sha256") @db.Char(64)
   actionCount   Int      @map("action_count") @db.SmallInt
-  /// accepted
+  /// accepted | quarantined (a revoked device's)
   status        String
+
+  reviewedAt     DateTime? @map("reviewed_at") @db.Timestamptz(3)
+  reviewedById   String?   @map("reviewed_by_account_id") @db.Uuid
+  /// accepted | rejected: a quarantined batch, decided once.
+  reviewDecision String?   @map("review_decision")
 
   @@unique([tenantId, id])
   @@index([tenantId, deviceId, receivedAt(sort: Desc)], map: "gate_offline_batches_device_idx")
@@ -2472,7 +2477,7 @@ model GateOfflineAction {
   deviceTime     DateTime  @map("device_time") @db.Timestamptz(3)
   occurredAt     DateTime? @map("occurred_at") @db.Timestamptz(3)
   receivedAt     DateTime  @map("received_at") @db.Timestamptz(3)
-  /// recorded | rejected
+  /// recorded | rejected | quarantined
   status         String
   /// offline-rules.ts REJECTIONS
   rejectReason   String?   @map("reject_reason")
@@ -2481,6 +2486,10 @@ model GateOfflineAction {
   gateId         String?   @map("gate_id") @db.Uuid
   /// The entry it recorded: a pointer.
   entryId        String?   @map("entry_id") @db.Uuid
+
+  /// A quarantined action as sent, less anything secret, until decided.
+  body       Json?
+  reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz(3)
 
   @@unique([tenantId, id])
   @@unique([tenantId, deviceId, seq], map: "gate_offline_actions_seq_key")

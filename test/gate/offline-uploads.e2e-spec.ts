@@ -509,17 +509,6 @@ describe('Gate offline — uploads (ADR 0057)', () => {
         }),
       ).toEqual([expect.objectContaining({ metadata: { reason: 'payload' } })]);
     });
-
-    it('from a revoked device: GATE_DEVICE_REVOKED, nothing recorded', async () => {
-      const p = await pass();
-      const { d, b } = await o.deviceWithBundle(s.guard, s.c);
-      await o.revokeRaw(s.manager, d.id).expect(200);
-      const res = await o.uploadRaw(s.guard, s.c, d, [
-        entryAction(d, b, onPass(p.id)),
-      ]);
-      expect([res.status, code(res)]).toEqual([403, 'GATE_DEVICE_REVOKED']);
-      expect((await passRow(p.id)).entriesUsed).toBe(0);
-    });
   });
 
   describe('the management’s flags', () => {

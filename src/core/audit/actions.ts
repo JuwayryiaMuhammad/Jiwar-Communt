@@ -1423,6 +1423,12 @@ export const AUDIT_ACTIONS = {
   // A device's upload refused whole. metadata: reason (signature, envelope,
   // payload).
   'gate_offline.upload_rejected': { log: 'tenant', target: 'gate_device' },
+  // A revoked device's quarantined batch decided. metadata: decision
+  // (accepted | rejected), actions, recorded.
+  'gate_offline_batch.reviewed': {
+    log: 'tenant',
+    target: 'gate_offline_batch',
+  },
   // metadata: kind, reviewCode.
   'gate_offline_flag.reviewed': { log: 'tenant', target: 'gate_offline_flag' },
 } as const satisfies Record<string, AuditActionDefinition>;

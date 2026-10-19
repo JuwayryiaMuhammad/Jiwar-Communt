@@ -13,6 +13,8 @@ export interface OfflineWorld {
   bGateDeviceId: string;
   /** A flag on a batch of B's device (rows written directly). */
   bOfflineFlagId: string;
+  /** That batch. */
+  bOfflineBatchId: string;
 }
 
 export async function offlineWorld(
@@ -28,7 +30,7 @@ export async function offlineWorld(
       proof: signAs(d, enrolMessage(b.tenantId, d.id, d.publicKey)),
     }),
   );
-  const bOfflineFlagId = await helpers.asManager(b, () =>
+  const rows = await helpers.asManager(b, () =>
     h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
       const at = { tenantId: b.tenantId, deviceId: d.id };
       await bundleRow(tx, {
@@ -38,8 +40,12 @@ export async function offlineWorld(
         guardId: b.ids.guard,
       });
       const batchId = await batchRow(tx, { ...at, uploadedById: b.ids.guard });
-      return flagRow(tx, { ...at, batchId });
+      return { batchId, flagId: await flagRow(tx, { ...at, batchId }) };
     }),
   );
-  return { bGateDeviceId: d.id, bOfflineFlagId };
+  return {
+    bGateDeviceId: d.id,
+    bOfflineFlagId: rows.flagId,
+    bOfflineBatchId: rows.batchId,
+  };
 }

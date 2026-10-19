@@ -20,7 +20,10 @@ const ROUNDS = 5;
  * - a bundle and a lockdown's start: the bundle says the lockdown or was
  *   issued before it began;
  * - an upload and a ban of its plate: met, or the ban came after the sync
- *   and the entry stays as it was.
+ *   and the entry stays as it was;
+ * - an upload and the device's revocation serialize on the device: every
+ *   action received before the revocation is recorded, every one after is
+ *   quarantined, none both.
  */
 describe('Gate offline — concurrently (ADR 0057)', () => {
   let h: HttpHarness;
@@ -166,6 +169,49 @@ describe('Gate offline — concurrently (ADR 0057)', () => {
         matched ? ['blocklist_ban_entered'] : [],
       );
       expect(await entries(p.id)).toBe(1);
+    }
+  });
+
+  it('an upload and the device’s revocation: recorded before it, quarantined after, never both', async () => {
+    for (let round = 0; round < ROUNDS; round++) {
+      const p = await o.passFull(s.alice, s.home.id, { partySize: 3 });
+      const { d, b } = await o.deviceWithBundle(s.guard, s.c);
+      const [up] = await Promise.all([
+        o.upload(s.guard, s.c, d, [
+          entryAction(d, b, onPass(p.id)),
+          entryAction(d, b, onPass(p.id)),
+          entryAction(d, b, onPass(p.id)),
+        ]),
+        o.revokeRaw(s.manager, d.id).expect(200),
+      ]);
+      const revokedAt = (await o.deviceRow(s.c, d.id))!.revokedAt!;
+      const rows = await o.inTx(s.c, (tx) =>
+        tx.gateOfflineAction.findMany({
+          where: { batchId: up.batchId },
+          orderBy: { seq: 'asc' },
+        }),
+      );
+      for (const r of rows)
+        if (r.status === 'recorded')
+          expect(r.receivedAt.getTime()).toBeLessThanOrEqual(
+            revokedAt.getTime(),
+          );
+        else {
+          expect(r.status).toBe('quarantined');
+          expect(r.receivedAt.getTime()).toBeGreaterThanOrEqual(
+            revokedAt.getTime(),
+          );
+        }
+      // Once quarantined, the rest of the batch is too.
+      const statuses = rows.map((r) => r.status);
+      const first = statuses.indexOf('quarantined');
+      if (first >= 0)
+        expect(statuses.slice(first).every((x) => x === 'quarantined')).toBe(
+          true,
+        );
+      expect((await passRow(p.id)).entriesUsed).toBe(
+        statuses.filter((x) => x === 'recorded').length,
+      );
     }
   });
 });

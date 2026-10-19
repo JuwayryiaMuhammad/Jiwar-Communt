@@ -3,9 +3,13 @@ import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import { REASON_CODES } from '../../../core/common/reasons';
 import type { FlagView } from '../offline-flags.service';
 import { FLAG_KINDS, REJECTIONS, type FlagKind } from '../offline-rules';
-import type { ActionResult, UploadResult } from '../offline-uploads.service';
+import type {
+  ActionResult,
+  BatchView,
+  UploadResult,
+} from '../offline-uploads.service';
 
-const STATUSES = ['recorded', 'duplicate', 'rejected'] as const;
+const STATUSES = ['recorded', 'duplicate', 'rejected', 'quarantined'] as const;
 
 export class OfflineActionResultView {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -16,7 +20,7 @@ export class OfflineActionResultView {
     enum: STATUSES,
     enumName: 'OfflineActionStatus',
     description:
-      '`recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number.',
+      '`recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number; `quarantined`: the device was revoked, the management decides.',
   })
   status: (typeof STATUSES)[number];
   @ApiProperty({
@@ -116,6 +120,77 @@ export class OfflineFlagResponse {
   static from(v: FlagView): OfflineFlagResponse {
     return {
       ...v,
+      reviewedBy: v.reviewedBy ? accountRef(v.reviewedBy) : null,
+    };
+  }
+}
+
+export class OfflineBatchActionView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  clientId: string;
+  @ApiProperty({ type: Number })
+  seq: number;
+  @ApiProperty({ type: String })
+  type: string;
+  @ApiProperty({ enum: ['recorded', 'rejected', 'quarantined'] })
+  status: 'recorded' | 'rejected' | 'quarantined';
+  @ApiProperty({ enum: [...REJECTIONS], nullable: true })
+  reason: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  deviceTime: Date;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  occurredAt: Date | null;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  entryId: string | null;
+  @ApiProperty({
+    type: FlagSubjectView,
+    nullable: true,
+    description: 'What a quarantined action says it was about.',
+  })
+  subject: FlagSubjectView | null;
+  @ApiProperty({ type: String, nullable: true })
+  direction: string | null;
+}
+
+/** A batch a device uploaded, as the management reads it (ADR 0057). */
+export class OfflineBatchResponse {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, format: 'uuid' })
+  deviceId: string;
+  @ApiProperty({ type: AccountRefView })
+  uploadedBy: AccountRefView;
+  @ApiProperty({ type: String, format: 'date-time' })
+  receivedAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  sentAt: Date;
+  @ApiProperty({
+    type: Number,
+    description: 'The device’s clock less the server’s when it was sent.',
+  })
+  clockOffsetMs: number;
+  @ApiProperty({ type: Number })
+  actionCount: number;
+  @ApiProperty({
+    enum: ['accepted', 'quarantined'],
+    description: '`quarantined`: from a device revoked when it arrived.',
+  })
+  status: 'accepted' | 'quarantined';
+  @ApiProperty({ type: Boolean })
+  pendingReview: boolean;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  reviewedAt: Date | null;
+  @ApiProperty({ type: AccountRefView, nullable: true })
+  reviewedBy: AccountRefView | null;
+  @ApiProperty({ enum: ['accepted', 'rejected'], nullable: true })
+  reviewDecision: 'accepted' | 'rejected' | null;
+  @ApiProperty({ type: [OfflineBatchActionView] })
+  actions: OfflineBatchActionView[];
+
+  static from(v: BatchView): OfflineBatchResponse {
+    return {
+      ...v,
+      uploadedBy: accountRef(v.uploadedBy),
       reviewedBy: v.reviewedBy ? accountRef(v.reviewedBy) : null,
     };
   }

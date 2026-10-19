@@ -16,12 +16,15 @@ import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { DeviceEnvelopeDto } from './dto/device-envelope.dto';
 import {
+  OfflineBatchesQueryDto,
   OfflineFlagsQueryDto,
+  ReviewOfflineBatchDto,
   ReviewOfflineFlagDto,
 } from './dto/offline-flags.dto';
 import { OfflineFlags } from './offline-flags.service';
 import { OfflineUploadsService } from './offline-uploads.service';
 import {
+  OfflineBatchResponse,
   OfflineFlagResponse,
   OfflineUploadResponse,
 } from './views/offline.views';
@@ -39,7 +42,7 @@ export class GuardOfflineController {
   @ApiOperation({
     summary: 'Upload a batch of what this device recorded offline',
     description:
-      'A signed envelope (`purpose: upload`, `batchId`, `actions`: 1 to 100 in sequence). Any guard of the compound may upload it, on duty or not: each action is the guard’s, shift’s and gate’s of its bundle. A retry answers the same; each action is recorded at its device time and flagged where the server knows more. A signature that does not verify refuses the batch whole (GATE_DEVICE_SIGNATURE_INVALID), audited and told.',
+      'A signed envelope (`purpose: upload`, `batchId`, `actions`: 1 to 100 in sequence). Any guard of the compound may upload it, on duty or not: each action is the guard’s, shift’s and gate’s of its bundle. A retry answers the same; each action is recorded at its device time and flagged where the server knows more. A signature that does not verify refuses the batch whole (GATE_DEVICE_SIGNATURE_INVALID), audited and told. A revoked device’s batch is quarantined for the management.',
   })
   @ApiOkResponse({ type: OfflineUploadResponse })
   async upload(@Body() dto: DeviceEnvelopeDto): Promise<OfflineUploadResponse> {
@@ -52,7 +55,51 @@ export class GuardOfflineController {
 @RequirePermissions('gate_devices.manage')
 @Controller('staff/gate/offline')
 export class StaffOfflineController {
-  constructor(private readonly flags: OfflineFlags) {}
+  constructor(
+    private readonly flags: OfflineFlags,
+    private readonly uploads: OfflineUploadsService,
+  ) {}
+
+  @Get('batches')
+  @NoStore()
+  @ApiOperation({ summary: 'List the devices’ uploaded batches, newest first' })
+  @ApiOkResponse({ type: ListOf(OfflineBatchResponse) })
+  async batches(
+    @Query() q: OfflineBatchesQueryDto,
+  ): Promise<ListResponse<OfflineBatchResponse>> {
+    return toList(await this.uploads.list(q), (v) =>
+      OfflineBatchResponse.from(v),
+    );
+  }
+
+  @Get('batches/:id')
+  @NoStore()
+  @ApiOperation({ summary: 'Get an uploaded batch and what each action did' })
+  @ApiOkResponse({ type: OfflineBatchResponse })
+  async batch(
+    @Param('id', parseId()) id: string,
+  ): Promise<OfflineBatchResponse> {
+    return OfflineBatchResponse.from(await this.uploads.get(id));
+  }
+
+  @Post('batches/:id/review')
+  @NoStore()
+  @HttpCode(HttpStatus.OK)
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Decide a revoked device’s quarantined batch, once',
+    description:
+      '`accept`: each action decided as at its receipt, recorded at its device time with its flags, or rejected; `reject`: each kept, rejected. GATE_OFFLINE_BATCH_REVIEWED after; GATE_OFFLINE_BATCH_NOT_QUARANTINED for a batch with nothing to decide.',
+  })
+  @ApiOkResponse({ type: OfflineBatchResponse })
+  async reviewBatch(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReviewOfflineBatchDto,
+  ): Promise<OfflineBatchResponse> {
+    return OfflineBatchResponse.from(
+      await this.uploads.review(id, dto.decision),
+    );
+  }
 
   @Get('flags')
   @NoStore()

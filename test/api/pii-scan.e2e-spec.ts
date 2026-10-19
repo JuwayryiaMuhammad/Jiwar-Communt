@@ -1545,6 +1545,7 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0057: B's device, not found for everyone of A.
       '/staff/gate/devices/{id}': w.bGateDeviceId,
       '/staff/gate/offline/flags/{id}': w.bOfflineFlagId,
+      '/staff/gate/offline/batches/{id}': w.bOfflineBatchId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

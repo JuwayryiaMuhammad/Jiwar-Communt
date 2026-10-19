@@ -36,6 +36,11 @@ export interface ActionBase {
   type: ActionType;
   /** The SHA-256 of the action as sent: a retry must say the same. */
   contentSha256: string;
+  /**
+   * The action as sent, for a revoked device's quarantine: what the
+   * management may accept later, less anything secret (`quarantineBody`).
+   */
+  raw: Record<string, unknown>;
 }
 
 /** Someone in or out on a pass or a worker card. */
@@ -133,12 +138,25 @@ export function parseUpload(
       direction: x.direction as 'in' | 'out',
       via: x.direction === 'in' ? (x.via as 'code' | 'qr') : 'code',
       contentSha256: actionHash(x),
+      raw: x,
     });
   });
   return problems.length
     ? { problems }
     : { batchId: p.batchId as string, actions };
 }
+
+/**
+ * What a quarantined action keeps until the management decides (ADR
+ * 0057): the action as sent, less what is secret or personal. An entry
+ * holds ids and codes only.
+ */
+export function quarantineBody(a: ActionBase): Record<string, unknown> {
+  const body = { ...a.raw };
+  for (const field of QUARANTINE_OMIT) delete body[field];
+  return body;
+}
+const QUARANTINE_OMIT: readonly string[] = [];
 
 /** The SHA-256 of an action as sent, keys sorted. */
 export const actionHash = (a: Record<string, unknown>): string =>
@@ -206,6 +224,8 @@ export const FLAG_KINDS = [
   'credential_banned',
   'once_only_reused',
   'action_rejected',
+  // A revoked device's batch, quarantined: once per batch.
+  'device_revoked_upload',
   // The management's: told, not critically.
   'credential_revoked',
   'invalid_at_time',
@@ -227,6 +247,7 @@ export const FLAG_CLASS: Record<FlagKind, FlagClass> = {
   credential_banned: 'security',
   once_only_reused: 'security',
   action_rejected: 'security',
+  device_revoked_upload: 'security',
   credential_revoked: 'manager',
   invalid_at_time: 'manager',
   capacity_exceeded: 'manager',
@@ -267,5 +288,10 @@ export function refusalFlag(refusal: Refusal | null): FlagKind | null {
 }
 
 /** Why an action is not recorded: it cannot have happened as said. */
-export const REJECTIONS = ['bundle_unknown', 'subject_unknown'] as const;
+export const REJECTIONS = [
+  'bundle_unknown',
+  'subject_unknown',
+  // A revoked device's action the management did not accept.
+  'quarantine_rejected',
+] as const;
 export type Rejection = (typeof REJECTIONS)[number];

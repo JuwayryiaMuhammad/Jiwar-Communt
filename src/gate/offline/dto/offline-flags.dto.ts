@@ -30,6 +30,38 @@ export class OfflineFlagsQueryDto extends PageQueryDto {
   deviceId?: string;
 }
 
+const BATCH_FILTERS = ['pending', 'reviewed', 'all'] as const;
+
+export class OfflineBatchesQueryDto extends PageQueryDto {
+  @ApiProperty({
+    enum: BATCH_FILTERS,
+    required: false,
+    default: 'all',
+    description:
+      '`pending`: holding a revoked device’s quarantined actions, to decide.',
+  })
+  @IsOptional()
+  @IsIn(BATCH_FILTERS, withParams({ allowed: [...BATCH_FILTERS] }))
+  status?: (typeof BATCH_FILTERS)[number];
+
+  @ApiProperty({ type: String, format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  deviceId?: string;
+}
+
+const DECISIONS = ['accept', 'reject'] as const;
+
+export class ReviewOfflineBatchDto {
+  @ApiProperty({
+    enum: DECISIONS,
+    description:
+      '`accept`: each quarantined action decided as at its receipt; `reject`: each kept, rejected.',
+  })
+  @IsIn(DECISIONS, withParams({ allowed: [...DECISIONS] }))
+  decision: (typeof DECISIONS)[number];
+}
+
 export class ReviewOfflineFlagDto {
   @ApiProperty({
     enum: [...REASON_CODES.offlineFlagReview],

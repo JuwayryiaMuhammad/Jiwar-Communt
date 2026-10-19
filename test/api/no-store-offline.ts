@@ -40,9 +40,10 @@ export function offlineCalls(
   const enrolled = async (): Promise<string> => (await device()).id;
   /**
    * A batch of one action on a subject nobody knows, from a device of A's
-   * with its bundle: rejected and flagged. The answer.
+   * with its bundle: rejected and flagged (quarantined when `revoked`).
+   * The answer.
    */
-  const uploaded = async () => {
+  const uploaded = async (revoked = false) => {
     const d = await device();
     const signed = (
       await guard(
@@ -52,6 +53,10 @@ export function offlineCalls(
       )
     ).body as SignedBundle;
     const b = readBundle(signed);
+    if (revoked)
+      await manager('POST', `/staff/gate/devices/${d.id}/revoke`, {
+        reasonCode: 'lost',
+      });
     return guard(
       'POST',
       '/gate/offline/uploads',
@@ -99,7 +104,20 @@ export function offlineCalls(
         '/gate/offline/bundles',
         envelope(await device(), world().a.tenantId, 'bundle'),
       ),
-    'POST /gate/offline/uploads': uploaded,
+    'POST /gate/offline/uploads': () => uploaded(),
+    'GET /staff/gate/offline/batches': () =>
+      manager('GET', '/staff/gate/offline/batches'),
+    'GET /staff/gate/offline/batches/{id}': async () =>
+      manager(
+        'GET',
+        `/staff/gate/offline/batches/${((await uploaded()).body as { batchId: string }).batchId}`,
+      ),
+    'POST /staff/gate/offline/batches/{id}/review': async () =>
+      manager(
+        'POST',
+        `/staff/gate/offline/batches/${((await uploaded(true)).body as { batchId: string }).batchId}/review`,
+        { decision: 'reject' },
+      ),
     'GET /staff/gate/offline/flags': () =>
       manager('GET', '/staff/gate/offline/flags'),
     'GET /staff/gate/offline/flags/{id}': async () =>

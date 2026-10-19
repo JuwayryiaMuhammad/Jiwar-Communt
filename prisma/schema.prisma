@@ -2377,6 +2377,32 @@ model GateVehicleCount {
 }
 
 // ============================================================================
+// The gate offline (ADR 0057): guard devices, the bundles they download, the
+// batches they upload and what those record or flag.
+// ============================================================================
+
+/// A guard device (ADR 0057): the compound's phone, known by its Ed25519
+/// public key; revoked once by the management.
+model GateDevice {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  publicKey    String    @map("public_key")
+  label        String?
+  enrolledById String    @map("enrolled_by_account_id") @db.Uuid
+  enrolledAt   DateTime  @map("enrolled_at") @db.Timestamptz(3)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(3)
+  revokedById  String?   @map("revoked_by_account_id") @db.Uuid
+  /// REASON_CODES.gateDeviceRevoke
+  revokeReason String?   @map("revoke_reason")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, publicKey], map: "gate_devices_public_key_key")
+  @@index([tenantId, enrolledAt(sort: Desc), id(sort: Desc)], map: "gate_devices_list_idx")
+  @@map("gate_devices")
+}
+
+// ============================================================================
 // AUDIT (ADR 0014) — immutable: SELECT/INSERT only for jiwar_app, triggers
 // reject UPDATE/DELETE/TRUNCATE for every role. No foreign keys on purpose:
 // entries must survive anything that happens to what they reference.

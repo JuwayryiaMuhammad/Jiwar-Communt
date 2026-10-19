@@ -656,4 +656,13 @@ export const REASON_CODES = {
     'outside_policy',
     'other',
   ],
+  // Guard devices (ADR 0057): why the management revoked one.
+  gateDeviceRevoke: [
+    'lost',
+    'stolen',
+    'replaced',
+    'retired',
+    'compromised',
+    'other',
+  ],
 } as const;

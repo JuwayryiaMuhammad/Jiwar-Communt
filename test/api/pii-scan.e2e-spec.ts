@@ -1542,6 +1542,8 @@ describe('API v0 — PII leak scan', () => {
       '/gate/incidents/{id}/signatures': w.bIncidentId,
       '/staff/security/incidents/{id}/signatures': w.bIncidentId,
       '/staff/security/patrols/runs/{id}/geofence-exits': w.bRunId,
+      // ADR 0057: B's device, not found for everyone of A.
+      '/staff/gate/devices/{id}': w.bGateDeviceId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

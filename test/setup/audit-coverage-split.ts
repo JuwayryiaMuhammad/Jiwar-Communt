@@ -598,3 +598,12 @@ export const GATE_COMPLETION_COVERAGE: readonly string[] = [
   'service_vehicle.exit_unconfirmed',
   'gate.log_searched',
 ];
+
+/**
+ * The gate offline (ADR 0057): guard devices, their uploads and flags.
+ * test/gate/offline-audit-coverage.
+ */
+export const OFFLINE_COVERAGE: readonly string[] = [
+  'gate_device.enrolled',
+  'gate_device.revoked',
+];

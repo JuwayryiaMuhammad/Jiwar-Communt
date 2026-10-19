@@ -1912,6 +1912,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'خرج أحد الحراس في جولة عن نطاق المسار لمدة {minutes} دقيقة أو أكثر. افتح الجولة.',
     },
   },
+  'gate_device.enrolled': {
+    en: {
+      title: 'New gate device',
+      body: 'A guard enrolled a device for the gate offline. Revoke it if you do not recognise it.',
+    },
+    ar: {
+      title: 'جهاز بوابة جديد',
+      body: 'سجّل أحد الحراس جهازاً للعمل على البوابة دون اتصال. ألغِه إن لم تتعرف عليه.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -386,6 +386,7 @@ const ERROR_TEXT: Record<string, string> = {
   // The gate's completion (ADR 0056).
   GATE_EXCEPTION_NOT_FOUND: 'This field exception does not exist.',
   GATE_EXCEPTION_DECIDED: 'This exception was answered already, withdrawn or expired: the first answer stands.',
+  GATE_DEVICE_ALREADY_REVOKED: 'This device was revoked already.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

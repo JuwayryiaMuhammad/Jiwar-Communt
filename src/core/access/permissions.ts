@@ -228,6 +228,10 @@ export const PERMISSIONS = {
   // The gate log searched by a visitor's full name, exactly (ADR 0056):
   // the manager only, audited, rate-limited.
   'gate_log.search': { kinds: ['manager'] },
+  // The gate offline (ADR 0057): the guard devices (enrolled by a guard,
+  // revoked here), their sync health, the flags their uploads raised, and
+  // the quarantined batches of a revoked one, accepted or rejected.
+  'gate_devices.manage': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

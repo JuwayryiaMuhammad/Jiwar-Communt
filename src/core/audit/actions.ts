@@ -1414,6 +1414,12 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'service_vehicle_visit',
   },
+  // The gate offline (ADR 0057). Ids, codes and counts only: never a key,
+  // a signature, a code, a plate nor a name.
+  // A guard enrolled a device. metadata: labelled (a boolean: never the label).
+  'gate_device.enrolled': { log: 'tenant', target: 'gate_device' },
+  // metadata: reasonCode.
+  'gate_device.revoked': { log: 'tenant', target: 'gate_device' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

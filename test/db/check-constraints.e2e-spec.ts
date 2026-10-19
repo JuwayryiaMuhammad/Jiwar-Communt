@@ -1730,6 +1730,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   incident_signatures_sha256: {},
   incident_signatures_version: {},
   incident_signatures_image_shape: {},
+  // The gate offline (ADR 0057).
+  gate_devices_public_key_shape: {},
+  gate_devices_label: { guarded: 'label IS NULL is tested first' },
+  gate_devices_revoke_shape: {
+    guarded:
+      'num_nonnulls is never NULL; revoked_at IS NULL is tested before the comparison',
+  },
+  gate_devices_revoke_reason: {
+    guarded: 'revoke_reason IS NULL is tested first',
+  },
 };
 
 interface Check {

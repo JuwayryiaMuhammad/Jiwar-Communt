@@ -35,6 +35,7 @@ import {
   SECURITY_OPS_COVERAGE,
   CHILDREN_COVERAGE,
   GATE_COMPLETION_COVERAGE,
+  OFFLINE_COVERAGE,
   FILES_COVERAGE,
   MAINTENANCE_COVERAGE,
   MANAGEMENT_COVERAGE,
@@ -875,6 +876,7 @@ describe('Audit coverage', () => {
         ...BOARD_MATTERS_COVERAGE,
         ...BUDGET_COVERAGE,
         ...GATE_COMPLETION_COVERAGE,
+        ...OFFLINE_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

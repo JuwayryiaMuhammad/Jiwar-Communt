@@ -87,6 +87,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'lockdown.end',
       'gate_exceptions.decide',
       'gate_log.search',
+      'gate_devices.manage',
     ],
   },
   {
@@ -168,6 +169,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'incidents.manage',
       'blocklist.manage',
       'violations.manage',
+      'gate_devices.manage',
     ],
   },
   {

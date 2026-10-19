@@ -151,6 +151,8 @@ describe('audit catalog', () => {
         'gate_field_exception',
         'service_vehicle_visit',
         'incident_signature',
+        // ADR 0057.
+        'gate_device',
       ]).toContain(def.target);
     }
   });

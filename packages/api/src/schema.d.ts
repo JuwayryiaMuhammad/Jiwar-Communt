@@ -1819,6 +1819,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enrol this device for the gate offline
+         * @description With its Ed25519 public key and the proof that it holds the private key. The same id and key again answer the same; another key under the id is GATE_DEVICE_EXISTS. The `gate_devices.manage` holders are told.
+         */
+        post: operations["GuardDevicesController_enrol"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/directory": {
         parameters: {
             query?: never;
@@ -8786,6 +8806,60 @@ export interface paths {
         get: operations["ReportsController_outstandingCsv"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the guard devices, newest first */
+        get: operations["StaffDevicesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a guard device */
+        get: operations["StaffDevicesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/devices/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke a guard device
+         * @description Once (GATE_DEVICE_ALREADY_REVOKED after). It downloads no bundle again; what it uploads after is quarantined for the management to accept or reject.
+         */
+        post: operations["StaffDevicesController_revoke"];
         delete?: never;
         options?: never;
         head?: never;
@@ -18115,6 +18189,19 @@ export interface components {
             /** @description Guests one "going" answer to an event may bring, at most. */
             eventMaxGuests: number;
         };
+        EnrolDeviceDto: {
+            /**
+             * Format: uuid
+             * @description The device’s own UUIDv7, kept with its key: the same id and key again answer the same.
+             */
+            id: string;
+            /** @description What the management sees it as ("Gate 1 phone"); never in the audit. */
+            label?: string;
+            /** @description The enrolment message signed with the key (base64url). */
+            proof: string;
+            /** @description The raw 32 bytes of the Ed25519 public key, base64url without padding. */
+            publicKey: string;
+        };
         EnterServiceVehicleDto: {
             company: string;
             /**
@@ -18795,6 +18882,8 @@ export interface components {
         /** @enum {string} */
         GateDecisionSource: "household" | "standing_instruction" | "timeout" | "guard";
         /** @enum {string} */
+        GateDeviceStatus: "active" | "revoked";
+        /** @enum {string} */
         GateDirection: "in" | "out";
         GateDirectoryView: {
             /** @description Every active gate, by name, with its guards on shift (perhaps none). */
@@ -19465,6 +19554,18 @@ export interface components {
             /** Format: date-time */
             since: string;
             subject: components["schemas"]["BlocklistSubject"];
+        };
+        GuardDeviceResponse: {
+            /** Format: date-time */
+            enrolledAt: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description The server’s clock now: the device keeps its offset and times what it records from it.
+             */
+            serverTime: string;
+            status: components["schemas"]["GateDeviceStatus"];
         };
         GuardFieldExceptionResponse: {
             /**
@@ -24181,6 +24282,13 @@ export interface components {
         RevokeConsentDto: {
             code: components["schemas"]["ConsentCode"];
         };
+        RevokeDeviceDto: {
+            /**
+             * @description Why, from the closed list `gateDeviceRevoke`.
+             * @enum {string}
+             */
+            reasonCode: "lost" | "stolen" | "replaced" | "retired" | "compromised" | "other";
+        };
         RevokeDto: {
             permission: components["schemas"]["MemberPermission"];
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
@@ -25247,6 +25355,24 @@ export interface components {
         };
         StaffComplaintViewList: {
             data: components["schemas"]["StaffComplaintView"][];
+            nextCursor: string | null;
+        };
+        StaffDeviceResponse: {
+            /** Format: date-time */
+            enrolledAt: string;
+            enrolledBy: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            label: string | null;
+            /** @enum {string|null} */
+            revokeReasonCode: "lost" | "stolen" | "replaced" | "retired" | "compromised" | "other" | null;
+            /** Format: date-time */
+            revokedAt: string | null;
+            revokedBy: components["schemas"]["AccountRefView"] | null;
+            status: components["schemas"]["GateDeviceStatus"];
+        };
+        StaffDeviceResponseList: {
+            data: components["schemas"]["StaffDeviceResponse"][];
             nextCursor: string | null;
         };
         StaffDisputeView: {
@@ -31224,6 +31350,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChildVerifyView"];
+                };
+            };
+        };
+    };
+    GuardDevicesController_enrol: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnrolDeviceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardDeviceResponse"];
                 };
             };
         };
@@ -41803,6 +41952,79 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    StaffDevicesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "active" | "revoked" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDeviceResponseList"];
+                };
+            };
+        };
+    };
+    StaffDevicesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDeviceResponse"];
+                };
+            };
+        };
+    };
+    StaffDevicesController_revoke: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeDeviceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDeviceResponse"];
                 };
             };
         };

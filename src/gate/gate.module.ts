@@ -2,6 +2,11 @@ import { Module } from '@nestjs/common';
 import { FineBoardAppeals } from './fines/fine-board-appeals';
 import { ViolationBoardAppeals } from './violations/violation-board-appeals';
 import { SecurityOverview } from './reports/security-overview';
+import {
+  GuardDevicesController,
+  StaffDevicesController,
+} from './offline/gate-devices.controller';
+import { GateDevicesService } from './offline/gate-devices.service';
 import { GateExportSections } from './export/export-sections';
 import {
   GuardFieldExceptionsController,
@@ -293,6 +298,9 @@ import { PickupPageService } from './children/pickup-page.service';
     CommunityGatePortModule,
   ],
   controllers: [
+    // The gate offline (ADR 0057).
+    GuardDevicesController,
+    StaffDevicesController,
     // The gate's completion (ADR 0056).
     GateSettingsController,
     GuardFieldExceptionsController,
@@ -390,6 +398,8 @@ import { PickupPageService } from './children/pickup-page.service';
     FineBoardAppeals,
     ViolationBoardAppeals,
     SecurityOverview,
+    // The gate offline (ADR 0057).
+    GateDevicesService,
     GateSettingsService,
     GateSettingsProvisioning,
     FieldExceptionsService,

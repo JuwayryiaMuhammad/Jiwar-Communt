@@ -548,4 +548,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   incident_signatures_tenant_id_id_key: null,
   incident_signatures_once_key: null,
   incident_signatures_file_key: null,
+  // Guard devices (ADR 0057): a key registered twice is the same phone,
+  // checked first under the enrolment's lock.
+  gate_devices_tenant_id_id_key: null,
+  gate_devices_public_key_key: ['publicKey'],
 };

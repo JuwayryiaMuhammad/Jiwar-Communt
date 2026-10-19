@@ -1771,6 +1771,17 @@ export const NOTIFICATION_KINDS = {
     target: 'patrol_run',
     params: { minutes: {} },
   },
+  /**
+   * A guard enrolled a device for the gate offline (ADR 0057): the
+   * `gate_devices.manage` holders, who revoke one they do not recognise.
+   */
+  'gate_device.enrolled': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'gate_device',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

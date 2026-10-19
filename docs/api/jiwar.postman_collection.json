@@ -11271,6 +11271,41 @@
           }
         },
         {
+          "name": "Enrol this device for the gate offline",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"id\": \"\",\n  \"publicKey\": \"\",\n  \"proof\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `id` | string (uuid) | yes | The device’s own UUIDv7, kept with its key: the same id and key again answer the same. |\n| `label` | string |  | What the management sees it as (\"Gate 1 phone\"); never in the audit. |\n| `proof` | string | yes | The enrolment message signed with the key (base64url). |\n| `publicKey` | string | yes | The raw 32 bytes of the Ed25519 public key, base64url without padding. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "devices"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/devices"
+            }
+          }
+        },
+        {
           "name": "The gates, their phones and who is on shift where",
           "request": {
             "description": "**Responses:** 200",
@@ -11885,6 +11920,126 @@
                 "visitor-parking"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/visitor-parking"
+            }
+          }
+        },
+        {
+          "name": "List the guard devices, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "devices"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/devices"
+            }
+          }
+        },
+        {
+          "name": "Get a guard device",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "devices",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/devices/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Revoke a guard device",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"lost\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `lost` \\| `stolen` \\| `replaced` \\| `retired` \\| `compromised` \\| `other` | yes | Why, from the closed list `gateDeviceRevoke`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "devices",
+                ":id",
+                "revoke"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/devices/:id/revoke",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

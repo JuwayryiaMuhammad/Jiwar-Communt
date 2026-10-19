@@ -12671,6 +12671,36 @@
         ],
         "type": "object"
       },
+      "EnrolDeviceDto": {
+        "properties": {
+          "id": {
+            "description": "The device’s own UUIDv7, kept with its key: the same id and key again answer the same.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "description": "What the management sees it as (\"Gate 1 phone\"); never in the audit.",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "proof": {
+            "description": "The enrolment message signed with the key (base64url).",
+            "pattern": "^[A-Za-z0-9_-]{86}$",
+            "type": "string"
+          },
+          "publicKey": {
+            "description": "The raw 32 bytes of the Ed25519 public key, base64url without padding.",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "publicKey",
+          "proof"
+        ],
+        "type": "object"
+      },
       "EnterServiceVehicleDto": {
         "properties": {
           "company": {
@@ -14880,6 +14910,13 @@
           "standing_instruction",
           "timeout",
           "guard"
+        ],
+        "type": "string"
+      },
+      "GateDeviceStatus": {
+        "enum": [
+          "active",
+          "revoked"
         ],
         "type": "string"
       },
@@ -17277,6 +17314,37 @@
           "fullName",
           "photo",
           "since"
+        ],
+        "type": "object"
+      },
+      "GuardDeviceResponse": {
+        "properties": {
+          "enrolledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "serverTime": {
+            "description": "The server’s clock now: the device keeps its offset and times what it records from it.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDeviceStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "enrolledAt",
+          "serverTime"
         ],
         "type": "object"
       },
@@ -32156,6 +32224,26 @@
         ],
         "type": "object"
       },
+      "RevokeDeviceDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "Why, from the closed list `gateDeviceRevoke`.",
+            "enum": [
+              "lost",
+              "stolen",
+              "replaced",
+              "retired",
+              "compromised",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "RevokeDto": {
         "properties": {
           "permission": {
@@ -35701,6 +35789,88 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffComplaintView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffDeviceResponse": {
+        "properties": {
+          "enrolledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "enrolledBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "nullable": true,
+            "type": "string"
+          },
+          "revokeReasonCode": {
+            "enum": [
+              "lost",
+              "stolen",
+              "replaced",
+              "retired",
+              "compromised",
+              "other"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "revokedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDeviceStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "status",
+          "enrolledBy",
+          "enrolledAt",
+          "revokedAt",
+          "revokedBy",
+          "revokeReasonCode"
+        ],
+        "type": "object"
+      },
+      "StaffDeviceResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffDeviceResponse"
             },
             "type": "array"
           },
@@ -51946,6 +52116,46 @@
         "summary": "Check a child's card",
         "tags": [
           "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/devices": {
+      "post": {
+        "description": "With its Ed25519 public key and the proof that it holds the private key. The same id and key again answer the same; another key under the id is GATE_DEVICE_EXISTS. The `gate_devices.manage` holders are told.",
+        "operationId": "GuardDevicesController_enrol",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrolDeviceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardDeviceResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enrol this device for the gate offline",
+        "tags": [
+          "gate"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -72077,6 +72287,166 @@
         "summary": "Export the outstanding report as CSV",
         "tags": [
           "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/devices": {
+      "get": {
+        "operationId": "StaffDevicesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "active",
+                "revoked",
+                "all"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDeviceResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the guard devices, newest first",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/devices/{id}": {
+      "get": {
+        "operationId": "StaffDevicesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDeviceResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a guard device",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/devices/{id}/revoke": {
+      "post": {
+        "description": "Once (GATE_DEVICE_ALREADY_REVOKED after). It downloads no bundle again; what it uploads after is quarantined for the management to accept or reject.",
+        "operationId": "StaffDevicesController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeDeviceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDeviceResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke a guard device",
+        "tags": [
+          "gate"
         ],
         "x-no-store": true,
         "x-stability": "draft"

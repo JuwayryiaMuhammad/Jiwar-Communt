@@ -87,4 +87,5 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'finance.budget': 'Draft the annual budget, record expenses against it, and void them',
   'gate_exceptions.decide': 'Answer the guards’ field exceptions: let in, once, someone the gate refused (the first answer wins)',
   'gate_log.search': 'Search the gate log by a visitor’s exact full name (audited)',
+  'gate_devices.manage': 'Keep the guard devices the gate works offline on: their sync, the flags their uploads raised, revoke one',
 };

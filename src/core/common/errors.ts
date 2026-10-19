@@ -1097,6 +1097,23 @@ export const ErrorCode = {
   INCIDENT_SIGNER_NOT_ELIGIBLE: 'INCIDENT_SIGNER_NOT_ELIGIBLE',
   /** This content is signed in this role already (409, params.role). */
   INCIDENT_ALREADY_SIGNED: 'INCIDENT_ALREADY_SIGNED',
+  // The gate offline (ADR 0057)
+  /** Unknown, or another compound's guard device. */
+  GATE_DEVICE_NOT_FOUND: 'GATE_DEVICE_NOT_FOUND',
+  /**
+   * This device id is enrolled already with another key (409): a device
+   * keeps the key it enrolled with. Enrol under a new id.
+   */
+  GATE_DEVICE_EXISTS: 'GATE_DEVICE_EXISTS',
+  /** The compound has params.max live devices (409): revoke one first. */
+  GATE_DEVICE_LIMIT_REACHED: 'GATE_DEVICE_LIMIT_REACHED',
+  /**
+   * The device's signature does not verify (422): the enrolment's proof, or
+   * an envelope signed by another key or over other bytes.
+   */
+  GATE_DEVICE_SIGNATURE_INVALID: 'GATE_DEVICE_SIGNATURE_INVALID',
+  /** Revoked already (409). */
+  GATE_DEVICE_ALREADY_REVOKED: 'GATE_DEVICE_ALREADY_REVOKED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

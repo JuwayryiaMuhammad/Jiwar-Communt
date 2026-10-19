@@ -139,6 +139,9 @@ describe('audit catalog', () => {
         'child_control',
         'child_escort',
         'child_pickup',
+        // ADR 0055.
+        'governance_approval',
+        'board_motion',
       ]).toContain(def.target);
     }
   });

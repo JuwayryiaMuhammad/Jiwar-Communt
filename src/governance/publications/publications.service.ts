@@ -131,6 +131,50 @@ export class BoardPublicationsService implements OnModuleInit {
     });
   }
 
+  /**
+   * A decision of the board published by the decision itself (ADR 0055: an
+   * approved annual budget), in the deciding transaction, by the member
+   * whose vote or close decided it, for the board of `termId`, decided
+   * today. Returns the announcement's id.
+   */
+  async publishDecision(
+    tx: TenantTxClient,
+    text: BoardNoticeText,
+    termId: string,
+    now: Date,
+  ): Promise<string> {
+    const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
+    const decidedOn = localDate(now, timezone);
+    const announcementId = await this.notices.publish(tx, text);
+    const id = newId();
+    await tx.boardPublication.create({
+      data: {
+        id,
+        tenantId: this.ctx.txTenantId,
+        kind: 'decision',
+        termId,
+        announcementId,
+        decidedOn: new Date(`${decidedOn}T00:00:00.000Z`),
+        authorSide: 'board',
+        publishedById: this.ctx.accountId,
+        createdAt: now,
+      },
+    });
+    await this.audit.record(tx, {
+      action: 'board_publication.published',
+      targetId: id,
+      metadata: {
+        kind: 'decision',
+        termId,
+        announcementId,
+        decidedOn,
+        attachment: false,
+        side: 'board',
+      },
+    });
+    return announcementId;
+  }
+
   /** New words: a new version of its announcement. */
   edit(id: string, input: BoardNoticeText): Promise<PublicationRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {

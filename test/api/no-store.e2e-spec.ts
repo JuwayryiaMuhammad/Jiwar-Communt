@@ -24,6 +24,7 @@ import {
   CONTEST_CLOSE_SWEEP,
   CONTEST_OPEN_SWEEP,
 } from '../../src/governance/contests/contest-sweeps';
+import { boardMatterCalls } from './no-store-board-matters';
 import { call } from './request';
 import { ROUTES } from './routes';
 import { inviteBody, minorBody } from './routes/household';
@@ -739,14 +740,21 @@ describe('API v0 — no-store', () => {
   let sittingBoard: Promise<unknown> | null = null;
   /** A board sits in A, with seats to spare (once per suite, or again after an appointment). */
   const aBoard = () =>
-    (sittingBoard ??= (async () =>
-      as('manager', 'POST', '/staff/governance/board/appoint', {
+    (sittingBoard ??= (async () => {
+      // The world seats A's landlord (ADR 0055): this suite's own board
+      // replaces it, the landlord on it too.
+      const now = body<{ board: { id: string } | null }>(
+        await as('manager', 'GET', '/staff/governance/board').expect(200),
+      ).board;
+      if (now) await lapse(now.id);
+      return as('manager', 'POST', '/staff/governance/board/appoint', {
         seats: 15,
         endsAt: new Date(Date.now() + 365 * 86_400_000).toISOString(),
         members: [w.a.ids.owner, w.a.ids.landlord, await aNewOwner()].map(
           (accountId) => ({ accountId, role: 'member' }),
         ),
-      }))());
+      });
+    })());
   const aSeat = async () => {
     await aBoard();
     const seat = await as(
@@ -3068,6 +3076,7 @@ describe('API v0 — no-store', () => {
     ...patrolCalls(() => w),
     ...securityOpsCalls(() => w),
     ...childrenCalls(() => w),
+    ...boardMatterCalls(() => w, aSittingBoard),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

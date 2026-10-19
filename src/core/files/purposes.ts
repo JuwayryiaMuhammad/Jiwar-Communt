@@ -213,6 +213,28 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['household.manage'],
   },
+  // An approval request's package (ADR 0055): documents and photos the
+  // manager or the accountant puts before the board.
+  approval_attachment: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['governance.approvals', 'governance.manage'],
+  },
+  // An owner's documents and photos backing an appeal to the board (ADR
+  // 0055). Any owner may upload one; only an owner or the primary of the
+  // decision's unit attaches it.
+  board_appeal_attachment: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['governance.read'],
+  },
+  // An expense's invoice (ADR 0055), the accountant's: nobody uploads one
+  // until finance records expenses.
+  expense_invoice: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: [],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

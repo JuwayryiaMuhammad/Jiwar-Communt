@@ -192,6 +192,13 @@ export const PERMISSIONS = {
   'governance.read': { kinds: ['resident'] },
   'governance.board': { kinds: [], derived: true },
   'governance.manage': { kinds: ['manager'] },
+  // Board matters (ADR 0055). `governance.approvals` raises decision
+  // packages for the board (the manager and the accountant), follows them
+  // and withdraws its own. A sitting member decides them, and appeals to
+  // the board, with `governance.board`; `governance.manage` marks an
+  // approved request implemented, keeps the deadlines and thresholds and
+  // follows decided appeals up, never deciding either.
+  'governance.approvals': { kinds: ['staff', 'manager'] },
   // Patrols (ADR 0052). `patrols.manage` keeps the checkpoints (and their
   // QR), the routes and their schedules, and cancels runs; a guard walks
   // them with `gate.operate`, inside a shift. Runs and the patrol report

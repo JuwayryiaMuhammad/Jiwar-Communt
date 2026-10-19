@@ -1433,6 +1433,55 @@ export const NOTIFICATION_KINDS = {
     target: 'governance_election',
     params: {},
   },
+  // Board matters (ADR 0055). None critical; params are codes only.
+  /** A decision package awaits the board: the sitting board; `type` its code. */
+  'governance_approval.raised': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_approval',
+    params: { type: {} },
+  },
+  /** The board decided a request: who raised it, the `governance.manage` holders and the sitting board; `decision` approved | rejected. */
+  'governance_approval.decided': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_approval',
+    params: { type: {}, decision: {} },
+  },
+  /** A request passed its deadline undecided, once: the sitting board and the `governance.manage` holders. */
+  'governance_approval.overdue': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_approval',
+    params: { type: {} },
+  },
+  /** The manager marked an approved request implemented: the sitting board. */
+  'governance_approval.implemented': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_approval',
+    params: { type: {} },
+  },
+  /** A pending request was withdrawn: the sitting board. */
+  'governance_approval.withdrawn': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_approval',
+    params: { type: {} },
+  },
+  /** A member proposed a motion: the other sitting members; `matter` approval | appeal. */
+  'governance_motion.proposed': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'board_motion',
+    params: { matter: {} },
+  },
   // Patrols (ADR 0052). None critical; params are codes at most.
   /** A scheduled run nobody started 15 minutes after its start. To the guards on shift at its post. */
   'patrol.late': {

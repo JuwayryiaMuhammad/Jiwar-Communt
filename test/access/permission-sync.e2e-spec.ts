@@ -712,7 +712,8 @@ describe('Permission sync', () => {
     expect([...report.added].sort()).toEqual([...r5].sort());
     expect(report.rolesCreated).toEqual(['accountant']);
     // The role as the code has it now: the fines' payments came with G2,
-    // finance with R6a, its reports with R6b.
+    // finance with R6a, its reports with R6b, the board's approvals with
+    // R7b.
     expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
       'club.billing',
       'finance.billing',
@@ -720,6 +721,7 @@ describe('Permission sync', () => {
       'finance.payments',
       'finance.reports',
       'fines.billing',
+      'governance.approvals',
     ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
@@ -785,6 +787,7 @@ describe('Permission sync', () => {
       'finance.invoice',
       'finance.payments',
       'finance.reports',
+      'governance.approvals',
     ]);
 
     const report = await sync(base, t);
@@ -797,6 +800,7 @@ describe('Permission sync', () => {
       'finance.payments',
       'finance.reports',
       'fines.billing',
+      'governance.approvals',
     ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
@@ -1531,6 +1535,53 @@ describe('Permission sync', () => {
       expect((await role(t, key)).permissions).not.toContain(
         'governance.board',
       );
+    expect(await sync(base, t)).toMatchObject({
+      added: [],
+      rolesCreated: [],
+      rolesChanged: 0,
+    });
+  });
+
+  it('Phase R7b reaches an existing compound: governance.approvals for the manager and the accountant, nobody else (ADR 0055)', async () => {
+    const r7b = ['governance.approvals'];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !r7b.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !r7b.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync R7b compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...r7b].sort());
+    for (const key of ['manager', 'accountant'])
+      for (const permission of r7b)
+        expect((await role(t, key)).permissions).toContain(permission);
+    for (const key of [
+      'resident',
+      'family_member',
+      'guard',
+      'technician',
+      'maintenance_supervisor',
+      'security_supervisor',
+    ])
+      for (const permission of r7b)
+        expect((await role(t, key)).permissions).not.toContain(permission);
     expect(await sync(base, t)).toMatchObject({
       added: [],
       rolesCreated: [],

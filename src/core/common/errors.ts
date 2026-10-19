@@ -801,6 +801,38 @@ export const ErrorCode = {
    * retry (ADR 0055).
    */
   GOVERNANCE_BUSY: 'GOVERNANCE_BUSY',
+  // board matters (ADR 0055)
+  /** Unknown, or another compound's. */
+  APPROVAL_NOT_FOUND: 'APPROVAL_NOT_FOUND',
+  /** Decided or withdrawn already (409, params.status). */
+  APPROVAL_NOT_PENDING: 'APPROVAL_NOT_PENDING',
+  /** Only an approved request is implemented (409, params.status). */
+  APPROVAL_NOT_APPROVED: 'APPROVAL_NOT_APPROVED',
+  /** Implemented already, by its decision or by the manager (409). */
+  APPROVAL_ALREADY_IMPLEMENTED: 'APPROVAL_ALREADY_IMPLEMENTED',
+  /** Only who raised it, or the manager, withdraws a request (403). */
+  APPROVAL_NOT_YOURS: 'APPROVAL_NOT_YOURS',
+  /** Unknown, another compound's, or not on a matter the caller sees. */
+  BOARD_MOTION_NOT_FOUND: 'BOARD_MOTION_NOT_FOUND',
+  /** The matter has an open motion: vote on it, or wait for its close (409, params.motionId). */
+  BOARD_MOTION_OPEN: 'BOARD_MOTION_OPEN',
+  /** The motion closed already (409, params.result). */
+  BOARD_MOTION_CLOSED: 'BOARD_MOTION_CLOSED',
+  /** The board that the motion was put to no longer sits (409): propose it again. */
+  BOARD_MOTION_LAPSED: 'BOARD_MOTION_LAPSED',
+  /** Only its proposer withdraws a motion (403). */
+  BOARD_MOTION_NOT_YOURS: 'BOARD_MOTION_NOT_YOURS',
+  /** The member voted on this motion already; a vote is never changed (409). */
+  BOARD_ALREADY_VOTED: 'BOARD_ALREADY_VOTED',
+  /**
+   * Not decided yet, and the matter's deadline has not passed (409,
+   * params.deadlineAt): the motion closes by itself once its count decides.
+   */
+  BOARD_VOTE_NOT_DUE: 'BOARD_VOTE_NOT_DUE',
+  /** Fewer votes than the quorum (409, params.cast, params.quorum). */
+  BOARD_QUORUM_NOT_MET: 'BOARD_QUORUM_NOT_MET',
+  /** The matter was decided or withdrawn already (409, params.status). */
+  BOARD_MATTER_DECIDED: 'BOARD_MATTER_DECIDED',
   // patrols (ADR 0052)
   /** Unknown, or another compound's. */
   PATROL_CHECKPOINT_NOT_FOUND: 'PATROL_CHECKPOINT_NOT_FOUND',

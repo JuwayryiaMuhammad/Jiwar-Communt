@@ -7,6 +7,7 @@ import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle
 import { EngagementProvisioning } from '../../src/engagement/provisioning';
 import { FacilitiesProvisioning } from '../../src/facilities/provisioning';
 import { FinanceProvisioning } from '../../src/finance/provisioning';
+import { GovernanceProvisioning } from '../../src/governance/provisioning';
 import { ParcelProvisioning } from '../../src/gate/parcels/parcel-provisioning';
 import { PlaceProvisioning } from '../../src/gate/places/place-provisioning';
 import { LockdownProvisioning } from '../../src/gate/lockdown/lockdown-provisioning';
@@ -39,6 +40,7 @@ new FinanceProvisioning(tenantLifecycle).onModuleInit();
 new PlaceProvisioning(tenantLifecycle).onModuleInit();
 new PermitProvisioning(tenantLifecycle).onModuleInit();
 new LockdownProvisioning(tenantLifecycle).onModuleInit();
+new GovernanceProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values

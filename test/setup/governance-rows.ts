@@ -16,7 +16,7 @@ const DAY = 86_400_000;
  */
 export async function boardTermRow(
   tx: TenantTxClient,
-  r: { tenantId: string; createdById: string; open?: boolean },
+  r: { tenantId: string; createdById: string; open?: boolean; seats?: number },
 ): Promise<string> {
   const id = newId();
   const startsAt = new Date(Date.now() - 400 * DAY);
@@ -25,7 +25,7 @@ export async function boardTermRow(
       id,
       tenantId: r.tenantId,
       source: 'appointed',
-      seats: 3,
+      seats: r.seats ?? 3,
       startsAt,
       endsAt: new Date(Date.now() + (r.open ? 365 : -35) * DAY),
       ...(r.open
@@ -264,6 +264,60 @@ export async function publicationRows(
       decidedOn: dbDate(localDay(now)),
       authorSide: 'manager',
       publishedById: r.accountId,
+    },
+  });
+  return id;
+}
+
+/**
+ * A pending approval request of a type that names no subject (ADR 0055),
+ * numbered past anything a suite raises; its id.
+ */
+export async function approvalRequestRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; raisedById: string; number?: number },
+): Promise<string> {
+  const id = newId();
+  const createdAt = new Date(Date.now() - DAY);
+  await tx.governanceApprovalRequest.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      number: r.number ?? 9000,
+      type: 'legal_escalation',
+      raisedById: r.raisedById,
+      context: 'A row',
+      impact: 'None',
+      deadlineAt: new Date(createdAt.getTime() + 14 * DAY),
+      createdAt,
+    },
+  });
+  return id;
+}
+
+/** An open motion on a request, by a seated member; its id. */
+export async function motionRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    requestId: string;
+    termId: string;
+    memberId: string;
+    accountId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.boardMotion.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      approvalRequestId: r.requestId,
+      termId: r.termId,
+      proposedByMemberId: r.memberId,
+      proposedById: r.accountId,
+      outcome: 'approve',
+      rationale: 'A row',
+      openedAt: new Date(),
     },
   });
   return id;

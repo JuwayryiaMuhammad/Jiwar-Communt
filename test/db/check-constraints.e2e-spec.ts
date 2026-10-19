@@ -1228,6 +1228,53 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'num_nonnulls() counts NULLs: never NULL',
   },
   found_items_cleared_shape: {},
+  // Board matters (ADR 0055).
+  governance_counters_kind: {},
+  governance_approval_settings_type: {},
+  governance_approval_settings_deadline: {},
+  governance_approval_settings_threshold: {
+    guarded:
+      'threshold IS NULL is tested first; the list and the comparisons run only on a value',
+  },
+  governance_approval_requests_type: {},
+  governance_approval_requests_subject: {},
+  governance_approval_requests_texts: {
+    guarded:
+      'implementation_note IS NULL is tested first; its length runs only on a value',
+  },
+  governance_approval_requests_cost: {
+    guarded:
+      'cost IS NULL is tested first; the comparisons run only on a value',
+  },
+  governance_approval_requests_number_positive: {},
+  governance_approval_requests_state_shape: {
+    guarded:
+      'overdue_notified_at IS NULL is tested first; deadline_at is NOT NULL; every other nullable column only under IS [NOT] NULL',
+  },
+  governance_approval_requests_withdraw_reason: {
+    guarded:
+      'withdraw_reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  governance_approval_alternatives_shape: {
+    guarded:
+      'cost IS NULL is tested first; the comparisons run only on a value',
+  },
+  governance_approval_attachments_position: {},
+  board_motions_one_matter: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  board_motions_outcome: {
+    guarded: 'approval_request_id IS NULL is tested first; outcome is NOT NULL',
+  },
+  board_motions_texts: {
+    guarded:
+      'alternatives_note IS NULL is tested first; its length runs only on a value',
+  },
+  board_motions_close_shape: {
+    guarded:
+      'CASE treats a NULL result as the ELSE branch; votes_for IS NULL is tested first and the others under IS NOT NULL; closed_at IS NULL before its comparison',
+  },
+  board_votes_choice: {},
   // Governance (ADR 0051).
   board_terms_period: {},
   board_terms_seats: {},

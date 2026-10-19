@@ -547,6 +547,13 @@ export const REASON_CODES = {
   governanceCandidateSystemWithdraw: ['no_longer_owner', 'account_closed'],
   // How the board resolved a tie across the last seat.
   governanceTieBreak: ['board_decision', 'lot_drawn'],
+  // Board matters (ADR 0055).
+  approvalWithdraw: [
+    'no_longer_needed',
+    'raised_in_error',
+    'superseded',
+    'other',
+  ],
   // Why the management cancels a scheduled patrol run (ADR 0052).
   patrolRunCancel: ['not_needed', 'post_closed', 'other'],
   // A scheduled run the system cancels, never picked by staff: its route

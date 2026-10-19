@@ -276,6 +276,9 @@ export class BoardService implements OnModuleInit {
       await this.access.lockSelf(tx);
       await this.access.lockAccounts(tx, [input.accountId]);
       await this.access.lockBoard(tx);
+      // The term for update (ADR 0055): a count of the board in progress
+      // holds it shared, and the seat filled waits for it.
+      await this.lockOpenTerm(tx);
       const now = await dbNow(tx);
       const board = await this.sitting(tx, now);
       if (!board) throw notSitting();

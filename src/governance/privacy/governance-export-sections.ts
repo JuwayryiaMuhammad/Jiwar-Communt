@@ -7,7 +7,7 @@ import {
   type ExportSubject,
 } from '../../core/exports/export-sections';
 
-const reference = (prefix: 'GP' | 'GE', n: number) =>
+const reference = (prefix: 'GP' | 'GE' | 'AR', n: number) =>
   `${prefix}-${String(n).padStart(4, '0')}`;
 
 /**
@@ -84,7 +84,36 @@ export class GovernanceExportSections implements OnModuleInit {
       const options = await tx.governancePollOption.findMany({
         where: { pollId: { in: polls.map((p) => p.id) } },
       });
+      // The board's motions it proposed and its votes (ADR 0055).
+      const proposed = await tx.boardMotion.findMany({
+        where: { proposedById: me },
+        orderBy: [{ openedAt: 'asc' }, { id: 'asc' }],
+      });
+      const cast = await tx.boardVote.findMany({
+        where: { accountId: me },
+        orderBy: [{ castAt: 'asc' }, { id: 'asc' }],
+      });
+      const votedOn = await tx.boardMotion.findMany({
+        where: { id: { in: cast.map((v) => v.motionId) } },
+      });
+      const motionsById = new Map(
+        [...proposed, ...votedOn].map((m) => [m.id, m]),
+      );
+      const requests = await tx.governanceApprovalRequest.findMany({
+        where: {
+          id: {
+            in: [...motionsById.values()].flatMap((m) =>
+              m.approvalRequestId ? [m.approvalRequestId] : [],
+            ),
+          },
+        },
+        select: { id: true, number: true, type: true },
+      });
       return {
+        proposed,
+        cast,
+        motionsById,
+        requests: new Map(requests.map((r) => [r.id, r])),
         seats,
         terms: new Map(terms.map((t) => [t.id, t])),
         candidacies,
@@ -135,6 +164,41 @@ export class GovernanceExportSections implements OnModuleInit {
           outcome: c.outcome,
         };
       }),
+    };
+    const matterOf = (m: { approvalRequestId: string | null }) => {
+      const r = m.approvalRequestId
+        ? data.requests.get(m.approvalRequestId)
+        : undefined;
+      return r
+        ? {
+            kind: 'approval',
+            reference: reference('AR', r.number),
+            type: r.type,
+          }
+        : null;
+    };
+    yield {
+      path: 'governance/board-votes.json',
+      json: {
+        motionsProposed: data.proposed.map((m) => ({
+          matter: matterOf(m),
+          outcome: m.outcome,
+          rationale: m.rationale,
+          alternativesNote: m.alternativesNote,
+          openedAt: m.openedAt,
+          result: m.result,
+          closedAt: m.closedAt,
+        })),
+        votes: data.cast.map((v) => {
+          const m = data.motionsById.get(v.motionId);
+          return {
+            matter: m ? matterOf(m) : null,
+            motionOutcome: m?.outcome ?? null,
+            choice: v.choice,
+            castAt: v.castAt,
+          };
+        }),
+      },
     };
     yield {
       path: 'governance/votes.json',

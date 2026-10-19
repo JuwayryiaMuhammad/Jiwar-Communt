@@ -77,6 +77,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'guard_reports.read',
       'found_items.manage',
       'governance.manage',
+      'governance.approvals',
       'patrols.manage',
       'incidents.manage',
       'blocklist.manage',
@@ -182,10 +183,11 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     permissions: ['tickets.dispatch'],
   },
   {
-    // The accountant (ADR 0044, 0045, 0046, 0048): the club's memberships
-    // and the offline payments that keep them, the vehicle fines' payments
-    // at the office, the units' billing plans, invoices, credit notes and
-    // payments, and the finance reports. Never the gateway's credentials,
+    // The accountant (ADR 0044, 0045, 0046, 0048, 0055): the club's
+    // memberships and the offline payments that keep them, the vehicle
+    // fines' payments at the office, the units' billing plans, invoices,
+    // credit notes and payments, the finance reports, and the decision
+    // packages it puts to the board. Never the gateway's credentials,
     // never a refund, and nothing else of the compound.
     key: 'accountant',
     kind: 'staff',
@@ -197,6 +199,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.invoice',
       'finance.payments',
       'finance.reports',
+      'governance.approvals',
     ],
   },
 ];

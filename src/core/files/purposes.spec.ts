@@ -4,12 +4,12 @@ import { FILE_PURPOSES, FILE_TYPES } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0054 recreated both, with every purpose). */
+/** Both CHECKs as they stand now (ADR 0055 recreated both after ADR 0054, with every purpose). */
 const sizeCheck = readFileSync(
   join(
     __dirname,
     migrations,
-    '20261101090200_child_photo_purposes/migration.sql',
+    '20261102090100_board_matters_purposes/migration.sql',
   ),
   'utf8',
 );
@@ -102,6 +102,19 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.vehicle_licence.maxBytes).toBe(
       FILE_PURPOSES.document.maxBytes,
     );
+    for (const purpose of [
+      'approval_attachment',
+      'board_appeal_attachment',
+      'expense_invoice',
+    ] as const) {
+      expect(sizeCheck).not.toContain(`WHEN '${purpose}'`);
+      expect(FILE_PURPOSES[purpose].maxBytes).toBe(
+        FILE_PURPOSES.document.maxBytes,
+      );
+      expect(FILE_PURPOSES[purpose].types).toEqual(
+        FILE_PURPOSES.document.types,
+      );
+    }
     // files_content_type_for_purpose: images for every purpose, a PDF only
     // as a document, a request's attachment, a community attachment, a
     // complaint's evidence or a vehicle's licence.
@@ -182,7 +195,7 @@ describe('file purposes', () => {
       `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" <> 'data_export')`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,

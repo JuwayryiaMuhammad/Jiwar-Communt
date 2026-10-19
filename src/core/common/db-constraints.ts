@@ -480,4 +480,18 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   governance_candidates_one_live: null,
   board_publications_tenant_id_id_key: null,
   board_publications_announcement_key: null,
+  // Board matters (ADR 0055). Numbers from the counter under its row lock;
+  // one pending request per subject and one open motion per matter are
+  // decided under the subject's and the matter's locks (a second pending
+  // request answers DUPLICATE_RESOURCE from the service); a vote once per
+  // member under the motion's lock; a file is claimed once.
+  governance_approval_requests_tenant_id_id_key: null,
+  governance_approval_requests_number_key: null,
+  governance_approval_requests_one_pending: null,
+  governance_approval_requests_motion_key: null,
+  governance_approval_attachments_file_key: null,
+  board_motions_tenant_id_id_key: null,
+  board_motions_one_open_per_request: null,
+  board_votes_tenant_id_id_key: null,
+  board_votes_once: null,
 };

@@ -1097,6 +1097,54 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'board_publication',
   },
+  // Board matters (ADR 0055): ids, codes, amounts, counts and outcomes.
+  // A package's words, a motion's reasons and an appeal's grounds go in
+  // as changed; a vote's choice never.
+  // A decision package put to the board. changes: number, type, subjectId,
+  // cost, deadlineAt, alternatives and attachments (how many), the context
+  // and the impact as "changed".
+  'governance_approval.raised': {
+    log: 'tenant',
+    target: 'governance_approval',
+    sensitive: ['context', 'impact'],
+  },
+  // metadata: reasonCode, side (raiser | manager), motionId (the open
+  // motion it closed, or null).
+  'governance_approval.withdrawn': {
+    log: 'tenant',
+    target: 'governance_approval',
+  },
+  // A carried motion decided it. metadata: decision (approved | rejected),
+  // motionId, implemented (a boolean: by the decision itself),
+  // announcementId (an approved annual budget's, or null).
+  'governance_approval.decided': {
+    log: 'tenant',
+    target: 'governance_approval',
+  },
+  // The manager marks an approved request implemented. metadata: note (a
+  // boolean: never the words).
+  'governance_approval.implemented': {
+    log: 'tenant',
+    target: 'governance_approval',
+  },
+  // The deadlines and thresholds. changes: `<type>.deadlineDays` and
+  // `<type>.threshold`, as they changed.
+  'governance_settings.changed': { log: 'tenant', target: 'tenant' },
+  // A member proposes a motion. changes: matter (approval | appeal),
+  // matterId, outcome, termId, memberId, the rationale and the
+  // alternatives note as "changed".
+  'board_motion.proposed': {
+    log: 'tenant',
+    target: 'board_motion',
+    sensitive: ['rationale', 'alternativesNote'],
+  },
+  // A motion closed. metadata: result (carried | failed | withdrawn |
+  // lapsed), votesFor, votesAgainst, sitting, quorum and chair (the seat
+  // that breaks a tie, or null) for a count, by (vote | close | proposer |
+  // matter | system).
+  'board_motion.closed': { log: 'tenant', target: 'board_motion' },
+  // A member's vote. metadata: memberId, voteId. Never the choice.
+  'board_vote.cast': { log: 'tenant', target: 'board_motion' },
   // Patrols (ADR 0052): ids, codes and counts. A checkpoint's names and
   // position go in as changed; its token and hash never.
   'patrol_checkpoint.created': {

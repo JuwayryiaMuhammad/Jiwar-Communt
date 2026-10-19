@@ -39,6 +39,7 @@ import {
   type RollCallEntry,
 } from '../contests/contests.service';
 import { BoardService } from '../board/board.service';
+import { nextGovernanceNumber } from '../counters';
 import { dbNow } from '../db-clock';
 import { GovernanceNotices } from '../governance-notices';
 import { POLL_LIMITS, pollResult, YES_NO } from './poll-rules';
@@ -619,14 +620,8 @@ export class GovernancePollsService implements OnModuleInit {
     });
   }
 
-  private async nextNumber(tx: TenantTxClient): Promise<number> {
-    const [{ number }] = await tx.$queryRaw<{ number: number }[]>`
-      INSERT INTO governance_counters (tenant_id, kind, last_number)
-      VALUES (${this.ctx.txTenantId}::uuid, 'poll'::governance_contest_kind, 1)
-      ON CONFLICT (tenant_id, kind)
-        DO UPDATE SET last_number = governance_counters.last_number + 1
-      RETURNING last_number AS number`;
-    return number;
+  private nextNumber(tx: TenantTxClient): Promise<number> {
+    return nextGovernanceNumber(tx, this.ctx.txTenantId, 'poll');
   }
 }
 

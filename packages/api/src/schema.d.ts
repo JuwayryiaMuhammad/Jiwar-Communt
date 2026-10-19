@@ -437,6 +437,123 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/board/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The board’s requests
+         * @description What awaits the board (`status=pending`), what waits to be implemented (`approved`), and the rest. A sitting member only.
+         */
+        get: operations["BoardApprovalsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/approvals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a request with its subject and the board’s motions */
+        get: operations["BoardApprovalsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/approvals/{id}/motions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Propose a motion on a request
+         * @description Approve or reject, with the reasons. One open motion per request (BOARD_MOTION_OPEN); the other members are told.
+         */
+        post: operations["BoardApprovalsController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/motions/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close a motion
+         * @description When its count is decided, or past the matter’s deadline as the votes stand with a quorum (BOARD_VOTE_NOT_DUE, BOARD_QUORUM_NOT_MET).
+         */
+        post: operations["BoardMotionsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/motions/{id}/votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Vote on a motion
+         * @description For or against, once (BOARD_ALREADY_VOTED). The vote that decides it closes it: a carried motion decides its matter at once.
+         */
+        post: operations["BoardMotionsController_vote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/motions/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw a motion
+         * @description Its proposer, while open (BOARD_MOTION_NOT_YOURS).
+         */
+        post: operations["BoardMotionsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/bookings/{id}": {
         parameters: {
             query?: never;
@@ -8134,6 +8251,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the requests put to the board
+         * @description Newest first.
+         */
+        get: operations["StaffApprovalsController_list"];
+        put?: never;
+        /**
+         * Put a decision package to the board
+         * @description The sitting board is told. Its deadline is the type’s, from the settings. An annual budget is a draft budget of finance’s (it is then submitted, its total the cost); an increase names a line of the active budget.
+         */
+        post: operations["StaffApprovalsController_raise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/approvals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a request
+         * @description The package, where it stands, and the board’s decision with its reasons. Never the board’s motions or votes.
+         */
+        get: operations["StaffApprovalsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/approvals/{id}/implemented": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark an approved request implemented
+         * @description Once; the board is told.
+         */
+        post: operations["StaffApprovalsController_implemented"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/approvals/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw a pending request
+         * @description Who raised it, or the manager (APPROVAL_NOT_YOURS). Its open motion closes; a budget goes back to its draft.
+         */
+        post: operations["StaffApprovalsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/governance/board": {
         parameters: {
             query?: never;
@@ -8409,6 +8610,30 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the board’s deadlines and thresholds
+         * @description One row per approval type and one for appeals to the board (`board_appeal`); read by who raises requests too.
+         */
+        get: operations["GovernanceSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the board’s deadlines and thresholds
+         * @description A deadline applies to matters raised from now on. A threshold is shown when a request is raised; `major_contract`’s is the manager’s limit for one expense.
+         */
+        patch: operations["GovernanceSettingsController_update"];
         trace?: never;
     };
     "/api/v1/staff/instalment-plans": {
@@ -13338,6 +13563,92 @@ export interface components {
             /** @description `requested` waits for the management, `proposed` waits for the resident, `confirmed` is agreed. */
             status: components["schemas"]["ManagementAppointmentStatus"];
         };
+        ApprovalAlternativeDto: {
+            /** @description What the alternative would cost, EGP. */
+            cost?: string;
+            text: string;
+        };
+        ApprovalAlternativeView: {
+            /** @description EGP. */
+            cost: string | null;
+            position: number;
+            text: string;
+        };
+        ApprovalAttachmentView: {
+            /** Format: uuid */
+            fileId: string;
+            /** @description A short-lived read URL. */
+            url: string | null;
+        };
+        /** @enum {string} */
+        ApprovalDecision: "approved" | "rejected";
+        ApprovalDecisionView: {
+            /** @description Why the alternatives were not taken. */
+            alternativesNote: string | null;
+            /** Format: date-time */
+            decidedAt: string;
+            decision: components["schemas"]["ApprovalDecision"];
+            /** @description The board’s reasons. */
+            rationale: string;
+        };
+        /** @enum {string} */
+        ApprovalFilter: "pending" | "approved" | "implemented" | "rejected" | "withdrawn";
+        ApprovalImplementationView: {
+            /** @description Implemented by its decision itself (an annual budget made active, an increase added). */
+            byDecision: boolean;
+            /** Format: date-time */
+            implementedAt: string;
+            note: string | null;
+        };
+        /** @enum {string} */
+        ApprovalMotionOutcome: "approve" | "reject";
+        /** @enum {string} */
+        ApprovalStatus: "pending" | "approved" | "rejected" | "withdrawn";
+        /** @enum {string} */
+        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation";
+        ApprovalView: {
+            alternatives: components["schemas"]["ApprovalAlternativeView"][];
+            attachments: components["schemas"]["ApprovalAttachmentView"][];
+            context: string;
+            /** @description EGP. */
+            cost: string | null;
+            /** @example EGP */
+            currency: string;
+            /** Format: date-time */
+            deadlineAt: string;
+            decision: components["schemas"]["ApprovalDecisionView"] | null;
+            /** Format: uuid */
+            id: string;
+            impact: string;
+            implementation: components["schemas"]["ApprovalImplementationView"] | null;
+            /** @description Pending past its deadline. */
+            overdue: boolean;
+            /** Format: date-time */
+            raisedAt: string;
+            /** @description The caller raised it. */
+            raisedByMe: boolean;
+            /** @example AR-0001 */
+            reference: string;
+            status: components["schemas"]["ApprovalStatus"];
+            /**
+             * Format: uuid
+             * @description The budget (annual_budget) or budget line (budget_increase).
+             */
+            subjectId: string | null;
+            /** @description The type’s threshold now (the four thresholded types), EGP; shown, not enforced, but for major_contract’s on expenses. */
+            threshold: string | null;
+            type: components["schemas"]["ApprovalType"];
+            withdrawal: components["schemas"]["ApprovalWithdrawalView"] | null;
+        };
+        ApprovalViewList: {
+            data: components["schemas"]["ApprovalView"][];
+            nextCursor: string | null;
+        };
+        ApprovalWithdrawalView: {
+            reasonCode: string;
+            /** Format: date-time */
+            withdrawnAt: string;
+        };
         ApprovePermitDto: {
             /** @description The management’s own note. Never shown to the unit. */
             note?: string;
@@ -13653,6 +13964,68 @@ export interface components {
         BlocklistStatus: "active" | "expired" | "lifted";
         /** @enum {string} */
         BlocklistSubject: "plate" | "person";
+        BoardApprovalView: {
+            alternatives: components["schemas"]["ApprovalAlternativeView"][];
+            attachments: components["schemas"]["ApprovalAttachmentView"][];
+            context: string;
+            /** @description EGP. */
+            cost: string | null;
+            /** @example EGP */
+            currency: string;
+            /** Format: date-time */
+            deadlineAt: string;
+            decision: components["schemas"]["ApprovalDecisionView"] | null;
+            /** Format: uuid */
+            id: string;
+            impact: string;
+            implementation: components["schemas"]["ApprovalImplementationView"] | null;
+            motions: components["schemas"]["BoardMotionView"][];
+            /** @description Pending past its deadline. */
+            overdue: boolean;
+            /** Format: date-time */
+            raisedAt: string;
+            /** @description The caller raised it. */
+            raisedByMe: boolean;
+            /** @example AR-0001 */
+            reference: string;
+            status: components["schemas"]["ApprovalStatus"];
+            /** @description The budget (its lines and total) or the line (its allowance and what is spent), as finance describes it; null for the other types. */
+            subject: Record<string, never> | null;
+            /**
+             * Format: uuid
+             * @description The budget (annual_budget) or budget line (budget_increase).
+             */
+            subjectId: string | null;
+            /** @description The type’s threshold now (the four thresholded types), EGP; shown, not enforced, but for major_contract’s on expenses. */
+            threshold: string | null;
+            type: components["schemas"]["ApprovalType"];
+            withdrawal: components["schemas"]["ApprovalWithdrawalView"] | null;
+        };
+        /** @enum {string} */
+        BoardMotionOutcome: "approve" | "reject" | "uphold" | "overturn";
+        /** @enum {string} */
+        BoardMotionStatus: "open" | "carried" | "failed" | "withdrawn" | "lapsed";
+        BoardMotionView: {
+            alternativesNote: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller’s vote, if any. */
+            myVote: components["schemas"]["BoardVoteChoice"] | null;
+            /** Format: date-time */
+            openedAt: string;
+            outcome: components["schemas"]["BoardMotionOutcome"];
+            /** @description The caller proposed it: only they withdraw it. */
+            proposedByMe: boolean;
+            /** Format: uuid */
+            proposedByMemberId: string;
+            proposedByName: string | null;
+            rationale: string;
+            status: components["schemas"]["BoardMotionStatus"];
+            tally: components["schemas"]["BoardTallyView"];
+            votes: components["schemas"]["BoardVoteView"][];
+        };
         BoardNowView: {
             board: components["schemas"]["BoardTermView"] | null;
         };
@@ -13786,6 +14159,13 @@ export interface components {
             data: components["schemas"]["BoardSuggestionView"][];
             nextCursor: string | null;
         };
+        BoardTallyView: {
+            against: number;
+            for: number;
+            quorum: number;
+            /** @description Seats that count: seated now (as closed, once closed). */
+            seats: number;
+        };
         /** @enum {string} */
         BoardTermSource: "appointed" | "elected";
         /**
@@ -13816,6 +14196,20 @@ export interface components {
         BoardTermViewList: {
             data: components["schemas"]["BoardTermView"][];
             nextCursor: string | null;
+        };
+        /** @enum {string} */
+        BoardVoteChoice: "for" | "against";
+        BoardVoteDto: {
+            choice: components["schemas"]["BoardVoteChoice"];
+        };
+        BoardVoteView: {
+            /** Format: date-time */
+            castAt: string;
+            choice: components["schemas"]["BoardVoteChoice"];
+            /** @description Null once the member’s account is erased. */
+            fullName: string | null;
+            /** Format: uuid */
+            memberId: string;
         };
         BookingOccasionView: {
             /** @description The child's first name; null once they are no longer the unit's. */
@@ -17026,7 +17420,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -17635,6 +18029,27 @@ export interface components {
             choice: string[];
             unitCode: string;
         };
+        GovernanceSettingDto: {
+            /** @description Days the board has to decide a matter of this type raised from now on. */
+            deadlineDays?: number;
+            /** @description EGP; null to clear. The four thresholded types only (FIELD_NOT_ALLOWED otherwise). major_contract’s is the manager’s limit for one expense. */
+            threshold?: string | null;
+            type: components["schemas"]["GovernanceSettingType"];
+        };
+        GovernanceSettingResponse: {
+            /** @description Days the board has to decide a matter of this type. */
+            deadlineDays: number;
+            /** @description EGP, or none set. */
+            threshold: string | null;
+            /** @description Whether the type takes a threshold. */
+            thresholded: boolean;
+            type: components["schemas"]["GovernanceSettingType"];
+        };
+        /** @enum {string} */
+        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "board_appeal";
+        GovernanceSettingsResponse: {
+            items: components["schemas"]["GovernanceSettingResponse"][];
+        };
         GovernanceVoteReceipt: {
             /** Format: uuid */
             pollId: string;
@@ -18228,6 +18643,9 @@ export interface components {
         IdView: {
             /** Format: uuid */
             id: string;
+        };
+        ImplementedApprovalDto: {
+            note?: string;
         };
         IncidentAcknowledgementView: {
             account: components["schemas"]["AccountRefView"];
@@ -20935,6 +21353,13 @@ export interface components {
             /** @description From the closed list `ticketPriority`. */
             reasonCode: string;
         };
+        ProposeApprovalMotionDto: {
+            /** @description Why the package’s alternatives were not taken. */
+            alternativesNote?: string;
+            outcome: components["schemas"]["ApprovalMotionOutcome"];
+            /** @description The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. */
+            rationale: string;
+        };
         PublicReceiptView: {
             amount: string;
             compoundName: string;
@@ -21005,6 +21430,26 @@ export interface components {
             end: string;
             /** @example 22:00 */
             start: string;
+        };
+        RaiseApprovalDto: {
+            alternatives?: components["schemas"]["ApprovalAlternativeDto"][];
+            /** @description The caller’s uploads of purpose `approval_attachment` (FILE_NOT_AVAILABLE). */
+            attachmentIds?: string[];
+            /**
+             * Format: uuid
+             * @description annual_budget only (FIELD_REQUIRED / FIELD_NOT_ALLOWED).
+             */
+            budgetId?: string;
+            /**
+             * Format: uuid
+             * @description budget_increase only: a line of the active budget.
+             */
+            budgetLineId?: string;
+            context: string;
+            /** @description EGP. Required for budget_increase (what it adds) and major_contract; not for annual_budget (its total). */
+            cost?: string;
+            impact: string;
+            type: components["schemas"]["ApprovalType"];
         };
         RaiseSosDto: {
             /** @description Raised from the post of your open shift, a gate or a zone (ADR 0053). */
@@ -25349,6 +25794,9 @@ export interface components {
             /** @description English, Arabic or both, each with its body. */
             titleEn?: string | null;
         };
+        UpdateGovernanceSettingsDto: {
+            items: components["schemas"]["GovernanceSettingDto"][];
+        };
         UpdateHandoverItemDto: {
             /** @description False retires it; true brings it back. */
             active?: boolean;
@@ -26921,6 +27369,153 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokensView"];
+                };
+            };
+        };
+    };
+    BoardApprovalsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `approved`: waiting to be implemented. */
+                status?: components["schemas"]["ApprovalFilter"];
+                type?: components["schemas"]["ApprovalType"];
+                /** @description Pending past the deadline only. */
+                overdue?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalViewList"];
+                };
+            };
+        };
+    };
+    BoardApprovalsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardApprovalView"];
+                };
+            };
+        };
+    };
+    BoardApprovalsController_propose: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeApprovalMotionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardMotionView"];
+                };
+            };
+        };
+    };
+    BoardMotionsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardMotionView"];
+                };
+            };
+        };
+    };
+    BoardMotionsController_vote: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardVoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardMotionView"];
+                };
+            };
+        };
+    };
+    BoardMotionsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardMotionView"];
                 };
             };
         };
@@ -38547,6 +39142,131 @@ export interface operations {
             };
         };
     };
+    StaffApprovalsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `approved`: waiting to be implemented. */
+                status?: components["schemas"]["ApprovalFilter"];
+                type?: components["schemas"]["ApprovalType"];
+                /** @description Pending past the deadline only. */
+                overdue?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalViewList"];
+                };
+            };
+        };
+    };
+    StaffApprovalsController_raise: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaiseApprovalDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalView"];
+                };
+            };
+        };
+    };
+    StaffApprovalsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalView"];
+                };
+            };
+        };
+    };
+    StaffApprovalsController_implemented: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImplementedApprovalDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalView"];
+                };
+            };
+        };
+    };
+    StaffApprovalsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalView"];
+                };
+            };
+        };
+    };
     StaffBoardController_now: {
         parameters: {
             query?: never;
@@ -38876,6 +39596,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardPublicationViewList"];
+                };
+            };
+        };
+    };
+    GovernanceSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceSettingsResponse"];
+                };
+            };
+        };
+    };
+    GovernanceSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGovernanceSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceSettingsResponse"];
                 };
             };
         };

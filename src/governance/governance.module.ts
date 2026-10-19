@@ -1,8 +1,14 @@
 import { Module } from '@nestjs/common';
 import { CommunityGovernancePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
+import { FilesModule } from '../core/files/files.module';
 import { EngagementModule } from '../engagement';
 import { GovernanceAccess } from './access';
+import {
+  BoardApprovalsController,
+  StaffApprovalsController,
+} from './approvals/approvals.controller';
+import { ApprovalsService } from './approvals/approvals.service';
 import { GovernanceBoardController } from './board/board.controller';
 import { BoardSeat } from './board/board-seat';
 import { BoardService } from './board/board.service';
@@ -16,6 +22,9 @@ import {
 import { CertificationService } from './elections/certification.service';
 import { GovernanceElectionsService } from './elections/elections.service';
 import { GovernanceNotices } from './governance-notices';
+import { MatterSweeps } from './motions/matter-sweeps';
+import { BoardMotionsController } from './motions/motions.controller';
+import { MotionsService } from './motions/motions.service';
 import { GovernanceExportSections } from './privacy/governance-export-sections';
 import { GovernanceLifecycle } from './privacy/governance-lifecycle';
 import {
@@ -28,14 +37,24 @@ import {
   StaffGovernancePollsController,
 } from './polls/polls.controller';
 import { GovernancePollsService } from './polls/polls.service';
+import { GovernanceProvisioning } from './provisioning';
+import { GovernanceSettingsController } from './settings/governance-settings.controller';
+import { GovernanceSettingsService } from './settings/governance-settings.service';
 
 /**
- * Governance (ADR 0051): the owners' board, its polls and elections, its
- * decisions and minutes. Reads community through its index, and engagement
- * for the board's notices; nothing imports it.
+ * Governance (ADR 0051, 0055): the owners' board, its polls and elections,
+ * its decisions and minutes, and what the board decides by motions:
+ * approval requests. Reads community through its index, and engagement for
+ * the board's notices; nothing imports it. What a decision does in another
+ * domain is that domain's, registered with core's BoardMatters.
  */
 @Module({
-  imports: [AccountsModule, CommunityGovernancePortModule, EngagementModule],
+  imports: [
+    AccountsModule,
+    CommunityGovernancePortModule,
+    EngagementModule,
+    FilesModule,
+  ],
   controllers: [
     GovernanceBoardController,
     StaffBoardController,
@@ -45,6 +64,10 @@ import { GovernancePollsService } from './polls/polls.service';
     StaffGovernanceElectionsController,
     BoardPublicationsController,
     StaffBoardPublicationsController,
+    StaffApprovalsController,
+    BoardApprovalsController,
+    BoardMotionsController,
+    GovernanceSettingsController,
   ],
   providers: [
     GovernanceAccess,
@@ -59,6 +82,11 @@ import { GovernancePollsService } from './polls/polls.service';
     BoardPublicationsService,
     GovernanceLifecycle,
     GovernanceExportSections,
+    GovernanceProvisioning,
+    GovernanceSettingsService,
+    MotionsService,
+    ApprovalsService,
+    MatterSweeps,
   ],
 })
 export class GovernanceModule {}

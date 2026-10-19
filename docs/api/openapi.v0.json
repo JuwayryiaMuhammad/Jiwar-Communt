@@ -1059,6 +1059,325 @@
         ],
         "type": "object"
       },
+      "ApprovalAlternativeDto": {
+        "properties": {
+          "cost": {
+            "description": "What the alternative would cost, EGP.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "ApprovalAlternativeView": {
+        "properties": {
+          "cost": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "text",
+          "cost"
+        ],
+        "type": "object"
+      },
+      "ApprovalAttachmentView": {
+        "properties": {
+          "fileId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A short-lived read URL.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "url"
+        ],
+        "type": "object"
+      },
+      "ApprovalDecision": {
+        "enum": [
+          "approved",
+          "rejected"
+        ],
+        "type": "string"
+      },
+      "ApprovalDecisionView": {
+        "properties": {
+          "alternativesNote": {
+            "description": "Why the alternatives were not taken.",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalDecision"
+              }
+            ]
+          },
+          "rationale": {
+            "description": "The board’s reasons.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "decidedAt",
+          "rationale",
+          "alternativesNote"
+        ],
+        "type": "object"
+      },
+      "ApprovalFilter": {
+        "enum": [
+          "pending",
+          "approved",
+          "implemented",
+          "rejected",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "ApprovalImplementationView": {
+        "properties": {
+          "byDecision": {
+            "description": "Implemented by its decision itself (an annual budget made active, an increase added).",
+            "type": "boolean"
+          },
+          "implementedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "implementedAt",
+          "byDecision",
+          "note"
+        ],
+        "type": "object"
+      },
+      "ApprovalMotionOutcome": {
+        "enum": [
+          "approve",
+          "reject"
+        ],
+        "type": "string"
+      },
+      "ApprovalStatus": {
+        "enum": [
+          "pending",
+          "approved",
+          "rejected",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "ApprovalType": {
+        "enum": [
+          "annual_budget",
+          "budget_increase",
+          "major_contract",
+          "exceptional_fee",
+          "waiver_above_limit",
+          "payment_plan_above_limit",
+          "legal_escalation"
+        ],
+        "type": "string"
+      },
+      "ApprovalView": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalAlternativeView"
+            },
+            "type": "array"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalAttachmentView"
+            },
+            "type": "array"
+          },
+          "context": {
+            "type": "string"
+          },
+          "cost": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "currency": {
+            "example": "EGP",
+            "type": "string"
+          },
+          "deadlineAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "impact": {
+            "type": "string"
+          },
+          "implementation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalImplementationView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "overdue": {
+            "description": "Pending past its deadline.",
+            "type": "boolean"
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "raisedByMe": {
+            "description": "The caller raised it.",
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "AR-0001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalStatus"
+              }
+            ]
+          },
+          "subjectId": {
+            "description": "The budget (annual_budget) or budget line (budget_increase).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "threshold": {
+            "description": "The type’s threshold now (the four thresholded types), EGP; shown, not enforced, but for major_contract’s on expenses.",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalType"
+              }
+            ]
+          },
+          "withdrawal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalWithdrawalView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "type",
+          "subjectId",
+          "context",
+          "impact",
+          "cost",
+          "currency",
+          "alternatives",
+          "attachments",
+          "threshold",
+          "raisedByMe",
+          "status",
+          "raisedAt",
+          "deadlineAt",
+          "overdue",
+          "decision",
+          "withdrawal",
+          "implementation"
+        ],
+        "type": "object"
+      },
+      "ApprovalViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ApprovalWithdrawalView": {
+        "properties": {
+          "reasonCode": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "withdrawnAt",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "ApprovePermitDto": {
         "properties": {
           "note": {
@@ -2140,6 +2459,251 @@
         ],
         "type": "string"
       },
+      "BoardApprovalView": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalAlternativeView"
+            },
+            "type": "array"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalAttachmentView"
+            },
+            "type": "array"
+          },
+          "context": {
+            "type": "string"
+          },
+          "cost": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "currency": {
+            "example": "EGP",
+            "type": "string"
+          },
+          "deadlineAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "impact": {
+            "type": "string"
+          },
+          "implementation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalImplementationView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "motions": {
+            "items": {
+              "$ref": "#/components/schemas/BoardMotionView"
+            },
+            "type": "array"
+          },
+          "overdue": {
+            "description": "Pending past its deadline.",
+            "type": "boolean"
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "raisedByMe": {
+            "description": "The caller raised it.",
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "AR-0001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalStatus"
+              }
+            ]
+          },
+          "subject": {
+            "description": "The budget (its lines and total) or the line (its allowance and what is spent), as finance describes it; null for the other types.",
+            "nullable": true,
+            "type": "object"
+          },
+          "subjectId": {
+            "description": "The budget (annual_budget) or budget line (budget_increase).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "threshold": {
+            "description": "The type’s threshold now (the four thresholded types), EGP; shown, not enforced, but for major_contract’s on expenses.",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalType"
+              }
+            ]
+          },
+          "withdrawal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalWithdrawalView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "type",
+          "subjectId",
+          "context",
+          "impact",
+          "cost",
+          "currency",
+          "alternatives",
+          "attachments",
+          "threshold",
+          "raisedByMe",
+          "status",
+          "raisedAt",
+          "deadlineAt",
+          "overdue",
+          "decision",
+          "withdrawal",
+          "implementation",
+          "subject",
+          "motions"
+        ],
+        "type": "object"
+      },
+      "BoardMotionOutcome": {
+        "enum": [
+          "approve",
+          "reject",
+          "uphold",
+          "overturn"
+        ],
+        "type": "string"
+      },
+      "BoardMotionStatus": {
+        "enum": [
+          "open",
+          "carried",
+          "failed",
+          "withdrawn",
+          "lapsed"
+        ],
+        "type": "string"
+      },
+      "BoardMotionView": {
+        "properties": {
+          "alternativesNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "myVote": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardVoteChoice"
+              }
+            ],
+            "description": "The caller’s vote, if any.",
+            "nullable": true
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMotionOutcome"
+              }
+            ]
+          },
+          "proposedByMe": {
+            "description": "The caller proposed it: only they withdraw it.",
+            "type": "boolean"
+          },
+          "proposedByMemberId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposedByName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMotionStatus"
+              }
+            ]
+          },
+          "tally": {
+            "$ref": "#/components/schemas/BoardTallyView"
+          },
+          "votes": {
+            "items": {
+              "$ref": "#/components/schemas/BoardVoteView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "outcome",
+          "rationale",
+          "alternativesNote",
+          "proposedByMemberId",
+          "proposedByName",
+          "status",
+          "openedAt",
+          "closedAt",
+          "votes",
+          "tally",
+          "myVote",
+          "proposedByMe"
+        ],
+        "type": "object"
+      },
       "BoardNowView": {
         "properties": {
           "board": {
@@ -2586,6 +3150,30 @@
         ],
         "type": "object"
       },
+      "BoardTallyView": {
+        "properties": {
+          "against": {
+            "type": "number"
+          },
+          "for": {
+            "type": "number"
+          },
+          "quorum": {
+            "type": "number"
+          },
+          "seats": {
+            "description": "Seats that count: seated now (as closed, once closed).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "seats",
+          "quorum",
+          "for",
+          "against"
+        ],
+        "type": "object"
+      },
       "BoardTermSource": {
         "enum": [
           "appointed",
@@ -2681,6 +3269,59 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BoardVoteChoice": {
+        "enum": [
+          "for",
+          "against"
+        ],
+        "type": "string"
+      },
+      "BoardVoteDto": {
+        "properties": {
+          "choice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardVoteChoice"
+              }
+            ]
+          }
+        },
+        "required": [
+          "choice"
+        ],
+        "type": "object"
+      },
+      "BoardVoteView": {
+        "properties": {
+          "castAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "choice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardVoteChoice"
+              }
+            ]
+          },
+          "fullName": {
+            "description": "Null once the member’s account is erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId",
+          "fullName",
+          "choice",
+          "castAt"
         ],
         "type": "object"
       },
@@ -12551,7 +13192,10 @@
           "violation_photo",
           "violation_appeal_photo",
           "child_photo",
-          "child_escort_photo"
+          "child_escort_photo",
+          "approval_attachment",
+          "board_appeal_attachment",
+          "expense_invoice"
         ],
         "type": "string"
       },
@@ -14844,6 +15488,91 @@
         ],
         "type": "object"
       },
+      "GovernanceSettingDto": {
+        "properties": {
+          "deadlineDays": {
+            "description": "Days the board has to decide a matter of this type raised from now on.",
+            "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          },
+          "threshold": {
+            "description": "EGP; null to clear. The four thresholded types only (FIELD_NOT_ALLOWED otherwise). major_contract’s is the manager’s limit for one expense.",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceSettingType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "GovernanceSettingResponse": {
+        "properties": {
+          "deadlineDays": {
+            "description": "Days the board has to decide a matter of this type.",
+            "type": "number"
+          },
+          "threshold": {
+            "description": "EGP, or none set.",
+            "nullable": true,
+            "type": "string"
+          },
+          "thresholded": {
+            "description": "Whether the type takes a threshold.",
+            "type": "boolean"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceSettingType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "deadlineDays",
+          "threshold",
+          "thresholded"
+        ],
+        "type": "object"
+      },
+      "GovernanceSettingType": {
+        "enum": [
+          "annual_budget",
+          "budget_increase",
+          "major_contract",
+          "exceptional_fee",
+          "waiver_above_limit",
+          "payment_plan_above_limit",
+          "legal_escalation",
+          "board_appeal"
+        ],
+        "type": "string"
+      },
+      "GovernanceSettingsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GovernanceSettingResponse"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "GovernanceVoteReceipt": {
         "properties": {
           "pollId": {
@@ -16917,6 +17646,16 @@
         "required": [
           "id"
         ],
+        "type": "object"
+      },
+      "ImplementedApprovalDto": {
+        "properties": {
+          "note": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "IncidentAcknowledgementView": {
@@ -25300,6 +26039,34 @@
         ],
         "type": "object"
       },
+      "ProposeApprovalMotionDto": {
+        "properties": {
+          "alternativesNote": {
+            "description": "Why the package’s alternatives were not taken.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalMotionOutcome"
+              }
+            ]
+          },
+          "rationale": {
+            "description": "The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "rationale",
+          "outcome"
+        ],
+        "type": "object"
+      },
       "PublicReceiptView": {
         "properties": {
           "amount": {
@@ -25500,6 +26267,63 @@
         "required": [
           "start",
           "end"
+        ],
+        "type": "object"
+      },
+      "RaiseApprovalDto": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalAlternativeDto"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "attachmentIds": {
+            "description": "The caller’s uploads of purpose `approval_attachment` (FILE_NOT_AVAILABLE).",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "budgetId": {
+            "description": "annual_budget only (FIELD_REQUIRED / FIELD_NOT_ALLOWED).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "description": "budget_increase only: a line of the active budget.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "context": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "cost": {
+            "description": "EGP. Required for budget_increase (what it adds) and major_contract; not for annual_budget (its total).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "impact": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "context",
+          "impact"
         ],
         "type": "object"
       },
@@ -40355,6 +41179,22 @@
         },
         "type": "object"
       },
+      "UpdateGovernanceSettingsDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GovernanceSettingDto"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "UpdateHandoverItemDto": {
         "properties": {
           "active": {
@@ -44297,6 +45137,319 @@
         "summary": "Exchange the login ticket for tokens on one account",
         "tags": [
           "auth"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/approvals": {
+      "get": {
+        "description": "What awaits the board (`status=pending`), what waits to be implemented (`approved`), and the rest. A sitting member only.",
+        "operationId": "BoardApprovalsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`approved`: waiting to be implemented.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ApprovalFilter"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ApprovalType"
+            }
+          },
+          {
+            "description": "Pending past the deadline only.",
+            "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The board’s requests",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/approvals/{id}": {
+      "get": {
+        "operationId": "BoardApprovalsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardApprovalView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a request with its subject and the board’s motions",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/approvals/{id}/motions": {
+      "post": {
+        "description": "Approve or reject, with the reasons. One open motion per request (BOARD_MOTION_OPEN); the other members are told.",
+        "operationId": "BoardApprovalsController_propose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeApprovalMotionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardMotionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Propose a motion on a request",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/motions/{id}/close": {
+      "post": {
+        "description": "When its count is decided, or past the matter’s deadline as the votes stand with a quorum (BOARD_VOTE_NOT_DUE, BOARD_QUORUM_NOT_MET).",
+        "operationId": "BoardMotionsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardMotionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a motion",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/motions/{id}/votes": {
+      "post": {
+        "description": "For or against, once (BOARD_ALREADY_VOTED). The vote that decides it closes it: a carried motion decides its matter at once.",
+        "operationId": "BoardMotionsController_vote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardVoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardMotionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Vote on a motion",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/motions/{id}/withdraw": {
+      "post": {
+        "description": "Its proposer, while open (BOARD_MOTION_NOT_YOURS).",
+        "operationId": "BoardMotionsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardMotionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a motion",
+        "tags": [
+          "governance"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -66316,6 +67469,272 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/governance/approvals": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffApprovalsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`approved`: waiting to be implemented.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ApprovalFilter"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ApprovalType"
+            }
+          },
+          {
+            "description": "Pending past the deadline only.",
+            "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the requests put to the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "The sitting board is told. Its deadline is the type’s, from the settings. An annual budget is a draft budget of finance’s (it is then submitted, its total the cost); an increase names a line of the active budget.",
+        "operationId": "StaffApprovalsController_raise",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaiseApprovalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put a decision package to the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/approvals/{id}": {
+      "get": {
+        "description": "The package, where it stands, and the board’s decision with its reasons. Never the board’s motions or votes.",
+        "operationId": "StaffApprovalsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a request",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/approvals/{id}/implemented": {
+      "post": {
+        "description": "Once; the board is told.",
+        "operationId": "StaffApprovalsController_implemented",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImplementedApprovalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark an approved request implemented",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/approvals/{id}/withdraw": {
+      "post": {
+        "description": "Who raised it, or the manager (APPROVAL_NOT_YOURS). Its open motion closes; a budget goes back to its draft.",
+        "operationId": "StaffApprovalsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a pending request",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/governance/board": {
       "get": {
         "description": "Current, or lapsed (past its end with nobody after it); null before the first board. Every seat, ended ones too.",
@@ -66989,6 +68408,74 @@
           }
         ],
         "summary": "List the board’s decisions and minutes",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/settings": {
+      "get": {
+        "description": "One row per approval type and one for appeals to the board (`board_appeal`); read by who raises requests too.",
+        "operationId": "GovernanceSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the board’s deadlines and thresholds",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "A deadline applies to matters raised from now on. A threshold is shown when a request is raised; `major_contract`’s is the manager’s limit for one expense.",
+        "operationId": "GovernanceSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGovernanceSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the board’s deadlines and thresholds",
         "tags": [
           "governance"
         ],

@@ -8027,7 +8027,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -11787,6 +11787,242 @@
     {
       "item": [
         {
+          "name": "The board’s requests",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "approvals"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`approved`: waiting to be implemented.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "description": "Pending past the deadline only.",
+                  "disabled": true,
+                  "key": "overdue",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/approvals"
+            }
+          }
+        },
+        {
+          "name": "Read a request with its subject and the board’s motions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "approvals",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/approvals/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Propose a motion on a request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"rationale\": \"\",\n  \"outcome\": \"approve\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `alternativesNote` | string |  | Why the package’s alternatives were not taken. |\n| `outcome` | `approve` \\| `reject` | yes |  |\n| `rationale` | string | yes | The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "approvals",
+                ":id",
+                "motions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/approvals/:id/motions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close a motion",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "motions",
+                ":id",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/motions/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vote on a motion",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"choice\": \"for\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `choice` | `for` \\| `against` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "motions",
+                ":id",
+                "votes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/motions/:id/votes",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw a motion",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "motions",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/motions/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the board sitting now",
           "request": {
             "description": "**Responses:** 200",
@@ -12555,6 +12791,219 @@
           }
         },
         {
+          "name": "List the requests put to the board",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "approvals"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`approved`: waiting to be implemented.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "description": "Pending past the deadline only.",
+                  "disabled": true,
+                  "key": "overdue",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/approvals"
+            }
+          }
+        },
+        {
+          "name": "Put a decision package to the board",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"type\": \"annual_budget\",\n  \"context\": \"\",\n  \"impact\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `alternatives` | object[] |  |  |\n| `attachmentIds` | string[] |  | The caller’s uploads of purpose `approval_attachment` (FILE_NOT_AVAILABLE). |\n| `budgetId` | string (uuid) |  | annual_budget only (FIELD_REQUIRED / FIELD_NOT_ALLOWED). |\n| `budgetLineId` | string (uuid) |  | budget_increase only: a line of the active budget. |\n| `context` | string | yes |  |\n| `cost` | string |  | EGP. Required for budget_increase (what it adds) and major_contract; not for annual_budget (its total). |\n| `impact` | string | yes |  |\n| `type` | `annual_budget` \\| `budget_increase` \\| `major_contract` \\| `exceptional_fee` \\| `waiver_above_limit` \\| `payment_plan_above_limit` \\| `legal_escalation` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "approvals"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/approvals"
+            }
+          }
+        },
+        {
+          "name": "Read a request",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "approvals",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/approvals/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark an approved request implemented",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"note\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "approvals",
+                ":id",
+                "implemented"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/approvals/:id/implemented",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw a pending request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "approvals",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/approvals/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the board’s open term",
           "request": {
             "description": "**Responses:** 200",
@@ -13089,6 +13538,63 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/governance/publications"
+            }
+          }
+        },
+        {
+          "name": "Get the board’s deadlines and thresholds",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/settings"
+            }
+          }
+        },
+        {
+          "name": "Change the board’s deadlines and thresholds",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"items\": [\n    {\n      \"type\": \"annual_budget\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/settings"
             }
           }
         }

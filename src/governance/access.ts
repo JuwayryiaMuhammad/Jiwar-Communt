@@ -192,6 +192,33 @@ export class GovernanceAccess {
     return seat ? { memberId: seat.id, termId: seat.term_id } : null;
   }
 
+  /**
+   * Step 3 for a count of the board (ADR 0055): the term shared, then every
+   * seat of it not ended, shared, in id order, so nothing seats or unseats
+   * a member, or moves the chair, while the count is taken (an end waits on
+   * its seat, a seat filled on the term). Returns them: the seats that may
+   * count, the chair's among them. Taken after the caller's own seat.
+   */
+  async lockBoardForVote(
+    tx: TenantTxClient,
+    termId: string,
+  ): Promise<{ memberId: string; accountId: string; role: string }[]> {
+    await tx.$queryRaw`
+      SELECT id FROM board_terms WHERE id = ${termId}::uuid FOR SHARE`;
+    const seats = await tx.$queryRaw<
+      { id: string; account_id: string; role: string }[]
+    >`
+      SELECT id, account_id, role::text AS role FROM board_members
+       WHERE term_id = ${termId}::uuid AND ended_at IS NULL
+       ORDER BY id FOR SHARE`;
+    this.state(tx).seatOrBoard = true;
+    return seats.map((s) => ({
+      memberId: s.id,
+      accountId: s.account_id,
+      role: s.role,
+    }));
+  }
+
   private state(tx: TenantTxClient) {
     let state = this.held.get(tx);
     if (!state) {

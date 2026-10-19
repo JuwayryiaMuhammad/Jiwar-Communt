@@ -1,12 +1,15 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
+import { newId } from '../../src/core/common/uuid';
 import {
+  approvalRequestRow,
   boardMemberRow,
   boardTermRow,
   closedContestRows,
   contestRow,
   electionRows,
+  motionRow,
   openContest,
   pollRow,
   publicationRows,
@@ -37,6 +40,31 @@ interface Table {
  * linked with composite keys. The RLS coverage test checks the policies
  * exist; this suite checks they hold, table by table.
  */
+/** Requests' numbers: unique in each compound, whatever inserts them. */
+let number = 1;
+
+/** A request of `own`'s and an open motion on it by a seat of `link`'s term. */
+async function motionOf(tx: TenantTxClient, own: Side, link: Side) {
+  const requestId = await approvalRequestRow(tx, {
+    tenantId: own.tenantId,
+    raisedById: own.accountId,
+    number: number++,
+  });
+  const memberId = await boardMemberRow(tx, {
+    tenantId: own.tenantId,
+    termId: link.termId,
+    accountId: link.accountId,
+    addedById: own.accountId,
+  });
+  return motionRow(tx, {
+    tenantId: own.tenantId,
+    requestId,
+    termId: link.termId,
+    memberId,
+    accountId: link.accountId,
+  });
+}
+
 const TABLES: Table[] = [
   {
     table: 'board_terms',
@@ -158,6 +186,77 @@ const TABLES: Table[] = [
           candidateId: link.accountId,
         })
       ).candidateId,
+  },
+  // Board matters (ADR 0055).
+  {
+    table: 'governance_approval_settings',
+    insert: async (tx, own) => {
+      await tx.governanceApprovalSetting.upsert({
+        where: {
+          tenantId_type: { tenantId: own.tenantId, type: 'legal_escalation' },
+        },
+        create: {
+          tenantId: own.tenantId,
+          type: 'legal_escalation',
+          deadlineDays: 14,
+        },
+        update: {},
+      });
+      return own.tenantId;
+    },
+    key: 'tenant_id',
+    linked: false,
+  },
+  {
+    table: 'governance_approval_requests',
+    insert: (tx, own, link) =>
+      approvalRequestRow(tx, {
+        tenantId: own.tenantId,
+        raisedById: link.accountId,
+        number: number++,
+      }),
+  },
+  {
+    table: 'governance_approval_alternatives',
+    insert: async (tx, own, link) => {
+      const requestId = await approvalRequestRow(tx, {
+        tenantId: own.tenantId,
+        raisedById: link.accountId,
+        number: number++,
+      });
+      await tx.governanceApprovalAlternative.create({
+        data: { tenantId: own.tenantId, requestId, position: 1, text: 'Alt' },
+      });
+      return requestId;
+    },
+    key: 'request_id',
+  },
+  {
+    table: 'board_motions',
+    insert: (tx, own, link) => motionOf(tx, own, link),
+  },
+  {
+    table: 'board_votes',
+    insert: async (tx, own, link) => {
+      const motionId = await motionOf(tx, own, own);
+      const id = newId();
+      const seat = await tx.boardMember.findFirstOrThrow({
+        where: { termId: own.termId },
+        orderBy: { addedAt: 'desc' },
+      });
+      await tx.boardVote.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          motionId,
+          memberId: seat.id,
+          accountId: link.accountId,
+          choice: 'for',
+          castAt: new Date(),
+        },
+      });
+      return id;
+    },
   },
   {
     table: 'board_publications',

@@ -469,6 +469,22 @@ export const GOVERNANCE_COVERAGE: readonly string[] = [
   'board_publication.archived',
 ];
 
+/**
+ * Board matters (ADR 0055), covered by
+ * test/governance/board-matters-audit-coverage.e2e-spec.ts: approval
+ * requests, the board's motions and votes, the settings.
+ */
+export const BOARD_MATTERS_COVERAGE: readonly string[] = [
+  'governance_approval.raised',
+  'governance_approval.withdrawn',
+  'governance_approval.decided',
+  'governance_approval.implemented',
+  'governance_settings.changed',
+  'board_motion.proposed',
+  'board_motion.closed',
+  'board_vote.cast',
+];
+
 /** Patrols (ADR 0052): test/security/patrol-audit-coverage. */
 export const PATROL_COVERAGE: readonly string[] = [
   'patrol_checkpoint.created',

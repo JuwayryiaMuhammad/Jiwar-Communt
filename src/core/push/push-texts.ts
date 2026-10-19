@@ -1551,6 +1551,66 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم اعتماد نتيجة انتخاب المجلس. افتح التطبيق لعرض المجلس الجديد.',
     },
   },
+  'governance_approval.raised': {
+    en: {
+      title: 'A decision awaits the board',
+      body: 'The management put a decision to the board. Open the dashboard to read it.',
+    },
+    ar: {
+      title: 'قرار بانتظار المجلس',
+      body: 'عرضت الإدارة قرارًا على المجلس. افتح لوحة التحكم لقراءته.',
+    },
+  },
+  'governance_approval.decided': {
+    en: {
+      title: 'The board decided',
+      body: 'The board decided a request put to it. Open the dashboard to see the decision.',
+    },
+    ar: {
+      title: 'قرر المجلس',
+      body: 'قرر المجلس في طلب عُرض عليه. افتح لوحة التحكم لعرض القرار.',
+    },
+  },
+  'governance_approval.overdue': {
+    en: {
+      title: 'A decision is overdue',
+      body: 'A request to the board passed its deadline undecided. Open the dashboard.',
+    },
+    ar: {
+      title: 'قرار متأخر',
+      body: 'تجاوز طلب إلى المجلس موعده دون قرار. افتح لوحة التحكم.',
+    },
+  },
+  'governance_approval.implemented': {
+    en: {
+      title: 'A decision was implemented',
+      body: 'The management implemented a decision of the board. Open the dashboard.',
+    },
+    ar: {
+      title: 'تم تنفيذ قرار',
+      body: 'نفذت الإدارة قرارًا للمجلس. افتح لوحة التحكم.',
+    },
+  },
+  'governance_approval.withdrawn': {
+    en: {
+      title: 'A request was withdrawn',
+      body: 'The management withdrew a request it put to the board.',
+    },
+    ar: {
+      title: 'تم سحب طلب',
+      body: 'سحبت الإدارة طلبًا عرضته على المجلس.',
+    },
+  },
+  'governance_motion.proposed': {
+    en: {
+      title: 'A motion to vote on',
+      body: 'A board member proposed a motion. Open the dashboard to vote.',
+    },
+    ar: {
+      title: 'اقتراح للتصويت',
+      body: 'اقترح عضو في المجلس قرارًا. افتح لوحة التحكم للتصويت.',
+    },
+  },
   'patrol.late': {
     en: {
       title: 'Patrol late',

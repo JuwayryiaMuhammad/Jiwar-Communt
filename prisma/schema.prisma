@@ -2214,6 +2214,12 @@ enum FilePurpose {
   child_photo
   /// An outside escort's photo (ADR 0054), the household's.
   child_escort_photo
+  /// An approval request's document or photo (ADR 0055), the staff's.
+  approval_attachment
+  /// An owner's document or photo backing an appeal to the board (ADR 0055).
+  board_appeal_attachment
+  /// An expense's invoice (ADR 0055), the accountant's.
+  expense_invoice
 
   @@map("file_purpose")
 }
@@ -6734,10 +6740,12 @@ enum GovernancePollKind {
 }
 
 /// The last number given per compound and contest kind (ADR 0051).
+/// Numbers per compound: polls (P-), elections (E-), approval requests
+/// (AR-) and appeals to the board (BA-) (ADR 0051, 0055).
 model GovernanceCounter {
-  tenantId   String                @map("tenant_id") @db.Uuid
-  kind       GovernanceContestKind
-  lastNumber Int                   @map("last_number")
+  tenantId   String @map("tenant_id") @db.Uuid
+  kind       String
+  lastNumber Int    @map("last_number")
 
   @@id([tenantId, kind])
   @@map("governance_counters")
@@ -6873,6 +6881,124 @@ model BoardPublication {
   @@unique([tenantId, announcementId], map: "board_publications_announcement_key")
   @@index([tenantId, createdAt, id], map: "board_publications_created_idx")
   @@map("board_publications")
+}
+
+// ============================================================================
+// Board matters (ADR 0055)
+// ============================================================================
+
+/// A compound's deadline (days) per approval type and for appeals to the
+/// board, and the thresholds of the four thresholded types. One row each,
+/// created with the compound.
+model GovernanceApprovalSetting {
+  tenantId     String   @map("tenant_id") @db.Uuid
+  type         String
+  deadlineDays Int      @map("deadline_days") @db.SmallInt
+  threshold    Decimal? @db.Decimal(14, 2)
+  updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@id([tenantId, type])
+  @@map("governance_approval_settings")
+}
+
+/// A decision package put to the board (ADR 0055): kept as raised; pending,
+/// then approved or rejected by a carried motion, or withdrawn; an approved
+/// one implemented once.
+model GovernanceApprovalRequest {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  number             Int
+  type               String
+  subjectId          String?   @map("subject_id") @db.Uuid
+  raisedById         String    @map("raised_by_account_id") @db.Uuid
+  context            String
+  impact             String
+  cost               Decimal?  @db.Decimal(14, 2)
+  currency           String    @default("EGP")
+  deadlineAt         DateTime  @map("deadline_at") @db.Timestamptz(3)
+  status             String    @default("pending")
+  decidedAt          DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedMotionId    String?   @map("decided_motion_id") @db.Uuid
+  withdrawnAt        DateTime? @map("withdrawn_at") @db.Timestamptz(3)
+  withdrawnById      String?   @map("withdrawn_by_account_id") @db.Uuid
+  withdrawReasonCode String?   @map("withdraw_reason_code")
+  implementedAt      DateTime? @map("implemented_at") @db.Timestamptz(3)
+  implementedById    String?   @map("implemented_by_account_id") @db.Uuid
+  implementationNote String?   @map("implementation_note")
+  overdueNotifiedAt  DateTime? @map("overdue_notified_at") @db.Timestamptz(3)
+  createdAt          DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "governance_approval_requests_number_key")
+  @@index([tenantId, status, createdAt, id], map: "governance_approval_requests_status_idx")
+  @@index([tenantId, createdAt, id], map: "governance_approval_requests_created_idx")
+  @@map("governance_approval_requests")
+}
+
+/// One of a package's alternatives, in order (ADR 0055). Never changed.
+model GovernanceApprovalAlternative {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  requestId String   @map("request_id") @db.Uuid
+  position  Int      @db.SmallInt
+  text      String
+  cost      Decimal? @db.Decimal(14, 2)
+
+  @@id([tenantId, requestId, position])
+  @@map("governance_approval_alternatives")
+}
+
+/// A package's attached file, in order (ADR 0055). Never changed.
+model GovernanceApprovalAttachment {
+  tenantId  String @map("tenant_id") @db.Uuid
+  requestId String @map("request_id") @db.Uuid
+  fileId    String @map("file_id") @db.Uuid
+  position  Int    @db.SmallInt
+
+  @@id([tenantId, requestId, position])
+  @@unique([tenantId, fileId], map: "governance_approval_attachments_file_key")
+  @@map("governance_approval_attachments")
+}
+
+/// A motion of the board on a matter (ADR 0055): the outcome and the
+/// reasons, fixed when proposed; closed once (carried, failed, withdrawn,
+/// lapsed), with the count for a carried or failed one.
+model BoardMotion {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  approvalRequestId  String?   @map("approval_request_id") @db.Uuid
+  termId             String    @map("term_id") @db.Uuid
+  proposedByMemberId String    @map("proposed_by_member_id") @db.Uuid
+  proposedById       String    @map("proposed_by_account_id") @db.Uuid
+  outcome            String
+  rationale          String
+  alternativesNote   String?   @map("alternatives_note")
+  openedAt           DateTime  @map("opened_at") @db.Timestamptz(3)
+  closedAt           DateTime? @map("closed_at") @db.Timestamptz(3)
+  result             String?
+  closedById         String?   @map("closed_by_account_id") @db.Uuid
+  votesFor           Int?      @map("votes_for") @db.SmallInt
+  votesAgainst       Int?      @map("votes_against") @db.SmallInt
+  sitting            Int?      @db.SmallInt
+
+  @@unique([tenantId, id])
+  @@index([tenantId, approvalRequestId, openedAt, id], map: "board_motions_request_idx")
+  @@map("board_motions")
+}
+
+/// A member's vote on a motion (ADR 0055): once, while open, never changed.
+model BoardVote {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  motionId  String   @map("motion_id") @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  choice    String
+  castAt    DateTime @map("cast_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, motionId, memberId], map: "board_votes_once")
+  @@index([tenantId, accountId, castAt, id], map: "board_votes_account_idx")
+  @@map("board_votes")
 }
 
 // ============================================================================

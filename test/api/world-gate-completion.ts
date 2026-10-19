@@ -19,8 +19,8 @@ export interface GateCompletionWorld {
   /** A visitor B's guard let in on an approved exception, with their photo. */
   bEntryId: string;
   /**
-   * A security incident B's manager reported (`bIncidentId` is a worker's
-   * card incident: another table).
+   * A security incident B's manager reported for the evidence and
+   * signature rows (ADR 0056), apart from the ADR 0053 rows' `bIncidentId`.
    */
   bGateIncidentId: string;
   /** A car A's owner registered (pending): for the guard to count. */

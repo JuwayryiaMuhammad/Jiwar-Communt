@@ -414,7 +414,7 @@ export const WORKERS_ROUTES: Row[] = [
     as: 'manager',
     denied: 'owner',
     foreign: {
-      params: (w) => ({ id: w.bIncidentId }),
+      params: (w) => ({ id: w.bCardIncidentId }),
       code: 'CARD_INCIDENT_NOT_FOUND',
     },
     invalid: 'none',

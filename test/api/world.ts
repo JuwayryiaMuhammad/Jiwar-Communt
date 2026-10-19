@@ -165,11 +165,13 @@ export interface World
   /** B's owner delegates the workers to B's family member. */
   bDelegationId: string;
   /** An active engagement in B (its worker), a compliance case on another
-   * worker, and a card incident on the engagement. */
+   * worker, and a card incident on the engagement. The card incident is
+   * `bCardIncidentId`: `bIncidentId` is B's security incident (ADR 0053),
+   * from securityOpsWorld, and must not be overwritten here. */
   bEngagementId: string;
   bWorkerId: string;
   bCaseId: string;
-  bIncidentId: string;
+  bCardIncidentId: string;
   /** A notification for B's owner. */
   bNotificationId: string;
   /** An active visitor pass of B's owner. */
@@ -1200,7 +1202,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bEngagementId: bEngagement.engagementId,
     bWorkerId: bRow.workerId,
     bCaseId,
-    bIncidentId: bIncident.incidentId,
+    bCardIncidentId: bIncident.incidentId,
     bDelegationId: bDelegation.id,
     bDeferredActionId,
     bInviteId: bInvite.inviteId,

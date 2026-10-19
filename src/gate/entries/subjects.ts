@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type {
   GateApprovalRequest,
+  GateFieldException,
   GateSubjectType,
   PermitGuest,
   PermitWorker,
@@ -49,7 +50,9 @@ export type Refusal =
   // A ban on the blocklist (ADR 0053): the guard reads the list, never why.
   | 'entry_blocked'
   // The works permit's work was stopped (ADR 0053).
-  | 'work_stopped';
+  | 'work_stopped'
+  // A field exception lets in at its own gate only (ADR 0056).
+  | 'wrong_gate';
 
 /** Who comes through the gate, resolved in this compound (ADR 0028). */
 export interface GateSubject {
@@ -67,6 +70,8 @@ export interface GateSubject {
   engagement?: GateEngagement;
   /** A visitor or delivery let in on a household's approval. */
   request?: GateApprovalRequest;
+  /** A visitor or a vehicle let in on a field exception (ADR 0056). */
+  exception?: GateFieldException;
   /** A permit's subject (ADR 0049): the permit, and its worker or guest. */
   permit?: UnitPermit;
   permitWorker?: PermitWorker;
@@ -110,6 +115,28 @@ export class GateSubjects {
       visitorDetailsId: r.visitorDetailsId,
       workerName: null,
       request: r,
+    };
+  }
+
+  /**
+   * A visitor or a vehicle a field exception is about (ADR 0056): one
+   * person (one vehicle), its unit. A worker's exception is never a subject:
+   * the worker comes in as the worker.
+   */
+  async exception(
+    tx: TenantTxClient,
+    e: GateFieldException,
+  ): Promise<GateSubject> {
+    return {
+      type: 'field_exception',
+      id: e.id,
+      unitId: e.unitId,
+      unitCode: await this.community.unitCode(tx, e.unitId),
+      kind: e.kind,
+      partySize: 1,
+      visitorDetailsId: e.visitorDetailsId,
+      workerName: null,
+      exception: e,
     };
   }
 
@@ -197,6 +224,12 @@ export class GateSubjects {
       case 'event_guest':
       case 'move_permit':
         return this.permitSubject(tx, type, id);
+      case 'field_exception': {
+        const e = await tx.gateFieldException.findUnique({ where: { id } });
+        return e && !e.engagementId && !e.permitWorkerId
+          ? this.exception(tx, e)
+          : null;
+      }
       default:
         return unknownType(type);
     }

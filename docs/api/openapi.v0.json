@@ -2325,7 +2325,7 @@
         "type": "string"
       },
       "BlocklistMatchSource": {
-        "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup.",
+        "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056).",
         "enum": [
           "visitor_pass",
           "move_permit",
@@ -2334,7 +2334,8 @@
           "verify",
           "entry",
           "plate_lookup",
-          "id_lookup"
+          "id_lookup",
+          "field_exception"
         ],
         "type": "string"
       },
@@ -2387,7 +2388,7 @@
                 "$ref": "#/components/schemas/BlocklistMatchSource"
               }
             ],
-            "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup."
+            "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056)."
           },
           "subjectId": {
             "format": "uuid",
@@ -2399,7 +2400,8 @@
               "visitor_pass",
               "gate_request",
               "event_guest",
-              "move_permit"
+              "move_permit",
+              "field_exception"
             ],
             "nullable": true,
             "type": "string"
@@ -10794,6 +10796,31 @@
         ],
         "type": "object"
       },
+      "DecideFieldExceptionDto": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A rejection’s, from the closed list `gateExceptionReject` (required then); never with an approval.",
+            "enum": [
+              "not_expected",
+              "identity_unclear",
+              "outside_policy",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "type": "object"
+      },
       "DecideViolationAppealDto": {
         "properties": {
           "decision": {
@@ -13207,6 +13234,64 @@
         ],
         "type": "object"
       },
+      "ExceptionPersonView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "ExceptionWorkerDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "description": "A household’s worker (its engagement) or a works permit’s contractor worker.",
+            "enum": [
+              "worker_engagement",
+              "permit_worker"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "ExceptionWorkerView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "worker_engagement",
+              "permit_worker"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
       "ExitEscortDto": {
         "properties": {
           "alone": {
@@ -14665,7 +14750,8 @@
           "approval",
           "guard",
           "system",
-          "permit"
+          "permit",
+          "exception"
         ],
         "type": "string"
       },
@@ -14729,6 +14815,25 @@
           "guests"
         ],
         "type": "object"
+      },
+      "GateExceptionKind": {
+        "enum": [
+          "worker_outside_hours",
+          "visitor_without_pass",
+          "unregistered_vehicle"
+        ],
+        "type": "string"
+      },
+      "GateExceptionStatus": {
+        "description": "A pending one past `answerBy` reads `expired`, whether or not the sweep wrote it yet.",
+        "enum": [
+          "pending",
+          "approved",
+          "rejected",
+          "expired",
+          "withdrawn"
+        ],
+        "type": "string"
       },
       "GateInstructionsDto": {
         "properties": {
@@ -15546,6 +15651,25 @@
         ],
         "type": "string"
       },
+      "GateSettingsResponse": {
+        "properties": {
+          "exceptionAnswerMinutes": {
+            "description": "Minutes the management has to answer a field exception.",
+            "example": 10,
+            "type": "number"
+          },
+          "exceptionEntryMinutes": {
+            "description": "Minutes an approved field exception lets its entry in.",
+            "example": 15,
+            "type": "number"
+          }
+        },
+        "required": [
+          "exceptionAnswerMinutes",
+          "exceptionEntryMinutes"
+        ],
+        "type": "object"
+      },
       "GateStatus": {
         "enum": [
           "active",
@@ -15606,7 +15730,8 @@
           "gate_request",
           "permit_worker",
           "event_guest",
-          "move_permit"
+          "move_permit",
+          "field_exception"
         ],
         "type": "string"
       },
@@ -16784,6 +16909,114 @@
           "fullName",
           "photo",
           "since"
+        ],
+        "type": "object"
+      },
+      "GuardFieldExceptionResponse": {
+        "properties": {
+          "answerBy": {
+            "description": "Unanswered by then, it expires.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "entryUntil": {
+            "description": "Approved: its one entry, at its gate, until then (`POST /gate/entries` with `subjectType: field_exception`).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateExceptionKind"
+              }
+            ]
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "enum": [
+              "resident_unreachable",
+              "expected_by_resident",
+              "regular_visitor",
+              "urgent_service",
+              "delivery_waiting",
+              "emergency",
+              "other"
+            ],
+            "type": "string"
+          },
+          "reference": {
+            "example": "GX-000042",
+            "type": "string"
+          },
+          "rejectReasonCode": {
+            "enum": [
+              "not_expected",
+              "identity_unclear",
+              "outside_policy",
+              "other"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateExceptionStatus"
+              }
+            ],
+            "description": "A pending one past `answerBy` reads `expired`, whether or not the sweep wrote it yet."
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "usedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "worker": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExceptionWorkerView"
+              }
+            ],
+            "description": "A worker’s: they come in as themselves, on this exception.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "reasonCode",
+          "unitCode",
+          "gateId",
+          "status",
+          "raisedAt",
+          "answerBy",
+          "decidedAt",
+          "rejectReasonCode",
+          "entryUntil",
+          "usedAt",
+          "worker"
         ],
         "type": "object"
       },
@@ -27348,6 +27581,56 @@
         ],
         "type": "object"
       },
+      "RaiseFieldExceptionDto": {
+        "properties": {
+          "idNumber": {
+            "description": "The full ID number on the card they show: matched against the blocklist, never stored, nor kept in the idempotency record.",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateExceptionKind"
+              }
+            ]
+          },
+          "reasonCode": {
+            "description": "Why the guard asks, from the closed list `gateExceptionRaise`.",
+            "enum": [
+              "resident_unreachable",
+              "expected_by_resident",
+              "regular_visitor",
+              "urgent_service",
+              "delivery_waiting",
+              "emergency",
+              "other"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "A visitor’s or a vehicle’s: the unit they came for.",
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "description": "Required for `unregistered_vehicle`, optional for a visitor’s car. Kept 30 days and matched against the blocklist.",
+            "example": "ق ب ط 1234",
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "As the visitor gives it: shown to the management deciding, kept 30 days, never in a notification.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "worker": {
+            "$ref": "#/components/schemas/ExceptionWorkerDto"
+          }
+        },
+        "required": [
+          "kind",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "RaiseSosDto": {
         "properties": {
           "type": {
@@ -34998,6 +35281,173 @@
         ],
         "type": "object"
       },
+      "StaffFieldExceptionResponse": {
+        "properties": {
+          "answerBy": {
+            "description": "Unanswered by then, it expires.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExceptionPersonView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "entryUntil": {
+            "description": "Approved: its one entry, at its gate, until then (`POST /gate/entries` with `subjectType: field_exception`).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "gateName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateExceptionKind"
+              }
+            ]
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "raisedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExceptionPersonView"
+              }
+            ],
+            "description": "The guard who asked."
+          },
+          "reasonCode": {
+            "enum": [
+              "resident_unreachable",
+              "expected_by_resident",
+              "regular_visitor",
+              "urgent_service",
+              "delivery_waiting",
+              "emergency",
+              "other"
+            ],
+            "type": "string"
+          },
+          "reference": {
+            "example": "GX-000042",
+            "type": "string"
+          },
+          "rejectReasonCode": {
+            "enum": [
+              "not_expected",
+              "identity_unclear",
+              "outside_policy",
+              "other"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateExceptionStatus"
+              }
+            ],
+            "description": "A pending one past `answerBy` reads `expired`, whether or not the sweep wrote it yet."
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "usedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "description": "While the visitor’s data lasts (30 days).",
+            "nullable": true,
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "While the visitor’s data lasts (30 days).",
+            "nullable": true,
+            "type": "string"
+          },
+          "worker": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExceptionWorkerView"
+              }
+            ],
+            "description": "A worker’s: they come in as themselves, on this exception.",
+            "nullable": true,
+            "type": "object"
+          },
+          "workerName": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "reasonCode",
+          "unitCode",
+          "gateId",
+          "status",
+          "raisedAt",
+          "answerBy",
+          "decidedAt",
+          "rejectReasonCode",
+          "entryUntil",
+          "usedAt",
+          "worker",
+          "gateName",
+          "raisedBy",
+          "decidedBy",
+          "visitorName",
+          "vehiclePlate",
+          "workerName"
+        ],
+        "type": "object"
+      },
+      "StaffFieldExceptionResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffFieldExceptionResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffFinePaymentView": {
         "properties": {
           "amount": {
@@ -42279,6 +42729,23 @@
               }
             ],
             "description": "Inactive ends the shifts open at the gate."
+          }
+        },
+        "type": "object"
+      },
+      "UpdateGateSettingsDto": {
+        "properties": {
+          "exceptionAnswerMinutes": {
+            "description": "Minutes the management has to answer a field exception before it expires.",
+            "maximum": 60,
+            "minimum": 1,
+            "type": "number"
+          },
+          "exceptionEntryMinutes": {
+            "description": "Minutes an approved field exception lets its one entry in, at its gate.",
+            "maximum": 120,
+            "minimum": 5,
+            "type": "number"
           }
         },
         "type": "object"
@@ -50625,6 +51092,141 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/field-exceptions": {
+      "post": {
+        "description": "Inside a shift at a gate. Never past a lockdown (LOCKDOWN_ACTIVE) or a ban (ENTRY_BLOCKED). Every holder of `gate_exceptions.decide` is told; nobody answering by `answerBy` expires it.",
+        "operationId": "GuardFieldExceptionsController_raise",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaiseFieldExceptionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardFieldExceptionResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask the management to let someone the gate refused in, once",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/field-exceptions/{id}": {
+      "get": {
+        "operationId": "GuardFieldExceptionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardFieldExceptionResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a field exception of my gate (poll while waiting)",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/field-exceptions/{id}/withdraw": {
+      "post": {
+        "operationId": "GuardFieldExceptionsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardFieldExceptionResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a pending field exception",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -69691,6 +70293,234 @@
         "summary": "Export the outstanding report as CSV",
         "tags": [
           "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/field-exceptions": {
+      "get": {
+        "operationId": "StaffFieldExceptionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`pending`: what may still be answered now; `decided`: answered, expired or withdrawn.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "pending",
+                "decided",
+                "all"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFieldExceptionResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the field exceptions, newest first",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/field-exceptions/{id}": {
+      "get": {
+        "operationId": "StaffFieldExceptionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFieldExceptionResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a field exception",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/field-exceptions/{id}/decide": {
+      "post": {
+        "description": "The first answer wins (GATE_EXCEPTION_DECIDED with params.status otherwise; `expired` when its deadline passed first). An approval lets one entry in at its gate for `gate_settings.exceptionEntryMinutes`.",
+        "operationId": "StaffFieldExceptionsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideFieldExceptionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFieldExceptionResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject a field exception",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/settings": {
+      "get": {
+        "operationId": "GateSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the gate’s settings",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "What is left out stays. A field exception already raised or approved keeps the deadlines written on it.",
+        "operationId": "GateSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGateSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the gate’s settings",
+        "tags": [
+          "gate"
         ],
         "x-no-store": true,
         "x-stability": "draft"

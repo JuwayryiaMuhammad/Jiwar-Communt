@@ -140,6 +140,8 @@ export const REASON_CODES = {
   violationCancel: ['appeal_accepted', 'issued_in_error', 'duplicate', 'other'],
   violationSystemCancel: ['board_overturned'],
   violationPaymentReverse: ['entered_in_error', 'refunded', 'other'],
+  gateExceptionRaise: ['resident_unreachable', 'expected_by_resident', 'regular_visitor', 'urgent_service', 'delivery_waiting', 'emergency', 'other'],
+  gateExceptionReject: ['not_expected', 'identity_unclear', 'outside_policy', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

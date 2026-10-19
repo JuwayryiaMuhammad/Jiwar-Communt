@@ -147,6 +147,8 @@ describe('audit catalog', () => {
         'expense',
         'expense_authorization',
         'governance_board_appeal',
+        // ADR 0056.
+        'gate_field_exception',
       ]).toContain(def.target);
     }
   });

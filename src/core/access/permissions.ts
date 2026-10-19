@@ -221,6 +221,10 @@ export const PERMISSIONS = {
   'violations.manage': { kinds: ['staff', 'manager'] },
   'violations.issue': { kinds: ['staff', 'manager'] },
   'lockdown.end': { kinds: ['manager'] },
+  // The gate's completion (ADR 0056). `gate_exceptions.decide`: the
+  // on-duty management answers the guards' field exceptions (every holder
+  // is asked, the first answer wins).
+  'gate_exceptions.decide': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

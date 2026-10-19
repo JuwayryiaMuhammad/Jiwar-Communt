@@ -11,6 +11,7 @@ import { GovernanceProvisioning } from '../../src/governance/provisioning';
 import { ParcelProvisioning } from '../../src/gate/parcels/parcel-provisioning';
 import { PlaceProvisioning } from '../../src/gate/places/place-provisioning';
 import { LockdownProvisioning } from '../../src/gate/lockdown/lockdown-provisioning';
+import { GateSettingsProvisioning } from '../../src/gate/settings/gate-settings-provisioning';
 import { PermitProvisioning } from '../../src/gate/permits/permit-provisioning';
 import { VehicleProvisioning } from '../../src/gate/vehicles/vehicle-provisioning';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
@@ -41,6 +42,7 @@ new PlaceProvisioning(tenantLifecycle).onModuleInit();
 new PermitProvisioning(tenantLifecycle).onModuleInit();
 new LockdownProvisioning(tenantLifecycle).onModuleInit();
 new GovernanceProvisioning(tenantLifecycle).onModuleInit();
+new GateSettingsProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values

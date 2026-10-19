@@ -517,4 +517,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   finance_expenses_tenant_id_id_key: null,
   finance_expenses_number_key: null,
   finance_expenses_invoice_file_key: null,
+  // Field exceptions (ADR 0056): numbers from the counter under its row
+  // lock; one entry per approval, written under the exception's lock.
+  gate_field_exceptions_tenant_id_id_key: null,
+  gate_field_exceptions_number_key: null,
+  gate_field_exceptions_used_entry_key: null,
 };

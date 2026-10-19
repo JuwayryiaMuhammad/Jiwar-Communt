@@ -577,3 +577,15 @@ export const CHILDREN_COVERAGE: readonly string[] = [
   'community_event.child_registered',
   'community_event.child_unregistered',
 ];
+
+/**
+ * The gate's completion (ADR 0056): its settings and the field exceptions.
+ * test/gate/gate-completion-audit-coverage.
+ */
+export const GATE_COMPLETION_COVERAGE: readonly string[] = [
+  'gate_settings.changed',
+  'gate_exception.raised',
+  'gate_exception.decided',
+  'gate_exception.expired',
+  'gate_exception.withdrawn',
+];

@@ -3,6 +3,14 @@ import { FineBoardAppeals } from './fines/fine-board-appeals';
 import { ViolationBoardAppeals } from './violations/violation-board-appeals';
 import { SecurityOverview } from './reports/security-overview';
 import { GateExportSections } from './export/export-sections';
+import {
+  GuardFieldExceptionsController,
+  StaffFieldExceptionsController,
+} from './exceptions/field-exceptions.controller';
+import { FieldExceptionsService } from './exceptions/field-exceptions.service';
+import { GateSettingsController } from './settings/gate-settings.controller';
+import { GateSettingsProvisioning } from './settings/gate-settings-provisioning';
+import { GateSettingsService } from './settings/gate-settings.service';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -258,6 +266,10 @@ import { PickupPageService } from './children/pickup-page.service';
     CommunityGatePortModule,
   ],
   controllers: [
+    // The gate's completion (ADR 0056).
+    GateSettingsController,
+    GuardFieldExceptionsController,
+    StaffFieldExceptionsController,
     GatesController,
     ShiftsController,
     VisitorsController,
@@ -341,6 +353,9 @@ import { PickupPageService } from './children/pickup-page.service';
     FineBoardAppeals,
     ViolationBoardAppeals,
     SecurityOverview,
+    GateSettingsService,
+    GateSettingsProvisioning,
+    FieldExceptionsService,
     GatesService,
     ShiftsService,
     VisitorPassesService,

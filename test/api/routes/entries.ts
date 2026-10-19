@@ -48,6 +48,7 @@ export const ENTRIES_ROUTES: Row[] = [
               'permit_worker',
               'event_guest',
               'move_permit',
+              'field_exception',
             ],
           },
         },

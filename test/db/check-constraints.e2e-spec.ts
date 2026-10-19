@@ -1651,6 +1651,30 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'for_children is NOT NULL and tested first; the ages are then tested NOT NULL before BETWEEN',
   },
+  // The gate's completion (ADR 0056).
+  gate_settings_exception_answer: {},
+  gate_settings_exception_entry: {},
+  gate_field_exceptions_number_positive: {},
+  gate_field_exceptions_kind: {},
+  gate_field_exceptions_reason: {},
+  gate_field_exceptions_worker_shape: {
+    guarded:
+      'num_nonnulls() counts NULLs: never NULL; visitor_details_id under IS NULL',
+  },
+  gate_field_exceptions_status: {},
+  gate_field_exceptions_answer_window: {},
+  gate_field_exceptions_decision_shape: {
+    guarded:
+      'decided_at IS NULL is tested first; entry_until is compared only after decided_at IS NOT NULL',
+  },
+  gate_field_exceptions_reject_reason: {
+    guarded: 'reject_reason_code IS NULL is tested first',
+  },
+  gate_field_exceptions_used_shape: {
+    guarded:
+      'used_at IS NULL is tested first; decided_at and entry_until are tested NOT NULL before the comparisons',
+  },
+  gate_entries_exception_shape: {},
 };
 
 interface Check {

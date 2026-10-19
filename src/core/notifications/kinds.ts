@@ -1711,6 +1711,34 @@ export const NOTIFICATION_KINDS = {
     target: 'child_pickup',
     params: { outcome: {} },
   },
+  // Field exceptions (ADR 0056): codes only, never a name or a plate.
+  /**
+   * A guard asks the on-duty management to let someone the gate refused in,
+   * once: every holder of `gate_exceptions.decide`. Critical: someone waits.
+   */
+  'gate_exception.requested': {
+    priority: 'critical',
+    category: 'gate_visitors',
+    critical: true,
+    target: 'gate_field_exception',
+    params: { exceptionKind: {}, unitCode: {}, gateName: {} },
+  },
+  /** The management answered the guard who asked: `decision` approved | rejected. */
+  'gate_exception.decided': {
+    priority: 'critical',
+    category: 'guard_duty',
+    critical: true,
+    target: 'gate_field_exception',
+    params: { decision: {}, unitCode: {} },
+  },
+  /** Nobody answered in time: the guard who asked. */
+  'gate_exception.expired': {
+    priority: 'critical',
+    category: 'guard_duty',
+    critical: true,
+    target: 'gate_field_exception',
+    params: { unitCode: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

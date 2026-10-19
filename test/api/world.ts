@@ -74,6 +74,10 @@ import {
   boardMattersWorld,
   type BoardMattersWorld,
 } from './world-board-matters';
+import {
+  gateCompletionWorld,
+  type GateCompletionWorld,
+} from './world-gate-completion';
 import { fileHelpers } from '../setup/files';
 import { parcelHelpers } from '../setup/parcels';
 import { gateHelpers } from '../setup/gate';
@@ -135,7 +139,8 @@ export interface World
     PatrolsWorld,
     SecurityOpsWorld,
     ChildrenWorld,
-    BoardMattersWorld {
+    BoardMattersWorld,
+    GateCompletionWorld {
   h: HttpHarness;
   helpers: ReturnType<typeof communityHelpers>;
   /** The compound the requests act in. */
@@ -1112,7 +1117,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const securityOps = await securityOpsWorld(h, helpers, b);
   const children = await childrenWorld(h, helpers, b);
   const boardMatters = await boardMattersWorld(h, helpers, a, b);
+  const gateCompletion = await gateCompletionWorld(h, helpers, b);
   return {
+    ...gateCompletion,
     ...guardDuty,
     ...patrols,
     ...securityOps,

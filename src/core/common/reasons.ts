@@ -639,4 +639,21 @@ export const REASON_CODES = {
   // The system's: the board overturned the decision (ADR 0055).
   violationSystemCancel: ['board_overturned'],
   violationPaymentReverse: ['entered_in_error', 'refunded', 'other'],
+  // Field exceptions (ADR 0056): why the guard asks to let someone in, and
+  // why the management said no.
+  gateExceptionRaise: [
+    'resident_unreachable',
+    'expected_by_resident',
+    'regular_visitor',
+    'urgent_service',
+    'delivery_waiting',
+    'emergency',
+    'other',
+  ],
+  gateExceptionReject: [
+    'not_expected',
+    'identity_unclear',
+    'outside_policy',
+    'other',
+  ],
 } as const;

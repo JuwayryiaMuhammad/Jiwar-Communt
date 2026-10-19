@@ -94,6 +94,8 @@ enum GateSubjectType {
   event_guest
   /// A move's truck (ADR 0049).
   move_permit
+  /// A visitor or a vehicle let in on a field exception (ADR 0056).
+  field_exception
 
   @@map("gate_subject_type")
 }
@@ -114,6 +116,8 @@ enum GateEntryMethod {
   /// Let in against a permit (ADR 0049): a face and an ID's last four, a
   /// name on a guest list, a truck's plate.
   permit
+  /// Let in on a field exception the management approved (ADR 0056).
+  exception
 
   @@map("gate_entry_method")
 }
@@ -549,6 +553,7 @@ model Tenant {
   dispatchSettings             MaintenanceDispatchSettings?
   slaSettings                  MaintenanceSlaSettings?
   standingInstructions         UnitStandingInstruction[]
+  gateSettings           GateSettings?
 
   @@map("tenants")
 }
@@ -992,6 +997,8 @@ model Account {
   neighbourReportsClosed         NeighbourConversationReport[]       @relation("NeighbourReportCloser")
   neighbourWelcomes              NeighbourWelcome[]
   managementAppointments         ManagementAppointment[]             @relation("ManagementAppointmentProposer")
+  fieldExceptionsRaised  GateFieldException[] @relation("FieldExceptionRaisedBy")
+  fieldExceptionsDecided GateFieldException[] @relation("FieldExceptionDecidedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1098,6 +1105,7 @@ model Unit {
   billingPlanOverrides       BillingPlanOverride[]
   financePayments            FinancePayment[]
   paymentSessions            PaymentSession[]
+  fieldExceptions        GateFieldException[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -1361,6 +1369,7 @@ model WorkerEngagement {
   cardIncidents   WorkerCardIncident[]
   gateRequests    GateApprovalRequest[]
   visitReceptions TicketVisit[]
+  fieldExceptions        GateFieldException[]
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId])
@@ -1950,6 +1959,7 @@ model Gate {
   shifts   GuardShift[]
   requests GateApprovalRequest[]
   works    Announcement[]
+  fieldExceptions        GateFieldException[]
 
   @@unique([tenantId, name])
   @@unique([tenantId, id])
@@ -1980,6 +1990,7 @@ model GuardShift {
   gate     Gate?                 @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
   place    Place?                @relation(fields: [tenantId, placeId], references: [tenantId, id], onUpdate: Restrict)
   requests GateApprovalRequest[]
+  fieldExceptions GateFieldException[]
 
   @@unique([tenantId, id])
   @@index([tenantId, gateId])
@@ -2003,6 +2014,7 @@ model VisitorDetails {
 
   passes   VisitorPass[]
   requests GateApprovalRequest[]
+  fieldExceptions GateFieldException[]
 
   @@unique([tenantId, id])
   @@index([tenantId, expiresAt])
@@ -2113,6 +2125,8 @@ model GateEntry {
   unconfirmed       Boolean         @default(false)
   /// A pointer: the details are deleted when they expire.
   visitorDetailsId  String?         @map("visitor_details_id") @db.Uuid
+  /// The field exception it came in on (ADR 0056): no key, as approvals.
+  fieldExceptionId  String?         @map("field_exception_id") @db.Uuid
 
   @@index([tenantId, subjectType, subjectId, occurredAt(sort: Desc)], map: "gate_entries_tenant_id_subject_idx")
   @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)])
@@ -2157,6 +2171,73 @@ model GateApprovalRequest {
   @@unique([tenantId, id])
   @@index([tenantId, unitId, status])
   @@map("gate_approval_requests")
+}
+
+/// The gate's settings (ADR 0056): one row per compound, created with it.
+/// Each column belongs to one feature.
+model GateSettings {
+  tenantId               String   @id @map("tenant_id") @db.Uuid
+  /// How long the management has to answer a field exception.
+  exceptionAnswerMinutes Int      @default(10) @map("exception_answer_minutes") @db.SmallInt
+  /// How long an approved field exception lets its one entry in.
+  exceptionEntryMinutes  Int      @default(15) @map("exception_entry_minutes") @db.SmallInt
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("gate_settings")
+}
+
+/// A guard asks the on-duty management to let in, once, someone the gate
+/// refused (ADR 0056). The first decision wins; nobody answering by
+/// `answerBy` expires it; an approval lets one entry in at its gate until
+/// `entryUntil`. Never a lockdown's or a ban's override. Never deleted:
+/// entries point at it.
+model GateFieldException {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  number             Int
+  /// worker_outside_hours | visitor_without_pass | unregistered_vehicle
+  kind               String
+  /// REASON_CODES.gateExceptionRaise.
+  reasonCode         String    @map("reason_code")
+  gateId             String    @map("gate_id") @db.Uuid
+  shiftId            String    @map("shift_id") @db.Uuid
+  raisedById         String    @map("raised_by_account_id") @db.Uuid
+  unitId             String    @map("unit_id") @db.Uuid
+  engagementId       String?   @map("engagement_id") @db.Uuid
+  permitWorkerId     String?   @map("permit_worker_id") @db.Uuid
+  /// The visitor's name and the vehicle's plate: deleted when they expire.
+  visitorDetailsId   String?   @map("visitor_details_id") @db.Uuid
+  /// pending | approved | rejected | expired | withdrawn
+  status             String    @default("pending")
+  raisedAt           DateTime  @map("raised_at") @db.Timestamptz(3)
+  answerBy           DateTime  @map("answer_by") @db.Timestamptz(3)
+  decidedAt          DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedById        String?   @map("decided_by_account_id") @db.Uuid
+  /// REASON_CODES.gateExceptionReject.
+  rejectReasonCode   String?   @map("reject_reason_code")
+  entryUntil         DateTime? @map("entry_until") @db.Timestamptz(3)
+  usedAt             DateTime? @map("used_at") @db.Timestamptz(3)
+  usedEntryId        String?   @map("used_entry_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  gate           Gate              @relation(fields: [tenantId, gateId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  shift          GuardShift        @relation(fields: [tenantId, shiftId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  raisedBy       Account           @relation("FieldExceptionRaisedBy", fields: [tenantId, raisedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "gate_field_exceptions_tenant_id_raised_by_fkey")
+  decidedBy      Account?          @relation("FieldExceptionDecidedBy", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "gate_field_exceptions_tenant_id_decided_by_fkey")
+  unit           Unit              @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  engagement     WorkerEngagement? @relation(fields: [tenantId, engagementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  permitWorker   PermitWorker?     @relation(fields: [tenantId, permitWorkerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  visitorDetails VisitorDetails?   @relation(fields: [tenantId, visitorDetailsId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "gate_field_exceptions_number_key")
+  @@unique([tenantId, usedEntryId], map: "gate_field_exceptions_used_entry_key")
+  @@index([tenantId, raisedAt(sort: Desc), id(sort: Desc)], map: "gate_field_exceptions_list_idx")
+  @@index([tenantId, shiftId], map: "gate_field_exceptions_shift_idx")
+  @@map("gate_field_exceptions")
 }
 
 // ============================================================================
@@ -5914,6 +5995,7 @@ enum SafetyCounterSeries {
   service
   incident
   violation
+  field_exception
 
   @@map("safety_counter_series")
 }
@@ -6182,6 +6264,7 @@ model PermitWorker {
   purgedAt     DateTime?      @map("purged_at") @db.Timestamptz(3)
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  fieldExceptions GateFieldException[]
 
   @@unique([tenantId, id])
   @@index([tenantId, permitId, createdAt, id], map: "permit_workers_permit_idx")

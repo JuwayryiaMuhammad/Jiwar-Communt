@@ -1955,6 +1955,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/field-exceptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask the management to let someone the gate refused in, once
+         * @description Inside a shift at a gate. Never past a lockdown (LOCKDOWN_ACTIVE) or a ban (ENTRY_BLOCKED). Every holder of `gate_exceptions.decide` is told; nobody answering by `answerBy` expires it.
+         */
+        post: operations["GuardFieldExceptionsController_raise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/field-exceptions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a field exception of my gate (poll while waiting) */
+        get: operations["GuardFieldExceptionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/field-exceptions/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a pending field exception */
+        post: operations["GuardFieldExceptionsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/found-items": {
         parameters: {
             query?: never;
@@ -8595,6 +8649,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/gate/field-exceptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the field exceptions, newest first */
+        get: operations["StaffFieldExceptionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/field-exceptions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a field exception */
+        get: operations["StaffFieldExceptionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/field-exceptions/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve or reject a field exception
+         * @description The first answer wins (GATE_EXCEPTION_DECIDED with params.status otherwise; `expired` when its deadline passed first). An approval lets one entry in at its gate for `gate_settings.exceptionEntryMinutes`.
+         */
+        post: operations["StaffFieldExceptionsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the gate’s settings */
+        get: operations["GateSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the gate’s settings
+         * @description What is left out stays. A field exception already raised or approved keeps the deadlines written on it.
+         */
+        patch: operations["GateSettingsController_update"];
+        trace?: never;
+    };
     "/api/v1/staff/governance/approvals": {
         parameters: {
             query?: never;
@@ -14334,10 +14463,10 @@ export interface components {
          */
         BlocklistMatchOutcome: "refused" | "flagged" | "noted";
         /**
-         * @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup.
+         * @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056).
          * @enum {string}
          */
-        BlocklistMatchSource: "visitor_pass" | "move_permit" | "event_guest" | "gate_request" | "verify" | "entry" | "plate_lookup" | "id_lookup";
+        BlocklistMatchSource: "visitor_pass" | "move_permit" | "event_guest" | "gate_request" | "verify" | "entry" | "plate_lookup" | "id_lookup" | "field_exception";
         BlocklistMatchView: {
             /** @description Who recorded or looked it up. */
             actor: components["schemas"]["AccountRefView"];
@@ -14350,12 +14479,12 @@ export interface components {
             kind: components["schemas"]["BlocklistKind"];
             /** @description `refused`: kept out; `flagged`: let in and watched; `noted`: met on a record or a lookup. */
             outcome: components["schemas"]["BlocklistMatchOutcome"];
-            /** @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup. */
+            /** @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056). */
             source: components["schemas"]["BlocklistMatchSource"];
             /** Format: uuid */
             subjectId: string | null;
             /** @enum {string|null} */
-            subjectType: "visitor_pass" | "gate_request" | "event_guest" | "move_permit" | null;
+            subjectType: "visitor_pass" | "gate_request" | "event_guest" | "move_permit" | "field_exception" | null;
         };
         BlocklistMatchViewList: {
             data: components["schemas"]["BlocklistMatchView"][];
@@ -17166,6 +17295,15 @@ export interface components {
             /** @description On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject). */
             reasonCode?: string;
         };
+        DecideFieldExceptionDto: {
+            /** @enum {string} */
+            decision: "approve" | "reject";
+            /**
+             * @description A rejection’s, from the closed list `gateExceptionReject` (required then); never with an approval.
+             * @enum {string}
+             */
+            reasonCode?: "not_expected" | "identity_unclear" | "outside_policy" | "other";
+        };
         DecideViolationAppealDto: {
             /**
              * @description `upheld`: open again. `cancelled`: it is cancelled.
@@ -17856,6 +17994,26 @@ export interface components {
             /** @description Written by the staff. A language is whole or absent; at least one is there. */
             titleEn: string | null;
         };
+        ExceptionPersonView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        ExceptionWorkerDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description A household’s worker (its engagement) or a works permit’s contractor worker.
+             * @enum {string}
+             */
+            type: "worker_engagement" | "permit_worker";
+        };
+        ExceptionWorkerView: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            type: "worker_engagement" | "permit_worker";
+        };
         ExitEscortDto: {
             /** @description The child is leaving alone. */
             alone?: boolean;
@@ -18306,7 +18464,7 @@ export interface components {
         /** @enum {string} */
         GateDirection: "in" | "out";
         /** @enum {string} */
-        GateEntryMethod: "code" | "qr" | "approval" | "guard" | "system" | "permit";
+        GateEntryMethod: "code" | "qr" | "approval" | "guard" | "system" | "permit" | "exception";
         GateEscortView: {
             /** @example Mona */
             firstName: string | null;
@@ -18323,6 +18481,13 @@ export interface components {
             guests: components["schemas"]["GatePermitGuestView"][] | null;
             title: string | null;
         };
+        /** @enum {string} */
+        GateExceptionKind: "worker_outside_hours" | "visitor_without_pass" | "unregistered_vehicle";
+        /**
+         * @description A pending one past `answerBy` reads `expired`, whether or not the sweep wrote it yet.
+         * @enum {string}
+         */
+        GateExceptionStatus: "pending" | "approved" | "rejected" | "expired" | "withdrawn";
         GateInstructionsDto: {
             delivery: components["schemas"]["DeliveryInstruction"];
             uninvitedVisitor: components["schemas"]["VisitorInstruction"];
@@ -18525,6 +18690,18 @@ export interface components {
         };
         /** @enum {string} */
         GateServiceWhen: "now" | "in_15" | "in_30";
+        GateSettingsResponse: {
+            /**
+             * @description Minutes the management has to answer a field exception.
+             * @example 10
+             */
+            exceptionAnswerMinutes: number;
+            /**
+             * @description Minutes an approved field exception lets its entry in.
+             * @example 15
+             */
+            exceptionEntryMinutes: number;
+        };
         /** @enum {string} */
         GateStatus: "active" | "inactive";
         GateStatusView: {
@@ -18541,7 +18718,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        GateSubjectType: "visitor_pass" | "worker_engagement" | "gate_request" | "permit_worker" | "event_guest" | "move_permit";
+        GateSubjectType: "visitor_pass" | "worker_engagement" | "gate_request" | "permit_worker" | "event_guest" | "move_permit" | "field_exception";
         GateView: {
             /** Format: date-time */
             createdAt: string;
@@ -18852,6 +19029,40 @@ export interface components {
             /** Format: date-time */
             since: string;
             subject: components["schemas"]["BlocklistSubject"];
+        };
+        GuardFieldExceptionResponse: {
+            /**
+             * Format: date-time
+             * @description Unanswered by then, it expires.
+             */
+            answerBy: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /**
+             * Format: date-time
+             * @description Approved: its one entry, at its gate, until then (`POST /gate/entries` with `subjectType: field_exception`).
+             */
+            entryUntil: string | null;
+            /** Format: uuid */
+            gateId: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["GateExceptionKind"];
+            /** Format: date-time */
+            raisedAt: string;
+            /** @enum {string} */
+            reasonCode: "resident_unreachable" | "expected_by_resident" | "regular_visitor" | "urgent_service" | "delivery_waiting" | "emergency" | "other";
+            /** @example GX-000042 */
+            reference: string;
+            /** @enum {string|null} */
+            rejectReasonCode: "not_expected" | "identity_unclear" | "outside_policy" | "other" | null;
+            /** @description A pending one past `answerBy` reads `expired`, whether or not the sweep wrote it yet. */
+            status: components["schemas"]["GateExceptionStatus"];
+            unitCode: string;
+            /** Format: date-time */
+            usedAt: string | null;
+            /** @description A worker’s: they come in as themselves, on this exception. */
+            worker: components["schemas"]["ExceptionWorkerView"] | null;
         };
         GuardGateView: {
             /** Format: uuid */
@@ -22199,6 +22410,26 @@ export interface components {
             impact: string;
             type: components["schemas"]["ApprovalType"];
         };
+        RaiseFieldExceptionDto: {
+            /** @description The full ID number on the card they show: matched against the blocklist, never stored, nor kept in the idempotency record. */
+            idNumber?: string;
+            kind: components["schemas"]["GateExceptionKind"];
+            /**
+             * @description Why the guard asks, from the closed list `gateExceptionRaise`.
+             * @enum {string}
+             */
+            reasonCode: "resident_unreachable" | "expected_by_resident" | "regular_visitor" | "urgent_service" | "delivery_waiting" | "emergency" | "other";
+            /** @description A visitor’s or a vehicle’s: the unit they came for. */
+            unitCode?: string;
+            /**
+             * @description Required for `unregistered_vehicle`, optional for a visitor’s car. Kept 30 days and matched against the blocklist.
+             * @example ق ب ط 1234
+             */
+            vehiclePlate?: string;
+            /** @description As the visitor gives it: shown to the management deciding, kept 30 days, never in a notification. */
+            visitorName?: string;
+            worker?: components["schemas"]["ExceptionWorkerDto"];
+        };
         RaiseSosDto: {
             /** @description Raised from the post of your open shift, a gate or a zone (ADR 0053). */
             type: components["schemas"]["EmergencyType"];
@@ -24531,6 +24762,53 @@ export interface components {
             data: components["schemas"]["StaffFacilityView"][];
             nextCursor: string | null;
         };
+        StaffFieldExceptionResponse: {
+            /**
+             * Format: date-time
+             * @description Unanswered by then, it expires.
+             */
+            answerBy: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decidedBy: components["schemas"]["ExceptionPersonView"] | null;
+            /**
+             * Format: date-time
+             * @description Approved: its one entry, at its gate, until then (`POST /gate/entries` with `subjectType: field_exception`).
+             */
+            entryUntil: string | null;
+            /** Format: uuid */
+            gateId: string;
+            gateName: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["GateExceptionKind"];
+            /** Format: date-time */
+            raisedAt: string;
+            /** @description The guard who asked. */
+            raisedBy: components["schemas"]["ExceptionPersonView"];
+            /** @enum {string} */
+            reasonCode: "resident_unreachable" | "expected_by_resident" | "regular_visitor" | "urgent_service" | "delivery_waiting" | "emergency" | "other";
+            /** @example GX-000042 */
+            reference: string;
+            /** @enum {string|null} */
+            rejectReasonCode: "not_expected" | "identity_unclear" | "outside_policy" | "other" | null;
+            /** @description A pending one past `answerBy` reads `expired`, whether or not the sweep wrote it yet. */
+            status: components["schemas"]["GateExceptionStatus"];
+            unitCode: string;
+            /** Format: date-time */
+            usedAt: string | null;
+            /** @description While the visitor’s data lasts (30 days). */
+            vehiclePlate: string | null;
+            /** @description While the visitor’s data lasts (30 days). */
+            visitorName: string | null;
+            /** @description A worker’s: they come in as themselves, on this exception. */
+            worker: components["schemas"]["ExceptionWorkerView"] | null;
+            workerName: string | null;
+        };
+        StaffFieldExceptionResponseList: {
+            data: components["schemas"]["StaffFieldExceptionResponse"][];
+            nextCursor: string | null;
+        };
         StaffFinePaymentView: {
             amount: string | null;
             /** Format: date-time */
@@ -26587,6 +26865,12 @@ export interface components {
             phone?: string | null;
             /** @description Inactive ends the shifts open at the gate. */
             status?: components["schemas"]["GateStatus"];
+        };
+        UpdateGateSettingsDto: {
+            /** @description Minutes the management has to answer a field exception before it expires. */
+            exceptionAnswerMinutes?: number;
+            /** @description Minutes an approved field exception lets its one entry in, at its gate. */
+            exceptionEntryMinutes?: number;
         };
         UpdateGovernanceElectionDto: {
             bodyAr?: string | null;
@@ -30418,6 +30702,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryView"];
+                };
+            };
+        };
+    };
+    GuardFieldExceptionsController_raise: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaiseFieldExceptionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardFieldExceptionResponse"];
+                };
+            };
+        };
+    };
+    GuardFieldExceptionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardFieldExceptionResponse"];
+                };
+            };
+        };
+    };
+    GuardFieldExceptionsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardFieldExceptionResponse"];
                 };
             };
         };
@@ -40463,6 +40818,122 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    StaffFieldExceptionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `pending`: what may still be answered now; `decided`: answered, expired or withdrawn. */
+                status?: "pending" | "decided" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFieldExceptionResponseList"];
+                };
+            };
+        };
+    };
+    StaffFieldExceptionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFieldExceptionResponse"];
+                };
+            };
+        };
+    };
+    StaffFieldExceptionsController_decide: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideFieldExceptionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFieldExceptionResponse"];
+                };
+            };
+        };
+    };
+    GateSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateSettingsResponse"];
+                };
+            };
+        };
+    };
+    GateSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGateSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateSettingsResponse"];
                 };
             };
         };

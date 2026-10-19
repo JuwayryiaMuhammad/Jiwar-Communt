@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   Prisma,
   type GateApprovalRequest,
+  type GateFieldException,
   type GateDirection,
   type GateEntry,
   type GateEntryMethod,
@@ -23,6 +24,9 @@ import { Notifier } from '../../core/notifications/notifier';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { ApprovalsService } from '../approvals/approvals.service';
+import { entryRefusal, WAIVABLE } from '../exceptions/field-exception-rules';
+import { FieldExceptionsService } from '../exceptions/field-exceptions.service';
+import { SafetyCore } from '../safety/safety-core';
 import { permitReference } from '../permits/permit-core';
 import { PermitIdCheck } from '../permits/permit-id-check';
 import { BlocklistMatcher, entryBlocked } from '../blocklist/blocklist-matcher';
@@ -173,6 +177,8 @@ export class EntriesService implements OnModuleInit {
     private readonly ids: PermitIdCheck,
     private readonly lockdown: LockdownCore,
     private readonly matcher: BlocklistMatcher,
+    private readonly exceptions: FieldExceptionsService,
+    private readonly safety: SafetyCore,
     config: ConfigService<Env, true>,
   ) {
     this.unconfirmedAfterMs =
@@ -226,7 +232,12 @@ export class EntriesService implements OnModuleInit {
         },
       );
     const recorded = await this.tenantTx.withTenantTx(async (tx) => {
-      const shift = await this.shifts.requireOpen(tx);
+      // The guard's own account first, then their shift, both FOR SHARE
+      // (ADR 0056's lock order): an erasure, a deactivation or the shift's
+      // end finished before, and the guard is refused, or waits for this
+      // entry.
+      await this.safety.lockSelf(tx);
+      const shift = await this.shifts.requireOpenLocked(tx);
       // A guard off duty learns nothing; a locked-out one learns no more.
       if (idCheck) {
         const locked = await this.ids.lockedOut(
@@ -281,8 +292,20 @@ export class EntriesService implements OnModuleInit {
       // racing this entry waits for it, or wins before it), its timeout
       // applied first. A worker let in off schedule stays the worker.
       let approval: GateApprovalRequest | null = null;
+      let exception: GateFieldException | null = null;
       let subject: GateSubject | null;
-      if (input.subjectType === 'gate_request') {
+      if (input.subjectType === 'field_exception') {
+        // On a field exception (ADR 0056): under its lock (an answer or an
+        // expiry racing this entry waits, or wins before it). A worker's
+        // comes in as the worker; a visitor's or a vehicle's as the
+        // exception itself.
+        const exists = await tx.gateFieldException.count({
+          where: { id: input.subjectId },
+        });
+        if (!exists) throw subjectNotFound();
+        exception = await this.exceptions.lockedResolved(tx, input.subjectId);
+        subject = await this.exceptions.subjectOf(tx, exception);
+      } else if (input.subjectType === 'gate_request') {
         const exists = await tx.gateApprovalRequest.count({
           where: { id: input.subjectId },
         });
@@ -305,6 +328,8 @@ export class EntriesService implements OnModuleInit {
       }
       if (!subject) throw subjectNotFound();
       await this.lockSubject(tx, subject.type, subject.id);
+      // An exception's one entry is spent: say so before anything else.
+      if (input.direction === 'in' && exception?.usedAt) throw refused('used');
       const inside = await this.insideCount(tx, subject.type, subject.id);
       let method: GateEntryMethod;
       if (input.direction === 'in') {
@@ -322,7 +347,14 @@ export class EntriesService implements OnModuleInit {
           );
         }
         const tz = (await this.settings.inTx(tx, tenantId)).timezone;
-        if (approval) {
+        if (exception) {
+          await this.checkException(tx, exception, subject, occurredAt, tz, {
+            gateId: shift.gateId,
+            guardId,
+            idLast4: input.idLast4,
+          });
+          method = 'exception';
+        } else if (approval) {
           await this.checkApproval(tx, approval, subject, occurredAt, tz);
           method = 'approval';
         } else {
@@ -415,7 +447,12 @@ export class EntriesService implements OnModuleInit {
         unconfirmed: false,
         approvalRequestId:
           input.direction === 'in' && approval ? approval.id : null,
+        fieldExceptionId:
+          input.direction === 'in' && exception ? exception.id : null,
       });
+      // The approval's one entry, under the lock this entry holds.
+      if (input.direction === 'in' && exception)
+        await this.exceptions.markUsed(tx, exception.id, entry);
       if (subject.engagement) {
         // The household knows when its worker comes and goes (ADR 0028).
         const holders = await this.community.holders(
@@ -587,6 +624,50 @@ export class EntriesService implements OnModuleInit {
     }
   }
 
+  /**
+   * A field exception lets in once, at its gate, within its window (ADR
+   * 0056). A worker's waives only their hours (WAIVABLE): anything else
+   * that refuses the worker refuses them still, and a contractor still
+   * shows the last four of their ID.
+   */
+  private async checkException(
+    tx: TenantTxClient,
+    e: GateFieldException,
+    subject: GateSubject,
+    at: Date,
+    tz: string,
+    by: { gateId: string; guardId: string; idLast4?: string },
+  ): Promise<void> {
+    const refusal = entryRefusal(e, at, by.gateId);
+    if (refusal) throw refused(refusal);
+    if (!e.engagementId && !e.permitWorkerId) return;
+    const type = e.engagementId ? 'worker_engagement' : 'permit_worker';
+    const worker = await this.subjects.refusal(tx, subject, at, tz);
+    if (worker && !WAIVABLE[type].includes(worker)) throw refused(worker);
+    if (subject.permitWorker) {
+      const tenantId = this.ctx.txTenantId;
+      if (!by.idLast4)
+        throw appError.badRequest(
+          ErrorCode.VALIDATION_FAILED,
+          'A contractor worker comes in with the last four of their ID',
+          {
+            fields: [{ field: 'idLast4', code: FieldErrorCode.FIELD_REQUIRED }],
+          },
+        );
+      const locked = await this.ids.lockedOut(tenantId, by.guardId, subject.id);
+      if (locked)
+        throw appError.tooManyRequests(
+          ErrorCode.PERMIT_ID_LOCKED,
+          'Too many wrong IDs, try again later',
+          { params: { scope: locked } },
+        );
+      if (!this.ids.matches(tenantId, subject.permitWorker, by.idLast4)) {
+        await this.ids.failed(tenantId, by.guardId, subject.id);
+        throw refused('id_mismatch');
+      }
+    }
+  }
+
   /** How many on the subject are inside now: its `in`s less its `out`s. */
   async insideCount(
     tx: TenantTxClient,
@@ -618,6 +699,8 @@ export class EntriesService implements OnModuleInit {
       occurredAt: Date;
       unconfirmed: boolean;
       approvalRequestId: string | null;
+      /** The field exception an `in` came on (ADR 0056). */
+      fieldExceptionId?: string | null;
     },
   ): Promise<GateEntry> {
     return tx.gateEntry.create({
@@ -633,6 +716,7 @@ export class EntriesService implements OnModuleInit {
         direction: e.direction,
         method: e.method,
         approvalRequestId: e.approvalRequestId,
+        fieldExceptionId: e.fieldExceptionId ?? null,
         occurredAt: e.occurredAt,
         unconfirmed: e.unconfirmed,
         visitorDetailsId: e.subject.visitorDetailsId,
@@ -680,6 +764,9 @@ export class EntriesService implements OnModuleInit {
         return;
       case 'move_permit':
         await tx.$queryRaw`SELECT id FROM unit_permits WHERE id = ${id}::uuid FOR UPDATE`;
+        return;
+      case 'field_exception':
+        await tx.$queryRaw`SELECT id FROM gate_field_exceptions WHERE id = ${id}::uuid FOR UPDATE`;
         return;
       default:
         unknownType(type);

@@ -1054,6 +1054,16 @@ export const ErrorCode = {
   COMMUNITY_EVENT_NOT_FOR_CHILDREN: 'COMMUNITY_EVENT_NOT_FOR_CHILDREN',
   /** The child is not of the event's age range, params.min to params.max (409). */
   COMMUNITY_EVENT_AGE_MISMATCH: 'COMMUNITY_EVENT_AGE_MISMATCH',
+  // The gate's completion (ADR 0056)
+  /** Unknown, or another compound's field exception. */
+  GATE_EXCEPTION_NOT_FOUND: 'GATE_EXCEPTION_NOT_FOUND',
+  /**
+   * The exception was decided, expired or withdrawn already (409,
+   * params.status): the first answer won.
+   */
+  GATE_EXCEPTION_DECIDED: 'GATE_EXCEPTION_DECIDED',
+  /** The worker may come in as they are: there is nothing to ask (409). */
+  GATE_EXCEPTION_NOT_NEEDED: 'GATE_EXCEPTION_NOT_NEEDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

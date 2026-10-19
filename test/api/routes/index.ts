@@ -39,6 +39,10 @@ import {
 } from './finance';
 import { GATE_ROUTES } from './gate';
 import {
+  FIELD_EXCEPTION_ROUTES,
+  GATE_SETTINGS_ROUTES,
+} from './gate-completion';
+import {
   DAILY_REPORT_ROUTES,
   FOUND_ITEM_ROUTES,
   HANDOVER_ROUTES,
@@ -278,4 +282,6 @@ export const ROUTES: Row[] = [
   ...CHILD_ESCORT_ROUTES,
   ...CHILD_GATE_ROUTES,
   ...CHILD_EVENT_ROUTES,
+  ...GATE_SETTINGS_ROUTES,
+  ...FIELD_EXCEPTION_ROUTES,
 ];

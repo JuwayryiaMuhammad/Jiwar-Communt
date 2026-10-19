@@ -85,6 +85,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'violations.manage',
       'violations.issue',
       'lockdown.end',
+      'gate_exceptions.decide',
     ],
   },
   {

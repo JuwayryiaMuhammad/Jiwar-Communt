@@ -20,11 +20,18 @@ export type MatchSource =
   | 'verify'
   | 'entry'
   | 'plate_lookup'
-  | 'id_lookup';
+  | 'id_lookup'
+  // A field exception's visitor or vehicle (ADR 0056).
+  | 'field_exception';
 
 /** The gate subject it met, when there is one. */
 export interface MatchSubject {
-  type: 'visitor_pass' | 'gate_request' | 'event_guest' | 'move_permit';
+  type:
+    | 'visitor_pass'
+    | 'gate_request'
+    | 'event_guest'
+    | 'move_permit'
+    | 'field_exception';
   id: string;
 }
 
@@ -240,6 +247,24 @@ export class BlocklistMatcher {
           plate: d?.vehiclePlate ?? null,
           subject: { type: 'gate_request', id: r.id },
           // The household was asked, and decided: nobody to tell again.
+          household: null,
+        };
+      }
+      case 'field_exception': {
+        // A visitor's or a vehicle's (ADR 0056): the plate the guard gave.
+        const e = await tx.gateFieldException.findUnique({
+          where: { id: subjectId },
+          select: { id: true, visitorDetailsId: true },
+        });
+        if (!e?.visitorDetailsId) return null;
+        const d = await tx.visitorDetails.findUnique({
+          where: { id: e.visitorDetailsId },
+          select: { vehiclePlate: true },
+        });
+        return {
+          plate: d?.vehiclePlate ?? null,
+          subject: { type: 'field_exception', id: e.id },
+          // The management decided it: no household to tell.
           household: null,
         };
       }

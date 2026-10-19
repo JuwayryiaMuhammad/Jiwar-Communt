@@ -1710,4 +1710,59 @@ describe('Permission sync', () => {
       });
     });
   });
+
+  describe('Phase G7 (ADR 0056)', () => {
+    const g7 = ['gate_exceptions.decide'];
+    /** The catalog before G7: none of its permissions anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !g7.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !g7.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: the manager only', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync G7 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...g7].sort());
+      expect(report.rolesCreated).toEqual([]);
+      expect((await role(t, 'manager')).permissions).toEqual(
+        expect.arrayContaining(g7),
+      );
+      // A guard asks with gate.operate; the supervisor keeps the guards, not
+      // the gate's exceptions.
+      for (const key of [
+        'guard',
+        'security_supervisor',
+        'resident',
+        'family_member',
+        'technician',
+        'maintenance_supervisor',
+        'accountant',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => g7.includes(p)),
+        ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
 });

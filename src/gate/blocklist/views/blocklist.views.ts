@@ -144,10 +144,11 @@ export class BlocklistMatchView {
       'entry',
       'plate_lookup',
       'id_lookup',
+      'field_exception',
     ],
     enumName: 'BlocklistMatchSource',
     description:
-      'Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup.',
+      'Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised (ADR 0056).',
   })
   source: string;
   @ApiProperty({
@@ -158,7 +159,13 @@ export class BlocklistMatchView {
   })
   outcome: string;
   @ApiProperty({
-    enum: ['visitor_pass', 'gate_request', 'event_guest', 'move_permit'],
+    enum: [
+      'visitor_pass',
+      'gate_request',
+      'event_guest',
+      'move_permit',
+      'field_exception',
+    ],
     nullable: true,
   })
   subjectType: string | null;

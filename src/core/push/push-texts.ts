@@ -1851,6 +1851,37 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'خرج طفل من منزلكم من الكمبوند. افتح التطبيق للتفاصيل.',
     },
   },
+  // Field exceptions (ADR 0056): no name, no plate.
+  'gate_exception.requested': {
+    en: {
+      title: 'An exception to decide',
+      body: 'A guard at {gateName} asks to let someone in for unit {unitCode}. Open the app to answer.',
+    },
+    ar: {
+      title: 'استثناء بانتظار قرارك',
+      body: 'يطلب أحد الحراس عند {gateName} السماح بدخول شخص للوحدة {unitCode}. افتح التطبيق للرد.',
+    },
+  },
+  'gate_exception.decided': {
+    en: {
+      title: 'The management answered',
+      body: 'Your exception for unit {unitCode} was answered. Open the app to see it.',
+    },
+    ar: {
+      title: 'ردّت الإدارة',
+      body: 'تم الرد على طلب الاستثناء الخاص بالوحدة {unitCode}. افتح التطبيق للاطلاع.',
+    },
+  },
+  'gate_exception.expired': {
+    en: {
+      title: 'No answer in time',
+      body: 'Nobody answered your exception for unit {unitCode}. Do not let them in.',
+    },
+    ar: {
+      title: 'لم يصل رد في الوقت المحدد',
+      body: 'لم يرد أحد على طلب الاستثناء الخاص بالوحدة {unitCode}. لا تسمح بالدخول.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

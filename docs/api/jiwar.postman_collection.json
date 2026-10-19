@@ -11352,7 +11352,7 @@
               },
               "raw": "{\n  \"subjectType\": \"visitor_pass\",\n  \"subjectId\": \"\",\n  \"direction\": \"in\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `direction` | `in` \\| `out` | yes |  |\n| `id` | string (uuid) |  | Client-generated (UUIDv7): a retry with the same id records once. |\n| `idLast4` | string |  | A contractor worker’s `in` (`permit_worker`, ADR 0049): the last four characters of the ID they show, typed by the guard after matching their face. Required, offline too (FIELD_REQUIRED). A wrong one is refused (`id_mismatch`); five in 15 minutes lock the guard out, ten in a day the worker (PERMIT_ID_LOCKED). Never stored, never shown. |\n| `occurredAt` | string (date-time) |  | When it happened (offline guards): up to 24 h back. |\n| `subjectId` | string (uuid) | yes |  |\n| `subjectType` | `visitor_pass` \\| `worker_engagement` \\| `gate_request` \\| `permit_worker` \\| `event_guest` \\| `move_permit` | yes |  |\n| `via` | `code` \\| `qr` |  | An entry on a pass or a worker code: typed or scanned. Exits and approvals keep their own method. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `direction` | `in` \\| `out` | yes |  |\n| `id` | string (uuid) |  | Client-generated (UUIDv7): a retry with the same id records once. |\n| `idLast4` | string |  | A contractor worker’s `in` (`permit_worker`, ADR 0049): the last four characters of the ID they show, typed by the guard after matching their face. Required, offline too (FIELD_REQUIRED). A wrong one is refused (`id_mismatch`); five in 15 minutes lock the guard out, ten in a day the worker (PERMIT_ID_LOCKED). Never stored, never shown. |\n| `occurredAt` | string (date-time) |  | When it happened (offline guards): up to 24 h back. |\n| `subjectId` | string (uuid) | yes |  |\n| `subjectType` | `visitor_pass` \\| `worker_engagement` \\| `gate_request` \\| `permit_worker` \\| `event_guest` \\| `move_permit` \\| `field_exception` | yes |  |\n| `via` | `code` \\| `qr` |  | An entry on a pass or a worker code: typed or scanned. Exits and approvals keep their own method. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -11377,6 +11377,109 @@
                 "entries"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/entries"
+            }
+          }
+        },
+        {
+          "name": "Ask the management to let someone the gate refused in, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"worker_outside_hours\",\n  \"reasonCode\": \"resident_unreachable\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `idNumber` | string |  | The full ID number on the card they show: matched against the blocklist, never stored, nor kept in the idempotency record. |\n| `kind` | `worker_outside_hours` \\| `visitor_without_pass` \\| `unregistered_vehicle` | yes |  |\n| `reasonCode` | `resident_unreachable` \\| `expected_by_resident` \\| `regular_visitor` \\| `urgent_service` \\| `delivery_waiting` \\| `emergency` \\| `other` | yes | Why the guard asks, from the closed list `gateExceptionRaise`. |\n| `unitCode` | string |  | A visitor’s or a vehicle’s: the unit they came for. |\n| `vehiclePlate` | string |  | Required for `unregistered_vehicle`, optional for a visitor’s car. Kept 30 days and matched against the blocklist. |\n| `visitorName` | string |  | As the visitor gives it: shown to the management deciding, kept 30 days, never in a notification. |\n| `worker` | object |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "field-exceptions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/field-exceptions"
+            }
+          }
+        },
+        {
+          "name": "Get a field exception of my gate (poll while waiting)",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "field-exceptions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/field-exceptions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw a pending field exception",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "field-exceptions",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/field-exceptions/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -11624,6 +11727,183 @@
                 "visitor-parking"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/visitor-parking"
+            }
+          }
+        },
+        {
+          "name": "List the field exceptions, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "field-exceptions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`pending`: what may still be answered now; `decided`: answered, expired or withdrawn.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/field-exceptions"
+            }
+          }
+        },
+        {
+          "name": "Get a field exception",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "field-exceptions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/field-exceptions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve or reject a field exception",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"decision\": \"approve\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `approve` \\| `reject` | yes |  |\n| `reasonCode` | `not_expected` \\| `identity_unclear` \\| `outside_policy` \\| `other` |  | A rejection’s, from the closed list `gateExceptionReject` (required then); never with an approval. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "field-exceptions",
+                ":id",
+                "decide"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/field-exceptions/:id/decide",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the gate’s settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/settings"
+            }
+          }
+        },
+        {
+          "name": "Change the gate’s settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/settings"
             }
           }
         }

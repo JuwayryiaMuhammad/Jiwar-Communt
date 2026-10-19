@@ -1379,6 +1379,17 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'community_event',
   },
+  // The gate's completion (ADR 0056). Ids, codes and counts only: never a
+  // visitor's name nor a plate.
+  'gate_settings.changed': { log: 'tenant', target: 'tenant' },
+  // metadata: number, kind, reasonCode, unitId, gateId, shiftId, and
+  // engagementId or permitWorkerId; visitorName and plate as booleans.
+  'gate_exception.raised': { log: 'tenant', target: 'gate_field_exception' },
+  // metadata: decision (approved | rejected), rejectReasonCode.
+  'gate_exception.decided': { log: 'tenant', target: 'gate_field_exception' },
+  // By the system: nobody answered by its deadline.
+  'gate_exception.expired': { log: 'tenant', target: 'gate_field_exception' },
+  'gate_exception.withdrawn': { log: 'tenant', target: 'gate_field_exception' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

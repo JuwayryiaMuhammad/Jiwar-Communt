@@ -196,6 +196,21 @@ export class ShiftsService implements OnModuleInit {
     return { id: shift.id, gateId: shift.gateId, gateName: shift.gate.name };
   }
 
+  /**
+   * As `requireOpen`, with the shift's row FOR SHARE for the rest of the
+   * transaction (ADR 0056's lock order: the account, then the shift): an
+   * end, which locks it for update, waits for this write, or ended it
+   * first and the guard is refused.
+   */
+  async requireOpenLocked(tx: TenantTxClient): Promise<OpenShift> {
+    const shift = await this.requireOpen(tx);
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM guard_shifts
+       WHERE id = ${shift.id}::uuid AND ended_at IS NULL FOR SHARE`;
+    if (!rows.length) throw noOpenShift();
+    return shift;
+  }
+
   /** The caller's open shift wherever it is, or 403 NO_OPEN_SHIFT. */
   async requireOnDuty(tx: TenantTxClient): Promise<DutyShift> {
     const shift = await this.onDuty(tx, this.ctx.accountId);

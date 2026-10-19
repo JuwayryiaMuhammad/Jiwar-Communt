@@ -192,6 +192,11 @@ export class GovernanceElectionsService implements OnModuleInit {
     if (fields.length) throw invalid(fields);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      // Nominations opening at once tell every owner: their accounts
+      // before the seat (by a clock read only for this).
+      const hint = await dbNow(tx);
+      if (windowOf(input, hint).nominationsOpenAt <= hint)
+        await this.access.lockOwners(tx);
       const author = await this.access.requireAuthor(tx);
       await this.contests.requireRoom(tx);
       const now = await dbNow(tx);
@@ -247,6 +252,13 @@ export class GovernanceElectionsService implements OnModuleInit {
   update(id: string, input: ElectionFields): Promise<ElectionRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      const seen = await tx.governanceElection.findUnique({
+        where: { id },
+        select: { nominationsOpenAt: true },
+      });
+      const hint = await dbNow(tx);
+      if (seen && (input.nominationsOpenAt ?? seen.nominationsOpenAt) <= hint)
+        await this.access.lockOwners(tx);
       await this.access.requireAuthor(tx);
       const { election, contest } = await this.lockElection(tx, id, 'update');
       const now = await dbNow(tx);

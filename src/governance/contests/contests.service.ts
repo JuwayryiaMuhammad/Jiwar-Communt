@@ -7,6 +7,7 @@ import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import { GovernanceAccess } from '../access';
 import {
   CONTEST_LIMITS,
   contestStatus,
@@ -53,6 +54,7 @@ export class Contests {
     private readonly ctx: RequestContext,
     private readonly community: CommunityGovernancePort,
     private readonly audit: AuditService,
+    private readonly access: GovernanceAccess,
   ) {}
 
   async create(
@@ -121,6 +123,12 @@ export class Contests {
   ): Promise<string[]> {
     const owners = [...(await this.community.votingOwners(tx)).entries()].sort(
       ([a], [b]) => (a < b ? -1 : 1),
+    );
+    // Each elector row key-shares its account. A member's poll locked the
+    // electorate before the seat; an owner who joined since is locked late.
+    await this.access.lockLate(
+      tx,
+      owners.map(([, accountId]) => accountId),
     );
     const tenantId = this.ctx.txTenantId;
     if (owners.length)

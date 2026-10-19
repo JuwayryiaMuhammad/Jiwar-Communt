@@ -333,6 +333,7 @@ const ERROR_TEXT: Record<string, string> = {
   GOVERNANCE_CANDIDACY_NOT_ALLOWED: 'Only an owner of a unit can stand.',
   GOVERNANCE_ALREADY_CANDIDATE: 'You stand in this election already.',
   GOVERNANCE_NOT_CERTIFIABLE: 'Voting has not been counted yet.',
+  GOVERNANCE_BUSY: 'Someone this would notify is being changed right now. Try again in a moment.',
   BOARD_PUBLICATION_NOT_FOUND: 'This decision does not exist, or was archived.',
   // Patrols (ADR 0052).
   PATROL_CHECKPOINT_NOT_FOUND: 'This checkpoint does not exist.',

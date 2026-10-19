@@ -795,6 +795,12 @@ export const ErrorCode = {
   GOVERNANCE_NOT_CERTIFIABLE: 'GOVERNANCE_NOT_CERTIFIABLE',
   /** Unknown, another compound's, or archived where it must not be. */
   BOARD_PUBLICATION_NOT_FOUND: 'BOARD_PUBLICATION_NOT_FOUND',
+  /**
+   * An account the write would tell or record was being changed (an
+   * erasure, a deactivation) at that instant (409): nothing was written;
+   * retry (ADR 0055).
+   */
+  GOVERNANCE_BUSY: 'GOVERNANCE_BUSY',
   // patrols (ADR 0052)
   /** Unknown, or another compound's. */
   PATROL_CHECKPOINT_NOT_FOUND: 'PATROL_CHECKPOINT_NOT_FOUND',

@@ -5,14 +5,20 @@ import type {
   NotificationParams,
 } from '../core/notifications/kinds';
 import { Notifier } from '../core/notifications/notifier';
+import { GovernanceAccess } from './access';
 
 /**
  * Tells the active accounts among `to` (ADR 0051), in the action's
  * transaction: a notification exists exactly when its cause committed.
+ * Its row key-shares each account: one the write did not lock first is
+ * locked late (`GovernanceAccess.lockLate`, ADR 0055).
  */
 @Injectable()
 export class GovernanceNotices {
-  constructor(private readonly notifier: Notifier) {}
+  constructor(
+    private readonly notifier: Notifier,
+    private readonly access: GovernanceAccess,
+  ) {}
 
   async send(
     tx: TenantTxClient,
@@ -29,10 +35,8 @@ export class GovernanceNotices {
       orderBy: { id: 'asc' },
     });
     if (!active.length) return 0;
-    return this.notifier.notify(
-      tx,
-      active.map((a) => a.id),
-      { kind, params, targetId },
-    );
+    const accountIds = active.map((a) => a.id);
+    await this.access.lockLate(tx, accountIds);
+    return this.notifier.notify(tx, accountIds, { kind, params, targetId });
   }
 }

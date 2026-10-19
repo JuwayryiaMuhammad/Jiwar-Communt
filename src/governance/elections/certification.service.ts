@@ -79,12 +79,14 @@ export class CertificationService implements OnModuleInit {
       // tells, before the board lock.
       await this.access.lockAccounts(tx, await this.told(tx, id));
       await this.access.lockBoard(tx);
+      // The term before the contest (step 3 before 4): a member cancelling
+      // the election holds the term shared and waits for the contest.
+      const open = await this.board.lockOpenTerm(tx);
       const { election, contest } = await this.elections.lockElection(
         tx,
         id,
         'update',
       );
-      const open = await this.board.lockOpenTerm(tx);
       const now = await dbNow(tx);
       const phase = electionPhase(election, contest, now);
       if (phase === 'certified' || phase === 'cancelled')

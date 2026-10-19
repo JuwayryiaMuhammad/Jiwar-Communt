@@ -177,6 +177,10 @@ export class GovernancePollsService implements OnModuleInit {
     if (fields.length) throw invalid(fields);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      // Opening at once tells the electorate: its accounts before the seat
+      // (by a clock read only for this; the decision's is read after).
+      if (opensAtOnce(input.opensAt, await dbNow(tx)))
+        await this.access.lockElectorate(tx);
       const author = await this.access.requireAuthor(tx);
       await this.contests.requireRoom(tx);
       const now = await dbNow(tx);
@@ -231,6 +235,21 @@ export class GovernancePollsService implements OnModuleInit {
   update(id: string, input: PollFields): Promise<PollRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      const seen = await tx.governancePoll.findUnique({
+        where: { id },
+        select: { contestId: true },
+      });
+      const scheduled = seen
+        ? await tx.governanceContest.findUnique({
+            where: { id: seen.contestId },
+            select: { opensAt: true },
+          })
+        : null;
+      if (
+        scheduled &&
+        opensAtOnce(input.opensAt ?? scheduled.opensAt, await dbNow(tx))
+      )
+        await this.access.lockElectorate(tx);
       await this.access.requireAuthor(tx);
       const { poll, contest } = await this.lockPoll(tx, id, 'update');
       const now = await dbNow(tx);
@@ -717,3 +736,8 @@ function audited(
 /** A contest's ballot, as the audit trail records it. */
 const ballotOf = (c: Pick<GovernanceContest, 'secret'>) =>
   c.secret ? 'secret' : 'open';
+
+/** Whether a write's opening time is now or past, by a clock read for this only. */
+function opensAtOnce(opensAt: Date | undefined, now: Date): boolean {
+  return !opensAt || opensAt <= now;
+}

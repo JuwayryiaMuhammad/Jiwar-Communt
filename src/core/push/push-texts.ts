@@ -1902,6 +1902,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'زائرك ما زال داخل المجمع بعد {minutes} دقيقة.',
     },
   },
+  'patrol.geofence_exit': {
+    en: {
+      title: 'Patrol left its area',
+      body: 'A guard on patrol has been outside the route’s area for {minutes} minutes or more. Open the run.',
+    },
+    ar: {
+      title: 'خروج الجولة عن نطاقها',
+      body: 'خرج أحد الحراس في جولة عن نطاق المسار لمدة {minutes} دقيقة أو أكثر. افتح الجولة.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

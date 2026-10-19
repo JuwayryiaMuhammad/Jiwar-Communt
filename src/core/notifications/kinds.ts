@@ -1759,6 +1759,18 @@ export const NOTIFICATION_KINDS = {
     target: 'gate_entry',
     params: { unitCode: {}, minutes: {} },
   },
+  /**
+   * A patrol's guard outside its route's geofence for `minutes` or more
+   * (ADR 0056), once per exit: the `patrols.manage` holders. The target is
+   * the run; never where.
+   */
+  'patrol.geofence_exit': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'patrol_run',
+    params: { minutes: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

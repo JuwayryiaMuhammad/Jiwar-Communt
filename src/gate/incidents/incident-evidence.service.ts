@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { IncidentEvidence } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
-import { appError, ErrorCode } from '../../core/common/errors';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
+import { invalid } from '../../core/common/localized';
 import {
   firstNameRef,
   type FirstNameRefView,
@@ -16,11 +17,12 @@ import { FilesService } from '../../core/files/files.service';
 import type { PresignedRead } from '../../core/files/object-storage';
 import { dbNow } from '../db-clock';
 import { SafetyCore } from '../safety/safety-core';
+import { runNotFound } from '../patrols/guard-patrols.service';
 import { ShiftsService } from '../shifts/shifts.service';
 import { incidentNotFound } from './incidents.service';
 
 /** What an incident may keep beyond its own photos (ADR 0056). */
-export type EvidenceKind = 'visitor_photo';
+export type EvidenceKind = 'visitor_photo' | 'patrol_track';
 
 /** At most this many pieces of evidence per incident. */
 export const EVIDENCE_MAX = 10;
@@ -29,6 +31,7 @@ export interface EvidenceRecord {
   id: string;
   kind: EvidenceKind;
   entryId: string | null;
+  runId: string | null;
   linkedAt: Date;
   linkedBy: FirstNameRefView;
   /** The visitor's photo, presigned and short-lived. */
@@ -39,14 +42,15 @@ export interface EvidenceRecord {
 export type EvidenceSide = 'guard' | 'staff';
 
 /**
- * An incident's evidence (ADR 0056): a visitor's photo at entry, kept for
- * as long as the incident (forever, today) instead of its 30 days. Added
- * by the guard who reported the incident, on duty, or by a keeper
+ * An incident's evidence (ADR 0056): a visitor's photo at entry, or where
+ * a patrol's guard walked, kept for as long as the incident (forever,
+ * today) instead of its 30 days. Added by the guard who reported the
+ * incident, on duty (a track: of their own run), or by a keeper
  * (`incidents.manage`) while it is not closed; never removed.
  *
  * Lock order: the caller's account (FOR SHARE), the incident (FOR UPDATE:
- * a close waits, or closed it first), the photo's row (FOR SHARE: the
- * purge skips it, or deleted it first and there is nothing to keep).
+ * a close waits, or closed it first), the photo's row or the run (FOR
+ * SHARE: the purge skips it, or deleted first what there was to keep).
  */
 @Injectable()
 export class IncidentEvidenceService {
@@ -61,28 +65,46 @@ export class IncidentEvidenceService {
 
   link(
     incidentId: string,
-    input: { kind: EvidenceKind; entryId: string },
+    input: { kind: EvidenceKind; entryId?: string; runId?: string },
     side: EvidenceSide,
   ): Promise<EvidenceRecord> {
+    const subject = this.subjectOf(input);
     return this.tenantTx.withTenantTx(async (tx) => {
       const tenantId = this.ctx.txTenantId;
       await this.safety.lockSelf(tx);
       if (side === 'guard') await this.shifts.requireOnDuty(tx);
       await this.lockedIncident(tx, incidentId, side);
-      const photo = await tx.$queryRaw<{ entry_id: string }[]>`
-        SELECT entry_id FROM gate_entry_photos
-         WHERE tenant_id = ${tenantId}::uuid AND entry_id = ${input.entryId}::uuid
-           FOR SHARE`;
-      if (!photo.length)
-        throw appError.notFound(
-          ErrorCode.ENTRY_PHOTO_NOT_FOUND,
-          'No photo of this entry',
-        );
+      if (subject.entryId) {
+        const photo = await tx.$queryRaw<{ entry_id: string }[]>`
+          SELECT entry_id FROM gate_entry_photos
+           WHERE tenant_id = ${tenantId}::uuid AND entry_id = ${subject.entryId}::uuid
+             FOR SHARE`;
+        if (!photo.length)
+          throw appError.notFound(
+            ErrorCode.ENTRY_PHOTO_NOT_FOUND,
+            'No photo of this entry',
+          );
+      } else {
+        const run = await tx.$queryRaw<{ guard_account_id: string | null }[]>`
+          SELECT guard_account_id FROM patrol_runs
+           WHERE id = ${subject.runId}::uuid FOR SHARE`;
+        if (
+          !run.length ||
+          (side === 'guard' && run[0].guard_account_id !== this.ctx.accountId)
+        )
+          throw runNotFound();
+      }
       const kept = await tx.incidentEvidence.findMany({
         where: { incidentId },
-        select: { entryId: true },
+        select: { entryId: true, runId: true },
       });
-      if (kept.some((e) => e.entryId === input.entryId))
+      if (
+        kept.some(
+          (e) =>
+            (subject.entryId && e.entryId === subject.entryId) ||
+            (subject.runId && e.runId === subject.runId),
+        )
+      )
         throw appError.conflict(
           ErrorCode.INCIDENT_EVIDENCE_EXISTS,
           'The incident keeps it already',
@@ -99,7 +121,8 @@ export class IncidentEvidenceService {
           tenantId,
           incidentId,
           kind: input.kind,
-          entryId: input.entryId,
+          entryId: subject.entryId,
+          runId: subject.runId,
           linkedById: this.ctx.accountId,
           linkedAt: await dbNow(tx),
         },
@@ -110,7 +133,8 @@ export class IncidentEvidenceService {
         metadata: {
           evidenceId: row.id,
           kind: input.kind,
-          entryId: input.entryId,
+          ...(subject.entryId ? { entryId: subject.entryId } : {}),
+          ...(subject.runId ? { runId: subject.runId } : {}),
         },
       });
       return this.record(tx, row);
@@ -140,6 +164,29 @@ export class IncidentEvidenceService {
         orderBy: { id: 'asc' },
       })
     ).map((e) => e.id);
+  }
+
+  /** What the kind names: an entry or a run, the other left out. */
+  private subjectOf(input: {
+    kind: EvidenceKind;
+    entryId?: string;
+    runId?: string;
+  }): { entryId: string | null; runId: string | null } {
+    const wants = input.kind === 'visitor_photo' ? 'entryId' : 'runId';
+    const other = wants === 'entryId' ? 'runId' : 'entryId';
+    const fields = [
+      ...(input[wants]
+        ? []
+        : [{ field: wants, code: FieldErrorCode.FIELD_REQUIRED }]),
+      ...(input[other]
+        ? [{ field: other, code: FieldErrorCode.FIELD_NOT_ALLOWED }]
+        : []),
+    ];
+    if (fields.length) throw invalid(fields);
+    return {
+      entryId: input.entryId ?? null,
+      runId: input.runId ?? null,
+    };
   }
 
   /** The incident, under its lock; a guard's own only; never a closed one. */
@@ -188,6 +235,7 @@ export class IncidentEvidenceService {
       id: r.id,
       kind: r.kind as EvidenceKind,
       entryId: r.entryId,
+      runId: r.runId,
       linkedAt: r.linkedAt,
       linkedBy: firstNameRef(
         by ?? { id: r.linkedById, fullName: null, status: 'erased' },

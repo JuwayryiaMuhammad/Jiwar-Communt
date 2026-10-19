@@ -5,7 +5,9 @@ import {
   entryPhotoRow,
   evidenceRow,
   fieldExceptionRow,
+  geofenceExitRow,
   overstayAlertRow,
+  patrolRunRow,
   serviceVehicleRow,
   vehicleCountRow,
 } from '../setup/gate-completion-rows';
@@ -21,6 +23,7 @@ interface Side {
   unitId: string;
   incidentId: string;
   photoEntryId: string;
+  runId: string;
 }
 
 /**
@@ -93,6 +96,15 @@ const TABLES: Table[] = [
       }),
   },
   {
+    table: 'patrol_geofence_exits',
+    insert: (tx, own, link) =>
+      geofenceExitRow(tx, {
+        tenantId: own.tenantId,
+        runId: link.runId,
+        guardId: link.accountId,
+      }),
+  },
+  {
     table: 'visit_overstay_alerts',
     key: 'entry_id',
     insert: (tx, own, link) =>
@@ -125,6 +137,7 @@ describe('RLS isolation — the gate’s completion (ADR 0056)', () => {
       unitId: (await createUnit(h, tenantId)).id,
       incidentId: '',
       photoEntryId: '',
+      runId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -143,6 +156,11 @@ describe('RLS isolation — the gate’s completion (ADR 0056)', () => {
         gateId: s.gateId,
         unitId: s.unitId,
         guardId: s.accountId,
+      });
+      s.runId = await patrolRunRow(tx, {
+        tenantId,
+        gateId: s.gateId,
+        createdById: s.accountId,
       });
     });
     return s;

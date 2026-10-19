@@ -10,8 +10,9 @@ import {
  * The patrols section of a personal-data export (ADR 0052), `patrols/`,
  * for a guard: the runs they started (route and post by name, times,
  * statuses), their scans (where they were, as their device said), their
- * notes (outcome, words, how many photos) and where they walked, while it
- * is kept. Never another guard's name or words.
+ * notes (outcome, words, how many photos), where they walked while it
+ * is kept, and when they were outside a route's geofence (ADR 0056).
+ * Never another guard's name or words.
  */
 @Injectable()
 export class PatrolExportSections implements OnModuleInit {
@@ -50,6 +51,10 @@ export class PatrolExportSections implements OnModuleInit {
       const track = await tx.patrolTrackPoint.findMany({
         where: { guardAccountId: me },
         orderBy: [{ recordedAt: 'asc' }, { id: 'asc' }],
+      });
+      const exits = await tx.patrolGeofenceExit.findMany({
+        where: { guardAccountId: me },
+        orderBy: [{ leftAt: 'asc' }, { id: 'asc' }],
       });
       const routes = new Map(
         (
@@ -95,6 +100,7 @@ export class PatrolExportSections implements OnModuleInit {
         notes,
         photos,
         track,
+        exits,
         routes,
         checkpoints,
         gates,
@@ -149,6 +155,14 @@ export class PatrolExportSections implements OnModuleInit {
         lat: p.lat,
         lng: p.lng,
         accuracyM: p.accuracyM,
+      })),
+    };
+    yield {
+      path: 'patrols/geofence-exits.json',
+      json: d.exits.map((e) => ({
+        leftAt: e.leftAt,
+        backAt: e.backAt,
+        flaggedAt: e.flaggedAt,
       })),
     };
   }

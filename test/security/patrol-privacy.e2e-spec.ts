@@ -182,6 +182,8 @@ describe('Patrols and privacy', () => {
     ]);
     const track = JSON.parse(archive.text('patrols/track.json')) as unknown[];
     expect(track).toHaveLength(2);
+    // Its route has no geofence: nothing outside (ADR 0056).
+    expect(JSON.parse(archive.text('patrols/geofence-exits.json'))).toEqual([]);
     expect(archive.all).not.toContain(otherName);
     expect(archive.all).not.toContain('Other words 4417');
   });
@@ -207,7 +209,7 @@ describe('Patrols and privacy', () => {
       .http('get', `/me/data-exports/${id}/download`, resident.token)
       .expect(200);
     const archive = await readArchive((dl.body as { url: string }).url);
-    for (const name of ['runs', 'scans', 'notes', 'track'])
+    for (const name of ['runs', 'scans', 'notes', 'track', 'geofence-exits'])
       expect(JSON.parse(archive.text(`patrols/${name}.json`))).toEqual([]);
   });
 });

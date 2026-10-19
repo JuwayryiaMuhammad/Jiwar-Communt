@@ -1702,6 +1702,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'exited_at IS NULL is tested before it is compared with entered_at; the rest are IS [NOT] NULL tests and a NOT NULL boolean',
   },
+  patrol_route_versions_geofence_shape: {
+    guarded:
+      'geofence IS NULL is tested first; each jsonb_typeof is COALESCEd, so a missing key is false, never NULL',
+  },
+  gate_settings_geofence_exit: {},
+  patrol_geofence_exits_back_after_left: {
+    guarded: 'back_at IS NULL is tested first',
+  },
+  patrol_geofence_exits_flag_shape: {},
+  patrol_geofence_exits_flagged_minutes: {
+    guarded: 'flagged_minutes IS NULL is tested first',
+  },
 };
 
 interface Check {

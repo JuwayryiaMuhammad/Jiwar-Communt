@@ -7,6 +7,7 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -18,9 +19,12 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { PostDto } from '../../roster/dto/roster.dto';
+import { GEOFENCE_RADIUS_M, GEOFENCE_VERTICES } from '../geofence';
 import {
   CHECKPOINT_NAME,
   EXPECTED_MINUTES,
+  LATITUDE,
+  LONGITUDE,
   ROUTE_CHECKPOINTS,
   TIMES_PER_DAY,
 } from '../patrol-rules';
@@ -48,6 +52,63 @@ export class PatrolScheduleDto {
   @IsArray()
   @IsString({ each: true })
   times: string[];
+}
+
+export class GeofenceCircleDto {
+  @ApiProperty({ type: Number, minimum: LATITUDE.min, maximum: LATITUDE.max })
+  @IsNumber({}, withParams({ ...LATITUDE }))
+  @Min(LATITUDE.min, withParams({ ...LATITUDE }))
+  @Max(LATITUDE.max, withParams({ ...LATITUDE }))
+  lat: number;
+
+  @ApiProperty({ type: Number, minimum: LONGITUDE.min, maximum: LONGITUDE.max })
+  @IsNumber({}, withParams({ ...LONGITUDE }))
+  @Min(LONGITUDE.min, withParams({ ...LONGITUDE }))
+  @Max(LONGITUDE.max, withParams({ ...LONGITUDE }))
+  lng: number;
+
+  @ApiProperty({
+    type: Number,
+    minimum: GEOFENCE_RADIUS_M.min,
+    maximum: GEOFENCE_RADIUS_M.max,
+    description: 'Metres.',
+  })
+  @IsInt(withParams({ ...GEOFENCE_RADIUS_M }))
+  @Min(GEOFENCE_RADIUS_M.min, withParams({ ...GEOFENCE_RADIUS_M }))
+  @Max(GEOFENCE_RADIUS_M.max, withParams({ ...GEOFENCE_RADIUS_M }))
+  radiusM: number;
+}
+
+/** Where a patrol of the route stays (ADR 0056): one of the two. */
+export class GeofenceDto {
+  @ApiPropertyOptional({ type: GeofenceCircleDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => GeofenceCircleDto)
+  circle?: GeofenceCircleDto;
+
+  @ApiPropertyOptional({
+    type: 'array',
+    items: {
+      type: 'array',
+      items: { type: 'number' },
+      minItems: 2,
+      maxItems: 2,
+    },
+    minItems: GEOFENCE_VERTICES.min,
+    maxItems: GEOFENCE_VERTICES.max,
+    example: [
+      [30.0, 31.0],
+      [30.0, 31.0023],
+      [30.002, 31.0023],
+      [30.002, 31.0],
+    ],
+    description:
+      '`[lat, lng]` vertices in order, not closed (the last joins the first). Edges may not cross, and it must enclose an area (INVALID_VALUE).',
+  })
+  @IsOptional()
+  @IsArray()
+  polygon?: number[][];
 }
 
 /** What a route asks: one version of it. */
@@ -92,6 +153,17 @@ export class RouteVersionDto {
   @ValidateNested()
   @Type(() => PatrolScheduleDto)
   schedule?: PatrolScheduleDto | null;
+
+  @ApiPropertyOptional({
+    type: GeofenceDto,
+    nullable: true,
+    description:
+      'Where a patrol of it stays (ADR 0056): a circle or a polygon. A guard outside it longer than the gate’s `geofenceExitMinutes` is flagged to `patrols.manage`, once per exit. None: not watched.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => GeofenceDto)
+  geofence?: GeofenceDto | null;
 }
 
 export class CreateRouteDto extends PostDto {

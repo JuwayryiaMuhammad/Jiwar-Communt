@@ -18,6 +18,7 @@ import {
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { RosterCore } from '../roster/roster-core';
+import { checkGeofence, type Geofence } from './geofence';
 import { PatrolCore, routeNotFound, routeRetired } from './patrol-core';
 import { RunsCore } from './runs-core';
 import {
@@ -36,6 +37,7 @@ export interface RouteVersionInput {
   ordered: boolean;
   expectedMinutes: number;
   schedule?: PatrolSchedule | null;
+  geofence?: { circle?: unknown; polygon?: unknown } | null;
 }
 
 /** A version checked: the same, normalized. */
@@ -44,6 +46,7 @@ interface CheckedVersion {
   ordered: boolean;
   expectedMinutes: number;
   schedule: PatrolSchedule | null;
+  geofence: Geofence | null;
 }
 
 /** What the audit sees of a route: its post; its names as changed. */
@@ -63,6 +66,10 @@ const versionMetadata = (v: PatrolRouteVersion, checkpoints: number) => ({
   ordered: v.ordered,
   expectedMinutes: v.expectedMinutes,
   scheduled: v.schedule !== null,
+  // Its kind, never where (ADR 0056).
+  ...(v.geofence
+    ? { geofence: 'circle' in (v.geofence as object) ? 'circle' : 'polygon' }
+    : {}),
 });
 
 /**
@@ -306,12 +313,16 @@ export class RoutesService implements OnModuleInit {
           `${prefix}schedule`,
         )
       : null;
+    const geofence = input.geofence
+      ? checkGeofence(input.geofence, fields, `${prefix}geofence`)
+      : null;
     if (fields.length) throw invalid(fields);
     return {
       checkpointIds: ids,
       ordered: input.ordered,
       expectedMinutes: input.expectedMinutes,
       schedule,
+      geofence,
     };
   }
 
@@ -365,6 +376,9 @@ export class RoutesService implements OnModuleInit {
         expectedMinutes: v.expectedMinutes,
         schedule: v.schedule
           ? (v.schedule as unknown as Prisma.InputJsonValue)
+          : undefined,
+        geofence: v.geofence
+          ? (v.geofence as unknown as Prisma.InputJsonValue)
           : undefined,
         createdById: this.ctx.accountId,
       },

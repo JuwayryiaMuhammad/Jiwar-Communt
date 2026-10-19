@@ -1,5 +1,6 @@
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
+import { checkpointRow, routeRow, runRow } from './patrol-rows';
 
 // Raw rows of the gate's completion tables (ADR 0056), for the schema and
 // isolation suites: the shortest valid row of each. Instants are written
@@ -179,4 +180,60 @@ export async function vehicleCountRow(
     },
   });
   return r.gateId;
+}
+
+/** A scheduled patrol run of a route of its own at a gate: the run's id. */
+export async function patrolRunRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; gateId: string; createdById: string },
+): Promise<string> {
+  const checkpointId = await checkpointRow(tx, r);
+  const { routeId, versionId } = await routeRow(tx, {
+    ...r,
+    checkpointIds: [checkpointId],
+  });
+  return runRow(tx, {
+    tenantId: r.tenantId,
+    routeId,
+    versionId,
+    gateId: r.gateId,
+  });
+}
+
+/** An open geofence exit of a run, its guard out since T0. */
+export async function geofenceExitRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; runId: string; guardId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.patrolGeofenceExit.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      runId: r.runId,
+      guardAccountId: r.guardId,
+      leftAt: ROW_T0,
+    },
+  });
+  return id;
+}
+
+/** An incident's evidence: the track of a run. */
+export async function trackEvidenceRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; incidentId: string; runId: string; byId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.incidentEvidence.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      incidentId: r.incidentId,
+      kind: 'patrol_track',
+      runId: r.runId,
+      linkedById: r.byId,
+      linkedAt: rowAt(60),
+    },
+  });
+  return id;
 }

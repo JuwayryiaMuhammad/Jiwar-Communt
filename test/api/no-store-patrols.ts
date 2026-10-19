@@ -182,6 +182,11 @@ export function patrolCalls(
     },
     'GET /staff/security/patrols/runs/{id}/track': async () =>
       manager('GET', `/staff/security/patrols/runs/${await aRun(60)}/track`),
+    'GET /staff/security/patrols/runs/{id}/geofence-exits': async () =>
+      manager(
+        'GET',
+        `/staff/security/patrols/runs/${await aRun(60)}/geofence-exits`,
+      ),
     'POST /gate/patrols/runs/{id}/end': async () => {
       await clearLive();
       const run = id(

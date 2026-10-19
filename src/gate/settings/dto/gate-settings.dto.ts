@@ -60,4 +60,19 @@ export class UpdateGateSettingsDto {
   @Min(L.visitExpectedMinutes.min, withParams(bounds(L.visitExpectedMinutes)))
   @Max(L.visitExpectedMinutes.max, withParams(bounds(L.visitExpectedMinutes)))
   visitExpectedMinutes?: number | null;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.geofenceExitMinutes.min,
+    maximum: L.geofenceExitMinutes.max,
+    description:
+      'Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once.',
+  })
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.geofenceExitMinutes)))
+  @Min(L.geofenceExitMinutes.min, withParams(bounds(L.geofenceExitMinutes)))
+  @Max(L.geofenceExitMinutes.max, withParams(bounds(L.geofenceExitMinutes)))
+  geofenceExitMinutes?: number;
 }

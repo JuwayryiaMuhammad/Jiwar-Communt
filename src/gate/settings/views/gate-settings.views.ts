@@ -29,11 +29,20 @@ export class GateSettingsResponse {
   })
   visitExpectedMinutes: number | null;
 
+  @ApiProperty({
+    type: Number,
+    example: L.geofenceExitMinutes.default,
+    description:
+      'Minutes outside a patrol route’s geofence that flag the exit to `patrols.manage`.',
+  })
+  geofenceExitMinutes: number;
+
   static from(s: GateSettingsValues): GateSettingsResponse {
     return {
       exceptionAnswerMinutes: s.exceptionAnswerMinutes,
       exceptionEntryMinutes: s.exceptionEntryMinutes,
       visitExpectedMinutes: s.visitExpectedMinutes,
+      geofenceExitMinutes: s.geofenceExitMinutes,
     };
   }
 }

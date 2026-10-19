@@ -14,6 +14,8 @@ export const GATE_SETTING_LIMITS = {
    * longer gets the system's unconfirmed exit.
    */
   visitExpectedMinutes: { min: 15, max: 720, default: 240, nullable: true },
+  /** Minutes outside a patrol route's geofence that flag the exit. */
+  geofenceExitMinutes: { min: 1, max: 60, default: 3 },
 } as const;
 
 type Limits = typeof GATE_SETTING_LIMITS;

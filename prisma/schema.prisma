@@ -2200,6 +2200,8 @@ model GateSettings {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   /// A visit's expected minutes when its pass gives none; null: no overstay alert.
   visitExpectedMinutes   Int?     @default(240) @map("visit_expected_minutes") @db.SmallInt
+  /// Minutes outside a patrol route's geofence that flag an exit.
+  geofenceExitMinutes    Int      @default(3) @map("geofence_exit_minutes") @db.SmallInt
 
   @@map("gate_settings")
 }
@@ -2343,9 +2345,10 @@ model IncidentEvidence {
   id          String   @id @db.Uuid
   tenantId    String   @map("tenant_id") @db.Uuid
   incidentId  String   @map("incident_id") @db.Uuid
-  /// visitor_photo
+  /// visitor_photo | patrol_track
   kind        String
   entryId     String?  @map("entry_id") @db.Uuid
+  runId       String?  @map("run_id") @db.Uuid
   linkedById  String   @map("linked_by_account_id") @db.Uuid
   linkedAt    DateTime @map("linked_at") @db.Timestamptz(3)
 
@@ -7448,6 +7451,8 @@ model PatrolRouteVersion {
   createdById     String    @map("created_by_account_id") @db.Uuid
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   supersededAt    DateTime? @map("superseded_at") @db.Timestamptz(3)
+  /// `{circle: {lat, lng, radiusM}}` or `{polygon: [[lat, lng], …]}`; null: none (ADR 0056).
+  geofence        Json?
 
   @@unique([tenantId, id])
   @@unique([tenantId, routeId, number], map: "patrol_route_versions_number_key")
@@ -7614,6 +7619,28 @@ model PatrolTrackPoint {
   @@index([tenantId, recordedAt], map: "patrol_track_points_age_idx")
   @@index([tenantId, guardAccountId], map: "patrol_track_points_guard_idx")
   @@map("patrol_track_points")
+}
+
+/// Each time a patrol run's guard was outside its route's geofence (ADR
+/// 0056): opened by the first point outside, closed by the next inside
+/// one; flagged once when it lasted the gate's setting. Times only.
+model PatrolGeofenceExit {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  runId          String    @map("run_id") @db.Uuid
+  guardAccountId String    @map("guard_account_id") @db.Uuid
+  /// The device's time of the first point outside.
+  leftAt         DateTime  @map("left_at") @db.Timestamptz(3)
+  /// The device's time of the next point inside; null while outside.
+  backAt         DateTime? @map("back_at") @db.Timestamptz(3)
+  flaggedAt      DateTime? @map("flagged_at") @db.Timestamptz(3)
+  /// The threshold it passed, in minutes.
+  flaggedMinutes Int?      @map("flagged_minutes") @db.SmallInt
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, runId, leftAt], map: "patrol_geofence_exits_once_key")
+  @@map("patrol_geofence_exits")
 }
 
 /// One row per compound (ADR 0053): what every lockdown decision locks. A

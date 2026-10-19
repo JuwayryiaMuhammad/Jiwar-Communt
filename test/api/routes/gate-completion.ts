@@ -27,6 +27,7 @@ export const GATE_SETTINGS_ROUTES: Row[] = [
         exceptionAnswerMinutes: 0,
         exceptionEntryMinutes: 121,
         visitExpectedMinutes: 14,
+        geofenceExitMinutes: 61,
       },
       fields: [
         {
@@ -43,6 +44,11 @@ export const GATE_SETTINGS_ROUTES: Row[] = [
           field: 'visitExpectedMinutes',
           code: 'INVALID_NUMBER',
           params: { min: 15, max: 720 },
+        },
+        {
+          field: 'geofenceExitMinutes',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 60 },
         },
       ],
     },
@@ -288,7 +294,7 @@ export const VISITOR_PHOTO_ROUTES: Row[] = [
             {
               field: 'kind',
               code: 'INVALID_VALUE',
-              params: { allowed: ['visitor_photo'] },
+              params: { allowed: ['visitor_photo', 'patrol_track'] },
             },
             { field: 'entryId', code: 'INVALID_UUID' },
           ],

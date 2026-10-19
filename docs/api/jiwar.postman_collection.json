@@ -12207,9 +12207,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"visitExpectedMinutes\": 15\n}"
+              "raw": "{\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"geofenceExitMinutes\": 1,\n  \"visitExpectedMinutes\": 15\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -17614,7 +17614,7 @@
           }
         },
         {
-          "name": "Keep a visitor’s photo at entry with the incident",
+          "name": "Keep a visitor’s photo at entry, or a patrol’s track, with the incident",
           "request": {
             "body": {
               "mode": "raw",
@@ -17623,9 +17623,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"kind\": \"visitor_photo\",\n  \"entryId\": \"\"\n}"
+              "raw": "{\n  \"kind\": \"visitor_photo\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `entryId` | string (uuid) | yes | The entry whose photo the incident keeps. |\n| `kind` | `visitor_photo` | yes | `visitor_photo`: the guard’s photo of a visitor at an entry. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `entryId` | string (uuid) |  | For `visitor_photo`: the entry whose photo the incident keeps (FIELD_REQUIRED; FIELD_NOT_ALLOWED otherwise). |\n| `kind` | `visitor_photo` \\| `patrol_track` | yes | `visitor_photo`: the guard’s photo of a visitor at an entry (`entryId`). `patrol_track`: where a patrol’s guard walked (`runId`), kept past its 30 days. |\n| `runId` | string (uuid) |  | For `patrol_track`: the run whose track the incident keeps — a guard, their own runs only (FIELD_REQUIRED; FIELD_NOT_ALLOWED otherwise). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -17980,7 +17980,7 @@
           }
         },
         {
-          "name": "Keep a visitor’s photo at entry with the incident",
+          "name": "Keep a visitor’s photo at entry, or a patrol’s track, with the incident",
           "request": {
             "body": {
               "mode": "raw",
@@ -17989,9 +17989,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"kind\": \"visitor_photo\",\n  \"entryId\": \"\"\n}"
+              "raw": "{\n  \"kind\": \"visitor_photo\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `entryId` | string (uuid) | yes | The entry whose photo the incident keeps. |\n| `kind` | `visitor_photo` | yes | `visitor_photo`: the guard’s photo of a visitor at an entry. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `entryId` | string (uuid) |  | For `visitor_photo`: the entry whose photo the incident keeps (FIELD_REQUIRED; FIELD_NOT_ALLOWED otherwise). |\n| `kind` | `visitor_photo` \\| `patrol_track` | yes | `visitor_photo`: the guard’s photo of a visitor at an entry (`entryId`). `patrol_track`: where a patrol’s guard walked (`runId`), kept past its 30 days. |\n| `runId` | string (uuid) |  | For `patrol_track`: the run whose track the incident keeps — a guard, their own runs only (FIELD_REQUIRED; FIELD_NOT_ALLOWED otherwise). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -26142,7 +26142,7 @@
               },
               "raw": "{\n  \"checkpointIds\": [\n    \"\"\n  ],\n  \"ordered\": false,\n  \"expectedMinutes\": 5\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `checkpointIds` | string[] | yes | Checkpoints in service, in the order walked, each once (CHECKPOINT_NOT_AVAILABLE, DUPLICATE_VALUE). |\n| `expectedMinutes` | number | yes |  |\n| `ordered` | boolean | yes | The guard must scan them in this order. |\n| `schedule` | object |  | Weekly start times; none: only the runs a guard starts. Runs are made 7 days ahead. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `checkpointIds` | string[] | yes | Checkpoints in service, in the order walked, each once (CHECKPOINT_NOT_AVAILABLE, DUPLICATE_VALUE). |\n| `expectedMinutes` | number | yes |  |\n| `geofence` | object |  | Where a patrol of it stays (ADR 0056): a circle or a polygon. A guard outside it longer than the gate’s `geofenceExitMinutes` is flagged to `patrols.manage`, once per exit. None: not watched. |\n| `ordered` | boolean | yes | The guard must scan them in this order. |\n| `schedule` | object |  | Weekly start times; none: only the runs a guard starts. Runs are made 7 days ahead. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -26320,6 +26320,37 @@
                 "cancel"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/patrols/runs/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "When the guard left the route’s geofence",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "runs",
+                ":id",
+                "geofence-exits"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/runs/:id/geofence-exits",
               "variable": [
                 {
                   "description": "",

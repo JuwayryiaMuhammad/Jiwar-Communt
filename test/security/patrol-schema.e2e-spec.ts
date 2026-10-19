@@ -316,6 +316,8 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
         'ordered = true',
         'expected_minutes = 60',
         'schedule = \'{"days": [2], "times": ["09:00"]}\'',
+        // Its geofence too (ADR 0056).
+        'geofence = \'{"circle": {"lat": 30, "lng": 31, "radiusM": 50}}\'',
         'number = 2',
         `route_id = gen_random_uuid()`,
       ])
@@ -351,6 +353,31 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
           another(`30, '[1]'`),
         ),
       ).rejects.toThrow(/patrol_route_versions_schedule_shape/);
+      // A geofence is a circle or a polygon of 3 to 50 vertices (ADR 0056).
+      const fenced = (geofence: string) =>
+        asApp(
+          `UPDATE patrol_route_versions SET superseded_at = now() WHERE ${where()}`,
+          `INSERT INTO patrol_route_versions (id, tenant_id, route_id, number, ordered, expected_minutes, geofence, created_by_account_id)
+           VALUES (gen_random_uuid(), '${tenantId}', '${routeId}', 9, false, 30, '${geofence}', '${managerId}')`,
+        );
+      const vertex = '[30, 31]';
+      for (const bad of [
+        '[1]',
+        '{}',
+        '{"circle": {"lat": 30, "lng": 31}}',
+        '{"circle": {"lat": "30", "lng": 31, "radiusM": 50}}',
+        `{"polygon": [${vertex}, ${vertex}]}`,
+        `{"polygon": [${Array(51).fill(vertex).join(', ')}]}`,
+        `{"circle": {"lat": 30, "lng": 31, "radiusM": 50}, "polygon": [${vertex}, ${vertex}, ${vertex}]}`,
+      ])
+        await expect(fenced(bad)).rejects.toThrow(
+          /patrol_route_versions_geofence_shape/,
+        );
+      for (const good of [
+        '{"circle": {"lat": 30, "lng": 31, "radiusM": 50}}',
+        `{"polygon": [${vertex}, ${vertex}, ${vertex}]}`,
+      ])
+        await expect(fenced(good)).resolves.toMatchObject({ rowCount: 1 });
     });
   });
 

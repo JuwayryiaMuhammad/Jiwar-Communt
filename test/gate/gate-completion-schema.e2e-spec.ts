@@ -6,9 +6,12 @@ import {
   entryPhotoRow,
   evidenceRow,
   fieldExceptionRow,
+  geofenceExitRow,
   overstayAlertRow,
+  patrolRunRow,
   rowAt,
   serviceVehicleRow,
+  trackEvidenceRow,
   vehicleCountRow,
   visitorDetailsRow,
 } from '../setup/gate-completion-rows';
@@ -40,6 +43,8 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
   let photoEntryId: string;
   let keptEntryId: string;
   let incidentId: string;
+  let runId: string;
+  let exitId: string;
 
   const inTx = <T>(fn: (tx: TenantTxClient) => Promise<T>) =>
     h.asTenant(tenantId, () => h.tenantTx.withTenantTx(fn));
@@ -77,6 +82,18 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
         reportedById: guardId,
       });
       await vehicleCountRow(tx, { tenantId, gateId });
+      runId = await patrolRunRow(tx, {
+        tenantId,
+        gateId,
+        createdById: managerId,
+      });
+      exitId = await geofenceExitRow(tx, { tenantId, runId, guardId });
+      await trackEvidenceRow(tx, {
+        tenantId,
+        incidentId,
+        runId,
+        byId: managerId,
+      });
       await evidenceRow(tx, {
         tenantId,
         incidentId,
@@ -488,6 +505,114 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
       );
       await expect(add('NULL')).rejects.toThrow(/incident_evidence_shape/);
     });
+
+    it('a run’s track is kept once per incident, by its run and nothing else', async () => {
+      const add = (kind: string, entry: string, run: string) =>
+        asApp(
+          `INSERT INTO incident_evidence (id, tenant_id, incident_id, kind, entry_id, run_id, linked_by_account_id, linked_at)
+           VALUES (gen_random_uuid(), '${tenantId}', '${incidentId}', '${kind}', ${entry}, ${run},
+              '${managerId}', ${at(63)})`,
+        );
+      await expect(add('patrol_track', 'NULL', `'${runId}'`)).rejects.toThrow(
+        /incident_evidence_run_key/,
+      );
+      await expect(add('patrol_track', 'NULL', 'NULL')).rejects.toThrow(
+        /incident_evidence_shape/,
+      );
+      await expect(
+        add('patrol_track', `'${photoEntryId}'`, `'${runId}'`),
+      ).rejects.toThrow(/incident_evidence_shape/);
+      await expect(
+        add('visitor_photo', `'${photoEntryId}'`, `'${runId}'`),
+      ).rejects.toThrow(/incident_evidence_shape/);
+      await expect(add('selfie', 'NULL', 'NULL')).rejects.toThrow(
+        /incident_evidence_kind/,
+      );
+    });
+  });
+
+  describe('a geofence exit', () => {
+    const exit = () => `id = '${exitId}'`;
+
+    it('the app reads, adds, closes and flags them; it never deletes or truncates', async () => {
+      expect({
+        table: 'patrol_geofence_exits',
+        ...(await privileges('patrol_geofence_exits')),
+      }).toEqual({
+        table: 'patrol_geofence_exits',
+        select: true,
+        insert: true,
+        update: true,
+        delete: false,
+        truncate: false,
+      });
+      await expect(
+        asApp(`DELETE FROM patrol_geofence_exits WHERE ${exit()}`),
+      ).rejects.toThrow(/permission denied/);
+    });
+
+    it('its run, guard and start never change; closed once, flagged once', async () => {
+      for (const set of [
+        `left_at = ${at(-1)}`,
+        `guard_account_id = '${otherId}'`,
+        `run_id = gen_random_uuid()`,
+      ])
+        await expect(
+          asApp(`UPDATE patrol_geofence_exits SET ${set} WHERE ${exit()}`),
+        ).rejects.toThrow(/closed once, flagged once/);
+      const close = `UPDATE patrol_geofence_exits SET back_at = ${at(4)} WHERE ${exit()}`;
+      await asApp(close);
+      for (const again of [`back_at = ${at(5)}`, 'back_at = NULL'])
+        await expect(
+          asApp(
+            close,
+            `UPDATE patrol_geofence_exits SET ${again} WHERE ${exit()}`,
+          ),
+        ).rejects.toThrow(/closed once, flagged once/);
+      const flag = `UPDATE patrol_geofence_exits SET flagged_at = ${at(3)}, flagged_minutes = 3 WHERE ${exit()}`;
+      await asApp(flag);
+      for (const again of [
+        `flagged_at = ${at(6)}`,
+        'flagged_minutes = 5',
+        'flagged_at = NULL, flagged_minutes = NULL',
+      ])
+        await expect(
+          asApp(
+            flag,
+            `UPDATE patrol_geofence_exits SET ${again} WHERE ${exit()}`,
+          ),
+        ).rejects.toThrow(/closed once, flagged once/);
+    });
+
+    it('back after it left; flagged with its minutes, 1 to 60', async () => {
+      for (const [set, check] of [
+        [`back_at = ${at(0)}`, 'back_after_left'],
+        [`flagged_at = ${at(3)}`, 'flag_shape'],
+        ['flagged_minutes = 3', 'flag_shape'],
+        [`flagged_at = ${at(3)}, flagged_minutes = 61`, 'flagged_minutes'],
+      ])
+        await expect(
+          asApp(`UPDATE patrol_geofence_exits SET ${set} WHERE ${exit()}`),
+        ).rejects.toThrow(new RegExp(`patrol_geofence_exits_${check}`));
+    });
+
+    it('one per (run, start); one open per run', async () => {
+      const another = (leftAt: string, backAt: string) =>
+        `INSERT INTO patrol_geofence_exits (id, tenant_id, run_id, guard_account_id, left_at, back_at)
+         VALUES (gen_random_uuid(), '${tenantId}', '${runId}', '${guardId}', ${leftAt}, ${backAt})`;
+      await expect(asApp(another(at(0), at(9)))).rejects.toThrow(
+        /patrol_geofence_exits_once_key/,
+      );
+      await expect(asApp(another(at(10), 'NULL'))).rejects.toThrow(
+        /patrol_geofence_exits_open_key/,
+      );
+      await expect(
+        asApp(
+          `UPDATE patrol_geofence_exits SET back_at = ${at(4)} WHERE ${exit()}`,
+          another(at(10), 'NULL'),
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+    });
   });
 
   describe('a resident vehicles’ count', () => {
@@ -537,12 +662,14 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
       'exception_entry_minutes = 121',
       'visit_expected_minutes = 14',
       'visit_expected_minutes = 721',
+      'geofence_exit_minutes = 0',
+      'geofence_exit_minutes = 61',
     ])
       await expect(
         asApp(
           `UPDATE gate_settings SET ${set} WHERE tenant_id = '${tenantId}'`,
         ),
-      ).rejects.toThrow(/gate_settings_(exception|visit)/);
+      ).rejects.toThrow(/gate_settings_(exception|visit|geofence)/);
     // The overstay alert may be off.
     await expect(
       asApp(

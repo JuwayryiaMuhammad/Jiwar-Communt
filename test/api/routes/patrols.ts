@@ -387,6 +387,20 @@ export const STAFF_RUN_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  // ADR 0056.
+  {
+    method: 'GET',
+    path: '/staff/security/patrols/runs/{id}/geofence-exits',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
   {
     method: 'POST',
     path: '/staff/security/patrols/runs/{id}/cancel',

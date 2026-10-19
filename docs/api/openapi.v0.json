@@ -15820,6 +15820,11 @@
             "example": 15,
             "type": "number"
           },
+          "geofenceExitMinutes": {
+            "description": "Minutes outside a patrol route’s geofence that flag the exit to `patrols.manage`.",
+            "example": 3,
+            "type": "number"
+          },
           "visitExpectedMinutes": {
             "description": "Minutes a visit is expected to last when its pass gives none; null: no overstay alert.",
             "example": 240,
@@ -15830,7 +15835,8 @@
         "required": [
           "exceptionAnswerMinutes",
           "exceptionEntryMinutes",
-          "visitExpectedMinutes"
+          "visitExpectedMinutes",
+          "geofenceExitMinutes"
         ],
         "type": "object"
       },
@@ -16162,6 +16168,167 @@
           "updatedBy",
           "updatedAt"
         ],
+        "type": "object"
+      },
+      "GeofenceCircleDto": {
+        "properties": {
+          "lat": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "radiusM": {
+            "description": "Metres.",
+            "maximum": 5000,
+            "minimum": 10,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng",
+          "radiusM"
+        ],
+        "type": "object"
+      },
+      "GeofenceCircleView": {
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          },
+          "radiusM": {
+            "description": "Metres.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng",
+          "radiusM"
+        ],
+        "type": "object"
+      },
+      "GeofenceDto": {
+        "properties": {
+          "circle": {
+            "$ref": "#/components/schemas/GeofenceCircleDto"
+          },
+          "polygon": {
+            "description": "`[lat, lng]` vertices in order, not closed (the last joins the first). Edges may not cross, and it must enclose an area (INVALID_VALUE).",
+            "example": [
+              [
+                30,
+                31
+              ],
+              [
+                30,
+                31.0023
+              ],
+              [
+                30.002,
+                31.0023
+              ],
+              [
+                30.002,
+                31
+              ]
+            ],
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array"
+            },
+            "maxItems": 50,
+            "minItems": 3,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "GeofenceExitView": {
+        "properties": {
+          "backAt": {
+            "description": "The device’s time of the next point inside; null: not back yet, or not known.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "flaggedAt": {
+            "description": "When it was flagged to `patrols.manage`: it lasted the threshold. Once.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "flaggedMinutes": {
+            "description": "The threshold it passed, in minutes.",
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "leftAt": {
+            "description": "The device’s time of the first point outside.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "leftAt",
+          "backAt",
+          "flaggedAt",
+          "flaggedMinutes"
+        ],
+        "type": "object"
+      },
+      "GeofenceExitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GeofenceExitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GeofenceView": {
+        "properties": {
+          "circle": {
+            "$ref": "#/components/schemas/GeofenceCircleView"
+          },
+          "polygon": {
+            "description": "`[lat, lng]` vertices in order.",
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "GovernanceCandidacyView": {
@@ -19054,9 +19221,10 @@
         "type": "object"
       },
       "IncidentEvidenceKind": {
-        "description": "`visitor_photo`: the guard’s photo of a visitor at an entry.",
+        "description": "`visitor_photo`: the guard’s photo of a visitor at an entry (`entryId`). `patrol_track`: where a patrol’s guard walked (`runId`), kept past its 30 days.",
         "enum": [
-          "visitor_photo"
+          "visitor_photo",
+          "patrol_track"
         ],
         "type": "string"
       },
@@ -19094,12 +19262,19 @@
             "description": "The visitor’s photo, a short-lived presigned URL.",
             "nullable": true,
             "type": "object"
+          },
+          "runId": {
+            "description": "A `patrol_track`’s run; its points are read where a run’s track is (`patrols.manage`).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
           "id",
           "kind",
           "entryId",
+          "runId",
           "linkedAt",
           "linkedBy",
           "photo"
@@ -20914,7 +21089,7 @@
       "LinkEvidenceDto": {
         "properties": {
           "entryId": {
-            "description": "The entry whose photo the incident keeps.",
+            "description": "For `visitor_photo`: the entry whose photo the incident keeps (FIELD_REQUIRED; FIELD_NOT_ALLOWED otherwise).",
             "format": "uuid",
             "type": "string"
           },
@@ -20924,12 +21099,16 @@
                 "$ref": "#/components/schemas/IncidentEvidenceKind"
               }
             ],
-            "description": "`visitor_photo`: the guard’s photo of a visitor at an entry."
+            "description": "`visitor_photo`: the guard’s photo of a visitor at an entry (`entryId`). `patrol_track`: where a patrol’s guard walked (`runId`), kept past its 30 days."
+          },
+          "runId": {
+            "description": "For `patrol_track`: the run whose track the incident keeps — a guard, their own runs only (FIELD_REQUIRED; FIELD_NOT_ALLOWED otherwise).",
+            "format": "uuid",
+            "type": "string"
           }
         },
         "required": [
-          "kind",
-          "entryId"
+          "kind"
         ],
         "type": "object"
       },
@@ -32233,6 +32412,16 @@
             "minimum": 5,
             "type": "number"
           },
+          "geofence": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeofenceDto"
+              }
+            ],
+            "description": "Where a patrol of it stays (ADR 0056): a circle or a polygon. A guard outside it longer than the gate’s `geofenceExitMinutes` is flagged to `patrols.manage`, once per exit. None: not watched.",
+            "nullable": true,
+            "type": "object"
+          },
           "ordered": {
             "description": "The guard must scan them in this order.",
             "type": "boolean"
@@ -32268,6 +32457,16 @@
           "expectedMinutes": {
             "type": "number"
           },
+          "geofence": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeofenceView"
+              }
+            ],
+            "description": "Where a patrol of it stays (ADR 0056); null: not watched.",
+            "nullable": true,
+            "type": "object"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -32300,6 +32499,7 @@
           "expectedMinutes",
           "windowMinutes",
           "schedule",
+          "geofence",
           "checkpoints",
           "createdAt"
         ],
@@ -43607,6 +43807,12 @@
             "minimum": 5,
             "type": "number"
           },
+          "geofenceExitMinutes": {
+            "description": "Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once.",
+            "maximum": 60,
+            "minimum": 1,
+            "type": "number"
+          },
           "visitExpectedMinutes": {
             "description": "Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off.",
             "maximum": 720,
@@ -53153,7 +53359,7 @@
         "x-stability": "draft"
       },
       "post": {
-        "description": "Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.",
+        "description": "Kept for as long as the incident, instead of 30 days. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.",
         "operationId": "GateIncidentEvidenceController_link",
         "parameters": [
           {
@@ -53192,7 +53398,7 @@
             "bearer": []
           }
         ],
-        "summary": "Keep a visitor’s photo at entry with the incident",
+        "summary": "Keep a visitor’s photo at entry, or a patrol’s track, with the incident",
         "tags": [
           "incidents"
         ],
@@ -76066,7 +76272,7 @@
         "x-stability": "draft"
       },
       "post": {
-        "description": "Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.",
+        "description": "Kept for as long as the incident, instead of 30 days. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.",
         "operationId": "StaffIncidentEvidenceController_link",
         "parameters": [
           {
@@ -76105,7 +76311,7 @@
             "bearer": []
           }
         ],
-        "summary": "Keep a visitor’s photo at entry with the incident",
+        "summary": "Keep a visitor’s photo at entry, or a patrol’s track, with the incident",
         "tags": [
           "incidents"
         ],
@@ -77311,6 +77517,45 @@
           }
         ],
         "summary": "Cancel a scheduled run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs/{id}/geofence-exits": {
+      "get": {
+        "description": "ADR 0056: each time outside, oldest first, with when it was flagged — times only, never where. `patrols.manage` only.",
+        "operationId": "StaffRunsController_geofenceExits",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeofenceExitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "When the guard left the route’s geofence",
         "tags": [
           "patrols"
         ],

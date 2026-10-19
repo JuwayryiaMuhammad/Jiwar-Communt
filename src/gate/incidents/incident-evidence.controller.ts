@@ -17,9 +17,10 @@ import { IncidentEvidenceService } from './incident-evidence.service';
 import { IncidentEvidenceView } from './views/incident-evidence.views';
 
 const LINK = {
-  summary: 'Keep a visitor’s photo at entry with the incident',
+  summary:
+    'Keep a visitor’s photo at entry, or a patrol’s track, with the incident',
   description:
-    'Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.',
+    'Kept for as long as the incident, instead of 30 days. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.',
 };
 
 /** The reporting guard's side (ADR 0056): their own incident, on duty. */

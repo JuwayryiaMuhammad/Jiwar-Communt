@@ -37,6 +37,10 @@ export interface RouteBody {
     expectedMinutes: number;
     windowMinutes: number;
     schedule: { days: number[]; times: string[] } | null;
+    geofence?:
+      | { circle: { lat: number; lng: number; radiusM: number } }
+      | { polygon: [number, number][] }
+      | null;
     checkpoints: number;
     createdAt: string;
   };

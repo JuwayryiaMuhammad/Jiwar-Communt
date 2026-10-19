@@ -6,6 +6,7 @@ import type {
 } from '@prisma/client';
 import type { DutyNames } from '../../roster/duty-names';
 import { PostView } from '../../roster/views/roster.views';
+import { geofenceOf } from '../geofence';
 import { scheduleOf, windowMinutes } from '../patrol-rules';
 import { CheckpointPositionView } from './checkpoint.views';
 
@@ -14,6 +15,28 @@ export class PatrolScheduleView {
   days: number[];
   @ApiProperty({ type: [String], example: ['08:00', '22:00'] })
   times: string[];
+}
+
+export class GeofenceCircleView {
+  @ApiProperty({ type: Number })
+  lat: number;
+  @ApiProperty({ type: Number })
+  lng: number;
+  @ApiProperty({ type: Number, description: 'Metres.' })
+  radiusM: number;
+}
+
+/** A route's geofence (ADR 0056): one of the two. */
+export class GeofenceView {
+  @ApiProperty({ type: GeofenceCircleView, required: false })
+  circle?: GeofenceCircleView;
+  @ApiProperty({
+    type: 'array',
+    required: false,
+    items: { type: 'array', items: { type: 'number' } },
+    description: '`[lat, lng]` vertices in order.',
+  })
+  polygon?: [number, number][];
 }
 
 /** What a route asks now: its current version. */
@@ -34,6 +57,12 @@ export class RouteVersionView {
   windowMinutes: number;
   @ApiProperty({ type: PatrolScheduleView, nullable: true })
   schedule: PatrolScheduleView | null;
+  @ApiProperty({
+    type: GeofenceView,
+    nullable: true,
+    description: 'Where a patrol of it stays (ADR 0056); null: not watched.',
+  })
+  geofence: GeofenceView | null;
   @ApiProperty({ type: Number, description: 'How many checkpoints.' })
   checkpoints: number;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -47,6 +76,7 @@ export class RouteVersionView {
       expectedMinutes: v.expectedMinutes,
       windowMinutes: windowMinutes(v.expectedMinutes),
       schedule: scheduleOf(v.schedule),
+      geofence: geofenceOf(v.geofence),
       checkpoints,
       createdAt: v.createdAt,
     };

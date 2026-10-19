@@ -42,7 +42,11 @@ import {
   RunView,
 } from './views/run.views';
 import { NoteView, ScanView } from './views/scan.views';
-import { TrackAcceptedView, TrackPointView } from './views/track.views';
+import {
+  GeofenceExitView,
+  TrackAcceptedView,
+  TrackPointView,
+} from './views/track.views';
 
 /** A guard's patrols (ADR 0052), inside a shift. */
 @ApiArea('patrols')
@@ -228,6 +232,21 @@ export class StaffRunsController {
     @Param('id', parseId()) id: string,
   ): Promise<ListResponse<TrackPointView>> {
     return bounded(await this.track.forStaff(id), (p) => p);
+  }
+
+  @Get(':id/geofence-exits')
+  @NoStore()
+  @RequirePermissions('patrols.manage')
+  @ApiOperation({
+    summary: 'When the guard left the route’s geofence',
+    description:
+      'ADR 0056: each time outside, oldest first, with when it was flagged — times only, never where. `patrols.manage` only.',
+  })
+  @ApiOkResponse({ type: ListOf(GeofenceExitView) })
+  async geofenceExits(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<GeofenceExitView>> {
+    return bounded(await this.track.exitsForStaff(id), (e) => e);
   }
 
   @Post(':id/cancel')

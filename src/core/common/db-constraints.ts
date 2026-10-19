@@ -531,4 +531,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_entry_photos_file_key: null,
   incident_evidence_tenant_id_id_key: null,
   incident_evidence_entry_key: ['entryId'],
+  // The patrol geofence (ADR 0056): an exit per (run, left at), one open per
+  // run; both written by the walk under the run's lock. A run's track kept
+  // once per incident (checked first, INCIDENT_EVIDENCE_EXISTS).
+  patrol_geofence_exits_tenant_id_id_key: null,
+  patrol_geofence_exits_once_key: null,
+  patrol_geofence_exits_open_key: null,
+  incident_evidence_run_key: ['runId'],
 };

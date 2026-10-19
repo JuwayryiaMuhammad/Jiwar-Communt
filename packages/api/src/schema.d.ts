@@ -2433,8 +2433,8 @@ export interface paths {
         get: operations["GateIncidentEvidenceController_list"];
         put?: never;
         /**
-         * Keep a visitor’s photo at entry with the incident
-         * @description Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.
+         * Keep a visitor’s photo at entry, or a patrol’s track, with the incident
+         * @description Kept for as long as the incident, instead of 30 days. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.
          */
         post: operations["GateIncidentEvidenceController_link"];
         delete?: never;
@@ -10262,8 +10262,8 @@ export interface paths {
         get: operations["StaffIncidentEvidenceController_list"];
         put?: never;
         /**
-         * Keep a visitor’s photo at entry with the incident
-         * @description Kept for as long as the incident, instead of 30 days after the entry. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.
+         * Keep a visitor’s photo at entry, or a patrol’s track, with the incident
+         * @description Kept for as long as the incident, instead of 30 days. Not on a closed incident (INCIDENT_CLOSED); once each (INCIDENT_EVIDENCE_EXISTS); ten at most (INCIDENT_EVIDENCE_LIMIT). Never removed.
          */
         post: operations["StaffIncidentEvidenceController_link"];
         delete?: never;
@@ -10656,6 +10656,26 @@ export interface paths {
          * @description Nobody started it yet (409 PATROL_RUN_CLOSED, params.status); a `patrolRunCancel` code.
          */
         post: operations["StaffRunsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/runs/{id}/geofence-exits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * When the guard left the route’s geofence
+         * @description ADR 0056: each time outside, oldest first, with when it was flagged — times only, never where. `patrols.manage` only.
+         */
+        get: operations["StaffRunsController_geofenceExits"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -18972,6 +18992,11 @@ export interface components {
              */
             exceptionEntryMinutes: number;
             /**
+             * @description Minutes outside a patrol route’s geofence that flag the exit to `patrols.manage`.
+             * @example 3
+             */
+            geofenceExitMinutes: number;
+            /**
              * @description Minutes a visit is expected to last when its pass gives none; null: no overstay alert.
              * @example 240
              */
@@ -19061,6 +19086,73 @@ export interface components {
              * @enum {string|null}
              */
             updatedBy: "manager" | "platform" | null;
+        };
+        GeofenceCircleDto: {
+            lat: number;
+            lng: number;
+            /** @description Metres. */
+            radiusM: number;
+        };
+        GeofenceCircleView: {
+            lat: number;
+            lng: number;
+            /** @description Metres. */
+            radiusM: number;
+        };
+        GeofenceDto: {
+            circle?: components["schemas"]["GeofenceCircleDto"];
+            /**
+             * @description `[lat, lng]` vertices in order, not closed (the last joins the first). Edges may not cross, and it must enclose an area (INVALID_VALUE).
+             * @example [
+             *       [
+             *         30,
+             *         31
+             *       ],
+             *       [
+             *         30,
+             *         31.0023
+             *       ],
+             *       [
+             *         30.002,
+             *         31.0023
+             *       ],
+             *       [
+             *         30.002,
+             *         31
+             *       ]
+             *     ]
+             */
+            polygon?: number[][];
+        };
+        GeofenceExitView: {
+            /**
+             * Format: date-time
+             * @description The device’s time of the next point inside; null: not back yet, or not known.
+             */
+            backAt: string | null;
+            /**
+             * Format: date-time
+             * @description When it was flagged to `patrols.manage`: it lasted the threshold. Once.
+             */
+            flaggedAt: string | null;
+            /** @description The threshold it passed, in minutes. */
+            flaggedMinutes: number | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description The device’s time of the first point outside.
+             */
+            leftAt: string;
+        };
+        GeofenceExitViewList: {
+            data: components["schemas"]["GeofenceExitView"][];
+            nextCursor: string | null;
+        };
+        GeofenceView: {
+            circle?: components["schemas"]["GeofenceCircleView"];
+            /** @description `[lat, lng]` vertices in order. */
+            polygon?: number[][];
         };
         GovernanceCandidacyView: {
             /** Format: uuid */
@@ -19878,10 +19970,10 @@ export interface components {
             role: "author" | "reviewer";
         };
         /**
-         * @description `visitor_photo`: the guard’s photo of a visitor at an entry.
+         * @description `visitor_photo`: the guard’s photo of a visitor at an entry (`entryId`). `patrol_track`: where a patrol’s guard walked (`runId`), kept past its 30 days.
          * @enum {string}
          */
-        IncidentEvidenceKind: "visitor_photo";
+        IncidentEvidenceKind: "visitor_photo" | "patrol_track";
         IncidentEvidenceView: {
             /** Format: uuid */
             entryId: string | null;
@@ -19893,6 +19985,11 @@ export interface components {
             linkedBy: components["schemas"]["FirstNameRefView"];
             /** @description The visitor’s photo, a short-lived presigned URL. */
             photo: components["schemas"]["PresignedReadView"] | null;
+            /**
+             * Format: uuid
+             * @description A `patrol_track`’s run; its points are read where a run’s track is (`patrols.manage`).
+             */
+            runId: string | null;
         };
         IncidentEvidenceViewList: {
             data: components["schemas"]["IncidentEvidenceView"][];
@@ -20512,11 +20609,16 @@ export interface components {
         LinkEvidenceDto: {
             /**
              * Format: uuid
-             * @description The entry whose photo the incident keeps.
+             * @description For `visitor_photo`: the entry whose photo the incident keeps (FIELD_REQUIRED; FIELD_NOT_ALLOWED otherwise).
              */
-            entryId: string;
-            /** @description `visitor_photo`: the guard’s photo of a visitor at an entry. */
+            entryId?: string;
+            /** @description `visitor_photo`: the guard’s photo of a visitor at an entry (`entryId`). `patrol_track`: where a patrol’s guard walked (`runId`), kept past its 30 days. */
             kind: components["schemas"]["IncidentEvidenceKind"];
+            /**
+             * Format: uuid
+             * @description For `patrol_track`: the run whose track the incident keeps — a guard, their own runs only (FIELD_REQUIRED; FIELD_NOT_ALLOWED otherwise).
+             */
+            runId?: string;
         };
         /** @enum {string} */
         Locale: "ar" | "en";
@@ -24099,6 +24201,8 @@ export interface components {
             /** @description Checkpoints in service, in the order walked, each once (CHECKPOINT_NOT_AVAILABLE, DUPLICATE_VALUE). */
             checkpointIds: string[];
             expectedMinutes: number;
+            /** @description Where a patrol of it stays (ADR 0056): a circle or a polygon. A guard outside it longer than the gate’s `geofenceExitMinutes` is flagged to `patrols.manage`, once per exit. None: not watched. */
+            geofence?: components["schemas"]["GeofenceDto"] | null;
             /** @description The guard must scan them in this order. */
             ordered: boolean;
             /** @description Weekly start times; none: only the runs a guard starts. Runs are made 7 days ahead. */
@@ -24110,6 +24214,8 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             expectedMinutes: number;
+            /** @description Where a patrol of it stays (ADR 0056); null: not watched. */
+            geofence: components["schemas"]["GeofenceView"] | null;
             /** Format: uuid */
             id: string;
             /** @description 1 for the first, then up. */
@@ -27374,6 +27480,8 @@ export interface components {
             exceptionAnswerMinutes?: number;
             /** @description Minutes an approved field exception lets its one entry in, at its gate. */
             exceptionEntryMinutes?: number;
+            /** @description Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. */
+            geofenceExitMinutes?: number;
             /** @description Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. */
             visitExpectedMinutes?: number | null;
         };
@@ -44241,6 +44349,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunView"];
+                };
+            };
+        };
+    };
+    StaffRunsController_geofenceExits: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeofenceExitViewList"];
                 };
             };
         };

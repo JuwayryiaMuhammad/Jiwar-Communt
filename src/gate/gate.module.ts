@@ -23,6 +23,8 @@ import {
   StaffIncidentEvidenceController,
 } from './incidents/incident-evidence.controller';
 import { IncidentEvidenceService } from './incidents/incident-evidence.service';
+import { GateDirectoryController } from './directory/gate-directory.controller';
+import { GateDirectoryService } from './directory/gate-directory.service';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -286,6 +288,7 @@ import { PickupPageService } from './children/pickup-page.service';
     StaffServiceVehiclesController,
     GateIncidentEvidenceController,
     StaffIncidentEvidenceController,
+    GateDirectoryController,
     GatesController,
     ShiftsController,
     VisitorsController,
@@ -376,6 +379,7 @@ import { PickupPageService } from './children/pickup-page.service';
     ServiceVehiclesService,
     EntryPhotosSweep,
     IncidentEvidenceService,
+    GateDirectoryService,
     GatesService,
     ShiftsService,
     VisitorPassesService,

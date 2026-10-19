@@ -1816,6 +1816,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/directory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The gates, their phones and who is on shift where
+         * @description For a guard on duty at any post (NO_OPEN_SHIFT otherwise). Guards by first name only; the only phones are the gates’ own.
+         */
+        get: operations["GateDirectoryController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/emergencies": {
         parameters: {
             query?: never;
@@ -17479,6 +17499,23 @@ export interface components {
         DeletionRequestStatus: "pending" | "cancelled" | "completed" | "queued" | "closed";
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DirectoryGateView: {
+            /** @description The guards on shift here now, by first name. */
+            guards: components["schemas"]["FirstNameRefView"][];
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["GateKind"];
+            name: string;
+            /**
+             * @description The gate’s own phone (E.164): the post’s, never a person’s.
+             * @example +201000000777
+             */
+            phone: string | null;
+        };
+        DirectoryZoneView: {
+            guards: components["schemas"]["FirstNameRefView"][];
+            zone: components["schemas"]["PlaceView"];
+        };
         DispatchAbsenceEntryView: {
             approved: boolean;
             /** Format: date-time */
@@ -18602,6 +18639,12 @@ export interface components {
         GateDecisionSource: "household" | "standing_instruction" | "timeout" | "guard";
         /** @enum {string} */
         GateDirection: "in" | "out";
+        GateDirectoryView: {
+            /** @description Every active gate, by name, with its guards on shift (perhaps none). */
+            gates: components["schemas"]["DirectoryGateView"][];
+            /** @description The zones with a guard on shift now. */
+            zones: components["schemas"]["DirectoryZoneView"][];
+        };
         /** @enum {string} */
         GateEntryMethod: "code" | "qr" | "approval" | "guard" | "system" | "permit" | "exception";
         GateEscortView: {
@@ -30704,6 +30747,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChildVerifyView"];
+                };
+            };
+        };
+    };
+    GateDirectoryController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateDirectoryView"];
                 };
             };
         };

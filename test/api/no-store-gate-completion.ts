@@ -111,6 +111,7 @@ export function gateCompletionCalls(
     });
   return {
     'GET /gate/inside': () => guard('GET', '/gate/inside'),
+    'GET /gate/directory': () => guard('GET', '/gate/directory'),
     'GET /gate/entries/{id}/photo': async () =>
       manager('GET', `/gate/entries/${await photographed()}/photo`),
     'POST /gate/incidents/{id}/evidence': evidence(

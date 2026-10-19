@@ -11015,6 +11015,63 @@
         ],
         "type": "string"
       },
+      "DirectoryGateView": {
+        "properties": {
+          "guards": {
+            "description": "The guards on shift here now, by first name.",
+            "items": {
+              "$ref": "#/components/schemas/FirstNameRefView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateKind"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "description": "The gate’s own phone (E.164): the post’s, never a person’s.",
+            "example": "+201000000777",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "phone",
+          "guards"
+        ],
+        "type": "object"
+      },
+      "DirectoryZoneView": {
+        "properties": {
+          "guards": {
+            "items": {
+              "$ref": "#/components/schemas/FirstNameRefView"
+            },
+            "type": "array"
+          },
+          "zone": {
+            "$ref": "#/components/schemas/PlaceView"
+          }
+        },
+        "required": [
+          "zone",
+          "guards"
+        ],
+        "type": "object"
+      },
       "DispatchAbsenceEntryView": {
         "properties": {
           "approved": {
@@ -14798,6 +14855,29 @@
           "out"
         ],
         "type": "string"
+      },
+      "GateDirectoryView": {
+        "properties": {
+          "gates": {
+            "description": "Every active gate, by name, with its guards on shift (perhaps none).",
+            "items": {
+              "$ref": "#/components/schemas/DirectoryGateView"
+            },
+            "type": "array"
+          },
+          "zones": {
+            "description": "The zones with a guard on shift now.",
+            "items": {
+              "$ref": "#/components/schemas/DirectoryZoneView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "gates",
+          "zones"
+        ],
+        "type": "object"
       },
       "GateEntryMethod": {
         "enum": [
@@ -50970,6 +51050,36 @@
         "summary": "Check a child's card",
         "tags": [
           "children"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/directory": {
+      "get": {
+        "description": "For a guard on duty at any post (NO_OPEN_SHIFT otherwise). Guards by first name only; the only phones are the gates’ own.",
+        "operationId": "GateDirectoryController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateDirectoryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The gates, their phones and who is on shift where",
+        "tags": [
+          "gate"
         ],
         "x-no-store": true,
         "x-stability": "draft"

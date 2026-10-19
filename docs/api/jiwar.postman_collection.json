@@ -11271,6 +11271,26 @@
           }
         },
         {
+          "name": "The gates, their phones and who is on shift where",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "directory"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/directory"
+            }
+          }
+        },
+        {
           "name": "Read the gate log",
           "request": {
             "description": "**Responses:** 200",

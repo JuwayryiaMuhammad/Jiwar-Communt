@@ -310,3 +310,17 @@ export const VISITOR_PHOTO_ROUTES: Row[] = [
     ];
   }),
 ];
+
+/** The gate directory (ADR 0056). */
+export const GATE_DIRECTORY_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/directory',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: 'none',
+  },
+];

@@ -135,6 +135,10 @@ export function boardMatterCalls(
       member('POST', `/board/motions/${await aDecidedOpenMotion()}/close`),
     'POST /board/motions/{id}/withdraw': async () =>
       member('POST', `/board/motions/${await aMotion()}/withdraw`),
+    'GET /board/overview': async () => {
+      await sitting();
+      return member('GET', '/board/overview');
+    },
   };
 }
 

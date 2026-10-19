@@ -11,6 +11,7 @@ import { BudgetReportService } from './budgets/budget-report.service';
 import { BudgetsController } from './budgets/budgets.controller';
 import { BudgetsService } from './budgets/budgets.service';
 import { ExpensesService } from './budgets/expenses.service';
+import { FinanceOverview } from './budgets/finance-overview';
 import { DisputeBoardAppeals } from './disputes/dispute-board-appeals';
 import { BillingPlansController } from './billing-plans/billing-plans.controller';
 import { BillingPlansService } from './billing-plans/billing-plans.service';
@@ -109,6 +110,7 @@ import { PaymentsService } from './payments/payments.service';
     ExpensesService,
     BudgetReportService,
     DisputeBoardAppeals,
+    FinanceOverview,
     FinanceNotices,
     InvoicesService,
     InstalmentsService,

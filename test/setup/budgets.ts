@@ -2,6 +2,7 @@ import type { Response } from 'supertest';
 import type { Compound } from './community';
 import { clock } from './compound-clock';
 import { fileHelpers } from './files';
+import { financeHelpers } from './finance';
 import { boardMatterHelpers, type Who } from './board-matters';
 import type { HttpHarness } from './http-app';
 
@@ -129,6 +130,7 @@ export function budgetHelpers(h: HttpHarness) {
   return {
     ...b,
     files,
+    fin: financeHelpers(h),
     thisYear,
     draft,
     setLines,

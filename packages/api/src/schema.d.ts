@@ -611,6 +611,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/board/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The board’s overview
+         * @description Read-only: the compound’s money, incidents and violations over a period of up to 31 days, from the existing reports.
+         */
+        get: operations["BoardOverviewController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/bookings/{id}": {
         parameters: {
             query?: never;
@@ -14504,6 +14524,14 @@ export interface components {
         BoardNowView: {
             board: components["schemas"]["BoardTermView"] | null;
         };
+        BoardOverviewView: {
+            /** @example 2027-02-12 */
+            from: string;
+            /** @description By section, from the existing reports: `finance` (aging and outstanding totals today, collections over the period, the active budget’s totals) and `security` (the incidents and violations reports’ totals over the period). Totals only. */
+            sections: Record<string, never>;
+            /** @example 2027-03-13 */
+            to: string;
+        };
         BoardPostView: {
             author: components["schemas"]["PostAuthorLabelView"];
             /** @enum {string} */
@@ -28393,6 +28421,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardMotionView"];
+                };
+            };
+        };
+    };
+    BoardOverviewController_get: {
+        parameters: {
+            query?: {
+                /** @description First local day; by default 29 days before `to`. */
+                from?: string;
+                /** @description Last local day, today by default; 31 days at most. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardOverviewView"];
                 };
             };
         };

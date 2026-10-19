@@ -12627,6 +12627,40 @@
           }
         },
         {
+          "name": "The board’s overview",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "overview"
+              ],
+              "query": [
+                {
+                  "description": "First local day; by default 29 days before `to`.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "Last local day, today by default; 31 days at most.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/overview"
+            }
+          }
+        },
+        {
           "name": "Get the board sitting now",
           "request": {
             "description": "**Responses:** 200",

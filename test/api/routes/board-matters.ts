@@ -596,3 +596,20 @@ export const BOARD_APPEAL_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The board's overview (ADR 0055). */
+export const BOARD_OVERVIEW_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/board/overview',
+    auth: 'tenant',
+    as: 'landlord',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { from: 'x' },
+      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+];

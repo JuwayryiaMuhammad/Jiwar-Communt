@@ -3042,6 +3042,28 @@
         ],
         "type": "object"
       },
+      "BoardOverviewView": {
+        "properties": {
+          "from": {
+            "example": "2027-02-12",
+            "type": "string"
+          },
+          "sections": {
+            "description": "By section, from the existing reports: `finance` (aging and outstanding totals today, collections over the period, the active budget’s totals) and `security` (the incidents and violations reports’ totals over the period). Totals only.",
+            "type": "object"
+          },
+          "to": {
+            "example": "2027-03-13",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "sections"
+        ],
+        "type": "object"
+      },
       "BoardPostView": {
         "properties": {
           "author": {
@@ -46801,6 +46823,57 @@
           }
         ],
         "summary": "Withdraw a motion",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/overview": {
+      "get": {
+        "description": "Read-only: the compound’s money, incidents and violations over a period of up to 31 days, from the existing reports.",
+        "operationId": "BoardOverviewController_get",
+        "parameters": [
+          {
+            "description": "First local day; by default 29 days before `to`.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, today by default; 31 days at most.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardOverviewView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The board’s overview",
         "tags": [
           "governance"
         ],

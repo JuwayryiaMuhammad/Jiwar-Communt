@@ -28,6 +28,8 @@ import {
 import { CertificationService } from './elections/certification.service';
 import { GovernanceElectionsService } from './elections/elections.service';
 import { GovernanceNotices } from './governance-notices';
+import { BoardOverviewController } from './overview/overview.controller';
+import { BoardOverviewService } from './overview/overview.service';
 import { MatterSweeps } from './motions/matter-sweeps';
 import { BoardMotionsController } from './motions/motions.controller';
 import { MotionsService } from './motions/motions.service';
@@ -77,6 +79,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     BoardAppealsController,
     StaffBoardAppealsController,
     BoardAppealsBoardController,
+    BoardOverviewController,
   ],
   providers: [
     GovernanceAccess,
@@ -96,6 +99,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     MotionsService,
     ApprovalsService,
     BoardAppealsService,
+    BoardOverviewService,
     MatterSweeps,
   ],
 })

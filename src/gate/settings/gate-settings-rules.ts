@@ -16,6 +16,15 @@ export const GATE_SETTING_LIMITS = {
   visitExpectedMinutes: { min: 15, max: 720, default: 240, nullable: true },
   /** Minutes outside a patrol route's geofence that flag the exit. */
   geofenceExitMinutes: { min: 1, max: 60, default: 3 },
+  /**
+   * Recordings a patrol note or an incident takes (ADR 0056), under the
+   * system's caps: seconds, and megabytes (the uploads' caps are 20 and
+   * 100).
+   */
+  audioMaxSeconds: { min: 10, max: 600, default: 300 },
+  videoMaxSeconds: { min: 10, max: 300, default: 120 },
+  audioMaxMb: { min: 1, max: 20, default: 20 },
+  videoMaxMb: { min: 1, max: 100, default: 100 },
 } as const;
 
 type Limits = typeof GATE_SETTING_LIMITS;

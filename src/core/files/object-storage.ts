@@ -204,6 +204,33 @@ export class ObjectStorage implements OnApplicationShutdown {
   }
 
   /**
+   * `length` bytes from `offset` of an object (a ranged GET; fewer at its
+   * end); null when there is none. A recording's container is read this
+   * way at finalize (ADR 0056), never whole.
+   */
+  async range(
+    key: string,
+    offset: number,
+    length: number,
+  ): Promise<Buffer | null> {
+    if (length <= 0) return Buffer.alloc(0);
+    try {
+      const res = await this.client.send(
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Range: `bytes=${offset}-${offset + length - 1}`,
+        }),
+      );
+      const bytes = await res.Body!.transformToByteArray();
+      return Buffer.from(bytes).subarray(0, length);
+    } catch (error: unknown) {
+      if (isNotFound(error)) return null;
+      throw this.unavailable('read', error);
+    }
+  }
+
+  /**
    * Deletes one object; a missing one counts as deleted. Never throws:
    * false means it is still there, and the caller keeps whatever points at
    * it so the sweep tries again. Logged with the key only (keys carry no

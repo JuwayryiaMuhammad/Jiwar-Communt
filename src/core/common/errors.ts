@@ -1079,6 +1079,17 @@ export const ErrorCode = {
   INCIDENT_EVIDENCE_EXISTS: 'INCIDENT_EVIDENCE_EXISTS',
   /** An incident keeps at most params.max pieces of evidence (409). */
   INCIDENT_EVIDENCE_LIMIT: 'INCIDENT_EVIDENCE_LIMIT',
+  /**
+   * A recording whose MP4 container has no movie header (`mvhd`), so no
+   * length (422): the file was deleted. Record in an MP4 container.
+   */
+  FILE_MEDIA_NO_DURATION: 'FILE_MEDIA_NO_DURATION',
+  /**
+   * A recording whose container cannot be read (422, params.reason:
+   * box_out_of_bounds, too_many_boxes, box_too_large, bad_movie_header):
+   * truncated or malformed. The file was deleted.
+   */
+  FILE_MEDIA_UNREADABLE: 'FILE_MEDIA_UNREADABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1276,6 +1287,8 @@ export const FieldErrorCode = {
    * with an account, or an active engagement of the unit.
    */
   ESCORT_NOT_ELIGIBLE: 'ESCORT_NOT_ELIGIBLE',
+  /** A recording longer than the gate allows (params.maxSeconds; ADR 0056). */
+  MEDIA_TOO_LONG: 'MEDIA_TOO_LONG',
 } as const;
 
 export type FieldErrorCode =

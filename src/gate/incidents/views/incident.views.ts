@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { PresignedReadView } from '../../../core/files/views/file.views';
+import { MediaView } from '../../media/gate-media';
 import { PlaceView } from '../../places/views/place.views';
 import { PostView } from '../../roster/views/roster.views';
 import { safetyReference } from '../../safety/safety-rules';
@@ -65,6 +66,12 @@ export class GuardIncidentView {
   description: string | null;
   @ApiProperty({ type: [PresignedReadView] })
   photos: PresignedReadView[];
+  @ApiProperty({
+    type: [MediaView],
+    description:
+      'Its recordings (ADR 0056), sound or video, with their lengths.',
+  })
+  media: MediaView[];
   @ApiProperty({ type: IncidentLinksView })
   links: IncidentLinksView;
   @ApiProperty({
@@ -107,6 +114,7 @@ export class GuardIncidentView {
       reportedAt: i.createdAt,
       description: i.description,
       photos: r.photos.map((p) => ({ url: p.url, expiresAt: p.expiresAt })),
+      media: r.media.map((m) => ({ ...m })),
       links: {
         emergencyId: i.emergencyId,
         gateServiceRequestId: i.gateServiceRequestId,

@@ -21,10 +21,12 @@ import {
   parseCheckpointPayload,
 } from './checkpoint-tokens';
 import { runNotFound } from './guard-patrols.service';
+import { GateMedia, PATROL_NOTE_MEDIA } from '../media/gate-media';
 import { PatrolCore } from './patrol-core';
 import {
   distanceMetres,
   inRunLifetime,
+  MAX_NOTE_MEDIA,
   MAX_NOTE_PHOTOS,
   NOTE_AFTER_END_MINUTES,
   NOTE_TEXT,
@@ -54,6 +56,7 @@ export interface NoteInput {
   text?: string;
   notedAt: Date;
   photoFileIds?: string[];
+  mediaFileIds?: string[];
 }
 
 const invalidCheckpoint = () =>
@@ -99,6 +102,7 @@ export class PatrolScansService {
     private readonly files: FilesService,
     private readonly core: PatrolCore,
     private readonly runs: RunsCore,
+    private readonly media: GateMedia,
   ) {}
 
   scan(runId: string, input: ScanInput): Promise<ScanView> {
@@ -236,7 +240,8 @@ export class PatrolScansService {
 
   /**
    * A note at a scan of my run: while it is under way, or 30 minutes after
-   * it ended. One per scan; up to three photos, claimed and attached.
+   * it ended. One per scan; up to three photos and two recordings (ADR
+   * 0056), claimed and attached.
    */
   note(runId: string, input: NoteInput): Promise<NoteView> {
     const text = input.text?.trim() || null;
@@ -253,6 +258,13 @@ export class PatrolScansService {
         field: 'photoFileIds',
         code: FieldErrorCode.INVALID_LENGTH,
         params: { min: 0, max: MAX_NOTE_PHOTOS },
+      });
+    const mediaIds = [...new Set(input.mediaFileIds ?? [])];
+    if (mediaIds.length > MAX_NOTE_MEDIA)
+      fields.push({
+        field: 'mediaFileIds',
+        code: FieldErrorCode.INVALID_LENGTH,
+        params: { min: 0, max: MAX_NOTE_MEDIA },
       });
     if (fields.length) throw invalid(fields);
     return this.tenantTx.withTenantTx(async (tx) => {
@@ -337,6 +349,23 @@ export class PatrolScansService {
           },
         });
       }
+      for (const m of await this.media.claim(
+        tx,
+        mediaIds,
+        PATROL_NOTE_MEDIA,
+        'mediaFileIds',
+      ))
+        await tx.patrolNoteMedia.create({
+          data: {
+            id: newId(),
+            tenantId: this.ctx.txTenantId,
+            noteId: note.id,
+            fileId: m.fileId,
+            kind: m.kind,
+            durationMs: m.durationMs,
+            uploadedById: this.ctx.accountId,
+          },
+        });
       return this.noteView(tx, note);
     });
   }
@@ -418,6 +447,9 @@ export class PatrolScansService {
     const photos = await tx.patrolNotePhoto.count({
       where: { noteId: note.id },
     });
-    return NoteView.of(note, photos);
+    const media = await tx.patrolNoteMedia.count({
+      where: { noteId: note.id },
+    });
+    return NoteView.of(note, photos, media);
   }
 }

@@ -2202,6 +2202,11 @@ model GateSettings {
   visitExpectedMinutes   Int?     @default(240) @map("visit_expected_minutes") @db.SmallInt
   /// Minutes outside a patrol route's geofence that flag an exit.
   geofenceExitMinutes    Int      @default(3) @map("geofence_exit_minutes") @db.SmallInt
+  /// Recordings a patrol note or an incident takes (ADR 0056).
+  audioMaxSeconds        Int      @default(300) @map("audio_max_seconds") @db.SmallInt
+  videoMaxSeconds        Int      @default(120) @map("video_max_seconds") @db.SmallInt
+  audioMaxMb             Int      @default(20) @map("audio_max_mb") @db.SmallInt
+  videoMaxMb             Int      @default(100) @map("video_max_mb") @db.SmallInt
 
   @@map("gate_settings")
 }
@@ -2434,6 +2439,14 @@ enum FilePurpose {
   expense_invoice
   /// A visitor's photo at entry (ADR 0056), taken by the guard.
   visitor_photo
+  /// A patrol note's sound (ADR 0056): audio/mp4.
+  patrol_note_audio
+  /// A patrol note's video (ADR 0056): video/mp4 or QuickTime.
+  patrol_note_video
+  /// An incident's sound (ADR 0056): audio/mp4.
+  incident_audio
+  /// An incident's video (ADR 0056): video/mp4 or QuickTime.
+  incident_video
 
   @@map("file_purpose")
 }
@@ -2477,6 +2490,8 @@ model StoredFile {
   neighbourComplaintAttachments NeighbourComplaintAttachment[] @relation("NeighbourComplaintAttachmentFile")
   neighbourPostPhotos           NeighbourPostPhoto[]           @relation("NeighbourPostPhotoFile")
   owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  /// A recording's length, read from its container at finalize (ADR 0056).
+  mediaDurationMs Int?        @map("media_duration_ms")
 
   @@unique([tenantId, id])
   @@map("files")
@@ -7600,6 +7615,25 @@ model PatrolNotePhoto {
   @@map("patrol_note_photos")
 }
 
+/// A patrol note's recording (ADR 0056): its kind and length copied from
+/// the file. Only ever added.
+model PatrolNoteMedia {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  noteId       String   @map("note_id") @db.Uuid
+  fileId       String   @map("file_id") @db.Uuid
+  /// audio | video
+  kind         String
+  durationMs   Int      @map("duration_ms")
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, fileId], map: "patrol_note_media_file_key")
+  @@index([tenantId, noteId], map: "patrol_note_media_parent_idx")
+  @@map("patrol_note_media")
+}
+
 /// Where a guard walked during a run (ADR 0052): personal data, deleted 30
 /// days after it was recorded and at the guard's erasure. Never changes.
 model PatrolTrackPoint {
@@ -7837,6 +7871,25 @@ model IncidentPhoto {
   @@unique([tenantId, id])
   @@index([tenantId, incidentId], map: "incident_photos_incident_idx")
   @@map("incident_photos")
+}
+
+/// An incident's recording (ADR 0056), attached at its report: its kind
+/// and length copied from the file. Only ever added.
+model IncidentMedia {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  incidentId   String   @map("incident_id") @db.Uuid
+  fileId       String   @map("file_id") @db.Uuid
+  /// audio | video
+  kind         String
+  durationMs   Int      @map("duration_ms")
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, fileId], map: "incident_media_file_key")
+  @@index([tenantId, incidentId], map: "incident_media_parent_idx")
+  @@map("incident_media")
 }
 
 /// The management's internal note on an incident (ADR 0053).

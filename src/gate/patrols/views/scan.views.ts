@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { PatrolNote, PatrolRun, PatrolScan } from '@prisma/client';
 import { PresignedReadView } from '../../../core/files/views/file.views';
+import { MediaView } from '../../media/gate-media';
 
 const METHOD = { enum: ['qr', 'nfc', 'manual'], enumName: 'PatrolScanMethod' };
 const OUTCOME = {
@@ -87,8 +88,13 @@ export class NoteView {
   receivedAt: Date;
   @ApiProperty({ type: Number, description: 'How many photos.' })
   photos: number;
+  @ApiProperty({
+    type: Number,
+    description: 'How many recordings (ADR 0056).',
+  })
+  media: number;
 
-  static of(n: PatrolNote, photos: number): NoteView {
+  static of(n: PatrolNote, photos: number, media: number): NoteView {
     return {
       id: n.id,
       scanId: n.scanId,
@@ -97,6 +103,7 @@ export class NoteView {
       notedAt: n.notedAt,
       receivedAt: n.receivedAt,
       photos,
+      media,
     };
   }
 }
@@ -182,14 +189,21 @@ export class GuardStopNoteView {
     description: 'Its author only.',
   })
   photos?: PresignedReadView[];
+  @ApiProperty({
+    type: [MediaView],
+    required: false,
+    description: 'Its recordings (ADR 0056); its author only.',
+  })
+  media?: MediaView[];
 
   static of(
     n: PatrolNote,
     own: boolean,
     photos: PresignedReadView[],
+    media: MediaView[],
   ): GuardStopNoteView {
     return own
-      ? { id: n.id, outcome: n.outcome, text: n.text, photos }
+      ? { id: n.id, outcome: n.outcome, text: n.text, photos, media }
       : { id: n.id, outcome: n.outcome };
   }
 }
@@ -214,8 +228,17 @@ export class StaffStopNoteView {
   receivedAt: Date;
   @ApiProperty({ type: [PresignedReadView] })
   photos: PresignedReadView[];
+  @ApiProperty({
+    type: [MediaView],
+    description: 'Its recordings (ADR 0056).',
+  })
+  media: MediaView[];
 
-  static of(n: PatrolNote, photos: PresignedReadView[]): StaffStopNoteView {
+  static of(
+    n: PatrolNote,
+    photos: PresignedReadView[],
+    media: MediaView[],
+  ): StaffStopNoteView {
     return {
       id: n.id,
       outcome: n.outcome,
@@ -224,6 +247,7 @@ export class StaffStopNoteView {
       notedAt: n.notedAt,
       receivedAt: n.receivedAt,
       photos,
+      media,
     };
   }
 }

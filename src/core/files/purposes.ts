@@ -4,10 +4,15 @@ import type { Permission } from '../access/permissions';
 const MB = 1024 * 1024;
 
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+/** Recordings (ADR 0056): the MP4 family only, its duration read at finalize. */
+export const AUDIO_TYPES = ['audio/mp4'] as const;
+export const VIDEO_TYPES = ['video/mp4', 'video/quicktime'] as const;
 export const FILE_TYPES = [
   ...IMAGE_TYPES,
   'application/pdf',
   'application/zip',
+  ...AUDIO_TYPES,
+  ...VIDEO_TYPES,
 ] as const;
 export type FileContentType = (typeof FILE_TYPES)[number];
 
@@ -16,6 +21,8 @@ export interface FilePurposeDefinition {
   maxBytes: number;
   /** Any one of these lets an account upload a file for this purpose. */
   uploaders: readonly Permission[];
+  /** A recording: its duration is read from its container at finalize. */
+  media?: 'audio' | 'video';
 }
 
 /**
@@ -243,6 +250,33 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['gate.operate'],
   },
+  // Recordings (ADR 0056): a patrol note's or an incident's sound or video,
+  // the MP4 family only. The caps are the system's; the gate's settings
+  // may lower them and limit the seconds, at attach. Kept as their parent.
+  patrol_note_audio: {
+    types: AUDIO_TYPES,
+    maxBytes: 20 * MB,
+    uploaders: ['gate.operate'],
+    media: 'audio',
+  },
+  patrol_note_video: {
+    types: VIDEO_TYPES,
+    maxBytes: 100 * MB,
+    uploaders: ['gate.operate'],
+    media: 'video',
+  },
+  incident_audio: {
+    types: AUDIO_TYPES,
+    maxBytes: 20 * MB,
+    uploaders: ['gate.operate', 'incidents.manage'],
+    media: 'audio',
+  },
+  incident_video: {
+    types: VIDEO_TYPES,
+    maxBytes: 100 * MB,
+    uploaders: ['gate.operate', 'incidents.manage'],
+    media: 'video',
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {
@@ -251,6 +285,10 @@ export const FILE_PURPOSES = {
     uploaders: [],
   },
 } as const satisfies Record<FilePurpose, FilePurposeDefinition>;
+
+/** Whether a purpose is a recording, and of what (ADR 0056). */
+export const mediaOf = (purpose: FilePurpose): 'audio' | 'video' | null =>
+  (FILE_PURPOSES[purpose] as FilePurposeDefinition).media ?? null;
 
 /** Every permission that may upload some purpose (the controller's gate). */
 export const ANY_UPLOADER = [

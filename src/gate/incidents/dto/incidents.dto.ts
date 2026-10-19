@@ -13,7 +13,12 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { DESCRIPTION, MAX_INCIDENT_PHOTOS, NOTE } from '../incidents.service';
+import {
+  DESCRIPTION,
+  MAX_INCIDENT_MEDIA,
+  MAX_INCIDENT_PHOTOS,
+  NOTE,
+} from '../incidents.service';
 
 const TYPES = REASON_CODES.incidentType;
 const SEVERITIES = REASON_CODES.incidentSeverity;
@@ -85,6 +90,20 @@ export class ReportIncidentDto {
   @ArrayMaxSize(MAX_INCIDENT_PHOTOS, withParams({ max: MAX_INCIDENT_PHOTOS }))
   @IsUUID('all', { each: true })
   photoFileIds?: string[];
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    required: false,
+    maxItems: MAX_INCIDENT_MEDIA,
+    description:
+      'Up to three recordings of the caller’s (ADR 0056): `incident_audio` (audio/mp4) or `incident_video` (video/mp4, video/quicktime), within the gate’s seconds and megabytes (MEDIA_TOO_LONG, FILE_TOO_LARGE).',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_INCIDENT_MEDIA, withParams({ max: MAX_INCIDENT_MEDIA }))
+  @IsUUID('all', { each: true })
+  mediaFileIds?: string[];
 
   @ApiProperty({ type: String, format: 'uuid', required: false })
   @IsOptional()

@@ -7,6 +7,15 @@ const startsWith = (b: Buffer, bytes: number[], at = 0) =>
   b.length >= at + bytes.length && bytes.every((x, i) => b[at + i] === x);
 const ascii = (s: string) => [...s].map((c) => c.charCodeAt(0));
 
+/**
+ * The MP4 family (ADR 0056): a `ftyp` box first, its major brand `qt  `
+ * for QuickTime and any other for MP4 and M4A.
+ */
+const ftyp = (b: Buffer, quickTime: boolean) =>
+  startsWith(b, ascii('ftyp'), 4) &&
+  b.length >= 12 &&
+  (b.toString('latin1', 8, 12) === 'qt  ') === quickTime;
+
 const SIGNATURES: Record<FileContentType, (b: Buffer) => boolean> = {
   'image/jpeg': (b) => startsWith(b, [0xff, 0xd8, 0xff]),
   'image/png': (b) =>
@@ -17,6 +26,9 @@ const SIGNATURES: Record<FileContentType, (b: Buffer) => boolean> = {
   'application/pdf': (b) => startsWith(b, ascii('%PDF-')),
   // A zip's local file header (ADR 0036; written by the server).
   'application/zip': (b) => startsWith(b, [0x50, 0x4b, 0x03, 0x04]),
+  'audio/mp4': (b) => ftyp(b, false),
+  'video/mp4': (b) => ftyp(b, false),
+  'video/quicktime': (b) => ftyp(b, true),
 };
 
 /**

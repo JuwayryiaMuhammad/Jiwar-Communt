@@ -1,16 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { FILE_PURPOSES, FILE_TYPES } from './purposes';
+import { FILE_PURPOSES, FILE_TYPES, mediaOf } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
 /** Both CHECKs as they stand now (ADR 0056 recreated both, with every purpose). */
 const sizeCheck = readFileSync(
-  join(
-    __dirname,
-    migrations,
-    '20261104090600_visitor_photo_purposes/migration.sql',
-  ),
+  join(__dirname, migrations, '20261104091300_media/migration.sql'),
   'utf8',
 );
 const typeCheck = sizeCheck;
@@ -84,6 +80,15 @@ describe('file purposes', () => {
     expect(sizeCheck).toContain(
       `WHEN 'visitor_photo' THEN ${FILE_PURPOSES.visitor_photo.maxBytes}`,
     );
+    for (const purpose of [
+      'patrol_note_audio',
+      'patrol_note_video',
+      'incident_audio',
+      'incident_video',
+    ] as const)
+      expect(sizeCheck).toContain(
+        `WHEN '${purpose}' THEN ${FILE_PURPOSES[purpose].maxBytes}`,
+      );
     expect(sizeCheck).toContain(
       `WHEN 'data_export' THEN ${FILE_PURPOSES.data_export.maxBytes}`,
     );
@@ -194,8 +199,22 @@ describe('file purposes', () => {
       FILE_PURPOSES.worker_photo.types,
     );
     expect(FILE_PURPOSES.data_export.types).toEqual(['application/zip']);
+    // Recordings (ADR 0056): the MP4 family, never an image.
+    for (const purpose of ['patrol_note_audio', 'incident_audio'] as const)
+      expect(FILE_PURPOSES[purpose].types).toEqual(['audio/mp4']);
+    for (const purpose of ['patrol_note_video', 'incident_video'] as const)
+      expect(FILE_PURPOSES[purpose].types).toEqual([
+        'video/mp4',
+        'video/quicktime',
+      ]);
     expect(typeCheck).toContain(
-      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" <> 'data_export')`,
+      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video'))`,
+    );
+    expect(typeCheck).toContain(
+      `("content_type" = 'audio/mp4' AND "purpose" IN ('patrol_note_audio', 'incident_audio'))`,
+    );
+    expect(typeCheck).toContain(
+      `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice'))`,
@@ -205,13 +224,28 @@ describe('file purposes', () => {
     );
   });
 
-  it('only the five types', () => {
+  it('only the eight types', () => {
     expect([...FILE_TYPES]).toEqual([
       'image/jpeg',
       'image/png',
       'image/webp',
       'application/pdf',
       'application/zip',
+      'audio/mp4',
+      'video/mp4',
+      'video/quicktime',
+    ]);
+  });
+
+  it('a recording, and only a recording, has its duration read', () => {
+    const media = Object.keys(FILE_PURPOSES).filter((p) =>
+      mediaOf(p as keyof typeof FILE_PURPOSES),
+    );
+    expect(media.sort()).toEqual([
+      'incident_audio',
+      'incident_video',
+      'patrol_note_audio',
+      'patrol_note_video',
     ]);
   });
 
@@ -247,6 +281,28 @@ describe('matchesSignature', () => {
       }
       void bytes;
     }
+  });
+
+  it('the MP4 family: a `ftyp` box first, QuickTime by its brand', () => {
+    const ftyp = (brand: string) =>
+      Buffer.concat([
+        Buffer.from([0, 0, 0, 0x18]),
+        Buffer.from('ftyp'),
+        Buffer.from(brand, 'latin1'),
+        Buffer.from([0, 0, 0, 0]),
+      ]);
+    for (const brand of ['isom', 'mp42', 'M4A '])
+      for (const type of ['audio/mp4', 'video/mp4'] as const) {
+        expect(matchesSignature(type, ftyp(brand))).toBe(true);
+        expect(matchesSignature('video/quicktime', ftyp(brand))).toBe(false);
+      }
+    expect(matchesSignature('video/quicktime', ftyp('qt  '))).toBe(true);
+    expect(matchesSignature('video/mp4', ftyp('qt  '))).toBe(false);
+    // Not a container: a PNG, or `ftyp` too short to name its brand.
+    expect(matchesSignature('video/mp4', png)).toBe(false);
+    expect(matchesSignature('audio/mp4', ftyp('isom').subarray(0, 10))).toBe(
+      false,
+    );
   });
 
   it('refuses short or empty files and a RIFF that is not WebP', () => {

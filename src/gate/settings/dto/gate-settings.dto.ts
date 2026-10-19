@@ -75,4 +75,61 @@ export class UpdateGateSettingsDto {
   @Min(L.geofenceExitMinutes.min, withParams(bounds(L.geofenceExitMinutes)))
   @Max(L.geofenceExitMinutes.max, withParams(bounds(L.geofenceExitMinutes)))
   geofenceExitMinutes?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.audioMaxSeconds.min,
+    maximum: L.audioMaxSeconds.max,
+    description:
+      'The longest sound a patrol note or an incident takes, in seconds; checked when attached.',
+  })
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.audioMaxSeconds)))
+  @Min(L.audioMaxSeconds.min, withParams(bounds(L.audioMaxSeconds)))
+  @Max(L.audioMaxSeconds.max, withParams(bounds(L.audioMaxSeconds)))
+  audioMaxSeconds?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.videoMaxSeconds.min,
+    maximum: L.videoMaxSeconds.max,
+    description: 'The longest video, in seconds; checked when attached.',
+  })
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.videoMaxSeconds)))
+  @Min(L.videoMaxSeconds.min, withParams(bounds(L.videoMaxSeconds)))
+  @Max(L.videoMaxSeconds.max, withParams(bounds(L.videoMaxSeconds)))
+  videoMaxSeconds?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.audioMaxMb.min,
+    maximum: L.audioMaxMb.max,
+    description: 'The largest sound, in megabytes; checked when attached.',
+  })
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.audioMaxMb)))
+  @Min(L.audioMaxMb.min, withParams(bounds(L.audioMaxMb)))
+  @Max(L.audioMaxMb.max, withParams(bounds(L.audioMaxMb)))
+  audioMaxMb?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.videoMaxMb.min,
+    maximum: L.videoMaxMb.max,
+    description: 'The largest video, in megabytes; checked when attached.',
+  })
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.videoMaxMb)))
+  @Min(L.videoMaxMb.min, withParams(bounds(L.videoMaxMb)))
+  @Max(L.videoMaxMb.max, withParams(bounds(L.videoMaxMb)))
+  videoMaxMb?: number;
 }

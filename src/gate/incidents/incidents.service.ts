@@ -29,6 +29,7 @@ import { PlacesService } from '../places/places.service';
 import { DutyNamesReader } from '../roster/duty-names';
 import { PostView } from '../roster/views/roster.views';
 import { SafetyCore, type UnitLocation } from '../safety/safety-core';
+import { GateMedia, INCIDENT_MEDIA, type MediaView } from '../media/gate-media';
 import { ShiftsService } from '../shifts/shifts.service';
 import { GuardIncidentView, StaffIncidentView } from './views/incident.views';
 
@@ -36,6 +37,8 @@ import { GuardIncidentView, StaffIncidentView } from './views/incident.views';
 export const GUARD_INCIDENT_RESOURCE = 'incident_guard';
 export const STAFF_INCIDENT_RESOURCE = 'incident_staff';
 export const MAX_INCIDENT_PHOTOS = 5;
+/** Recordings an incident takes at its report (ADR 0056). */
+export const MAX_INCIDENT_MEDIA = 3;
 export const DESCRIPTION = { min: 1, max: 4000 } as const;
 export const NOTE = { min: 1, max: 2000 } as const;
 /** An incident is reported within this many days of when it happened. */
@@ -54,6 +57,7 @@ export interface NewIncident {
   occurredAt: Date;
   description: string;
   photoFileIds?: string[];
+  mediaFileIds?: string[];
   emergencyId?: string;
   gateServiceRequestId?: string;
   patrolNoteId?: string;
@@ -74,6 +78,7 @@ export interface IncidentRecord {
   investigator: Person | null;
   closedBy: Person | null;
   photos: PresignedRead[];
+  media: MediaView[];
   notes: { note: IncidentNote; author: Person }[];
   acknowledgements: { ack: IncidentAcknowledgement; account: Person }[];
 }
@@ -117,6 +122,7 @@ export class IncidentsService implements OnModuleInit {
     private readonly places: PlacesService,
     private readonly files: FilesService,
     private readonly names: DutyNamesReader,
+    private readonly media: GateMedia,
   ) {}
 
   onModuleInit(): void {
@@ -144,6 +150,15 @@ export class IncidentsService implements OnModuleInit {
           field: 'photoFileIds',
           code: FieldErrorCode.INVALID_LENGTH,
           params: { max: MAX_INCIDENT_PHOTOS },
+        },
+      ]);
+    const mediaIds = [...new Set(input.mediaFileIds ?? [])];
+    if (mediaIds.length > MAX_INCIDENT_MEDIA)
+      throw invalid([
+        {
+          field: 'mediaFileIds',
+          code: FieldErrorCode.INVALID_LENGTH,
+          params: { max: MAX_INCIDENT_MEDIA },
         },
       ]);
     if (!input.placeId && !input.unitCode)
@@ -226,6 +241,23 @@ export class IncidentsService implements OnModuleInit {
           },
         });
       }
+      for (const m of await this.media.claim(
+        tx,
+        mediaIds,
+        INCIDENT_MEDIA,
+        'mediaFileIds',
+      ))
+        await tx.incidentMedia.create({
+          data: {
+            id: newId(),
+            tenantId: this.ctx.txTenantId,
+            incidentId: id,
+            fileId: m.fileId,
+            kind: m.kind,
+            durationMs: m.durationMs,
+            uploadedById: me,
+          },
+        });
       await this.audit.record(tx, {
         action: 'incident.reported',
         targetId: id,
@@ -237,6 +269,7 @@ export class IncidentsService implements OnModuleInit {
           unitId,
           shiftId: shift?.id ?? null,
           photos: photoIds.length,
+          ...(mediaIds.length ? { media: mediaIds.length } : {}),
           emergencyId: input.emergencyId ?? null,
           gateServiceRequestId: input.gateServiceRequestId ?? null,
           patrolNoteId: input.patrolNoteId ?? null,
@@ -560,6 +593,10 @@ export class IncidentsService implements OnModuleInit {
       where: { incidentId: { in: ids } },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
+    const media = await tx.incidentMedia.findMany({
+      where: { incidentId: { in: ids } },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
     const notes = await tx.incidentNote.findMany({
       where: { incidentId: { in: ids } },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -625,6 +662,10 @@ export class IncidentsService implements OnModuleInit {
         investigator: i.investigatorId ? person(i.investigatorId) : null,
         closedBy: i.closedById ? person(i.closedById) : null,
         photos: reads,
+        media: await this.media.views(
+          tx,
+          media.filter((m) => m.incidentId === i.id),
+        ),
         notes: notes
           .filter((n) => n.incidentId === i.id)
           .map((n) => ({ note: n, author: person(n.authorId) })),

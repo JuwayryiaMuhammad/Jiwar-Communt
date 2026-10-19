@@ -7,6 +7,8 @@ import {
   evidenceRow,
   fieldExceptionRow,
   geofenceExitRow,
+  incidentMediaRow,
+  mediaFileRow,
   overstayAlertRow,
   patrolRunRow,
   rowAt,
@@ -45,6 +47,8 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
   let incidentId: string;
   let runId: string;
   let exitId: string;
+  let mediaId: string;
+  let spareMediaId: string;
 
   const inTx = <T>(fn: (tx: TenantTxClient) => Promise<T>) =>
     h.asTenant(tenantId, () => h.tenantTx.withTenantTx(fn));
@@ -88,6 +92,18 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
         createdById: managerId,
       });
       exitId = await geofenceExitRow(tx, { tenantId, runId, guardId });
+      mediaId = (
+        await tx.incidentMedia.findUniqueOrThrow({
+          where: {
+            id: await incidentMediaRow(tx, {
+              tenantId,
+              incidentId,
+              byId: guardId,
+            }),
+          },
+        })
+      ).fileId;
+      spareMediaId = await mediaFileRow(tx, tenantId);
       await trackEvidenceRow(tx, {
         tenantId,
         incidentId,
@@ -531,6 +547,59 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
     });
   });
 
+  describe('a recording', () => {
+    it('its rows are only ever added; its file is attached once', async () => {
+      for (const table of ['patrol_note_media', 'incident_media'])
+        expect({ table, ...(await privileges(table)) }).toEqual({
+          table,
+          select: true,
+          insert: true,
+          update: false,
+          delete: false,
+          truncate: false,
+        });
+      const add = (fileId: string, kind = 'audio', ms = 1000) =>
+        `INSERT INTO incident_media (id, tenant_id, incident_id, file_id, kind, duration_ms, uploaded_by_account_id)
+         VALUES (gen_random_uuid(), '${tenantId}', '${incidentId}', '${fileId}', '${kind}', ${ms}, '${guardId}')`;
+      await expect(asApp(add(mediaId))).rejects.toThrow(
+        /incident_media_file_key/,
+      );
+      await expect(asApp(add(spareMediaId, 'photo'))).rejects.toThrow(
+        /incident_media_kind/,
+      );
+      await expect(asApp(add(spareMediaId, 'audio', 0))).rejects.toThrow(
+        /incident_media_duration/,
+      );
+    });
+
+    it('a recording’s file has its length once finalized; no other file has one', async () => {
+      const file = (
+        purpose: string,
+        type: string,
+        status: string,
+        ms: string,
+      ) =>
+        asApp(
+          `INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes, status, upload_expires_at, finalized_at, media_duration_ms)
+           VALUES (gen_random_uuid(), '${tenantId}', '${guardId}', '${purpose}', '${type}', 100, '${status}', now(), ${status === 'ready' ? 'now()' : 'NULL'}, ${ms})`,
+        );
+      await expect(
+        file('incident_audio', 'audio/mp4', 'pending', 'NULL'),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        file('incident_audio', 'audio/mp4', 'ready', '4200'),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      for (const [purpose, type, status, ms] of [
+        ['incident_audio', 'audio/mp4', 'ready', 'NULL'],
+        ['incident_video', 'video/mp4', 'ready', '0'],
+        ['incident_photo', 'image/png', 'ready', '1000'],
+      ])
+        await expect(file(purpose, type, status, ms)).rejects.toThrow(
+          /files_media_duration/,
+        );
+    });
+  });
+
   describe('a geofence exit', () => {
     const exit = () => `id = '${exitId}'`;
 
@@ -664,12 +733,20 @@ describe('The gate’s completion tables — CHECKs, triggers and privileges', (
       'visit_expected_minutes = 721',
       'geofence_exit_minutes = 0',
       'geofence_exit_minutes = 61',
+      'audio_max_seconds = 9',
+      'audio_max_seconds = 601',
+      'video_max_seconds = 9',
+      'video_max_seconds = 301',
+      'audio_max_mb = 0',
+      'audio_max_mb = 21',
+      'video_max_mb = 0',
+      'video_max_mb = 101',
     ])
       await expect(
         asApp(
           `UPDATE gate_settings SET ${set} WHERE tenant_id = '${tenantId}'`,
         ),
-      ).rejects.toThrow(/gate_settings_(exception|visit|geofence)/);
+      ).rejects.toThrow(/gate_settings_(exception|visit|geofence|audio|video)/);
     // The overstay alert may be off.
     await expect(
       asApp(

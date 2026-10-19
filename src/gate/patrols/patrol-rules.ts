@@ -202,6 +202,8 @@ export const SCAN_GRACE_MINUTES = 2;
 export const NOTE_AFTER_END_MINUTES = 30;
 export const NOTE_TEXT = { min: 1, max: 1000 } as const;
 export const MAX_NOTE_PHOTOS = 3;
+/** Recordings a note takes (ADR 0056): a sound and a video, say. */
+export const MAX_NOTE_MEDIA = 2;
 /** A device's reported accuracy, in metres. */
 export const ACCURACY_M = { min: 0, max: 10_000 } as const;
 

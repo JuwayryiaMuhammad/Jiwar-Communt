@@ -1714,6 +1714,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   patrol_geofence_exits_flagged_minutes: {
     guarded: 'flagged_minutes IS NULL is tested first',
   },
+  files_media_duration: {
+    guarded:
+      'media_duration_ms IS NULL is tested before its comparison; the rest are IS [NOT] NULL tests',
+  },
+  gate_settings_audio_seconds: {},
+  gate_settings_video_seconds: {},
+  gate_settings_audio_mb: {},
+  gate_settings_video_mb: {},
+  patrol_note_media_kind: {},
+  patrol_note_media_duration: {},
+  incident_media_kind: {},
+  incident_media_duration: {},
 };
 
 interface Check {

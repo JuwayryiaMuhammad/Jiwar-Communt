@@ -10,6 +10,7 @@ import { appError, ErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { FilesService } from '../../core/files/files.service';
 import type { PresignedReadView } from '../../core/files/views/file.views';
+import { GateMedia, type MediaView } from '../media/gate-media';
 import { DutyNamesReader } from '../roster/duty-names';
 import type { RouteContext } from './views/route.views';
 import type { RunContext } from './views/run.views';
@@ -35,6 +36,7 @@ export class PatrolCore {
   constructor(
     private readonly names: DutyNamesReader,
     private readonly files: FilesService,
+    private readonly media: GateMedia,
   ) {}
 
   /** The route FOR UPDATE, or 404. */
@@ -175,6 +177,17 @@ export class PatrolCore {
       const url = await this.files.readUrl(tx, p.fileId);
       if (url) photos.set(p.noteId, [...(photos.get(p.noteId) ?? []), url]);
     }
+    const media = new Map<string, MediaView[]>();
+    if (shown.length) {
+      const rows = await tx.patrolNoteMedia.findMany({
+        where: { noteId: { in: shown.map((n) => n.id) } },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      for (const n of shown) {
+        const own = rows.filter((m) => m.noteId === n.id);
+        if (own.length) media.set(n.id, await this.media.views(tx, own));
+      }
+    }
     const scansByRun = new Map<string, PatrolScan[]>();
     for (const sc of scans)
       scansByRun.set(sc.runId, [...(scansByRun.get(sc.runId) ?? []), sc]);
@@ -196,6 +209,7 @@ export class PatrolCore {
       scans: scansByRun,
       notes: new Map(notes.map((n) => [n.scanId, n])),
       photos,
+      media,
     };
   }
 

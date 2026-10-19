@@ -49,7 +49,11 @@ export class FilesController {
   }
 
   @Post(':id/finalize')
-  @ApiOperation({ summary: 'Finalize an upload once the file is PUT' })
+  @ApiOperation({
+    summary: 'Finalize an upload once the file is PUT',
+    description:
+      'The object must be exactly what was declared (422 FILE_CONTENT_MISMATCH; the file is deleted). A recording (ADR 0056) has its length read from its MP4 container, `moov` at the start or the end: a container that cannot be read is 422 FILE_MEDIA_UNREADABLE (params.reason), one with no movie header 422 FILE_MEDIA_NO_DURATION; the file is deleted either way.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: FileView })
   async finalize(@Param('id', parseId()) id: string): Promise<FileView> {

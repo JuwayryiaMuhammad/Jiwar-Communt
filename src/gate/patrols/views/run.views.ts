@@ -17,6 +17,7 @@ import type { DutyNames } from '../../roster/duty-names';
 import { PostView } from '../../roster/views/roster.views';
 import { timeoutAt } from '../patrol-rules';
 import type { PresignedReadView } from '../../../core/files/views/file.views';
+import type { MediaView } from '../../media/gate-media';
 import { CheckpointPositionView } from './checkpoint.views';
 import {
   GuardStopNoteView,
@@ -39,6 +40,8 @@ export interface RunContext {
   notes: Map<string, PatrolNote>;
   /** Per note (details only): its photos' read URLs. */
   photos: Map<string, PresignedReadView[]>;
+  /** Per note (details only): its recordings (ADR 0056). */
+  media: Map<string, MediaView[]>;
 }
 
 const KIND = { enum: ['scheduled', 'adhoc'], enumName: 'PatrolRunKind' };
@@ -266,6 +269,7 @@ function scanned(r: PatrolRun, c: RunContext, checkpointId: string) {
     scan: scan ?? null,
     note: note ?? null,
     photos: note ? (c.photos.get(note.id) ?? []) : [],
+    media: note ? (c.media.get(note.id) ?? []) : [],
   };
 }
 
@@ -308,7 +312,9 @@ export class RunDetailView extends RunView {
         return {
           ...stop,
           scan: at.scan ? StaffStopScanView.from(at.scan, r) : null,
-          note: at.note ? StaffStopNoteView.of(at.note, at.photos) : null,
+          note: at.note
+            ? StaffStopNoteView.of(at.note, at.photos, at.media)
+            : null,
         };
       }),
     };
@@ -345,6 +351,7 @@ export class GuardRunDetailView extends GuardRunView {
                 at.note,
                 at.note.guardAccountId === viewer,
                 at.photos,
+                at.media,
               )
             : null,
         };

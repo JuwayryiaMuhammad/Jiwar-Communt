@@ -19,6 +19,13 @@ export class FileView {
   status: FileStatus;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
+  @ApiProperty({
+    type: Number,
+    required: false,
+    description:
+      'A finalized recording’s length in milliseconds, read from its container (ADR 0056); absent for anything else.',
+  })
+  durationMs?: number;
 
   static from(f: StoredFile): FileView {
     return {
@@ -28,6 +35,7 @@ export class FileView {
       size: f.sizeBytes,
       status: f.status,
       createdAt: f.createdAt,
+      ...(f.mediaDurationMs !== null ? { durationMs: f.mediaDurationMs } : {}),
     };
   }
 }

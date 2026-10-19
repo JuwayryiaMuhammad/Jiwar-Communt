@@ -59,6 +59,15 @@ export class IncidentExportSections implements OnModuleInit {
           })
         : [])
         photos.set(p.incidentId, (photos.get(p.incidentId) ?? 0) + 1);
+      // Its recordings, counted as its photos are (ADR 0056).
+      const media = new Map<string, number>();
+      for (const m of reported.length
+        ? await tx.incidentMedia.findMany({
+            where: { incidentId: { in: reported.map((i) => i.id) } },
+            select: { incidentId: true },
+          })
+        : [])
+        media.set(m.incidentId, (media.get(m.incidentId) ?? 0) + 1);
       const known = new Map(
         [...reported, ...closed].map((i) => [i.id, i.number]),
       );
@@ -91,7 +100,17 @@ export class IncidentExportSections implements OnModuleInit {
         tx,
         reported.flatMap((i) => (i.unitId ? [i.unitId] : [])),
       );
-      return { reported, closed, notes, acks, photos, known, places, codes };
+      return {
+        reported,
+        closed,
+        notes,
+        acks,
+        photos,
+        media,
+        known,
+        places,
+        codes,
+      };
     });
     const ref = (id: string) => {
       const n = d.known.get(id);
@@ -108,6 +127,7 @@ export class IncidentExportSections implements OnModuleInit {
         occurredAt: i.occurredAt,
         description: i.description,
         photos: d.photos.get(i.id) ?? 0,
+        media: d.media.get(i.id) ?? 0,
         status: i.status,
         outcome: i.outcome,
         createdAt: i.createdAt,

@@ -37,12 +37,46 @@ export class GateSettingsResponse {
   })
   geofenceExitMinutes: number;
 
+  @ApiProperty({
+    type: Number,
+    example: L.audioMaxSeconds.default,
+    description:
+      'The longest sound a patrol note or an incident takes, in seconds.',
+  })
+  audioMaxSeconds: number;
+
+  @ApiProperty({
+    type: Number,
+    example: L.videoMaxSeconds.default,
+    description:
+      'The longest video a patrol note or an incident takes, in seconds.',
+  })
+  videoMaxSeconds: number;
+
+  @ApiProperty({
+    type: Number,
+    example: L.audioMaxMb.default,
+    description: 'The largest sound, in megabytes (20 at most).',
+  })
+  audioMaxMb: number;
+
+  @ApiProperty({
+    type: Number,
+    example: L.videoMaxMb.default,
+    description: 'The largest video, in megabytes (100 at most).',
+  })
+  videoMaxMb: number;
+
   static from(s: GateSettingsValues): GateSettingsResponse {
     return {
       exceptionAnswerMinutes: s.exceptionAnswerMinutes,
       exceptionEntryMinutes: s.exceptionEntryMinutes,
       visitExpectedMinutes: s.visitExpectedMinutes,
       geofenceExitMinutes: s.geofenceExitMinutes,
+      audioMaxSeconds: s.audioMaxSeconds,
+      videoMaxSeconds: s.videoMaxSeconds,
+      audioMaxMb: s.audioMaxMb,
+      videoMaxMb: s.videoMaxMb,
     };
   }
 }

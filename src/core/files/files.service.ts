@@ -15,7 +15,8 @@ import {
   type PresignedRead,
   type PresignedUpload,
 } from './object-storage';
-import { FILE_PURPOSES, type FileContentType } from './purposes';
+import { Mp4Refused, mp4DurationMs } from './mp4-duration';
+import { FILE_PURPOSES, mediaOf, type FileContentType } from './purposes';
 import { matchesSignature, SIGNATURE_BYTES } from './signatures';
 
 /**
@@ -75,6 +76,11 @@ const invalid = (
  * a type and a size, uploads with the presigned PUT (the store refuses any
  * other size or type, and a second PUT), then finalizes: the server checks
  * the object's size, type and first bytes before the file is usable.
+ *
+ * A recording (ADR 0056) has its duration read from its container then,
+ * with ranged reads of its headers and its movie box: a container that
+ * cannot be read, or holds no duration, is refused and deleted like a
+ * mismatch.
  *
  * Every endpoint here is the owner's own: another account's file, another
  * compound's, and a deleted one are all FILE_NOT_FOUND. Rows are locked
@@ -241,6 +247,9 @@ export class FilesService implements OnModuleInit {
         'The uploaded bytes are not the declared file',
       );
     }
+    const mediaDurationMs = mediaOf(file.purpose)
+      ? await this.durationOf(id, key, file.sizeBytes)
+      : null;
 
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.lock(tx, id);
@@ -249,9 +258,47 @@ export class FilesService implements OnModuleInit {
       this.refuseExpired(current);
       return tx.storedFile.update({
         where: { id },
-        data: { status: 'ready', finalizedAt: new Date() },
+        data: { status: 'ready', finalizedAt: new Date(), mediaDurationMs },
       });
     });
+  }
+
+  /**
+   * A recording's duration from its container. A container that cannot be
+   * read is FILE_MEDIA_UNREADABLE (params.reason), one with no movie
+   * header FILE_MEDIA_NO_DURATION; either way the file goes, as a mismatch.
+   */
+  private async durationOf(
+    id: string,
+    key: string,
+    size: number,
+  ): Promise<number> {
+    // Deleted while it was read: as finalize finding no object.
+    const gone = { seen: false };
+    try {
+      return await mp4DurationMs(size, async (offset, length) => {
+        const bytes = await this.storage.range(key, offset, length);
+        if (!bytes) {
+          gone.seen = true;
+          throw new Error('gone');
+        }
+        return bytes;
+      });
+    } catch (error: unknown) {
+      if (gone.seen) return this.uploadMissing(id);
+      if (!(error instanceof Mp4Refused)) throw error;
+      await this.removeOwn(id, 'content_mismatch');
+      if (error.problem === 'no_movie_header')
+        throw appError.unprocessable(
+          ErrorCode.FILE_MEDIA_NO_DURATION,
+          'The recording says nothing of its length: record it in an MP4 container',
+        );
+      throw appError.unprocessable(
+        ErrorCode.FILE_MEDIA_UNREADABLE,
+        'The recording’s container cannot be read',
+        { params: { reason: error.problem } },
+      );
+    }
   }
 
   /** The file, and a read URL once it is finalized. */

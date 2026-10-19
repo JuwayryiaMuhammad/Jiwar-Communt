@@ -1,6 +1,12 @@
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
-import { checkpointRow, routeRow, runRow } from './patrol-rows';
+import {
+  checkpointRow,
+  noteRow,
+  routeRow,
+  runRow,
+  scanRow,
+} from './patrol-rows';
 
 // Raw rows of the gate's completion tables (ADR 0056), for the schema and
 // isolation suites: the shortest valid row of each. Instants are written
@@ -233,6 +239,106 @@ export async function trackEvidenceRow(
       runId: r.runId,
       linkedById: r.byId,
       linkedAt: rowAt(60),
+    },
+  });
+  return id;
+}
+
+/** A patrol note on a scan of a run of a route of its own at a gate. */
+export async function patrolNoteRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; gateId: string; guardId: string },
+): Promise<string> {
+  const checkpointId = await checkpointRow(tx, {
+    tenantId: r.tenantId,
+    gateId: r.gateId,
+    createdById: r.guardId,
+  });
+  const { routeId, versionId } = await routeRow(tx, {
+    tenantId: r.tenantId,
+    gateId: r.gateId,
+    createdById: r.guardId,
+    checkpointIds: [checkpointId],
+  });
+  const runId = await runRow(tx, {
+    tenantId: r.tenantId,
+    routeId,
+    versionId,
+    gateId: r.gateId,
+  });
+  const scanId = await scanRow(tx, {
+    tenantId: r.tenantId,
+    runId,
+    checkpointId,
+    guardId: r.guardId,
+  });
+  return noteRow(tx, {
+    tenantId: r.tenantId,
+    runId,
+    scanId,
+    guardId: r.guardId,
+  });
+}
+
+/** A finalized, attached recording of a purpose: a second of sound. */
+export async function mediaFileRow(
+  tx: TenantTxClient,
+  tenantId: string,
+  purpose: 'patrol_note_audio' | 'incident_audio' = 'incident_audio',
+): Promise<string> {
+  const id = newId();
+  await tx.storedFile.create({
+    data: {
+      id,
+      tenantId,
+      purpose,
+      contentType: 'audio/mp4',
+      sizeBytes: 1000,
+      status: 'ready',
+      mediaDurationMs: 1000,
+      uploadExpiresAt: ROW_T0,
+      finalizedAt: ROW_T0,
+      attachedAt: ROW_T0,
+    },
+  });
+  return id;
+}
+
+/** A recording on a patrol note: its file made in the row's own compound. */
+export async function noteMediaRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; noteId: string; byId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.patrolNoteMedia.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      noteId: r.noteId,
+      fileId: await mediaFileRow(tx, r.tenantId, 'patrol_note_audio'),
+      kind: 'audio',
+      durationMs: 1000,
+      uploadedById: r.byId,
+    },
+  });
+  return id;
+}
+
+/** A recording on an incident: its file made in the row's own compound. */
+export async function incidentMediaRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; incidentId: string; byId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.incidentMedia.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      incidentId: r.incidentId,
+      fileId: await mediaFileRow(tx, r.tenantId),
+      kind: 'audio',
+      durationMs: 1000,
+      uploadedById: r.byId,
     },
   });
   return id;

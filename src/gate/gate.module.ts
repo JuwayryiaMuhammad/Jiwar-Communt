@@ -228,6 +228,7 @@ import { PatrolLifecycle } from './patrols/patrol-lifecycle';
 import { PatrolReportService } from './patrols/patrol-report.service';
 import { PatrolReportController } from './patrols/report.controller';
 import { PatrolSweeps } from './patrols/patrol-sweeps';
+import { GateMedia } from './media/gate-media';
 import { PatrolGeofence } from './patrols/patrol-geofence';
 import { PatrolTrackService } from './patrols/patrol-track.service';
 import {
@@ -500,6 +501,7 @@ import { PickupPageService } from './children/pickup-page.service';
     PatrolScansService,
     PatrolTrackService,
     PatrolGeofence,
+    GateMedia,
     PatrolReportService,
     PatrolSweeps,
     PatrolLifecycle,

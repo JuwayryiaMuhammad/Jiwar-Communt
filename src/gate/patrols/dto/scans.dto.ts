@@ -19,6 +19,7 @@ import {
   ACCURACY_M,
   LATITUDE,
   LONGITUDE,
+  MAX_NOTE_MEDIA,
   MAX_NOTE_PHOTOS,
   NOTE_TEXT,
 } from '../patrol-rules';
@@ -166,4 +167,14 @@ export class NoteDto {
   @ArrayMaxSize(MAX_NOTE_PHOTOS, withParams({ min: 0, max: MAX_NOTE_PHOTOS }))
   @IsUUID(undefined, { each: true })
   photoFileIds?: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: `Finalized recordings of the caller (ADR 0056), ${MAX_NOTE_MEDIA} at most: \`patrol_note_audio\` (audio/mp4) or \`patrol_note_video\` (video/mp4, video/quicktime), within the gate’s seconds and megabytes (MEDIA_TOO_LONG, FILE_TOO_LARGE).`,
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_NOTE_MEDIA, withParams({ min: 0, max: MAX_NOTE_MEDIA }))
+  @IsUUID(undefined, { each: true })
+  mediaFileIds?: string[];
 }

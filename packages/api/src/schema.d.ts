@@ -1626,7 +1626,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Finalize an upload once the file is PUT */
+        /**
+         * Finalize an upload once the file is PUT
+         * @description The object must be exactly what was declared (422 FILE_CONTENT_MISMATCH; the file is deleted). A recording (ADR 0056) has its length read from its MP4 container, `moov` at the start or the end: a container that cannot be read is 422 FILE_MEDIA_UNREADABLE (params.reason), one with no movie header 422 FILE_MEDIA_NO_DURATION; the file is deleted either way.
+         */
         post: operations["FilesController_finalize"];
         delete?: never;
         options?: never;
@@ -18594,11 +18597,13 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
             createdAt: string;
+            /** @description A finalized recording’s length in milliseconds, read from its container (ADR 0056); absent for anything else. */
+            durationMs?: number;
             /** Format: uuid */
             id: string;
             purpose: components["schemas"]["FilePurpose"];
@@ -18619,6 +18624,8 @@ export interface components {
             contentType: string;
             /** Format: date-time */
             createdAt: string;
+            /** @description A finalized recording’s length in milliseconds, read from its container (ADR 0056); absent for anything else. */
+            durationMs?: number;
             /** Format: uuid */
             id: string;
             purpose: components["schemas"]["FilePurpose"];
@@ -18982,6 +18989,16 @@ export interface components {
         GateServiceWhen: "now" | "in_15" | "in_30";
         GateSettingsResponse: {
             /**
+             * @description The largest sound, in megabytes (20 at most).
+             * @example 20
+             */
+            audioMaxMb: number;
+            /**
+             * @description The longest sound a patrol note or an incident takes, in seconds.
+             * @example 300
+             */
+            audioMaxSeconds: number;
+            /**
              * @description Minutes the management has to answer a field exception.
              * @example 10
              */
@@ -18996,6 +19013,16 @@ export interface components {
              * @example 3
              */
             geofenceExitMinutes: number;
+            /**
+             * @description The largest video, in megabytes (100 at most).
+             * @example 100
+             */
+            videoMaxMb: number;
+            /**
+             * @description The longest video a patrol note or an incident takes, in seconds.
+             * @example 120
+             */
+            videoMaxSeconds: number;
             /**
              * @description Minutes a visit is expected to last when its pass gives none; null: no overstay alert.
              * @example 240
@@ -19494,6 +19521,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             links: components["schemas"]["IncidentLinksView"];
+            /** @description Its recordings (ADR 0056), sound or video, with their lengths. */
+            media: components["schemas"]["MediaView"][];
             /** Format: date-time */
             occurredAt: string;
             outcome: components["schemas"]["IncidentOutcome"] | null;
@@ -19668,6 +19697,8 @@ export interface components {
         GuardStopNoteView: {
             /** Format: uuid */
             id: string;
+            /** @description Its recordings (ADR 0056); its author only. */
+            media?: components["schemas"]["MediaView"][];
             outcome: components["schemas"]["PatrolNoteOutcome"];
             /** @description Its author only. */
             photos?: components["schemas"]["PresignedReadView"][];
@@ -20972,6 +21003,17 @@ export interface components {
             status: components["schemas"]["AccountStatus"];
             type: components["schemas"]["AccountType"];
         };
+        /** @enum {string} */
+        MediaKind: "audio" | "video";
+        MediaView: {
+            /** @description Its length, in milliseconds. */
+            durationMs: number;
+            /** Format: date-time */
+            expiresAt: string;
+            kind: components["schemas"]["MediaKind"];
+            /** @description A short-lived presigned URL. */
+            url: string;
+        };
         MemberGrantResponse: {
             /** @description Finance only: the cap per operation. */
             capPerOperation: string | null;
@@ -21441,7 +21483,7 @@ export interface components {
              * @description Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED).
              * @enum {string}
              */
-            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "application/zip";
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "application/zip" | "audio/mp4" | "video/mp4" | "video/quicktime";
             purpose: components["schemas"]["FilePurpose"];
             /** @description Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). */
             size: number;
@@ -21489,6 +21531,8 @@ export interface components {
              * @description The app’s own id (UUIDv7): sent again, it records once.
              */
             id: string;
+            /** @description Finalized recordings of the caller (ADR 0056), 2 at most: `patrol_note_audio` (audio/mp4) or `patrol_note_video` (video/mp4, video/quicktime), within the gate’s seconds and megabytes (MEDIA_TOO_LONG, FILE_TOO_LARGE). */
+            mediaFileIds?: string[];
             /** Format: date-time */
             notedAt: string;
             outcome: components["schemas"]["PatrolNoteOutcome"];
@@ -21504,6 +21548,8 @@ export interface components {
         NoteView: {
             /** Format: uuid */
             id: string;
+            /** @description How many recordings (ADR 0056). */
+            media: number;
             /** Format: date-time */
             notedAt: string;
             outcome: components["schemas"]["PatrolNoteOutcome"];
@@ -23299,6 +23345,8 @@ export interface components {
             emergencyId?: string;
             /** Format: uuid */
             gateServiceRequestId?: string;
+            /** @description Up to three recordings of the caller’s (ADR 0056): `incident_audio` (audio/mp4) or `incident_video` (video/mp4, video/quicktime), within the gate’s seconds and megabytes (MEDIA_TOO_LONG, FILE_TOO_LARGE). */
+            mediaFileIds?: string[];
             /**
              * Format: date-time
              * @description At most 30 days back, not more than 5 minutes ahead.
@@ -25782,6 +25830,8 @@ export interface components {
             id: string;
             investigator: components["schemas"]["AccountRefView"] | null;
             links: components["schemas"]["IncidentLinksView"];
+            /** @description Its recordings (ADR 0056), sound or video, with their lengths. */
+            media: components["schemas"]["MediaView"][];
             notes: components["schemas"]["IncidentNoteView"][];
             /** Format: date-time */
             occurredAt: string;
@@ -26267,6 +26317,8 @@ export interface components {
         StaffStopNoteView: {
             /** Format: uuid */
             id: string;
+            /** @description Its recordings (ADR 0056). */
+            media: components["schemas"]["MediaView"][];
             /** Format: date-time */
             notedAt: string;
             outcome: components["schemas"]["PatrolNoteOutcome"];
@@ -27476,12 +27528,20 @@ export interface components {
             status?: components["schemas"]["GateStatus"];
         };
         UpdateGateSettingsDto: {
+            /** @description The largest sound, in megabytes; checked when attached. */
+            audioMaxMb?: number;
+            /** @description The longest sound a patrol note or an incident takes, in seconds; checked when attached. */
+            audioMaxSeconds?: number;
             /** @description Minutes the management has to answer a field exception before it expires. */
             exceptionAnswerMinutes?: number;
             /** @description Minutes an approved field exception lets its one entry in, at its gate. */
             exceptionEntryMinutes?: number;
             /** @description Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. */
             geofenceExitMinutes?: number;
+            /** @description The largest video, in megabytes; checked when attached. */
+            videoMaxMb?: number;
+            /** @description The longest video, in seconds; checked when attached. */
+            videoMaxSeconds?: number;
             /** @description Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. */
             visitExpectedMinutes?: number | null;
         };

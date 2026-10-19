@@ -6,6 +6,9 @@ import {
   evidenceRow,
   fieldExceptionRow,
   geofenceExitRow,
+  incidentMediaRow,
+  noteMediaRow,
+  patrolNoteRow,
   overstayAlertRow,
   patrolRunRow,
   serviceVehicleRow,
@@ -24,6 +27,7 @@ interface Side {
   incidentId: string;
   photoEntryId: string;
   runId: string;
+  noteId: string;
 }
 
 /**
@@ -96,6 +100,24 @@ const TABLES: Table[] = [
       }),
   },
   {
+    table: 'patrol_note_media',
+    insert: (tx, own, link) =>
+      noteMediaRow(tx, {
+        tenantId: own.tenantId,
+        noteId: link.noteId,
+        byId: link.accountId,
+      }),
+  },
+  {
+    table: 'incident_media',
+    insert: (tx, own, link) =>
+      incidentMediaRow(tx, {
+        tenantId: own.tenantId,
+        incidentId: link.incidentId,
+        byId: link.accountId,
+      }),
+  },
+  {
     table: 'patrol_geofence_exits',
     insert: (tx, own, link) =>
       geofenceExitRow(tx, {
@@ -138,6 +160,7 @@ describe('RLS isolation — the gate’s completion (ADR 0056)', () => {
       incidentId: '',
       photoEntryId: '',
       runId: '',
+      noteId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -161,6 +184,11 @@ describe('RLS isolation — the gate’s completion (ADR 0056)', () => {
         tenantId,
         gateId: s.gateId,
         createdById: s.accountId,
+      });
+      s.noteId = await patrolNoteRow(tx, {
+        tenantId,
+        gateId: s.gateId,
+        guardId: s.accountId,
       });
     });
     return s;

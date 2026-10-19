@@ -14378,7 +14378,11 @@
           "approval_attachment",
           "board_appeal_attachment",
           "expense_invoice",
-          "visitor_photo"
+          "visitor_photo",
+          "patrol_note_audio",
+          "patrol_note_video",
+          "incident_audio",
+          "incident_video"
         ],
         "type": "string"
       },
@@ -14390,6 +14394,10 @@
           "createdAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "durationMs": {
+            "description": "A finalized recording’s length in milliseconds, read from its container (ADR 0056); absent for anything else.",
+            "type": "number"
           },
           "id": {
             "format": "uuid",
@@ -14452,6 +14460,10 @@
           "createdAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "durationMs": {
+            "description": "A finalized recording’s length in milliseconds, read from its container (ADR 0056); absent for anything else.",
+            "type": "number"
           },
           "id": {
             "format": "uuid",
@@ -15810,6 +15822,16 @@
       },
       "GateSettingsResponse": {
         "properties": {
+          "audioMaxMb": {
+            "description": "The largest sound, in megabytes (20 at most).",
+            "example": 20,
+            "type": "number"
+          },
+          "audioMaxSeconds": {
+            "description": "The longest sound a patrol note or an incident takes, in seconds.",
+            "example": 300,
+            "type": "number"
+          },
           "exceptionAnswerMinutes": {
             "description": "Minutes the management has to answer a field exception.",
             "example": 10,
@@ -15825,6 +15847,16 @@
             "example": 3,
             "type": "number"
           },
+          "videoMaxMb": {
+            "description": "The largest video, in megabytes (100 at most).",
+            "example": 100,
+            "type": "number"
+          },
+          "videoMaxSeconds": {
+            "description": "The longest video a patrol note or an incident takes, in seconds.",
+            "example": 120,
+            "type": "number"
+          },
           "visitExpectedMinutes": {
             "description": "Minutes a visit is expected to last when its pass gives none; null: no overstay alert.",
             "example": 240,
@@ -15836,7 +15868,11 @@
           "exceptionAnswerMinutes",
           "exceptionEntryMinutes",
           "visitExpectedMinutes",
-          "geofenceExitMinutes"
+          "geofenceExitMinutes",
+          "audioMaxSeconds",
+          "videoMaxSeconds",
+          "audioMaxMb",
+          "videoMaxMb"
         ],
         "type": "object"
       },
@@ -17567,6 +17603,13 @@
           "links": {
             "$ref": "#/components/schemas/IncidentLinksView"
           },
+          "media": {
+            "description": "Its recordings (ADR 0056), sound or video, with their lengths.",
+            "items": {
+              "$ref": "#/components/schemas/MediaView"
+            },
+            "type": "array"
+          },
           "occurredAt": {
             "format": "date-time",
             "type": "string"
@@ -17651,6 +17694,7 @@
           "reportedAt",
           "description",
           "photos",
+          "media",
           "links",
           "outcome",
           "closedAt",
@@ -18184,6 +18228,13 @@
           "id": {
             "format": "uuid",
             "type": "string"
+          },
+          "media": {
+            "description": "Its recordings (ADR 0056); its author only.",
+            "items": {
+              "$ref": "#/components/schemas/MediaView"
+            },
+            "type": "array"
           },
           "outcome": {
             "allOf": [
@@ -22236,6 +22287,43 @@
         ],
         "type": "object"
       },
+      "MediaKind": {
+        "enum": [
+          "audio",
+          "video"
+        ],
+        "type": "string"
+      },
+      "MediaView": {
+        "properties": {
+          "durationMs": {
+            "description": "Its length, in milliseconds.",
+            "type": "number"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaKind"
+              }
+            ]
+          },
+          "url": {
+            "description": "A short-lived presigned URL.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "durationMs",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "MemberGrantResponse": {
         "properties": {
           "capPerOperation": {
@@ -23782,7 +23870,10 @@
               "image/png",
               "image/webp",
               "application/pdf",
-              "application/zip"
+              "application/zip",
+              "audio/mp4",
+              "video/mp4",
+              "video/quicktime"
             ],
             "type": "string"
           },
@@ -23904,6 +23995,13 @@
             "format": "uuid",
             "type": "string"
           },
+          "mediaFileIds": {
+            "description": "Finalized recordings of the caller (ADR 0056), 2 at most: `patrol_note_audio` (audio/mp4) or `patrol_note_video` (video/mp4, video/quicktime), within the gate’s seconds and megabytes (MEDIA_TOO_LONG, FILE_TOO_LARGE).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "notedAt": {
             "format": "date-time",
             "type": "string"
@@ -23947,6 +24045,10 @@
             "format": "uuid",
             "type": "string"
           },
+          "media": {
+            "description": "How many recordings (ADR 0056).",
+            "type": "number"
+          },
           "notedAt": {
             "format": "date-time",
             "type": "string"
@@ -23982,7 +24084,8 @@
           "text",
           "notedAt",
           "receivedAt",
-          "photos"
+          "photos",
+          "media"
         ],
         "type": "object"
       },
@@ -29429,6 +29532,15 @@
           "gateServiceRequestId": {
             "format": "uuid",
             "type": "string"
+          },
+          "mediaFileIds": {
+            "description": "Up to three recordings of the caller’s (ADR 0056): `incident_audio` (audio/mp4) or `incident_video` (video/mp4, video/quicktime), within the gate’s seconds and megabytes (MEDIA_TOO_LONG, FILE_TOO_LARGE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 3,
+            "type": "array"
           },
           "occurredAt": {
             "description": "At most 30 days back, not more than 5 minutes ahead.",
@@ -37940,6 +38052,13 @@
           "links": {
             "$ref": "#/components/schemas/IncidentLinksView"
           },
+          "media": {
+            "description": "Its recordings (ADR 0056), sound or video, with their lengths.",
+            "items": {
+              "$ref": "#/components/schemas/MediaView"
+            },
+            "type": "array"
+          },
           "notes": {
             "items": {
               "$ref": "#/components/schemas/IncidentNoteView"
@@ -38043,6 +38162,7 @@
           "reportedAt",
           "description",
           "photos",
+          "media",
           "links",
           "outcome",
           "closedAt",
@@ -39638,6 +39758,13 @@
             "format": "uuid",
             "type": "string"
           },
+          "media": {
+            "description": "Its recordings (ADR 0056).",
+            "items": {
+              "$ref": "#/components/schemas/MediaView"
+            },
+            "type": "array"
+          },
           "notedAt": {
             "format": "date-time",
             "type": "string"
@@ -39675,7 +39802,8 @@
           "textCleared",
           "notedAt",
           "receivedAt",
-          "photos"
+          "photos",
+          "media"
         ],
         "type": "object"
       },
@@ -43795,6 +43923,18 @@
       },
       "UpdateGateSettingsDto": {
         "properties": {
+          "audioMaxMb": {
+            "description": "The largest sound, in megabytes; checked when attached.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          },
+          "audioMaxSeconds": {
+            "description": "The longest sound a patrol note or an incident takes, in seconds; checked when attached.",
+            "maximum": 600,
+            "minimum": 10,
+            "type": "number"
+          },
           "exceptionAnswerMinutes": {
             "description": "Minutes the management has to answer a field exception before it expires.",
             "maximum": 60,
@@ -43811,6 +43951,18 @@
             "description": "Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once.",
             "maximum": 60,
             "minimum": 1,
+            "type": "number"
+          },
+          "videoMaxMb": {
+            "description": "The largest video, in megabytes; checked when attached.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          },
+          "videoMaxSeconds": {
+            "description": "The longest video, in seconds; checked when attached.",
+            "maximum": 300,
+            "minimum": 10,
             "type": "number"
           },
           "visitExpectedMinutes": {
@@ -51206,6 +51358,7 @@
     },
     "/api/v1/files/{id}/finalize": {
       "post": {
+        "description": "The object must be exactly what was declared (422 FILE_CONTENT_MISMATCH; the file is deleted). A recording (ADR 0056) has its length read from its MP4 container, `moov` at the start or the end: a container that cannot be read is 422 FILE_MEDIA_UNREADABLE (params.reason), one with no movie header 422 FILE_MEDIA_NO_DURATION; the file is deleted either way.",
         "operationId": "FilesController_finalize",
         "parameters": [
           {

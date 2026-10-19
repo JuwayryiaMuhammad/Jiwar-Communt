@@ -28,6 +28,7 @@ export const GATE_SETTINGS_ROUTES: Row[] = [
         exceptionEntryMinutes: 121,
         visitExpectedMinutes: 14,
         geofenceExitMinutes: 61,
+        audioMaxSeconds: 9,
       },
       fields: [
         {
@@ -49,6 +50,11 @@ export const GATE_SETTINGS_ROUTES: Row[] = [
           field: 'geofenceExitMinutes',
           code: 'INVALID_NUMBER',
           params: { min: 1, max: 60 },
+        },
+        {
+          field: 'audioMaxSeconds',
+          code: 'INVALID_NUMBER',
+          params: { min: 10, max: 600 },
         },
       ],
     },

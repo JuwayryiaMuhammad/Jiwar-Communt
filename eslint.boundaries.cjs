@@ -38,12 +38,14 @@ const DOMAINS = [
  * (ADR 0040, 0051). Neighbours reads community
  * only, and nothing imports it (ADR 0042). Facilities reads community only,
  * and nothing imports it (ADR 0044). Finance reads community only, and
- * nothing imports it (ADR 0046). Governance reads community, and engagement
- * for the board's notices, and nothing imports it (ADR 0051).
+ * nothing imports it (ADR 0046; every domain lists it since ADR 0055).
+ * Governance reads community, and engagement for the board's notices, and
+ * nothing imports it (ADR 0051): the domains register what the board's
+ * decisions do with core's BoardMatters (ADR 0055).
  */
 const NO_IMPORT = {
-  community: ['governance'],
-  engagement: ['governance'],
+  community: ['finance', 'governance'],
+  engagement: ['finance', 'governance'],
   facilities: [
     'engagement',
     'finance',
@@ -62,7 +64,7 @@ const NO_IMPORT = {
     'management',
     'neighbours',
   ],
-  gate: ['governance'],
+  gate: ['finance', 'governance'],
   governance: [
     'facilities',
     'finance',
@@ -71,8 +73,8 @@ const NO_IMPORT = {
     'management',
     'neighbours',
   ],
-  maintenance: ['gate', 'governance'],
-  management: ['gate', 'governance'],
+  maintenance: ['finance', 'gate', 'governance'],
+  management: ['finance', 'gate', 'governance'],
   neighbours: [
     'engagement',
     'finance',
@@ -113,7 +115,7 @@ function otherDomainsInternals(domain) {
     banned.includes(d)
       ? {
           group: [`**/${d}`, `**/${d}/**`],
-          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042, 0044, 0046, 0051).`,
+          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042, 0044, 0046, 0051, 0055).`,
         }
       : {
           group: [`**/${d}/**`, `!**/${d}/index`],

@@ -359,8 +359,15 @@ describe('import boundaries', () => {
       expect(found).toHaveLength(1);
       expect(found[0]).toContain(`finance must not import ${domain} at all`);
     }
+    // Nothing imports finance, not even its index (ADR 0046, 0055).
     for (const from of [
+      'src/community/residents/x.ts',
+      'src/engagement/polls/x.ts',
       'src/facilities/club/x.ts',
+      'src/gate/fines/x.ts',
+      'src/governance/board/x.ts',
+      'src/maintenance/tickets/x.ts',
+      'src/management/requests/x.ts',
       'src/neighbours/complaints/x.ts',
     ]) {
       const found = await problems(from, "import { A } from '../../finance';");
@@ -378,9 +385,7 @@ describe('import boundaries', () => {
       "import { A } from '../../finance/payments/payments.service';",
     );
     expect(deep).toHaveLength(1);
-    expect(deep[0]).toContain(
-      'Import finance only through its public index.ts',
-    );
+    expect(deep[0]).toContain('community must not import finance at all');
   });
 
   it('the governance domain imports core, community and engagement (its board notices) through their index.ts, and no domain imports it (ADR 0051)', async () => {

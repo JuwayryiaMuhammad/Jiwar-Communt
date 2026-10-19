@@ -28,6 +28,7 @@ import { AppController } from './app.controller';
 import { AuditModule } from './core/audit/audit.module';
 import { AssistModule } from './core/assist/assist.module';
 import { AuthModule } from './core/auth/auth.module';
+import { BoardMattersModule } from './core/board-matters/board-matters.module';
 import { ConsentsModule } from './core/consents/consents.module';
 import { RequestContextModule } from './core/common/cls/request-context.module';
 import { AllExceptionsFilter } from './core/common/filters/all-exceptions.filter';
@@ -112,6 +113,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     TenantSettingsModule,
     FilesModule,
     ExportsModule,
+    BoardMattersModule,
     AssistModule,
     HealthModule,
     AuthModule,

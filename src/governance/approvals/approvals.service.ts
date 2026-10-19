@@ -1,4 +1,8 @@
-import { Injectable, type OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  type OnApplicationBootstrap,
+  type OnModuleInit,
+} from '@nestjs/common';
 import type {
   BoardMotion,
   GovernanceApprovalAlternative,
@@ -46,6 +50,12 @@ import {
 import { ApprovalView } from './views/approvals.views';
 
 export const GOVERNANCE_APPROVAL_RESOURCE = 'governance_approval';
+/** Finance's (ADR 0055): a budget, a line's increase, a contract's expenses. */
+const REQUIRED_HANDLERS: ApprovalType[] = [
+  'annual_budget',
+  'budget_increase',
+  'major_contract',
+];
 const PAGE = keysetCursor('createdAt', 'desc');
 const DAY = 86_400_000;
 
@@ -103,7 +113,7 @@ const notPending = (status: string) =>
  * motions, the votes and the counts.
  */
 @Injectable()
-export class ApprovalsService implements OnModuleInit {
+export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
@@ -148,6 +158,20 @@ export class ApprovalsService implements OnModuleInit {
         ).length > 0,
       decide: (tx, ev) => this.decide(tx, ev),
     });
+  }
+
+  /**
+   * The types whose decision acts in another domain must have its handler
+   * by now (every module's onModuleInit has run): a missing one is a
+   * wiring error, refused at boot rather than at a vote.
+   */
+  onApplicationBootstrap(): void {
+    const missing = this.matters.missing({
+      approvals: REQUIRED_HANDLERS,
+      appeals: [],
+    });
+    if (missing.length)
+      throw new Error(`Board matters without a handler: ${missing.join(', ')}`);
   }
 
   // --------------------------------------------------------------------------

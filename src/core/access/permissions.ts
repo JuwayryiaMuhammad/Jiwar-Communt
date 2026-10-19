@@ -161,6 +161,11 @@ export const PERMISSIONS = {
   // and exports them. Instalment plans and disputes are `finance.invoice`.
   'finance.refund': { kinds: ['manager'] },
   'finance.reports': { kinds: ['staff', 'manager'] },
+  // The annual budget and expenses (ADR 0055). `finance.budget` drafts a
+  // fiscal year's budget, records expenses against its lines and voids
+  // them, and sets the month the fiscal year starts. The board approves
+  // the budget; budget vs actual is `finance.reports`.
+  'finance.budget': { kinds: ['staff', 'manager'] },
   // Permits (ADR 0049). Residents and family ask for a unit's permits: the
   // unit's primary for works, moves and material exits, anyone who may
   // invite visitors for an event (the service decides per unit);

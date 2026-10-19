@@ -494,4 +494,19 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   board_motions_one_open_per_request: null,
   board_votes_tenant_id_id_key: null,
   board_votes_once: null,
+  // The budget and expenses (ADR 0055): one active and one budget in the
+  // making per year, decided under the year's drafting lock; one line per
+  // category, checked in the input; an increase and an authorization once
+  // per request; numbers from the counter; an invoice claimed once.
+  finance_budgets_tenant_id_id_key: null,
+  finance_budgets_one_active: null,
+  finance_budgets_one_in_progress: null,
+  finance_budget_lines_tenant_id_id_key: null,
+  finance_budget_lines_category_key: null,
+  finance_budget_adjustments_request_key: null,
+  finance_expense_authorizations_tenant_id_id_key: null,
+  finance_expense_authorizations_request_key: null,
+  finance_expenses_tenant_id_id_key: null,
+  finance_expenses_number_key: null,
+  finance_expenses_invoice_file_key: null,
 };

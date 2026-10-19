@@ -1,6 +1,6 @@
 import { COUNTER_ORDER, formatNumber, inOrder } from './counters';
 
-describe('finance counters (ADR 0046, 0048)', () => {
+describe('finance counters (ADR 0046, 0048, 0055)', () => {
   it('numbers read as their prefix and six digits at least', () => {
     expect(formatNumber('instalment_plan', 7)).toBe('IP-000007');
     expect(formatNumber('refund', 1234567)).toBe('RF-1234567');
@@ -31,6 +31,9 @@ describe('finance counters (ADR 0046, 0048)', () => {
       'invoice',
       'refund',
       'receipt',
+      // An expense takes no other counter (ADR 0055).
+      'expense',
     ]);
+    expect(formatNumber('expense', 12)).toBe('EX-000012');
   });
 });

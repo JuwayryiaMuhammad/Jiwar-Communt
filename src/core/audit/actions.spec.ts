@@ -142,6 +142,10 @@ describe('audit catalog', () => {
         // ADR 0055.
         'governance_approval',
         'board_motion',
+        'budget',
+        'budget_line',
+        'expense',
+        'expense_authorization',
       ]).toContain(def.target);
     }
   });

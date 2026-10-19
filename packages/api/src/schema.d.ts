@@ -8030,6 +8030,172 @@ export interface paths {
         patch: operations["FacilitySettingsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/finance/budget-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The month the fiscal year starts on */
+        get: operations["BudgetsController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set the month the fiscal year starts on
+         * @description Until a budget exists (FISCAL_YEAR_LOCKED).
+         */
+        patch: operations["BudgetsController_setSettings"];
+        trace?: never;
+    };
+    "/api/v1/staff/finance/budgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the budgets
+         * @description Newest first.
+         */
+        get: operations["BudgetsController_list"];
+        put?: never;
+        /**
+         * Draft a fiscal year’s budget
+         * @description Optionally from another budget’s lines. Refused with an active budget for the year (BUDGET_YEAR_ACTIVE) or one in the making (BUDGET_IN_PROGRESS). It goes to the board as an annual_budget request (POST /staff/governance/approvals).
+         */
+        post: operations["BudgetsController_draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/budgets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a budget
+         * @description Every line with what it allows, what was spent and what is left.
+         */
+        get: operations["BudgetsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/budgets/{id}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace a draft’s lines
+         * @description One per category (DUPLICATE_VALUE); a draft only (BUDGET_NOT_DRAFT).
+         */
+        put: operations["BudgetsController_lines"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/expense-authorizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The major contracts the board approved
+         * @description What expenses above the manager’s limit may name, with what is left.
+         */
+        get: operations["BudgetsController_authorizations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the expenses
+         * @description Newest first.
+         */
+        get: operations["BudgetsController_expensesList"];
+        put?: never;
+        /**
+         * Record an expense
+         * @description On a line of the active budget, within what it has left (EXPENSE_OVER_BUDGET); above the manager’s limit it names an approved major contract (EXPENSE_NEEDS_APPROVAL, EXPENSE_AUTHORIZATION_EXCEEDED).
+         */
+        post: operations["BudgetsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/expenses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an expense */
+        get: operations["BudgetsController_expense"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/expenses/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Void an expense
+         * @description Once, with an `expenseVoid` code: the line has it again.
+         */
+        post: operations["BudgetsController_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/gateway": {
         parameters: {
             query?: never;
@@ -8326,7 +8492,7 @@ export interface paths {
         put?: never;
         /**
          * Withdraw a pending request
-         * @description Who raised it, or the manager (APPROVAL_NOT_YOURS). Its open motion closes; a budget goes back to its draft.
+         * @description Who raised it, or the manager (APPROVAL_NOT_YOURS). Its open motion closes; a budget submitted with it is withdrawn too (final: draft another).
          */
         post: operations["StaffApprovalsController_withdraw"];
         delete?: never;
@@ -14339,6 +14505,98 @@ export interface components {
             /** @description Not finished, or not closed. */
             open: number;
         };
+        /** @enum {string} */
+        BudgetCategory: "security" | "cleaning" | "landscaping" | "maintenance" | "utilities" | "staff" | "insurance" | "administration" | "reserve_fund" | "other";
+        BudgetLineDto: {
+            /** @description EGP. */
+            amount: string;
+            category: components["schemas"]["BudgetCategory"];
+            note?: string;
+        };
+        BudgetLineView: {
+            /**
+             * @description The amount and the increases.
+             * @example 1200.00
+             */
+            allowance: string;
+            /**
+             * @description As budgeted.
+             * @example 1200.00
+             */
+            amount: string;
+            category: components["schemas"]["BudgetCategory"];
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Approved increases.
+             * @example 1200.00
+             */
+            increases: string;
+            note: string | null;
+            /**
+             * @description What the line has left.
+             * @example 1200.00
+             */
+            remaining: string;
+            /**
+             * @description Live expenses.
+             * @example 1200.00
+             */
+            spent: string;
+        };
+        BudgetLinesDto: {
+            lines: components["schemas"]["BudgetLineDto"][];
+        };
+        BudgetSettingsDto: {
+            /** @description The month a fiscal year starts on; fixed once a budget exists (FISCAL_YEAR_LOCKED). */
+            fiscalYearStartMonth: number;
+        };
+        BudgetSettingsView: {
+            fiscalYearStartMonth: number;
+        };
+        /** @enum {string} */
+        BudgetStatus: "draft" | "submitted" | "active" | "rejected" | "withdrawn";
+        BudgetTotalsView: {
+            /** @example 1200.00 */
+            allowance: string;
+            /** @example 1200.00 */
+            budgeted: string;
+            /** @example 1200.00 */
+            increases: string;
+            /** @example 1200.00 */
+            remaining: string;
+            /** @example 1200.00 */
+            spent: string;
+        };
+        BudgetView: {
+            /**
+             * Format: uuid
+             * @description Its annual_budget request, once submitted.
+             */
+            approvalRequestId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @example EGP */
+            currency: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @example 2027-12-31 */
+            endsOn: string;
+            fiscalYear: number;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["BudgetLineView"][];
+            /** @example 2027-01-01 */
+            startsOn: string;
+            status: components["schemas"]["BudgetStatus"];
+            /** Format: date-time */
+            submittedAt: string | null;
+            totals: components["schemas"]["BudgetTotalsView"];
+        };
+        BudgetViewList: {
+            data: components["schemas"]["BudgetView"][];
+            nextCursor: string | null;
+        };
         BuildingsView: {
             /** @description The buildings the compound’s units name, in order. */
             buildings: string[];
@@ -16858,6 +17116,15 @@ export interface components {
             /** @description A presigned GET of the archive, valid a few minutes. */
             url: string;
         };
+        DraftBudgetDto: {
+            /**
+             * Format: uuid
+             * @description Start from another budget’s lines.
+             */
+            copyFromId?: string;
+            /** @description The fiscal year, named after the calendar year it starts in: the one under way, the one before or the next. */
+            fiscalYear: number;
+        };
         EmergencyContactsView: {
             /** @description The other people who live in the unit, the primary first. Empty for a caller who does not live there (a landlord). */
             family: components["schemas"]["FamilyContactView"][];
@@ -17194,6 +17461,63 @@ export interface components {
         ExitEscortView: {
             firstName: string | null;
             kind: components["schemas"]["ChildEscortKind"];
+        };
+        ExpenseAuthorizationView: {
+            /**
+             * @description As approved.
+             * @example 1200.00
+             */
+            amount: string;
+            /**
+             * Format: uuid
+             * @description Its major_contract request.
+             */
+            approvalRequestId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example 1200.00 */
+            remaining: string;
+            /** @example 1200.00 */
+            spent: string;
+        };
+        ExpenseView: {
+            /** @example 1200.00 */
+            amount: string;
+            /** Format: uuid */
+            authorizationId: string | null;
+            /** Format: uuid */
+            budgetId: string;
+            /** Format: uuid */
+            budgetLineId: string;
+            category: components["schemas"]["BudgetCategory"];
+            /** @example EGP */
+            currency: string;
+            fiscalYear: number;
+            /** Format: uuid */
+            id: string;
+            /** @description A short-lived read URL. */
+            invoiceUrl: string | null;
+            /** @example EX-000001 */
+            number: string;
+            /** Format: date-time */
+            recordedAt: string;
+            recordedByMe: boolean;
+            reference: string | null;
+            /** @example 2027-03-14 */
+            spentOn: string;
+            vendor: string;
+            voided: components["schemas"]["ExpenseVoidView"] | null;
+        };
+        ExpenseViewList: {
+            data: components["schemas"]["ExpenseView"][];
+            nextCursor: string | null;
+        };
+        ExpenseVoidView: {
+            reasonCode: string;
+            /** Format: date-time */
+            voidedAt: string;
         };
         ExportDownloadDto: {
             /** @description The code sent to the account’s email for this link. */
@@ -21555,6 +21879,29 @@ export interface components {
              * @enum {string}
              */
             via: "code" | "qr";
+        };
+        RecordExpenseDto: {
+            /** @description EGP. */
+            amount: string;
+            /**
+             * Format: uuid
+             * @description An approved major contract (GET /staff/finance/expense-authorizations): needed above the manager’s limit (EXPENSE_NEEDS_APPROVAL).
+             */
+            authorizationId?: string;
+            /**
+             * Format: uuid
+             * @description A line of the active budget.
+             */
+            budgetLineId: string;
+            /**
+             * Format: uuid
+             * @description The caller’s upload of purpose `expense_invoice` (FILE_NOT_AVAILABLE).
+             */
+            invoiceFileId: string;
+            reference?: string;
+            /** @description Within the budget’s year, not ahead (DAY_OUT_OF_RANGE). */
+            spentOn: string;
+            vendor: string;
         };
         RecordFinePaymentDto: {
             /** @description The whole amount of the fine (AMOUNT_MISMATCH, params.amount). */
@@ -38804,6 +39151,263 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacilitySettingsResponse"];
+                };
+            };
+        };
+    };
+    BudgetsController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetSettingsView"];
+                };
+            };
+        };
+    };
+    BudgetsController_setSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetSettingsView"];
+                };
+            };
+        };
+    };
+    BudgetsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                fiscalYear?: number;
+                status?: components["schemas"]["BudgetStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetViewList"];
+                };
+            };
+        };
+    };
+    BudgetsController_draft: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftBudgetDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetView"];
+                };
+            };
+        };
+    };
+    BudgetsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetView"];
+                };
+            };
+        };
+    };
+    BudgetsController_lines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetLinesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetView"];
+                };
+            };
+        };
+    };
+    BudgetsController_authorizations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseAuthorizationView"][];
+                };
+            };
+        };
+    };
+    BudgetsController_expensesList: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                budgetId?: string;
+                budgetLineId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseViewList"];
+                };
+            };
+        };
+    };
+    BudgetsController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordExpenseDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseView"];
+                };
+            };
+        };
+    };
+    BudgetsController_expense: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseView"];
+                };
+            };
+        };
+    };
+    BudgetsController_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseView"];
                 };
             };
         };

@@ -1498,6 +1498,8 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0055: a request of B's: not found for everyone of A.
       '/staff/governance/approvals/{id}': w.bApprovalId,
       '/board/approvals/{id}': w.bApprovalId,
+      '/staff/finance/budgets/{id}': w.bBudgetId,
+      '/staff/finance/expenses/{id}': w.bExpenseId,
       // A route and a run of B's: not found for everyone of A.
       '/staff/security/patrols/routes/{id}': w.bRouteId,
       '/staff/security/patrols/runs/{id}': w.bRunId,

@@ -712,11 +712,12 @@ describe('Permission sync', () => {
     expect([...report.added].sort()).toEqual([...r5].sort());
     expect(report.rolesCreated).toEqual(['accountant']);
     // The role as the code has it now: the fines' payments came with G2,
-    // finance with R6a, its reports with R6b, the board's approvals with
-    // R7b.
+    // finance with R6a, its reports with R6b, the budget and the board's
+    // approvals with R7b.
     expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
       'club.billing',
       'finance.billing',
+      'finance.budget',
       'finance.invoice',
       'finance.payments',
       'finance.reports',
@@ -784,6 +785,7 @@ describe('Permission sync', () => {
     expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
       'club.billing',
       'finance.billing',
+      'finance.budget',
       'finance.invoice',
       'finance.payments',
       'finance.reports',
@@ -796,6 +798,7 @@ describe('Permission sync', () => {
     expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
       'club.billing',
       'finance.billing',
+      'finance.budget',
       'finance.invoice',
       'finance.payments',
       'finance.reports',
@@ -1542,8 +1545,8 @@ describe('Permission sync', () => {
     });
   });
 
-  it('Phase R7b reaches an existing compound: governance.approvals for the manager and the accountant, nobody else (ADR 0055)', async () => {
-    const r7b = ['governance.approvals'];
+  it('Phase R7b reaches an existing compound: governance.approvals and finance.budget for the manager and the accountant, nobody else (ADR 0055)', async () => {
+    const r7b = ['governance.approvals', 'finance.budget'];
     const before: AccessCatalog = {
       ...base,
       permissions: Object.fromEntries(

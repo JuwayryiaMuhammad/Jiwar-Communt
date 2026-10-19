@@ -5,9 +5,12 @@ import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
   allocationRow,
   batchRow,
+  budgetLineRow,
+  budgetRow,
   creditNoteRow,
   disputeRow,
   eventRow,
+  expenseRow,
   gatewayRow,
   instalmentPlanRow,
   invoiceRow,
@@ -291,6 +294,41 @@ const TABLES: Table[] = [
         sessionId: link.sessionId,
         invoiceId: link.invoiceId,
       }),
+  },
+  // The budget and expenses (ADR 0055).
+  {
+    table: 'finance_budgets',
+    insert: (tx, own, link) =>
+      budgetRow(tx, { tenantId: own.tenantId, createdById: link.accountId }),
+  },
+  {
+    table: 'finance_budget_lines',
+    insert: async (tx, own, link) =>
+      budgetLineRow(tx, {
+        tenantId: own.tenantId,
+        budgetId: await budgetRow(tx, {
+          tenantId: own.tenantId,
+          createdById: link.accountId,
+        }),
+      }),
+  },
+  {
+    table: 'finance_expenses',
+    insert: async (tx, own, link) => {
+      const budgetId = await budgetRow(tx, {
+        tenantId: own.tenantId,
+        createdById: own.accountId,
+      });
+      const lineId = await budgetLineRow(tx, {
+        tenantId: own.tenantId,
+        budgetId,
+      });
+      return expenseRow(tx, {
+        tenantId: own.tenantId,
+        lineId,
+        recordedById: link.accountId,
+      });
+    },
   },
   {
     table: 'payment_gateway_events',

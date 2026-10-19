@@ -1275,6 +1275,25 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'CASE treats a NULL result as the ELSE branch; votes_for IS NULL is tested first and the others under IS NOT NULL; closed_at IS NULL before its comparison',
   },
   board_votes_choice: {},
+  finance_settings_fiscal_year_start_month: {},
+  finance_budgets_period: {},
+  // Nullable columns only under IS [NOT] NULL.
+  finance_budgets_state_shape: {},
+  finance_budget_lines_category: {},
+  finance_budget_lines_shape: {
+    guarded: 'note IS NULL is tested first; its length runs only on a value',
+  },
+  finance_budget_adjustments_amount: {},
+  finance_expense_authorizations_amount: {},
+  finance_expenses_shape: {
+    guarded:
+      'reference IS NULL is tested first; its length runs only on a value',
+  },
+  finance_expenses_void_shape: {},
+  finance_expenses_void_reason: {
+    guarded:
+      'void_reason_code IS NULL is tested first; the list runs only on a value',
+  },
   // Governance (ADR 0051).
   board_terms_period: {},
   board_terms_seats: {},

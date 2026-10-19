@@ -24,6 +24,7 @@ import { ResidentsService } from '../../src/community/residents/residents.servic
 import { auditReaders } from '../setup/audit';
 import {
   BOARD_MATTERS_COVERAGE,
+  BUDGET_COVERAGE,
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
   FACILITIES_COVERAGE,
@@ -871,6 +872,7 @@ describe('Audit coverage', () => {
         ...SECURITY_OPS_COVERAGE,
         ...CHILDREN_COVERAGE,
         ...BOARD_MATTERS_COVERAGE,
+        ...BUDGET_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

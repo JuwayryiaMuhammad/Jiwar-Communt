@@ -94,7 +94,7 @@ export class StaffApprovalsController {
   @ApiOperation({
     summary: 'Withdraw a pending request',
     description:
-      'Who raised it, or the manager (APPROVAL_NOT_YOURS). Its open motion closes; a budget goes back to its draft.',
+      'Who raised it, or the manager (APPROVAL_NOT_YOURS). Its open motion closes; a budget submitted with it is withdrawn too (final: draft another).',
   })
   @ApiOkResponse({ type: ApprovalView })
   async withdraw(

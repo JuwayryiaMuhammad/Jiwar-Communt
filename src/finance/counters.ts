@@ -1,7 +1,12 @@
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 
 export type CounterKind =
-  'invoice' | 'credit_note' | 'receipt' | 'instalment_plan' | 'refund';
+  | 'invoice'
+  | 'credit_note'
+  | 'receipt'
+  | 'instalment_plan'
+  | 'refund'
+  | 'expense';
 
 /**
  * The one order in which a transaction takes numbers (ADR 0048). A counter
@@ -16,6 +21,7 @@ export const COUNTER_ORDER: readonly CounterKind[] = [
   'invoice',
   'refund',
   'receipt',
+  'expense',
 ];
 
 const lastTaken = new WeakMap<object, number>();
@@ -58,6 +64,7 @@ const PREFIX: Record<CounterKind, string> = {
   receipt: 'RC',
   instalment_plan: 'IP',
   refund: 'RF',
+  expense: 'EX',
 };
 
 /** `INV-000123`: six digits at least, as the house numbers are. */

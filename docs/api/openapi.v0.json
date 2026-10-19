@@ -3734,6 +3734,279 @@
         ],
         "type": "object"
       },
+      "BudgetCategory": {
+        "enum": [
+          "security",
+          "cleaning",
+          "landscaping",
+          "maintenance",
+          "utilities",
+          "staff",
+          "insurance",
+          "administration",
+          "reserve_fund",
+          "other"
+        ],
+        "type": "string"
+      },
+      "BudgetLineDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BudgetCategory"
+              }
+            ]
+          },
+          "note": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "BudgetLineView": {
+        "properties": {
+          "allowance": {
+            "description": "The amount and the increases.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "amount": {
+            "description": "As budgeted.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BudgetCategory"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "increases": {
+            "description": "Approved increases.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "remaining": {
+            "description": "What the line has left.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "spent": {
+            "description": "Live expenses.",
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "amount",
+          "note",
+          "increases",
+          "allowance",
+          "spent",
+          "remaining"
+        ],
+        "type": "object"
+      },
+      "BudgetLinesDto": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetLineDto"
+            },
+            "maxItems": 10,
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "type": "object"
+      },
+      "BudgetSettingsDto": {
+        "properties": {
+          "fiscalYearStartMonth": {
+            "description": "The month a fiscal year starts on; fixed once a budget exists (FISCAL_YEAR_LOCKED).",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "fiscalYearStartMonth"
+        ],
+        "type": "object"
+      },
+      "BudgetSettingsView": {
+        "properties": {
+          "fiscalYearStartMonth": {
+            "maximum": 12,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "fiscalYearStartMonth"
+        ],
+        "type": "object"
+      },
+      "BudgetStatus": {
+        "enum": [
+          "draft",
+          "submitted",
+          "active",
+          "rejected",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "BudgetTotalsView": {
+        "properties": {
+          "allowance": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "budgeted": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "increases": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "remaining": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "spent": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "budgeted",
+          "increases",
+          "allowance",
+          "spent",
+          "remaining"
+        ],
+        "type": "object"
+      },
+      "BudgetView": {
+        "properties": {
+          "approvalRequestId": {
+            "description": "Its annual_budget request, once submitted.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "example": "EGP",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsOn": {
+            "example": "2027-12-31",
+            "type": "string"
+          },
+          "fiscalYear": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetLineView"
+            },
+            "type": "array"
+          },
+          "startsOn": {
+            "example": "2027-01-01",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BudgetStatus"
+              }
+            ]
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/BudgetTotalsView"
+          }
+        },
+        "required": [
+          "id",
+          "fiscalYear",
+          "startsOn",
+          "endsOn",
+          "status",
+          "approvalRequestId",
+          "createdAt",
+          "submittedAt",
+          "decidedAt",
+          "currency",
+          "lines",
+          "totals"
+        ],
+        "type": "object"
+      },
+      "BudgetViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BuildingsView": {
         "properties": {
           "buildings": {
@@ -11324,6 +11597,23 @@
         ],
         "type": "object"
       },
+      "DraftBudgetDto": {
+        "properties": {
+          "copyFromId": {
+            "description": "Start from another budget’s lines.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "fiscalYear": {
+            "description": "The fiscal year, named after the calendar year it starts in: the one under way, the one before or the next.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "fiscalYear"
+        ],
+        "type": "object"
+      },
       "EmergencyContactsView": {
         "properties": {
           "family": {
@@ -12449,6 +12739,174 @@
         "required": [
           "kind",
           "firstName"
+        ],
+        "type": "object"
+      },
+      "ExpenseAuthorizationView": {
+        "properties": {
+          "amount": {
+            "description": "As approved.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "approvalRequestId": {
+            "description": "Its major_contract request.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "remaining": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "spent": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "approvalRequestId",
+          "amount",
+          "spent",
+          "remaining",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ExpenseView": {
+        "properties": {
+          "amount": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "authorizationId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "budgetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BudgetCategory"
+              }
+            ]
+          },
+          "currency": {
+            "example": "EGP",
+            "type": "string"
+          },
+          "fiscalYear": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceUrl": {
+            "description": "A short-lived read URL.",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "EX-000001",
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recordedByMe": {
+            "type": "boolean"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "spentOn": {
+            "example": "2027-03-14",
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "voided": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExpenseVoidView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "budgetId",
+          "fiscalYear",
+          "budgetLineId",
+          "category",
+          "authorizationId",
+          "vendor",
+          "amount",
+          "currency",
+          "spentOn",
+          "invoiceUrl",
+          "reference",
+          "recordedAt",
+          "recordedByMe",
+          "voided"
+        ],
+        "type": "object"
+      },
+      "ExpenseViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ExpenseView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ExpenseVoidView": {
+        "properties": {
+          "reasonCode": {
+            "type": "string"
+          },
+          "voidedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "voidedAt",
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -26612,6 +27070,53 @@
           "subjectType",
           "subjectId",
           "direction"
+        ],
+        "type": "object"
+      },
+      "RecordExpenseDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "authorizationId": {
+            "description": "An approved major contract (GET /staff/finance/expense-authorizations): needed above the manager’s limit (EXPENSE_NEEDS_APPROVAL).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "description": "A line of the active budget.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceFileId": {
+            "description": "The caller’s upload of purpose `expense_invoice` (FILE_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reference": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "spentOn": {
+            "description": "Within the budget’s year, not ahead (DAY_OUT_OF_RANGE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "vendor": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "budgetLineId",
+          "vendor",
+          "amount",
+          "spentOn",
+          "invoiceFileId"
         ],
         "type": "object"
       },
@@ -66689,6 +67194,531 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/budget-settings": {
+      "get": {
+        "operationId": "BudgetsController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The month the fiscal year starts on",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Until a budget exists (FISCAL_YEAR_LOCKED).",
+        "operationId": "BudgetsController_setSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the month the fiscal year starts on",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/budgets": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "BudgetsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fiscalYear",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BudgetStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the budgets",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Optionally from another budget’s lines. Refused with an active budget for the year (BUDGET_YEAR_ACTIVE) or one in the making (BUDGET_IN_PROGRESS). It goes to the board as an annual_budget request (POST /staff/governance/approvals).",
+        "operationId": "BudgetsController_draft",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftBudgetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Draft a fiscal year’s budget",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/budgets/{id}": {
+      "get": {
+        "description": "Every line with what it allows, what was spent and what is left.",
+        "operationId": "BudgetsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a budget",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/budgets/{id}/lines": {
+      "put": {
+        "description": "One per category (DUPLICATE_VALUE); a draft only (BUDGET_NOT_DRAFT).",
+        "operationId": "BudgetsController_lines",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetLinesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace a draft’s lines",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/expense-authorizations": {
+      "get": {
+        "description": "What expenses above the manager’s limit may name, with what is left.",
+        "operationId": "BudgetsController_authorizations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseAuthorizationView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The major contracts the board approved",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/expenses": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "BudgetsController_expensesList",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "budgetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "budgetLineId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the expenses",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "On a line of the active budget, within what it has left (EXPENSE_OVER_BUDGET); above the manager’s limit it names an approved major contract (EXPENSE_NEEDS_APPROVAL, EXPENSE_AUTHORIZATION_EXCEEDED).",
+        "operationId": "BudgetsController_record",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordExpenseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record an expense",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/expenses/{id}": {
+      "get": {
+        "operationId": "BudgetsController_expense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read an expense",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/expenses/{id}/void": {
+      "post": {
+        "description": "Once, with an `expenseVoid` code: the line has it again.",
+        "operationId": "BudgetsController_void",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Void an expense",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/gateway": {
       "get": {
         "operationId": "GatewayController_get",
@@ -67688,7 +68718,7 @@
     },
     "/api/v1/staff/governance/approvals/{id}/withdraw": {
       "post": {
-        "description": "Who raised it, or the manager (APPROVAL_NOT_YOURS). Its open motion closes; a budget goes back to its draft.",
+        "description": "Who raised it, or the manager (APPROVAL_NOT_YOURS). Its open motion closes; a budget submitted with it is withdrawn too (final: draft another).",
         "operationId": "StaffApprovalsController_withdraw",
         "parameters": [
           {

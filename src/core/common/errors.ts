@@ -833,6 +833,38 @@ export const ErrorCode = {
   BOARD_QUORUM_NOT_MET: 'BOARD_QUORUM_NOT_MET',
   /** The matter was decided or withdrawn already (409, params.status). */
   BOARD_MATTER_DECIDED: 'BOARD_MATTER_DECIDED',
+  // the budget and expenses (ADR 0055)
+  /** Unknown, or another compound's. */
+  BUDGET_NOT_FOUND: 'BUDGET_NOT_FOUND',
+  /** Only a draft's lines change, and only a draft is submitted (409, params.status). */
+  BUDGET_NOT_DRAFT: 'BUDGET_NOT_DRAFT',
+  /** The fiscal year has an active budget: increase its lines instead (409, params.budgetId). */
+  BUDGET_YEAR_ACTIVE: 'BUDGET_YEAR_ACTIVE',
+  /** The fiscal year has a draft or a submitted budget already (409, params.budgetId). */
+  BUDGET_IN_PROGRESS: 'BUDGET_IN_PROGRESS',
+  /** A budget with no line is not put to the board (409). */
+  BUDGET_EMPTY: 'BUDGET_EMPTY',
+  /** Not the active budget of its year (409, params.status). */
+  BUDGET_NOT_ACTIVE: 'BUDGET_NOT_ACTIVE',
+  /** Unknown, or another compound's. */
+  BUDGET_LINE_NOT_FOUND: 'BUDGET_LINE_NOT_FOUND',
+  /** A budget was submitted: the fiscal year's first month stays (409). */
+  FISCAL_YEAR_LOCKED: 'FISCAL_YEAR_LOCKED',
+  /** Unknown, or another compound's. */
+  EXPENSE_NOT_FOUND: 'EXPENSE_NOT_FOUND',
+  /** More than the line has left (409, params.remaining). */
+  EXPENSE_OVER_BUDGET: 'EXPENSE_OVER_BUDGET',
+  /**
+   * Above the manager's limit (major_contract's threshold) without an
+   * approved major contract to name (409, params.limit).
+   */
+  EXPENSE_NEEDS_APPROVAL: 'EXPENSE_NEEDS_APPROVAL',
+  /** Unknown, or another compound's. */
+  EXPENSE_AUTHORIZATION_NOT_FOUND: 'EXPENSE_AUTHORIZATION_NOT_FOUND',
+  /** More than the approved contract has left (409, params.remaining). */
+  EXPENSE_AUTHORIZATION_EXCEEDED: 'EXPENSE_AUTHORIZATION_EXCEEDED',
+  /** Voided already (409). */
+  EXPENSE_ALREADY_VOIDED: 'EXPENSE_ALREADY_VOIDED',
   // patrols (ADR 0052)
   /** Unknown, or another compound's. */
   PATROL_CHECKPOINT_NOT_FOUND: 'PATROL_CHECKPOINT_NOT_FOUND',

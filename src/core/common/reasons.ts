@@ -554,6 +554,7 @@ export const REASON_CODES = {
     'superseded',
     'other',
   ],
+  expenseVoid: ['entered_in_error', 'duplicate', 'vendor_refund', 'other'],
   // Why the management cancels a scheduled patrol run (ADR 0052).
   patrolRunCancel: ['not_needed', 'post_closed', 'other'],
   // A scheduled run the system cancels, never picked by staff: its route

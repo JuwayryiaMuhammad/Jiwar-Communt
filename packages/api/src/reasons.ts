@@ -117,6 +117,7 @@ export const REASON_CODES = {
   governanceCandidateSystemWithdraw: ['no_longer_owner', 'account_closed'],
   governanceTieBreak: ['board_decision', 'lot_drawn'],
   approvalWithdraw: ['no_longer_needed', 'raised_in_error', 'superseded', 'other'],
+  expenseVoid: ['entered_in_error', 'duplicate', 'vendor_refund', 'other'],
   patrolRunCancel: ['not_needed', 'post_closed', 'other'],
   patrolRunCancelSystem: ['route_changed', 'route_retired', 'post_out_of_service'],
   patrolRunEnd: ['guard', 'shift_ended'],

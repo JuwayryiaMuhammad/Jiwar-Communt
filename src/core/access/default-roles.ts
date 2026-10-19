@@ -78,6 +78,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'found_items.manage',
       'governance.manage',
       'governance.approvals',
+      'finance.budget',
       'patrols.manage',
       'incidents.manage',
       'blocklist.manage',
@@ -187,7 +188,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     // memberships and the offline payments that keep them, the vehicle
     // fines' payments at the office, the units' billing plans, invoices,
     // credit notes and payments, the finance reports, and the decision
-    // packages it puts to the board. Never the gateway's credentials,
+    // packages it puts to the board, the budget and the expenses. Never the
+    // gateway's credentials,
     // never a refund, and nothing else of the compound.
     key: 'accountant',
     kind: 'staff',
@@ -200,6 +202,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.payments',
       'finance.reports',
       'governance.approvals',
+      'finance.budget',
     ],
   },
 ];

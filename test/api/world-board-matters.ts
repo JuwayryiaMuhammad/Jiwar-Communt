@@ -1,5 +1,6 @@
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
+import { budgetLineRow, budgetRow, expenseRow } from '../setup/finance-rows';
 import {
   approvalRequestRow,
   boardMemberRow,
@@ -19,6 +20,9 @@ export interface BoardMattersWorld {
   bApprovalId: string;
   /** An open motion of B's board on it. */
   bBoardMotionId: string;
+  /** A draft budget of B's, and an expense on its line (ADR 0055). */
+  bBudgetId: string;
+  bExpenseId: string;
 }
 
 export async function boardMattersWorld(
@@ -55,8 +59,22 @@ export async function boardMattersWorld(
         tenantId: b.tenantId,
         raisedById: b.ids.manager,
       });
+      const bBudgetId = await budgetRow(tx, {
+        tenantId: b.tenantId,
+        createdById: b.ids.manager,
+      });
+      const lineId = await budgetLineRow(tx, {
+        tenantId: b.tenantId,
+        budgetId: bBudgetId,
+      });
       return {
         bApprovalId,
+        bBudgetId,
+        bExpenseId: await expenseRow(tx, {
+          tenantId: b.tenantId,
+          lineId,
+          recordedById: b.ids.manager,
+        }),
         bBoardMotionId: await motionRow(tx, {
           tenantId: b.tenantId,
           requestId: bApprovalId,

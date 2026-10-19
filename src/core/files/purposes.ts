@@ -228,12 +228,12 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['governance.read'],
   },
-  // An expense's invoice (ADR 0055), the accountant's: nobody uploads one
-  // until finance records expenses.
+  // An expense's invoice (ADR 0055): a photo or the PDF, uploaded by who
+  // records expenses.
   expense_invoice: {
     types: [...IMAGE_TYPES, 'application/pdf'],
     maxBytes: 10 * MB,
-    uploaders: [],
+    uploaders: ['finance.budget'],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

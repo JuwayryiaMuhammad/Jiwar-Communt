@@ -5,6 +5,10 @@ import { AccountsModule } from '../core/accounts/accounts.module';
 import { AuthModule } from '../core/auth/auth.module';
 import { PlatformModule } from '../core/platform/platform.module';
 import { FinanceAccess } from './access';
+import { BudgetMatters } from './budgets/budget-matters';
+import { BudgetsController } from './budgets/budgets.controller';
+import { BudgetsService } from './budgets/budgets.service';
+import { ExpensesService } from './budgets/expenses.service';
 import { BillingPlansController } from './billing-plans/billing-plans.controller';
 import { BillingPlansService } from './billing-plans/billing-plans.service';
 import { CredentialVault } from './gateway/credential-vault';
@@ -59,10 +63,11 @@ import {
 import { PaymentsService } from './payments/payments.service';
 
 /**
- * Finance (ADR 0046): invoices per unit, recurring billing, payments at the
- * office and online through each compound's own Paymob account, and their
- * receipts. Reads community through its index and nothing else; nothing
- * imports it.
+ * Finance (ADR 0046, 0048, 0055): invoices per unit, recurring billing,
+ * payments at the office and online through each compound's own Paymob
+ * account, and their receipts; the annual budget and expenses. Reads
+ * community through its index and nothing else; nothing imports it. What
+ * the board's decisions do here is registered with core's BoardMatters.
  */
 @Module({
   imports: [
@@ -90,10 +95,14 @@ import { PaymentsService } from './payments/payments.service';
     PaymobWebhookController,
     GatewayEventsController,
     ReceiptPageController,
+    BudgetsController,
   ],
   providers: [
     FinanceProvisioning,
     FinanceAccess,
+    BudgetsService,
+    BudgetMatters,
+    ExpensesService,
     FinanceNotices,
     InvoicesService,
     InstalmentsService,

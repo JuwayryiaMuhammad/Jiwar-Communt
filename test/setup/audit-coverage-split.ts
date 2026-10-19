@@ -485,6 +485,23 @@ export const BOARD_MATTERS_COVERAGE: readonly string[] = [
   'board_vote.cast',
 ];
 
+/**
+ * The budget and expenses (ADR 0055), covered by
+ * test/finance/budget-audit-coverage.e2e-spec.ts.
+ */
+export const BUDGET_COVERAGE: readonly string[] = [
+  'budget.drafted',
+  'budget.lines_replaced',
+  'budget.submitted',
+  'budget.decided',
+  'budget.withdrawn',
+  'budget.settings_changed',
+  'budget_line.increased',
+  'expense_authorization.granted',
+  'expense.recorded',
+  'expense.voided',
+];
+
 /** Patrols (ADR 0052): test/security/patrol-audit-coverage. */
 export const PATROL_COVERAGE: readonly string[] = [
   'patrol_checkpoint.created',

@@ -421,3 +421,99 @@ export async function eventRow(
   });
   return id;
 }
+
+// ----------------------------------------------------------------------------
+// The budget and expenses (ADR 0055)
+// ----------------------------------------------------------------------------
+
+let budgetYears = 0;
+
+/**
+ * A budget of a year no other row of the suite takes, as a draft (its
+ * lines may be written) or active; its id.
+ */
+export async function budgetRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    createdById: string;
+    status?: 'draft' | 'active';
+    requestId?: string;
+  },
+): Promise<string> {
+  const id = newId();
+  const year = 2000 + (budgetYears++ % 100);
+  const now = new Date();
+  const active = r.status === 'active';
+  await tx.financeBudget.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      fiscalYear: year,
+      startsOn: new Date(`${year}-01-01T00:00:00.000Z`),
+      endsOn: new Date(`${year}-12-31T00:00:00.000Z`),
+      status: active ? 'active' : 'draft',
+      approvalRequestId: active ? (r.requestId ?? null) : null,
+      createdById: r.createdById,
+      createdAt: now,
+      ...(active ? { submittedAt: now, decidedAt: now } : {}),
+    },
+  });
+  return id;
+}
+
+/** A line of a draft budget; its id. */
+export async function budgetLineRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; budgetId: string; category?: string },
+): Promise<string> {
+  const id = newId();
+  await tx.financeBudgetLine.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      budgetId: r.budgetId,
+      category: r.category ?? 'security',
+      amount: new Prisma.Decimal('1000.00'),
+    },
+  });
+  return id;
+}
+
+/** An expense on a line, with its invoice file; its id. */
+export async function expenseRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; lineId: string; recordedById: string },
+): Promise<string> {
+  const fileId = newId();
+  const now = new Date();
+  await tx.storedFile.create({
+    data: {
+      id: fileId,
+      tenantId: r.tenantId,
+      purpose: 'expense_invoice',
+      contentType: 'application/pdf',
+      sizeBytes: 100,
+      status: 'ready',
+      uploadExpiresAt: now,
+      finalizedAt: now,
+      attachedAt: now,
+    },
+  });
+  const id = newId();
+  await tx.financeExpense.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      number: next(),
+      budgetLineId: r.lineId,
+      vendor: 'A vendor',
+      amount: new Prisma.Decimal('10.00'),
+      spentOn: today(),
+      invoiceFileId: fileId,
+      recordedById: r.recordedById,
+      recordedAt: now,
+    },
+  });
+  return id;
+}

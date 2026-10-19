@@ -5252,11 +5252,14 @@ enum FinanceGatewayMode {
 /// One per compound (ADR 0046): online payment on or off. The platform's
 /// switch wins over the manager's.
 model FinanceSettings {
-  tenantId         String   @id @map("tenant_id") @db.Uuid
-  onlineEnabled    Boolean  @default(false) @map("online_enabled")
-  platformDisabled Boolean  @default(false) @map("platform_disabled")
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  tenantId             String   @id @map("tenant_id") @db.Uuid
+  onlineEnabled        Boolean  @default(false) @map("online_enabled")
+  platformDisabled     Boolean  @default(false) @map("platform_disabled")
+  /// The month (1–12) a fiscal year starts on (ADR 0055); fixed once a
+  /// budget was submitted.
+  fiscalYearStartMonth Int      @default(1) @map("fiscal_year_start_month") @db.SmallInt
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
@@ -6999,6 +7002,99 @@ model BoardVote {
   @@unique([tenantId, motionId, memberId], map: "board_votes_once")
   @@index([tenantId, accountId, castAt, id], map: "board_votes_account_idx")
   @@map("board_votes")
+}
+
+// ============================================================================
+// Budget and expenses (ADR 0055)
+// ============================================================================
+
+/// A fiscal year's budget: drafted by the accountant, submitted as an
+/// annual_budget request, active only once the board approves it.
+model FinanceBudget {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  fiscalYear        Int       @map("fiscal_year") @db.SmallInt
+  startsOn          DateTime  @map("starts_on") @db.Date
+  endsOn            DateTime  @map("ends_on") @db.Date
+  status            String    @default("draft")
+  approvalRequestId String?   @map("approval_request_id") @db.Uuid
+  createdById       String    @map("created_by_account_id") @db.Uuid
+  createdAt         DateTime  @map("created_at") @db.Timestamptz(3)
+  submittedAt       DateTime? @map("submitted_at") @db.Timestamptz(3)
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, fiscalYear, createdAt, id], map: "finance_budgets_year_idx")
+  @@map("finance_budgets")
+}
+
+/// A budget's line: one expense category, written only while a draft.
+model FinanceBudgetLine {
+  id       String  @id @db.Uuid
+  tenantId String  @map("tenant_id") @db.Uuid
+  budgetId String  @map("budget_id") @db.Uuid
+  category String
+  amount   Decimal @db.Decimal(14, 2)
+  note     String?
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, budgetId, category], map: "finance_budget_lines_category_key")
+  @@map("finance_budget_lines")
+}
+
+/// An increase of a line the board approved (a budget_increase). Append-only.
+model FinanceBudgetAdjustment {
+  id                String   @id @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  lineId            String   @map("line_id") @db.Uuid
+  approvalRequestId String   @map("approval_request_id") @db.Uuid
+  amount            Decimal  @db.Decimal(14, 2)
+  createdAt         DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, approvalRequestId], map: "finance_budget_adjustments_request_key")
+  @@index([tenantId, lineId], map: "finance_budget_adjustments_line_idx")
+  @@map("finance_budget_adjustments")
+}
+
+/// A major contract the board approved: what expenses above the manager's
+/// limit may spend. Append-only.
+model FinanceExpenseAuthorization {
+  id                String   @id @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  approvalRequestId String   @map("approval_request_id") @db.Uuid
+  amount            Decimal  @db.Decimal(14, 2)
+  createdAt         DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, approvalRequestId], map: "finance_expense_authorizations_request_key")
+  @@map("finance_expense_authorizations")
+}
+
+/// What the compound spent, on a line of the active budget (ADR 0055).
+/// Keeps its terms; voided once.
+model FinanceExpense {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  number          Int
+  budgetLineId    String    @map("budget_line_id") @db.Uuid
+  authorizationId String?   @map("authorization_id") @db.Uuid
+  vendor          String
+  amount          Decimal   @db.Decimal(14, 2)
+  spentOn         DateTime  @map("spent_on") @db.Date
+  invoiceFileId   String    @map("invoice_file_id") @db.Uuid
+  reference       String?
+  recordedById    String    @map("recorded_by_account_id") @db.Uuid
+  recordedAt      DateTime  @map("recorded_at") @db.Timestamptz(3)
+  voidedAt        DateTime? @map("voided_at") @db.Timestamptz(3)
+  voidedById      String?   @map("voided_by_account_id") @db.Uuid
+  voidReasonCode  String?   @map("void_reason_code")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "finance_expenses_number_key")
+  @@unique([tenantId, invoiceFileId], map: "finance_expenses_invoice_file_key")
+  @@index([tenantId, budgetLineId, spentOn, id], map: "finance_expenses_line_idx")
+  @@index([tenantId, recordedAt, id], map: "finance_expenses_recorded_idx")
+  @@map("finance_expenses")
 }
 
 // ============================================================================

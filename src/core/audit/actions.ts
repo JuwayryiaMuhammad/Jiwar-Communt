@@ -1145,6 +1145,42 @@ export const AUDIT_ACTIONS = {
   'board_motion.closed': { log: 'tenant', target: 'board_motion' },
   // A member's vote. metadata: memberId, voteId. Never the choice.
   'board_vote.cast': { log: 'tenant', target: 'board_motion' },
+  // The budget and expenses (ADR 0055): ids, codes, amounts and days; a
+  // line's note, a vendor and a reference as changed.
+  // metadata: fiscalYear, startsOn, endsOn, copiedFrom (a budget id or null).
+  'budget.drafted': { log: 'tenant', target: 'budget' },
+  // A draft's lines, replaced. changes: lines (how many), total; the notes
+  // as changed.
+  'budget.lines_replaced': {
+    log: 'tenant',
+    target: 'budget',
+    sensitive: ['notes'],
+  },
+  // Put to the board. metadata: requestId, total.
+  'budget.submitted': { log: 'tenant', target: 'budget' },
+  // The board decided it (system, in the deciding vote's transaction).
+  // metadata: requestId, status (active | rejected).
+  'budget.decided': { log: 'tenant', target: 'budget' },
+  // Its request was withdrawn. metadata: requestId.
+  'budget.withdrawn': { log: 'tenant', target: 'budget' },
+  // changes: fiscalYearStartMonth.
+  'budget.settings_changed': { log: 'tenant', target: 'tenant' },
+  // An approved increase. metadata: budgetId, requestId, amount.
+  'budget_line.increased': { log: 'tenant', target: 'budget_line' },
+  // An approved major contract. metadata: requestId, amount.
+  'expense_authorization.granted': {
+    log: 'tenant',
+    target: 'expense_authorization',
+  },
+  // changes: number, lineId, authorizationId, amount, spentOn, the vendor
+  // and the reference as changed.
+  'expense.recorded': {
+    log: 'tenant',
+    target: 'expense',
+    sensitive: ['vendor', 'reference'],
+  },
+  // metadata: reasonCode.
+  'expense.voided': { log: 'tenant', target: 'expense' },
   // Patrols (ADR 0052): ids, codes and counts. A checkpoint's names and
   // position go in as changed; its token and hash never.
   'patrol_checkpoint.created': {

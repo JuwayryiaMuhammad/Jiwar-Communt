@@ -106,136 +106,158 @@ export class PatrolScansService {
   ) {}
 
   scan(runId: string, input: ScanInput): Promise<ScanView> {
+    const reason = this.checkScan(input);
+    return this.tenantTx.withTenantTx((tx) =>
+      this.scanIn(tx, runId, input, this.ctx.accountId, reason),
+    );
+  }
+
+  /** A scan's shape, and its manual reason (a code), before any read. */
+  checkScan(input: ScanInput): string | null {
     const manual = input.method === 'manual';
     const reason = manual
       ? requireReasonCodeOnly(input.reasonCode, REASON_CODES.patrolManualScan)
       : null;
     this.checkShape(input, manual);
-    return this.tenantTx.withTenantTx(async (tx) => {
-      const run = await this.lockMine(tx, runId);
-      const known = await tx.patrolScan.findUnique({ where: { id: input.id } });
-      if (known) return this.replay(known, run, input);
-      const checkpointId = manual
-        ? input.checkpointId!
-        : (parseCheckpointPayload(input.payload!)?.checkpointId ?? null);
-      if (!checkpointId) throw invalidCheckpoint();
-      const [checkpoint] = await tx.$queryRaw<
-        {
-          id: string;
-          token_hash: string;
-          retired: boolean;
-          lat: number | null;
-          lng: number | null;
-          radius_m: number | null;
-        }[]
-      >`
-        SELECT id, token_hash, retired_at IS NOT NULL AS retired,
-               lat, lng, radius_m
-          FROM patrol_checkpoints WHERE id = ${checkpointId}::uuid FOR SHARE`;
-      if (!manual) {
-        const token = parseCheckpointPayload(input.payload!)!.token;
-        if (
-          !checkpoint ||
-          checkpoint.retired ||
-          !checkpointTokenMatches(
-            checkpoint.token_hash,
-            this.ctx.txTenantId,
-            checkpointId,
-            token,
-          )
-        )
-          throw invalidCheckpoint();
-      }
-      const stops = (await this.core.stops(tx, [run.versionId])).get(
-        run.versionId,
-      )!;
-      const position = stops.findIndex((c) => c.id === checkpointId) + 1;
-      if (!checkpoint || position === 0)
-        throw appError.unprocessable(
-          ErrorCode.PATROL_CHECKPOINT_NOT_ON_ROUTE,
-          'The checkpoint is not on this route',
-        );
-      const now = await dbNow(tx);
+    return reason;
+  }
+
+  /**
+   * A scan of `guardId`'s run, in the caller's transaction: the online
+   * scan's, and an offline one synced later by any guard (ADR 0057), which
+   * is the run's guard's still. Its refusals are thrown before any write.
+   */
+  async scanIn(
+    tx: TenantTxClient,
+    runId: string,
+    input: ScanInput,
+    guardId: string,
+    reason: string | null,
+  ): Promise<ScanView> {
+    const manual = input.method === 'manual';
+    const run = await this.lockOf(tx, runId, guardId);
+    const known = await tx.patrolScan.findUnique({ where: { id: input.id } });
+    if (known) return this.replay(known, run, input);
+    const checkpointId = manual
+      ? input.checkpointId!
+      : (parseCheckpointPayload(input.payload!)?.checkpointId ?? null);
+    if (!checkpointId) throw invalidCheckpoint();
+    const [checkpoint] = await tx.$queryRaw<
+      {
+        id: string;
+        token_hash: string;
+        retired: boolean;
+        lat: number | null;
+        lng: number | null;
+        radius_m: number | null;
+      }[]
+    >`
+      SELECT id, token_hash, retired_at IS NOT NULL AS retired,
+             lat, lng, radius_m
+        FROM patrol_checkpoints WHERE id = ${checkpointId}::uuid FOR SHARE`;
+    if (!manual) {
+      const token = parseCheckpointPayload(input.payload!)!.token;
       if (
-        !inRunLifetime(
-          { startedAt: run.startedAt!, endedAt: run.endedAt },
-          input.scannedAt,
-          now,
+        !checkpoint ||
+        checkpoint.retired ||
+        !checkpointTokenMatches(
+          checkpoint.token_hash,
+          this.ctx.txTenantId,
+          checkpointId,
+          token,
         )
       )
-        throw outOfWindow('scannedAt');
-      if (await tx.patrolScan.count({ where: { runId, checkpointId } }))
-        throw appError.conflict(
-          ErrorCode.PATROL_CHECKPOINT_ALREADY_SCANNED,
-          'This run scanned that checkpoint already',
-        );
-      const version = await tx.patrolRouteVersion.findUniqueOrThrow({
-        where: { id: run.versionId },
-      });
-      if (version.ordered) {
-        const last = await tx.patrolScan.findFirst({
-          where: { runId },
-          orderBy: [{ position: 'desc' }],
-          select: { position: true, scannedAt: true },
-        });
-        const problem = orderProblem(last, position, input.scannedAt);
-        if (problem)
-          throw appError.unprocessable(
-            ErrorCode.PATROL_OUT_OF_ORDER,
-            'Another checkpoint comes first',
-            { params: problem },
-          );
-      }
-      const hasPosition = input.lat !== undefined && input.lng !== undefined;
-      const distance =
-        hasPosition && checkpoint.lat !== null && checkpoint.lng !== null
-          ? distanceMetres(
-              { lat: input.lat!, lng: input.lng! },
-              { lat: checkpoint.lat, lng: checkpoint.lng },
-            )
-          : null;
-      let scan: PatrolScan;
-      try {
-        scan = await tx.patrolScan.create({
-          data: {
-            id: input.id,
-            tenantId: this.ctx.txTenantId,
-            runId,
-            checkpointId,
-            position,
-            method: input.method,
-            manualReason: reason,
-            scannedAt: input.scannedAt,
-            receivedAt: now,
-            lat: hasPosition ? input.lat! : null,
-            lng: hasPosition ? input.lng! : null,
-            accuracyM: hasPosition ? (input.accuracyM ?? null) : null,
-            distanceM: distance,
-            positionSuspect:
-              distance === null ? null : distance > checkpoint.radius_m!,
-            guardAccountId: this.ctx.accountId,
-          },
-        });
-      } catch (error) {
-        // The id is another run's, recorded meanwhile.
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === 'P2002'
-        )
-          throw idUsed();
-        throw error;
-      }
-      let after = await tx.patrolRun.update({
-        where: { id: runId },
-        data: { scannedCount: { increment: 1 } },
-      });
-      if (
-        after.status === 'in_progress' &&
-        after.scannedCount === after.checkpointsTotal
+        throw invalidCheckpoint();
+    }
+    const stops = (await this.core.stops(tx, [run.versionId])).get(
+      run.versionId,
+    )!;
+    const position = stops.findIndex((c) => c.id === checkpointId) + 1;
+    if (!checkpoint || position === 0)
+      throw appError.unprocessable(
+        ErrorCode.PATROL_CHECKPOINT_NOT_ON_ROUTE,
+        'The checkpoint is not on this route',
+      );
+    const now = await dbNow(tx);
+    if (
+      !inRunLifetime(
+        { startedAt: run.startedAt!, endedAt: run.endedAt },
+        input.scannedAt,
+        now,
       )
-        after = await this.runs.end(tx, after, 'completed', now);
-      return ScanView.of(scan, after);
+    )
+      throw outOfWindow('scannedAt');
+    if (await tx.patrolScan.count({ where: { runId, checkpointId } }))
+      throw appError.conflict(
+        ErrorCode.PATROL_CHECKPOINT_ALREADY_SCANNED,
+        'This run scanned that checkpoint already',
+      );
+    const version = await tx.patrolRouteVersion.findUniqueOrThrow({
+      where: { id: run.versionId },
     });
+    if (version.ordered) {
+      const last = await tx.patrolScan.findFirst({
+        where: { runId },
+        orderBy: [{ position: 'desc' }],
+        select: { position: true, scannedAt: true },
+      });
+      const problem = orderProblem(last, position, input.scannedAt);
+      if (problem)
+        throw appError.unprocessable(
+          ErrorCode.PATROL_OUT_OF_ORDER,
+          'Another checkpoint comes first',
+          { params: problem },
+        );
+    }
+    const hasPosition = input.lat !== undefined && input.lng !== undefined;
+    const distance =
+      hasPosition && checkpoint.lat !== null && checkpoint.lng !== null
+        ? distanceMetres(
+            { lat: input.lat!, lng: input.lng! },
+            { lat: checkpoint.lat, lng: checkpoint.lng },
+          )
+        : null;
+    let scan: PatrolScan;
+    try {
+      scan = await tx.patrolScan.create({
+        data: {
+          id: input.id,
+          tenantId: this.ctx.txTenantId,
+          runId,
+          checkpointId,
+          position,
+          method: input.method,
+          manualReason: reason,
+          scannedAt: input.scannedAt,
+          receivedAt: now,
+          lat: hasPosition ? input.lat! : null,
+          lng: hasPosition ? input.lng! : null,
+          accuracyM: hasPosition ? (input.accuracyM ?? null) : null,
+          distanceM: distance,
+          positionSuspect:
+            distance === null ? null : distance > checkpoint.radius_m!,
+          guardAccountId: guardId,
+        },
+      });
+    } catch (error) {
+      // The id is another run's, recorded meanwhile.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      )
+        throw idUsed();
+      throw error;
+    }
+    let after = await tx.patrolRun.update({
+      where: { id: runId },
+      data: { scannedCount: { increment: 1 } },
+    });
+    if (
+      after.status === 'in_progress' &&
+      after.scannedCount === after.checkpointsTotal
+    )
+      after = await this.runs.end(tx, after, 'completed', now);
+    return ScanView.of(scan, after);
   }
 
   /**
@@ -416,12 +438,18 @@ export class PatrolScansService {
   }
 
   /** My run FOR UPDATE, started; anyone else's is not found. */
-  private async lockMine(
+  private lockMine(tx: TenantTxClient, runId: string): Promise<PatrolRun> {
+    return this.lockOf(tx, runId, this.ctx.accountId);
+  }
+
+  /** The run under its lock, when it is `guardId`'s; else not found. */
+  private async lockOf(
     tx: TenantTxClient,
     runId: string,
+    guardId: string,
   ): Promise<PatrolRun> {
     const run = await this.runs.lockRun(tx, runId);
-    if (!run || run.guardAccountId !== this.ctx.accountId) throw runNotFound();
+    if (!run || run.guardAccountId !== guardId) throw runNotFound();
     return run;
   }
 

@@ -24657,6 +24657,8 @@
               "bundle_unknown",
               "subject_unknown",
               "quarantine_rejected",
+              "contractor_unresolved",
+              "patrol_refused",
               "client_id_reused",
               "sequence_reused"
             ],
@@ -24723,7 +24725,9 @@
             "enum": [
               "bundle_unknown",
               "subject_unknown",
-              "quarantine_rejected"
+              "quarantine_rejected",
+              "contractor_unresolved",
+              "patrol_refused"
             ],
             "nullable": true,
             "type": "string"
@@ -24879,15 +24883,18 @@
           "once_only_reused",
           "action_rejected",
           "device_revoked_upload",
+          "contractor_unresolved",
           "credential_revoked",
           "invalid_at_time",
           "capacity_exceeded",
           "clock_skew",
           "bundle_expired",
           "shift_ended",
+          "patrol_scan_refused",
           "blocklist_watch_entered",
           "already_inside",
-          "exit_without_entry"
+          "exit_without_entry",
+          "duplicate_inside"
         ],
         "type": "string"
       },

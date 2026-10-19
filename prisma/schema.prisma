@@ -2470,7 +2470,7 @@ model GateOfflineAction {
   deviceId       String    @map("device_id") @db.Uuid
   batchId        String    @map("batch_id") @db.Uuid
   seq            Int
-  /// entry
+  /// entry | contractor | service_vehicle_in | service_vehicle_out | material_entry | patrol_scan
   type           String
   contentSha256  String    @map("content_sha256") @db.Char(64)
   bundleId       String?   @map("bundle_id") @db.Uuid
@@ -2490,6 +2490,11 @@ model GateOfflineAction {
   /// A quarantined action as sent, less anything secret, until decided.
   body       Json?
   reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz(3)
+
+  /// What else it recorded: a service vehicle's visit, a material entry, a patrol's scan.
+  serviceVehicleVisitId String? @map("service_vehicle_visit_id") @db.Uuid
+  materialEntryId       String? @map("material_entry_id") @db.Uuid
+  patrolScanId          String? @map("patrol_scan_id") @db.Uuid
 
   @@unique([tenantId, id])
   @@unique([tenantId, deviceId, seq], map: "gate_offline_actions_seq_key")
@@ -6625,6 +6630,7 @@ model MaterialEntry {
   occurredAt     DateTime @map("occurred_at") @db.Timestamptz(3)
   recordedAt     DateTime @default(now()) @map("recorded_at") @db.Timestamptz(3)
 
+  @@unique([tenantId, id])
   @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)], map: "material_entries_occurred_idx")
   @@map("material_entries")
 }

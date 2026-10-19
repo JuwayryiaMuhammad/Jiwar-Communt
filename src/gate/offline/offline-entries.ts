@@ -7,8 +7,15 @@ import { Notifier } from '../../core/notifications/notifier';
 import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
 import { EntriesService } from '../entries/entries.service';
 import { GateSubjects, type GateSubject } from '../entries/subjects';
-import type { NewFlag } from './offline-flags.service';
+import { OfflineFlags, type NewFlag } from './offline-flags.service';
 import { refusalFlag, type EntryAction, type FlagKind } from './offline-rules';
+
+/** The permits' subjects come in on the permit (ADR 0049). */
+const PERMIT_SUBJECTS: readonly string[] = [
+  'permit_worker',
+  'event_guest',
+  'move_permit',
+];
 
 /** Where and by whom an offline entry happened: its bundle's. */
 export interface OfflineEntryContext {
@@ -59,6 +66,7 @@ export class OfflineEntries {
     private readonly matcher: BlocklistMatcher,
     private readonly community: CommunityGatePort,
     private readonly notifier: Notifier,
+    private readonly flagsOf: OfflineFlags,
   ) {}
 
   async record(
@@ -144,7 +152,11 @@ export class OfflineEntries {
       } else if (pass && inside >= pass.partySize)
         flags.push('capacity_exceeded');
       else if (!pass && inside >= 1) flags.push('already_inside');
-      method = a.via === 'qr' ? 'qr' : 'code';
+      method = PERMIT_SUBJECTS.includes(subject.type)
+        ? 'permit'
+        : a.via === 'qr'
+          ? 'qr'
+          : 'code';
     } else if (inside <= 0) flags.push('exit_without_entry');
     const entry = await this.entries.insert(tx, {
       id: a.clientId,
@@ -159,6 +171,7 @@ export class OfflineEntries {
       unconfirmed: false,
       approvalRequestId: null,
     });
+    const of = () => ({ type: subject.type, id: subject.id });
     if (subject.engagement) {
       // The household knows when its worker comes and goes (ADR 0028),
       // late as it is.
@@ -177,12 +190,14 @@ export class OfflineEntries {
         targetId: subject.id,
       });
     }
-    const of = { type: subject.type, id: subject.id };
+    // An entry that came before an exit flagged as without one closes it.
+    if (a.direction === 'in')
+      await this.flagsOf.reconcile(tx, of(), e.occurredAt);
     return {
       entryId: entry.id,
       flags: flags.map((kind) => ({
         kind,
-        subject: of,
+        subject: of(),
         gateId: e.gateId,
         shiftId: e.shiftId,
         params:
@@ -196,7 +211,7 @@ export class OfflineEntries {
   }
 
   /** A lockdown that held the gate at `at`, by its own start and end. */
-  private async lockdownAt(
+  async lockdownAt(
     tx: TenantTxClient,
     gateId: string,
     at: Date,

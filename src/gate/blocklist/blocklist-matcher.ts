@@ -219,7 +219,23 @@ export class BlocklistMatcher {
   ): Promise<BlocklistHit | null> {
     const carried = await this.carried(tx, subjectType, subjectId);
     if (!carried?.plate) return null;
-    const key = plateKey(carried.plate);
+    return this.plateAtSync(tx, plateKey(carried.plate), at, {
+      ...where,
+      subject: carried.subject,
+    });
+  }
+
+  /**
+   * A plate's key met at sync (ADR 0057): a service vehicle's, or the plate
+   * a subject carries. The entries live now or at `at`, recorded as
+   * flagged with the keepers told. Null when nothing is met.
+   */
+  async plateAtSync(
+    tx: TenantTxClient,
+    key: string,
+    at: Date,
+    where: { gateId: string; shiftId: string; subject?: MatchSubject },
+  ): Promise<BlocklistHit | null> {
     await this.core.lockRead(tx);
     const now = await dbNow(tx);
     const entries = await tx.blocklistEntry.findMany({
@@ -240,7 +256,7 @@ export class BlocklistMatcher {
     await this.record(tx, hit, {
       source: 'offline_sync',
       outcome: 'flagged',
-      subject: carried.subject,
+      ...(where.subject ? { subject: where.subject } : {}),
       gateId: where.gateId,
       shiftId: where.shiftId,
     });

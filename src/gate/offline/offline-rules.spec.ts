@@ -4,6 +4,7 @@ import {
   FLAG_CLASS,
   FLAG_KINDS,
   parseUpload,
+  quarantineBody,
   refusalFlag,
   SKEW_MS,
   whenOf,
@@ -78,11 +79,167 @@ describe('an upload’s payload (ADR 0057)', () => {
         { field: 'actions.2.type', code: 'INVALID_VALUE' },
         { field: 'actions.3.deviceTime', code: 'INVALID_FORMAT' },
         { field: 'actions.3.subjectType', code: 'INVALID_VALUE' },
-        { field: 'actions.3.via', code: 'INVALID_VALUE' },
         { field: 'actions.4.clientId', code: 'INVALID_VALUE' },
         { field: 'actions.5', code: 'INVALID_VALUE' },
       ],
     });
+  });
+
+  it('each subject by what it comes in by', () => {
+    const problems = (over: Record<string, unknown>) =>
+      (
+        parseUpload({ batchId: BATCH, actions: [action(1, over)] }) as {
+          problems?: unknown[];
+        }
+      ).problems ?? [];
+    expect(problems({ subjectType: 'event_guest', via: 'list' })).toEqual([]);
+    expect(problems({ subjectType: 'move_permit', via: 'plate' })).toEqual([]);
+    expect(problems({ via: 'plate' })).toEqual([]);
+    for (const over of [
+      { subjectType: 'worker_engagement', via: 'list' },
+      { subjectType: 'move_permit', via: 'code' },
+      { via: 'nfc' },
+    ])
+      expect(problems(over)).toEqual([
+        { field: 'actions.0.via', code: 'INVALID_VALUE' },
+      ]);
+    // An exit needs no `via`.
+    expect(problems({ direction: 'out', via: undefined })).toEqual([]);
+  });
+
+  it('the other actions: what each carries, checked', () => {
+    const one = (x: Record<string, unknown>) =>
+      parseUpload({
+        batchId: BATCH,
+        actions: [
+          {
+            clientId: id(1),
+            seq: 1,
+            deviceTime: T0.toISOString(),
+            bundleId: BUNDLE,
+            ...x,
+          },
+        ],
+      });
+    expect(
+      one({
+        type: 'contractor',
+        permitId: SUBJECT,
+        direction: 'in',
+        idLast4: ' ab12 ',
+      }),
+    ).toEqual({
+      batchId: BATCH,
+      actions: [expect.objectContaining({ idLast4: 'AB12' })],
+    });
+    expect(
+      one({
+        type: 'contractor',
+        permitId: SUBJECT,
+        direction: 'in',
+        idLast4: 'A1',
+      }),
+    ).toEqual({
+      problems: [{ field: 'actions.0.idLast4', code: 'INVALID_FORMAT' }],
+    });
+    expect(
+      one({
+        type: 'service_vehicle_in',
+        plate: ' ab  123 ',
+        kind: 'tanker',
+        company: ' Nile  Water ',
+        unitCode: 'B7',
+      }),
+    ).toEqual({
+      batchId: BATCH,
+      actions: [
+        expect.objectContaining({
+          plate: 'AB 123',
+          company: 'Nile Water',
+          unitCode: 'B7',
+          facilityId: null,
+        }),
+      ],
+    });
+    expect(
+      one({
+        type: 'service_vehicle_in',
+        plate: '!!',
+        kind: 'rocket',
+        company: '',
+        unitCode: 'B7',
+        facilityId: SUBJECT,
+      }),
+    ).toEqual({
+      problems: [
+        { field: 'actions.0.plate', code: 'INVALID_FORMAT' },
+        { field: 'actions.0.kind', code: 'INVALID_VALUE' },
+        { field: 'actions.0.company', code: 'INVALID_VALUE' },
+        { field: 'actions.0.facilityId', code: 'INVALID_VALUE' },
+      ],
+    });
+    expect(
+      one({ type: 'material_entry', unitCode: 'B7', description: 'Cement' }),
+    ).toEqual({
+      batchId: BATCH,
+      actions: [expect.objectContaining({ permitId: null })],
+    });
+    expect(
+      one({
+        type: 'patrol_scan',
+        runId: SUBJECT,
+        method: 'manual',
+        checkpointId: SUBJECT,
+        reasonCode: 'qr_damaged',
+        lat: 30.1,
+        lng: 31.2,
+      }),
+    ).toEqual({
+      batchId: BATCH,
+      actions: [expect.objectContaining({ payload: null, lat: 30.1 })],
+    });
+    expect(
+      one({ type: 'patrol_scan', runId: SUBJECT, method: 'qr', lat: 30.1 }),
+    ).toEqual({
+      problems: [
+        { field: 'actions.0.payload', code: 'INVALID_FORMAT' },
+        { field: 'actions.0.lat', code: 'INVALID_VALUE' },
+      ],
+    });
+  });
+
+  it('a quarantined contractor kept no last four: it parses again without', () => {
+    const body = {
+      clientId: id(1),
+      seq: 1,
+      deviceTime: T0.toISOString(),
+      bundleId: BUNDLE,
+      type: 'contractor',
+      permitId: SUBJECT,
+      direction: 'in',
+    };
+    expect(parseUpload({ batchId: BATCH, actions: [body] })).toHaveProperty(
+      'problems',
+    );
+    expect(
+      parseUpload(
+        { batchId: BATCH, actions: [body] },
+        { fromQuarantine: true },
+      ),
+    ).toEqual({
+      batchId: BATCH,
+      actions: [expect.objectContaining({ idLast4: null })],
+    });
+    expect(
+      quarantineBody(
+        (
+          parseUpload({
+            batchId: BATCH,
+            actions: [{ ...body, idLast4: 'AB12' }],
+          }) as { actions: Parameters<typeof quarantineBody>[0][] }
+        ).actions[0],
+      ),
+    ).not.toHaveProperty('idLast4');
   });
 
   it('one to BATCH_MAX actions', () => {

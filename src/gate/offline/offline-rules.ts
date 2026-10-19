@@ -1,7 +1,14 @@
 import { createHash } from 'node:crypto';
 import { isUUID } from 'class-validator';
 import { stableJson } from '../../core/common/http/stable-json';
+import { REASON_CODES } from '../../core/common/reasons';
+import { normalizePlate } from '../../core/common/vehicle-plate';
 import type { Refusal } from '../entries/subjects';
+import { MATERIAL_DESCRIPTION } from '../permits/dto/permits.dto';
+import {
+  COMPANY_MAX,
+  SERVICE_VEHICLE_KINDS,
+} from '../service-vehicles/service-vehicle-rules';
 
 // ============================================================================
 // The gate offline's rules (ADR 0057), pure: what an upload says, when its
@@ -15,13 +22,41 @@ export const BATCH_MAX = 100;
 /** How far a device's clock may wander before it is flagged (either way). */
 export const SKEW_MS = 2 * MINUTE;
 
-export const ACTION_TYPES = ['entry'] as const;
+export const ACTION_TYPES = [
+  'entry',
+  'contractor',
+  'service_vehicle_in',
+  'service_vehicle_out',
+  'material_entry',
+  'patrol_scan',
+] as const;
 export type ActionType = (typeof ACTION_TYPES)[number];
 
-export const ENTRY_SUBJECTS = ['visitor_pass', 'worker_engagement'] as const;
+/** Who comes in or out on what the bundle carries. */
+export const ENTRY_SUBJECTS = [
+  'visitor_pass',
+  'worker_engagement',
+  'event_guest',
+  'move_permit',
+] as const;
 export type OfflineEntrySubject = (typeof ENTRY_SUBJECTS)[number];
 
-export const ENTRY_VIA = ['code', 'qr'] as const;
+/**
+ * How the device knew them: a typed code, a scanned QR, a plate, or a name
+ * on an event's guest list.
+ */
+export const ENTRY_VIA = ['code', 'qr', 'plate', 'list'] as const;
+export type EntryVia = (typeof ENTRY_VIA)[number];
+
+/** Which `via` each subject comes in by. */
+const VIA_OF: Record<OfflineEntrySubject, readonly EntryVia[]> = {
+  visitor_pass: ['code', 'qr', 'plate'],
+  worker_engagement: ['code', 'qr'],
+  event_guest: ['plate', 'list'],
+  move_permit: ['plate'],
+};
+
+export const PATROL_METHODS = ['qr', 'nfc', 'manual'] as const;
 
 /** What every action carries. */
 export interface ActionBase {
@@ -43,16 +78,69 @@ export interface ActionBase {
   raw: Record<string, unknown>;
 }
 
-/** Someone in or out on a pass or a worker card. */
+/** Someone in or out on a pass, a worker card, a guest list or a truck. */
 export interface EntryAction extends ActionBase {
   type: 'entry';
-  subjectType: OfflineEntrySubject;
+  subjectType: OfflineEntrySubject | 'permit_worker';
   subjectId: string;
   direction: 'in' | 'out';
-  via: (typeof ENTRY_VIA)[number];
+  via: EntryVia;
 }
 
-export type OfflineAction = EntryAction;
+/**
+ * A contractor in or out on a works permit: the device knows the permit,
+ * the server finds the worker by the last four of the ID shown.
+ */
+export interface ContractorAction extends ActionBase {
+  type: 'contractor';
+  permitId: string;
+  direction: 'in' | 'out';
+  /** Never stored: matched at sync, left out of a quarantine. */
+  idLast4: string | null;
+}
+
+export interface ServiceVehicleInAction extends ActionBase {
+  type: 'service_vehicle_in';
+  plate: string;
+  kind: (typeof SERVICE_VEHICLE_KINDS)[number];
+  company: string;
+  unitCode: string | null;
+  facilityId: string | null;
+}
+
+/** Out by its plate: the device may not know the visit (another device's). */
+export interface ServiceVehicleOutAction extends ActionBase {
+  type: 'service_vehicle_out';
+  plate: string;
+}
+
+export interface MaterialEntryAction extends ActionBase {
+  type: 'material_entry';
+  unitCode: string;
+  permitId: string | null;
+  description: string;
+}
+
+/** A checkpoint of a run started online, scanned offline (ADR 0052). */
+export interface PatrolScanAction extends ActionBase {
+  type: 'patrol_scan';
+  runId: string;
+  method: (typeof PATROL_METHODS)[number];
+  payload: string | null;
+  checkpointId: string | null;
+  reasonCode: string | null;
+  lat: number | null;
+  lng: number | null;
+  accuracyM: number | null;
+}
+
+export type OfflineAction =
+  | EntryAction
+  | ContractorAction
+  | ServiceVehicleInAction
+  | ServiceVehicleOutAction
+  | MaterialEntryAction
+  | PatrolScanAction;
 
 export interface ParsedUpload {
   batchId: string;
@@ -72,6 +160,13 @@ const instant = (v: unknown): Date | null => {
 };
 const oneOf = <T extends string>(list: readonly T[], v: unknown): v is T =>
   typeof v === 'string' && (list as readonly string[]).includes(v);
+const text = (v: unknown, max: number): string | null => {
+  if (typeof v !== 'string') return null;
+  const t = v.trim().replace(/\s+/g, ' ');
+  return t.length >= 1 && t.length <= max ? t : null;
+};
+const finite = (v: unknown): v is number =>
+  typeof v === 'number' && Number.isFinite(v);
 
 /**
  * An upload's payload (already signed and opened): its batch id and its
@@ -80,6 +175,7 @@ const oneOf = <T extends string>(list: readonly T[], v: unknown): v is T =>
  */
 export function parseUpload(
   p: Record<string, unknown>,
+  opts: { fromQuarantine?: boolean } = {},
 ): ParsedUpload | { problems: PayloadProblem[] } {
   const problems: PayloadProblem[] = [];
   const add = (field: string, code: PayloadProblem['code']) =>
@@ -114,32 +210,159 @@ export function parseUpload(
     const deviceTime = instant(x.deviceTime);
     if (!deviceTime) add(at('deviceTime'), 'INVALID_FORMAT');
     if (!uuid(x.bundleId)) add(at('bundleId'), 'INVALID_FORMAT');
-    if (!oneOf(ACTION_TYPES, x.type)) add(at('type'), 'INVALID_VALUE');
-    else if (x.type === 'entry') {
-      if (!oneOf(ENTRY_SUBJECTS, x.subjectType))
-        add(at('subjectType'), 'INVALID_VALUE');
-      if (!uuid(x.subjectId)) add(at('subjectId'), 'INVALID_FORMAT');
-      if (!oneOf(['in', 'out'] as const, x.direction))
-        add(at('direction'), 'INVALID_VALUE');
-      if (x.direction === 'in' && !oneOf(ENTRY_VIA, x.via))
-        add(at('via'), 'INVALID_VALUE');
+    if (!oneOf(ACTION_TYPES, x.type)) {
+      add(at('type'), 'INVALID_VALUE');
+      return;
     }
-    if (problems.length > before) return;
-    lastSeq = x.seq as number;
-    ids.add(x.clientId as string);
-    actions.push({
+    const direction = (): 'in' | 'out' | null => {
+      if (oneOf(['in', 'out'] as const, x.direction)) return x.direction;
+      add(at('direction'), 'INVALID_VALUE');
+      return null;
+    };
+    const base = (): ActionBase => ({
       clientId: x.clientId as string,
       seq: x.seq as number,
       deviceTime: deviceTime!,
       bundleId: x.bundleId as string,
-      type: 'entry',
-      subjectType: x.subjectType as OfflineEntrySubject,
-      subjectId: x.subjectId as string,
-      direction: x.direction as 'in' | 'out',
-      via: x.direction === 'in' ? (x.via as 'code' | 'qr') : 'code',
+      type: x.type as ActionType,
       contentSha256: actionHash(x),
       raw: x,
     });
+    let action: OfflineAction | null = null;
+    switch (x.type) {
+      case 'entry': {
+        const d = direction();
+        if (!oneOf(ENTRY_SUBJECTS, x.subjectType))
+          add(at('subjectType'), 'INVALID_VALUE');
+        if (!uuid(x.subjectId)) add(at('subjectId'), 'INVALID_FORMAT');
+        if (
+          d === 'in' &&
+          oneOf(ENTRY_SUBJECTS, x.subjectType) &&
+          !(oneOf(ENTRY_VIA, x.via) && VIA_OF[x.subjectType].includes(x.via))
+        )
+          add(at('via'), 'INVALID_VALUE');
+        if (problems.length === before)
+          action = {
+            ...base(),
+            type: 'entry',
+            subjectType: x.subjectType as OfflineEntrySubject,
+            subjectId: x.subjectId as string,
+            direction: d!,
+            via: d === 'in' ? (x.via as EntryVia) : 'code',
+          };
+        break;
+      }
+      case 'contractor': {
+        const d = direction();
+        if (!uuid(x.permitId)) add(at('permitId'), 'INVALID_FORMAT');
+        // A quarantine never kept it: its worker is not found, later.
+        const kept = !(opts.fromQuarantine && x.idLast4 === undefined);
+        const last4 =
+          typeof x.idLast4 === 'string' ? x.idLast4.trim().toUpperCase() : '';
+        if (kept && !/^[A-Z0-9]{4}$/.test(last4))
+          add(at('idLast4'), 'INVALID_FORMAT');
+        if (problems.length === before)
+          action = {
+            ...base(),
+            type: 'contractor',
+            permitId: x.permitId as string,
+            direction: d!,
+            idLast4: kept ? last4 : null,
+          };
+        break;
+      }
+      case 'service_vehicle_in': {
+        const plate =
+          typeof x.plate === 'string' ? normalizePlate(x.plate) : null;
+        if (!plate) add(at('plate'), 'INVALID_FORMAT');
+        if (!oneOf(SERVICE_VEHICLE_KINDS, x.kind))
+          add(at('kind'), 'INVALID_VALUE');
+        const company = text(x.company, COMPANY_MAX);
+        if (!company) add(at('company'), 'INVALID_VALUE');
+        const unitCode = x.unitCode === undefined ? null : text(x.unitCode, 32);
+        if (x.unitCode !== undefined && !unitCode)
+          add(at('unitCode'), 'INVALID_VALUE');
+        if (x.facilityId !== undefined && !uuid(x.facilityId))
+          add(at('facilityId'), 'INVALID_FORMAT');
+        if (x.unitCode !== undefined && x.facilityId !== undefined)
+          add(at('facilityId'), 'INVALID_VALUE');
+        if (problems.length === before)
+          action = {
+            ...base(),
+            type: 'service_vehicle_in',
+            plate: plate!,
+            kind: x.kind as ServiceVehicleInAction['kind'],
+            company: company!,
+            unitCode,
+            facilityId: (x.facilityId as string | undefined) ?? null,
+          };
+        break;
+      }
+      case 'service_vehicle_out': {
+        const plate =
+          typeof x.plate === 'string' ? normalizePlate(x.plate) : null;
+        if (!plate) add(at('plate'), 'INVALID_FORMAT');
+        if (problems.length === before)
+          action = { ...base(), type: 'service_vehicle_out', plate: plate! };
+        break;
+      }
+      case 'material_entry': {
+        const unitCode = text(x.unitCode, 32);
+        if (!unitCode) add(at('unitCode'), 'INVALID_VALUE');
+        if (x.permitId !== undefined && !uuid(x.permitId))
+          add(at('permitId'), 'INVALID_FORMAT');
+        const description = text(x.description, MATERIAL_DESCRIPTION.max);
+        if (!description) add(at('description'), 'INVALID_VALUE');
+        if (problems.length === before)
+          action = {
+            ...base(),
+            type: 'material_entry',
+            unitCode: unitCode!,
+            permitId: (x.permitId as string | undefined) ?? null,
+            description: description!,
+          };
+        break;
+      }
+      case 'patrol_scan': {
+        if (!uuid(x.runId)) add(at('runId'), 'INVALID_FORMAT');
+        if (!oneOf(PATROL_METHODS, x.method))
+          add(at('method'), 'INVALID_VALUE');
+        const manual = x.method === 'manual';
+        if (manual && !uuid(x.checkpointId))
+          add(at('checkpointId'), 'INVALID_FORMAT');
+        if (manual && !oneOf(REASON_CODES.patrolManualScan, x.reasonCode))
+          add(at('reasonCode'), 'INVALID_VALUE');
+        if (!manual && (typeof x.payload !== 'string' || !x.payload.length))
+          add(at('payload'), 'INVALID_FORMAT');
+        const hasLat = x.lat !== undefined;
+        const hasLng = x.lng !== undefined;
+        if (hasLat !== hasLng || (hasLat && !(finite(x.lat) && finite(x.lng))))
+          add(at('lat'), 'INVALID_VALUE');
+        if (
+          x.accuracyM !== undefined &&
+          !(finite(x.accuracyM) && x.accuracyM >= 0)
+        )
+          add(at('accuracyM'), 'INVALID_VALUE');
+        if (problems.length === before)
+          action = {
+            ...base(),
+            type: 'patrol_scan',
+            runId: x.runId as string,
+            method: x.method as PatrolScanAction['method'],
+            payload: manual ? null : (x.payload as string),
+            checkpointId: manual ? (x.checkpointId as string) : null,
+            reasonCode: manual ? (x.reasonCode as string) : null,
+            lat: hasLat ? (x.lat as number) : null,
+            lng: hasLng ? (x.lng as number) : null,
+            accuracyM: (x.accuracyM as number | undefined) ?? null,
+          };
+        break;
+      }
+    }
+    if (!action || problems.length > before) return;
+    lastSeq = action.seq;
+    ids.add(action.clientId);
+    actions.push(action);
   });
   return problems.length
     ? { problems }
@@ -148,15 +371,16 @@ export function parseUpload(
 
 /**
  * What a quarantined action keeps until the management decides (ADR
- * 0057): the action as sent, less what is secret or personal. An entry
- * holds ids and codes only.
+ * 0057): the action as sent, less what is secret or personal. A
+ * contractor's ID last four is never kept: accepted later, the worker is
+ * not found (`contractor_unresolved`).
  */
 export function quarantineBody(a: ActionBase): Record<string, unknown> {
   const body = { ...a.raw };
   for (const field of QUARANTINE_OMIT) delete body[field];
   return body;
 }
-const QUARANTINE_OMIT: readonly string[] = [];
+const QUARANTINE_OMIT: readonly string[] = ['idLast4'];
 
 /** The SHA-256 of an action as sent, keys sorted. */
 export const actionHash = (a: Record<string, unknown>): string =>
@@ -226,6 +450,8 @@ export const FLAG_KINDS = [
   'action_rejected',
   // A revoked device's batch, quarantined: once per batch.
   'device_revoked_upload',
+  // A contractor in on a permit, no worker of it matching the last four.
+  'contractor_unresolved',
   // The management's: told, not critically.
   'credential_revoked',
   'invalid_at_time',
@@ -233,10 +459,15 @@ export const FLAG_KINDS = [
   'clock_skew',
   'bundle_expired',
   'shift_ended',
+  // A patrol's scan the run refused at sync (its window, its order, a
+  // checkpoint reissued since).
+  'patrol_scan_refused',
   // Kept for the record, nobody told.
   'blocklist_watch_entered',
   'already_inside',
   'exit_without_entry',
+  // A service vehicle's plate inside already: the older visit closed.
+  'duplicate_inside',
 ] as const;
 export type FlagKind = (typeof FLAG_KINDS)[number];
 export type FlagClass = 'security' | 'manager' | 'info';
@@ -248,15 +479,18 @@ export const FLAG_CLASS: Record<FlagKind, FlagClass> = {
   once_only_reused: 'security',
   action_rejected: 'security',
   device_revoked_upload: 'security',
+  contractor_unresolved: 'security',
   credential_revoked: 'manager',
   invalid_at_time: 'manager',
   capacity_exceeded: 'manager',
   clock_skew: 'manager',
   bundle_expired: 'manager',
   shift_ended: 'manager',
+  patrol_scan_refused: 'manager',
   blocklist_watch_entered: 'info',
   already_inside: 'info',
   exit_without_entry: 'info',
+  duplicate_inside: 'info',
 };
 
 /**
@@ -293,5 +527,18 @@ export const REJECTIONS = [
   'subject_unknown',
   // A revoked device's action the management did not accept.
   'quarantine_rejected',
+  // No worker of the permit, or more than one, has those last four.
+  'contractor_unresolved',
+  // The patrol's run refused the scan (its code in the flag).
+  'patrol_refused',
 ] as const;
 export type Rejection = (typeof REJECTIONS)[number];
+
+/** The flag a rejection raises: what cannot have happened, or its own. */
+export const REJECTION_FLAG: Record<Rejection, FlagKind | null> = {
+  bundle_unknown: 'action_rejected',
+  subject_unknown: 'action_rejected',
+  quarantine_rejected: null,
+  contractor_unresolved: 'contractor_unresolved',
+  patrol_refused: 'patrol_scan_refused',
+};

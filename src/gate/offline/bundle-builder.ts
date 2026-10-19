@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { CommunityGatePort, type GateSchedule } from '../../community';
+import { nameKey } from '../../core/common/visitor-name';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { BlocklistCore } from '../blocklist/blocklist-core';
 import { GateSubjects, type Refusal } from '../entries/subjects';
+import { EVENT_EARLY_MS } from '../entries/subjects';
 import { LockdownCore, scopeOf } from '../lockdown/lockdown-core';
+import { permitReference } from '../permits/permit-core';
+import { workRules, type WorkRules } from '../permits/permit-rules';
 import { PassTokens } from '../visitors/pass-tokens';
 import { longTag, shortTag } from './offline-tags';
 
@@ -56,6 +60,50 @@ export interface BundlePlate {
   plate: string;
 }
 
+/** A works permit in force: its contractors come in by its reference and the last four of their ID. */
+export interface BundleWorks {
+  ref: string;
+  reference: string;
+  unitCode: string;
+  startsAt: string;
+  endsAt: string;
+  /** The permit's own daily hours, minutes after local midnight. */
+  dailyFrom: number | null;
+  dailyTo: number | null;
+  /** Its work stopped at download (ADR 0053): its workers stay out. */
+  stopped: boolean;
+  /** How many workers it names (never who). */
+  workers: number;
+}
+
+/** A move's truck, by its plate. */
+export interface BundleMove {
+  ref: string;
+  reference: string;
+  unitCode: string;
+  startsAt: string;
+  endsAt: string;
+  plate: string;
+}
+
+/** An event's guests, by plate or by their exact name, while it lets them in. */
+export interface BundleEvent {
+  ref: string;
+  reference: string;
+  unitCode: string;
+  /** Guests may come from half an hour before the event to its end. */
+  guestsFrom: string;
+  guestsUntil: string;
+  guests: { ref: string; name: string | null; plate: string | null }[];
+}
+
+/** A service vehicle inside at download, for its exit. */
+export interface BundleServiceVehicle {
+  ref: string;
+  plate: string;
+  kind: string;
+}
+
 export interface BundleSections {
   /** The lockdown holding the bundle's gate at download, or null. */
   lockdown: { scope: 'gate' | 'all'; since: string } | null;
@@ -67,6 +115,12 @@ export interface BundleSections {
    * device cannot check its mac, so it tells the guard to check an ID.
    */
   residents: string[];
+  /** The compound's work days and hours for contractors and moves (ADR 0049). */
+  workRules: WorkRules;
+  works: BundleWorks[];
+  moves: BundleMove[];
+  events: BundleEvent[];
+  serviceVehicles: BundleServiceVehicle[];
 }
 
 export interface BuildContext {
@@ -143,6 +197,18 @@ export class BundleBuilder {
         orderBy: { id: 'asc' },
       })
     ).map((c) => longTag(b.bundleId, 'resident-credential', c.id));
+    const permits = await this.permits(tx, b);
+    const serviceVehicles = (
+      await tx.serviceVehicleVisit.findMany({
+        where: { exitedAt: null, plateKey: { not: null } },
+        select: { id: true, plateKey: true, kind: true },
+        orderBy: { id: 'asc' },
+      })
+    ).map((v): BundleServiceVehicle => ({
+      ref: v.id,
+      plate: shortTag(b.salt, 'plate', v.plateKey!),
+      kind: v.kind,
+    }));
     return {
       sections: {
         lockdown: live
@@ -152,6 +218,13 @@ export class BundleBuilder {
         workers: workers.items,
         blocklist,
         residents,
+        workRules: workRules(
+          await tx.permitSettings.findUniqueOrThrow({
+            where: { tenantId: b.tenantId },
+          }),
+        ),
+        ...permits,
+        serviceVehicles,
       },
       counts: {
         passes: passes.items.length,
@@ -160,6 +233,10 @@ export class BundleBuilder {
         workersNotDerivable: workers.notDerivable,
         blocklist: blocklist.length,
         residents: residents.length,
+        works: permits.works.length,
+        moves: permits.moves.length,
+        events: permits.events.length,
+        serviceVehicles: serviceVehicles.length,
       },
     };
   }
@@ -252,6 +329,91 @@ export class BundleBuilder {
       });
     }
     return { items, notDerivable };
+  }
+
+  /**
+   * The approved permits in force during the bundle (ADR 0049): works by
+   * reference, moves by their truck's plate, events by their guests' plates
+   * and exact names, from half an hour before. Never a name in clear.
+   */
+  private async permits(
+    tx: TenantTxClient,
+    b: BuildContext,
+  ): Promise<{
+    works: BundleWorks[];
+    moves: BundleMove[];
+    events: BundleEvent[];
+  }> {
+    const rows = await tx.unitPermit.findMany({
+      where: {
+        status: 'approved',
+        kind: { in: ['works', 'move', 'event'] },
+        startsAt: { lt: new Date(b.validUntil.getTime() + EVENT_EARLY_MS) },
+        endsAt: { gt: b.issuedAt },
+      },
+      orderBy: { id: 'asc' },
+    });
+    const codes = await this.community.unitCodes(
+      tx,
+      rows.map((r) => r.unitId),
+    );
+    const works: BundleWorks[] = [];
+    const moves: BundleMove[] = [];
+    const events: BundleEvent[] = [];
+    for (const p of rows) {
+      const common = {
+        ref: p.id,
+        reference: permitReference(p.kind, p.number),
+        unitCode: codes.get(p.unitId)!,
+      };
+      if (p.kind === 'works') {
+        if (p.startsAt >= b.validUntil) continue;
+        works.push({
+          ...common,
+          startsAt: p.startsAt.toISOString(),
+          endsAt: p.endsAt.toISOString(),
+          dailyFrom: p.dailyFrom,
+          dailyTo: p.dailyTo,
+          stopped:
+            (await tx.permitWorkStop.count({
+              where: { permitId: p.id, endedAt: null },
+            })) > 0,
+          workers: await tx.permitWorker.count({
+            where: { permitId: p.id, removedAt: null, purgedAt: null },
+          }),
+        });
+      } else if (p.kind === 'move') {
+        if (p.startsAt >= b.validUntil || !p.plateKey) continue;
+        moves.push({
+          ...common,
+          startsAt: p.startsAt.toISOString(),
+          endsAt: p.endsAt.toISOString(),
+          plate: shortTag(b.salt, 'plate', p.plateKey),
+        });
+      } else {
+        const guests = await tx.permitGuest.findMany({
+          where: { permitId: p.id, removedAt: null, purgedAt: null },
+          select: { id: true, fullName: true, plateKey: true },
+          orderBy: { id: 'asc' },
+        });
+        events.push({
+          ...common,
+          guestsFrom: new Date(
+            p.startsAt.getTime() - EVENT_EARLY_MS,
+          ).toISOString(),
+          guestsUntil: p.endsAt.toISOString(),
+          guests: guests.map((g) => {
+            const key = g.fullName ? nameKey(g.fullName) : null;
+            return {
+              ref: g.id,
+              name: key ? shortTag(b.salt, 'guest-name', key) : null,
+              plate: g.plateKey ? shortTag(b.salt, 'plate', g.plateKey) : null,
+            };
+          }),
+        });
+      }
+    }
+    return { works, moves, events };
   }
 
   /** In less out per subject, over the whole log (ADR 0043: inside is a count). */

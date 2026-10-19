@@ -21,6 +21,8 @@ const ROUNDS = 5;
  *   issued before it began;
  * - an upload and a ban of its plate: met, or the ban came after the sync
  *   and the entry stays as it was;
+ * - an offline and an online entry of one service vehicle's plate share
+ *   the plate's lock: one visit is left inside, the other closed;
  * - an upload and the device's revocation serialize on the device: every
  *   action received before the revocation is recorded, every one after is
  *   quarantined, none both.
@@ -212,6 +214,41 @@ describe('Gate offline — concurrently (ADR 0057)', () => {
       expect((await passRow(p.id)).entriesUsed).toBe(
         statuses.filter((x) => x === 'recorded').length,
       );
+    }
+  });
+
+  it('an offline and an online entry of one service vehicle: one left inside', async () => {
+    for (let round = 0; round < ROUNDS; round++) {
+      const plate = `ط ر ${6100 + round}`;
+      const key = plate.replace(/\s/g, '');
+      const { d, b } = await o.deviceWithBundle(s.guard, s.c);
+      const [online, offline] = await Promise.all([
+        o.serviceInRaw(s.guard, { plate }),
+        o.upload(s.guard, s.c, d, [
+          {
+            clientId: newId(),
+            seq: d.seq++,
+            deviceTime: b.issuedAt,
+            bundleId: b.bundleId,
+            type: 'service_vehicle_in',
+            plate,
+            kind: 'waste',
+            company: 'Race Waste',
+          },
+        ]),
+      ]);
+      expect(offline.results[0].status).toBe('recorded');
+      // Online after the offline one: refused, it is inside. Before: closed.
+      if (online.status === 201)
+        expect(offline.results[0].flags).toEqual(['duplicate_inside']);
+      else expect(online.status).toBe(409);
+      expect(
+        await o.inTx(s.c, (tx) =>
+          tx.serviceVehicleVisit.count({
+            where: { plateKey: key, exitedAt: null },
+          }),
+        ),
+      ).toBe(1);
     }
   });
 });

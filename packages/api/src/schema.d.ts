@@ -22015,7 +22015,7 @@ export interface components {
             entryId: string | null;
             flags: components["schemas"]["OfflineFlagKind"][];
             /** @enum {string|null} */
-            reason: "bundle_unknown" | "subject_unknown" | "quarantine_rejected" | "client_id_reused" | "sequence_reused" | null;
+            reason: "bundle_unknown" | "subject_unknown" | "quarantine_rejected" | "contractor_unresolved" | "patrol_refused" | "client_id_reused" | "sequence_reused" | null;
             seq: number;
             /** @description `recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number; `quarantined`: the device was revoked, the management decides. */
             status: components["schemas"]["OfflineActionStatus"];
@@ -22036,7 +22036,7 @@ export interface components {
             /** Format: date-time */
             occurredAt: string | null;
             /** @enum {string|null} */
-            reason: "bundle_unknown" | "subject_unknown" | "quarantine_rejected" | null;
+            reason: "bundle_unknown" | "subject_unknown" | "quarantine_rejected" | "contractor_unresolved" | "patrol_refused" | null;
             seq: number;
             /** @enum {string} */
             status: "recorded" | "rejected" | "quarantined";
@@ -22075,7 +22075,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        OfflineFlagKind: "lockdown_entered" | "blocklist_ban_entered" | "credential_banned" | "once_only_reused" | "action_rejected" | "device_revoked_upload" | "credential_revoked" | "invalid_at_time" | "capacity_exceeded" | "clock_skew" | "bundle_expired" | "shift_ended" | "blocklist_watch_entered" | "already_inside" | "exit_without_entry";
+        OfflineFlagKind: "lockdown_entered" | "blocklist_ban_entered" | "credential_banned" | "once_only_reused" | "action_rejected" | "device_revoked_upload" | "contractor_unresolved" | "credential_revoked" | "invalid_at_time" | "capacity_exceeded" | "clock_skew" | "bundle_expired" | "shift_ended" | "patrol_scan_refused" | "blocklist_watch_entered" | "already_inside" | "exit_without_entry" | "duplicate_inside";
         OfflineFlagResponse: {
             /** Format: uuid */
             actionId: string | null;

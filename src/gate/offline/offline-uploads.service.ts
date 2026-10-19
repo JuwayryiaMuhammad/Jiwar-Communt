@@ -31,11 +31,12 @@ import {
   type OpenedEnvelope,
 } from './device-envelopes';
 import { GateDevicesService } from './gate-devices.service';
-import { OfflineEntries } from './offline-entries';
+import { OfflineHandlers } from './offline-handlers';
 import { OfflineFlags, type NewFlag } from './offline-flags.service';
 import {
   parseUpload,
   quarantineBody,
+  REJECTION_FLAG,
   SKEW_MS,
   whenOf,
   type FlagKind,
@@ -156,7 +157,7 @@ export class OfflineUploadsService implements OnModuleInit {
     private readonly devices: GateDevicesService,
     private readonly lockdown: LockdownCore,
     private readonly settings: TenantSettingsService,
-    private readonly entries: OfflineEntries,
+    private readonly handlers: OfflineHandlers,
     private readonly flags: OfflineFlags,
     private readonly idempotency: IdempotencyService,
   ) {}
@@ -518,21 +519,30 @@ export class OfflineUploadsService implements OnModuleInit {
               ...data,
             },
           });
-    const reject = async (reason: Rejection, bundleId: string | null) => {
+    const reject = async (
+      reason: Rejection,
+      bundleId: string | null,
+      params: Record<string, string | number> = {},
+    ) => {
       const row = await write({
         bundleId,
         status: 'rejected',
         rejectReason: reason,
       });
-      await this.flags.raise(tx, [
-        {
-          kind: 'action_rejected',
-          batchId,
-          deviceId: device.id,
-          actionId: row.id,
-          params: { reason },
-        },
-      ]);
+      const kind = REJECTION_FLAG[reason];
+      if (kind)
+        await this.flags.raise(tx, [
+          {
+            kind,
+            batchId,
+            deviceId: device.id,
+            actionId: row.id,
+            ...(bundleId && at.bundle
+              ? { gateId: at.bundle.gateId, shiftId: at.bundle.shiftId }
+              : {}),
+            params: { reason, ...params },
+          },
+        ]);
       return this.answer(tx, row, 'rejected');
     };
     const own = at.bundle;
@@ -559,16 +569,17 @@ export class OfflineUploadsService implements OnModuleInit {
       select: { name: true },
     });
     const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
-    const outcome = await this.entries.record(tx, {
-      action: a,
+    const outcome = await this.handlers.handle(tx, a, {
       occurredAt: when.occurredAt,
       gateId: own.gateId,
       gateName: gate.name,
       shiftId: own.shiftId,
       guardId: own.guardAccountId,
       timezone,
+      actionId: a.clientId,
     });
-    if ('rejection' in outcome) return reject(outcome.rejection, own.id);
+    if ('rejection' in outcome)
+      return reject(outcome.rejection, own.id, outcome.params);
     const row = await write({
       bundleId: own.id,
       occurredAt: when.occurredAt,
@@ -576,7 +587,10 @@ export class OfflineUploadsService implements OnModuleInit {
       guardAccountId: own.guardAccountId,
       shiftId: own.shiftId,
       gateId: own.gateId,
-      entryId: outcome.entryId,
+      entryId: outcome.recorded.entryId ?? null,
+      serviceVehicleVisitId: outcome.recorded.serviceVehicleVisitId ?? null,
+      materialEntryId: outcome.recorded.materialEntryId ?? null,
+      patrolScanId: outcome.recorded.patrolScanId ?? null,
     });
     const where = { gateId: own.gateId, shiftId: own.shiftId };
     await this.flags.raise(tx, [
@@ -598,12 +612,6 @@ export class OfflineUploadsService implements OnModuleInit {
         actionId: row.id,
       })),
     ]);
-    if (a.direction === 'in')
-      await this.flags.reconcile(
-        tx,
-        { type: a.subjectType, id: a.subjectId },
-        when.occurredAt,
-      );
     return this.answer(tx, row, 'recorded');
   }
 
@@ -850,10 +858,10 @@ type Base = Pick<
 
 /** A quarantined row's action, parsed again from what it kept. */
 function actionOf(row: GateOfflineAction): OfflineAction {
-  const parsed = parseUpload({
-    batchId: row.batchId,
-    actions: [row.body as Record<string, unknown>],
-  });
+  const parsed = parseUpload(
+    { batchId: row.batchId, actions: [row.body as Record<string, unknown>] },
+    { fromQuarantine: true },
+  );
   // It parsed when it arrived, and the parser is the same.
   if ('problems' in parsed)
     throw new Error(`A quarantined action no longer parses: ${row.id}`);

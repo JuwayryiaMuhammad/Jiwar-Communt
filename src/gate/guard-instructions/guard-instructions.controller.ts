@@ -43,7 +43,7 @@ export class StaffGuardInstructionsController {
   @ApiOperation({
     summary: 'Send guards an instruction',
     description:
-      'To all guards, a gate or a zone. It reaches the active guards then — at a gate or a zone, those on shift there and those scheduled there in the next seven days — and anyone who opens a shift where it applies while it is live. Urgent: a critical push.',
+      'To all guards, a gate or a zone. It reaches the active guards then — at a gate or a zone, those on shift there and those scheduled there in the next seven days — and anyone who opens a shift where it applies while it is live. Urgent: a critical push. With `validFrom`/`validUntil` (compound days, inclusive; ADR 0056) guards see and acknowledge it only on those days, and are pushed at sending only when it holds today — otherwise at their first shift start on a day it holds.',
   })
   @ApiCreatedResponse({ type: StaffGuardInstructionView })
   send(

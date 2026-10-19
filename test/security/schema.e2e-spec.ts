@@ -720,10 +720,20 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
         "body = 'Other words'",
         'urgent = true',
         `gate_id = '${otherGateId}'`,
+        // Its days too (ADR 0056).
+        "valid_from = DATE '2027-01-01'",
+        "valid_until = DATE '2027-01-01'",
       ])
         await expect(
           asApp(`UPDATE guard_instructions SET ${set} WHERE ${where}`),
         ).rejects.toThrow(/keeps what it says/);
+      await expect(
+        asApp(
+          `INSERT INTO guard_instructions (id, tenant_id, title, body, audience, created_by_account_id, valid_from, valid_until, updated_at)
+           SELECT '${newId()}', tenant_id, title, body, 'all', created_by_account_id, DATE '2027-01-02', DATE '2027-01-01', now()
+             FROM guard_instructions WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/guard_instructions_validity/);
       const archive = `UPDATE guard_instructions SET archived_at = now(), archived_by_account_id = '${otherId}' WHERE ${where}`;
       await asApp(archive);
       await expect(
@@ -757,6 +767,19 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
           `UPDATE guard_instruction_recipients SET account_id = '${otherId}' WHERE ${where}`,
         ),
       ).rejects.toThrow(/acknowledged once/);
+      // Told once (ADR 0056): set, it is never moved or cleared.
+      const told = `UPDATE guard_instruction_recipients SET notified_at = now() WHERE ${where}`;
+      await asApp(told);
+      for (const set of [
+        "notified_at = now() + interval '1 minute'",
+        'notified_at = NULL',
+      ])
+        await expect(
+          asApp(
+            told,
+            `UPDATE guard_instruction_recipients SET ${set} WHERE ${where}`,
+          ),
+        ).rejects.toThrow(/acknowledged once/);
     });
   });
 

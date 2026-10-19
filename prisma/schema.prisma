@@ -6727,6 +6727,10 @@ model GuardInstruction {
   archivedById String?                  @map("archived_by_account_id") @db.Uuid
   createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// A compound day it holds from, inclusive (ADR 0056); null: from its sending.
+  validFrom            DateTime?                @map("valid_from") @db.Date
+  /// A compound day it holds until, inclusive; null: until archived.
+  validUntil           DateTime?                @map("valid_until") @db.Date
 
   @@unique([tenantId, id])
   @@index([tenantId, createdAt, id], map: "guard_instructions_created_idx")
@@ -6744,6 +6748,8 @@ model GuardInstructionRecipient {
   addedVia       GuardInstructionVia @map("added_via")
   addedAt        DateTime            @default(now()) @map("added_at") @db.Timestamptz(3)
   acknowledgedAt DateTime?           @map("acknowledged_at") @db.Timestamptz(3)
+  /// When the guard was told (ADR 0056): once, on a day it is valid.
+  notifiedAt     DateTime?             @map("notified_at") @db.Timestamptz(3)
 
   @@unique([tenantId, id])
   @@unique([tenantId, instructionId, accountId], map: "guard_instruction_recipients_once_key")

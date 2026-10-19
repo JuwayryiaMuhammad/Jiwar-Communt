@@ -413,16 +413,21 @@ describe('Audit coverage — guard shifts and tasks', () => {
             audience: 'gate',
             gateId: own,
             urgent: true,
+            validFrom: today(),
+            validUntil: addDays(today(), 30),
           })
           .expect(201)
       ).body as { id: string };
       const issued = await single('guard_instruction.issued', i.id);
       expect(issued).toMatchObject(by(supervisor, 'guard_instruction'));
+      // Days, not words (ADR 0056).
       expect(issued.metadata).toEqual({
         audience: 'gate',
         gateId: own,
         urgent: true,
         recipients: 1,
+        validFrom: today(),
+        validUntil: addDays(today(), 30),
       });
       await x
         .http(

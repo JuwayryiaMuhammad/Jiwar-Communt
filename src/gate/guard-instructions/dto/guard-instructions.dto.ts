@@ -6,9 +6,15 @@ import {
   IsString,
   IsUUID,
   Length,
+  Matches,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import {
+  INSTRUCTION_STATES,
+  type InstructionState,
+} from '../instruction-validity';
 
 const AUDIENCES = ['all', 'gate', 'zone'] as const;
 
@@ -53,13 +59,42 @@ export class SendGuardInstructionDto {
   @IsOptional()
   @IsUUID()
   zoneId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2026-12-20',
+    description:
+      'The compound day it holds from, inclusive (ADR 0056). Until then guards neither see it nor are told of it; they are told at their first shift start on a day it holds. Default: from now.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(LOCAL_DATE)
+  validFrom?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2027-01-05',
+    description:
+      'The last compound day it holds, inclusive: not before `validFrom` (ENDS_BEFORE_START), nor before today (DAY_OUT_OF_RANGE {min}). After it, guards no longer see it. Default: until archived. Both are fixed once sent.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(LOCAL_DATE)
+  validUntil?: string;
 }
 
 export class StaffGuardInstructionsQueryDto extends PageQueryDto {
-  @ApiPropertyOptional({ enum: ['live', 'archived'] })
+  @ApiPropertyOptional({
+    enum: INSTRUCTION_STATES,
+    enumName: 'GuardInstructionState',
+    description:
+      'Today, in the compound’s calendar (ADR 0056): `scheduled` (not yet valid), `live` (valid; guards see it), `expired` (past its last day), `archived`. Default: all.',
+  })
   @IsOptional()
-  @IsIn(['live', 'archived'])
-  state?: 'live' | 'archived';
+  @IsIn(INSTRUCTION_STATES)
+  state?: InstructionState;
 }
 
 export class MyGuardInstructionsQueryDto extends PageQueryDto {

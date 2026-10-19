@@ -5,6 +5,12 @@ import type {
 } from '@prisma/client';
 import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import type { DutyNames } from '../../roster/duty-names';
+import {
+  dayOf,
+  INSTRUCTION_STATES,
+  instructionState,
+  type InstructionState,
+} from '../instruction-validity';
 import { PostView } from '../../roster/views/roster.views';
 
 export interface InstructionCounts {
@@ -41,6 +47,22 @@ class GuardInstructionBodyView {
     description: 'It reaches nobody new once archived.',
   })
   archivedAt: Date | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '2026-12-20',
+    description:
+      'The compound day it holds from, inclusive (ADR 0056); null: from its sending.',
+  })
+  validFrom: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '2027-01-05',
+    description:
+      'The compound day it holds until, inclusive; null: until archived.',
+  })
+  validUntil: string | null;
 }
 
 function body(i: GuardInstruction, names: DutyNames): GuardInstructionBodyView {
@@ -53,6 +75,8 @@ function body(i: GuardInstruction, names: DutyNames): GuardInstructionBodyView {
     post: i.gateId || i.placeId ? PostView.of(i, names) : null,
     createdAt: i.createdAt,
     archivedAt: i.archivedAt,
+    validFrom: i.validFrom ? dayOf(i.validFrom) : null,
+    validUntil: i.validUntil ? dayOf(i.validUntil) : null,
   };
 }
 
@@ -86,15 +110,24 @@ export class StaffGuardInstructionView extends GuardInstructionBodyView {
     description: 'Of them, those who acknowledged.',
   })
   acknowledged: number;
+  @ApiProperty({
+    enum: INSTRUCTION_STATES,
+    enumName: 'GuardInstructionState',
+    description:
+      'Today, in the compound’s calendar: not yet valid, valid (guards see it), past its last day, or archived (ADR 0056).',
+  })
+  state: InstructionState;
 
   static of(
     i: GuardInstruction,
     names: DutyNames,
     counts: Map<string, InstructionCounts>,
+    today: string,
   ): StaffGuardInstructionView {
     const c = counts.get(i.id);
     return {
       ...body(i, names),
+      state: instructionState(i, today),
       createdBy: accountRef(names.people.get(i.createdById)!),
       recipients: c?.recipients ?? 0,
       acknowledged: c?.acknowledged ?? 0,

@@ -16244,7 +16244,7 @@
                   "value": ""
                 },
                 {
-                  "description": "",
+                  "description": "Today, in the compound’s calendar (ADR 0056): `scheduled` (not yet valid), `live` (valid; guards see it), `expired` (past its last day), `archived`. Default: all.",
                   "disabled": true,
                   "key": "state",
                   "value": ""
@@ -16266,7 +16266,7 @@
               },
               "raw": "{\n  \"title\": \"\",\n  \"body\": \"\",\n  \"audience\": \"all\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audience` | `all` \\| `gate` \\| `zone` | yes |  |\n| `body` | string | yes |  |\n| `gateId` | string (uuid) |  | For `gate`: a gate in service. |\n| `title` | string | yes |  |\n| `urgent` | boolean |  | A critical push (`guard_instruction.urgent`). |\n| `zoneId` | string (uuid) |  | For `zone`: a place in service. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audience` | `all` \\| `gate` \\| `zone` | yes |  |\n| `body` | string | yes |  |\n| `gateId` | string (uuid) |  | For `gate`: a gate in service. |\n| `title` | string | yes |  |\n| `urgent` | boolean |  | A critical push (`guard_instruction.urgent`). |\n| `validFrom` | string |  | The compound day it holds from, inclusive (ADR 0056). Until then guards neither see it nor are told of it; they are told at their first shift start on a day it holds. Default: from now. |\n| `validUntil` | string |  | The last compound day it holds, inclusive: not before `validFrom` (ENDS_BEFORE_START), nor before today (DAY_OUT_OF_RANGE {min}). After it, guards no longer see it. Default: until archived. Both are fixed once sent. |\n| `zoneId` | string (uuid) |  | For `zone`: a place in service. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

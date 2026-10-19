@@ -10307,7 +10307,7 @@ export interface paths {
         put?: never;
         /**
          * Send guards an instruction
-         * @description To all guards, a gate or a zone. It reaches the active guards then — at a gate or a zone, those on shift there and those scheduled there in the next seven days — and anyone who opens a shift where it applies while it is live. Urgent: a critical push.
+         * @description To all guards, a gate or a zone. It reaches the active guards then — at a gate or a zone, those on shift there and those scheduled there in the next seven days — and anyone who opens a shift where it applies while it is live. Urgent: a critical push. With `validFrom`/`validUntil` (compound days, inclusive; ADR 0056) guards see and acknowledge it only on those days, and are pushed at sending only when it holds today — otherwise at their first shift start on a day it holds.
          */
         post: operations["StaffGuardInstructionsController_send"];
         delete?: never;
@@ -19428,6 +19428,11 @@ export interface components {
         /** @enum {string} */
         GuardInstructionAudience: "all" | "gate" | "zone";
         /**
+         * @description Today, in the compound’s calendar: not yet valid, valid (guards see it), past its last day, or archived (ADR 0056).
+         * @enum {string}
+         */
+        GuardInstructionState: "scheduled" | "live" | "expired" | "archived";
+        /**
          * @description Reached at the send, or opening a shift where it applies.
          * @enum {string}
          */
@@ -21019,6 +21024,16 @@ export interface components {
             title: string;
             /** @description Sent as a critical push. */
             urgent: boolean;
+            /**
+             * @description The compound day it holds from, inclusive (ADR 0056); null: from its sending.
+             * @example 2026-12-20
+             */
+            validFrom: string | null;
+            /**
+             * @description The compound day it holds until, inclusive; null: until archived.
+             * @example 2027-01-05
+             */
+            validUntil: string | null;
         };
         MyGuardInstructionViewList: {
             data: components["schemas"]["MyGuardInstructionView"][];
@@ -24324,6 +24339,16 @@ export interface components {
              */
             urgent: boolean;
             /**
+             * @description The compound day it holds from, inclusive (ADR 0056). Until then guards neither see it nor are told of it; they are told at their first shift start on a day it holds. Default: from now.
+             * @example 2026-12-20
+             */
+            validFrom?: string;
+            /**
+             * @description The last compound day it holds, inclusive: not before `validFrom` (ENDS_BEFORE_START), nor before today (DAY_OUT_OF_RANGE {min}). After it, guards no longer see it. Default: until archived. Both are fixed once sent.
+             * @example 2027-01-05
+             */
+            validUntil?: string;
+            /**
              * Format: uuid
              * @description For `zone`: a place in service.
              */
@@ -25513,9 +25538,21 @@ export interface components {
             reached: components["schemas"]["InstructionRecipientView"][];
             /** @description The guards it reaches. */
             recipients: number;
+            /** @description Today, in the compound’s calendar: not yet valid, valid (guards see it), past its last day, or archived (ADR 0056). */
+            state: components["schemas"]["GuardInstructionState"];
             title: string;
             /** @description Sent as a critical push. */
             urgent: boolean;
+            /**
+             * @description The compound day it holds from, inclusive (ADR 0056); null: from its sending.
+             * @example 2026-12-20
+             */
+            validFrom: string | null;
+            /**
+             * @description The compound day it holds until, inclusive; null: until archived.
+             * @example 2027-01-05
+             */
+            validUntil: string | null;
         };
         StaffGuardInstructionView: {
             /** @description Of them, those who acknowledged. */
@@ -25536,9 +25573,21 @@ export interface components {
             post: components["schemas"]["PostView"] | null;
             /** @description The guards it reaches. */
             recipients: number;
+            /** @description Today, in the compound’s calendar: not yet valid, valid (guards see it), past its last day, or archived (ADR 0056). */
+            state: components["schemas"]["GuardInstructionState"];
             title: string;
             /** @description Sent as a critical push. */
             urgent: boolean;
+            /**
+             * @description The compound day it holds from, inclusive (ADR 0056); null: from its sending.
+             * @example 2026-12-20
+             */
+            validFrom: string | null;
+            /**
+             * @description The compound day it holds until, inclusive; null: until archived.
+             * @example 2027-01-05
+             */
+            validUntil: string | null;
         };
         StaffGuardInstructionViewList: {
             data: components["schemas"]["StaffGuardInstructionView"][];
@@ -43676,7 +43725,8 @@ export interface operations {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
-                state?: "live" | "archived";
+                /** @description Today, in the compound’s calendar (ADR 0056): `scheduled` (not yet valid), `live` (valid; guards see it), `expired` (past its last day), `archived`. Default: all. */
+                state?: components["schemas"]["GuardInstructionState"];
             };
             header?: never;
             path?: never;

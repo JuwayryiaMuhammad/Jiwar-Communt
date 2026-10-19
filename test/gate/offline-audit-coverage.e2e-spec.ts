@@ -3,7 +3,13 @@ import { auditReaders } from '../setup/audit';
 import * as split from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { leakText } from '../setup/leak-text';
-import { offlineHelpers, type Who } from '../setup/offline';
+import { newId } from '../../src/core/common/uuid';
+import {
+  entryAction,
+  newDevice,
+  offlineHelpers,
+  type Who,
+} from '../setup/offline';
 
 /**
  * One scenario per catalog entry of ADR 0057 (ADR 0014): actor, target and
@@ -59,6 +65,46 @@ describe('Audit coverage — the gate offline (ADR 0057)', () => {
     const row = await single('gate_device.revoked', d.id);
     expect(row).toMatchObject(by(s.manager, 'gate_device'));
     expect(row.metadata).toEqual({ reasonCode: 'compromised' });
+  });
+
+  it('gate_offline.upload_rejected: why, by code; never the key nor the payload', async () => {
+    const { d, b } = await o.deviceWithBundle(s.guard, s.c);
+    secrets.push(d.publicKey);
+    await o
+      .uploadRaw(
+        s.guard,
+        s.c,
+        d,
+        [entryAction(d, b, { type: 'visitor_pass', id: newId() })],
+        {},
+        newDevice(),
+      )
+      .expect(422);
+    const row = await single('gate_offline.upload_rejected', d.id);
+    expect(row).toMatchObject(by(s.guard, 'gate_device'));
+    expect(row.metadata).toEqual({ reason: 'signature' });
+  });
+
+  it('gate_offline_flag.reviewed: the flag’s kind and the code', async () => {
+    const { d, b } = await o.deviceWithBundle(s.guard, s.c);
+    await o.upload(s.guard, s.c, d, [
+      entryAction(d, b, { type: 'visitor_pass', id: newId() }),
+    ]);
+    const [flag] = await o.flagsOf(s.c, d.id);
+    await o
+      .http(
+        'post',
+        `/staff/gate/offline/flags/${flag.id}/review`,
+        s.manager.token,
+        { reviewCode: 'confirmed' },
+      )
+      .expect(200);
+    const row = await single('gate_offline_flag.reviewed', flag.id);
+    expect(row).toMatchObject(by(s.manager, 'gate_offline_flag'));
+    expect(row.metadata).toEqual({
+      kind: 'action_rejected',
+      reviewCode: 'confirmed',
+    });
   });
 
   describe('catalog completeness', () => {

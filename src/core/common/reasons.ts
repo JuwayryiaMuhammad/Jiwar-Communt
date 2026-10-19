@@ -656,6 +656,8 @@ export const REASON_CODES = {
     'outside_policy',
     'other',
   ],
+  // Offline flags (ADR 0057): what the management made of one.
+  offlineFlagReview: ['confirmed', 'followed_up', 'false_alarm', 'other'],
   // Guard devices (ADR 0057): why the management revoked one.
   gateDeviceRevoke: [
     'lost',

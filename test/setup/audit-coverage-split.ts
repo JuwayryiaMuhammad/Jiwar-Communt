@@ -606,4 +606,6 @@ export const GATE_COMPLETION_COVERAGE: readonly string[] = [
 export const OFFLINE_COVERAGE: readonly string[] = [
   'gate_device.enrolled',
   'gate_device.revoked',
+  'gate_offline.upload_rejected',
+  'gate_offline_flag.reviewed',
 ];

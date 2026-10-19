@@ -23,7 +23,9 @@ export type MatchSource =
   | 'id_lookup'
   // A field exception's visitor or vehicle, a service vehicle (ADR 0056).
   | 'field_exception'
-  | 'service_vehicle';
+  | 'service_vehicle'
+  // An offline entry's plate, met when its device synced (ADR 0057).
+  | 'offline_sync';
 
 /** The gate subject it met, when there is one. */
 export interface MatchSubject {
@@ -198,6 +200,50 @@ export class BlocklistMatcher {
         carried.household.accountId,
         carried.household.target,
       );
+    return hit;
+  }
+
+  /**
+   * An offline entry in at `at`, met when its device synced (ADR 0057):
+   * the plate the subject carries, against the entries live now or at the
+   * instant it came in — a ban added after the bundle, or after the entry
+   * with them still inside. Recorded as flagged (it was let in) with the
+   * keepers told; never the household. Null when nothing is met.
+   */
+  async atSync(
+    tx: TenantTxClient,
+    subjectType: string,
+    subjectId: string,
+    at: Date,
+    where: { gateId: string; shiftId: string },
+  ): Promise<BlocklistHit | null> {
+    const carried = await this.carried(tx, subjectType, subjectId);
+    if (!carried?.plate) return null;
+    const key = plateKey(carried.plate);
+    await this.core.lockRead(tx);
+    const now = await dbNow(tx);
+    const entries = await tx.blocklistEntry.findMany({
+      where: {
+        subject: 'plate',
+        plateKey: key,
+        OR: [this.core.active(now), this.core.activeAt(at)],
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    if (!entries.length) return null;
+    const entry = entries.find((e) => e.kind === 'ban') ?? entries[0];
+    const hit: BlocklistHit = {
+      entries,
+      kind: entry.kind as 'ban' | 'watch',
+      entry,
+    };
+    await this.record(tx, hit, {
+      source: 'offline_sync',
+      outcome: 'flagged',
+      subject: carried.subject,
+      gateId: where.gateId,
+      shiftId: where.shiftId,
+    });
     return hit;
   }
 

@@ -1,5 +1,7 @@
 import { enrolMessage } from '../../src/gate/offline/device-envelope';
 import { GateDevicesService } from '../../src/gate/offline/gate-devices.service';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { batchRow, bundleRow, flagRow } from '../setup/offline-rows';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
 import { newDevice, signAs } from '../setup/offline';
@@ -9,6 +11,8 @@ import type { Side } from './world';
 export interface OfflineWorld {
   /** A device B's guard enrolled. */
   bGateDeviceId: string;
+  /** A flag on a batch of B's device (rows written directly). */
+  bOfflineFlagId: string;
 }
 
 export async function offlineWorld(
@@ -24,5 +28,18 @@ export async function offlineWorld(
       proof: signAs(d, enrolMessage(b.tenantId, d.id, d.publicKey)),
     }),
   );
-  return { bGateDeviceId: d.id };
+  const bOfflineFlagId = await helpers.asManager(b, () =>
+    h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+      const at = { tenantId: b.tenantId, deviceId: d.id };
+      await bundleRow(tx, {
+        ...at,
+        shiftId: b.shiftId,
+        gateId: b.gateId,
+        guardId: b.ids.guard,
+      });
+      const batchId = await batchRow(tx, { ...at, uploadedById: b.ids.guard });
+      return flagRow(tx, { ...at, batchId });
+    }),
+  );
+  return { bGateDeviceId: d.id, bOfflineFlagId };
 }

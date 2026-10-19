@@ -1420,6 +1420,11 @@ export const AUDIT_ACTIONS = {
   'gate_device.enrolled': { log: 'tenant', target: 'gate_device' },
   // metadata: reasonCode.
   'gate_device.revoked': { log: 'tenant', target: 'gate_device' },
+  // A device's upload refused whole. metadata: reason (signature, envelope,
+  // payload).
+  'gate_offline.upload_rejected': { log: 'tenant', target: 'gate_device' },
+  // metadata: kind, reviewCode.
+  'gate_offline_flag.reviewed': { log: 'tenant', target: 'gate_offline_flag' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

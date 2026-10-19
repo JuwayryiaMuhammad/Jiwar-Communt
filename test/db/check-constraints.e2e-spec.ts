@@ -1747,6 +1747,30 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_offline_bundles_sha256: {},
   gate_offline_bundles_counts: {},
   gate_device_envelopes_sha256: {},
+  gate_devices_seq_shape: {},
+  gate_offline_batches_sha256: {},
+  gate_offline_batches_action_count: {},
+  gate_offline_batches_status: {},
+  gate_offline_actions_seq_positive: {},
+  gate_offline_actions_type: {},
+  gate_offline_actions_sha256: {},
+  gate_offline_actions_status: {},
+  gate_offline_actions_shape: {
+    guarded:
+      'num_nonnulls is never NULL; reject_reason and entry_id are tested IS NULL before IN or a comparison',
+  },
+  gate_offline_flags_kind: {},
+  gate_offline_flags_subject: {
+    guarded: 'subject_type IS NULL is tested before IN',
+  },
+  gate_offline_flags_params: {},
+  gate_offline_flags_cleared: {
+    guarded: 'cleared_reason IS NULL is tested before the comparison',
+  },
+  gate_offline_flags_review_shape: {
+    guarded:
+      'num_nonnulls is never NULL; review_code IS NULL is tested before IN',
+  },
   worker_engagements_token_derivation: {
     guarded:
       'token_seq IS NULL and token_key_version IS NULL are tested before each comparison',

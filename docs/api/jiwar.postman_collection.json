@@ -11679,6 +11679,42 @@
           }
         },
         {
+          "name": "Upload a batch of what this device recorded offline",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"deviceId\": \"\",\n  \"payload\": \"\",\n  \"signature\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `deviceId` | string (uuid) | yes |  |\n| `payload` | string | yes | The payload’s UTF-8 JSON in base64url, as signed. |\n| `signature` | string | yes | The device’s Ed25519 signature, base64url. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "offline",
+                "uploads"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/offline/uploads"
+            }
+          }
+        },
+        {
           "name": "Look a plate up: the units’ vehicles and the visitors’ passes carrying it",
           "request": {
             "body": {
@@ -12253,6 +12289,141 @@
                 "log-search"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/gate/log-search"
+            }
+          }
+        },
+        {
+          "name": "List the offline flags, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "offline",
+                "flags"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`open`: neither reviewed nor cleared; `cleared`: an exit whose entry arrived later.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "class",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "deviceId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/offline/flags"
+            }
+          }
+        },
+        {
+          "name": "Get an offline flag",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "offline",
+                "flags",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/offline/flags/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Review an offline flag, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reviewCode\": \"confirmed\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reviewCode` | `confirmed` \\| `followed_up` \\| `false_alarm` \\| `other` | yes | What the management made of it, from `offlineFlagReview`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "offline",
+                "flags",
+                ":id",
+                "review"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/offline/flags/:id/review",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

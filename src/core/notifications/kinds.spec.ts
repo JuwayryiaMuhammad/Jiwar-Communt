@@ -37,6 +37,10 @@ const CRITICAL_KINDS = [
   'gate_exception.decided',
   'gate_exception.expired',
   'gate_exception.requested',
+  // ADR 0057.
+  'gate_device.upload_rejected',
+  'gate_offline.lockdown_entered',
+  'gate_offline.security_conflict',
   // ADR 0053.
   'gate_lockdown.resident_notice',
   'gate_lockdown.started',

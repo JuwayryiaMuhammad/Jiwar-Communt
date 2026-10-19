@@ -47,7 +47,11 @@ import {
   TRAFFIC_ROUTES,
   LOG_SEARCH_ROUTES,
 } from './gate-completion';
-import { GATE_BUNDLE_ROUTES, GATE_DEVICE_ROUTES } from './offline';
+import {
+  GATE_BUNDLE_ROUTES,
+  GATE_DEVICE_ROUTES,
+  OFFLINE_UPLOAD_ROUTES,
+} from './offline';
 import {
   DAILY_REPORT_ROUTES,
   FOUND_ITEM_ROUTES,
@@ -297,4 +301,5 @@ export const ROUTES: Row[] = [
   ...LOG_SEARCH_ROUTES,
   ...GATE_DEVICE_ROUTES,
   ...GATE_BUNDLE_ROUTES,
+  ...OFFLINE_UPLOAD_ROUTES,
 ];

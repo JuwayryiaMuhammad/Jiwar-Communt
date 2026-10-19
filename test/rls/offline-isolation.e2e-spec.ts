@@ -1,7 +1,14 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { bundleRow, deviceRow, envelopeRow } from '../setup/offline-rows';
+import {
+  actionRow,
+  batchRow,
+  bundleRow,
+  deviceRow,
+  envelopeRow,
+  flagRow,
+} from '../setup/offline-rows';
 import { gateRow, shiftRow } from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
@@ -11,6 +18,9 @@ interface Side {
   deviceId: string;
   gateId: string;
   shiftId: string;
+  bundleId: string;
+  batchId: string;
+  actionId: string;
 }
 
 /**
@@ -56,6 +66,38 @@ const TABLES: Table[] = [
     insert: (tx, own, link) =>
       envelopeRow(tx, { tenantId: own.tenantId, deviceId: link.deviceId }),
   },
+  {
+    table: 'gate_offline_batches',
+    insert: (tx, own, link) =>
+      batchRow(tx, {
+        tenantId: own.tenantId,
+        deviceId: link.deviceId,
+        uploadedById: link.accountId,
+      }),
+  },
+  {
+    table: 'gate_offline_actions',
+    insert: (tx, own, link) =>
+      actionRow(tx, {
+        tenantId: own.tenantId,
+        deviceId: link.deviceId,
+        batchId: link.batchId,
+        bundleId: link.bundleId,
+        guardId: link.accountId,
+        shiftId: link.shiftId,
+        gateId: link.gateId,
+      }),
+  },
+  {
+    table: 'gate_offline_flags',
+    insert: (tx, own, link) =>
+      flagRow(tx, {
+        tenantId: own.tenantId,
+        deviceId: link.deviceId,
+        batchId: link.batchId,
+        actionId: link.actionId,
+      }),
+  },
 ];
 
 describe('RLS isolation — the gate offline (ADR 0057)', () => {
@@ -77,6 +119,9 @@ describe('RLS isolation — the gate offline (ADR 0057)', () => {
       deviceId: '',
       gateId: '',
       shiftId: '',
+      bundleId: '',
+      batchId: '',
+      actionId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -88,6 +133,22 @@ describe('RLS isolation — the gate offline (ADR 0057)', () => {
       s.deviceId = await deviceRow(tx, {
         tenantId,
         enrolledById: s.accountId,
+      });
+      const at = { tenantId, deviceId: s.deviceId };
+      s.bundleId = await bundleRow(tx, {
+        ...at,
+        shiftId: s.shiftId,
+        gateId: s.gateId,
+        guardId: s.accountId,
+      });
+      s.batchId = await batchRow(tx, { ...at, uploadedById: s.accountId });
+      s.actionId = await actionRow(tx, {
+        ...at,
+        batchId: s.batchId,
+        bundleId: s.bundleId,
+        guardId: s.accountId,
+        shiftId: s.shiftId,
+        gateId: s.gateId,
       });
     });
     return s;

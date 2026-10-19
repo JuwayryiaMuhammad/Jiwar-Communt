@@ -30,6 +30,20 @@ export class BlocklistCore {
       SELECT pg_advisory_xact_lock_shared(hashtext(${`blocklist:${this.ctx.txTenantId}`}))`;
   }
 
+  /**
+   * Live at an instant gone by (ADR 0057, an offline entry): made by then,
+   * and neither lifted nor expired by then.
+   */
+  activeAt(at: Date): Prisma.BlocklistEntryWhereInput {
+    return {
+      createdAt: { lte: at },
+      AND: [
+        { OR: [{ liftedAt: null }, { liftedAt: { gt: at } }] },
+        { OR: [{ expiresAt: null }, { expiresAt: { gt: at } }] },
+      ],
+    };
+  }
+
   /** Live at `now`: not lifted, and not past its expiry. */
   active(now: Date): Prisma.BlocklistEntryWhereInput {
     return {

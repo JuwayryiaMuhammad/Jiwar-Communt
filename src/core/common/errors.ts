@@ -1128,6 +1128,10 @@ export const ErrorCode = {
   GATE_DEVICE_ENVELOPE_INVALID: 'GATE_DEVICE_ENVELOPE_INVALID',
   /** This very envelope was received already (409): sign a new one. */
   GATE_DEVICE_ENVELOPE_REPLAYED: 'GATE_DEVICE_ENVELOPE_REPLAYED',
+  /** Unknown, or another compound's offline flag. */
+  GATE_OFFLINE_FLAG_NOT_FOUND: 'GATE_OFFLINE_FLAG_NOT_FOUND',
+  /** The flag was reviewed already (409). */
+  GATE_OFFLINE_FLAG_REVIEWED: 'GATE_OFFLINE_FLAG_REVIEWED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

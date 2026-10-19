@@ -153,6 +153,7 @@ describe('audit catalog', () => {
         'incident_signature',
         // ADR 0057.
         'gate_device',
+        'gate_offline_flag',
       ]).toContain(def.target);
     }
   });

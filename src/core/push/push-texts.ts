@@ -1912,6 +1912,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'خرج أحد الحراس في جولة عن نطاق المسار لمدة {minutes} دقيقة أو أكثر. افتح الجولة.',
     },
   },
+  'gate_offline.security_conflict': {
+    en: {
+      title: 'Offline gate: security conflict',
+      body: 'A gate device synced {flags} security conflict(s) from offline. Open the offline flags.',
+    },
+    ar: {
+      title: 'البوابة دون اتصال: تعارض أمني',
+      body: 'زامن جهاز بوابة {flags} تعارضاً أمنياً سُجّل دون اتصال. افتح تنبيهات العمل دون اتصال.',
+    },
+  },
+  'gate_offline.conflicts': {
+    en: {
+      title: 'Offline gate: entries to review',
+      body: 'A gate device synced {flags} entry conflict(s) from offline. Open the offline flags.',
+    },
+    ar: {
+      title: 'البوابة دون اتصال: دخول للمراجعة',
+      body: 'زامن جهاز بوابة {flags} تعارضاً في الدخول سُجّل دون اتصال. افتح تنبيهات العمل دون اتصال.',
+    },
+  },
+  'gate_offline.lockdown_entered': {
+    en: {
+      title: 'Entry during a lockdown',
+      body: 'A device synced an entry recorded offline while this gate was locked down. Tell your supervisor.',
+    },
+    ar: {
+      title: 'دخول أثناء الإغلاق',
+      body: 'زامن جهاز دخولاً سُجّل دون اتصال أثناء إغلاق هذه البوابة. أبلغ مشرفك.',
+    },
+  },
+  'gate_device.upload_rejected': {
+    en: {
+      title: 'Gate device upload refused',
+      body: 'A gate device’s offline upload was refused. Check the device; revoke it if it is not yours.',
+    },
+    ar: {
+      title: 'رُفض رفع من جهاز بوابة',
+      body: 'رُفض رفع بيانات العمل دون اتصال من جهاز بوابة. افحص الجهاز وألغِه إن لم يكن تابعاً لكم.',
+    },
+  },
   'gate_device.enrolled': {
     en: {
       title: 'New gate device',

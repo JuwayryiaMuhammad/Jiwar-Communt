@@ -17,6 +17,24 @@ export interface TestDevice {
   id: string;
   publicKey: string;
   privateKey: KeyObject;
+  /** Its next sequence number, as the app counts. */
+  seq: number;
+}
+
+/** What an upload answers (ADR 0057). */
+export interface UploadBody {
+  batchId: string;
+  receivedAt: string;
+  ackedThroughSeq: number;
+  results: {
+    clientId: string;
+    seq: number;
+    status: 'recorded' | 'duplicate' | 'rejected';
+    reason: string | null;
+    flags: string[];
+    entryId: string | null;
+  }[];
+  serverTime: string;
 }
 
 /** A device as the management reads it (ADR 0057). */
@@ -97,6 +115,32 @@ export function newDevice(): TestDevice {
     id: newId(),
     publicKey: publicKey.export({ format: 'jwk' }).x!,
     privateKey,
+    seq: 1,
+  };
+}
+
+/**
+ * An entry the device recorded offline on a bundle: in on a pass by its
+ * code, at the bundle's issue unless `over` says otherwise. Takes the
+ * device's next sequence number.
+ */
+export function entryAction(
+  d: TestDevice,
+  bundle: { bundleId: string; issuedAt: string },
+  subject: { type: string; id: string },
+  over: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    clientId: newId(),
+    seq: d.seq++,
+    deviceTime: bundle.issuedAt,
+    bundleId: bundle.bundleId,
+    type: 'entry',
+    subjectType: subject.type,
+    subjectId: subject.id,
+    direction: 'in',
+    via: 'code',
+    ...over,
   };
 }
 
@@ -258,6 +302,59 @@ export function offlineHelpers(h: HttpHarness) {
       serverTime: string;
     };
 
+  /** `POST /gate/offline/uploads` as `as`: the batch, signed by `d`. */
+  function uploadRaw(
+    as: Who,
+    c: Compound,
+    d: TestDevice,
+    actions: Record<string, unknown>[],
+    over: Record<string, unknown> = {},
+    signer: TestDevice = d,
+  ) {
+    return g.http(
+      'post',
+      '/gate/offline/uploads',
+      as.token,
+      envelope(
+        d,
+        c.tenantId,
+        'upload',
+        { batchId: newId(), actions, ...over },
+        signer,
+      ),
+    );
+  }
+
+  /** A batch that must be taken: its answer. */
+  async function upload(
+    as: Who,
+    c: Compound,
+    d: TestDevice,
+    actions: Record<string, unknown>[],
+    over: Record<string, unknown> = {},
+  ): Promise<UploadBody> {
+    const res = await uploadRaw(as, c, d, actions, over);
+    if (res.status !== 200)
+      throw new Error(`upload: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as UploadBody;
+  }
+
+  /** The device's flags, oldest first. */
+  const flagsOf = (c: Compound, deviceId: string) =>
+    g.inTx(c, (tx) =>
+      tx.gateOfflineFlag.findMany({
+        where: { deviceId },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+    );
+
+  /** A device enrolled by `as` and its first bundle. */
+  async function deviceWithBundle(as: Who, c: Compound) {
+    const d = await enrol(as, c);
+    const { body } = await bundle(as, c, d);
+    return { d, b: body };
+  }
+
   /**
    * A visitor pass of the unit by `host`, valid six hours from four minutes
    * ago (the most a pass may start back is five): an action at its bundle's
@@ -305,5 +402,9 @@ export function offlineHelpers(h: HttpHarness) {
     bundle,
     keys,
     passFull,
+    uploadRaw,
+    upload,
+    flagsOf,
+    deviceWithBundle,
   };
 }

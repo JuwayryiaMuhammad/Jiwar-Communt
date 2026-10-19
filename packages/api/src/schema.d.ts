@@ -2644,6 +2644,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/offline/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload a batch of what this device recorded offline
+         * @description A signed envelope (`purpose: upload`, `batchId`, `actions`: 1 to 100 in sequence). Any guard of the compound may upload it, on duty or not: each action is the guard’s, shift’s and gate’s of its bundle. A retry answers the same; each action is recorded at its device time and flagged where the server knows more. A signature that does not verify refuses the batch whole (GATE_DEVICE_SIGNATURE_INVALID), audited and told.
+         */
+        post: operations["GuardOfflineController_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/parcels": {
         parameters: {
             query?: never;
@@ -8974,6 +8994,60 @@ export interface paths {
          * @description The compound’s days asked (31 at most), a unit, a visitor named exactly. Every search is audited without the name; 20 searches per 10 minutes (RATE_LIMITED).
          */
         post: operations["LogSearchController_find"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/offline/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the offline flags, newest first */
+        get: operations["StaffOfflineController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/offline/flags/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an offline flag */
+        get: operations["StaffOfflineController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/offline/flags/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review an offline flag, once
+         * @description With a code from `offlineFlagReview` (GATE_OFFLINE_FLAG_REVIEWED after).
+         */
+        post: operations["StaffOfflineController_review"];
         delete?: never;
         options?: never;
         head?: never;
@@ -18879,6 +18953,11 @@ export interface components {
              */
             flagId: string;
         };
+        FlagSubjectView: {
+            /** Format: uuid */
+            id: string;
+            type: string;
+        };
         FoundItemClaimView: {
             /** @description As told; null after 30 days. */
             name: string | null;
@@ -21875,6 +21954,78 @@ export interface components {
             /** @description 0 is Sunday, 6 is Saturday. */
             weekday: number;
         };
+        OfflineActionResultView: {
+            /** Format: uuid */
+            clientId: string;
+            /** Format: uuid */
+            entryId: string | null;
+            flags: components["schemas"]["OfflineFlagKind"][];
+            /** @enum {string|null} */
+            reason: "bundle_unknown" | "subject_unknown" | "client_id_reused" | "sequence_reused" | null;
+            seq: number;
+            /** @description `recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number. */
+            status: components["schemas"]["OfflineActionStatus"];
+        };
+        /**
+         * @description `recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number.
+         * @enum {string}
+         */
+        OfflineActionStatus: "recorded" | "duplicate" | "rejected";
+        /** @enum {string} */
+        OfflineFlagKind: "lockdown_entered" | "blocklist_ban_entered" | "credential_banned" | "once_only_reused" | "action_rejected" | "credential_revoked" | "invalid_at_time" | "capacity_exceeded" | "clock_skew" | "bundle_expired" | "shift_ended" | "blocklist_watch_entered" | "already_inside" | "exit_without_entry";
+        OfflineFlagResponse: {
+            /** Format: uuid */
+            actionId: string | null;
+            /** Format: uuid */
+            batchId: string;
+            /** @enum {string} */
+            class: "security" | "manager" | "info";
+            /** Format: date-time */
+            clearedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            deviceId: string;
+            /** Format: uuid */
+            gateId: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["OfflineFlagKind"];
+            /**
+             * Format: date-time
+             * @description When the action it is about happened, by its device.
+             */
+            occurredAt: string | null;
+            /** @description Codes and numbers: a refusal’s `reason`, a clock’s `skewSeconds` or `offsetSeconds`, a rejected action’s `reason` and `seq`. */
+            params: {
+                [key: string]: unknown;
+            };
+            /** @enum {string|null} */
+            reviewCode: "confirmed" | "followed_up" | "false_alarm" | "other" | null;
+            /** Format: date-time */
+            reviewedAt: string | null;
+            reviewedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            shiftId: string | null;
+            /** @enum {string} */
+            status: "open" | "cleared" | "reviewed";
+            subject: components["schemas"]["FlagSubjectView"] | null;
+        };
+        OfflineFlagResponseList: {
+            data: components["schemas"]["OfflineFlagResponse"][];
+            nextCursor: string | null;
+        };
+        OfflineUploadResponse: {
+            /** @description Every action of the device up to this sequence number was received: it may forget them. */
+            ackedThroughSeq: number;
+            /** Format: uuid */
+            batchId: string;
+            /** Format: date-time */
+            receivedAt: string;
+            results: components["schemas"]["OfflineActionResultView"][];
+            /** Format: date-time */
+            serverTime: string;
+        };
         OpenDisputeDto: {
             /**
              * Format: uuid
@@ -24320,6 +24471,13 @@ export interface components {
         ReviewEngagementViewList: {
             data: components["schemas"]["ReviewEngagementView"][];
             nextCursor: string | null;
+        };
+        ReviewOfflineFlagDto: {
+            /**
+             * @description What the management made of it, from `offlineFlagReview`.
+             * @enum {string}
+             */
+            reviewCode: "confirmed" | "followed_up" | "false_alarm" | "other";
         };
         ReviewWorkerView: {
             banned: boolean;
@@ -32548,6 +32706,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BundleKeysResponse"];
+                };
+            };
+        };
+    };
+    GuardOfflineController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceEnvelopeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfflineUploadResponse"];
                 };
             };
         };
@@ -42238,6 +42419,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogSearchView"];
+                };
+            };
+        };
+    };
+    StaffOfflineController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `open`: neither reviewed nor cleared; `cleared`: an exit whose entry arrived later. */
+                status?: "open" | "cleared" | "reviewed" | "all";
+                class?: "security" | "manager" | "info";
+                deviceId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfflineFlagResponseList"];
+                };
+            };
+        };
+    };
+    StaffOfflineController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfflineFlagResponse"];
+                };
+            };
+        };
+    };
+    StaffOfflineController_review: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewOfflineFlagDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfflineFlagResponse"];
                 };
             };
         };

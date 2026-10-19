@@ -1782,6 +1782,56 @@ export const NOTIFICATION_KINDS = {
     target: 'gate_device',
     params: {},
   },
+  /**
+   * An upload's batch the server took held what it knew better (ADR 0057):
+   * someone let in during a lockdown, a banned plate, a worker banned or
+   * work stopped, a once-only code used twice, an action that cannot have
+   * happened. Once per batch, critically, to the `gate_devices.manage`
+   * holders; `flags` counts them. The target is the batch.
+   */
+  'gate_offline.security_conflict': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'gate_offline_batch',
+    params: { flags: {} },
+  },
+  /**
+   * The same for what the management should look at (a credential revoked
+   * or out of its hours, a capacity, a device's clock or bundle): once per
+   * batch, not critically.
+   */
+  'gate_offline.conflicts': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'gate_offline_batch',
+    params: { flags: {} },
+  },
+  /**
+   * Someone was let in offline while a lockdown held the gate (ADR 0057):
+   * the guards on shift at that gate, critically. The target is the gate.
+   */
+  'gate_offline.lockdown_entered': {
+    priority: 'critical',
+    category: 'guard_duty',
+    critical: true,
+    target: 'gate',
+    params: {},
+  },
+  /**
+   * A device's upload was refused (ADR 0057): a signature that does not
+   * verify, a payload that does not parse, an action whose id or sequence
+   * number another one holds. `reason` the code; once per device in 15
+   * minutes, critically, to the `gate_devices.manage` holders.
+   */
+  'gate_device.upload_rejected': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'gate_device',
+    params: { reason: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

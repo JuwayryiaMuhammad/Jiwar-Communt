@@ -1,6 +1,13 @@
 import type { Response } from 'supertest';
 import { enrolMessage } from '../../src/gate/offline/device-envelope';
-import { envelope, newDevice, signAs } from '../setup/offline';
+import { newId } from '../../src/core/common/uuid';
+import {
+  envelope,
+  newDevice,
+  readBundle,
+  signAs,
+  type SignedBundle,
+} from '../setup/offline';
 import { call } from './request';
 import type { World } from './world';
 
@@ -31,6 +38,48 @@ export function offlineCalls(
     return d;
   };
   const enrolled = async (): Promise<string> => (await device()).id;
+  /**
+   * A batch of one action on a subject nobody knows, from a device of A's
+   * with its bundle: rejected and flagged. The answer.
+   */
+  const uploaded = async () => {
+    const d = await device();
+    const signed = (
+      await guard(
+        'POST',
+        '/gate/offline/bundles',
+        envelope(d, world().a.tenantId, 'bundle'),
+      )
+    ).body as SignedBundle;
+    const b = readBundle(signed);
+    return guard(
+      'POST',
+      '/gate/offline/uploads',
+      envelope(d, world().a.tenantId, 'upload', {
+        batchId: newId(),
+        actions: [
+          {
+            clientId: newId(),
+            seq: d.seq++,
+            deviceTime: b.issuedAt,
+            bundleId: b.bundleId,
+            type: 'entry',
+            subjectType: 'visitor_pass',
+            subjectId: newId(),
+            direction: 'in',
+            via: 'code',
+          },
+        ],
+      }),
+    );
+  };
+  /** A flag of A's: its id. */
+  const flagged = async (): Promise<string> => {
+    const up = (await uploaded()).body as { batchId: string };
+    const list = (await manager('GET', '/staff/gate/offline/flags?status=open'))
+      .body as { data: { id: string; batchId: string }[] };
+    return list.data.find((f) => f.batchId === up.batchId)!.id;
+  };
   return {
     'POST /gate/devices': async () => {
       const d = newDevice();
@@ -50,6 +99,15 @@ export function offlineCalls(
         '/gate/offline/bundles',
         envelope(await device(), world().a.tenantId, 'bundle'),
       ),
+    'POST /gate/offline/uploads': uploaded,
+    'GET /staff/gate/offline/flags': () =>
+      manager('GET', '/staff/gate/offline/flags'),
+    'GET /staff/gate/offline/flags/{id}': async () =>
+      manager('GET', `/staff/gate/offline/flags/${await flagged()}`),
+    'POST /staff/gate/offline/flags/{id}/review': async () =>
+      manager('POST', `/staff/gate/offline/flags/${await flagged()}/review`, {
+        reviewCode: 'false_alarm',
+      }),
     'POST /staff/gate/devices/{id}/revoke': async () =>
       manager('POST', `/staff/gate/devices/${await enrolled()}/revoke`, {
         reasonCode: 'retired',

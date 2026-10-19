@@ -143,6 +143,7 @@ export const REASON_CODES = {
   gateExceptionRaise: ['resident_unreachable', 'expected_by_resident', 'regular_visitor', 'urgent_service', 'delivery_waiting', 'emergency', 'other'],
   gateExceptionReject: ['not_expected', 'identity_unclear', 'outside_policy', 'other'],
   gateDeviceRevoke: ['lost', 'stolen', 'replaced', 'retired', 'compromised', 'other'],
+  offlineFlagReview: ['confirmed', 'followed_up', 'false_alarm', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

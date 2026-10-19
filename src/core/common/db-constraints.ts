@@ -555,4 +555,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // A device's bundles are numbered under its row lock.
   gate_offline_bundles_tenant_id_id_key: null,
   gate_offline_bundles_version_key: null,
+  // Offline uploads (ADR 0057): an action's id and sequence number are the
+  // device's, checked first under the device's lock; an entry is one
+  // action's.
+  gate_offline_batches_tenant_id_id_key: null,
+  gate_offline_actions_tenant_id_id_key: null,
+  gate_offline_actions_seq_key: null,
+  gate_offline_actions_entry_key: null,
+  gate_offline_flags_tenant_id_id_key: null,
 };

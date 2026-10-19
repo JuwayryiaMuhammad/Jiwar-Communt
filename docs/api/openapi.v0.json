@@ -14755,6 +14755,22 @@
         ],
         "type": "object"
       },
+      "FlagSubjectView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
       "FoundItemClaimView": {
         "properties": {
           "name": {
@@ -24619,6 +24635,263 @@
         ],
         "type": "object"
       },
+      "OfflineActionResultView": {
+        "properties": {
+          "clientId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "entryId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/OfflineFlagKind"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "enum": [
+              "bundle_unknown",
+              "subject_unknown",
+              "client_id_reused",
+              "sequence_reused"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OfflineActionStatus"
+              }
+            ],
+            "description": "`recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number."
+          }
+        },
+        "required": [
+          "clientId",
+          "seq",
+          "status",
+          "reason",
+          "flags",
+          "entryId"
+        ],
+        "type": "object"
+      },
+      "OfflineActionStatus": {
+        "description": "`recorded` now; `duplicate`: recorded before (a retry); `rejected`: it cannot have happened as said (its `reason`), or another action holds its id or sequence number.",
+        "enum": [
+          "recorded",
+          "duplicate",
+          "rejected"
+        ],
+        "type": "string"
+      },
+      "OfflineFlagKind": {
+        "enum": [
+          "lockdown_entered",
+          "blocklist_ban_entered",
+          "credential_banned",
+          "once_only_reused",
+          "action_rejected",
+          "credential_revoked",
+          "invalid_at_time",
+          "capacity_exceeded",
+          "clock_skew",
+          "bundle_expired",
+          "shift_ended",
+          "blocklist_watch_entered",
+          "already_inside",
+          "exit_without_entry"
+        ],
+        "type": "string"
+      },
+      "OfflineFlagResponse": {
+        "properties": {
+          "actionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "batchId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "class": {
+            "enum": [
+              "security",
+              "manager",
+              "info"
+            ],
+            "type": "string"
+          },
+          "clearedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "gateId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OfflineFlagKind"
+              }
+            ]
+          },
+          "occurredAt": {
+            "description": "When the action it is about happened, by its device.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "description": "Codes and numbers: a refusal’s `reason`, a clock’s `skewSeconds` or `offsetSeconds`, a rejected action’s `reason` and `seq`.",
+            "type": "object"
+          },
+          "reviewCode": {
+            "enum": [
+              "confirmed",
+              "followed_up",
+              "false_alarm",
+              "other"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "shiftId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "cleared",
+              "reviewed"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlagSubjectView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "class",
+          "status",
+          "batchId",
+          "actionId",
+          "deviceId",
+          "subject",
+          "gateId",
+          "shiftId",
+          "params",
+          "createdAt",
+          "occurredAt",
+          "clearedAt",
+          "reviewedAt",
+          "reviewedBy",
+          "reviewCode"
+        ],
+        "type": "object"
+      },
+      "OfflineFlagResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/OfflineFlagResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "OfflineUploadResponse": {
+        "properties": {
+          "ackedThroughSeq": {
+            "description": "Every action of the device up to this sequence number was received: it may forget them.",
+            "type": "number"
+          },
+          "batchId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/OfflineActionResultView"
+            },
+            "type": "array"
+          },
+          "serverTime": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "batchId",
+          "receivedAt",
+          "ackedThroughSeq",
+          "results",
+          "serverTime"
+        ],
+        "type": "object"
+      },
       "OpenDisputeDto": {
         "properties": {
           "photoFileId": {
@@ -32193,6 +32466,24 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReviewOfflineFlagDto": {
+        "properties": {
+          "reviewCode": {
+            "description": "What the management made of it, from `offlineFlagReview`.",
+            "enum": [
+              "confirmed",
+              "followed_up",
+              "false_alarm",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewCode"
         ],
         "type": "object"
       },
@@ -54416,6 +54707,46 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/offline/uploads": {
+      "post": {
+        "description": "A signed envelope (`purpose: upload`, `batchId`, `actions`: 1 to 100 in sequence). Any guard of the compound may upload it, on duty or not: each action is the guard’s, shift’s and gate’s of its bundle. A retry answers the same; each action is recorded at its device time and flagged where the server knows more. A signature that does not verify refuses the batch whole (GATE_DEVICE_SIGNATURE_INVALID), audited and told.",
+        "operationId": "GuardOfflineController_upload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceEnvelopeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineUploadResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a batch of what this device recorded offline",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/parcels": {
       "get": {
         "operationId": "GateParcelsController_list",
@@ -72818,6 +73149,190 @@
           }
         ],
         "summary": "Search the gate log",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/offline/flags": {
+      "get": {
+        "operationId": "StaffOfflineController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`open`: neither reviewed nor cleared; `cleared`: an exit whose entry arrived later.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "open",
+                "cleared",
+                "reviewed",
+                "all"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "class",
+            "required": false,
+            "schema": {
+              "enum": [
+                "security",
+                "manager",
+                "info"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deviceId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineFlagResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the offline flags, newest first",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/offline/flags/{id}": {
+      "get": {
+        "operationId": "StaffOfflineController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineFlagResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an offline flag",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/offline/flags/{id}/review": {
+      "post": {
+        "description": "With a code from `offlineFlagReview` (GATE_OFFLINE_FLAG_REVIEWED after).",
+        "operationId": "StaffOfflineController_review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewOfflineFlagDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineFlagResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Review an offline flag, once",
         "tags": [
           "gate"
         ],

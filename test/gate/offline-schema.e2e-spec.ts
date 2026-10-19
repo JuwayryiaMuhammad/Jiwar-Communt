@@ -3,9 +3,12 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 import {
+  actionRow,
+  batchRow,
   bundleRow,
   deviceRow,
   envelopeRow,
+  flagRow,
   offlineAt,
   publicKeyOf,
 } from '../setup/offline-rows';
@@ -27,6 +30,9 @@ describe('The gate offline’s tables — CHECKs, triggers and privileges', () =
   let shiftId: string;
   let bundleId: string;
   let envelopeHex: string;
+  let batchId: string;
+  let actionId: string;
+  let flagId: string;
 
   const inTx = <T>(fn: (tx: TenantTxClient) => Promise<T>) =>
     h.asTenant(tenantId, () => h.tenantTx.withTenantTx(fn));
@@ -48,6 +54,21 @@ describe('The gate offline’s tables — CHECKs, triggers and privileges', () =
         guardId,
       });
       envelopeHex = await envelopeRow(tx, { tenantId, deviceId });
+      batchId = await batchRow(tx, {
+        tenantId,
+        deviceId,
+        uploadedById: guardId,
+      });
+      actionId = await actionRow(tx, {
+        tenantId,
+        deviceId,
+        batchId,
+        bundleId,
+        guardId,
+        shiftId,
+        gateId,
+      });
+      flagId = await flagRow(tx, { tenantId, deviceId, batchId, actionId });
     });
     app = new Client({ connectionString: process.env.DATABASE_URL });
     await app.connect();
@@ -289,6 +310,147 @@ describe('The gate offline’s tables — CHECKs, triggers and privileges', () =
            VALUES ('${tenantId}', '${deviceId}', '${envelopeHex}', ${at(0)}, ${at(0)})`,
         ),
       ).rejects.toThrow(/gate_device_envelopes_pkey/);
+    });
+  });
+
+  describe('uploads', () => {
+    it('batches and actions are append-only; flags move forward', async () => {
+      for (const table of ['gate_offline_batches', 'gate_offline_actions'])
+        expect({ table, ...(await privileges(table)) }).toEqual({
+          table,
+          select: true,
+          insert: true,
+          update: false,
+          delete: false,
+          truncate: false,
+        });
+      expect(await privileges('gate_offline_flags')).toEqual({
+        select: true,
+        insert: true,
+        update: true,
+        delete: false,
+        truncate: false,
+      });
+    });
+
+    it('a device’s sequence only grows, and never acknowledges past what it got', async () => {
+      const set = (sql: string) =>
+        `UPDATE gate_devices SET ${sql} WHERE id = '${deviceId}'`;
+      await expect(
+        asApp(set('acked_seq = 2, max_seq = 3')),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(set('acked_seq = 2, max_seq = 3'), set('max_seq = 2')),
+      ).rejects.toThrow(/keeps its key and is revoked once/);
+      await expect(asApp(set('acked_seq = 4, max_seq = 3'))).rejects.toThrow(
+        /gate_devices_seq_shape/,
+      );
+    });
+
+    it('the shapes of an action', async () => {
+      const sql = (over: Record<string, string>) => {
+        const cols: Record<string, string> = {
+          id: 'gen_random_uuid()',
+          tenant_id: `'${tenantId}'`,
+          device_id: `'${deviceId}'`,
+          batch_id: `'${batchId}'`,
+          seq: '900',
+          type: `'entry'`,
+          content_sha256: `'${'d'.repeat(64)}'`,
+          bundle_id: `'${bundleId}'`,
+          device_time: at(1),
+          occurred_at: at(1),
+          received_at: at(2),
+          status: `'recorded'`,
+          guard_account_id: `'${guardId}'`,
+          shift_id: `'${shiftId}'`,
+          gate_id: `'${gateId}'`,
+          ...over,
+        };
+        return `INSERT INTO gate_offline_actions (${Object.keys(cols).join(', ')})
+                VALUES (${Object.values(cols).join(', ')})`;
+      };
+      const insert = (over: Record<string, string>) => asApp(sql(over));
+      await expect(insert({})).resolves.toMatchObject({ rowCount: 1 });
+      await expect(insert({ seq: '0' })).rejects.toThrow(
+        /gate_offline_actions_seq_positive/,
+      );
+      await expect(insert({ type: `'teleport'` })).rejects.toThrow(
+        /gate_offline_actions_type/,
+      );
+      // Recorded: all of when, who, where and which bundle.
+      await expect(insert({ shift_id: 'NULL' })).rejects.toThrow(
+        /gate_offline_actions_shape/,
+      );
+      // Rejected: a reason from its list, and nothing recorded.
+      await expect(
+        insert({ status: `'rejected'`, occurred_at: 'NULL' }),
+      ).rejects.toThrow(/gate_offline_actions_shape/);
+      await expect(
+        insert({
+          status: `'rejected'`,
+          occurred_at: 'NULL',
+          guard_account_id: 'NULL',
+          shift_id: 'NULL',
+          gate_id: 'NULL',
+          reject_reason: `'boredom'`,
+        }),
+      ).rejects.toThrow(/gate_offline_actions_shape/);
+      await expect(
+        insert({
+          status: `'rejected'`,
+          occurred_at: 'NULL',
+          guard_account_id: 'NULL',
+          shift_id: 'NULL',
+          gate_id: 'NULL',
+          reject_reason: `'subject_unknown'`,
+          entry_id: 'gen_random_uuid()',
+        }),
+      ).rejects.toThrow(/gate_offline_actions_shape/);
+      // One action per sequence number of a device.
+      await expect(asApp(sql({}), sql({}))).rejects.toThrow(
+        /gate_offline_actions_seq_key/,
+      );
+    });
+
+    it('a flag: its kind with its class, told, cleared and reviewed once', async () => {
+      const where = `id = '${flagId}'`;
+      const set = (sql: string) =>
+        `UPDATE gate_offline_flags SET ${sql} WHERE ${where}`;
+      await expect(asApp(set(`kind = 'lockdown_entered'`))).rejects.toThrow(
+        /told, cleared and reviewed once/,
+      );
+      await expect(
+        asApp(set(`alerted_at = ${at(3)}`), set(`alerted_at = ${at(4)}`)),
+      ).rejects.toThrow(/told, cleared and reviewed once/);
+      const review = set(
+        `reviewed_at = ${at(5)}, reviewed_by_account_id = '${managerId}', review_code = 'confirmed'`,
+      );
+      await expect(asApp(review)).resolves.toMatchObject({ rowCount: 1 });
+      await expect(asApp(review, set(`review_code = 'other'`))).rejects.toThrow(
+        /told, cleared and reviewed once/,
+      );
+      await expect(asApp(set(`reviewed_at = ${at(5)}`))).rejects.toThrow(
+        /gate_offline_flags_review_shape/,
+      );
+      // Only an exit's flag is cleared, as reconciled.
+      await expect(
+        asApp(set(`cleared_at = ${at(5)}, cleared_reason = 'reconciled'`)),
+      ).rejects.toThrow(/gate_offline_flags_cleared/);
+      const raise = (kind: string, klass: string) =>
+        asApp(
+          `INSERT INTO gate_offline_flags (id, tenant_id, batch_id, device_id, kind, class, created_at)
+           VALUES (gen_random_uuid(), '${tenantId}', '${batchId}', '${deviceId}', '${kind}', '${klass}', ${at(2)})`,
+        );
+      await expect(raise('lockdown_entered', 'manager')).rejects.toThrow(
+        /gate_offline_flags_kind/,
+      );
+      await expect(
+        raise('lockdown_entered', 'security'),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(asApp(set(`params = '[1]'`))).rejects.toThrow(
+        /told, cleared and reviewed once|gate_offline_flags_params/,
+      );
     });
   });
 });

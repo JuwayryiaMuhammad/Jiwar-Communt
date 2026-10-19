@@ -2388,20 +2388,25 @@ model GateVehicleCount {
 /// A guard device (ADR 0057): the compound's phone, known by its Ed25519
 /// public key; revoked once by the management.
 model GateDevice {
-  id            String    @id @db.Uuid
-  tenantId      String    @map("tenant_id") @db.Uuid
-  publicKey     String    @map("public_key")
-  label         String?
-  enrolledById  String    @map("enrolled_by_account_id") @db.Uuid
-  enrolledAt    DateTime  @map("enrolled_at") @db.Timestamptz(3)
-  revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(3)
-  revokedById   String?   @map("revoked_by_account_id") @db.Uuid
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  publicKey          String    @map("public_key")
+  label              String?
+  enrolledById       String    @map("enrolled_by_account_id") @db.Uuid
+  enrolledAt         DateTime  @map("enrolled_at") @db.Timestamptz(3)
+  revokedAt          DateTime? @map("revoked_at") @db.Timestamptz(3)
+  revokedById        String?   @map("revoked_by_account_id") @db.Uuid
   /// REASON_CODES.gateDeviceRevoke
-  revokeReason  String?   @map("revoke_reason")
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokeReason       String?   @map("revoke_reason")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   /// Its bundles so far (ADR 0057): the last one's number and when.
-  bundleVersion Int       @default(0) @map("bundle_version")
-  lastBundleAt  DateTime? @map("last_bundle_at") @db.Timestamptz(3)
+  bundleVersion      Int       @default(0) @map("bundle_version")
+  lastBundleAt       DateTime? @map("last_bundle_at") @db.Timestamptz(3)
+  /// Its actions received without a gap, the highest received.
+  ackedSeq           Int       @default(0) @map("acked_seq")
+  maxSeq             Int       @default(0) @map("max_seq")
+  /// When the management was last told of an upload it refused.
+  rejectionAlertedAt DateTime? @map("rejection_alerted_at") @db.Timestamptz(3)
 
   @@unique([tenantId, id])
   @@unique([tenantId, publicKey], map: "gate_devices_public_key_key")
@@ -2432,7 +2437,91 @@ model GateOfflineBundle {
   @@map("gate_offline_bundles")
 }
 
-/// The replay guard of what devices sign (ADR 0057): an envelope's
+/// A batch a device uploaded (ADR 0057): never its payload.
+model GateOfflineBatch {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  deviceId      String   @map("device_id") @db.Uuid
+  uploadedById  String   @map("uploaded_by_account_id") @db.Uuid
+  receivedAt    DateTime @map("received_at") @db.Timestamptz(3)
+  sentAt        DateTime @map("sent_at") @db.Timestamptz(3)
+  /// The device's clock less the server's, when it was sent.
+  clockOffsetMs Int      @map("clock_offset_ms")
+  payloadSha256 String   @map("payload_sha256") @db.Char(64)
+  actionCount   Int      @map("action_count") @db.SmallInt
+  /// accepted
+  status        String
+
+  @@unique([tenantId, id])
+  @@index([tenantId, deviceId, receivedAt(sort: Desc)], map: "gate_offline_batches_device_idx")
+  @@map("gate_offline_batches")
+}
+
+/// An action a device recorded offline (ADR 0057), its id the app's: what
+/// it recorded, or why it was not. Never a code, a plate or a name.
+model GateOfflineAction {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  deviceId       String    @map("device_id") @db.Uuid
+  batchId        String    @map("batch_id") @db.Uuid
+  seq            Int
+  /// entry
+  type           String
+  contentSha256  String    @map("content_sha256") @db.Char(64)
+  bundleId       String?   @map("bundle_id") @db.Uuid
+  deviceTime     DateTime  @map("device_time") @db.Timestamptz(3)
+  occurredAt     DateTime? @map("occurred_at") @db.Timestamptz(3)
+  receivedAt     DateTime  @map("received_at") @db.Timestamptz(3)
+  /// recorded | rejected
+  status         String
+  /// offline-rules.ts REJECTIONS
+  rejectReason   String?   @map("reject_reason")
+  guardAccountId String?   @map("guard_account_id") @db.Uuid
+  shiftId        String?   @map("shift_id") @db.Uuid
+  gateId         String?   @map("gate_id") @db.Uuid
+  /// The entry it recorded: a pointer.
+  entryId        String?   @map("entry_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, deviceId, seq], map: "gate_offline_actions_seq_key")
+  @@index([tenantId, batchId, seq], map: "gate_offline_actions_batch_idx")
+  @@map("gate_offline_actions")
+}
+
+/// What the server knew at sync that the device did not (ADR 0057): codes
+/// and numbers only; told per batch, cleared or reviewed once.
+model GateOfflineFlag {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  batchId       String    @map("batch_id") @db.Uuid
+  actionId      String?   @map("action_id") @db.Uuid
+  deviceId      String    @map("device_id") @db.Uuid
+  /// offline-rules.ts FLAG_KINDS
+  kind          String
+  /// security | manager | info
+  class         String
+  subjectType   String?   @map("subject_type")
+  subjectId     String?   @map("subject_id") @db.Uuid
+  gateId        String?   @map("gate_id") @db.Uuid
+  shiftId       String?   @map("shift_id") @db.Uuid
+  params        Json      @default("{}")
+  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+  alertedAt     DateTime? @map("alerted_at") @db.Timestamptz(3)
+  clearedAt     DateTime? @map("cleared_at") @db.Timestamptz(3)
+  /// reconciled
+  clearedReason String?   @map("cleared_reason")
+  reviewedAt    DateTime? @map("reviewed_at") @db.Timestamptz(3)
+  reviewedById  String?   @map("reviewed_by_account_id") @db.Uuid
+  /// REASON_CODES.offlineFlagReview
+  reviewCode    String?   @map("review_code")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "gate_offline_flags_list_idx")
+  @@index([tenantId, batchId], map: "gate_offline_flags_batch_idx")
+  @@map("gate_offline_flags")
+}
+
+/// The replay guard of what devices sign (ADR 0057)/// The replay guard of what devices sign (ADR 0057): an envelope's
 /// signature, hashed, once per device for a day.
 model GateDeviceEnvelope {
   tenantId        String   @map("tenant_id") @db.Uuid

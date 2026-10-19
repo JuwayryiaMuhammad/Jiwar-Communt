@@ -91,3 +91,93 @@ export async function envelopeRow(
   });
   return hex;
 }
+
+/** An accepted batch of the device, received at T0 with one action. */
+export async function batchRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; deviceId: string; uploadedById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.gateOfflineBatch.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      deviceId: r.deviceId,
+      uploadedById: r.uploadedById,
+      receivedAt: OFFLINE_T0,
+      sentAt: OFFLINE_T0,
+      clockOffsetMs: 0,
+      payloadSha256: 'b'.repeat(64),
+      actionCount: 1,
+      status: 'accepted',
+    },
+  });
+  return id;
+}
+
+let actions = 0;
+
+/** A recorded entry action of the batch, at T0 + 1 min, on the bundle. */
+export async function actionRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    deviceId: string;
+    batchId: string;
+    bundleId: string;
+    guardId: string;
+    shiftId: string;
+    gateId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.gateOfflineAction.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      deviceId: r.deviceId,
+      batchId: r.batchId,
+      seq: ++actions,
+      type: 'entry',
+      contentSha256: 'c'.repeat(64),
+      bundleId: r.bundleId,
+      deviceTime: offlineAt(1),
+      occurredAt: offlineAt(1),
+      receivedAt: offlineAt(2),
+      status: 'recorded',
+      guardAccountId: r.guardId,
+      shiftId: r.shiftId,
+      gateId: r.gateId,
+      entryId: newId(),
+    },
+  });
+  return id;
+}
+
+/** A flag on the batch (its action's when given), raised at T0 + 2 min. */
+export async function flagRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    deviceId: string;
+    batchId: string;
+    actionId?: string;
+    kind?: string;
+    klass?: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.gateOfflineFlag.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      batchId: r.batchId,
+      actionId: r.actionId ?? null,
+      deviceId: r.deviceId,
+      kind: r.kind ?? 'clock_skew',
+      class: r.klass ?? 'manager',
+      createdAt: offlineAt(2),
+    },
+  });
+  return id;
+}

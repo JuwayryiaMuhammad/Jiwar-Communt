@@ -108,3 +108,86 @@ export const GATE_BUNDLE_ROUTES: Row[] = [
     },
   },
 ];
+
+/** Offline uploads, and the management's flags (ADR 0057). */
+export const OFFLINE_UPLOAD_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/offline/uploads',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({
+        deviceId: w.bGateDeviceId,
+        payload: 'e30',
+        signature: 'A'.repeat(86),
+      }),
+      code: 'GATE_DEVICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { deviceId: 'nope', payload: 'not base64url!', signature: 'short' },
+      fields: [
+        { field: 'deviceId', code: 'INVALID_UUID' },
+        { field: 'payload', code: 'INVALID_FORMAT' },
+        { field: 'signature', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/gate/offline/flags',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'lost', class: 'urgent' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'cleared', 'reviewed', 'all'] },
+        },
+        {
+          field: 'class',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['security', 'manager', 'info'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/gate/offline/flags/{id}',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bOfflineFlagId }),
+      code: 'GATE_OFFLINE_FLAG_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/gate/offline/flags/{id}/review',
+    auth: 'tenant',
+    noStore: true,
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bOfflineFlagId }),
+      body: () => ({ reviewCode: 'confirmed' }),
+      code: 'GATE_OFFLINE_FLAG_NOT_FOUND',
+    },
+    invalid: {
+      body: { reviewCode: 5 },
+      fields: [{ field: 'reviewCode', code: 'INVALID_TYPE' }],
+    },
+  },
+];

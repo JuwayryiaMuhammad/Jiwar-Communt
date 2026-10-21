@@ -217,7 +217,12 @@ export class GuardPatrolsService implements OnModuleInit {
         );
       await this.requireNoLiveRun(tx);
       await this.idempotency.claim(tx, { type: GUARD_RUN_RESOURCE, id });
-      const late = now >= lateAfter(run.scheduledStart!);
+      const late =
+        now >=
+        lateAfter({
+          scheduledStart: run.scheduledStart!,
+          createdAt: run.createdAt,
+        });
       const started = await this.updateStarted(tx, id, {
         status: 'in_progress',
         guardAccountId: this.ctx.accountId,

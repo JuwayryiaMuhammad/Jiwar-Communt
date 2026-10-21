@@ -155,6 +155,7 @@ describe('patrol rules (ADR 0052)', () => {
     const run = {
       scheduledStart: at('2026-11-01T08:00:00Z'),
       windowEndsAt: at('2026-11-01T08:30:00Z'),
+      createdAt: at('2026-10-25T09:00:00Z'),
     };
 
     it('is started from 15 minutes before its start until its window ends', () => {
@@ -167,12 +168,19 @@ describe('patrol rules (ADR 0052)', () => {
     });
 
     it('is late 15 minutes after its start, timed out at twice its minutes', () => {
-      expect(lateAfter(run.scheduledStart).toISOString()).toBe(
-        '2026-11-01T08:15:00.000Z',
-      );
+      expect(lateAfter(run).toISOString()).toBe('2026-11-01T08:15:00.000Z');
       expect(timeoutAt(run.scheduledStart, 25).toISOString()).toBe(
         '2026-11-01T08:50:00.000Z',
       );
+    });
+
+    it('made during its window, is late 15 minutes after it was made', () => {
+      expect(
+        lateAfter({
+          ...run,
+          createdAt: at('2026-11-01T08:10:00Z'),
+        }).toISOString(),
+      ).toBe('2026-11-01T08:25:00.000Z');
     });
 
     it('ends completed only with every checkpoint scanned', () => {

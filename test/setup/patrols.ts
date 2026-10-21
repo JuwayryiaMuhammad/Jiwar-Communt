@@ -167,15 +167,22 @@ export function patrolHelpers(h: HttpHarness) {
   /**
    * A scheduled run row of the route's current version, as the sweep would
    * have made it: its start `startsAgo` minutes before now (negative: to
-   * come), its window as the route says.
+   * come), its window as the route says, made a day before its start (or
+   * at `madeAgo` minutes before now).
    */
   function runRow(
     c: Compound,
     r: RouteBody,
     startsAgo: number,
     windowMinutes = r.version.windowMinutes,
+    madeAgo?: number,
   ) {
     const scheduledStart = new Date(Date.now() - startsAgo * MINUTE);
+    const createdAt =
+      madeAgo === undefined
+        ? // eslint-disable-next-line no-restricted-syntax -- any instant before the start: only its order with the start counts
+          new Date(scheduledStart.getTime() - 24 * 60 * MINUTE)
+        : new Date(Date.now() - madeAgo * MINUTE);
     return x.inTx(c, (tx) =>
       tx.patrolRun.create({
         data: {
@@ -193,6 +200,7 @@ export function patrolHelpers(h: HttpHarness) {
           ),
           status: 'scheduled',
           checkpointsTotal: r.version.checkpoints,
+          createdAt,
         },
       }),
     );

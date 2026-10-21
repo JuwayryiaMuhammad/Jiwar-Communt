@@ -3,7 +3,7 @@ import {
   PATROL_SCHEDULE_SWEEP,
   PATROL_WATCH_SWEEP,
 } from '../../src/gate/patrols/patrol-sweeps';
-import { daysLater } from '../setup/compound-clock';
+import { daysLater, localMinute } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import {
   patrolHelpers,
@@ -77,7 +77,8 @@ describe('Patrol runs', () => {
     expect(made.length).toBeLessThanOrEqual(16);
     for (const r of made) {
       expect(r.status).toBe('scheduled');
-      expect(r.plannedAt.getTime()).toBeGreaterThan(Date.now() - MINUTE);
+      // Not ended: a window open as the route is made has its run too.
+      expect(r.windowEndsAt!.getTime()).toBeGreaterThan(Date.now() - MINUTE);
       expect(r.plannedAt.getTime()).toBeLessThan(daysLater(9).getTime());
       expect(r.windowEndsAt!.getTime() - r.scheduledStart!.getTime()).toBe(
         30 * MINUTE,
@@ -120,6 +121,49 @@ describe('Patrol runs', () => {
     expect(gone.map((r) => [r.status, r.cancelReason])).toEqual(
       fresh.map(() => ['cancelled', 'route_retired']),
     );
+  });
+
+  it('a route made or changed during a window makes that window’s run, startable and not yet late', async () => {
+    // Five minutes ago on the compound's clock: its 30-minute window is open.
+    const m = (localMinute(new Date()) - 5 + 1440) % 1440;
+    const time = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+    const schedule = { days: [0, 1, 2, 3, 4, 5, 6], times: [time] };
+    const point = await x.checkpoint(supervisor, { gateId });
+    const open = await x.route(supervisor, { gateId }, [point.id], {
+      expectedMinutes: 30,
+      schedule,
+    });
+    const isOpen = (r: { scheduledStart: Date | null }) =>
+      r.scheduledStart!.getTime() <= Date.now();
+    const [first] = (await scheduledOf(open.id)).filter(isOpen);
+    expect(first).toMatchObject({ status: 'scheduled', lateAt: null });
+    await x.sweep(PATROL_WATCH_SWEEP, new Date());
+    expect((await x.runOf(s.c, first.id)).lateAt).toBeNull();
+
+    // Changed: the open run is cancelled, and the new version makes its own.
+    const next = (
+      await x
+        .versionRaw(supervisor, open.id, {
+          checkpointIds: [point.id],
+          ordered: false,
+          expectedMinutes: 30,
+          schedule,
+        })
+        .expect(200)
+    ).body as RouteBody;
+    const runs = (await scheduledOf(open.id)).filter(isOpen);
+    expect(
+      Object.fromEntries(runs.map((r) => [r.versionId, r.status])),
+    ).toEqual({
+      [open.version.id]: 'cancelled',
+      [next.version.id]: 'scheduled',
+    });
+    const fresh = runs.find((r) => r.versionId === next.version.id)!;
+    const guard = await onShift();
+    const started = (await x.startRunRaw(guard, fresh.id).expect(200))
+      .body as RunBody;
+    expect(started.late).toBe(false);
+    await x.endRunRaw(guard, fresh.id).expect(200);
   });
 
   it('started at the post from 15 minutes before its start until its window ends; late after 15 minutes', async () => {
@@ -271,6 +315,14 @@ describe('Patrol runs', () => {
       await x.sweep(PATROL_WATCH_SWEEP, new Date());
       expect((await x.runOf(s.c, run.id)).lateAt).toEqual(row.lateAt);
       expect(await x.told(s.c, guard.id, run.id)).toHaveLength(1);
+    });
+
+    it('a run made after its start is late 15 minutes after it was made', async () => {
+      const fresh = await x.runRow(s.c, route, 20, 60, 5);
+      const stale = await x.runRow(s.c, route, 40, 60, 16);
+      await x.sweep(PATROL_WATCH_SWEEP, new Date());
+      expect((await x.runOf(s.c, fresh.id)).lateAt).toBeNull();
+      expect((await x.runOf(s.c, stale.id)).lateAt).not.toBeNull();
     });
 
     it('missed when its window ends: the keepers are told; at a post out of service it is cancelled, nobody told', async () => {

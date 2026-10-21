@@ -27,10 +27,12 @@ export class RunsCore {
   ) {}
 
   /**
-   * The version's scheduled runs, HORIZON_DAYS ahead from `now`, those to
-   * start after it. Each is made once: the unique index keeps cancelled
-   * ones too, so nothing cancelled comes back. The caller holds the route
-   * (FOR SHARE or FOR UPDATE), so a new version waits or is seen.
+   * The version's scheduled runs, HORIZON_DAYS ahead from `now`, those
+   * whose window has not ended: one already open (a route made or changed
+   * during it) is late counted from `now`. Each is made once: the unique
+   * index keeps cancelled ones too, so nothing cancelled comes back. The
+   * caller holds the route (FOR SHARE or FOR UPDATE), so a new version
+   * waits or is seen.
    */
   async generate(
     tx: TenantTxClient,
@@ -42,13 +44,14 @@ export class RunsCore {
     const schedule = scheduleOf(version.schedule);
     if (!schedule || route.retiredAt || version.supersededAt) return 0;
     const today = localDate(now, timeZone);
+    // From yesterday: a window that opened before midnight may still be.
     const coming = runOccurrences(
       schedule,
       version.expectedMinutes,
-      today,
+      addDays(today, -1),
       addDays(today, HORIZON_DAYS),
       timeZone,
-    ).filter((o) => o.startsAt > now);
+    ).filter((o) => o.endsAt > now);
     if (!coming.length) return 0;
     const total = await tx.patrolRouteCheckpoint.count({
       where: { versionId: version.id },
@@ -67,6 +70,8 @@ export class RunsCore {
         windowEndsAt: o.endsAt,
         status: 'scheduled' as const,
         checkpointsTotal: total,
+        // By the caller's clock: lateness counts from here when later.
+        createdAt: now,
       })),
       skipDuplicates: true,
     });

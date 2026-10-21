@@ -77,7 +77,7 @@ A route is walked from a post and has names. What it asks is a **version**:
 
 **Changing any of it makes a new version.** A route's names change in place. One version is current (a unique index); a version never changes and is superseded once. A run keeps the version it was made with.
 
-**A scheduled run's window** runs from its start for its expected minutes, 30 at least. So being late (15 minutes) always comes before being missed. Two start times closer than that window, on a day, over midnight or from Saturday into Sunday, are refused (`schedule.times`, `PATROL_SCHEDULE_OVERLAP`, params.minutes). The starts come from the roster's occurrences in the compound's time zone: a start the clock skips moves forward.
+**A scheduled run's window** runs from its start for its expected minutes, 30 at least. So being late (15 minutes) comes before being missed, but for a run made in its window's last 15 minutes: missed, never late. Two start times closer than that window, on a day, over midnight or from Saturday into Sunday, are refused (`schedule.times`, `PATROL_SCHEDULE_OVERLAP`, params.minutes). The starts come from the roster's occurrences in the compound's time zone: a start the clock skips moves forward.
 
 Retired once: its scheduled runs nobody started are cancelled (`route_retired`); a run under way finishes.
 
@@ -85,7 +85,8 @@ Retired once: its scheduled runs nobody started are cancelled (`route_retired`);
 
 **Made ahead.** A version's schedule makes its runs 7 days ahead:
 - when the route is made, when it changes, and by an hourly sweep (`gate.patrol_schedule`, the route FOR SHARE);
-- each once: a unique index on `(version, scheduled start)` keeps cancelled ones too, so nothing cancelled comes back.
+- each once: a unique index on `(version, scheduled start)` keeps cancelled ones too, so nothing cancelled comes back;
+- every run whose window has not ended: a route made or changed during a window makes that window's run, already open. **Late counts from its start, or from when it was made if later** (ADR 0050's roster slots do the same).
 
 A new version cancels the scheduled runs nobody started (`route_changed`) and makes its own, in its transaction.
 
@@ -117,7 +118,7 @@ A start takes the guard's account FOR SHARE (a deactivation holds it first), the
 
 | Mark | When | Told |
 |---|---|---|
-| late, once | a scheduled run not started 15 minutes after its start | the guards on shift at its post (`patrol.late`) |
+| late, once | a scheduled run not started 15 minutes after its start, or after it was made if later | the guards on shift at its post (`patrol.late`) |
 | missed | not started when its window ends | the roster's keepers (`patrol.missed`) |
 | cancelled (`post_out_of_service`) | the same, at a post out of service | nobody; it is nobody's miss |
 | timed out | under way twice its expected minutes | the roster's keepers (`patrol.incomplete`, `timed_out`) |

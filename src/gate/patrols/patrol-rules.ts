@@ -180,9 +180,16 @@ export function startProblem(
   return null;
 }
 
-/** When a scheduled run is late, if nobody started it. */
-export const lateAfter = (scheduledStart: Date) =>
-  new Date(scheduledStart.getTime() + LATE_AFTER_MINUTES * MINUTE_MS);
+/**
+ * When a scheduled run is late, if nobody started it: counted from its
+ * start, or from when it was made if later (a route made or changed during
+ * its window makes that window's run, already open).
+ */
+export const lateAfter = (run: { scheduledStart: Date; createdAt: Date }) =>
+  new Date(
+    Math.max(run.scheduledStart.getTime(), run.createdAt.getTime()) +
+      LATE_AFTER_MINUTES * MINUTE_MS,
+  );
 
 /** When a run under way is timed out. */
 export const timeoutAt = (startedAt: Date, expectedMinutes: number) =>

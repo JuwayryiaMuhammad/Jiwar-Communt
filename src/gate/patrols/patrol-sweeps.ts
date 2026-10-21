@@ -33,8 +33,9 @@ const MINUTE = 60_000;
  * - **Watched** (a sweep every minute): each run is taken FOR UPDATE SKIP
  *   LOCKED and judged again under the lock by the database's clock, so a
  *   start holding it wins:
- *   - late, once: not started 15 minutes after its start; the guards on
- *     shift at its post are told (`patrol.late`);
+ *   - late, once: not started 15 minutes after its start, or after it was
+ *     made if later; the guards on shift at its post are told
+ *     (`patrol.late`);
  *   - missed, once: not started when its window ends; the roster's keepers
  *     are told (`patrol.missed`). At a post out of service it is cancelled
  *     instead (`post_out_of_service`) and nobody is told;
@@ -109,6 +110,7 @@ export class PatrolSweeps implements OnModuleInit {
                   status: 'scheduled',
                   lateAt: null,
                   scheduledStart: { lte: lateDue },
+                  createdAt: { lte: lateDue },
                 },
                 { status: 'in_progress', startedAt: { lte: liveDue } },
               ],
@@ -173,7 +175,15 @@ export class PatrolSweeps implements OnModuleInit {
       return 1;
     }
     // A post out of service is nobody's lateness.
-    if (run.lateAt || at < lateAfter(run.scheduledStart!) || !inService)
+    if (
+      run.lateAt ||
+      at <
+        lateAfter({
+          scheduledStart: run.scheduledStart!,
+          createdAt: run.createdAt,
+        }) ||
+      !inService
+    )
       return 0;
     await tx.patrolRun.update({ where: { id }, data: { lateAt: at } });
     const recipients = await this.safety.notify(

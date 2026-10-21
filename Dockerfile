@@ -19,7 +19,9 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
-RUN pnpm build
+# The compile needs more than Node's default heap on a smaller machine (CI's
+# job sets the same 4 GB). Only this step: the runtime image keeps the default.
+RUN NODE_OPTIONS=--max-old-space-size=4096 pnpm build
 
 FROM base AS runtime
 ENV NODE_ENV=production

@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { WorkerCapacity, WorkerEngagementStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
@@ -17,6 +16,7 @@ import { PageQueryDto } from '../../../core/common/http/list';
 import { ReasonDto } from '../../../core/common/http/reason.dto';
 import { IsPhone } from '../../../core/common/validation/is-phone';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 export const WORKER_LANGUAGES = ['ar', 'en'] as const;
 
@@ -72,7 +72,7 @@ export class NewWorkerDto extends IdentityDocumentDto {
     description: 'Required for `temporary`.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   validUntil?: Date;
 

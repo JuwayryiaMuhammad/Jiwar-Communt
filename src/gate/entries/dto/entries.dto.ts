@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GateDirection, GateSubjectType } from '@prisma/client';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsDate,
   IsEnum,
@@ -15,6 +15,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { ExclusiveWith } from '../../../core/common/validation/exclusive-with';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 /** Exactly one of `code` (typed) or `qr` (scanned), ADR 0030. */
 export class VerifyDto {
@@ -106,7 +107,7 @@ export class RecordEntryDto {
     description: 'When it happened (offline guards): up to 24 h back.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   occurredAt?: Date;
 
@@ -156,13 +157,13 @@ export class EntriesQueryDto extends PageQueryDto {
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   from?: Date;
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   to?: Date;
 }

@@ -27,6 +27,7 @@ import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
 import { PERMIT_LIMITS } from '../permit-rules';
 import { PERMIT_VIEW_STATUSES } from '../views/permit.views';
 import { PermitHoursDto } from './permit-settings.dto';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 export const CONTRACTOR_COMPANY = { min: 1, max: 120 } as const;
 export const PERMIT_DESCRIPTION = { min: 1, max: 1000 } as const;
@@ -342,7 +343,7 @@ export class CreateEventPermitDto {
     description:
       'Not more than 5 minutes ago (INVALID_VALUE); its local day at most 90 days ahead (DAY_OUT_OF_RANGE).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt: Date;
 
@@ -352,7 +353,7 @@ export class CreateEventPermitDto {
     description:
       'After `startsAt` (ENDS_BEFORE_START), 24 hours at most (WINDOW_TOO_LONG, params.maxHours); past midnight is fine.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   endsAt: Date;
 
@@ -513,13 +514,13 @@ export class MaterialEntriesQueryDto extends PageQueryDto {
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   from?: Date;
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   to?: Date;
 }

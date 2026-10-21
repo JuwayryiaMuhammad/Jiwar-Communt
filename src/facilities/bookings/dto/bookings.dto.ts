@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BookingStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
 import {
   IsDate,
   IsEnum,
@@ -15,6 +14,7 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const GUESTS = { min: 0, max: 50 } as const;
 export const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -41,7 +41,7 @@ export class CreateBookingDto {
     description:
       'The start of one of the facility’s slots, exactly (BOOKING_SLOT_NOT_OFFERED); not sooner than its `minMinutesBefore` (BOOKING_TOO_SOON) nor further than its `maxDaysAhead` (BOOKING_TOO_FAR).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt: Date;
 
@@ -129,7 +129,7 @@ export class StaffBookingsQueryDto extends PageQueryDto {
     description: 'Starting at or after.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   from?: Date;
 
@@ -140,7 +140,7 @@ export class StaffBookingsQueryDto extends PageQueryDto {
     description: 'Starting before.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   to?: Date;
 }

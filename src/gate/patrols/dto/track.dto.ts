@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { ACCURACY_M, LATITUDE, LONGITUDE, TRACK_BATCH } from '../patrol-rules';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const decimals = { maxDecimalPlaces: 7 };
 
@@ -23,7 +24,7 @@ export class TrackPointDto {
     description:
       'The device’s time: inside the run’s lifetime, two minutes either side.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   recordedAt: Date;
 

@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -22,6 +21,7 @@ import {
   ELECTION_PHASES,
   type ElectionPhase,
 } from '../election-rules';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const text = (max: number, description?: string) =>
   ApiProperty({
@@ -63,7 +63,7 @@ class GovernanceElectionFieldsDto {
       'When nominations open: absent or past, now; at most 90 days ahead.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   nominationsOpenAt?: Date;
 }
@@ -97,7 +97,7 @@ export class CreateGovernanceElectionDto extends GovernanceElectionFieldsDto {
     format: 'date-time',
     description: 'When nominations close: 24 hours to 30 days after they open.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   nominationsCloseAt: Date;
 
@@ -107,7 +107,7 @@ export class CreateGovernanceElectionDto extends GovernanceElectionFieldsDto {
     description:
       'When voting opens: from the close of nominations, at most 14 days later.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   votingOpensAt: Date;
 
@@ -116,7 +116,7 @@ export class CreateGovernanceElectionDto extends GovernanceElectionFieldsDto {
     format: 'date-time',
     description: 'When voting closes: 1 hour to 60 days after it opens.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   votingClosesAt: Date;
 }
@@ -137,19 +137,19 @@ export class UpdateGovernanceElectionDto extends GovernanceElectionFieldsDto {
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   nominationsCloseAt?: Date;
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   votingOpensAt?: Date;
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   votingClosesAt?: Date;
 }

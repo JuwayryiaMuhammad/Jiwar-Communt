@@ -3,7 +3,6 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
-  IsISO8601,
   IsOptional,
   IsString,
   IsUUID,
@@ -23,6 +22,7 @@ import {
   SLOT_PLACE,
   VISITOR_NAME,
 } from '../parking-rules';
+import { IsInstant } from '../../../core/common/validation/instant';
 
 export class CreateVisitorParkingDto {
   @ApiProperty({
@@ -63,7 +63,7 @@ export class CreateVisitorParkingDto {
     description:
       'Whole minutes; no earlier than 15 minutes ago, at most 14 days ahead.',
   })
-  @IsISO8601()
+  @IsInstant()
   startsAt: string;
 
   @ApiProperty({
@@ -72,7 +72,7 @@ export class CreateVisitorParkingDto {
     description:
       'Whole minutes; 15 minutes to the compound’s `visitorParkingMaxHours` after the start.',
   })
-  @IsISO8601()
+  @IsInstant()
   endsAt: string;
 }
 

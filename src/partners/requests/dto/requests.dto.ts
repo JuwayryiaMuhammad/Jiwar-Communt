@@ -17,6 +17,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
+import { ToInstant } from '../../../core/common/validation/instant';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { PARTNER_CATEGORIES, type PartnerCategory } from '../../categories';
 
@@ -84,7 +85,7 @@ export class CreatePartnerRequestDto {
     description:
       '15 minutes to 14 days from now (PARTNER_WINDOW_TOO_SOON / _TOO_FAR).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   windowStartsAt: Date;
 
@@ -94,7 +95,7 @@ export class CreatePartnerRequestDto {
     description:
       '30 minutes to 8 hours after the start (PARTNER_WINDOW_LENGTH).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   windowEndsAt: Date;
 
@@ -193,7 +194,7 @@ export class ProposePartnerRequestDto extends AcceptPartnerRequestDto {
     format: 'date-time',
     description: '15 minutes to 14 days from now.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   windowStartsAt: Date;
 
@@ -202,7 +203,7 @@ export class ProposePartnerRequestDto extends AcceptPartnerRequestDto {
     format: 'date-time',
     description: '30 minutes to 8 hours after the start.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   windowEndsAt: Date;
 }

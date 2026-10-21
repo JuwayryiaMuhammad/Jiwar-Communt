@@ -4,12 +4,14 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import boundaries from './eslint.boundaries.cjs';
+import instants from './eslint.instants.cjs';
 import testClock from './eslint.test-clock.cjs';
 import txConcurrency from './eslint.tx-concurrency.cjs';
 
 const { boundaryConfigs } = boundaries;
 const { txConcurrencyConfigs } = txConcurrency;
 const { testClockConfigs } = testClock;
+const { instantConfigs } = instants;
 
 export default tseslint.config(
   {
@@ -17,6 +19,7 @@ export default tseslint.config(
     ignores: [
       'eslint.config.mjs',
       'eslint.boundaries.cjs',
+      'eslint.instants.cjs',
       'eslint.tx-concurrency.cjs',
       'eslint.test-clock.cjs',
       'dist/**',
@@ -63,6 +66,10 @@ export default tseslint.config(
   // One query at a time on a transaction client (eslint.tx-concurrency.cjs)
   // ==========================================================================
   ...txConcurrencyConfigs,
+  // ==========================================================================
+  // An instant needs its offset (eslint.instants.cjs, ADR 0025)
+  // ==========================================================================
+  ...instantConfigs,
   // ==========================================================================
   // Tests read the compound's day from one helper (eslint.test-clock.cjs)
   // ==========================================================================

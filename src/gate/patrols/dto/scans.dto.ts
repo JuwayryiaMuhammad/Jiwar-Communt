@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -23,6 +22,7 @@ import {
   MAX_NOTE_PHOTOS,
   NOTE_TEXT,
 } from '../patrol-rules';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 export const SCAN_METHODS = ['qr', 'nfc', 'manual'] as const;
 const decimals = { maxDecimalPlaces: 7 };
@@ -114,7 +114,7 @@ export class ScanDto extends DevicePositionDto {
     description:
       'The device’s time of the scan: inside the run’s lifetime, two minutes either side (422 PATROL_SCAN_OUT_OF_WINDOW).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   scannedAt: Date;
 }
@@ -154,7 +154,7 @@ export class NoteDto {
   text?: string;
 
   @ApiProperty({ type: String, format: 'date-time' })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   notedAt: Date;
 

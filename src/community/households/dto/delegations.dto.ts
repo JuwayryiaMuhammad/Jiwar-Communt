@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DelegationScope } from '@prisma/client';
-import { Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, IsDate, IsIn, IsUUID } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const SCOPES = Object.values(DelegationScope);
 
@@ -30,7 +30,7 @@ export class CreateDelegationDto {
     format: 'date-time',
     description: 'In the future, at most a year away.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   expiresAt: Date;
 }

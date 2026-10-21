@@ -24,6 +24,7 @@ import {
   type ContestStatus,
 } from '../../contests/contest-rules';
 import { POLL_LIMITS } from '../poll-rules';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const text = (max: number, description?: string) =>
   ApiProperty({
@@ -93,7 +94,7 @@ class GovernancePollFieldsDto {
       'When voting opens: absent or past, now; at most 90 days ahead.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   opensAt?: Date;
 }
@@ -140,7 +141,7 @@ export class CreateGovernancePollDto extends GovernancePollFieldsDto {
     description:
       'When voting closes: 1 hour to 60 days after it opens (INVALID_VALUE, params.minHours and params.maxDays).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   closesAt: Date;
 }
@@ -182,7 +183,7 @@ export class UpdateGovernancePollDto extends GovernancePollFieldsDto {
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   closesAt?: Date;
 }

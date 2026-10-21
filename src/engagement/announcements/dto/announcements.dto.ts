@@ -29,6 +29,7 @@ import {
   TITLE_MAX,
 } from '../announcements.service';
 import type { AnnouncementStatus } from '../announcement-rules';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const TITLE = { min: 1, max: TITLE_MAX };
 const BODY = { min: 1, max: BODY_MAX };
@@ -48,7 +49,7 @@ const text = (limits: { min: number; max: number }, description?: string) =>
 /** Where works are and when. */
 export class WorksDto {
   @ApiProperty({ type: String, format: 'date-time' })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt: Date;
 
@@ -57,7 +58,7 @@ export class WorksDto {
     format: 'date-time',
     description: 'After `startsAt` (ENDS_BEFORE_START).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   endsAt: Date;
 
@@ -133,7 +134,7 @@ class AnnouncementContentDto {
     description: 'Stays on top until then. Only when `important`.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   pinnedUntil?: Date | null;
 
@@ -146,7 +147,7 @@ class AnnouncementContentDto {
       'No longer shown from then on. A general announcement’s only: works end by their own dates.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   expiresAt?: Date | null;
 
@@ -221,7 +222,7 @@ export class PublishAnnouncementDto {
     description: 'When it comes out. Absent: now. Not in the past.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   publishAt?: Date;
 }

@@ -69,6 +69,8 @@ describe('an upload’s payload (ADR 0057)', () => {
           }),
           action(6, { clientId: id(2) }),
           'nope',
+          // The same instant without its offset names none (ADR 0025).
+          action(7, { deviceTime: T0.toISOString().replace('Z', '') }),
         ],
       }),
     ).toEqual({
@@ -81,6 +83,7 @@ describe('an upload’s payload (ADR 0057)', () => {
         { field: 'actions.3.subjectType', code: 'INVALID_VALUE' },
         { field: 'actions.4.clientId', code: 'INVALID_VALUE' },
         { field: 'actions.5', code: 'INVALID_VALUE' },
+        { field: 'actions.6.deviceTime', code: 'INVALID_FORMAT' },
       ],
     });
   });

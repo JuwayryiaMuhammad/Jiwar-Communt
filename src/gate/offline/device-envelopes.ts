@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { GateDevice } from '@prisma/client';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode } from '../../core/common/errors';
+import { instantOf } from '../../core/common/validation/instant';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { dbNow } from '../db-clock';
@@ -112,9 +113,9 @@ export class DeviceEnvelopes implements OnModuleInit {
     if (payload.purpose !== purpose) throw invalid('purpose');
     if (payload.tenantId !== this.ctx.txTenantId) throw invalid('tenant');
     if (payload.deviceId !== envelope.deviceId) throw invalid('device');
-    const sentAt =
-      typeof payload.sentAt === 'string' ? new Date(payload.sentAt) : null;
-    if (!sentAt || Number.isNaN(sentAt.getTime())) throw invalid('sent_at');
+    // With its offset (ADR 0025): a time without one names no instant.
+    const sentAt = instantOf(payload.sentAt);
+    if (!sentAt) throw invalid('sent_at');
     await this.devices.lock(tx, found.id);
     const device = await this.devices.row(tx, found.id);
     const now = await dbNow(tx);

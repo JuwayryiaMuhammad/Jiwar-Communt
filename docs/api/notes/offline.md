@@ -16,7 +16,7 @@ Conventions, as everywhere in API v0:
 - Lists are `{ "data": [...], "nextCursor": string | null }`.
 - Errors are `{ "statusCode", "code", "message", "params"?, "fields"?: [...] }`. Switch on `code` and `fields[].code`, never on `message`.
 - **Every response here is `Cache-Control: no-store`.**
-- Instants are ISO 8601 UTC with milliseconds (`2026-11-06T09:00:00.000Z`).
+- **Every instant carries its offset, `Z` or `±HH:MM`** (RFC 3339): send UTC with milliseconds (`2026-11-06T09:00:00.000Z`). A time without one names no instant and is refused, never read in a zone: an envelope's `sentAt` is 422 `GATE_DEVICE_ENVELOPE_INVALID` (`params.reason: "sent_at"`), an action's `deviceTime` is `INVALID_FORMAT` in the upload's `fields` (ADR 0025).
 - base64url is RFC 4648 §5, **without padding**.
 - The device routes take **no `Idempotency-Key`**: the client ids, the batch id and the sequence numbers do that job.
 

@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   IsDate,
   IsIn,
@@ -11,6 +10,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { NOTE } from '../blocklist.service';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const KINDS = ['ban', 'watch'] as const;
 const SUBJECTS = ['plate', 'person'] as const;
@@ -97,7 +97,7 @@ export class CreateBlocklistEntryDto {
       'In the future, at most three years ahead. None: until lifted.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   expiresAt?: Date;
 }
@@ -138,7 +138,7 @@ export class UpdateBlocklistEntryDto {
     description: '`null`: until lifted.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   expiresAt?: Date | null;
 

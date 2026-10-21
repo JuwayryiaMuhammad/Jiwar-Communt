@@ -30,6 +30,7 @@ import {
   EVENT_PLACE_MAX,
   EVENT_TITLE_MAX,
 } from '../events.service';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const TITLE = { min: 1, max: EVENT_TITLE_MAX };
 const DESCRIPTION = { min: 1, max: EVENT_DESCRIPTION_MAX };
@@ -108,7 +109,7 @@ export class CreateEventDto extends EventTextDto {
   place: string;
 
   @ApiProperty({ type: String, format: 'date-time' })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt: Date;
 
@@ -117,7 +118,7 @@ export class CreateEventDto extends EventTextDto {
     format: 'date-time',
     description: 'After `startsAt` (ENDS_BEFORE_START).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   endsAt: Date;
 
@@ -179,13 +180,13 @@ export class UpdateEventDto extends EventTextDto {
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt?: Date;
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   endsAt?: Date;
 }

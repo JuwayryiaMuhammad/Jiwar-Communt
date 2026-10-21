@@ -25,6 +25,7 @@ import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { DESCRIPTION_LENGTH } from '../standing-instructions.service';
 import { PLATE_MAX } from '../../../core/common/vehicle-plate';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const PARTY = { min: 1, max: 50 };
 /** A visit's expected minutes (ADR 0056): within the unconfirmed exit's 12 hours. */
@@ -94,7 +95,7 @@ export class CreateVisitorPassDto {
   partySize: number;
 
   @ApiProperty({ type: String, format: 'date-time' })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   validFrom: Date;
 
@@ -104,7 +105,7 @@ export class CreateVisitorPassDto {
     description:
       'At most 7 days after `validFrom` (one-time), 180 (recurring).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   validUntil: Date;
 

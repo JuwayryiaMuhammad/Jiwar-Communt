@@ -353,6 +353,8 @@ describe('Gate offline — the bundle (ADR 0057)', () => {
         [{ tenantId: '01a102b6-6253-74a0-92b1-96e7c9d52601' }, 'tenant'],
         [{ deviceId: newDevice().id }, 'device'],
         [{ sentAt: 'yesterday' }, 'sent_at'],
+        // Now, but without its offset: no instant (ADR 0025).
+        [{ sentAt: dbClock().toISOString().replace('Z', '') }, 'sent_at'],
         [
           {
             sentAt: new Date(

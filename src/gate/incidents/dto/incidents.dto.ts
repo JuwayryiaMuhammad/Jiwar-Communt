@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -19,6 +18,7 @@ import {
   MAX_INCIDENT_PHOTOS,
   NOTE,
 } from '../incidents.service';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const TYPES = REASON_CODES.incidentType;
 const SEVERITIES = REASON_CODES.incidentSeverity;
@@ -63,7 +63,7 @@ export class ReportIncidentDto {
     format: 'date-time',
     description: 'At most 30 days back, not more than 5 minutes ahead.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   occurredAt: Date;
 
@@ -144,7 +144,7 @@ export class StaffIncidentsQueryDto extends PageQueryDto {
     description: 'Happened at or after.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   from?: Date;
 
@@ -155,7 +155,7 @@ export class StaffIncidentsQueryDto extends PageQueryDto {
     description: 'Happened before.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   to?: Date;
 }

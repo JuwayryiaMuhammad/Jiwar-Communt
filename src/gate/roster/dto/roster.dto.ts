@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 class WeeklyWindowDto {
   @ApiProperty({ type: String, example: '22:00' })
@@ -113,7 +114,7 @@ export class CreateRosterSlotDto extends PostDto {
     format: 'date-time',
     description: 'In the future.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt: Date;
 
@@ -122,7 +123,7 @@ export class CreateRosterSlotDto extends PostDto {
     format: 'date-time',
     description: 'After the start, a day at most.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   endsAt: Date;
 }

@@ -18,6 +18,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { SLOT_DAYS } from '../appointment-slots';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 /** Which days to offer slots for. */
 export class AppointmentSlotsQueryDto {
@@ -55,7 +56,7 @@ export class SlotChoiceDto {
     description:
       'The start of one of the offered slots, exactly (APPOINTMENT_SLOT_NOT_OFFERED); at least an hour and at most thirty days from now.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt: Date;
 
@@ -119,7 +120,7 @@ export class StaffAppointmentsQueryDto extends PageQueryDto {
     description: 'Starting at or after.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   from?: Date;
 
@@ -130,7 +131,7 @@ export class StaffAppointmentsQueryDto extends PageQueryDto {
     description: 'Starting before.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   to?: Date;
 }

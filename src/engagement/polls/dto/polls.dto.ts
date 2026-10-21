@@ -23,6 +23,7 @@ import {
   QUESTION_MAX,
   type PollStatus,
 } from '../poll-rules';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const text = (max: number, description?: string) =>
   ApiProperty({
@@ -99,7 +100,7 @@ export class CreatePollDto extends PollContentDto {
     description: 'When voting opens. Absent: now.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   opensAt?: Date;
 
@@ -108,7 +109,7 @@ export class CreatePollDto extends PollContentDto {
     format: 'date-time',
     description: 'When voting closes, by itself. After the opening, and ahead.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   closesAt: Date;
 }
@@ -135,13 +136,13 @@ export class UpdatePollDto extends PollContentDto {
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   opensAt?: Date;
 
   @ApiProperty({ type: String, format: 'date-time', required: false })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   closesAt?: Date;
 }

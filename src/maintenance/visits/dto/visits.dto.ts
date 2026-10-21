@@ -14,6 +14,7 @@ import {
 import { ExclusiveWith } from '../../../core/common/validation/exclusive-with';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { SLOT_DAYS } from '../visit-slots';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 /** A window: checked against the database's clock (ADR 0034). */
 export class VisitWindowDto {
@@ -22,7 +23,7 @@ export class VisitWindowDto {
     format: 'date-time',
     description: 'At least 15 minutes from now, within 30 days.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt: Date;
 
@@ -31,7 +32,7 @@ export class VisitWindowDto {
     format: 'date-time',
     description: 'After `startsAt`, at most four hours later.',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   endsAt: Date;
 }

@@ -19,6 +19,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { BOARD_SEATS } from '../board-rules';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 export class BoardSeatDto {
   @ApiProperty({
@@ -57,7 +58,7 @@ export class AppointBoardDto {
     description:
       'When the term ends: 30 days to five years from now (INVALID_VALUE, params.minDays and params.maxDays).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   endsAt: Date;
 

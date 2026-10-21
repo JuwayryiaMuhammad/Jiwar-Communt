@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import { IsDate, IsString } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 export class CreateClosureDto {
   @ApiProperty({ type: String, format: 'date-time' })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   startsAt: Date;
 
@@ -15,7 +15,7 @@ export class CreateClosureDto {
     description:
       'After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG), and not already past (CLOSURE_ENDED).',
   })
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   endsAt: Date;
 

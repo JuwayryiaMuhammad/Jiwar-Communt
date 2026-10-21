@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -13,6 +12,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 const KINDS = ['closed_unit_inspection', 'custom'] as const;
 const STATUSES = ['open', 'in_progress', 'done', 'cancelled'] as const;
@@ -72,7 +72,7 @@ export class CreateGuardTaskDto {
 
   @ApiPropertyOptional({ type: String, format: 'date-time' })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   dueAt?: Date;
 }

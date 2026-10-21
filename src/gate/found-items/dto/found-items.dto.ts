@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -12,6 +11,7 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { ToInstant } from '../../../core/common/validation/instant';
 
 export class RegisterFoundItemDto {
   @ApiProperty({ type: String, minLength: 1, maxLength: 500 })
@@ -40,7 +40,7 @@ export class RegisterFoundItemDto {
     description: 'When it was found; default now, never later.',
   })
   @IsOptional()
-  @Type(() => Date)
+  @ToInstant()
   @IsDate()
   foundAt?: Date;
 

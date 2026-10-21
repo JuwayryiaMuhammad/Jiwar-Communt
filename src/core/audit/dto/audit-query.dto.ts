@@ -1,13 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsISO8601,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Length,
-  Matches,
-} from 'class-validator';
+import { IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator';
 import { PageQueryDto } from '../../common/http/list';
+import { IsInstant } from '../../common/validation/instant';
 import { withParams } from '../../common/validation/validation-errors';
 
 class TimeWindowDto extends PageQueryDto {
@@ -18,7 +12,7 @@ class TimeWindowDto extends PageQueryDto {
     description: 'Inclusive.',
   })
   @IsOptional()
-  @IsISO8601()
+  @IsInstant()
   from?: string;
 
   @ApiProperty({
@@ -28,7 +22,7 @@ class TimeWindowDto extends PageQueryDto {
     description: 'Exclusive.',
   })
   @IsOptional()
-  @IsISO8601()
+  @IsInstant()
   to?: string;
 }
 

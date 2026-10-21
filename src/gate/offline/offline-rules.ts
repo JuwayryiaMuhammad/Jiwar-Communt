@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { isUUID } from 'class-validator';
 import { stableJson } from '../../core/common/http/stable-json';
 import { REASON_CODES } from '../../core/common/reasons';
+import { instantOf } from '../../core/common/validation/instant';
 import { normalizePlate } from '../../core/common/vehicle-plate';
 import type { Refusal } from '../entries/subjects';
 import { MATERIAL_DESCRIPTION } from '../permits/dto/permits.dto';
@@ -171,11 +172,6 @@ export interface PayloadProblem {
 }
 
 const uuid = (v: unknown): v is string => typeof v === 'string' && isUUID(v);
-const instant = (v: unknown): Date | null => {
-  if (typeof v !== 'string') return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d;
-};
 const oneOf = <T extends string>(list: readonly T[], v: unknown): v is T =>
   typeof v === 'string' && (list as readonly string[]).includes(v);
 const text = (v: unknown, max: number): string | null => {
@@ -225,7 +221,7 @@ export function parseUpload(
       x.seq <= lastSeq
     )
       add(at('seq'), 'INVALID_VALUE');
-    const deviceTime = instant(x.deviceTime);
+    const deviceTime = instantOf(x.deviceTime);
     if (!deviceTime) add(at('deviceTime'), 'INVALID_FORMAT');
     if (!uuid(x.bundleId)) add(at('bundleId'), 'INVALID_FORMAT');
     if (!oneOf(ACTION_TYPES, x.type)) {

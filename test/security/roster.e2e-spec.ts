@@ -504,6 +504,21 @@ describe('The roster', () => {
     await x.endRaw(other).expect(200);
   });
 
+  it('a time without an offset names no instant: INVALID_FORMAT, nothing made', async () => {
+    const guard = await x.guard(s.c);
+    const res = await x.slotRaw(supervisor, {
+      guardId: guard.id,
+      gateId,
+      startsAt: '2031-01-13T22:00:00',
+      endsAt: '2031-01-13T23:00:00Z',
+    });
+    expect(code(res)).toEqual({ status: 400, code: 'VALIDATION_FAILED' });
+    expect(fields(res)).toEqual([
+      { field: 'startsAt', code: 'INVALID_FORMAT' },
+    ]);
+    expect(await slotsOf(supervisor, { guardId: guard.id })).toEqual([]);
+  });
+
   it('a create replays under its Idempotency-Key', async () => {
     const guard = await x.guard(s.c);
     const body = {

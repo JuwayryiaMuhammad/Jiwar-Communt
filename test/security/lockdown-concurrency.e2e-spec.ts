@@ -1,5 +1,6 @@
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityOpsHelpers, type LockdownBody } from '../setup/security-ops';
+import { whileShiftEnds } from '../setup/shift-end';
 
 const ROUNDS = 5;
 
@@ -11,7 +12,10 @@ const ROUNDS = 5;
  * - an entry and a start meet in one order: the entry committed before
  *   the lockdown started, or it is refused;
  * - an end and a start of the same scope meet in one order, and at most one
- *   lockdown of a scope is ever live.
+ *   lockdown of a scope is ever live;
+ * - a start while the guard's shift ends: the start takes the account, then
+ *   the shift FOR SHARE, then the lockdown state (ADR 0056's lock order),
+ *   so it waits for the end and is refused, never started by a shift over.
  */
 describe('Lockdown — races', () => {
   let h: HttpHarness;
@@ -115,5 +119,20 @@ describe('Lockdown — races', () => {
         expect(live).toEqual([]);
       }
     }
+  });
+
+  it('R4: a start while the guard’s shift ends: it waits for the end, then is refused', async () => {
+    const gate = await x.g.gate(s.c);
+    const leaving = await x.guardAt(s.c, gate.id);
+    const res = await whileShiftEnds(leaving.shiftId, () =>
+      x.lockdownRaw(leaving, { scope: 'gate', gateId: gate.id }),
+    );
+    expect(res.status).toBe(403);
+    expect((res.body as { code: string }).code).toBe('NO_OPEN_SHIFT');
+    expect(
+      await x.inTx(s.c, (tx) =>
+        tx.gateLockdown.count({ where: { startedShiftId: leaving.shiftId } }),
+      ),
+    ).toBe(0);
   });
 });

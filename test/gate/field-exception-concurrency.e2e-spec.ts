@@ -1,9 +1,8 @@
-import { Client } from 'pg';
 import { dbClock } from '../setup/compound-clock';
 import { gateCompletionHelpers } from '../setup/gate-completion';
 import { superuserSql } from '../setup/governance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
-import { required } from '../setup/test-env';
+import { whileShiftEnds } from '../setup/shift-end';
 
 const ROUNDS = 5;
 
@@ -151,43 +150,11 @@ describe('Gate — a field exception, concurrently (ADR 0056)', () => {
     const leaving = await g.guardAt(s.c, s.guard.gateId);
     const x = await g.visitor(s.guard, s.unitCode);
     await g.approve(s.manager, x.id);
-    const db = new Client({
-      connectionString: required('TEST_SUPERUSER_DATABASE_URL'),
-    });
-    await db.connect();
-    try {
-      await db.query('BEGIN');
-      await db.query(
-        `UPDATE guard_shifts SET ended_at = now(), end_reason = 'race'
-          WHERE id = $1`,
-        [leaving.shiftId],
-      );
-      const { rows } = await db.query<{ pid: number }>(
-        'SELECT pg_backend_pid() AS pid',
-      );
-      const entry = g.entryRaw(leaving, 'field_exception', x.id).then((r) => r);
-      // The entry is held behind the end: a plain read of the shift would
-      // have seen it open and recorded the visitor after it ended.
-      const deadline = Date.now() + 5_000;
-      for (;;) {
-        const waiting = await db.query<{ n: number }>(
-          `SELECT count(*)::int AS n FROM pg_stat_activity
-            WHERE $1 = ANY(pg_blocking_pids(pid))`,
-          [rows[0].pid],
-        );
-        if (waiting.rows[0].n > 0) break;
-        if (Date.now() > deadline)
-          throw new Error('the entry never waited for the shift’s end');
-        await new Promise((r) => setTimeout(r, 20));
-      }
-      await db.query('COMMIT');
-      const res = await entry;
-      expect(res.status).toBe(403);
-      expect(code(res)).toBe('NO_OPEN_SHIFT');
-    } finally {
-      await db.query('ROLLBACK').catch(() => undefined);
-      await db.end();
-    }
+    const res = await whileShiftEnds(leaving.shiftId, () =>
+      g.entryRaw(leaving, 'field_exception', x.id),
+    );
+    expect(res.status).toBe(403);
+    expect(code(res)).toBe('NO_OPEN_SHIFT');
     expect(
       await g.inTx(s.c, (tx) =>
         tx.gateEntry.count({ where: { subjectId: x.id } }),

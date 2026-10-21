@@ -1,5 +1,6 @@
 import { gateCompletionHelpers } from '../setup/gate-completion';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { whileShiftEnds } from '../setup/shift-end';
 
 const ROUNDS = 5;
 
@@ -9,6 +10,10 @@ const ROUNDS = 5;
  * UPDATE SKIP LOCKED. Either the link comes first and the photo stays (the
  * purge skips it, then finds it kept), or the purge comes first and the
  * link finds no photo; never evidence that names a deleted photo.
+ *
+ * A guard's link while their shift ends: the link takes the account, then
+ * the shift, FOR SHARE (ADR 0056's lock order), so it waits for the end
+ * and is refused, never kept by a guard off duty.
  */
 describe('Gate — a visitor’s photo kept while it is purged (ADR 0056)', () => {
   let h: HttpHarness;
@@ -60,5 +65,28 @@ describe('Gate — a visitor’s photo kept while it is purged (ADR 0056)', () =
         expect(evidence).toBe(0);
       }
     }
+  });
+
+  it('a guard’s link while their shift ends: it waits for the end, then is refused', async () => {
+    const leaving = await g.guardAt(s.c, s.guard.gateId);
+    const incidentId = await g.incident(leaving, s.unitCode);
+    const p = await g.pass(s.alice, s.home.id);
+    const photoFileId = await g.photo(s.guard, 'visitor_photo');
+    const entryId = await g.enter(s.guard, 'visitor_pass', p.id, {
+      photoFileId,
+    });
+    const res = await whileShiftEnds(leaving.shiftId, () =>
+      g.http('post', `/gate/incidents/${incidentId}/evidence`, leaving.token, {
+        kind: 'visitor_photo',
+        entryId,
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect((res.body as { code: string }).code).toBe('NO_OPEN_SHIFT');
+    expect(
+      await g.inTx(s.c, (tx) =>
+        tx.incidentEvidence.count({ where: { entryId } }),
+      ),
+    ).toBe(0);
   });
 });

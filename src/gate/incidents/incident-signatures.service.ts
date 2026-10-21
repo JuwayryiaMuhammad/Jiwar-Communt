@@ -101,7 +101,9 @@ export class IncidentSignaturesService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.safety.lockSelf(tx);
-      if (side === 'guard') await this.shifts.requireOnDuty(tx);
+      // A guard's shift FOR SHARE (ADR 0056's lock order): its end waits
+      // for the signature, or came first and the guard is refused.
+      if (side === 'guard') await this.shifts.requireOnDutyLocked(tx);
       const incident = await this.locked(tx, incidentId);
       const isAuthor = incident.reportedById === me;
       if (side === 'guard' && !isAuthor) throw incidentNotFound();

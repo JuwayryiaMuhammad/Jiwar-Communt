@@ -72,7 +72,9 @@ export class IncidentEvidenceService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const tenantId = this.ctx.txTenantId;
       await this.safety.lockSelf(tx);
-      if (side === 'guard') await this.shifts.requireOnDuty(tx);
+      // A guard's shift FOR SHARE (ADR 0056's lock order): its end waits
+      // for the link, or came first and the guard is refused.
+      if (side === 'guard') await this.shifts.requireOnDutyLocked(tx);
       await this.lockedIncident(tx, incidentId, side);
       if (subject.entryId) {
         const photo = await tx.$queryRaw<{ entry_id: string }[]>`

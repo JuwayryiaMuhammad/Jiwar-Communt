@@ -45,6 +45,8 @@ The model is the gate card's:
 
 A manager's decision takes their account, then the subject. Sweeps take the subject with SKIP LOCKED.
 
+**The shift, FOR SHARE (step 2):** a shift's end waits for a guard write in flight, or ended first and the write is refused (NO_OPEN_SHIFT). It is taken by every guard write this ADR adds, by the entry (`EntriesService.record`), and by three writes that read it plainly before: an incident's evidence link, its signature, and a guard's lockdown start (ADR 0053). The guard writes of earlier ADRs still read the shift without the lock; they are listed under Open.
+
 **This amends:**
 
 - ADR 0029: four recording purposes, a signature purpose, the duration read at finalize, ranged reads;
@@ -413,4 +415,5 @@ The traffic report and the log search pages wait for M3.
 - **A duty roster for the management**, so field exceptions go to whoever is on duty.
 - **Offline (O1):** field exceptions, service vehicles and recordings queued on the device.
 - **More media containers** (WebM, MP3), each with its own parser.
+- **The shift's lock in the earlier guard writes.** These still read the shift without FOR SHARE, so a write in flight can commit just after the guard's shift ended: a parcel's receipt, hand-over and return (ADR 0035); a gate request, its withdrawal and a standing instruction applied (ADR 0028, 0043); a permit's use, a material entry and a work stop (ADR 0049); a task taken and completed, a handover acknowledged, a found item registered (ADR 0050); a guard's SOS (ADR 0047); an incident reported and acknowledged, a violation issued, a lockdown overridden (ADR 0053).
 - **`JWP1.` is two QRs' prefix:** a parcel's (ADR 0035) and an outside escort's pickup (ADR 0054). No lookup confuses them today. Each is parsed only where it belongs: the parcel hand-over looks a `JWP1.` token up in `parcel_credentials` by the `parcel-qr` HMAC; the child's exit looks it up in `child_escorts` by the `child-pickup-qr` HMAC; the entry scanner reads `JWR1.`/`JWR2.` only. The other kind is unknown there, as any wrong QR is (at the parcel desk it counts toward the guard's wrong-code lockout like any other). Their 6-digit codes are kept apart the same way. A scanner that routes by prefix alone, such as an offline bundle, cannot tell them apart: a new prefix for pickups (`JWE1.`, say) would be needed first, with `JWP1.` pickups still read until the last one expires.

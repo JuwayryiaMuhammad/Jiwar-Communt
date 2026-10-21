@@ -139,19 +139,20 @@ export class MySlotView {
   @ApiProperty({
     type: Number,
     nullable: true,
-    description: 'Minutes after the start the shift opened; null until it did.',
+    description:
+      'Minutes after the slot was due (its start, or when it was made if later) the shift opened; null until it did.',
   })
   lateMinutes: number | null;
   @ApiProperty({
     type: Boolean,
-    description: 'Opened more than ten minutes after the start.',
+    description: 'Opened more than ten minutes after it was due.',
   })
   late: boolean;
   @ApiProperty({
     type: String,
     format: 'date-time',
     nullable: true,
-    description: 'Not opened an hour after its start.',
+    description: 'Not opened an hour after it was due.',
   })
   absentAt: Date | null;
   @ApiProperty({
@@ -226,7 +227,7 @@ export class GuardAttendanceView {
   late: number;
   @ApiProperty({
     type: Number,
-    description: 'Of them, not opened an hour after the start.',
+    description: 'Of them, not opened an hour after they were due.',
   })
   absent: number;
   @ApiProperty({ type: Number })

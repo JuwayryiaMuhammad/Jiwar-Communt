@@ -370,7 +370,7 @@ function Attendance() {
       <div className="toolbar">
         <DateRange from={range.from} to={range.to} onChange={(r) => setRange(r)} />
       </div>
-      <p className="t-secondary">Recorded only: no payroll. Late is more than ten minutes; absent is not opened an hour after the start.</p>
+      <p className="t-secondary">Recorded only: no payroll. Late is more than ten minutes; absent is not opened an hour after the start (or after the slot was made, if later).</p>
       <Card flush>
         <QueryState query={report}>
           <DataTable<GuardAttendance>

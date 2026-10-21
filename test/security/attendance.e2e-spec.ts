@@ -10,7 +10,8 @@ const MINUTE = 60_000;
 /**
  * ADR 0050: opening a shift fills the guard's slot at that post (from 30
  * minutes before its start until its end), with how late it opened; more
- * than ten minutes is late. A slot not opened an hour after its start is
+ * than ten minutes is late. A slot not opened an hour after it was due (its
+ * start, or when it was made if later) is
  * marked absent by a sweep, and the roster's keepers are told — critically
  * when nobody else is on shift there. A shift's end records overtime for a
  * filled slot, and unscheduled minutes (never overtime) without one.
@@ -180,6 +181,42 @@ describe('Attendance', () => {
     await x.sweep(ROSTER_ATTENDANCE_SWEEP, new Date());
     expect((await x.slotRow(s.c, slot.id)).absentAt).toBeNull();
     expect((await x.slotRow(s.c, early.id)).absentAt).toBeNull();
+  });
+
+  it('a slot made after its start is due from then: late and absent count from when it was made', async () => {
+    const gateId = (await x.g.gate(s.c)).id;
+    const minutesAgo = (n: number) => new Date(Date.now() - n * MINUTE);
+    // Started two hours ago, made five minutes ago: neither absent nor late.
+    const guard = await x.guard(s.c);
+    const fresh = await x.pastSlot(s.c, guard.id, { gateId }, 120, 480, {
+      createdAt: minutesAgo(5),
+    });
+    // Started three hours ago, made 61 minutes ago: absent.
+    const away = await x.pastSlot(
+      s.c,
+      (await x.guard(s.c)).id,
+      { gateId },
+      180,
+      480,
+      { createdAt: minutesAgo(61) },
+    );
+    await x.sweep(ROSTER_ATTENDANCE_SWEEP, new Date());
+    expect((await x.slotRow(s.c, fresh.id)).absentAt).toBeNull();
+    expect((await x.slotRow(s.c, away.id)).absentAt).not.toBeNull();
+
+    const shift = await x.start(guard, { gateId });
+    expect(shift.lateMinutes).toBe(5);
+    expect(await x.slotRow(s.c, fresh.id)).toMatchObject({
+      shiftId: shift.id,
+      lateMinutes: 5,
+    });
+    expect(
+      await auditReaders(h).tenant(s.c.tenantId, {
+        action: 'guard_shift.late',
+        targetId: shift.id,
+      }),
+    ).toEqual([]);
+    await x.endRaw(guard).expect(200);
   });
 
   it('attendance adds it up per guard; each guard reads their own', async () => {

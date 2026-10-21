@@ -38,7 +38,7 @@ export class DailyCountsView {
   late: number;
   @ApiProperty({
     type: Number,
-    description: 'Of the slots, not opened an hour after the start.',
+    description: 'Of the slots, not opened an hour after they were due.',
   })
   absent: number;
   @ApiProperty({ type: Number, description: 'Shifts that filled no slot.' })

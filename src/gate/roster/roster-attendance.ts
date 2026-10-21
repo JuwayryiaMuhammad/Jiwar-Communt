@@ -11,6 +11,7 @@ import {
 import { RosterCore } from './roster-core';
 import {
   ABSENT_AFTER_MINUTES,
+  dueFrom,
   endMinutes,
   isLate,
   lateMinutesOf,
@@ -33,9 +34,10 @@ const MINUTE = 60_000;
  *   earliest scheduled, unfilled slot at that post whose window takes the
  *   start (30 minutes before it until its end) is filled, with how late the
  *   shift opened; more than ten minutes is audited as late. No slot: the
- *   shift is unscheduled.
+ *   shift is unscheduled. Lateness counts from when the slot was due: its
+ *   start, or when it was made if later (`dueFrom`).
  * - **Absence** (a sweep every minute): a slot nobody opened an hour after
- *   its start, at a post still in service, is marked absent once, and the
+ *   it was due, at a post still in service, is marked absent once, and the
  *   roster's keepers are told — critically when nobody else is on shift
  *   there. A later opening still fills it: both are recorded.
  * - **Ending** (an end hook, for every end): overtime for a shift that
@@ -92,7 +94,7 @@ export class RosterAttendance implements OnModuleInit {
     const slot = await tx.guardRosterSlot.findUniqueOrThrow({
       where: { id: rows[0].id },
     });
-    const lateMinutes = lateMinutesOf(slot.startsAt, shift.startedAt);
+    const lateMinutes = lateMinutesOf(slot, shift.startedAt);
     await tx.guardRosterSlot.update({
       where: { id: slot.id },
       data: { shiftId: shift.id, lateMinutes },
@@ -120,7 +122,7 @@ export class RosterAttendance implements OnModuleInit {
   }
 
   /**
-   * Slots nobody opened an hour after their start, one transaction each:
+   * Slots nobody opened an hour after they were due, one transaction each:
    * the row is taken with SKIP LOCKED and judged again under its lock, so
    * an opening holding it wins. Run twice, or on two instances at once, a
    * slot is marked once (`absent_at` is the claim; the trigger allows it
@@ -138,6 +140,7 @@ export class RosterAttendance implements OnModuleInit {
               shiftId: null,
               absentAt: null,
               startsAt: { lte: due, gte: floor },
+              createdAt: { lte: due },
             },
             orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
             take: SWEEP_BATCH,
@@ -156,7 +159,7 @@ export class RosterAttendance implements OnModuleInit {
           slot.status !== 'scheduled' ||
           slot.shiftId ||
           slot.absentAt ||
-          slot.startsAt > due
+          dueFrom(slot) > due
         )
           return 0;
         // A post out of service is nobody's absence: the slot stays, and is

@@ -11,8 +11,10 @@ const MINUTE = 60_000;
  * ADR 0050, the roster under concurrency: one writer at a time per guard
  * (the account FOR SHARE, then the guard's lock), so two overlapping
  * writes never both land; an opening and the absence sweep on one slot
- * are each decided under its row; a template ended while its slot is
- * asked to be swapped leaves no live swap on a cancelled slot.
+ * are each decided under its row; a slot made beside its guard's shift
+ * opening or ending is filled by it, or left to the next, never half; a
+ * template ended while its slot is asked to be swapped leaves no live swap
+ * on a cancelled slot.
  */
 describe('The roster under concurrency', () => {
   let h: HttpHarness;
@@ -76,6 +78,47 @@ describe('The roster under concurrency', () => {
         x.slotRaw(supervisor, slotBody(guard.id, 3 * DAY, 60)),
       ]);
       expect([template.status, slot.status].sort()).toEqual([201, 409]);
+    }
+  });
+
+  it('a slot made while its guard opens a shift there: that shift fills it either way', async () => {
+    for (let i = 0; i < 5; i++) {
+      const guard = await x.guard(s.c);
+      const [made, started] = await Promise.all([
+        x.slotRaw(supervisor, slotBody(guard.id, 10, 60)),
+        x.startRaw(guard, { gateId }),
+      ]);
+      expect([made.status, started.status]).toEqual([201, 201]);
+      const row = await x.slotRow(s.c, (made.body as { id: string }).id);
+      expect(row).toMatchObject({
+        shiftId: (started.body as { id: string }).id,
+        lateMinutes: 0,
+      });
+      await x.endRaw(guard).expect(200);
+    }
+  });
+
+  it('a slot made while its guard’s shift there ends: the end records that slot, or the slot stays open, never half', async () => {
+    for (let i = 0; i < 5; i++) {
+      const guard = await x.guard(s.c);
+      const shift = await x.start(guard, { gateId });
+      const [made, ended] = await Promise.all([
+        x.slotRaw(supervisor, slotBody(guard.id, 10, 60)),
+        x.endRaw(guard),
+      ]);
+      expect([made.status, ended.status]).toEqual([201, 200]);
+      const slot = await x.slotRow(s.c, (made.body as { id: string }).id);
+      const row = await x.shiftRow(s.c, shift.id);
+      if (slot.shiftId) {
+        expect(slot.shiftId).toBe(shift.id);
+        expect(row).toMatchObject({
+          overtimeMinutes: 0,
+          unscheduledMinutes: null,
+        });
+      } else {
+        expect(row.overtimeMinutes).toBeNull();
+        expect(row.unscheduledMinutes).not.toBeNull();
+      }
     }
   });
 

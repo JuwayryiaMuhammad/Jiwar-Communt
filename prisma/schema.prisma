@@ -6852,10 +6852,11 @@ model GuardRosterSlot {
   cancelReason   String?         @map("cancel_reason")
   /// The shift that filled it.
   shiftId        String?         @map("shift_id") @db.Uuid
-  /// Minutes after the start the shift opened (0 when on time or early).
+  /// Minutes after the slot was due (its start, or when it was made if
+  /// later) the shift opened (0 when on time or early).
   /// Late is more than ten (ADR 0050).
   lateMinutes    Int?            @map("late_minutes")
-  /// Not opened an hour after its start (the attendance sweep).
+  /// Not opened an hour after it was due (the attendance sweep).
   absentAt       DateTime?       @map("absent_at") @db.Timestamptz(3)
   /// When a swap last gave it to its guard.
   swappedAt      DateTime?       @map("swapped_at") @db.Timestamptz(3)

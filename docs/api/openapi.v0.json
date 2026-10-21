@@ -10910,7 +10910,7 @@
       "DailyCountsView": {
         "properties": {
           "absent": {
-            "description": "Of the slots, not opened an hour after the start.",
+            "description": "Of the slots, not opened an hour after they were due.",
             "type": "number"
           },
           "contractorWorkers": {
@@ -18153,7 +18153,7 @@
       "GuardAttendanceView": {
         "properties": {
           "absent": {
-            "description": "Of them, not opened an hour after the start.",
+            "description": "Of them, not opened an hour after they were due.",
             "type": "number"
           },
           "filled": {
@@ -24429,7 +24429,7 @@
       "MySlotView": {
         "properties": {
           "absentAt": {
-            "description": "Not opened an hour after its start.",
+            "description": "Not opened an hour after it was due.",
             "format": "date-time",
             "nullable": true,
             "type": "string"
@@ -24448,11 +24448,11 @@
             "type": "string"
           },
           "late": {
-            "description": "Opened more than ten minutes after the start.",
+            "description": "Opened more than ten minutes after it was due.",
             "type": "boolean"
           },
           "lateMinutes": {
-            "description": "Minutes after the start the shift opened; null until it did.",
+            "description": "Minutes after the slot was due (its start, or when it was made if later) the shift opened; null until it did.",
             "nullable": true,
             "type": "number"
           },
@@ -35774,7 +35774,7 @@
       "RosterSlotView": {
         "properties": {
           "absentAt": {
-            "description": "Not opened an hour after its start.",
+            "description": "Not opened an hour after it was due.",
             "format": "date-time",
             "nullable": true,
             "type": "string"
@@ -35796,11 +35796,11 @@
             "type": "string"
           },
           "late": {
-            "description": "Opened more than ten minutes after the start.",
+            "description": "Opened more than ten minutes after it was due.",
             "type": "boolean"
           },
           "lateMinutes": {
-            "description": "Minutes after the start the shift opened; null until it did.",
+            "description": "Minutes after the slot was due (its start, or when it was made if later) the shift opened; null until it did.",
             "nullable": true,
             "type": "number"
           },

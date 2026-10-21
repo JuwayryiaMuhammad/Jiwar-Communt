@@ -18938,7 +18938,7 @@ export interface components {
             rows: components["schemas"]["CashierRowView"][];
         };
         DailyCountsView: {
-            /** @description Of the slots, not opened an hour after the start. */
+            /** @description Of the slots, not opened an hour after they were due. */
             absent: number;
             /** @description Contractor workers let in at this gate against a works permit (ADR 0049); null for a zone. Never in `visitors`. */
             contractorWorkers: number | null;
@@ -21089,7 +21089,7 @@ export interface components {
             permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "polls_vote";
         };
         GuardAttendanceView: {
-            /** @description Of them, not opened an hour after the start. */
+            /** @description Of them, not opened an hour after they were due. */
             absent: number;
             /** @description Of them, filled by a shift. */
             filled: number;
@@ -23069,7 +23069,7 @@ export interface components {
         MySlotView: {
             /**
              * Format: date-time
-             * @description Not opened an hour after its start.
+             * @description Not opened an hour after it was due.
              */
             absentAt: string | null;
             /** @description From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it. */
@@ -23078,9 +23078,9 @@ export interface components {
             endsAt: string;
             /** Format: uuid */
             id: string;
-            /** @description Opened more than ten minutes after the start. */
+            /** @description Opened more than ten minutes after it was due. */
             late: boolean;
-            /** @description Minutes after the start the shift opened; null until it did. */
+            /** @description Minutes after the slot was due (its start, or when it was made if later) the shift opened; null until it did. */
             lateMinutes: number | null;
             post: components["schemas"]["PostView"];
             shift: components["schemas"]["SlotShiftView"] | null;
@@ -26648,7 +26648,7 @@ export interface components {
         RosterSlotView: {
             /**
              * Format: date-time
-             * @description Not opened an hour after its start.
+             * @description Not opened an hour after it was due.
              */
             absentAt: string | null;
             /** @description From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it. */
@@ -26658,9 +26658,9 @@ export interface components {
             guard: components["schemas"]["AccountRefView"];
             /** Format: uuid */
             id: string;
-            /** @description Opened more than ten minutes after the start. */
+            /** @description Opened more than ten minutes after it was due. */
             late: boolean;
-            /** @description Minutes after the start the shift opened; null until it did. */
+            /** @description Minutes after the slot was due (its start, or when it was made if later) the shift opened; null until it did. */
             lateMinutes: number | null;
             post: components["schemas"]["PostView"];
             shift: components["schemas"]["SlotShiftView"] | null;

@@ -17,7 +17,9 @@ import { shiftPostOf, type ShiftPost } from '../shifts/shifts.service';
 import { dbNow } from '../db-clock';
 import {
   dayCount,
+  fills,
   HORIZON_DAYS,
+  lateMinutesOf,
   MAX_RANGE_DAYS,
   occurrences,
   overlaps,
@@ -263,10 +265,12 @@ export class RosterCore {
   }
 
   /**
-   * Makes a live template's slots that start after `now`, up to
-   * HORIZON_DAYS ahead, each once (a unique index backs it). The caller
-   * holds the guard's lock. A slot that would overlap one of the guard's
-   * (a swap gave them one meanwhile) is not made. Returns how many were.
+   * Makes a live template's slots that have not ended by `now`, up to
+   * HORIZON_DAYS ahead, each once (a unique index backs it). One already
+   * started (a template made during its window) is due from `now`, and the
+   * guard's open shift at its post fills it. The caller holds the guard's
+   * lock. A slot that would overlap one of the guard's (a swap gave them
+   * one meanwhile) is not made. Returns how many were.
    */
   async materialize(
     tx: TenantTxClient,
@@ -276,12 +280,13 @@ export class RosterCore {
   ): Promise<number> {
     if (t.endedAt) return 0;
     const today = localDate(now, timeZone);
+    // From yesterday: a night window that started then runs on today.
     const coming = this.occurrencesOf(
       t,
-      today,
+      addDays(today, -1),
       addDays(today, HORIZON_DAYS),
       timeZone,
-    ).filter((o) => o.startsAt > now);
+    ).filter((o) => o.endsAt > now);
     if (!coming.length) return 0;
     const made = new Set(
       (
@@ -306,7 +311,7 @@ export class RosterCore {
         },
       });
       if (clash) continue;
-      await tx.guardRosterSlot.create({
+      const slot = await tx.guardRosterSlot.create({
         data: {
           id: newId(),
           tenantId: t.tenantId,
@@ -316,11 +321,49 @@ export class RosterCore {
           startsAt: o.startsAt,
           endsAt: o.endsAt,
           templateId: t.id,
+          // By the caller's clock: when it is due counts from here.
+          createdAt: now,
         },
       });
+      await this.fillFromOpenShift(tx, slot, now);
       count++;
     }
     return count;
+  }
+
+  /**
+   * A slot just made, filled by its guard's shift already open at its post
+   * when a shift opening `now` would fill it: that shift opened before the
+   * slot existed, so its start hook could not. It opened before the slot
+   * was due, so it is not late. The shift is read FOR SHARE while open: an
+   * end holding it finished first (and there is nothing to fill), or waits
+   * and records this slot. The caller holds the guard's lock (the start
+   * hook's order: account, guard, then the shift).
+   */
+  async fillFromOpenShift(
+    tx: TenantTxClient,
+    slot: GuardRosterSlot,
+    now: Date,
+  ): Promise<GuardRosterSlot> {
+    if (!fills(slot, now)) return slot;
+    const [shift] = await tx.$queryRaw<{ id: string; started_at: Date }[]>`
+      SELECT id, started_at FROM guard_shifts
+       WHERE guard_account_id = ${slot.guardAccountId}::uuid
+         AND ended_at IS NULL
+         AND gate_id IS NOT DISTINCT FROM ${slot.gateId}::uuid
+         AND place_id IS NOT DISTINCT FROM ${slot.placeId}::uuid
+       FOR SHARE`;
+    if (!shift) return slot;
+    // It fills one slot at most (a unique index backs it).
+    if (await tx.guardRosterSlot.count({ where: { shiftId: shift.id } }))
+      return slot;
+    return tx.guardRosterSlot.update({
+      where: { id: slot.id },
+      data: {
+        shiftId: shift.id,
+        lateMinutes: lateMinutesOf(slot, shift.started_at),
+      },
+    });
   }
 
   /**

@@ -69,6 +69,7 @@ Kept by `guard_roster.manage`:
 
 How templates become slots:
 - A template is made into slots 28 days ahead as it is created, and kept so by an hourly sweep.
+- Every slot not yet ended is made. A template made during one of its windows (06:00–14:00, made at 10:00 on its first day) makes that window's slot, already under way: it keeps its own times and is **due from when it was made**. When the guard already has a slot then (a template ended and made again mid-shift), that window keeps it: the new template is not refused for it, and makes its slots from the next window on.
 - Each slot is made once: a unique index covers cancelled ones too, so the sweep never brings back what the management cancelled.
 - Ending a template cancels its slots to come that nobody opened and no swap gave away (`template_ended`).
 - A single slot nobody opened is cancelled with a `guardSlotCancel` code.
@@ -79,10 +80,12 @@ How templates become slots:
 - There is no btree_gist in the repo, and an EXCLUDE constraint would not see the slots still to come.
 
 **Attendance**, recorded only:
-- **Opening a shift fills a slot.** The start hook, under the guard's lock, takes FOR UPDATE the guard's earliest unfilled slot at that post whose window takes the start (from 30 minutes before it until its end). It records how many minutes after the start it opened. **Late** is more than 10, and is audited.
+- **A slot is due** from its start, or from when it was made if later. Lateness and absence count from there.
+- **Opening a shift fills a slot.** The start hook, under the guard's lock, takes FOR UPDATE the guard's earliest unfilled slot at that post whose window takes the start (from 30 minutes before it until its end). It records how many minutes after the slot was due it opened. **Late** is more than 10, and is audited.
+- **A shift already open fills a slot made after it**, at the slot's post, when a shift opening then would (from 30 minutes before the slot's start until its end), on time. Its start hook could not: the slot did not exist. The maker holds the guard's lock and reads the shift FOR SHARE while open, so an end either finished first (nothing to fill) or waits and records the slot.
 - **A shift with no such slot is unscheduled.** At its end it records its length as `unscheduled_minutes`, **never overtime**.
 - **Overtime** is only for a shift that filled a slot: the minutes worked beyond the slot's length, recorded at every end.
-- **Absent:** a sweep every minute marks, once, a slot nobody opened an hour after its start at a post still in service.
+- **Absent:** a sweep every minute marks, once, a slot nobody opened an hour after it was due at a post still in service.
   - It takes the slot with SKIP LOCKED and judges it again under the lock: an opening holding it wins.
   - The roster's keepers are told: `guard_shift.absent_unmanned` (critical) when nobody else is on shift at that post, `guard_shift.absent` (normal) otherwise.
   - A later opening still fills the slot: both facts stay.

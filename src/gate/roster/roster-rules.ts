@@ -92,9 +92,19 @@ export function minutesBetween(a: Date, b: Date): number {
   return Math.max(0, Math.floor((b.getTime() - a.getTime()) / MINUTE));
 }
 
-/** Minutes after the slot's start the shift opened (0 when on time or early). */
-export const lateMinutesOf = (slotStart: Date, openedAt: Date) =>
-  minutesBetween(slotStart, openedAt);
+/**
+ * When a slot is due: its start, or when it was made if later (a template
+ * made during one of its windows makes that window's slot, already
+ * started). Lateness and absence count from here.
+ */
+export const dueFrom = (slot: { startsAt: Date; createdAt: Date }) =>
+  slot.createdAt > slot.startsAt ? slot.createdAt : slot.startsAt;
+
+/** Minutes after the slot was due the shift opened (0 when on time or early). */
+export const lateMinutesOf = (
+  slot: { startsAt: Date; createdAt: Date },
+  openedAt: Date,
+) => minutesBetween(dueFrom(slot), openedAt);
 
 export const isLate = (lateMinutes: number | null) =>
   lateMinutes !== null && lateMinutes > LATE_AFTER_MINUTES;

@@ -174,7 +174,9 @@ export class RosterService implements OnModuleInit {
   /**
    * A new template overlaps nothing of its guard's: no other live template
    * on the weekly timeline (when their days meet), and none of the guard's
-   * slots to come falls on one of its own.
+   * slots not yet ended falls on one it will make. One already started is
+   * not a clash: `materialize` leaves it to the slot the guard has (a
+   * template ended and made again mid-shift keeps the old one's today).
    */
   private async assertTemplateFree(
     tx: TenantTxClient,
@@ -345,7 +347,11 @@ export class RosterService implements OnModuleInit {
   // Slots
   // --------------------------------------------------------------------------
 
-  /** One slot, in the future, a day at most. `Idempotency-Key`. */
+  /**
+   * One slot, in the future, a day at most; the guard's shift already open
+   * at its post fills it when it starts within the half hour.
+   * `Idempotency-Key`.
+   */
   createSlot(input: {
     guardId: string;
     gateId?: string;
@@ -386,17 +392,22 @@ export class RosterService implements OnModuleInit {
       const id = newId();
       await this.idempotency.claim(tx, { type: ROSTER_SLOT_RESOURCE, id });
       await this.core.assertFree(tx, input.guardId, input, tz);
-      const slot = await tx.guardRosterSlot.create({
-        data: {
-          id,
-          tenantId: this.ctx.txTenantId,
-          guardAccountId: input.guardId,
-          ...post,
-          startsAt: input.startsAt,
-          endsAt: input.endsAt,
-          createdById: this.ctx.accountId,
-        },
-      });
+      const slot = await this.core.fillFromOpenShift(
+        tx,
+        await tx.guardRosterSlot.create({
+          data: {
+            id,
+            tenantId: this.ctx.txTenantId,
+            guardAccountId: input.guardId,
+            ...post,
+            startsAt: input.startsAt,
+            endsAt: input.endsAt,
+            createdById: this.ctx.accountId,
+            createdAt: now,
+          },
+        }),
+        now,
+      );
       await this.audit.record(tx, {
         action: 'guard_roster.slot_created',
         targetId: id,

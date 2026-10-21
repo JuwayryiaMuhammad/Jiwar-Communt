@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { REASON_CODES } from '../../core/common/reasons';
 import {
   dayCount,
+  dueFrom,
   endMinutes,
   fills,
   isLate,
@@ -85,13 +86,26 @@ describe('the roster’s rules (ADR 0050)', () => {
   });
 
   it('late is more than ten minutes after the start', () => {
-    const start = at('2026-11-05T06:00:00Z');
-    expect(lateMinutesOf(start, at('2026-11-05T05:50:00Z'))).toBe(0);
-    expect(lateMinutesOf(start, at('2026-11-05T06:10:59Z'))).toBe(10);
+    const slot = {
+      startsAt: at('2026-11-05T06:00:00Z'),
+      createdAt: at('2026-11-01T09:00:00Z'),
+    };
+    expect(lateMinutesOf(slot, at('2026-11-05T05:50:00Z'))).toBe(0);
+    expect(lateMinutesOf(slot, at('2026-11-05T06:10:59Z'))).toBe(10);
     expect(isLate(10)).toBe(false);
-    expect(lateMinutesOf(start, at('2026-11-05T06:11:00Z'))).toBe(11);
+    expect(lateMinutesOf(slot, at('2026-11-05T06:11:00Z'))).toBe(11);
     expect(isLate(11)).toBe(true);
     expect(isLate(null)).toBe(false);
+  });
+
+  it('a slot made after its start is due from when it was made', () => {
+    const slot = {
+      startsAt: at('2026-11-05T06:00:00Z'),
+      createdAt: at('2026-11-05T11:52:00Z'),
+    };
+    expect(dueFrom(slot)).toEqual(slot.createdAt);
+    expect(lateMinutesOf(slot, at('2026-11-05T11:30:00Z'))).toBe(0);
+    expect(lateMinutesOf(slot, at('2026-11-05T12:03:00Z'))).toBe(11);
   });
 
   it('a filled slot records overtime only; an unscheduled shift its length, never overtime', () => {

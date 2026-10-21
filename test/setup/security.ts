@@ -159,7 +159,8 @@ export function securityHelpers(h: HttpHarness) {
 
   /**
    * A slot row written as it would have been in the past (the API makes
-   * future slots only): `startsAgo` minutes before now, `lasts` long.
+   * future slots only): `startsAgo` minutes before now, `lasts` long, made
+   * a day before its start (`extra.createdAt` to make it later).
    */
   function pastSlot(
     c: Compound,
@@ -181,6 +182,8 @@ export function securityHelpers(h: HttpHarness) {
           startsAt,
           endsAt: new Date(startsAt.getTime() + lasts * MINUTE),
           createdById: c.managerId,
+          // eslint-disable-next-line no-restricted-syntax -- any instant before the start: only its order with the start counts
+          createdAt: new Date(startsAt.getTime() - 24 * 60 * MINUTE),
           ...extra,
         },
       }),

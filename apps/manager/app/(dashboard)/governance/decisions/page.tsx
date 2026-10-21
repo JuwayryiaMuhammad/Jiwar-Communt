@@ -29,7 +29,7 @@ function Publish({ onClose }: { onClose: () => void }) {
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
   const [kind, setKind] = useState<'decision' | 'minutes'>('decision');
-  const [decidedOn, setDecidedOn] = useState(new Date().toISOString().slice(0, 10));
+  const [decidedOn, setDecidedOn] = useState(() => new Date().toLocaleDateString('en-CA'));
   const [titleEn, setTitleEn] = useState('');
   const [bodyEn, setBodyEn] = useState('');
   const [pdf, setPdf] = useState<string | null>(null);

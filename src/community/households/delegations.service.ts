@@ -23,6 +23,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { Outbox } from '../../core/mail/outbox';
+import { DEFAULT_TIME_ZONE } from '../../core/preferences/delivery-preferences';
 import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
 import {
@@ -391,6 +392,10 @@ export class DelegationsService implements OnModuleInit {
       where: { id: d.tenantId },
       select: { name: true },
     });
+    const settings = await tx.tenantSettings.findUnique({
+      where: { tenantId: d.tenantId },
+      select: { timezone: true },
+    });
     const params: StoredDelegationEmail = {
       event,
       compoundName: tenant.name,
@@ -399,6 +404,7 @@ export class DelegationsService implements OnModuleInit {
       delegateName: delegate.fullName ?? '',
       scopes: d.scopes,
       expiresAt: d.expiresAt.toISOString(),
+      timeZone: settings?.timezone ?? DEFAULT_TIME_ZONE,
     };
     for (const to of [delegator, delegate]) {
       if (!to.email) {

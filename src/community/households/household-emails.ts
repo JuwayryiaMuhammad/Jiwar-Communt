@@ -1,4 +1,6 @@
 import type { Locale } from '../../core/common/i18n/locale';
+import { localDate } from '../../core/common/slots/day-slots';
+import { DEFAULT_TIME_ZONE } from '../../core/preferences/delivery-preferences';
 import {
   emailPage,
   escapeHtml,
@@ -108,6 +110,8 @@ export interface DelegationEmail {
   delegateName: string;
   scopes: ('household' | 'workers')[];
   expiresAt: Date;
+  /** The compound's zone, which dates the end. Cairo for older rows. */
+  timeZone?: string;
 }
 
 const SCOPES = {
@@ -142,7 +146,7 @@ export function renderDelegationEmail(
   locale: Locale,
   e: DelegationEmail,
 ): RenderedEmail {
-  const date = e.expiresAt.toISOString().slice(0, 10);
+  const date = localDate(e.expiresAt, e.timeZone ?? DEFAULT_TIME_ZONE);
   const scopes = e.scopes.map((s) => SCOPES[locale][s]);
   let subject: string;
   let lead: string;

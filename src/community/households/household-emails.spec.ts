@@ -70,6 +70,17 @@ describe('household emails', () => {
     expect(created.text).toContain('never covers money');
     expect(created.html).toContain('Primary &lt;P&gt;');
 
+    // The end is dated in the compound's zone: Cairo's midnight is still
+    // the 28th in UTC.
+    const midnight = renderDelegationEmail('en', {
+      ...base,
+      expiresAt: new Date('2027-02-28T22:00:00Z'),
+      timeZone: 'Africa/Cairo',
+      event: { kind: 'created' },
+    });
+    expect(midnight.text).toContain('2027-03-01');
+    expect(midnight.text).not.toContain('2027-02-28');
+
     const ended = renderDelegationEmail('ar', {
       ...base,
       event: { kind: 'ended', reason: 'primary_changed' },

@@ -15,7 +15,8 @@ type Code = Schema<'AccessCodeView'>;
 type Day = Schema<'AttendanceDayView'>;
 type Open = 'birth' | 'ban' | 'unban' | 'underage' | 'incident' | 'reissue' | 'attendance' | null;
 
-const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+/** The browser's local day, `YYYY-MM-DD` (not UTC's: before 03:00 in Cairo that is yesterday). */
+const isoDay = (d: Date) => d.toLocaleDateString('en-CA');
 
 function Attendance({ engagementId }: { engagementId: string }) {
   const [from, setFrom] = useState(() => isoDay(new Date(Date.now() - 29 * 86_400_000)));

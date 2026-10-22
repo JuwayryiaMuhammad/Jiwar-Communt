@@ -42,6 +42,7 @@ jest-results.json
 .env.test.local
 .env.production.local
 .env.local
+.env.bak.*
 
 # temp directory
 .temp
@@ -63,3 +64,6 @@ node_modules/
 .next/
 next-env.d.ts
 *.tsbuildinfo
+
+# Local env backups (secrets)
+.env.bak.*

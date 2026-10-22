@@ -14,7 +14,15 @@ const ROUTES: ReadonlySet<string> = new Set([
   'registrations/start',
   'registrations/complete',
   'public/receipts/lookup',
+  'public/partner-desk/lookup',
 ]);
+
+/**
+ * A partner's desk actions (ADR 0060): the request's id is in the path, so
+ * these are matched whole — one id, one of five verbs, nothing else.
+ */
+const DESK_ACTION =
+  /^public\/partner-desk\/requests\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(accept|decline|propose|done|cancel)$/;
 
 /** The largest body is the registration form; this is far above it. */
 export const MAX_BODY_BYTES = 16 * 1024;
@@ -22,7 +30,7 @@ export const MAX_BODY_BYTES = 16 * 1024;
 /** The backend path for the segments after /api, or null when not allowed. */
 export function backendPath(segments: readonly string[]): string | null {
   const joined = segments.join('/');
-  return ROUTES.has(joined) ? `/api/v1/${joined}` : null;
+  return ROUTES.has(joined) || DESK_ACTION.test(joined) ? `/api/v1/${joined}` : null;
 }
 
 export function isJson(contentType: string | null): boolean {

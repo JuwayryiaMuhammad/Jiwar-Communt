@@ -323,3 +323,17 @@ a {
   border: 1px dashed var(--line);
   border-radius: var(--radius);
 }
+
+/* A partner's desk (ADR 0060): one card per request, its answers in a row. */
+.card--inner {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-block: 1rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

@@ -35000,6 +35000,72 @@
         ],
         "type": "object"
       },
+      "ServiceStandingView": {
+        "properties": {
+          "appealUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why, a code: `no_shows`.",
+            "type": "string"
+          },
+          "restore": {
+            "description": "How it is restored: it ends by itself at `until`; an appeal to the board while `appealUntil` has not passed; the management.",
+            "items": {
+              "enum": [
+                "wait_until",
+                "appeal_board",
+                "contact_management"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "service": {
+            "description": "What is suspended: `bookings` (the facilities).",
+            "type": "string"
+          },
+          "since": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "until": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "service",
+          "reason",
+          "since",
+          "until",
+          "restore",
+          "appealUntil"
+        ],
+        "type": "object"
+      },
+      "ServiceStandingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ServiceStandingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ServiceVehicleFacilityView": {
         "properties": {
           "id": {
@@ -65817,6 +65883,44 @@
         "tags": [
           "me"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/units/{unitId}/service-standing": {
+      "get": {
+        "operationId": "MeUnitsController_standing",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStandingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What services my unit is suspended from, and how to restore them",
+        "tags": [
+          "me"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

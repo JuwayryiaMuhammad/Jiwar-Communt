@@ -51,6 +51,20 @@ export const ME_ROUTES: Row[] = [
     },
     invalid: 'none',
   },
+  // The services the unit is suspended from (ADR 0058).
+  {
+    method: 'GET',
+    path: '/me/units/{unitId}/service-standing',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'none',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
   {
     method: 'GET',
     path: '/me/units/{unitId}/permissions',

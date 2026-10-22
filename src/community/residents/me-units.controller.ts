@@ -1,6 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
-import { ApiArea } from '../../core/common/http/decorators';
+import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   bounded,
   ListOf,
@@ -16,6 +16,7 @@ import {
   MyDelegationView,
   MyPermissionsView,
   MyUnitView,
+  ServiceStandingView,
 } from './views/me-units.views';
 
 /** The caller's units and what they may do on each (any tenant account). */
@@ -50,6 +51,24 @@ export class MeUnitsController {
     @Param('unitId', parseId('unitId')) unitId: string,
   ): Promise<CapabilitiesView> {
     return CapabilitiesView.from(await this.capabilities.mine(unitId));
+  }
+
+  /**
+   * The services the unit is suspended from (ADR 0058), why, until when,
+   * and how each is restored. Empty when none is.
+   */
+  @Get('units/:unitId/service-standing')
+  @ApiOperation({
+    summary: 'What services my unit is suspended from, and how to restore them',
+  })
+  @NoStore()
+  @ApiOkResponse({ type: ListOf(ServiceStandingView) })
+  async standing(
+    @Param('unitId', parseId('unitId')) unitId: string,
+  ): Promise<ListResponse<ServiceStandingView>> {
+    return bounded(await this.capabilities.standing(unitId), (s) =>
+      ServiceStandingView.from(s),
+    );
   }
 
   /** A household member's own permissions on the unit, and the baseline. */

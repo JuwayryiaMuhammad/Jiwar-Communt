@@ -1692,6 +1692,35 @@
           }
         },
         {
+          "name": "What services my unit is suspended from, and how to restore them",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "units",
+                ":unitId",
+                "service-standing"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/units/:unitId/service-standing",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the maintenance visits coming to my unit",
           "request": {
             "description": "**Responses:** 200",

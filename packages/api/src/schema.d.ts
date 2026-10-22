@@ -6199,6 +6199,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/units/{unitId}/service-standing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What services my unit is suspended from, and how to restore them */
+        get: operations["MeUnitsController_standing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/units/{unitId}/visits": {
         parameters: {
             query?: never;
@@ -25654,6 +25671,24 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        ServiceStandingView: {
+            /** Format: date-time */
+            appealUntil: string | null;
+            /** @description Why, a code: `no_shows`. */
+            reason: string;
+            /** @description How it is restored: it ends by itself at `until`; an appeal to the board while `appealUntil` has not passed; the management. */
+            restore: ("wait_until" | "appeal_board" | "contact_management")[];
+            /** @description What is suspended: `bookings` (the facilities). */
+            service: string;
+            /** Format: date-time */
+            since: string;
+            /** Format: date-time */
+            until: string | null;
+        };
+        ServiceStandingViewList: {
+            data: components["schemas"]["ServiceStandingView"][];
+            nextCursor: string | null;
+        };
         ServiceVehicleFacilityView: {
             /** Format: uuid */
             id: string;
@@ -38773,6 +38808,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyPermissionsView"];
+                };
+            };
+        };
+    };
+    MeUnitsController_standing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceStandingViewList"];
                 };
             };
         };

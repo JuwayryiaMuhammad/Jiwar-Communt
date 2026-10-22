@@ -1,3 +1,4 @@
+import type { ServiceStanding } from '../../../core/resident-items/resident-items';
 import { ApiProperty } from '@nestjs/swagger';
 import { DelegationScope, UnitType } from '@prisma/client';
 import { AccountRefView, accountRef } from '../../../core/common/http/personal';
@@ -163,6 +164,41 @@ export class MyDelegationView {
       counterpart: accountRef(d.counterpart),
       scopes: d.scopes,
       expiresAt: d.expiresAt,
+    };
+  }
+}
+
+/** A service the unit is suspended from (ADR 0058). */
+export class ServiceStandingView {
+  @ApiProperty({
+    type: String,
+    description: 'What is suspended: `bookings` (the facilities).',
+  })
+  service: string;
+  @ApiProperty({ type: String, description: 'Why, a code: `no_shows`.' })
+  reason: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  since: Date;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  until: Date | null;
+  @ApiProperty({
+    enum: ['wait_until', 'appeal_board', 'contact_management'],
+    isArray: true,
+    description:
+      'How it is restored: it ends by itself at `until`; an appeal to the board while `appealUntil` has not passed; the management.',
+  })
+  restore: string[];
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  appealUntil: Date | null;
+
+  static from(s: ServiceStanding): ServiceStandingView {
+    return {
+      service: s.service,
+      reason: s.reason,
+      since: s.since,
+      until: s.until,
+      restore: [...s.restore],
+      appealUntil: s.appealUntil,
     };
   }
 }

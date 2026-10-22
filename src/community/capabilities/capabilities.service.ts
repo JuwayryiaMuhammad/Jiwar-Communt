@@ -1,3 +1,8 @@
+import {
+  ResidentItems,
+  type ServiceStanding,
+} from '../../core/resident-items/resident-items';
+import { dbNow } from '../db-clock';
 import { Injectable } from '@nestjs/common';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode } from '../../core/common/errors';
@@ -28,6 +33,7 @@ export class CapabilitiesService {
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
+    private readonly items: ResidentItems,
   ) {}
 
   /**
@@ -43,6 +49,27 @@ export class CapabilitiesService {
         throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
       }
       return capabilitiesFor(subject, await this.unitState(tx, unitId));
+    });
+  }
+
+  /**
+   * The services the unit is suspended from now (ADR 0058), for whoever
+   * has a place on it (`unitView`); anyone else UNIT_NOT_FOUND. Each
+   * domain registers its own (ResidentItems.registerStanding).
+   */
+  standing(unitId: string): Promise<ServiceStanding[]> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const subject = await this.subject(tx, this.ctx.accountId, unitId);
+      if (
+        !subject ||
+        !capabilitiesFor(subject, await this.unitState(tx, unitId)).unitView
+      )
+        throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+      const now = await dbNow(tx);
+      const out: ServiceStanding[] = [];
+      for (const read of this.items.standingReaders())
+        out.push(...(await read(tx, unitId, now)));
+      return out.sort((a, b) => a.service.localeCompare(b.service));
     });
   }
 

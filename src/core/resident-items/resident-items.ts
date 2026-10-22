@@ -149,6 +149,30 @@ export type HoldReader = (
 ) => Promise<HeldItem | null>;
 
 /**
+ * A service the unit is suspended from (ADR 0058), why, until when, and how
+ * it is restored: wait until the end, or appeal to the board while it may.
+ */
+export interface ServiceStanding {
+  /** What is suspended: `bookings` (ADR 0044). */
+  service: string;
+  /** Why, a code: `no_shows`. */
+  reason: string;
+  since: Date;
+  /** Null: until someone lifts it. */
+  until: Date | null;
+  restore: ('wait_until' | 'appeal_board' | 'contact_management')[];
+  /** The last instant an appeal to the board may be lodged, when it may. */
+  appealUntil: Date | null;
+}
+
+/** The unit's suspensions of one service in force at `now`. */
+export type StandingReader = (
+  tx: TenantTxClient,
+  unitId: string,
+  now: Date,
+) => Promise<ServiceStanding[]>;
+
+/**
  * The registry of resident item sources (ADR 0058), modelled on
  * `ExportSections` and `BoardMatters`: each domain registers its own at
  * startup, so core lists what finance and governance hold without anyone
@@ -159,6 +183,18 @@ export type HoldReader = (
 export class ResidentItems {
   private readonly sources = new Map<ResidentItemType, ResidentItemSource>();
   private readonly holds = new Map<HoldType, HoldReader>();
+  private readonly standings = new Map<string, StandingReader>();
+
+  /** A service's suspensions (ADR 0058): today facilities' bookings. */
+  registerStanding(service: string, reader: StandingReader): void {
+    if (this.standings.has(service))
+      throw new Error(`Standing reader ${service} registered twice`);
+    this.standings.set(service, reader);
+  }
+
+  standingReaders(): StandingReader[] {
+    return [...this.standings.values()];
+  }
 
   registerHold(type: HoldType, reader: HoldReader): void {
     if (this.holds.has(type))

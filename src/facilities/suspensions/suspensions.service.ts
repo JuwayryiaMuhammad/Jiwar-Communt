@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { ResidentItems } from '../../core/resident-items/resident-items';
+import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Booking, BookingSuspension } from '@prisma/client';
 import { CommunityFacilitiesPort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
@@ -32,6 +33,9 @@ export const suspensionNotFound = () =>
 export const inForce = (s: BookingSuspension, now: Date) =>
   s.liftedAt === null && s.endsAt.getTime() > now.getTime();
 
+/** The board hears a suspension's appeal within this many days of its start (ADR 0055). */
+export const BOARD_APPEAL_DAYS = 15;
+
 /**
  * A unit's suspension from booking (ADR 0044). The no-show that brings
  * the unit's no-shows to the compound's threshold within its window —
@@ -43,7 +47,7 @@ export const inForce = (s: BookingSuspension, now: Date) =>
  * with a reason code. The unit's people see it with its end.
  */
 @Injectable()
-export class SuspensionsService {
+export class SuspensionsService implements OnModuleInit {
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
@@ -52,7 +56,34 @@ export class SuspensionsService {
     private readonly access: FacilitiesAccess,
     private readonly settings: FacilitySettingsService,
     private readonly notices: BookingNotices,
+    private readonly items: ResidentItems,
   ) {}
+
+  /**
+   * The unit's standing with its bookings (ADR 0058): a suspension in force
+   * ends by itself, and may go to the board within 15 days of its start
+   * while it was not appealed (ADR 0055).
+   */
+  onModuleInit(): void {
+    this.items.registerStanding('bookings', async (tx, unitId, now) => {
+      const s = await this.current(tx, unitId, now);
+      if (!s) return [];
+      const appealUntil = new Date(
+        s.startsAt.getTime() + BOARD_APPEAL_DAYS * 86_400_000,
+      );
+      const appealable = !s.boardAppealAt && now < appealUntil;
+      return [
+        {
+          service: 'bookings',
+          reason: 'no_shows',
+          since: s.startsAt,
+          until: s.endsAt,
+          restore: appealable ? ['wait_until', 'appeal_board'] : ['wait_until'],
+          appealUntil: appealable ? appealUntil : null,
+        },
+      ];
+    });
+  }
 
   /** The unit's suspension in force, if any; under the unit's lock to be sure of it. */
   current(

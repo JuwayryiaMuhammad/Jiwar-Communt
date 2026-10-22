@@ -11,5 +11,7 @@ export function residentItemCalls(
   return {
     'GET /me/appeals': () => owner('/me/appeals'),
     'GET /me/search': () => owner('/me/search', { q: 'MT-1' }),
+    'GET /me/units/{unitId}/service-standing': () =>
+      owner(`/me/units/${world().a.homeUnitId}/service-standing`),
   };
 }

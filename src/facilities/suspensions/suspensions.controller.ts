@@ -17,7 +17,7 @@ import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { LiftSuspensionDto, SuspensionsQueryDto } from './dto/suspensions.dto';
-import { SuspensionsService } from './suspensions.service';
+import { BOARD_APPEAL_DAYS, SuspensionsService } from './suspensions.service';
 import {
   BookingStandingView,
   BookingSuspensionNoticeView,
@@ -43,7 +43,9 @@ export class BookingStandingController {
     const { suspension, now } = await this.suspensions.standing(unitId);
     const until =
       suspension && !suspension.boardAppealAt
-        ? new Date(suspension.startsAt.getTime() + 15 * 86_400_000)
+        ? new Date(
+            suspension.startsAt.getTime() + BOARD_APPEAL_DAYS * 86_400_000,
+          )
         : null;
     return {
       suspension: suspension && BookingSuspensionNoticeView.from(suspension),

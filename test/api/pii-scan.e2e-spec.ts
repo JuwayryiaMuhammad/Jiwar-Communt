@@ -1385,6 +1385,8 @@ describe('API v0 — PII leak scan', () => {
       '/me/parcels/{id}': parcel.id,
       '/parcels/{id}': parcel.id,
       '/me/units/{unitId}/capabilities': unit.id,
+      // ADR 0058.
+      '/me/units/{unitId}/service-standing': unit.id,
       '/me/units/{unitId}/permissions': unit.id,
       '/residents/{id}': primary.id,
       '/accounts/{id}': primary.id,

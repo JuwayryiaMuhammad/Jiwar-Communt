@@ -1335,6 +1335,8 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0058: the quotes.
       '/tickets/{id}/quotes': ticket.id,
       '/maintenance/tickets/{id}/quotes': ticket.id,
+      // ADR 0058: a formal notice (none here: not found).
+      '/me/notices/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000058e2',
       // ADR 0058: the resident's timeline.
       '/tickets/{id}/timeline': ticket.id,
       '/technician/tickets/{id}/messages': ticket.id,

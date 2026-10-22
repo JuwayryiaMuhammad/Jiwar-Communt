@@ -957,6 +957,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   credit_notes_reason: {},
   // A compensation's reason (ADR 0058): the nullable column only under
   // IS [NOT] NULL, and its list tested only on a value.
+  // Formal notices (ADR 0058).
+  formal_notice_counters_last_number_nonnegative: {},
+  formal_notices_type_known: {},
+  formal_notices_subject_known: {},
+  formal_notices_number_positive: {},
+  formal_notices_amount_positive: {},
+  formal_notice_recipients_proofs_after_delivery: {
+    guarded:
+      'emailed_at and read_at IS NULL are tested first; each comparison runs only on a value, against the NOT NULL delivered_at',
+  },
+  finance_settings_late_notice_cure_days: {},
   credit_notes_compensation: {
     guarded:
       'compensation_reason IS NULL is compared as a boolean, and tested first before its list',

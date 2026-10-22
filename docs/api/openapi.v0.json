@@ -15055,6 +15055,12 @@
         ],
         "type": "object"
       },
+      "FormalNoticeType": {
+        "enum": [
+          "late_payment"
+        ],
+        "type": "string"
+      },
       "FoundItemClaimView": {
         "properties": {
           "name": {
@@ -23566,6 +23572,103 @@
         ],
         "type": "object"
       },
+      "MyNoticeView": {
+        "properties": {
+          "amount": {
+            "description": "EGP: what was still owed when it was issued.",
+            "type": "string"
+          },
+          "deliveredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "emailedAt": {
+            "description": "When its email was sent; null while it was not.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "FN-000012",
+            "type": "string"
+          },
+          "readAt": {
+            "description": "The first opening (`GET /me/notices/{id}`).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectType": {
+            "description": "What it is about.",
+            "enum": [
+              "invoice"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FormalNoticeType"
+              }
+            ]
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "type",
+          "unitId",
+          "subjectType",
+          "subjectId",
+          "amount",
+          "dueOn",
+          "issuedAt",
+          "deliveredAt",
+          "emailedAt",
+          "readAt"
+        ],
+        "type": "object"
+      },
+      "MyNoticeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyNoticeView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MyParkingReportView": {
         "properties": {
           "createdAt": {
@@ -24684,6 +24787,35 @@
         ],
         "type": "object"
       },
+      "NoticeRecipientView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "deliveredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "emailedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "readAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "deliveredAt",
+          "emailedAt",
+          "readAt"
+        ],
+        "type": "object"
+      },
       "NoticeSentView": {
         "properties": {
           "id": {
@@ -24698,6 +24830,31 @@
         "required": [
           "id",
           "sentAt"
+        ],
+        "type": "object"
+      },
+      "NoticeSettingsDto": {
+        "properties": {
+          "lateNoticeCureDays": {
+            "description": "Days after an invoice’s due date before its formal late-payment notice (the cure period).",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lateNoticeCureDays"
+        ],
+        "type": "object"
+      },
+      "NoticeSettingsView": {
+        "properties": {
+          "lateNoticeCureDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "lateNoticeCureDays"
         ],
         "type": "object"
       },
@@ -31583,7 +31740,8 @@
           "board_appeal",
           "invoice",
           "booking",
-          "parcel"
+          "parcel",
+          "formal_notice"
         ],
         "type": "string"
       },
@@ -39817,6 +39975,75 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffIncidentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffLateNoticeView": {
+        "properties": {
+          "amount": {
+            "description": "EGP still owed at issue.",
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceId": {
+            "description": "The invoice.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "FN-000012",
+            "type": "string"
+          },
+          "recipients": {
+            "items": {
+              "$ref": "#/components/schemas/NoticeRecipientView"
+            },
+            "type": "array"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "invoiceId",
+          "amount",
+          "dueOn",
+          "issuedAt",
+          "recipients"
+        ],
+        "type": "object"
+      },
+      "StaffLateNoticeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffLateNoticeView"
             },
             "type": "array"
           },
@@ -64473,6 +64700,92 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/notices": {
+      "get": {
+        "operationId": "FormalNoticesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyNoticeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my formal notices",
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/notices/{id}": {
+      "get": {
+        "operationId": "FormalNoticesController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyNoticeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open one of my formal notices",
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/notification-preferences": {
       "get": {
         "operationId": "PreferencesController_mine",
@@ -73760,6 +74073,55 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/late-notices": {
+      "get": {
+        "operationId": "LateNoticesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffLateNoticeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the late-payment notices with their delivery and read proofs",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/ledger": {
       "get": {
         "description": "Every invoice, credit note, payment, refund, their reversals, credit applied and released, from the units’ side. Not double-entry.",
@@ -73952,6 +74314,70 @@
           "finance"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/notice-settings": {
+      "get": {
+        "operationId": "LateNoticesController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the cure period before a late-payment notice",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "LateNoticesController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticeSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the cure period before a late-payment notice",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },

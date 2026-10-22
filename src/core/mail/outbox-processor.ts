@@ -11,6 +11,7 @@ import {
   GlobalDbService,
   type ClaimedOutboxMessage,
 } from '../database/global-db.service';
+import { TenantTx } from '../database/tenant-tx.service';
 import { EmailTemplates } from './email-templates';
 import { Mailer } from './mailer';
 
@@ -78,6 +79,7 @@ export class OutboxProcessor
     private readonly globalDb: GlobalDbService,
     private readonly templates: EmailTemplates,
     private readonly mailer: Mailer,
+    private readonly tenantTx: TenantTx,
   ) {
     this.enabled = config.get('OUTBOX_ENABLED', { infer: true });
     this.pollMs = config.get('OUTBOX_POLL_MS', { infer: true });
@@ -217,11 +219,37 @@ export class OutboxProcessor
       });
       return 'retried';
     }
+    if (message.formalNoticeRecipientId && message.tenantId) {
+      await this.sentWithProof(message, lease);
+      return 'sent';
+    }
     await this.globalDb.outboxMessage.updateMany({
       where: lease,
       data: { status: 'sent', sentAt: new Date(), lockedUntil: null },
     });
     return 'sent';
+  }
+
+  /**
+   * A formal notice's email (ADR 0058): marked sent and its recipient's
+   * `emailed_at` set, in one transaction of its compound, once. The outbox
+   * row goes after its retention; the proof stays with the notice.
+   */
+  private async sentWithProof(
+    message: ClaimedOutboxMessage,
+    lease: { id: string; status: 'processing'; lockedUntil: Date | null },
+  ): Promise<void> {
+    await this.tenantTx.runInTenantUnsafe(message.tenantId!, async (tx) => {
+      const { count } = await this.globalDb.in(tx).outboxMessage.updateMany({
+        where: lease,
+        data: { status: 'sent', sentAt: new Date(), lockedUntil: null },
+      });
+      if (count)
+        await tx.$executeRaw`
+          UPDATE formal_notice_recipients SET emailed_at = now()
+           WHERE id = ${message.formalNoticeRecipientId}::uuid
+             AND emailed_at IS NULL`;
+    });
   }
 
   private async markDead(message: ClaimedOutboxMessage, code: string) {

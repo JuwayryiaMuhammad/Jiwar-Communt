@@ -236,6 +236,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   management_requests_tenant_id_number_key: null,
   // One live request to release each held item (ADR 0058).
   management_requests_one_live_about: ['about'],
+  // Formal notices (ADR 0058): server numbers and ids; one per type and
+  // subject, issued under the subject's lock; a violation is a bug.
+  formal_notices_tenant_id_id_key: null,
+  formal_notices_tenant_id_number_key: null,
+  formal_notices_one_per_subject: null,
+  formal_notice_recipients_tenant_id_id_key: null,
+  formal_notice_recipients_once: null,
   management_request_messages_tenant_id_id_key: null,
   management_request_messages_request_message_key: null,
   // A file is claimed under its row lock before it is attached.

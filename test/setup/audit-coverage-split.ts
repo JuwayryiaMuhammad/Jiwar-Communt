@@ -360,6 +360,8 @@ export const FINANCE_COVERAGE: readonly string[] = [
   'invoice_dispute.decided',
   'refund.recorded',
   'refund.reversed',
+  // The cure period before a late-payment notice (ADR 0058).
+  'finance.notice_settings_changed',
 ];
 
 /**

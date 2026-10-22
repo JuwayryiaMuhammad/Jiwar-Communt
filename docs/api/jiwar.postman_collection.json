@@ -1360,6 +1360,68 @@
           }
         },
         {
+          "name": "List my formal notices",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "notices"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/notices"
+            }
+          }
+        },
+        {
+          "name": "Open one of my formal notices",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "notices",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/notices/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Set or replace my photo",
           "request": {
             "body": {
@@ -9332,6 +9394,41 @@
           }
         },
         {
+          "name": "List the late-payment notices with their delivery and read proofs",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "late-notices"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/late-notices"
+            }
+          }
+        },
+        {
           "name": "Read the compound’s ledger for a period, oldest first",
           "request": {
             "description": "**Responses:** 200",
@@ -9443,6 +9540,63 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/ledger/export?from=&to="
+            }
+          }
+        },
+        {
+          "name": "Get the cure period before a late-payment notice",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "notice-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/notice-settings"
+            }
+          }
+        },
+        {
+          "name": "Set the cure period before a late-payment notice",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"lateNoticeCureDays\": 0\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `lateNoticeCureDays` | number | yes | Days after an invoice’s due date before its formal late-payment notice (the cure period). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "notice-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/notice-settings"
             }
           }
         },

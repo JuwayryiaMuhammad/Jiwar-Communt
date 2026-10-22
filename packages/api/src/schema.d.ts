@@ -5737,6 +5737,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my formal notices */
+        get: operations["FormalNoticesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open one of my formal notices */
+        get: operations["FormalNoticesController_open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/notification-preferences": {
         parameters: {
             query?: never;
@@ -8855,6 +8889,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/late-notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the late-payment notices with their delivery and read proofs */
+        get: operations["LateNoticesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/ledger": {
         parameters: {
             query?: never;
@@ -8893,6 +8944,24 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/notice-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the cure period before a late-payment notice */
+        get: operations["LateNoticesController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set the cure period before a late-payment notice */
+        patch: operations["LateNoticesController_update"];
         trace?: never;
     };
     "/api/v1/staff/finance/reports/aging": {
@@ -19369,6 +19438,8 @@ export interface components {
             id: string;
             type: string;
         };
+        /** @enum {string} */
+        FormalNoticeType: "late_payment";
         FoundItemClaimView: {
             /** @description As told; null after 30 days. */
             name: string | null;
@@ -21956,6 +22027,47 @@ export interface components {
             data: components["schemas"]["MyGuardInstructionView"][];
             nextCursor: string | null;
         };
+        MyNoticeView: {
+            /** @description EGP: what was still owed when it was issued. */
+            amount: string;
+            /** Format: date-time */
+            deliveredAt: string;
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            dueOn: string;
+            /**
+             * Format: date-time
+             * @description When its email was sent; null while it was not.
+             */
+            emailedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            issuedAt: string;
+            /** @example FN-000012 */
+            number: string;
+            /**
+             * Format: date-time
+             * @description The first opening (`GET /me/notices/{id}`).
+             */
+            readAt: string | null;
+            /** Format: uuid */
+            subjectId: string;
+            /**
+             * @description What it is about.
+             * @enum {string}
+             */
+            subjectType: "invoice";
+            type: components["schemas"]["FormalNoticeType"];
+            /** Format: uuid */
+            unitId: string;
+        };
+        MyNoticeViewList: {
+            data: components["schemas"]["MyNoticeView"][];
+            nextCursor: string | null;
+        };
         MyParkingReportView: {
             /** Format: date-time */
             createdAt: string;
@@ -22308,11 +22420,28 @@ export interface components {
             scanId: string;
             text: string | null;
         };
+        NoticeRecipientView: {
+            /** Format: uuid */
+            accountId: string;
+            /** Format: date-time */
+            deliveredAt: string;
+            /** Format: date-time */
+            emailedAt: string | null;
+            /** Format: date-time */
+            readAt: string | null;
+        };
         NoticeSentView: {
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             sentAt: string;
+        };
+        NoticeSettingsDto: {
+            /** @description Days after an invoice’s due date before its formal late-payment notice (the cure period). */
+            lateNoticeCureDays: number;
+        };
+        NoticeSettingsView: {
+            lateNoticeCureDays: number;
         };
         /** @enum {string} */
         NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty" | "governance";
@@ -24538,7 +24667,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "vehicle_fine" | "unit_violation" | "board_appeal" | "invoice" | "booking" | "parcel";
+        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "vehicle_fine" | "unit_violation" | "board_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
         ResidentItemView: {
             /** @description Where its appeal stands (the appeals list); null elsewhere. */
             appeal: components["schemas"]["ItemAppealView"] | null;
@@ -26912,6 +27041,30 @@ export interface components {
         };
         StaffIncidentViewList: {
             data: components["schemas"]["StaffIncidentView"][];
+            nextCursor: string | null;
+        };
+        StaffLateNoticeView: {
+            /** @description EGP still owed at issue. */
+            amount: string;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The invoice.
+             */
+            invoiceId: string;
+            /** Format: date-time */
+            issuedAt: string;
+            /** @example FN-000012 */
+            number: string;
+            recipients: components["schemas"]["NoticeRecipientView"][];
+            /** Format: uuid */
+            unitId: string;
+        };
+        StaffLateNoticeViewList: {
+            data: components["schemas"]["StaffLateNoticeView"][];
             nextCursor: string | null;
         };
         StaffLockdownView: {
@@ -37989,6 +38142,50 @@ export interface operations {
             };
         };
     };
+    FormalNoticesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyNoticeViewList"];
+                };
+            };
+        };
+    };
+    FormalNoticesController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyNoticeView"];
+                };
+            };
+        };
+    };
     PreferencesController_mine: {
         parameters: {
             query?: never;
@@ -42912,6 +43109,29 @@ export interface operations {
             };
         };
     };
+    LateNoticesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffLateNoticeViewList"];
+                };
+            };
+        };
+    };
     ReportsController_page: {
         parameters: {
             query: {
@@ -42967,6 +43187,48 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    LateNoticesController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoticeSettingsView"];
+                };
+            };
+        };
+    };
+    LateNoticesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoticeSettingsView"];
                 };
             };
         };

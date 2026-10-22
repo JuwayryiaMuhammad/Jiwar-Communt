@@ -21,6 +21,7 @@ export const RESIDENT_ITEM_TYPES = [
   'invoice',
   'booking',
   'parcel',
+  'formal_notice',
 ] as const;
 export type ResidentItemType = (typeof RESIDENT_ITEM_TYPES)[number];
 

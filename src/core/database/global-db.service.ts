@@ -175,6 +175,7 @@ export class GlobalDbService implements GlobalTables {
         status: 'processing' | 'dead';
         attempts: number;
         locked_until: Date | null;
+        formal_notice_recipient_id: string | null;
       }[]
     >`
       WITH claimed AS (
@@ -194,7 +195,8 @@ export class GlobalDbService implements GlobalTables {
             LIMIT ${limit}
             FOR UPDATE SKIP LOCKED)
         RETURNING id, tenant_id, template_key, locale, recipient, params,
-                  status, attempts, locked_until, next_attempt_at)
+                  status, attempts, locked_until, next_attempt_at,
+                  formal_notice_recipient_id)
       -- RETURNING has no order of its own: deliver in queue order.
       SELECT * FROM claimed ORDER BY next_attempt_at, id`;
     return rows.map((r) => ({
@@ -207,6 +209,7 @@ export class GlobalDbService implements GlobalTables {
       status: r.status,
       attempts: r.attempts,
       lockedUntil: r.locked_until,
+      formalNoticeRecipientId: r.formal_notice_recipient_id,
     }));
   }
 
@@ -333,6 +336,8 @@ export interface ClaimedOutboxMessage {
    * Null on a dead claim.
    */
   lockedUntil: Date | null;
+  /** A formal notice's email (ADR 0058): its sending is that proof. */
+  formalNoticeRecipientId: string | null;
 }
 
 export interface ClaimedPushDelivery {

@@ -1351,6 +1351,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم قبول اعتراضك على فاتورة. افتح التطبيق لمعرفة المبلغ الجديد.',
     },
   },
+  'formal_notice.issued': {
+    en: {
+      title: 'A formal notice',
+      body: 'The management sent you a formal notice. Open it to read it.',
+    },
+    ar: {
+      title: 'إنذار رسمي',
+      body: 'أرسلت إليك الإدارة إنذارًا رسميًا. افتحه لقراءته.',
+    },
+  },
   'credit_note.issued': {
     en: {
       title: 'Invoice credited',

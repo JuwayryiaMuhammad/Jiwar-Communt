@@ -756,29 +756,32 @@ model ActionToken {
 /// deleted after retention; dead rows are kept with their personal data
 /// stripped, as evidence that a notice never arrived.
 model OutboxMessage {
-  id                 String        @id @db.Uuid
-  tenantId           String?       @map("tenant_id") @db.Uuid
-  channel            OutboxChannel
-  templateKey        String        @map("template_key")
-  locale             Locale
+  id                      String        @id @db.Uuid
+  tenantId                String?       @map("tenant_id") @db.Uuid
+  channel                 OutboxChannel
+  templateKey             String        @map("template_key")
+  locale                  Locale
   /// Null once stripped (dead rows past retention).
-  recipient          String?
-  params             Json?
-  status             OutboxStatus  @default(pending)
-  attempts           Int           @default(0)
-  nextAttemptAt      DateTime      @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
-  lockedUntil        DateTime?     @map("locked_until") @db.Timestamptz(3)
-  lastErrorCode      String?       @map("last_error_code")
-  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  sentAt             DateTime?     @map("sent_at") @db.Timestamptz(3)
+  recipient               String?
+  params                  Json?
+  status                  OutboxStatus  @default(pending)
+  attempts                Int           @default(0)
+  nextAttemptAt           DateTime      @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  lockedUntil             DateTime?     @map("locked_until") @db.Timestamptz(3)
+  lastErrorCode           String?       @map("last_error_code")
+  createdAt               DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  sentAt                  DateTime?     @map("sent_at") @db.Timestamptz(3)
   /// When recipient and params were removed (dead rows past retention).
-  strippedAt         DateTime?     @map("stripped_at") @db.Timestamptz(3)
+  strippedAt              DateTime?     @map("stripped_at") @db.Timestamptz(3)
   /// The account a message is for (a pointer, no FK): erasure strips that
   /// account's pending messages without touching others sharing the address.
-  recipientAccountId String?       @map("recipient_account_id") @db.Uuid
+  recipientAccountId      String?       @map("recipient_account_id") @db.Uuid
   /// When the account's preferences held it (quiet hours, a pause; ADR 0036).
   /// A held message is re-decided whenever those preferences change.
-  heldAt             DateTime?     @map("held_at") @db.Timestamptz(3)
+  heldAt                  DateTime?     @map("held_at") @db.Timestamptz(3)
+  /// The formal notice recipient whose email this is (ADR 0058, a pointer):
+  /// marking it sent records the email's proof.
+  formalNoticeRecipientId String?       @map("formal_notice_recipient_id") @db.Uuid
 
   @@index([status, nextAttemptAt])
   @@index([status, sentAt])
@@ -1907,6 +1910,61 @@ model AccountLogin {
   @@index([tenantId, accountId, createdAt(sort: Desc), id(sort: Desc)], map: "account_logins_account_idx")
   @@index([tenantId, createdAt], map: "account_logins_created_idx")
   @@map("account_logins")
+}
+
+/// The compound's formal notice numbers (ADR 0058): `FN-000123`.
+model FormalNoticeCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+
+  @@map("formal_notice_counters")
+}
+
+/// A formal notice (ADR 0058): a decision about a unit that must be proven
+/// delivered and read; the compound's record, never changed. One per type
+/// and subject. Codes, amounts and dates only.
+model FormalNotice {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  number      Int
+  /// late_payment.
+  type        String
+  unitId      String   @map("unit_id") @db.Uuid
+  /// invoice.
+  subjectType String   @map("subject_type")
+  subjectId   String   @map("subject_id") @db.Uuid
+  amount      Decimal  @db.Decimal(12, 2)
+  dueOn       DateTime @map("due_on") @db.Date
+  issuedAt    DateTime @default(now()) @map("issued_at") @db.Timestamptz(3)
+
+  recipients FormalNoticeRecipient[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number])
+  @@unique([tenantId, type, subjectType, subjectId], map: "formal_notices_one_per_subject")
+  @@index([tenantId, issuedAt(sort: Desc), id(sort: Desc)], map: "formal_notices_issued_idx")
+  @@map("formal_notices")
+}
+
+/// Who a formal notice was for, and its proofs, each set once (ADR 0058).
+model FormalNoticeRecipient {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  noticeId    String    @map("notice_id") @db.Uuid
+  accountId   String    @map("account_id") @db.Uuid
+  /// The inbox row, written at issue.
+  deliveredAt DateTime  @default(now()) @map("delivered_at") @db.Timestamptz(3)
+  /// The email was sent (copied by the outbox when it marks it sent).
+  emailedAt   DateTime? @map("emailed_at") @db.Timestamptz(3)
+  /// The recipient first opened it.
+  readAt      DateTime? @map("read_at") @db.Timestamptz(3)
+
+  notice FormalNotice @relation(fields: [tenantId, noticeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "formal_notice_recipients_notice_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, noticeId, accountId], map: "formal_notice_recipients_once")
+  @@index([tenantId, accountId, deliveredAt(sort: Desc), id(sort: Desc)], map: "formal_notice_recipients_account_idx")
+  @@map("formal_notice_recipients")
 }
 
 /// A personal-data export (ADR 0036).
@@ -5757,6 +5815,8 @@ model FinanceSettings {
   /// The month (1–12) a fiscal year starts on (ADR 0055); fixed once a
   /// budget was submitted.
   fiscalYearStartMonth Int      @default(1) @map("fiscal_year_start_month") @db.SmallInt
+  /// Days after the due date before a late-payment notice (ADR 0058): 0–60.
+  lateNoticeCureDays   Int      @default(14) @map("late_notice_cure_days") @db.SmallInt
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 

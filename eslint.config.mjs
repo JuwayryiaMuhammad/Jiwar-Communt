@@ -77,7 +77,9 @@ export default tseslint.config(
   // SweepRunner.forEachTenant does that for every later task (ADR 0027);
   // the visitor page resolves the compound from the link's global pointer,
   // with no account at all (ADR 0030); the push worker claims deliveries
-  // across compounds and reads each one's notification in its own (ADR 0041).
+  // across compounds and reads each one's notification in its own (ADR 0041);
+  // the email outbox records a formal notice's email in its compound (ADR
+  // 0058).
   // Finance (ADR 0046): the platform changes a compound's gateway, the
   // Paymob webhook resolves the compound from its URL, the public receipt
   // page from the code's global pointer, and the boot check and the
@@ -105,6 +107,7 @@ export default tseslint.config(
       'src/community/residents/registration.service.ts',
       'src/core/accounts/account-deletion.service.ts',
       'src/core/push/push-processor.ts',
+      'src/core/mail/outbox-processor.ts',
       'src/core/sweep/sweep-runner.ts',
       'src/gate/visitors/visitor-page.service.ts',
       'src/gate/children/pickup-page.service.ts',

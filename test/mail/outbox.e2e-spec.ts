@@ -1,3 +1,4 @@
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { newId } from '../../src/core/common/uuid';
@@ -224,6 +225,7 @@ describe('Email outbox', () => {
       globalDb,
       h.moduleRef.get(EmailTemplates),
       mailer,
+      h.moduleRef.get(TenantTx),
     );
     const [a, b] = await Promise.all([
       processor.processDue(),
@@ -565,6 +567,7 @@ describe('Email outbox poller', () => {
       globalDb,
       h.moduleRef.get(EmailTemplates),
       h.moduleRef.get(Mailer),
+      h.moduleRef.get(TenantTx),
     );
     processor.onApplicationBootstrap();
     try {

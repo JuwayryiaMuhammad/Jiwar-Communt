@@ -1,3 +1,5 @@
+import { LateNoticesController } from './late-notices/late-notices.controller';
+import { LateNoticesService } from './late-notices/late-notices.service';
 import { ResidentFinanceItems } from './invoices/resident-finance-items';
 import { Module } from '@nestjs/common';
 import { CommunityFinancePortModule } from '../community';
@@ -83,6 +85,7 @@ import { PaymentsService } from './payments/payments.service';
     CommunityFinancePortModule,
   ],
   controllers: [
+    LateNoticesController,
     GatewayController,
     PlatformGatewayController,
     StaffInvoicesController,
@@ -115,6 +118,7 @@ import { PaymentsService } from './payments/payments.service';
     FinanceNotices,
     InvoicesService,
     ResidentFinanceItems,
+    LateNoticesService,
     InstalmentsService,
     DisputesService,
     RefundsService,

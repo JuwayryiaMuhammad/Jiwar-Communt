@@ -1205,6 +1205,9 @@ export const AUDIT_ACTIONS = {
   'budget.withdrawn': { log: 'tenant', target: 'budget' },
   // changes: fiscalYearStartMonth.
   'budget.settings_changed': { log: 'tenant', target: 'tenant' },
+  // The cure period before a late-payment notice (ADR 0058). changes:
+  // lateNoticeCureDays.
+  'finance.notice_settings_changed': { log: 'tenant', target: 'tenant' },
   // An approved increase. metadata: budgetId, requestId, amount.
   'budget_line.increased': { log: 'tenant', target: 'budget_line' },
   // An approved major contract. metadata: requestId, amount.

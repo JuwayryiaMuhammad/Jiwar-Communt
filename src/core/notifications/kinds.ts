@@ -1264,6 +1264,14 @@ export const NOTIFICATION_KINDS = {
     target: 'invoice_dispute',
     params: {},
   },
+  /** A formal notice (ADR 0058): its type; opening it records the reading. */
+  'formal_notice.issued': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'formal_notice',
+    params: { type: {} },
+  },
   /** The staff credited one of the unit's invoices (ADR 0058): the reason code. */
   'credit_note.issued': {
     priority: 'normal',

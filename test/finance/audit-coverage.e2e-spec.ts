@@ -433,6 +433,29 @@ describe('Audit coverage — finance', () => {
     });
   });
 
+  describe('formal notices (ADR 0058)', () => {
+    it('finance.notice_settings_changed: the cure period by value', async () => {
+      await f
+        .http('patch', '/staff/finance/notice-settings', s.manager.token, {
+          lateNoticeCureDays: 21,
+        })
+        .expect(200);
+      const row = await single('finance.notice_settings_changed', s.c.tenantId);
+      expect(row).toMatchObject({
+        actorId: s.manager.id,
+        targetType: 'tenant',
+        changes: { lateNoticeCureDays: { from: 14, to: 21 } },
+      });
+      // The same value again writes nothing.
+      await f
+        .http('patch', '/staff/finance/notice-settings', s.manager.token, {
+          lateNoticeCureDays: 21,
+        })
+        .expect(200);
+      await single('finance.notice_settings_changed', s.c.tenantId);
+    });
+  });
+
   describe('refunds', () => {
     it('refund.recorded and .reversed: amounts, the channel and ids; never the reference', async () => {
       const home = await f.unit(s.c, 'A');
@@ -742,7 +765,7 @@ describe('Audit coverage — finance', () => {
       expect(
         all
           .filter((k) =>
-            /^(finance_gateway|invoice|invoice_batch|credit_note|billing_plan|payment|payment_session|instalment_plan|invoice_dispute|refund)\.|^tenant\.payment_gateway_|^platform\.step_up_/.test(
+            /^(finance_gateway|invoice|invoice_batch|credit_note|billing_plan|payment|payment_session|instalment_plan|invoice_dispute|refund)\.|^tenant\.payment_gateway_|^platform\.step_up_|^finance\.notice_/.test(
               k,
             ),
           )

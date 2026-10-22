@@ -30,6 +30,7 @@ import { AssistModule } from './core/assist/assist.module';
 import { AuthModule } from './core/auth/auth.module';
 import { BoardMattersModule } from './core/board-matters/board-matters.module';
 import { ResidentItemsModule } from './core/resident-items/resident-items.module';
+import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
 import { ConsentsModule } from './core/consents/consents.module';
 import { RequestContextModule } from './core/common/cls/request-context.module';
 import { AllExceptionsFilter } from './core/common/filters/all-exceptions.filter';
@@ -116,6 +117,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     ExportsModule,
     BoardMattersModule,
     ResidentItemsModule,
+    FormalNoticesModule,
     AssistModule,
     HealthModule,
     AuthModule,

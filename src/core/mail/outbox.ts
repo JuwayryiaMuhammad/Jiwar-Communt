@@ -24,6 +24,8 @@ export interface OutboxEmail {
    * be shared by several accounts.
    */
   recipientAccountId?: string | null;
+  /** A formal notice's recipient (ADR 0058): sending it is the proof. */
+  formalNoticeRecipientId?: string | null;
 }
 
 /** `last_error_code` of a notice that had nobody to go to. */
@@ -85,6 +87,7 @@ export class Outbox {
         recipient: email.recipient,
         params: email.params as Prisma.InputJsonValue,
         recipientAccountId: email.recipientAccountId ?? null,
+        formalNoticeRecipientId: email.formalNoticeRecipientId ?? null,
         ...(hold
           ? {
               status: hold.status,

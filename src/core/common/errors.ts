@@ -268,6 +268,8 @@ export const ErrorCode = {
   // requests to the management (ADR 0039)
   /** Unknown, or another compound's. */
   MANAGEMENT_TOPIC_NOT_FOUND: 'MANAGEMENT_TOPIC_NOT_FOUND',
+  /** Unknown, or not one of the caller's formal notices (ADR 0058). */
+  FORMAL_NOTICE_NOT_FOUND: 'FORMAL_NOTICE_NOT_FOUND',
   /** Not something the caller sees that is held now (404, ADR 0058). */
   HELD_ITEM_NOT_FOUND: 'HELD_ITEM_NOT_FOUND',
   /** Unknown, another compound's, or not the caller's own: one answer. */

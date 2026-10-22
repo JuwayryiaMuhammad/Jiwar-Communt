@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -36,7 +37,11 @@ export class NotificationsController {
     @Query() q: InboxQueryDto,
   ): Promise<ListResponse<NotificationView>> {
     return toList(
-      await this.notifications.mine({ ...q, unread: q.unread === 'true' }),
+      await this.notifications.mine({
+        ...q,
+        unread: q.unread === 'true',
+        archived: q.archived === 'true',
+      }),
       (n) => NotificationView.from(n),
     );
   }
@@ -62,5 +67,29 @@ export class NotificationsController {
   @ApiNoContentResponse()
   async read(@Param('id', parseId()) id: string): Promise<void> {
     await this.notifications.markRead(id);
+  }
+
+  @Post(':id/archive')
+  @ApiOperation({ summary: 'Archive one notification (it is read, too)' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async archive(@Param('id', parseId()) id: string): Promise<void> {
+    await this.notifications.archive(id);
+  }
+
+  @Post(':id/unarchive')
+  @ApiOperation({ summary: 'Put an archived notification back in the list' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async unarchive(@Param('id', parseId()) id: string): Promise<void> {
+    await this.notifications.unarchive(id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete one notification' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async remove(@Param('id', parseId()) id: string): Promise<void> {
+    await this.notifications.remove(id);
   }
 }

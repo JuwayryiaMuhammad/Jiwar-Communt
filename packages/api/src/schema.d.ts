@@ -5737,6 +5737,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/notifications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete one notification */
+        delete: operations["NotificationsController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive one notification (it is read, too) */
+        post: operations["NotificationsController_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/notifications/{id}/read": {
         parameters: {
             query?: never;
@@ -5748,6 +5782,23 @@ export interface paths {
         put?: never;
         /** Mark one notification as read */
         post: operations["NotificationsController_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/{id}/unarchive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put an archived notification back in the list */
+        post: operations["NotificationsController_unarchive"];
         delete?: never;
         options?: never;
         head?: never;
@@ -22083,6 +22134,11 @@ export interface components {
         /** @enum {string} */
         NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty" | "governance";
         NotificationView: {
+            /**
+             * Format: date-time
+             * @description When its holder archived it (ADR 0058).
+             */
+            archivedAt: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: uuid */
@@ -37538,6 +37594,10 @@ export interface operations {
                 cursor?: string;
                 limit?: number;
                 unread?: "true" | "false";
+                /** @description Only the kinds of this delivery category (ADR 0058). */
+                category?: components["schemas"]["NotificationCategory"];
+                /** @description `true`: the archived ones only. By default they are left out. */
+                archived?: "true" | "false";
             };
             header?: never;
             path?: never;
@@ -37593,7 +37653,64 @@ export interface operations {
             };
         };
     };
+    NotificationsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationsController_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     NotificationsController_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationsController_unarchive: {
         parameters: {
             query?: never;
             header?: never;

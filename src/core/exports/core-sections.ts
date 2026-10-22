@@ -174,6 +174,7 @@ export class CoreExportSections implements OnModuleInit {
             targetType: n.targetType,
             targetId: n.targetId,
             readAt: n.readAt,
+            archivedAt: n.archivedAt,
             createdAt: n.createdAt,
           }),
         ),

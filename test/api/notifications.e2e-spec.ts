@@ -11,6 +11,7 @@ import { call, err } from './request';
 import { buildWorld, type World } from './world';
 
 const ITEM = [
+  'archivedAt',
   'createdAt',
   'id',
   'kind',
@@ -146,6 +147,115 @@ describe('API v0 — notifications inbox (ADR 0027)', () => {
       token: other.token,
     }).expect(200);
     expect(theirCount.body).toEqual({ unread: 1, critical: 0 });
+  });
+
+  it('a category filter, archive, unarchive and delete (ADR 0058)', async () => {
+    const me = await freshResident();
+    const other = await freshResident();
+    await notify([me.id], entered(w.bEngagementId)); // gate_visitors
+    await notify([me.id], {
+      kind: 'ticket.declined',
+      params: { ticketNumber: 'MT-000001' },
+      targetId: w.bEngagementId,
+    }); // maintenance
+    await notify([other.id], entered(w.bEngagementId));
+    const list = async (query: Record<string, string> = {}) =>
+      (
+        (
+          await call(w, 'GET', '/me/notifications', {
+            token: me.token,
+            query,
+          }).expect(200)
+        ).body as {
+          data: {
+            id: string;
+            kind: string;
+            readAt: string | null;
+            archivedAt: string | null;
+          }[];
+        }
+      ).data;
+
+    expect(
+      (await list({ category: 'gate_visitors' })).map((n) => n.kind),
+    ).toEqual(['worker.entered']);
+    expect(
+      (await list({ category: 'maintenance' })).map((n) => n.kind),
+    ).toEqual(['ticket.declined']);
+    expect(await list({ category: 'finance' })).toEqual([]);
+    const bad = await call(w, 'GET', '/me/notifications', {
+      token: me.token,
+      query: { category: 'nope' },
+    }).expect(400);
+    expect(err(bad).code).toBe('VALIDATION_FAILED');
+
+    const [latest, worker] = await list();
+    const before = (
+      await call(w, 'GET', '/me/notifications/unread-count', {
+        token: me.token,
+      }).expect(200)
+    ).body as { unread: number; critical: number };
+    expect(before).toEqual({ unread: 2, critical: 0 });
+    // Archived: out of the list, read, and in the archive.
+    for (let i = 0; i < 2; i++)
+      await call(w, 'POST', `/me/notifications/${latest.id}/archive`, {
+        token: me.token,
+      }).expect(204);
+    expect((await list()).map((n) => n.id)).toEqual([worker.id]);
+    const archived = await list({ archived: 'true' });
+    expect(archived.map((n) => n.id)).toEqual([latest.id]);
+    expect(archived[0].readAt).not.toBeNull();
+    expect(archived[0].archivedAt).not.toBeNull();
+    expect(
+      (
+        await call(w, 'GET', '/me/notifications/unread-count', {
+          token: me.token,
+        }).expect(200)
+      ).body,
+    ).toEqual({ unread: 1, critical: 0 });
+    // Back in the list, still read; again changes nothing.
+    for (let i = 0; i < 2; i++)
+      await call(w, 'POST', `/me/notifications/${latest.id}/unarchive`, {
+        token: me.token,
+      }).expect(204);
+    const back = await list();
+    expect(back.map((n) => n.id)).toEqual([latest.id, worker.id]);
+    expect(back[0]).toMatchObject({ archivedAt: null });
+    expect(back[0].readAt).not.toBeNull();
+
+    // Deleted: gone, and a second delete is not found.
+    await call(w, 'DELETE', `/me/notifications/${worker.id}`, {
+      token: me.token,
+    }).expect(204);
+    expect((await list()).map((n) => n.id)).toEqual([latest.id]);
+    const again = await call(w, 'DELETE', `/me/notifications/${worker.id}`, {
+      token: me.token,
+    }).expect(404);
+    expect(err(again).code).toBe('NOTIFICATION_NOT_FOUND');
+
+    // Someone else's is not found, and stays.
+    const [theirs] = (
+      (
+        await call(w, 'GET', '/me/notifications', {
+          token: await w.tokenFor(w.a, other.id, 'resident'),
+        }).expect(200)
+      ).body as { data: { id: string }[] }
+    ).data;
+    for (const [method, path] of [
+      ['POST', `/me/notifications/${theirs.id}/archive`],
+      ['POST', `/me/notifications/${theirs.id}/unarchive`],
+      ['DELETE', `/me/notifications/${theirs.id}`],
+    ] as const) {
+      const res = await call(w, method, path, { token: me.token }).expect(404);
+      expect(err(res).code).toBe('NOTIFICATION_NOT_FOUND');
+    }
+    expect(
+      await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.notification.findUniqueOrThrow({
+          where: { id: theirs.id },
+        }),
+      ),
+    ).toMatchObject({ archivedAt: null, readAt: null });
   });
 
   it('the catalog is enforced at write time, and nothing is written outside a transaction', async () => {

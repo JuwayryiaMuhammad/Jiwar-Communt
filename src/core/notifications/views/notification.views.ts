@@ -27,6 +27,14 @@ export class NotificationView {
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   readAt: Date | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'When its holder archived it (ADR 0058).',
+  })
+  archivedAt: Date | null;
+
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -39,6 +47,7 @@ export class NotificationView {
       targetType: n.targetType,
       targetId: n.targetId,
       readAt: n.readAt,
+      archivedAt: n.archivedAt,
       createdAt: n.createdAt,
     };
   }

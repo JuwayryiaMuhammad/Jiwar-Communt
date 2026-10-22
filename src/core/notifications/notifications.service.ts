@@ -8,6 +8,14 @@ import { appError, ErrorCode } from '../common/errors';
 import type { Env } from '../config/env.schema';
 import { TenantTx } from '../database/tenant-tx.service';
 import { SweepRunner } from '../sweep/sweep-runner';
+import {
+  NOTIFICATION_CATEGORIES,
+  type NotificationCategory,
+} from '../preferences/categories';
+import { NOTIFICATION_KINDS } from './kinds';
+
+const notFound = () =>
+  appError.notFound(ErrorCode.NOTIFICATION_NOT_FOUND, 'Notification not found');
 
 export const NOTIFICATIONS_RETENTION_SWEEP = 'notifications.retention';
 
@@ -21,8 +29,19 @@ export interface InboxItem {
   targetType: string | null;
   targetId: string | null;
   readAt: Date | null;
+  archivedAt: Date | null;
   createdAt: Date;
 }
+
+/** Each delivery category's kinds, from the catalog (ADR 0058). */
+const KINDS_OF = Object.fromEntries(
+  NOTIFICATION_CATEGORIES.map((c) => [
+    c,
+    Object.entries(NOTIFICATION_KINDS)
+      .filter(([, spec]) => spec.category === c)
+      .map(([kind]) => kind),
+  ]),
+) as Record<NotificationCategory, string[]>;
 
 /**
  * The signed-in account's own inbox (ADR 0027). Nothing here takes another
@@ -54,9 +73,19 @@ export class NotificationsService implements OnModuleInit {
     });
   }
 
-  /** Newest first; `unread` keeps only the unread ones. */
+  /**
+   * Newest first; `unread` keeps only the unread ones, `category` the kinds
+   * of one delivery category (ADR 0058). Archived ones are left out, or
+   * alone with `archived`.
+   */
   async mine(
-    q: { cursor?: string; limit?: number; unread?: boolean } = {},
+    q: {
+      cursor?: string;
+      limit?: number;
+      unread?: boolean;
+      category?: NotificationCategory;
+      archived?: boolean;
+    } = {},
   ): Promise<Page<InboxItem>> {
     const limit = clampLimit(q.limit);
     const accountId = this.ctx.accountId;
@@ -65,7 +94,9 @@ export class NotificationsService implements OnModuleInit {
         where: {
           AND: [
             { accountId },
+            q.archived ? { archivedAt: { not: null } } : { archivedAt: null },
             ...(q.unread ? [{ readAt: null }] : []),
+            ...(q.category ? [{ kind: { in: KINDS_OF[q.category] } }] : []),
             ...(PAGE.after(q.cursor) as Prisma.NotificationWhereInput[]),
           ],
         },
@@ -83,6 +114,7 @@ export class NotificationsService implements OnModuleInit {
           targetType: n.targetType,
           targetId: n.targetId,
           readAt: n.readAt,
+          archivedAt: n.archivedAt,
           createdAt: n.createdAt,
         })),
       };
@@ -117,6 +149,53 @@ export class NotificationsService implements OnModuleInit {
           ErrorCode.NOTIFICATION_NOT_FOUND,
           'Notification not found',
         );
+    });
+  }
+
+  /**
+   * Out of the list (ADR 0058), read if it was not; kept until the read
+   * retention takes it. Idempotent; someone else's is NOTIFICATION_NOT_FOUND.
+   */
+  async archive(id: string): Promise<void> {
+    const accountId = this.ctx.accountId;
+    await this.tenantTx.withTenantTx(async (tx) => {
+      const [row] = await tx.$queryRaw<{ id: string }[]>`
+        UPDATE notifications
+           SET archived_at = COALESCE(archived_at, now()),
+               read_at = COALESCE(read_at, now())
+         WHERE id = ${id}::uuid AND account_id = ${accountId}::uuid
+        RETURNING id`;
+      if (!row) throw notFound();
+    });
+  }
+
+  /** Back in the list, still read. Idempotent. */
+  async unarchive(id: string): Promise<void> {
+    const accountId = this.ctx.accountId;
+    await this.tenantTx.withTenantTx(async (tx) => {
+      await tx.notification.updateMany({
+        where: { id, accountId, archivedAt: { not: null } },
+        data: { archivedAt: null },
+      });
+      if (!(await tx.notification.count({ where: { id, accountId } })))
+        throw notFound();
+    });
+  }
+
+  /**
+   * Gone for good (ADR 0058). A push not sent yet is dropped by the push
+   * worker, which finds no notification (ADR 0041). A notification is a
+   * record that someone was told, never the record of a decision: a formal
+   * notice keeps its own. Someone else's, or one already deleted, is
+   * NOTIFICATION_NOT_FOUND.
+   */
+  async remove(id: string): Promise<void> {
+    const accountId = this.ctx.accountId;
+    await this.tenantTx.withTenantTx(async (tx) => {
+      const { count } = await tx.notification.deleteMany({
+        where: { id, accountId },
+      });
+      if (!count) throw notFound();
     });
   }
 

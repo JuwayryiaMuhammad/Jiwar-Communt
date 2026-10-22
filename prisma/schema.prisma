@@ -1702,6 +1702,8 @@ model Notification {
   targetType String?              @map("target_type")
   targetId   String?              @map("target_id") @db.Uuid
   readAt     DateTime?            @map("read_at") @db.Timestamptz(3)
+  /// Its holder archived it (ADR 0058): out of the list; always read.
+  archivedAt DateTime?            @map("archived_at") @db.Timestamptz(3)
   createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
 
   account Account @relation("NotificationAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)

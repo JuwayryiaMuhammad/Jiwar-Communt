@@ -537,6 +537,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   known_devices_os_known: {},
   known_devices_client_known: {},
   known_devices_client_source: {},
+  // The inbox (ADR 0058): nullable columns only under IS [NOT] NULL.
+  notifications_archived_is_read: {},
   // Data exports (ADR 0036): nullable columns only under IS [NOT] NULL.
   data_exports_shape: {},
   // The deletion queue (ADR 0036): nullable columns only under

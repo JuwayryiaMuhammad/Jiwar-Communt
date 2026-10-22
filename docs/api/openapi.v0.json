@@ -24637,6 +24637,12 @@
       },
       "NotificationView": {
         "properties": {
+          "archivedAt": {
+            "description": "When its holder archived it (ADR 0058).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -24693,6 +24699,7 @@
           "targetType",
           "targetId",
           "readAt",
+          "archivedAt",
           "createdAt"
         ],
         "type": "object"
@@ -63742,6 +63749,28 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "description": "Only the kinds of this delivery category (ADR 0058).",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/NotificationCategory"
+            }
+          },
+          {
+            "description": "`true`: the archived ones only. By default they are left out.",
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -63824,6 +63853,66 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/notifications/{id}": {
+      "delete": {
+        "operationId": "NotificationsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete one notification",
+        "tags": [
+          "notifications"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/notifications/{id}/archive": {
+      "post": {
+        "operationId": "NotificationsController_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive one notification (it is read, too)",
+        "tags": [
+          "notifications"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/notifications/{id}/read": {
       "post": {
         "operationId": "NotificationsController_read",
@@ -63848,6 +63937,36 @@
           }
         ],
         "summary": "Mark one notification as read",
+        "tags": [
+          "notifications"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/notifications/{id}/unarchive": {
+      "post": {
+        "operationId": "NotificationsController_unarchive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put an archived notification back in the list",
         "tags": [
           "notifications"
         ],

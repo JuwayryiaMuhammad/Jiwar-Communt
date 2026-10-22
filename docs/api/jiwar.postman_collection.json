@@ -24750,6 +24750,18 @@
                   "disabled": true,
                   "key": "unread",
                   "value": ""
+                },
+                {
+                  "description": "Only the kinds of this delivery category (ADR 0058).",
+                  "disabled": true,
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: the archived ones only. By default they are left out.",
+                  "disabled": true,
+                  "key": "archived",
+                  "value": ""
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/me/notifications"
@@ -24799,6 +24811,63 @@
           }
         },
         {
+          "name": "Delete one notification",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "notifications",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/notifications/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Archive one notification (it is read, too)",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "notifications",
+                ":id",
+                "archive"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/notifications/:id/archive",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Mark one notification as read",
           "request": {
             "description": "**Responses:** 204",
@@ -24817,6 +24886,35 @@
                 "read"
               ],
               "raw": "{{baseUrl}}/api/v1/me/notifications/:id/read",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Put an archived notification back in the list",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "notifications",
+                ":id",
+                "unarchive"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/notifications/:id/unarchive",
               "variable": [
                 {
                   "description": "",

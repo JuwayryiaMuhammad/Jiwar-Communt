@@ -87,7 +87,9 @@ describe('Gate — a field exception, concurrently (ADR 0056)', () => {
       await g.sweepExceptions(new Date(dbClock().getTime() + 60_000));
       expect((await g.row(s.c, x.id)).status).toBe(row.status);
     }
-  });
+    // Ten sweeps, each a transaction per compound in the shared test
+    // database (160 and more late in a long run): longer than the default.
+  }, 120_000);
 
   it('an answer while the guard withdraws it: one of the two', async () => {
     for (let round = 0; round < ROUNDS; round++) {

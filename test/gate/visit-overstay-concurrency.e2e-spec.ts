@@ -36,5 +36,7 @@ describe('Gate — visit overstay, concurrently (ADR 0056)', () => {
       expect((await g.told(s.c, s.guard.id, entry)).length).toBe(1);
       expect((await g.told(s.c, s.alice.id, entry)).length).toBe(1);
     }
-  });
+    // Ten sweeps, each a transaction per compound in the shared test
+    // database (160 and more late in a long run): longer than the default.
+  }, 120_000);
 });

@@ -65,7 +65,9 @@ describe('Gate — a visitor’s photo kept while it is purged (ADR 0056)', () =
         expect(evidence).toBe(0);
       }
     }
-  });
+    // Ten sweeps, each a transaction per compound in the shared test
+    // database (160 and more late in a long run): longer than the default.
+  }, 120_000);
 
   it('a guard’s link while their shift ends: it waits for the end, then is refused', async () => {
     const leaving = await g.guardAt(s.c, s.guard.gateId);

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { at, day, permitHelpers, type PermitBody } from '../setup/permits';
 
@@ -18,6 +19,9 @@ describe('Permits — works by a contractor (ADR 0049)', () => {
 
   it('the primary asks: pending, numbered W-, the period at the compound’s midnights; the management is told, nobody else', async () => {
     const c = await p.setUp('Works Ask Court');
+    // The body's first work day after today, by the compound's rules (a
+    // Thursday's tomorrow is a Friday, not a work day by default).
+    const first = await p.workDay(c.alice);
     const res = p.status(await p.worksRaw(c.alice, c.home.id), 201);
     expect(res.headers['cache-control']).toBe('no-store');
     const permit = res.body as PermitBody;
@@ -33,8 +37,8 @@ describe('Permits — works by a contractor (ADR 0049)', () => {
       event: null,
       works: {
         workType: 'renovation',
-        startsOn: day(1),
-        endsOn: day(7),
+        startsOn: first,
+        endsOn: addDays(first, 6),
         dailyHours: { from: '09:00', to: '17:00' },
         contractorCompany: 'Nile Builders',
         description: 'New kitchen tiles',
@@ -42,8 +46,8 @@ describe('Permits — works by a contractor (ADR 0049)', () => {
         workers: [],
       },
     });
-    expect(new Date(permit.startsAt)).toEqual(at(day(1), 0));
-    expect(new Date(permit.endsAt)).toEqual(at(day(8), 0));
+    expect(new Date(permit.startsAt)).toEqual(at(first, 0));
+    expect(new Date(permit.endsAt)).toEqual(at(addDays(first, 7), 0));
     expect(await p.told(c.c, c.manager.id, permit.id)).toEqual([
       { kind: 'unit_permit.requested', params: { permitKind: 'works' } },
     ]);

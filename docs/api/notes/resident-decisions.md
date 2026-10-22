@@ -139,6 +139,7 @@ For residents and family only; staff get `403`. `?state=open|closed` (closed is 
   | `invoice_dispute` | `/invoice-disputes/{id}` (`number` is the invoice's) |
   | `unit_permit` | `/permits/{id}` |
   | `neighbour_complaint` | `/neighbour-complaints/{id}` |
+  | `partner_request` | `/partner-requests/{id}` (`kind` is the category, ADR 0060) |
   | `vehicle_fine` | `/vehicle-fines/{id}` |
   | `unit_violation` | `/violations/{id}` |
   | `board_appeal` | `/governance/board-appeals/{id}` |
@@ -155,7 +156,7 @@ For residents and family only; staff get `403`. `?state=open|closed` (closed is 
 ### `GET /me/search?q=` → `200`
 
 - **The text:** 2–64 characters, with no `%`, `_` or `\`.
-- **What matches:** a reference (`MT-000123`, `mt123` or `123` all find ticket 123), or words of a name the compound wrote: a ticket category, a request topic, a facility.
+- **What matches:** a reference (`MT-000123`, `mt123` or `123` all find ticket 123), or words of a name the compound wrote: a ticket category, a request topic, a facility, a partner (`SR-000123` finds a request to a partner).
 - **What is returned:** the caller's own items, the same shape as above, newest first. At most 10 of a kind and 50 in all.
 - **Not searchable:** visitor passes (they have no reference).
 - **The limit:** 30 searches a minute per account, then `429 RATE_LIMITED`. Search as the user submits, not on every keystroke.

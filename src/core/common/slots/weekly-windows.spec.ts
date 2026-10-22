@@ -5,6 +5,7 @@ import {
   sortedWindows,
   uncoveredWindows,
   weeklySlotsOfDay,
+  weeklyStatus,
   weeklyWindowProblems,
   windowCode,
 } from './weekly-windows';
@@ -146,6 +147,31 @@ describe('weekly windows', () => {
         expect(openAt(nightly, at(d, 1370), ZONE)).toBe(false);
         expect(openLateTonight(nightly, at(d, 600), ZONE, 1320)).toBe(true);
       }
+    });
+
+    it('the weekly status says open exactly when openAt does, every quarter hour of a week', () => {
+      const sets = [
+        office,
+        pharmacy,
+        lateBar,
+        [w(1, 540, 720), w(1, 720, 1020)],
+      ];
+      for (const set of sets)
+        for (let d = 0; d < 7; d++)
+          for (let m = 0; m < 1440; m += 15) {
+            const t = at(addDays('2031-01-12', d), m);
+            expect(weeklyStatus(set, t, ZONE).openNow).toBe(
+              openAt(set, t, ZONE),
+            );
+          }
+    });
+
+    it('past midnight is one stretch: open until the next day’s window ends', () => {
+      expect(weeklyStatus(lateBar, at('2031-01-13', 1200), ZONE)).toEqual({
+        openNow: true,
+        closesAt: at('2031-01-14', 120),
+        nextOpensAt: at('2031-01-20', 1080),
+      });
     });
   });
 });

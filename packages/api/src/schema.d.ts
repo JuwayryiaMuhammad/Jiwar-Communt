@@ -5491,6 +5491,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the devices I signed in from, with their live sessions */
+        get: operations["MeController_devices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/devices/{id}/not-me": {
         parameters: {
             query?: never;
@@ -5502,6 +5519,23 @@ export interface paths {
         put?: never;
         /** "Not me" on an unusual-login alert: freeze my account */
         post: operations["MeDevicesController_notMeFromApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/devices/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign a device out: its sessions end, and its next login alerts as new */
+        post: operations["MeController_revokeDevice"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5615,6 +5649,23 @@ export interface paths {
         head?: never;
         /** Set my preferred language */
         patch: operations["MeController_locale"];
+        trace?: never;
+    };
+    "/api/v1/me/logins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my logins of the last 90 days */
+        get: operations["MeController_logins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/me/notification-preferences": {
@@ -17929,6 +17980,11 @@ export interface components {
         DeletionRequestStatus: "pending" | "cancelled" | "completed" | "queued" | "closed";
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        /**
+         * @description `app`, or the browser family.
+         * @enum {string}
+         */
+        DeviceClient: "app" | "edge" | "opera" | "samsung" | "firefox" | "chrome" | "safari" | "other";
         DeviceEnvelopeDto: {
             /** Format: uuid */
             deviceId: string;
@@ -17936,6 +17992,38 @@ export interface components {
             payload: string;
             /** @description The device’s Ed25519 signature, base64url. */
             signature: string;
+        };
+        DeviceLabelView: {
+            /** @description `app`, or the browser family. */
+            client: components["schemas"]["DeviceClient"];
+            deviceType: components["schemas"]["DeviceType"];
+            /** Format: uuid */
+            id: string;
+            os: components["schemas"]["DeviceOs"];
+        };
+        /** @enum {string} */
+        DeviceOs: "ios" | "android" | "windows" | "macos" | "linux" | "other";
+        /** @enum {string} */
+        DeviceType: "ios" | "android" | "desktop_web" | "mobile_web" | "unknown";
+        DeviceView: {
+            /** @description `app`, or the browser family. */
+            client: components["schemas"]["DeviceClient"];
+            deviceType: components["schemas"]["DeviceType"];
+            /** Format: date-time */
+            firstSeenAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The device of the session of this request. */
+            isCurrent: boolean;
+            /** Format: date-time */
+            lastSeenAt: string;
+            /** @description Live sessions started on it. */
+            liveSessions: number;
+            os: components["schemas"]["DeviceOs"];
+        };
+        DeviceViewList: {
+            data: components["schemas"]["DeviceView"][];
+            nextCursor: string | null;
         };
         DirectoryGateView: {
             /** @description The guards on shift here now, by first name. */
@@ -21168,6 +21256,19 @@ export interface components {
             accountId: string;
             accountType: components["schemas"]["AccountType"];
             tenantName: string;
+        };
+        LoginView: {
+            /** Format: date-time */
+            at: string;
+            device: components["schemas"]["DeviceLabelView"];
+            /** Format: uuid */
+            id: string;
+            /** @description The login of the session of this request. */
+            isCurrent: boolean;
+        };
+        LoginViewList: {
+            data: components["schemas"]["LoginView"][];
+            nextCursor: string | null;
         };
         MaintenanceSettingsResponse: {
             /** @description Hours a completed ticket waits for the reporter. */
@@ -25133,6 +25234,8 @@ export interface components {
         SessionView: {
             /** Format: date-time */
             createdAt: string;
+            /** @description The device it was started on; null for older sessions. */
+            device: components["schemas"]["DeviceLabelView"] | null;
             /** Format: uuid */
             id: string;
             /** @description The session of this request. */
@@ -37148,6 +37251,25 @@ export interface operations {
             };
         };
     };
+    MeController_devices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceViewList"];
+                };
+            };
+        };
+    };
     MeDevicesController_notMeFromApp: {
         parameters: {
             query?: never;
@@ -37164,6 +37286,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    MeController_revokeDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokedView"];
+                };
             };
         };
     };
@@ -37319,6 +37462,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LocaleView"];
+                };
+            };
+        };
+    };
+    MeController_logins: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginViewList"];
                 };
             };
         };

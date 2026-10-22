@@ -1202,6 +1202,55 @@
           }
         },
         {
+          "name": "List the devices I signed in from, with their live sessions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "devices"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/devices"
+            }
+          }
+        },
+        {
+          "name": "Sign a device out: its sessions end, and its next login alerts as new",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "devices",
+                ":id",
+                "revoke"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/devices/:id/revoke",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Set my preferred language",
           "request": {
             "body": {
@@ -1233,6 +1282,40 @@
                 "locale"
               ],
               "raw": "{{baseUrl}}/api/v1/me/locale"
+            }
+          }
+        },
+        {
+          "name": "List my logins of the last 90 days",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "logins"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/logins"
             }
           }
         },

@@ -102,6 +102,46 @@ export const ME_ROUTES: Row[] = [
     foreign: 'none',
     invalid: 'none',
   },
+  // Devices and the login history (ADR 0058).
+  {
+    method: 'GET',
+    path: '/me/devices',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'none',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/me/devices/{id}/revoke',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'none',
+    foreign: {
+      params: (w) => ({ id: w.bDeviceId }),
+      code: 'DEVICE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/me/logins',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'none',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+  },
   {
     method: 'GET',
     path: '/me/deletion-request',

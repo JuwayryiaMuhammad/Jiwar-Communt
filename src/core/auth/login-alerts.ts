@@ -1,7 +1,7 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Locale } from '../common/i18n/locale';
 import { GlobalDbService } from '../database/global-db.service';
-import { TenantTx } from '../database/tenant-tx.service';
+import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 import { EmailTemplates } from '../mail/email-templates';
 import {
   emailPage,
@@ -49,7 +49,12 @@ const DEVICE_LABELS: Record<Locale, Record<DeviceType, string>> = {
  * - the account's first device is the baseline and raises nothing (an
  *   account that only logged in before R1 gets its baseline at its next
  *   login);
- * - a known device only updates its last use.
+ * - a known device only updates its last use; one its holder revoked
+ *   (ADR 0058) counts as never seen again: it alerts and is live again.
+ *
+ * The session is started in the same transaction, on that device, and the
+ * login is recorded (`account_logins`, ADR 0058): a revocation of the
+ * device, under the same account lock, comes wholly before or after.
  *
  * Fail-closed: a login that cannot record its device does not happen.
  */
@@ -76,95 +81,77 @@ export class LoginAlerts implements OnModuleInit {
     );
   }
 
-  async recordLogin(
+  async recordLogin<T>(
     account: { accountId: string; tenantId: string },
     origin: { userAgent?: string | null; installId?: string | null },
+    start: (
+      tx: TenantTxClient,
+      knownDeviceId: string,
+    ) => Promise<{ sessionId: string; result: T }>,
     now: Date = new Date(),
-  ): Promise<void> {
+  ): Promise<T> {
     const device = deviceIdentity(origin.userAgent, origin.installId);
     const deviceHash = this.hasher.hashDevice(
       account.accountId,
       device.source,
       device.material,
     );
-    const alerted = await this.tenantTx.runInTenantUnsafe(
+    const label = { os: device.os, client: device.client };
+    const { alerted, result } = await this.tenantTx.runInTenantUnsafe(
       account.tenantId,
       async (tx) => {
         // Two first logins at once: one is the baseline, the other alerts.
+        // A device's revocation takes the same lock (AccountSelfService).
         await tx.$queryRaw`
           SELECT id FROM accounts WHERE id = ${account.accountId}::uuid
              FOR NO KEY UPDATE`;
         const known = await tx.knownDevice.findFirst({
           where: { accountId: account.accountId, deviceHash },
-          select: { id: true },
+          select: { id: true, revokedAt: true },
         });
+        let alertOn: string | null = null;
+        let deviceId: string;
         if (known) {
           await tx.knownDevice.update({
             where: { id: known.id },
-            data: { lastSeenAt: now },
+            data: { lastSeenAt: now, revokedAt: null, ...label },
           });
-          return null;
+          deviceId = known.id;
+          if (known.revokedAt) alertOn = known.id;
+        } else {
+          const baseline =
+            (await tx.knownDevice.count({
+              where: { accountId: account.accountId },
+            })) === 0;
+          const created = await tx.knownDevice.create({
+            data: {
+              id: newId(),
+              tenantId: account.tenantId,
+              accountId: account.accountId,
+              deviceHash,
+              source: device.source,
+              deviceType: device.deviceType,
+              ...label,
+              firstSeenAt: now,
+              lastSeenAt: now,
+            },
+          });
+          deviceId = created.id;
+          if (!baseline) alertOn = created.id;
         }
-        const baseline =
-          (await tx.knownDevice.count({
-            where: { accountId: account.accountId },
-          })) === 0;
-        const created = await tx.knownDevice.create({
+        if (alertOn)
+          await this.alert(tx, account, device.deviceType, alertOn, now);
+        const started = await start(tx, deviceId);
+        await tx.accountLogin.create({
           data: {
             id: newId(),
             tenantId: account.tenantId,
             accountId: account.accountId,
-            deviceHash,
-            source: device.source,
-            deviceType: device.deviceType,
-            firstSeenAt: now,
-            lastSeenAt: now,
+            knownDeviceId: deviceId,
+            sessionId: started.sessionId,
           },
         });
-        if (baseline) return null;
-
-        const at = now.toISOString();
-        await this.notifier.notify(tx, [account.accountId], {
-          kind: 'account.new_device_login',
-          params: { deviceType: device.deviceType, at },
-          targetId: created.id,
-        });
-        const holder = await tx.account.findUniqueOrThrow({
-          where: { id: account.accountId },
-          select: { email: true, preferredLocale: true },
-        });
-        if (holder.email) {
-          const tokenId = await this.tokens.create(tx, {
-            tenantId: account.tenantId,
-            accountId: account.accountId,
-            purpose: 'not_me',
-            subjectId: created.id,
-            expiresAt: new Date(now.getTime() + NOT_ME_TTL_MS),
-          });
-          const tenant = await this.globalDb.in(tx).tenant.findUniqueOrThrow({
-            where: { id: account.tenantId },
-            select: { name: true },
-          });
-          const timeZone =
-            (await tx.tenantSettings.findFirst({ select: { timezone: true } }))
-              ?.timezone ?? 'Africa/Cairo';
-          await this.outbox.enqueue(tx, {
-            tenantId: account.tenantId,
-            templateKey: NEW_DEVICE_EMAIL,
-            locale: holder.preferredLocale,
-            recipient: holder.email,
-            // Codes and ids only: the link is derived when it is sent.
-            params: {
-              compoundName: tenant.name,
-              deviceType: device.deviceType,
-              at,
-              timeZone,
-              actionTokenId: tokenId,
-            },
-            recipientAccountId: account.accountId,
-          });
-        }
-        return created.id;
+        return { alerted: alertOn, result: started.result };
       },
     );
     if (alerted)
@@ -173,6 +160,58 @@ export class LoginAlerts implements OnModuleInit {
         accountId: account.accountId,
         metadata: { deviceId: alerted, deviceType: device.deviceType },
       });
+    return result;
+  }
+
+  /** The alert: the inbox and, with an address, the email and its link. */
+  private async alert(
+    tx: TenantTxClient,
+    account: { accountId: string; tenantId: string },
+    deviceType: DeviceType,
+    deviceId: string,
+    now: Date,
+  ): Promise<void> {
+    const at = now.toISOString();
+    await this.notifier.notify(tx, [account.accountId], {
+      kind: 'account.new_device_login',
+      params: { deviceType, at },
+      targetId: deviceId,
+    });
+    const holder = await tx.account.findUniqueOrThrow({
+      where: { id: account.accountId },
+      select: { email: true, preferredLocale: true },
+    });
+    if (holder.email) {
+      const tokenId = await this.tokens.create(tx, {
+        tenantId: account.tenantId,
+        accountId: account.accountId,
+        purpose: 'not_me',
+        subjectId: deviceId,
+        expiresAt: new Date(now.getTime() + NOT_ME_TTL_MS),
+      });
+      const tenant = await this.globalDb.in(tx).tenant.findUniqueOrThrow({
+        where: { id: account.tenantId },
+        select: { name: true },
+      });
+      const timeZone =
+        (await tx.tenantSettings.findFirst({ select: { timezone: true } }))
+          ?.timezone ?? 'Africa/Cairo';
+      await this.outbox.enqueue(tx, {
+        tenantId: account.tenantId,
+        templateKey: NEW_DEVICE_EMAIL,
+        locale: holder.preferredLocale,
+        recipient: holder.email,
+        // Codes and ids only: the link is derived when it is sent.
+        params: {
+          compoundName: tenant.name,
+          deviceType,
+          at,
+          timeZone,
+          actionTokenId: tokenId,
+        },
+        recipientAccountId: account.accountId,
+      });
+    }
   }
 
   private render(locale: Locale, p: Record<string, unknown>): RenderedEmail {

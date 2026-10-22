@@ -86,10 +86,20 @@ describe('Self-service', () => {
     for (const s of sessions) {
       expect(Object.keys(s).sort()).toEqual([
         'createdAt',
+        'device',
         'id',
         'isCurrent',
         'lastUsedAt',
         'userAgent',
+      ]);
+      // Never the IP, here or in the device's label (ADR 0058): its id, its
+      // type and its label (the OS and the client), nothing else.
+      expect(s).not.toHaveProperty('ip');
+      expect(Object.keys(s.device!).sort()).toEqual([
+        'client',
+        'deviceType',
+        'id',
+        'os',
       ]);
     }
   });

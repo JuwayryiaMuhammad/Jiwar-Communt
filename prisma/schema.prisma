@@ -614,9 +614,14 @@ model Session {
   /// A step-up code was verified on this session (ADR 0036): the next
   /// sensitive action may run until then, and consumes it.
   stepUpUntil      DateTime? @map("step_up_until") @db.Timestamptz(3)
+  /// The known device it was started on (ADR 0058); null before R11b.
+  knownDeviceId    String?   @map("known_device_id") @db.Uuid
 
   pushDevices PushDevice[]
+  knownDevice KnownDevice?   @relation(fields: [tenantId, knownDeviceId], references: [tenantId, id], onDelete: SetNull, onUpdate: Restrict, map: "sessions_known_device_fkey")
+  logins      AccountLogin[]
 
+  @@unique([tenantId, id])
   @@index([accountId])
   @@map("sessions")
 }
@@ -915,6 +920,7 @@ model Account {
   channelPrefs                   NotificationChannelPref[]           @relation("ChannelPrefAccount")
   consents                       AccountConsent[]                    @relation("ConsentAccount")
   knownDevices                   KnownDevice[]                       @relation("KnownDeviceAccount")
+  accountLogins                  AccountLogin[]                      @relation("AccountLoginAccount")
   dataExports                    DataExport[]                        @relation("DataExportAccount")
   idempotencyKeys                IdempotencyKey[]                    @relation("IdempotencyAccount")
   technicianSpecialties          TechnicianSpecialty[]               @relation("TechnicianSpecialtyAccount")
@@ -1862,12 +1868,42 @@ model KnownDevice {
   lastSeenAt  DateTime          @default(now()) @map("last_seen_at") @db.Timestamptz(3)
   /// The account said "not me" about it.
   disownedAt  DateTime?         @map("disowned_at") @db.Timestamptz(3)
+  /// The coarse label (ADR 0058): ios, android, windows, macos, linux, other.
+  os          String
+  /// app, or a browser family: edge, opera, samsung, firefox, chrome,
+  /// safari, other.
+  client      String
+  /// Its holder signed it out (ADR 0058); a later login from it is new.
+  revokedAt   DateTime?         @map("revoked_at") @db.Timestamptz(3)
 
-  account Account @relation("KnownDeviceAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  account  Account        @relation("KnownDeviceAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  sessions Session[]
+  logins   AccountLogin[]
 
   @@unique([tenantId, accountId, deviceHash])
   @@unique([tenantId, id])
   @@map("known_devices")
+}
+
+/// One login of an account (ADR 0058): when, on which known device, which
+/// session. Never an IP, a user agent or a place. Insert-only; kept 90 days.
+model AccountLogin {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  accountId     String   @map("account_id") @db.Uuid
+  knownDeviceId String   @map("known_device_id") @db.Uuid
+  sessionId     String   @map("session_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  account     Account     @relation("AccountLoginAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict, map: "account_logins_account_fkey")
+  knownDevice KnownDevice @relation(fields: [tenantId, knownDeviceId], references: [tenantId, id], onDelete: Cascade, onUpdate: Restrict, map: "account_logins_device_fkey")
+  session     Session     @relation(fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Cascade, onUpdate: Restrict, map: "account_logins_session_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, sessionId], map: "account_logins_session_key")
+  @@index([tenantId, accountId, createdAt(sort: Desc), id(sort: Desc)], map: "account_logins_account_idx")
+  @@index([tenantId, createdAt], map: "account_logins_created_idx")
+  @@map("account_logins")
 }
 
 /// A personal-data export (ADR 0036).

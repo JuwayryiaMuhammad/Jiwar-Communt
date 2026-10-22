@@ -35,6 +35,8 @@ const INBOX_PAGE = 500;
  *   the account's own history: who acted is `self`, `assisted` or
  *   `system`, never a manager's id);
  * - `sessions.json`: `GET /me/sessions` plus ended ones, never an IP;
+ * - `logins.json`: `GET /me/logins` (ADR 0058): when, on which device's
+ *   label;
  * - `notifications/NNN.json`: the inbox as `GET /me/notifications` shows it;
  * - `deletion-requests.json`;
  * - `files/`: the account's own photo and the ready files it owns.
@@ -54,6 +56,7 @@ export class CoreExportSections implements OnModuleInit {
     this.sections.register('preferences', () => this.preferencesOf());
     this.sections.register('consents', (s) => this.consentsOf(s));
     this.sections.register('sessions', (s) => this.sessions(s));
+    this.sections.register('logins', (s) => this.logins(s));
     this.sections.register('notifications', (s) => this.inbox(s));
     this.sections.register('deletion_requests', (s) => this.deletions(s));
     this.sections.register('files', (s) => this.ownFiles(s));
@@ -119,6 +122,23 @@ export class CoreExportSections implements OnModuleInit {
       orderBy: { createdAt: 'asc' },
     });
     yield { path: 'sessions.json', json: rows };
+  }
+
+  private async *logins(s: ExportSubject): AsyncIterable<ExportEntry> {
+    const rows = await this.tenantTx.withTenantTx((tx) =>
+      tx.accountLogin.findMany({
+        where: { accountId: s.accountId },
+        select: {
+          createdAt: true,
+          knownDevice: { select: { deviceType: true, os: true, client: true } },
+        },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+    );
+    yield {
+      path: 'logins.json',
+      json: rows.map((r) => ({ at: r.createdAt, device: r.knownDevice })),
+    };
   }
 
   private async *inbox(s: ExportSubject): AsyncIterable<ExportEntry> {

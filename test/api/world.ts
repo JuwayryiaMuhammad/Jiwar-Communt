@@ -20,7 +20,7 @@ import { RegistrationService } from '../../src/community/residents/registration.
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
-import { LoginAlerts } from '../../src/core/auth/login-alerts';
+import { deviceLogin } from '../setup/login';
 import { Notifier } from '../../src/core/notifications/notifier';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
@@ -725,12 +725,11 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { key: 'plumbing' },
     }),
   );
-  await h.moduleRef
-    .get(LoginAlerts)
-    .recordLogin(
-      { accountId: b.ids.owner, tenantId: b.tenantId },
-      { userAgent: 'World/1.0 (Linux)' },
-    );
+  await deviceLogin(
+    h,
+    { accountId: b.ids.owner, tenantId: b.tenantId },
+    { userAgent: 'World/1.0 (Linux)' },
+  );
   const bDevice = await helpers.asManager(b, () =>
     helpers.prisma.tenant.knownDevice.findFirstOrThrow({
       where: { accountId: b.ids.owner },

@@ -6,7 +6,13 @@ import {
   Locale,
 } from '@prisma/client';
 import { maskDocument } from '../../common/http/personal';
-import type { MySession } from '../account-self.service';
+import type {
+  DeviceLabel,
+  MyDevice,
+  MyLogin,
+  MySession,
+} from '../account-self.service';
+import { DEVICE_CLIENTS, DEVICE_OSES, DEVICE_TYPES } from '../../auth/devices';
 import type { DeletionRequestView } from '../account-deletion.service';
 import type { AccountRecord } from '../account-record';
 import type { RoleWithPermissions } from '../../access/roles.service';
@@ -108,6 +114,26 @@ export class LocaleView {
   preferredLocale: Locale;
 }
 
+/** A device's coarse label (ADR 0058): codes the app names, never a user agent. */
+export class DeviceLabelView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: DEVICE_TYPES, enumName: 'DeviceType' })
+  deviceType: string;
+  @ApiProperty({ enum: DEVICE_OSES, enumName: 'DeviceOs' })
+  os: string;
+  @ApiProperty({
+    enum: DEVICE_CLIENTS,
+    enumName: 'DeviceClient',
+    description: '`app`, or the browser family.',
+  })
+  client: string;
+
+  static from(d: DeviceLabel & { id: string }): DeviceLabelView {
+    return { id: d.id, deviceType: d.deviceType, os: d.os, client: d.client };
+  }
+}
+
 export class SessionView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -117,6 +143,12 @@ export class SessionView {
   lastUsedAt: Date | null;
   @ApiProperty({ type: String, nullable: true })
   userAgent: string | null;
+  @ApiProperty({
+    type: DeviceLabelView,
+    nullable: true,
+    description: 'The device it was started on; null for older sessions.',
+  })
+  device: DeviceLabelView | null;
   @ApiProperty({ type: Boolean, description: 'The session of this request.' })
   isCurrent: boolean;
 
@@ -126,7 +158,55 @@ export class SessionView {
       createdAt: s.createdAt,
       lastUsedAt: s.lastUsedAt,
       userAgent: s.userAgent,
+      device: s.device ? DeviceLabelView.from(s.device) : null,
       isCurrent: s.isCurrent,
+    };
+  }
+}
+
+export class DeviceView extends DeviceLabelView {
+  @ApiProperty({ type: String, format: 'date-time' })
+  firstSeenAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  lastSeenAt: Date;
+  @ApiProperty({ type: Number, description: 'Live sessions started on it.' })
+  liveSessions: number;
+  @ApiProperty({
+    type: Boolean,
+    description: 'The device of the session of this request.',
+  })
+  isCurrent: boolean;
+
+  static fromDevice(d: MyDevice): DeviceView {
+    return {
+      ...DeviceLabelView.from(d),
+      firstSeenAt: d.firstSeenAt,
+      lastSeenAt: d.lastSeenAt,
+      liveSessions: d.liveSessions,
+      isCurrent: d.isCurrent,
+    };
+  }
+}
+
+export class LoginView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+  @ApiProperty({ type: DeviceLabelView })
+  device: DeviceLabelView;
+  @ApiProperty({
+    type: Boolean,
+    description: 'The login of the session of this request.',
+  })
+  isCurrent: boolean;
+
+  static from(l: MyLogin): LoginView {
+    return {
+      id: l.id,
+      at: l.at,
+      device: DeviceLabelView.from(l.device),
+      isCurrent: l.isCurrent,
     };
   }
 }

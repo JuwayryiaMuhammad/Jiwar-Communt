@@ -11,9 +11,9 @@ import {
 } from '../setup/audit-coverage-split';
 import { communityHelpers, type Compound } from '../setup/community';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { deviceLogin } from '../setup/login';
 import { waitForOtp } from '../setup/mailpit';
 import { sessionOf } from '../api/world';
-import { LoginAlerts } from '../../src/core/auth/login-alerts';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { newId } from '../../src/core/common/uuid';
 import {
@@ -156,10 +156,9 @@ describe('Audit coverage — preferences, consents, export, deletion', () => {
     const unit = await x.unit(c);
     await x.resident(c, [unit.id]);
     const p = await x.resident(c, [unit.id], 'tenant');
-    const alerts = h.moduleRef.get(LoginAlerts);
     const who = { accountId: p.id, tenantId: c.tenantId };
-    await alerts.recordLogin(who, { userAgent: 'Audit/1.0 (Linux)' });
-    await alerts.recordLogin(who, {
+    await deviceLogin(h, who, { userAgent: 'Audit/1.0 (Linux)' });
+    await deviceLogin(h, who, {
       userAgent: 'Jiwar/1.0 (iPhone)',
       installId: '0192a5f0-1c2b-7d3e-8f40-0000000000aa',
     });
@@ -192,7 +191,9 @@ describe('Audit coverage — preferences, consents, export, deletion', () => {
     expect(rows[0].metadata).toEqual({
       via: 'app',
       deviceId,
-      sessionsRevoked: 1,
+      // The two logins' sessions (ADR 0058: a login starts its session with
+      // its device) and the caller's own.
+      sessionsRevoked: 3,
     });
     covered.add('account.not_me');
   });

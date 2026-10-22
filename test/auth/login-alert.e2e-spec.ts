@@ -1,11 +1,10 @@
 import { AccountsService } from '../../src/core/accounts/accounts.service';
-import { LoginAlerts } from '../../src/core/auth/login-alerts';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { auditReaders } from '../setup/audit';
 import { communityHelpers, type Compound } from '../setup/community';
 import { drainOutbox } from '../setup/outbox';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
-import { requestAndVerify } from '../setup/login';
+import { deviceLogin, requestAndVerify } from '../setup/login';
 import { waitForMessage } from '../setup/mailpit';
 
 const ANDROID_APP = 'Jiwar/1.4.0 (Android 14; Pixel 8)';
@@ -291,13 +290,12 @@ describe('Unusual-login alert', () => {
   });
 
   it('two first logins at once: one baseline, one alert', async () => {
-    const alertsService = h.moduleRef.get(LoginAlerts);
     for (let i = 0; i < 5; i++) {
       const p = await someone();
       const who = { accountId: p.id, tenantId: c.tenantId };
       await Promise.all([
-        alertsService.recordLogin(who, { userAgent: CHROME_WIN(129) }),
-        alertsService.recordLogin(who, { userAgent: FIREFOX_LINUX }),
+        deviceLogin(h, who, { userAgent: CHROME_WIN(129) }),
+        deviceLogin(h, who, { userAgent: FIREFOX_LINUX }),
       ]);
       expect(await devices(p.id)).toHaveLength(2);
       expect(await alerts(p.id)).toHaveLength(1);

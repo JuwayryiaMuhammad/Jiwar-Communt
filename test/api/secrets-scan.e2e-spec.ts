@@ -3,13 +3,13 @@ import type { AddressInfo } from 'node:net';
 import { Writable } from 'node:stream';
 import { Logger } from '@nestjs/common';
 import pinoHttp from 'pino-http';
-import { LoginAlerts } from '../../src/core/auth/login-alerts';
 import { httpLogOptions } from '../../src/core/common/logging/http-log-options';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { PrismaService } from '../../src/core/database/prisma.service';
 import { communityHelpers, type Compound } from '../setup/community';
 import { buildExports } from '../setup/exports';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { deviceLogin } from '../setup/login';
 import { waitForMessage, waitForOtp } from '../setup/mailpit';
 import { drainOutbox } from '../setup/outbox';
 
@@ -134,11 +134,10 @@ describe('Secrets scan — email action tokens', () => {
     const unit = await x.unit(c);
     await x.resident(c, [unit.id]);
     const p = await x.resident(c, [unit.id], 'tenant');
-    const alerts = h.moduleRef.get(LoginAlerts);
     const who = { accountId: p.id, tenantId: c.tenantId };
-    await alerts.recordLogin(who, { userAgent: 'Secrets/1.0 (Linux)' });
+    await deviceLogin(h, who, { userAgent: 'Secrets/1.0 (Linux)' });
     const since = new Date();
-    await alerts.recordLogin(who, {
+    await deviceLogin(h, who, {
       userAgent: 'Jiwar/1.0 (Android)',
       installId: '0192a5f0-1c2b-7d3e-8f40-5ec4e7000002',
     });

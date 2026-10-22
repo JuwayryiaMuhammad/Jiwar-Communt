@@ -234,7 +234,14 @@ describe('API v0 — me', () => {
       200,
     );
     expect(keyPaths(list.body)).toEqual(
-      listKeys(['createdAt', 'id', 'isCurrent', 'lastUsedAt', 'userAgent']),
+      listKeys([
+        'createdAt',
+        'device',
+        'id',
+        'isCurrent',
+        'lastUsedAt',
+        'userAgent',
+      ]),
     );
     const sessions = (
       list.body as { data: { id: string; isCurrent: boolean }[] }

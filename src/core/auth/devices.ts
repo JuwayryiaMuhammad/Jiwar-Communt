@@ -3,8 +3,14 @@ import { isUUID } from 'class-validator';
 /** The header the apps send with every login: a UUID made at install. */
 export const INSTALL_ID_HEADER = 'x-jiwar-install-id';
 
-export type DeviceType =
-  'ios' | 'android' | 'desktop_web' | 'mobile_web' | 'unknown';
+export const DEVICE_TYPES = [
+  'ios',
+  'android',
+  'desktop_web',
+  'mobile_web',
+  'unknown',
+] as const;
+export type DeviceType = (typeof DEVICE_TYPES)[number];
 
 export interface DeviceIdentity {
   source: 'app' | 'web';
@@ -12,11 +18,34 @@ export interface DeviceIdentity {
   material: string;
   /** All a notification says about the device (ADR 0036). */
   deviceType: DeviceType;
+  /** The coarse label its holder sees (ADR 0058): never the user agent. */
+  os: DeviceOs;
+  client: DeviceClient;
 }
 
-type Os = 'ios' | 'android' | 'windows' | 'macos' | 'linux' | 'other';
+export const DEVICE_OSES = [
+  'ios',
+  'android',
+  'windows',
+  'macos',
+  'linux',
+  'other',
+] as const;
+export type DeviceOs = (typeof DEVICE_OSES)[number];
+type Os = DeviceOs;
 type Browser =
   'edge' | 'opera' | 'samsung' | 'firefox' | 'chrome' | 'safari' | 'other';
+export const DEVICE_CLIENTS = [
+  'app',
+  'edge',
+  'opera',
+  'samsung',
+  'firefox',
+  'chrome',
+  'safari',
+  'other',
+] as const;
+export type DeviceClient = (typeof DEVICE_CLIENTS)[number];
 
 /** A coarse reading of a user agent: the OS and the browser family. */
 export function classifyUserAgent(ua: string | null | undefined): {
@@ -68,6 +97,8 @@ export function deviceIdentity(
       source: 'app',
       material: installId.toLowerCase(),
       deviceType: os === 'ios' || os === 'android' ? os : 'unknown',
+      os,
+      client: 'app',
     };
   }
   return {
@@ -79,5 +110,7 @@ export function deviceIdentity(
         : mobile
           ? 'mobile_web'
           : 'desktop_web',
+    os,
+    client: browser,
   };
 }

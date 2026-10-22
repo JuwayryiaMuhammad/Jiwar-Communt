@@ -1,4 +1,9 @@
-import { classifyUserAgent, deviceIdentity } from './devices';
+import {
+  classifyUserAgent,
+  DEVICE_CLIENTS,
+  DEVICE_OSES,
+  deviceIdentity,
+} from './devices';
 
 const UA = {
   chromeWindows:
@@ -53,6 +58,8 @@ describe('devices', () => {
       source: 'app',
       material: install,
       deviceType: 'android',
+      os: 'android',
+      client: 'app',
     });
     expect(deviceIdentity(UA.app, install.toUpperCase()).material).toBe(
       install,
@@ -62,12 +69,29 @@ describe('devices', () => {
       source: 'web',
       material: 'chrome/windows',
       deviceType: 'desktop_web',
+      os: 'windows',
+      client: 'chrome',
     });
     expect(deviceIdentity(UA.safariIphone, null).deviceType).toBe('mobile_web');
     expect(deviceIdentity(undefined, undefined)).toEqual({
       source: 'web',
       material: 'other/other',
       deviceType: 'unknown',
+      os: 'other',
+      client: 'other',
+    });
+  });
+
+  it('the label is codes from closed lists, never the user agent (ADR 0058)', () => {
+    for (const ua of [...Object.values(UA), undefined]) {
+      const d = deviceIdentity(ua, undefined);
+      expect(DEVICE_OSES).toContain(d.os);
+      expect(DEVICE_CLIENTS).toContain(d.client);
+      expect(d.client).not.toBe('app');
+    }
+    expect(deviceIdentity(UA.safariMac, undefined)).toMatchObject({
+      os: 'macos',
+      client: 'safari',
     });
   });
 

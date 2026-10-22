@@ -157,8 +157,18 @@ export class AuthService {
         'Invalid or expired login ticket',
       );
     }
-    await this.loginAlerts.recordLogin(chosen, origin);
-    const tokens = await this.sessions.start(chosen);
+    const tokens = await this.loginAlerts.recordLogin(
+      chosen,
+      origin,
+      async (tx, knownDeviceId) => {
+        const { sessionId, tokens } = await this.sessions.startIn(
+          tx,
+          chosen,
+          knownDeviceId,
+        );
+        return { sessionId, result: tokens };
+      },
+    );
     await this.securityEvents.record('login.succeeded', {
       accountId: chosen.accountId,
       tenantId: chosen.tenantId,

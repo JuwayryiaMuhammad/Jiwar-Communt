@@ -11087,6 +11087,20 @@
         ],
         "type": "string"
       },
+      "DeviceClient": {
+        "description": "`app`, or the browser family.",
+        "enum": [
+          "app",
+          "edge",
+          "opera",
+          "samsung",
+          "firefox",
+          "chrome",
+          "safari",
+          "other"
+        ],
+        "type": "string"
+      },
       "DeviceEnvelopeDto": {
         "properties": {
           "deviceId": {
@@ -11108,6 +11122,140 @@
           "deviceId",
           "payload",
           "signature"
+        ],
+        "type": "object"
+      },
+      "DeviceLabelView": {
+        "properties": {
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceClient"
+              }
+            ],
+            "description": "`app`, or the browser family."
+          },
+          "deviceType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceType"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "os": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceOs"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "deviceType",
+          "os",
+          "client"
+        ],
+        "type": "object"
+      },
+      "DeviceOs": {
+        "enum": [
+          "ios",
+          "android",
+          "windows",
+          "macos",
+          "linux",
+          "other"
+        ],
+        "type": "string"
+      },
+      "DeviceType": {
+        "enum": [
+          "ios",
+          "android",
+          "desktop_web",
+          "mobile_web",
+          "unknown"
+        ],
+        "type": "string"
+      },
+      "DeviceView": {
+        "properties": {
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceClient"
+              }
+            ],
+            "description": "`app`, or the browser family."
+          },
+          "deviceType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceType"
+              }
+            ]
+          },
+          "firstSeenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isCurrent": {
+            "description": "The device of the session of this request.",
+            "type": "boolean"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "liveSessions": {
+            "description": "Live sessions started on it.",
+            "type": "number"
+          },
+          "os": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceOs"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "deviceType",
+          "os",
+          "client",
+          "firstSeenAt",
+          "lastSeenAt",
+          "liveSessions",
+          "isCurrent"
+        ],
+        "type": "object"
+      },
+      "DeviceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DeviceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -21795,6 +21943,51 @@
           "accountId",
           "tenantName",
           "accountType"
+        ],
+        "type": "object"
+      },
+      "LoginView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "device": {
+            "$ref": "#/components/schemas/DeviceLabelView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isCurrent": {
+            "description": "The login of the session of this request.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "device",
+          "isCurrent"
+        ],
+        "type": "object"
+      },
+      "LoginViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/LoginView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -34390,6 +34583,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "device": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceLabelView"
+              }
+            ],
+            "description": "The device it was started on; null for older sessions.",
+            "nullable": true,
+            "type": "object"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -34413,6 +34616,7 @@
           "createdAt",
           "lastUsedAt",
           "userAgent",
+          "device",
           "isCurrent"
         ],
         "type": "object"
@@ -62992,6 +63196,34 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/devices": {
+      "get": {
+        "operationId": "MeController_devices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the devices I signed in from, with their live sessions",
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/devices/{id}/not-me": {
       "post": {
         "operationId": "MeDevicesController_notMeFromApp",
@@ -63018,6 +63250,43 @@
         "summary": "\"Not me\" on an unusual-login alert: freeze my account",
         "tags": [
           "security"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/devices/{id}/revoke": {
+      "post": {
+        "operationId": "MeController_revokeDevice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sign a device out: its sessions end, and its next login alerts as new",
+        "tags": [
+          "me"
         ],
         "x-stability": "draft"
       }
@@ -63319,6 +63588,55 @@
           }
         ],
         "summary": "Set my preferred language",
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/logins": {
+      "get": {
+        "operationId": "MeController_logins",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my logins of the last 90 days",
         "tags": [
           "me"
         ],

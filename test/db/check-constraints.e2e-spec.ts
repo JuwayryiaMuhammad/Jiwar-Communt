@@ -533,6 +533,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   account_freezes_released_shape: {},
   action_tokens_uses_nonnegative: {},
   known_devices_device_type_known: {},
+  // The device label (ADR 0058): NOT NULL columns only.
+  known_devices_os_known: {},
+  known_devices_client_known: {},
+  known_devices_client_source: {},
   // Data exports (ADR 0036): nullable columns only under IS [NOT] NULL.
   data_exports_shape: {},
   // The deletion queue (ADR 0036): nullable columns only under

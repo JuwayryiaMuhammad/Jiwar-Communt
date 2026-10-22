@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -18,7 +19,13 @@ import { DerivedGrants } from '../access/derived-grants';
 import { RolesService } from '../access/roles.service';
 import { appError, ErrorCode } from '../common/errors';
 import { ApiArea, NoStore } from '../common/http/decorators';
-import { bounded, ListOf, type ListResponse } from '../common/http/list';
+import {
+  bounded,
+  ListOf,
+  PageQueryDto,
+  toList,
+  type ListResponse,
+} from '../common/http/list';
 import { parseId } from '../common/validation/parse-id.pipe';
 import { AccountDeletionService } from './account-deletion.service';
 import { AccountSelfService } from './account-self.service';
@@ -26,7 +33,9 @@ import { AccountsService } from './accounts.service';
 import { DeletionConfirmationDto, UpdateLocaleDto } from './dto/me.dto';
 import {
   DeletionRequestResponse,
+  DeviceView,
   LocaleView,
+  LoginView,
   MeView,
   RevokedView,
   SessionView,
@@ -96,6 +105,37 @@ export class MeController {
   @ApiNoContentResponse()
   async revoke(@Param('id', parseId()) id: string): Promise<void> {
     await this.self.revokeSession(id);
+  }
+
+  /** The known devices (ADR 0058): the label only, never the IP. */
+  @Get('devices')
+  @ApiOperation({
+    summary: 'List the devices I signed in from, with their live sessions',
+  })
+  @ApiOkResponse({ type: ListOf(DeviceView) })
+  async devices(): Promise<ListResponse<DeviceView>> {
+    return bounded(await this.self.listMyDevices(), (d) =>
+      DeviceView.fromDevice(d),
+    );
+  }
+
+  @Post('devices/:id/revoke')
+  @ApiOperation({
+    summary:
+      'Sign a device out: its sessions end, and its next login alerts as new',
+  })
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: RevokedView })
+  async revokeDevice(@Param('id', parseId()) id: string): Promise<RevokedView> {
+    return { revoked: await this.self.revokeDevice(id) };
+  }
+
+  /** The login history (ADR 0058): when and on which device, 90 days. */
+  @Get('logins')
+  @ApiOperation({ summary: 'List my logins of the last 90 days' })
+  @ApiOkResponse({ type: ListOf(LoginView) })
+  async logins(@Query() q: PageQueryDto): Promise<ListResponse<LoginView>> {
+    return toList(await this.self.listMyLogins(q), (l) => LoginView.from(l));
   }
 
   @Get('deletion-request')

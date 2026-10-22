@@ -247,6 +247,7 @@ describe('Personal-data export', () => {
         'notification-preferences.json',
         'consents.json',
         'sessions.json',
+        'logins.json',
         'deletion-requests.json',
         'units.json',
         'delegations.json',

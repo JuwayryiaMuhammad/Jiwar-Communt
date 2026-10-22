@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import type { AccountType } from '@prisma/client';
+import type { AccountType, Prisma } from '@prisma/client';
 import type { AccessTokenClaims } from '../common/guards/access-token';
 import {
   newSecret,
@@ -41,26 +41,51 @@ export class SessionService {
   ) {}
 
   async start(account: SessionAccount): Promise<IssuedTokens> {
+    return (await this.startOn(this.globalDb, account, null)).tokens;
+  }
+
+  /**
+   * A login's session, in the transaction that recorded its device (ADR
+   * 0058): a revocation of that device, which takes the same account lock,
+   * either ends this session or comes before it.
+   */
+  async startIn(
+    tx: Prisma.TransactionClient,
+    account: SessionAccount,
+    knownDeviceId: string,
+  ): Promise<{ sessionId: string; tokens: IssuedTokens }> {
+    return this.startOn(this.globalDb.in(tx), account, knownDeviceId);
+  }
+
+  private async startOn(
+    db: Pick<Prisma.TransactionClient, 'session'>,
+    account: SessionAccount,
+    knownDeviceId: string | null,
+  ): Promise<{ sessionId: string; tokens: IssuedTokens }> {
     const policy = SESSION_POLICY[account.accountType];
     const sessionId = newId();
     const secret = newSecret();
     const refreshTokenExpiresAt = new Date(
       Date.now() + policy.refreshTtlSeconds * 1000,
     );
-    await this.globalDb.session.create({
+    await db.session.create({
       data: {
         id: sessionId,
         accountId: account.accountId,
         tenantId: account.tenantId,
         refreshTokenHash: sha256(secret),
         expiresAt: refreshTokenExpiresAt,
+        knownDeviceId,
         ...this.origin(),
       },
     });
     return {
-      ...(await this.accessToken(account, sessionId)),
-      refreshToken: `${sessionId}.${secret}`,
-      refreshTokenExpiresAt,
+      sessionId,
+      tokens: {
+        ...(await this.accessToken(account, sessionId)),
+        refreshToken: `${sessionId}.${secret}`,
+        refreshTokenExpiresAt,
+      },
     };
   }
 

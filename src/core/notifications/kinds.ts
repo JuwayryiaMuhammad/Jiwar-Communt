@@ -1264,6 +1264,30 @@ export const NOTIFICATION_KINDS = {
     target: 'invoice_dispute',
     params: {},
   },
+  /** The staff credited one of the unit's invoices (ADR 0058): the reason code. */
+  'credit_note.issued': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'invoice',
+    params: { reason: {} },
+  },
+  /** A compensation: a credit note with its compensation reason code. */
+  'compensation.granted': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'invoice',
+    params: { reason: {} },
+  },
+  /** A checkout's payment failed (once per checkout): its alternatives are on it. */
+  'payment.failed': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'payment_session',
+    params: {},
+  },
   // Guard shifts and tasks (ADR 0050). Params are codes at most: never a
   // name, a unit or a post's name.
   /**

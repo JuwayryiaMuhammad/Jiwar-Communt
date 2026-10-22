@@ -16,8 +16,8 @@ const KIND: Record<InvoiceNoticeKind, NotificationKind> = {
 
 /**
  * Finance's notifications (ADR 0027, 0046), in the action's transaction:
- * category `finance`, none critical, no params — never an amount, a number,
- * a unit or a name. They reach every account that sees the unit's money
+ * category `finance`, none critical; params are reason codes at most (ADR
+ * 0058) — never an amount, a number, a unit or a name. They reach every account that sees the unit's money
  * now (capabilities.financeView), the payer included.
  */
 @Injectable()
@@ -33,10 +33,11 @@ export class FinanceNotices {
     unitId: string,
     kind: NotificationKind,
     targetId: string,
+    params: Record<string, string> = {},
   ): Promise<number> {
     const to = await this.community.financeHolders(tx, unitId);
     if (!to.length) return 0;
-    return this.notifier.notify(tx, to, { kind, params: {}, targetId });
+    return this.notifier.notify(tx, to, { kind, params, targetId });
   }
 
   /**

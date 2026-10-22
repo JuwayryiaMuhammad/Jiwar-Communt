@@ -1,3 +1,4 @@
+import type { PaymentAlternative } from './views/payment-session.views';
 import { createHash } from 'node:crypto';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -437,6 +438,12 @@ export class PaymentSessionsService implements OnModuleInit {
         amount: show(l.amount),
       })),
       lastAttempt: last?.outcome === 'failed_attempt' ? 'failed' : null,
+      alternatives: alternativesOf(
+        s,
+        last?.outcome === 'failed_attempt',
+        mine,
+        await dbNow(tx),
+      ),
       payment: payment
         ? {
             id: payment.id,
@@ -446,4 +453,28 @@ export class PaymentSessionsService implements OnModuleInit {
       checkoutUrl,
     };
   }
+}
+
+/**
+ * What else the payer may do after a failure (ADR 0058): retry on the
+ * hosted page while the checkout is open (the payer only), open a new
+ * checkout once it is over, pay at the office, or ask the management (a
+ * request on the billing topic). Nothing while nothing failed.
+ */
+export function alternativesOf(
+  s: Pick<PaymentSession, 'status' | 'expiresAt'>,
+  attemptFailed: boolean,
+  mine: boolean,
+  now: Date,
+): PaymentAlternative[] {
+  const failed =
+    attemptFailed || s.status === 'failed' || s.status === 'expired';
+  if (!failed) return [];
+  const open = s.status === 'open' && s.expiresAt > now;
+  return [
+    ...(open && mine ? (['retry'] as const) : []),
+    ...(!open ? (['new_checkout'] as const) : []),
+    'pay_at_office',
+    'ask_management',
+  ];
 }

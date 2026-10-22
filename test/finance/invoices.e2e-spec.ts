@@ -492,6 +492,7 @@ describe('Finance — invoices', () => {
               'waiver',
               'duplicate',
               'goodwill',
+              'compensation',
               'other',
             ],
           },

@@ -10231,7 +10231,7 @@
               },
               "raw": "{\n  \"amount\": \"\",\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | At most its total less earlier credit notes. Beyond what it still owes, paid money is released to the unit’s credit (ADR 0048). |\n| `reasonCode` | string | yes | `billing_error`, `waiver`, `duplicate`, `goodwill` or `other` (REASON_CODES.creditNote). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | At most its total less earlier credit notes. Beyond what it still owes, paid money is released to the unit’s credit (ADR 0048). |\n| `compensationReasonCode` | string |  | Required with `compensation`, refused otherwise (ADR 0058): `service_outage`, `maintenance_delay`, `facility_closure` or `other` (REASON_CODES.creditNoteCompensation). |\n| `reasonCode` | string | yes | `billing_error`, `waiver`, `duplicate`, `goodwill`, `compensation` or `other` (REASON_CODES.creditNote). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

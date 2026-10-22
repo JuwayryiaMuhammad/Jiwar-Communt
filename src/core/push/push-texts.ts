@@ -1351,6 +1351,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم قبول اعتراضك على فاتورة. افتح التطبيق لمعرفة المبلغ الجديد.',
     },
   },
+  'credit_note.issued': {
+    en: {
+      title: 'Invoice credited',
+      body: 'The management credited one of your invoices. Open it to see the amount.',
+    },
+    ar: {
+      title: 'خصم على فاتورة',
+      body: 'خصمت الإدارة مبلغًا من إحدى فواتيرك. افتحها لمعرفة القيمة.',
+    },
+  },
+  'compensation.granted': {
+    en: {
+      title: 'Compensation granted',
+      body: 'The management granted you a compensation as a credit on an invoice.',
+    },
+    ar: {
+      title: 'تعويض',
+      body: 'منحتك الإدارة تعويضًا في صورة خصم على فاتورة.',
+    },
+  },
+  'payment.failed': {
+    en: {
+      title: 'Payment failed',
+      body: 'Your online payment did not go through. Try again or choose another way to pay.',
+    },
+    ar: {
+      title: 'لم يتم الدفع',
+      body: 'لم ينجح الدفع الإلكتروني. حاول مرة أخرى أو اختر طريقة دفع أخرى.',
+    },
+  },
   'invoice.dispute_rejected': {
     en: {
       title: 'Dispute not accepted',

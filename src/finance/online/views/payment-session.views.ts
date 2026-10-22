@@ -20,6 +20,14 @@ export class SessionPaymentView {
   receiptNumber: string;
 }
 
+export const PAYMENT_ALTERNATIVES = [
+  'retry',
+  'new_checkout',
+  'pay_at_office',
+  'ask_management',
+] as const;
+export type PaymentAlternative = (typeof PAYMENT_ALTERNATIVES)[number];
+
 /**
  * A checkout and where it stands (ADR 0046). The app polls it after the
  * hosted page: the return URL proves nothing; the webhook decides.
@@ -47,6 +55,14 @@ export class PaymentSessionView {
       'The latest attempt on the hosted page failed; the payer may retry there while it is open.',
   })
   lastAttempt: 'failed' | null;
+  @ApiProperty({
+    enum: PAYMENT_ALTERNATIVES,
+    enumName: 'PaymentAlternative',
+    isArray: true,
+    description:
+      'After a failure (ADR 0058): `retry` on the hosted page while open (the payer), `new_checkout` once over, `pay_at_office`, `ask_management` (a request on the billing topic). Empty while nothing failed.',
+  })
+  alternatives: PaymentAlternative[];
   @ApiProperty({ type: SessionPaymentView, nullable: true })
   payment: SessionPaymentView | null;
   @ApiProperty({

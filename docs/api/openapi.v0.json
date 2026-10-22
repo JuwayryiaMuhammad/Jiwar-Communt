@@ -10395,8 +10395,12 @@
             "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
             "type": "string"
           },
+          "compensationReasonCode": {
+            "description": "Required with `compensation`, refused otherwise (ADR 0058): `service_outage`, `maintenance_delay`, `facility_closure` or `other` (REASON_CODES.creditNoteCompensation).",
+            "type": "string"
+          },
           "reasonCode": {
-            "description": "`billing_error`, `waiver`, `duplicate`, `goodwill` or `other` (REASON_CODES.creditNote).",
+            "description": "`billing_error`, `waiver`, `duplicate`, `goodwill`, `compensation` or `other` (REASON_CODES.creditNote).",
             "type": "string"
           }
         },
@@ -10409,6 +10413,11 @@
       "CreditNoteView": {
         "properties": {
           "amount": {
+            "type": "string"
+          },
+          "compensationReason": {
+            "description": "On a `compensation` (ADR 0058): why, from REASON_CODES.creditNoteCompensation.",
+            "nullable": true,
             "type": "string"
           },
           "createdAt": {
@@ -10443,6 +10452,7 @@
           "amount",
           "released",
           "reasonCode",
+          "compensationReason",
           "createdAt"
         ],
         "type": "object"
@@ -26400,6 +26410,16 @@
         ],
         "type": "object"
       },
+      "PaymentAlternative": {
+        "description": "After a failure (ADR 0058): `retry` on the hosted page while open (the payer), `new_checkout` once over, `pay_at_office`, `ask_management` (a request on the billing topic). Empty while nothing failed.",
+        "enum": [
+          "retry",
+          "new_checkout",
+          "pay_at_office",
+          "ask_management"
+        ],
+        "type": "string"
+      },
       "PaymentChannel": {
         "enum": [
           "office",
@@ -26575,6 +26595,13 @@
       },
       "PaymentSessionView": {
         "properties": {
+          "alternatives": {
+            "description": "After a failure (ADR 0058): `retry` on the hosted page while open (the payer), `new_checkout` once over, `pay_at_office`, `ask_management` (a request on the billing topic). Empty while nothing failed.",
+            "items": {
+              "$ref": "#/components/schemas/PaymentAlternative"
+            },
+            "type": "array"
+          },
           "amount": {
             "type": "string"
           },
@@ -26641,6 +26668,7 @@
           "expiresAt",
           "invoices",
           "lastAttempt",
+          "alternatives",
           "payment",
           "checkoutUrl"
         ],

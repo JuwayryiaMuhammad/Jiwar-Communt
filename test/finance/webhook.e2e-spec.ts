@@ -4,6 +4,7 @@ import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { VERIFY_SWEEP } from '../../src/finance/online/paymob-webhook.service';
 import { SESSION_EXPIRY_SWEEP } from '../../src/finance/online/payment-sessions.service';
 import { auditReaders } from '../setup/audit';
+import { dbClock } from '../setup/compound-clock';
 import { day } from '../setup/facilities';
 import { financeHelpers, type FinanceSetUp } from '../setup/finance';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
@@ -307,6 +308,56 @@ describe('Finance — Paymob webhook', () => {
     expect(polled.lastAttempt).toBe('failed');
     await paid(s, intention).send().expect(200);
     expect((await sessionOf(s, sessionId)).status).toBe('succeeded');
+  });
+
+  it('a failed attempt tells the payer once, and the checkout lists the alternatives (ADR 0058)', async () => {
+    const s = await online('Webhook Failed Told');
+    await f.issue(s.manager, s.home.id);
+    const { sessionId, intention } = await checkout(s);
+    const told = () =>
+      f.x.asManager(s.c, () =>
+        h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+          tx.notification.findMany({
+            where: { targetId: sessionId, kind: 'payment.failed' },
+          }),
+        ),
+      );
+    const view = async () =>
+      body<{ lastAttempt: string | null; alternatives: string[] }>(
+        await f
+          .http('get', `/payment-sessions/${sessionId}`, s.owner.token)
+          .expect(200),
+      );
+    expect((await view()).alternatives).toEqual([]);
+    // Two failed callbacks at once, and a replay: told once.
+    const failed = paymob.callback(intention, s.creds.hmacSecret, {
+      success: false,
+    });
+    const again = paymob.callback(intention, s.creds.hmacSecret, {
+      success: false,
+    });
+    await Promise.all([
+      post(s.c.tenantId, failed.hmac, failed.body).expect(200),
+      post(s.c.tenantId, again.hmac, again.body).expect(200),
+    ]);
+    await post(s.c.tenantId, failed.hmac, failed.body).expect(200);
+    const notes = await told();
+    expect(notes.map((n) => [n.accountId, n.params])).toEqual([
+      [s.owner.id, {}],
+    ]);
+    expect(await view()).toMatchObject({
+      lastAttempt: 'failed',
+      alternatives: ['retry', 'pay_at_office', 'ask_management'],
+    });
+    // Over: a new checkout instead of a retry.
+    await h.moduleRef
+      .get(SweepRunner)
+      .run(SESSION_EXPIRY_SWEEP, new Date(dbClock().getTime() + 31 * 60_000));
+    expect((await view()).alternatives).toEqual([
+      'new_checkout',
+      'pay_at_office',
+      'ask_management',
+    ]);
   });
 
   it('a late success after expiry still pays; after a supersede its excess becomes the unit’s credit', async () => {

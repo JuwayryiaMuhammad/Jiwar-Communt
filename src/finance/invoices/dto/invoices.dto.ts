@@ -122,10 +122,20 @@ export class CreditNoteDto {
   @ApiProperty({
     type: String,
     description:
-      '`billing_error`, `waiver`, `duplicate`, `goodwill` or `other` (REASON_CODES.creditNote).',
+      '`billing_error`, `waiver`, `duplicate`, `goodwill`, `compensation` or `other` (REASON_CODES.creditNote).',
   })
   @IsString()
   reasonCode: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description:
+      'Required with `compensation`, refused otherwise (ADR 0058): `service_outage`, `maintenance_delay`, `facility_closure` or `other` (REASON_CODES.creditNoteCompensation).',
+  })
+  @IsOptional()
+  @IsString()
+  compensationReasonCode?: string;
 }
 
 export class InvoiceStatusQueryDto extends PageQueryDto {

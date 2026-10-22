@@ -17962,11 +17962,15 @@ export interface components {
         CreditNoteDto: {
             /** @description At most its total less earlier credit notes. Beyond what it still owes, paid money is released to the unit’s credit (ADR 0048). */
             amount: string;
-            /** @description `billing_error`, `waiver`, `duplicate`, `goodwill` or `other` (REASON_CODES.creditNote). */
+            /** @description Required with `compensation`, refused otherwise (ADR 0058): `service_outage`, `maintenance_delay`, `facility_closure` or `other` (REASON_CODES.creditNoteCompensation). */
+            compensationReasonCode?: string;
+            /** @description `billing_error`, `waiver`, `duplicate`, `goodwill`, `compensation` or `other` (REASON_CODES.creditNote). */
             reasonCode: string;
         };
         CreditNoteView: {
             amount: string;
+            /** @description On a `compensation` (ADR 0058): why, from REASON_CODES.creditNoteCompensation. */
+            compensationReason: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: uuid */
@@ -22874,6 +22878,11 @@ export interface components {
             invoiceId: string;
             invoiceNumber: string;
         };
+        /**
+         * @description After a failure (ADR 0058): `retry` on the hosted page while open (the payer), `new_checkout` once over, `pay_at_office`, `ask_management` (a request on the billing topic). Empty while nothing failed.
+         * @enum {string}
+         */
+        PaymentAlternative: "retry" | "new_checkout" | "pay_at_office" | "ask_management";
         /** @enum {string} */
         PaymentChannel: "office" | "online";
         PaymentDetailView: {
@@ -22926,6 +22935,8 @@ export interface components {
         /** @enum {string} */
         PaymentSessionStatus: "opening" | "open" | "succeeded" | "failed" | "expired" | "superseded";
         PaymentSessionView: {
+            /** @description After a failure (ADR 0058): `retry` on the hosted page while open (the payer), `new_checkout` once over, `pay_at_office`, `ask_management` (a request on the billing topic). Empty while nothing failed. */
+            alternatives: components["schemas"]["PaymentAlternative"][];
             amount: string;
             /** @description The hosted checkout, to the payer only and while open. Rebuilt each time, never stored. */
             checkoutUrl: string | null;

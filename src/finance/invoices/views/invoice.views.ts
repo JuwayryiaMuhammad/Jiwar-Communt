@@ -34,6 +34,13 @@ export class CreditNoteView {
       'REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`, `dispute`.',
   })
   reasonCode: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'On a `compensation` (ADR 0058): why, from REASON_CODES.creditNoteCompensation.',
+  })
+  compensationReason: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 }

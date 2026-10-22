@@ -1,3 +1,4 @@
+import { FinanceNotices } from '../notices/finance-notices';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import type { PaymentSession } from '@prisma/client';
@@ -99,6 +100,7 @@ export class PaymobWebhookService implements OnModuleInit {
     private readonly vault: CredentialVault,
     private readonly paymob: PaymobClient,
     private readonly payments: PaymentsService,
+    private readonly notices: FinanceNotices,
   ) {}
 
   onModuleInit(): void {
@@ -402,6 +404,8 @@ export class PaymobWebhookService implements OnModuleInit {
     s: Signed,
     outcome: WebhookOutcome,
   ): Promise<WebhookOutcome> {
+    if (outcome === 'failed_attempt' && sessionId)
+      await this.failedOnce(tx, sessionId);
     await tx.paymentGatewayEvent.create({
       data: {
         id: newId(),
@@ -416,6 +420,34 @@ export class PaymobWebhookService implements OnModuleInit {
       },
     });
     return outcome;
+  }
+
+  /**
+   * A checkout's first failed attempt tells its payer (ADR 0058), while they
+   * still see the unit's money; the checkout's view lists the alternatives.
+   * Under the checkout's row lock, so of two failed callbacks at once (or a
+   * replay) only the first tells.
+   */
+  private async failedOnce(
+    tx: TenantTxClient,
+    sessionId: string,
+  ): Promise<void> {
+    const [session] = await tx.$queryRaw<
+      { account_id: string; unit_id: string }[]
+    >`SELECT account_id, unit_id FROM payment_sessions
+       WHERE id = ${sessionId}::uuid FOR UPDATE`;
+    if (!session) return;
+    const before = await tx.paymentGatewayEvent.count({
+      where: { sessionId, outcome: 'failed_attempt' },
+    });
+    if (before) return;
+    await this.notices.toHolder(
+      tx,
+      session.account_id,
+      session.unit_id,
+      'payment.failed',
+      sessionId,
+    );
   }
 
   private alarm(

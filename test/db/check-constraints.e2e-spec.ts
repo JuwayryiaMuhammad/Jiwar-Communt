@@ -955,6 +955,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   credit_notes_number: {},
   credit_notes_amount: {},
   credit_notes_reason: {},
+  // A compensation's reason (ADR 0058): the nullable column only under
+  // IS [NOT] NULL, and its list tested only on a value.
+  credit_notes_compensation: {
+    guarded:
+      'compensation_reason IS NULL is compared as a boolean, and tested first before its list',
+  },
   billing_plans_names_length: {},
   billing_plans_amount: {},
   billing_plans_starts_on: {},

@@ -450,7 +450,21 @@ export const REASON_CODES = {
     'not_possible',
   ],
   // Why the staff credit part or all of an invoice (ADR 0046).
-  creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
+  creditNote: [
+    'billing_error',
+    'waiver',
+    'duplicate',
+    'goodwill',
+    'compensation',
+    'other',
+  ],
+  // Why a compensation (ADR 0058): required exactly with `compensation`.
+  creditNoteCompensation: [
+    'service_outage',
+    'maintenance_delay',
+    'facility_closure',
+    'other',
+  ],
   // A credit note the system writes, never picked by staff (ADR 0048): an
   // instalment plan closing an invoice or cancelling its instalments.
   creditNoteSystem: ['instalment_plan', 'dispute'],

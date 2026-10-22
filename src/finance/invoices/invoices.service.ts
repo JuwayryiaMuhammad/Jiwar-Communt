@@ -320,6 +320,24 @@ export class InvoicesService implements OnModuleInit {
       dto.reasonCode,
       REASON_CODES.creditNote,
     );
+    // A compensation says why (ADR 0058); no other credit note does.
+    const compensationReason =
+      reasonCode === 'compensation'
+        ? requireCompensationReason(dto.compensationReasonCode)
+        : null;
+    if (!compensationReason && dto.compensationReasonCode !== undefined)
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'Only a compensation has a compensation reason',
+        {
+          fields: [
+            {
+              field: 'compensationReasonCode',
+              code: FieldErrorCode.FIELD_NOT_ALLOWED,
+            },
+          ],
+        },
+      );
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: CREDIT_NOTE_RESOURCE, id });
@@ -336,6 +354,7 @@ export class InvoicesService implements OnModuleInit {
         invoiceId,
         amount: money(dto.amount),
         reasonCode,
+        compensationReason,
         createdById: this.ctx.accountId,
       });
       await supersedeLive(tx, [invoice.unitId]);
@@ -352,8 +371,17 @@ export class InvoicesService implements OnModuleInit {
           amount: show(note.amount),
           released: show(released),
           reasonCode,
+          ...(compensationReason ? { compensationReason } : {}),
         },
       });
+      // The unit is told (ADR 0058): the code, never the amount.
+      await this.notices.toUnit(
+        tx,
+        invoice.unitId,
+        compensationReason ? 'compensation.granted' : 'credit_note.issued',
+        invoiceId,
+        { reason: compensationReason ?? reasonCode },
+      );
       return creditNoteView({ ...note, released });
     });
   }
@@ -651,6 +679,7 @@ export function creditNoteView(n: {
   invoiceId: string;
   amount: Prisma.Decimal;
   reasonCode: string;
+  compensationReason: string | null;
   createdAt: Date;
   released: Prisma.Decimal;
 }): CreditNoteView {
@@ -661,6 +690,7 @@ export function creditNoteView(n: {
     amount: show(n.amount),
     released: show(n.released),
     reasonCode: n.reasonCode,
+    compensationReason: n.compensationReason,
     createdAt: n.createdAt,
   };
 }
@@ -674,6 +704,7 @@ export async function creditNoteViews(
     invoiceId: string;
     amount: Prisma.Decimal;
     reasonCode: string;
+    compensationReason: string | null;
     createdAt: Date;
   }[],
 ): Promise<CreditNoteView[]> {
@@ -709,6 +740,7 @@ export async function creditInvoice(
     invoiceId: string;
     amount: Prisma.Decimal;
     reasonCode: string;
+    compensationReason?: string | null;
     createdById: string;
     instalmentPlanId?: string;
     disputeId?: string;
@@ -741,6 +773,7 @@ export async function creditInvoice(
       createdById: input.createdById,
       instalmentPlanId: input.instalmentPlanId ?? null,
       disputeId: input.disputeId ?? null,
+      compensationReason: input.compensationReason ?? null,
     },
   });
   const excess = input.amount.sub(balance.outstanding);
@@ -780,4 +813,38 @@ function batchView(
     dueOn: fromDate(b.dueOn),
     createdAt: b.createdAt,
   };
+}
+
+/** `creditNoteCompensation`: required on a compensation (ADR 0058). */
+function requireCompensationReason(code: string | undefined): string {
+  if (!code)
+    throw appError.badRequest(
+      ErrorCode.VALIDATION_FAILED,
+      'A compensation says why',
+      {
+        fields: [
+          {
+            field: 'compensationReasonCode',
+            code: FieldErrorCode.FIELD_REQUIRED,
+          },
+        ],
+      },
+    );
+  if (
+    !(REASON_CODES.creditNoteCompensation as readonly string[]).includes(code)
+  )
+    throw appError.badRequest(
+      ErrorCode.VALIDATION_FAILED,
+      'Unknown reason code',
+      {
+        fields: [
+          {
+            field: 'compensationReasonCode',
+            code: FieldErrorCode.INVALID_REASON_CODE,
+            params: { allowed: [...REASON_CODES.creditNoteCompensation] },
+          },
+        ],
+      },
+    );
+  return code;
 }

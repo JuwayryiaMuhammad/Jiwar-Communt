@@ -11432,6 +11432,45 @@
         ],
         "type": "object"
       },
+      "DeskPassView": {
+        "properties": {
+          "code": {
+            "description": "The 6-digit gate code.",
+            "type": "string"
+          },
+          "link": {
+            "description": "The pass’s public page (`/v#…`), for the staff’s phones.",
+            "nullable": true,
+            "type": "string"
+          },
+          "partySize": {
+            "description": "People it lets in, one entry each.",
+            "type": "number"
+          },
+          "qrPayload": {
+            "description": "For the QR.",
+            "nullable": true,
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "link",
+          "qrPayload",
+          "validFrom",
+          "validUntil",
+          "partySize"
+        ],
+        "type": "object"
+      },
       "DeskProposeDto": {
         "properties": {
           "staffCount": {
@@ -26835,6 +26874,16 @@
             "example": "SR-000123",
             "type": "string"
           },
+          "pass": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeskPassView"
+              }
+            ],
+            "description": "From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise.",
+            "nullable": true,
+            "type": "object"
+          },
           "proposedEndsAt": {
             "format": "date-time",
             "nullable": true,
@@ -26895,7 +26944,8 @@
           "unitCode",
           "firstName",
           "note",
-          "items"
+          "items",
+          "pass"
         ],
         "type": "object"
       },
@@ -33470,6 +33520,12 @@
           "partner": {
             "$ref": "#/components/schemas/RequestPartnerView"
           },
+          "passId": {
+            "description": "The partner’s staff’s gate pass, in the requester’s name: open it as any of one’s passes (`GET /visitor-passes/{id}`).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "proposedEndsAt": {
             "format": "date-time",
             "nullable": true,
@@ -33534,7 +33590,8 @@
           "unitCode",
           "note",
           "items",
-          "lastActivityAt"
+          "lastActivityAt",
+          "passId"
         ],
         "type": "object"
       },
@@ -41964,6 +42021,16 @@
           "partner": {
             "$ref": "#/components/schemas/RequestPartnerView"
           },
+          "pass": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeskPassView"
+              }
+            ],
+            "description": "From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise.",
+            "nullable": true,
+            "type": "object"
+          },
           "proposedEndsAt": {
             "format": "date-time",
             "nullable": true,
@@ -42025,6 +42092,7 @@
           "firstName",
           "note",
           "items",
+          "pass",
           "partner",
           "lastActivityAt"
         ],

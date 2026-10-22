@@ -1,17 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import type { PartnerRequest } from '@prisma/client';
 import { CommunityPartnersPort } from '../../community';
+import { GatePartnersPort, type ServicePass } from '../../gate';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { PartnersAccess } from '../access';
+import { dbNow } from '../db-clock';
 import { consentedRequests } from './consent-reads';
 import {
   PartnerActions,
   type PartnerAction,
   type PartnerActionInput,
 } from './partner-actions';
+import { deskPasses } from './partner-passes';
 import { requestNotFound } from './request-engine';
 import { RequestReads, type RequestRead } from './request-reads';
 import type { PartnerRequestStatus } from './request-rules';
@@ -28,6 +31,7 @@ export interface RelayRead {
   request: RequestRead;
   consented: boolean;
   firstName: string | null;
+  pass: ServicePass | null;
 }
 
 const PAGE = keysetCursor('createdAt', 'desc');
@@ -49,6 +53,7 @@ export class RelayService {
     private readonly access: PartnersAccess,
     private readonly reads: RequestReads,
     private readonly actions: PartnerActions,
+    private readonly gate: GatePartnersPort,
   ) {}
 
   list(q: RelayQuery): Promise<Page<RelayRead>> {
@@ -102,10 +107,18 @@ export class RelayService {
       tx,
       rows.map((r) => r.requesterId),
     );
+    const passes = await deskPasses(
+      this.gate,
+      tx,
+      rows,
+      consented,
+      await dbNow(tx),
+    );
     return reads.map((r) => ({
       request: r,
       consented: consented.has(r.id),
       firstName: names.get(r.requesterId) ?? null,
+      pass: passes.get(r.id) ?? null,
     }));
   }
 }

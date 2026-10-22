@@ -1897,6 +1897,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   partner_desk_links_token_hash_hex: {},
   partner_desk_links_validity: {},
   partner_desk_links_revoked_shape: {},
+  // pass_id only under IS NULL; gate_pass is NOT NULL.
+  partner_requests_pass_shape: {},
 };
 
 interface Check {

@@ -18976,6 +18976,20 @@ export interface components {
             nameAr: string;
             nameEn: string;
         };
+        DeskPassView: {
+            /** @description The 6-digit gate code. */
+            code: string;
+            /** @description The pass’s public page (`/v#…`), for the staff’s phones. */
+            link: string | null;
+            /** @description People it lets in, one entry each. */
+            partySize: number;
+            /** @description For the QR. */
+            qrPayload: string | null;
+            /** Format: date-time */
+            validFrom: string;
+            /** Format: date-time */
+            validUntil: string;
+        };
         DeskProposeDto: {
             /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
             staffCount?: number;
@@ -23663,6 +23677,8 @@ export interface components {
             note: string | null;
             /** @example SR-000123 */
             number: string;
+            /** @description From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise. */
+            pass: components["schemas"]["DeskPassView"] | null;
             /** Format: date-time */
             proposedEndsAt: string | null;
             /**
@@ -25817,6 +25833,11 @@ export interface components {
             /** @example SR-000123 */
             number: string;
             partner: components["schemas"]["RequestPartnerView"];
+            /**
+             * Format: uuid
+             * @description The partner’s staff’s gate pass, in the requester’s name: open it as any of one’s passes (`GET /visitor-passes/{id}`).
+             */
+            passId: string | null;
             /** Format: date-time */
             proposedEndsAt: string | null;
             /**
@@ -28273,6 +28294,8 @@ export interface components {
             /** @example SR-000123 */
             number: string;
             partner: components["schemas"]["RequestPartnerView"];
+            /** @description From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise. */
+            pass: components["schemas"]["DeskPassView"] | null;
             /** Format: date-time */
             proposedEndsAt: string | null;
             /**

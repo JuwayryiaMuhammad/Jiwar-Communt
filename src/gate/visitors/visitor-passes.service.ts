@@ -253,18 +253,108 @@ export class VisitorPassesService implements OnModuleInit {
     }
     await this.requireInviter(tx, unitId);
     await this.community.lockUnit(tx, unitId);
-    const settings = await this.settings.inTx(tx, tenantId);
-    const now = new Date();
-    const active = await tx.visitorPass.count({
-      where: { unitId, status: 'active', validUntil: { gt: now } },
-    });
-    if (active >= settings.maxActiveVisitorPasses)
+    const max = await this.roomFor(tx, tenantId, unitId);
+    if (max !== null)
       throw appError.conflict(
         ErrorCode.VISITOR_PASS_LIMIT_REACHED,
         'This unit has as many active visitor passes as the compound allows',
-        { params: { max: settings.maxActiveVisitorPasses } },
+        { params: { max } },
       );
+    return this.issued(
+      ...(await this.insertPass(tx, {
+        tenantId,
+        hostAccountId,
+        unitId,
+        input,
+        key,
+        hash,
+      })),
+    );
+  }
 
+  /**
+   * A one-time pass for a partner's staff coming on an accepted request
+   * (ADR 0060), in the partners' transaction, in the requester's name: the
+   * host is named, not the session. The same pass and the same gate as any
+   * other — no new gate logic. It is skipped, never refused, when the host
+   * may no longer invite visitors to the unit or the unit has as many
+   * active passes as the compound allows: the guard then asks the
+   * household as for anyone uninvited. The unit's lock is taken here,
+   * after the partners' own locks (ADR 0060's lock order).
+   */
+  async createForService(
+    tx: TenantTxClient,
+    hostAccountId: string,
+    unitId: string,
+    input: NewPass,
+  ): Promise<
+    { passId: string } | { skipped: 'host_cannot_invite' | 'pass_limit' }
+  > {
+    const pass = this.validate(input);
+    const caps = await this.community.placeIn(tx, hostAccountId, unitId);
+    if (!caps?.visitorsInvite) return { skipped: 'host_cannot_invite' };
+    await this.community.lockUnit(tx, unitId);
+    if ((await this.roomFor(tx, this.ctx.txTenantId, unitId)) !== null)
+      return { skipped: 'pass_limit' };
+    const [created] = await this.insertPass(tx, {
+      tenantId: this.ctx.txTenantId,
+      hostAccountId,
+      unitId,
+      input: pass,
+      key: undefined,
+      hash: null,
+    });
+    return { passId: created.id };
+  }
+
+  /**
+   * A pass with its code, link and QR while it is active and its key still
+   * derives them (ADR 0043); with none of them otherwise. Null for an
+   * unknown pass.
+   */
+  async withLiveSecret(
+    tx: TenantTxClient,
+    passId: string,
+  ): Promise<IssuedPass | null> {
+    const pass = await tx.visitorPass.findUnique({ where: { id: passId } });
+    if (!pass) return null;
+    return this.issued(
+      pass,
+      passStatus(pass) === 'active' ? this.passTokens.liveSecret(pass) : null,
+    );
+  }
+
+  /**
+   * Null while the unit may hold one more active pass; else the
+   * compound's limit. Under the unit's lock.
+   */
+  private async roomFor(
+    tx: TenantTxClient,
+    tenantId: string,
+    unitId: string,
+  ): Promise<number | null> {
+    const settings = await this.settings.inTx(tx, tenantId);
+    const active = await tx.visitorPass.count({
+      where: { unitId, status: 'active', validUntil: { gt: new Date() } },
+    });
+    return active >= settings.maxActiveVisitorPasses
+      ? settings.maxActiveVisitorPasses
+      : null;
+  }
+
+  /** Writes a pass, its visitor's details, its pointer and its audit entry. */
+  private async insertPass(
+    tx: TenantTxClient,
+    p: {
+      tenantId: string;
+      hostAccountId: string;
+      unitId: string;
+      input: NewPass;
+      key: string | undefined;
+      hash: string | null;
+    },
+  ): Promise<[VisitorPass, PassSecret]> {
+    const { tenantId, hostAccountId, unitId, input, key, hash } = p;
     let detailsId: string | null = null;
     if (input.visitorName || input.visitorPhone || input.vehiclePlate) {
       detailsId = newId();
@@ -323,7 +413,7 @@ export class VisitorPassesService implements OnModuleInit {
       { type: 'visitor_pass', id },
       input.vehiclePlate,
     );
-    return this.issued(created, secret);
+    return [created, secret];
   }
 
   /** The same pass, a new code: the first one dies with the retry. */

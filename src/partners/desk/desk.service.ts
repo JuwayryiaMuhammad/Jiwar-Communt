@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { PartnerRequest } from '@prisma/client';
 import { ClsService } from 'nestjs-cls';
 import { CommunityPartnersPort } from '../../community';
+import { GatePartnersPort, type ServicePass } from '../../gate';
 import { AuditService } from '../../core/audit/audit.service';
 import type { AppClsStore } from '../../core/common/cls/app-cls';
 import { appError, ErrorCode } from '../../core/common/errors';
@@ -19,6 +20,7 @@ import {
   type PartnerAction,
   type PartnerActionInput,
 } from '../requests/partner-actions';
+import { deskPasses } from '../requests/partner-passes';
 import { RequestReads, type RequestRead } from '../requests/request-reads';
 import { LIVE } from '../requests/request-rules';
 import { deskTokenHash, isDeskToken } from './desk-tokens';
@@ -36,6 +38,7 @@ export interface DeskRequest {
   request: RequestRead;
   consented: boolean;
   firstName: string | null;
+  pass: ServicePass | null;
 }
 
 /** What a desk shows: the partner and its requests. */
@@ -83,6 +86,7 @@ export class DeskService {
     private readonly audit: AuditService,
     private readonly reads: RequestReads,
     private readonly actions: PartnerActions,
+    private readonly gate: GatePartnersPort,
   ) {}
 
   async lookup(token: string, ip: string): Promise<DeskPage> {
@@ -199,10 +203,18 @@ export class DeskService {
       tx,
       rows.map((r) => r.requesterId),
     );
+    const passes = await deskPasses(
+      this.gate,
+      tx,
+      rows,
+      consented,
+      await dbNow(tx),
+    );
     return reads.map((r) => ({
       request: r,
       consented: consented.has(r.id),
       firstName: names.get(r.requesterId) ?? null,
+      pass: passes.get(r.id) ?? null,
     }));
   }
 

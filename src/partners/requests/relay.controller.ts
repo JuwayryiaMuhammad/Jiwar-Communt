@@ -52,7 +52,12 @@ export class RelayQueryDto extends PageQueryDto {
 }
 
 const view = (r: RelayRead) =>
-  StaffPartnerRequestView.fromStaff(r.request, r.consented, r.firstName);
+  StaffPartnerRequestView.fromStaff(
+    r.request,
+    r.consented,
+    r.firstName,
+    r.pass,
+  );
 
 /** The management's relay of the partners' requests (ADR 0060). */
 @ApiArea('partners')

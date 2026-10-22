@@ -608,4 +608,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // One live link per partner: a new one revokes the one before under the
   // partner's row lock, so a violation is a race.
   partner_desk_links_one_live: null,
+  // A pass is one request's, set once by the service under its lock.
+  partner_requests_pass_key: null,
 };

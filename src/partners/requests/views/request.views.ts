@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { PartnerRequestEvent, PartnerRequestItem } from '@prisma/client';
+import type { ServicePass } from '../../../gate';
 import { PARTNER_CATEGORIES, type PartnerCategory } from '../../categories';
 import {
   PARTNER_PRICE_UNITS,
@@ -36,6 +37,44 @@ export class PartnerRequestItemView {
       price: i.price.toFixed(2),
       unit: i.unit as PartnerPriceUnit,
       quantity: i.quantity,
+    };
+  }
+}
+
+/**
+ * The service pass as a partner's desk shows it (ADR 0060): its code, QR
+ * and link, from two hours before the agreed window until it ends, while
+ * active. The staff show it at the gate.
+ */
+export class DeskPassView {
+  @ApiProperty({ type: String, description: 'The 6-digit gate code.' })
+  code: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'The pass’s public page (`/v#…`), for the staff’s phones.',
+  })
+  link: string | null;
+  @ApiProperty({ type: String, nullable: true, description: 'For the QR.' })
+  qrPayload: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  validFrom: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  validUntil: Date;
+  @ApiProperty({
+    type: Number,
+    description: 'People it lets in, one entry each.',
+  })
+  partySize: number;
+
+  static from(p: ServicePass): DeskPassView {
+    return {
+      code: p.code,
+      link: p.link,
+      qrPayload: p.qrPayload,
+      validFrom: p.validFrom,
+      validUntil: p.validUntil,
+      partySize: p.partySize,
     };
   }
 }
@@ -206,6 +245,14 @@ export class ResidentPartnerRequestView extends PartnerRequestBaseView {
   @ApiProperty({ type: String, format: 'date-time' })
   lastActivityAt: Date;
   @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description:
+      'The partner’s staff’s gate pass, in the requester’s name: open it as any of one’s passes (`GET /visitor-passes/{id}`).',
+  })
+  passId: string | null;
+  @ApiProperty({
     type: [PartnerRequestStepView],
     required: false,
     description: 'One request’s history, oldest first; absent on a list.',
@@ -228,6 +275,7 @@ export class ResidentPartnerRequestView extends PartnerRequestBaseView {
       note: r.note,
       items: r.items.map((i) => PartnerRequestItemView.from(i)),
       lastActivityAt: r.lastActivityAt,
+      passId: r.passId,
       ...(r.history
         ? { history: r.history.map((e) => PartnerRequestStepView.from(e)) }
         : {}),
@@ -261,11 +309,19 @@ export class PartnerSideRequestView extends PartnerRequestBaseView {
   note: string | null;
   @ApiProperty({ type: [PartnerRequestItemView] })
   items: PartnerRequestItemView[];
+  @ApiProperty({
+    type: DeskPassView,
+    nullable: true,
+    description:
+      'From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise.',
+  })
+  pass: DeskPassView | null;
 
   static from(
     r: RequestRead,
     consented: boolean,
     firstName: string | null,
+    pass: ServicePass | null = null,
   ): PartnerSideRequestView {
     return {
       ...PartnerRequestBaseView.base(r),
@@ -276,6 +332,7 @@ export class PartnerSideRequestView extends PartnerRequestBaseView {
       items: consented
         ? r.items.map((i) => PartnerRequestItemView.from(i))
         : [],
+      pass: consented && pass ? DeskPassView.from(pass) : null,
     };
   }
 }
@@ -291,9 +348,10 @@ export class StaffPartnerRequestView extends PartnerSideRequestView {
     r: RequestRead,
     consented: boolean,
     firstName: string | null,
+    pass: ServicePass | null = null,
   ): StaffPartnerRequestView {
     return {
-      ...PartnerSideRequestView.from(r, consented, firstName),
+      ...PartnerSideRequestView.from(r, consented, firstName, pass),
       partner: {
         id: r.partner.id,
         nameEn: r.partner.nameEn,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityPartnersPortModule } from '../community';
+import { GateModule } from '../gate';
 import { PartnersAccess } from './access';
 import { DeskController } from './desk/desk.controller';
 import { DeskService } from './desk/desk.service';
@@ -8,6 +9,7 @@ import { DeskLinksController } from './desk/desk-links.controller';
 import { PartnerEmailTemplates } from './notices/partner-email-templates';
 import { PartnerNotices } from './notices/partner-notices';
 import { PartnerActions } from './requests/partner-actions';
+import { PartnerPasses } from './requests/partner-passes';
 import { RelayController } from './requests/relay.controller';
 import { RelayService } from './requests/relay.service';
 import { PartnerRequestEngine } from './requests/request-engine';
@@ -35,7 +37,7 @@ import { SubcategoriesService } from './setup/subcategories.service';
  * gate and management through their index; nothing imports it.
  */
 @Module({
-  imports: [CommunityPartnersPortModule],
+  imports: [CommunityPartnersPortModule, GateModule],
   controllers: [
     PartnerCategoriesController,
     StaffPartnerSubcategoriesController,
@@ -65,6 +67,7 @@ import { SubcategoriesService } from './setup/subcategories.service';
     RelayService,
     PartnerRequestSweeps,
     ResidentPartnerItems,
+    PartnerPasses,
   ],
 })
 export class PartnersModule {}

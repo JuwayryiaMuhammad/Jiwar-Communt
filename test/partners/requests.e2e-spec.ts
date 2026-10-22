@@ -83,10 +83,11 @@ describe('Partners: requests (ADR 0060)', () => {
     it('a member the primary has not let invite visitors is refused; with the grant, they may ask (ADR 0021)', async () => {
       const member = await p.family(s.c, s.homeA.id, s.alice);
       await p.consent(member);
+      await p.canInvite(s.c, s.alice, member.memberId, false);
       const refused = await p.ask(member, s.homeA.id, partnerId);
       expect(refused.status).toBe(403);
       expect(err(refused).code).toBe('PARTNER_REQUEST_NOT_ALLOWED');
-      await p.grantInvite(s.c, s.alice, member.memberId);
+      await p.canInvite(s.c, s.alice, member.memberId, true);
       expect((await p.ask(member, s.homeA.id, partnerId)).status).toBe(201);
     });
 
@@ -291,7 +292,7 @@ describe('Partners: requests (ADR 0060)', () => {
   describe('a request is its requester’s alone', () => {
     it('the household’s primary and another resident get the same not-found', async () => {
       const member = await p.family(s.c, s.homeA.id, s.alice);
-      await p.grantInvite(s.c, s.alice, member.memberId);
+      await p.canInvite(s.c, s.alice, member.memberId, true);
       await p.consent(member);
       const mine = await p.request(member, s.homeA.id, partnerId);
       for (const who of [s.alice, s.bob]) {
@@ -612,11 +613,16 @@ describe('Partners: requests (ADR 0060)', () => {
             }),
           )
         ).map((e) => e.kind);
+        // Never an orphan pass: one issued is one cancelled.
+        expect(kinds.includes('pass_issued')).toBe(
+          kinds.includes('pass_cancelled'),
+        );
+        const moves = kinds.filter((k) => !k.startsWith('pass_'));
         if (accept.status === 200)
-          expect(kinds).toEqual(['accepted', 'cancelled']);
+          expect(moves).toEqual(['accepted', 'cancelled']);
         else {
           expect(err(accept).code).toBe('PARTNER_REQUEST_INVALID_TRANSITION');
-          expect(kinds).toEqual(['cancelled']);
+          expect(moves).toEqual(['cancelled']);
         }
       }
     });

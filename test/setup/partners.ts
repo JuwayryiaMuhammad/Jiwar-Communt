@@ -55,24 +55,33 @@ export const rewindListing = (partnerId: string, days: number) =>
 
 /**
  * A request's windows moved into the past (asked, proposed and agreed
- * alike, by the same interval): its window `started` a minute ago, or
- * `ended` a minute ago, without waiting.
+ * alike, by the same interval), and its gate pass with them: its window
+ * `started` a minute ago, or `ended` a minute ago, without waiting.
  */
 export const shiftWindow = (requestId: string, to: 'started' | 'ended') =>
   asSuperuser(
-    `UPDATE partner_requests r
+    `WITH x AS (
+       SELECT id, pass_id,
+              (CASE WHEN $2 = 'started'
+                    THEN COALESCE(agreed_starts_at, proposed_starts_at, asked_starts_at)
+                    ELSE COALESCE(agreed_ends_at, proposed_ends_at, asked_ends_at)
+               END) - now() + interval '1 minute' AS d
+         FROM partner_requests WHERE id = $1
+     ), pass AS (
+       UPDATE visitor_passes v
+          SET valid_from = v.valid_from - x.d,
+              valid_until = v.valid_until - x.d
+         FROM x
+        WHERE v.id = x.pass_id
+     )
+     UPDATE partner_requests r
         SET asked_starts_at = r.asked_starts_at - x.d,
             asked_ends_at = r.asked_ends_at - x.d,
             proposed_starts_at = r.proposed_starts_at - x.d,
             proposed_ends_at = r.proposed_ends_at - x.d,
             agreed_starts_at = r.agreed_starts_at - x.d,
             agreed_ends_at = r.agreed_ends_at - x.d
-       FROM (SELECT id,
-                    (CASE WHEN $2 = 'started'
-                          THEN COALESCE(agreed_starts_at, proposed_starts_at, asked_starts_at)
-                          ELSE COALESCE(agreed_ends_at, proposed_ends_at, asked_ends_at)
-                     END) - now() + interval '1 minute' AS d
-               FROM partner_requests WHERE id = $1) x
+       FROM x
       WHERE r.id = x.id`,
     [requestId, to],
   );
@@ -344,13 +353,33 @@ export function partnersHelpers(h: HttpHarness) {
     );
   }
 
-  /** The member's grant of `visitors_invite`, given by the primary. */
-  function grantInvite(c: Compound, primary: Who, memberId: string) {
-    return x.as(c, { id: primary.id, type: 'resident' }, () =>
-      h.moduleRef
-        .get(MemberPermissionsService)
-        .grant(memberId, 'visitors_invite'),
+  /**
+   * Whether the member may invite visitors to the unit, set by the primary
+   * as in the household screen (ADR 0021): the grant given, or taken back.
+   * A member who joins may hold it by default; this makes it what the test
+   * says.
+   */
+  async function canInvite(
+    c: Compound,
+    primary: Who,
+    memberId: string,
+    on: boolean,
+  ) {
+    const live = await inTx(c, (tx) =>
+      tx.householdMemberGrant.findFirst({
+        where: { memberId, permission: 'visitors_invite', revokedAt: null },
+      }),
     );
+    if (on === (live !== null)) return;
+    await x.as(c, { id: primary.id, type: 'resident' }, () => {
+      const permissions = h.moduleRef.get(MemberPermissionsService);
+      return on
+        ? permissions.grant(memberId, 'visitors_invite').then(() => undefined)
+        : permissions.revoke(memberId, 'visitors_invite', {
+            code: 'no_longer_needed',
+            text: 'Not any more',
+          });
+    });
   }
 
   return {
@@ -377,7 +406,7 @@ export function partnersHelpers(h: HttpHarness) {
     deskLink,
     desk,
     row,
-    grantInvite,
+    canInvite,
   };
 }
 

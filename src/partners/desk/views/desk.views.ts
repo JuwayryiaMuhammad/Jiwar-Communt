@@ -13,7 +13,7 @@ export class DeskPartnerView {
 
 /** A request on the desk. */
 export const deskRequestView = (r: DeskRequest): PartnerSideRequestView =>
-  PartnerSideRequestView.from(r.request, r.consented, r.firstName);
+  PartnerSideRequestView.from(r.request, r.consented, r.firstName, r.pass);
 
 /** What a partner's desk shows (ADR 0060): its live requests and those closed today. */
 export class DeskPageView {

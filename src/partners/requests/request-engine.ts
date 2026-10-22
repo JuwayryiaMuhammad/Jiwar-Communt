@@ -281,9 +281,11 @@ export class PartnerRequestEngine {
       },
     });
     if (input.notify !== false) await this.tell(tx, after, action, actor);
+    if (!this.after.length) return after;
     for (const hook of this.after)
       await hook(tx, request, after, action, actor, now);
-    return after;
+    // What the hooks wrote (a service pass) is the request's too.
+    return tx.partnerRequest.findUniqueOrThrow({ where: { id: request.id } });
   }
 
   /** A row of the request's history. */

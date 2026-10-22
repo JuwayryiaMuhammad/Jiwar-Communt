@@ -8698,6 +8698,8 @@ model PartnerRequest {
   /// REASON_CODES.partnerRequest*
   closeReason        String?   @map("close_reason")
   lastActivityAt     DateTime  @map("last_activity_at") @db.Timestamptz(3)
+  /// The gate's one-time pass for the partner's staff (ADR 0060), once.
+  passId             String?   @map("pass_id") @db.Uuid
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -8706,6 +8708,7 @@ model PartnerRequest {
 
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "partner_requests_number_key")
+  @@unique([tenantId, passId], map: "partner_requests_pass_key")
   @@index([tenantId, requesterId, lastActivityAt(sort: Desc), id], map: "partner_requests_requester_idx")
   @@index([tenantId, partnerId, status, askedStartsAt], map: "partner_requests_partner_idx")
   @@index([tenantId, createdAt(sort: Desc), id], map: "partner_requests_queue_idx")

@@ -107,3 +107,49 @@ export class OfficeHoursController {
     return OfficeHoursResponse.from(await this.hours.replace(dto.windows));
   }
 }
+
+/** The office hours as residents read them (ADR 0058). */
+export class ResidentOfficeHoursResponse extends OfficeHoursResponse {
+  @ApiProperty({ type: String, example: 'Africa/Cairo' })
+  timeZone: string;
+  @ApiProperty({
+    type: Boolean,
+    description: 'Open now, by the server’s clock.',
+  })
+  openNow: boolean;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  closesAt: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Within the coming week; null when no window is set.',
+  })
+  nextOpensAt: Date | null;
+}
+
+/**
+ * When the office is open (ADR 0058), for whoever may open a request: the
+ * reply times are the topics' own (`targetResponseHours`).
+ */
+@ApiArea('management-requests')
+@RequirePermissions('requests.create')
+@Controller('management-office-hours')
+export class ResidentOfficeHoursController {
+  constructor(private readonly hours: OfficeHoursService) {}
+
+  @Get()
+  @NoStore()
+  @ApiOperation({ summary: 'Get the office hours and whether it is open now' })
+  @ApiOkResponse({ type: ResidentOfficeHoursResponse })
+  async get(): Promise<ResidentOfficeHoursResponse> {
+    const r = await this.hours.forResidents();
+    return {
+      ...OfficeHoursResponse.from(r.windows),
+      timeZone: r.timeZone,
+      openNow: r.openNow,
+      closesAt: r.closesAt,
+      nextOpensAt: r.nextOpensAt,
+    };
+  }
+}

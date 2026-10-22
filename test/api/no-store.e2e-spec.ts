@@ -2403,6 +2403,10 @@ describe('API v0 — no-store', () => {
         token: w.a.tokens.manager,
         body: { autoCloseDays: 7 },
       }),
+    'GET /management-office-hours': () =>
+      call(w, 'GET', '/management-office-hours', {
+        token: w.a.tokens.owner,
+      }),
     'GET /management/office-hours': () =>
       call(w, 'GET', '/management/office-hours', {
         token: w.a.tokens.manager,

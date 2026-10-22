@@ -41,6 +41,18 @@ export const DEFAULT_TOPICS: readonly DefaultTopic[] = [
   },
 ];
 
+/**
+ * The topic of a request to release a hold (ADR 0058): seeded in every
+ * compound (the migration 20261108090300 backfills it), renamed or retired
+ * like any other, its key fixed.
+ */
+export const RELEASE_TOPIC: DefaultTopic = {
+  key: 'release_request',
+  nameAr: 'طلب رفع تعليق',
+  nameEn: 'Release a hold',
+  targetResponseHours: 48,
+};
+
 export interface OfficeWindow {
   /** 0 is Sunday. */
   weekday: number;

@@ -4,10 +4,12 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
 
@@ -94,4 +96,17 @@ export class UpdateTopicDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    description:
+      'The staff role that owns the topic (ADR 0058): residents see its name, and an unassigned request goes to its handlers. Null: every handler. A role of a resident kind is TOPIC_OWNER_NOT_STAFF.',
+  })
+  @IsOptional()
+  @ValidateIf((o: UpdateTopicDto) => o.ownerRoleId !== null)
+  @IsUUID()
+  ownerRoleId?: string | null;
 }

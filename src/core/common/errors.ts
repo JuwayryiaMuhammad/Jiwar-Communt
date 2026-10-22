@@ -268,6 +268,8 @@ export const ErrorCode = {
   // requests to the management (ADR 0039)
   /** Unknown, or another compound's. */
   MANAGEMENT_TOPIC_NOT_FOUND: 'MANAGEMENT_TOPIC_NOT_FOUND',
+  /** Not something the caller sees that is held now (404, ADR 0058). */
+  HELD_ITEM_NOT_FOUND: 'HELD_ITEM_NOT_FOUND',
   /** Unknown, another compound's, or not the caller's own: one answer. */
   MANAGEMENT_REQUEST_NOT_FOUND: 'MANAGEMENT_REQUEST_NOT_FOUND',
   /** The request's status does not take the action (409, params.status). */
@@ -1223,6 +1225,10 @@ export const FieldErrorCode = {
   TOPIC_NOT_AVAILABLE: 'TOPIC_NOT_AVAILABLE',
   /** Not an active resident or family account of this compound. */
   AUTHOR_NOT_ELIGIBLE: 'AUTHOR_NOT_ELIGIBLE',
+  /** A topic's owner is a staff or manager role (ADR 0058). */
+  TOPIC_OWNER_NOT_STAFF: 'TOPIC_OWNER_NOT_STAFF',
+  /** A release request is on the release topic, and only it (ADR 0058). */
+  RELEASE_TOPIC_REQUIRED: 'RELEASE_TOPIC_REQUIRED',
   /** Not an active account holding `requests.handle`. */
   ASSIGNEE_NOT_ELIGIBLE: 'ASSIGNEE_NOT_ELIGIBLE',
   /** Not the start of a slot the office hours offer. */

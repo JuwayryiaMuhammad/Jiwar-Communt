@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DEFAULT_OFFICE_HOURS, DEFAULT_TOPICS } from './defaults';
+import {
+  DEFAULT_OFFICE_HOURS,
+  DEFAULT_TOPICS,
+  RELEASE_TOPIC,
+} from './defaults';
 
 const backfill = readFileSync(
   join(
@@ -61,6 +65,20 @@ describe('default management topics and office hours', () => {
     );
     expect(backfill).toContain(
       '"appointment_slot_capacity" INTEGER NOT NULL DEFAULT 1',
+    );
+  });
+
+  it('the release topic matches its backfill (ADR 0058)', () => {
+    const release = readFileSync(
+      join(
+        __dirname,
+        '../../../prisma/migrations/20261108090300_management_owners_holds/migration.sql',
+      ),
+      'utf8',
+    );
+    const t = RELEASE_TOPIC;
+    expect(release).toContain(
+      `'${t.key}', '${t.nameAr}', '${t.nameEn}', ${t.targetResponseHours}`,
     );
   });
 });

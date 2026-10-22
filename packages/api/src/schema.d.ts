@@ -4854,6 +4854,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/management-office-hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the office hours and whether it is open now */
+        get: operations["ResidentOfficeHoursController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/management-request-topics": {
         parameters: {
             query?: never;
@@ -17582,6 +17599,8 @@ export interface components {
             position?: number;
         };
         CreateRequestDto: {
+            /** @description A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf. */
+            about?: components["schemas"]["RequestAboutDto"];
             /** @description Required for an `appointment` request, refused for any other type. */
             appointment?: components["schemas"]["SlotChoiceDto"];
             /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
@@ -17602,6 +17621,8 @@ export interface components {
             unitId?: string;
         };
         CreateRequestOnBehalfDto: {
+            /** @description A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf. */
+            about?: components["schemas"]["RequestAboutDto"];
             /** @description Required for an `appointment` request, refused for any other type. */
             appointment?: components["schemas"]["SlotChoiceDto"];
             /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
@@ -20597,6 +20618,11 @@ export interface components {
         HoldDto: {
             holdReason: components["schemas"]["TicketHoldReason"];
         };
+        /**
+         * @description `maintenance`: a ticket on hold; `unit_permit`: a stopped works permit; `unit_credit`: the unit’s credit (its id is the unit’s).
+         * @enum {string}
+         */
+        HoldType: "maintenance" | "unit_permit" | "unit_credit";
         HostRequestResponse: {
             /** Format: date-time */
             createdAt: string;
@@ -24270,6 +24296,19 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        RequestAboutDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description `maintenance`: a ticket on hold; `unit_permit`: a stopped works permit; `unit_credit`: the unit’s credit (its id is the unit’s). */
+            type: components["schemas"]["HoldType"];
+        };
+        RequestAboutView: {
+            /** Format: uuid */
+            id: string;
+            /** @description Why it was held when the request was opened: a ticket’s hold reason, a work stop’s reason, or `unit_credit`. */
+            reasonCode: string;
+            type: components["schemas"]["HoldType"];
+        };
         RequestCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -24545,6 +24584,21 @@ export interface components {
             data: components["schemas"]["ResidentMessageView"][];
             nextCursor: string | null;
         };
+        ResidentOfficeHoursResponse: {
+            /** Format: date-time */
+            closesAt: string | null;
+            /**
+             * Format: date-time
+             * @description Within the coming week; null when no window is set.
+             */
+            nextOpensAt: string | null;
+            /** @description Open now, by the server’s clock. */
+            openNow: boolean;
+            /** @example Africa/Cairo */
+            timeZone: string;
+            /** @description By weekday, then start. Empty: the office is closed. */
+            windows: components["schemas"]["OfficeWindowDto"][];
+        };
         ResidentParcelView: {
             carrier: components["schemas"]["ParcelCarrier"];
             delegate: components["schemas"]["ParcelDelegateView"] | null;
@@ -24612,6 +24666,8 @@ export interface components {
             kind: components["schemas"]["VisitReceiverKind"];
         };
         ResidentRequestDetailView: {
+            /** @description A request to release a hold: what it is about. */
+            about: components["schemas"]["RequestAboutView"] | null;
             /** @description On an appointment request: the live appointment, else the last one. */
             appointment: components["schemas"]["AppointmentView"] | null;
             /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
@@ -24670,6 +24726,8 @@ export interface components {
             nextCursor: string | null;
         };
         ResidentRequestView: {
+            /** @description A request to release a hold: what it is about. */
+            about: components["schemas"]["RequestAboutView"] | null;
             /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
             closeReason: string | null;
             /** Format: date-time */
@@ -27109,6 +27167,8 @@ export interface components {
             nextCursor: string | null;
         };
         StaffRequestDetailView: {
+            /** @description A request to release a hold: what it is about. */
+            about: components["schemas"]["RequestAboutView"] | null;
             /** Format: date-time */
             answeredAt: string | null;
             /** @description On an appointment request: the live appointment, else the last one. */
@@ -27163,6 +27223,8 @@ export interface components {
             unit: components["schemas"]["RequestUnitRefView"] | null;
         };
         StaffRequestListItemView: {
+            /** @description A request to release a hold: what it is about. */
+            about: components["schemas"]["RequestAboutView"] | null;
             /** Format: date-time */
             answeredAt: string | null;
             /** @description Null: in the unassigned queue. */
@@ -27240,6 +27302,8 @@ export interface components {
             nextCursor: string | null;
         };
         StaffRequestView: {
+            /** @description A request to release a hold: what it is about. */
+            about: components["schemas"]["RequestAboutView"] | null;
             /** Format: date-time */
             answeredAt: string | null;
             /** @description Null: in the unassigned queue. */
@@ -28034,12 +28098,20 @@ export interface components {
             nameAr: string;
             /** @description Written by the compound. */
             nameEn: string;
+            /** @description Who answers it (ADR 0058): a role, never a person; null when any handler does. */
+            owner: components["schemas"]["TopicOwnerView"] | null;
             /** @description Hours the management gives itself to answer. */
             targetResponseHours: number;
         };
         TopicOptionViewList: {
             data: components["schemas"]["TopicOptionView"][];
             nextCursor: string | null;
+        };
+        TopicOwnerView: {
+            /** @description The role’s key. */
+            roleKey: string;
+            /** @description Written by the compound; a default role has none (name it by key). */
+            roleName: string | null;
         };
         TopicView: {
             active: boolean;
@@ -28052,6 +28124,10 @@ export interface components {
             nameAr: string;
             /** @description Written by the compound. */
             nameEn: string;
+            /** @description Who answers it (ADR 0058): a role, never a person; null when any handler does. */
+            owner: components["schemas"]["TopicOwnerView"] | null;
+            /** Format: uuid */
+            ownerRoleId: string | null;
             /** @description Hours the management gives itself to answer. */
             targetResponseHours: number;
             /** Format: date-time */
@@ -28764,6 +28840,11 @@ export interface components {
             active?: boolean;
             nameAr?: string;
             nameEn?: string;
+            /**
+             * Format: uuid
+             * @description The staff role that owns the topic (ADR 0058): residents see its name, and an unassigned request goes to its handlers. Null: every handler. A role of a resident kind is TOPIC_OWNER_NOT_STAFF.
+             */
+            ownerRoleId?: string | null;
             /** @description Applies to requests opened or reopened from now on; a running cycle keeps its due time. */
             targetResponseHours?: number;
         };
@@ -36533,6 +36614,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppointmentSlotViewList"];
+                };
+            };
+        };
+    };
+    ResidentOfficeHoursController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentOfficeHoursResponse"];
                 };
             };
         };

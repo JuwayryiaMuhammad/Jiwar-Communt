@@ -38,6 +38,8 @@ describe('Management requests — topics, settings and office hours', () => {
         ['documents', 72, true],
         ['facilities', 72, true],
         ['general', 48, true],
+        // ADR 0058: the request to release a hold.
+        ['release_request', 48, true],
         ['security_gate', 24, true],
       ]);
       const offered = await topics('/management-request-topics', s.owner.token);
@@ -47,6 +49,7 @@ describe('Management requests — topics, settings and office hours', () => {
         'key',
         'nameAr',
         'nameEn',
+        'owner',
         'targetResponseHours',
       ]);
     });

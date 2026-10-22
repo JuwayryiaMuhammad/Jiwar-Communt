@@ -9,7 +9,13 @@ import {
   type PageRequest,
   type ResidentItem,
 } from '../../core/resident-items/resident-items';
-import { ResidentTicketFeed, type FeedTicket } from './resident-ticket-feed';
+import { CommunityMaintenancePort } from '../../community';
+import { RequestContext } from '../../core/common/cls/request-context';
+import {
+  ResidentTicketFeed,
+  residentTickets,
+  type FeedTicket,
+} from './resident-ticket-feed';
 
 /** A ticket is finished when it is closed or cancelled. */
 const FINISHED: TicketStatus[] = ['closed', 'cancelled'];
@@ -24,6 +30,8 @@ export class ResidentTicketItems implements OnModuleInit {
   constructor(
     private readonly items: ResidentItems,
     private readonly feed: ResidentTicketFeed,
+    private readonly ctx: RequestContext,
+    private readonly community: CommunityMaintenancePort,
   ) {}
 
   onModuleInit(): void {
@@ -32,6 +40,22 @@ export class ResidentTicketItems implements OnModuleInit {
       group: 'request',
       page: (tx, q) => this.page(tx, q),
       search: (tx, q, take, caller) => this.search(tx, q, take, caller),
+    });
+    // A ticket on hold, with its hold reason (ADR 0058's release request).
+    this.items.registerHold('maintenance', async (tx, id) => {
+      const me = this.ctx.accountId;
+      const ticket = await tx.ticket.findFirst({
+        where: {
+          AND: [
+            { id, status: 'on_hold' },
+            residentTickets(me, await this.community.primaryUnits(tx, me)),
+          ],
+        },
+        select: { unitId: true, holdReason: true },
+      });
+      return ticket?.holdReason
+        ? { unitId: ticket.unitId, reasonCode: ticket.holdReason }
+        : null;
     });
   }
 

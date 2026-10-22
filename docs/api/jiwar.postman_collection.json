@@ -21004,6 +21004,25 @@
           }
         },
         {
+          "name": "Get the office hours and whether it is open now",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-office-hours"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-office-hours"
+            }
+          }
+        },
+        {
           "name": "List the topics a request may be opened under",
           "request": {
             "description": "**Responses:** 200",
@@ -21079,7 +21098,7 @@
               },
               "raw": "{\n  \"type\": \"question\",\n  \"topicId\": \"\",\n  \"body\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `appointment` | object |  | Required for an `appointment` request, refused for any other type. |\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `body` | string | yes | What the request says: it becomes its first message. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `type` | `question` \\| `general` \\| `appointment` | yes | An `appointment` names its slot in `appointment`. |\n| `unitId` | string (uuid) |  | One of the author’s units, when the request is about one. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `about` | object |  | A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf. |\n| `appointment` | object |  | Required for an `appointment` request, refused for any other type. |\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `body` | string | yes | What the request says: it becomes its first message. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `type` | `question` \\| `general` \\| `appointment` | yes | An `appointment` names its slot in `appointment`. |\n| `unitId` | string (uuid) |  | One of the author’s units, when the request is about one. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -21779,9 +21798,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"targetResponseHours\": 1\n}"
+              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"ownerRoleId\": \"\",\n  \"targetResponseHours\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the topic: no new request may use it. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `targetResponseHours` | number |  | Applies to requests opened or reopened from now on; a running cycle keeps its due time. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the topic: no new request may use it. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `ownerRoleId` | string (uuid) |  | The staff role that owns the topic (ADR 0058): residents see its name, and an unassigned request goes to its handlers. Null: every handler. A role of a resident kind is TOPIC_OWNER_NOT_STAFF. |\n| `targetResponseHours` | number |  | Applies to requests opened or reopened from now on; a running cycle keeps its due time. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -21900,7 +21919,7 @@
               },
               "raw": "{\n  \"type\": \"question\",\n  \"topicId\": \"\",\n  \"body\": \"\",\n  \"authorAccountId\": \"\",\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `appointment` | object |  | Required for an `appointment` request, refused for any other type. |\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `authorAccountId` | string (uuid) | yes | The resident the request is for: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author. |\n| `body` | string | yes | What the request says: it becomes its first message. |\n| `reasonCode` | string | yes | How the resident reached the management, from the closed list `managementRequestOnBehalf`. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `type` | `question` \\| `general` \\| `appointment` | yes | An `appointment` names its slot in `appointment`. |\n| `unitId` | string (uuid) |  | One of the author’s units, when the request is about one. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `about` | object |  | A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf. |\n| `appointment` | object |  | Required for an `appointment` request, refused for any other type. |\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `authorAccountId` | string (uuid) | yes | The resident the request is for: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author. |\n| `body` | string | yes | What the request says: it becomes its first message. |\n| `reasonCode` | string | yes | How the resident reached the management, from the closed list `managementRequestOnBehalf`. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `type` | `question` \\| `general` \\| `appointment` | yes | An `appointment` names its slot in `appointment`. |\n| `unitId` | string (uuid) |  | One of the author’s units, when the request is about one. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

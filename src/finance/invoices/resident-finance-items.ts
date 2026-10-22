@@ -11,6 +11,7 @@ import {
   type ResidentItem,
 } from '../../core/resident-items/resident-items';
 import { formatNumber } from '../counters';
+import { unitCredit } from '../payments/allocation';
 import { InvoicesService } from './invoices.service';
 
 /**
@@ -43,6 +44,14 @@ export class ResidentFinanceItems implements OnModuleInit {
               q.number,
             )
           : Promise.resolve([]),
+    });
+    // The unit's credit awaiting a refund: the one held money (ADR 0058).
+    this.items.registerHold('unit_credit', async (tx, unitId) => {
+      const caps = await this.community.placeIn(tx, this.ctx.accountId, unitId);
+      if (!caps?.financeView) return null;
+      return (await unitCredit(tx, unitId)).gt(0)
+        ? { unitId, reasonCode: 'unit_credit' }
+        : null;
     });
     this.items.register({
       type: 'invoice',

@@ -1,3 +1,8 @@
+import {
+  ResidentItems,
+  type HoldType,
+} from '../../core/resident-items/resident-items';
+import { RELEASE_TOPIC } from '../settings/defaults';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   Prisma,
@@ -54,6 +59,8 @@ export interface NewRequest {
   attachmentFileIds?: string[];
   /** The slot of an appointment request: required for one, refused otherwise. */
   appointment?: SlotChoice;
+  /** A request to release a hold: what it is about (ADR 0058). */
+  about?: { type: HoldType; id: string };
 }
 
 export interface NewRequestOnBehalf extends NewRequest {
@@ -178,6 +185,7 @@ export class RequestsService implements OnModuleInit {
     private readonly appointments: AppointmentsService,
     private readonly ratings: RatingService,
     private readonly notices: RequestNotices,
+    private readonly items: ResidentItems,
   ) {}
 
   onModuleInit(): void {
@@ -206,14 +214,19 @@ export class RequestsService implements OnModuleInit {
       if (input.unitId && !(await this.community.hasUnit(tx, me, input.unitId)))
         throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
       const topic = await this.topic(tx, input.topicId);
+      const about = await this.held(tx, input, topic);
       const request = await this.insert(tx, id, input, topic, {
         authorId: me,
         side: 'resident',
+        about,
       });
       await this.audit.record(tx, {
         action: 'management_request.created',
         targetId: request.id,
-        metadata: this.facts(request, topic),
+        metadata: {
+          ...this.facts(request, topic),
+          ...(about ? { aboutType: about.type } : {}),
+        },
       });
       await this.notices.toHandlers(tx, request, 'management_request.created');
       return request;
@@ -233,6 +246,11 @@ export class RequestsService implements OnModuleInit {
       REASON_CODES.managementRequestOnBehalf,
     );
     this.assertSlot(input);
+    // A release is the resident's own ask, about what they see (ADR 0058).
+    if (input.about)
+      throw invalid([
+        { field: 'about', code: FieldErrorCode.FIELD_NOT_ALLOWED },
+      ]);
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });
@@ -300,6 +318,38 @@ export class RequestsService implements OnModuleInit {
     ]);
   }
 
+  /**
+   * A request to release a hold (ADR 0058) is on the release topic, about
+   * something the author sees that is held now; its hold's reason is kept
+   * as it was. One live request per held item: the database's unique
+   * index answers DUPLICATE_RESOURCE on `about`, also to a racing twin.
+   */
+  private async held(
+    tx: TenantTxClient,
+    input: NewRequest,
+    topic: ManagementRequestTopic,
+  ): Promise<{ type: HoldType; id: string; reasonCode: string } | null> {
+    const release = topic.key === RELEASE_TOPIC.key;
+    if (!input.about) {
+      if (release)
+        throw invalid([
+          { field: 'about', code: FieldErrorCode.FIELD_REQUIRED },
+        ]);
+      return null;
+    }
+    if (!release)
+      throw invalid([
+        { field: 'topicId', code: FieldErrorCode.RELEASE_TOPIC_REQUIRED },
+      ]);
+    const item = await this.items.hold(input.about.type)(tx, input.about.id);
+    if (!item)
+      throw appError.notFound(
+        ErrorCode.HELD_ITEM_NOT_FOUND,
+        'Nothing held of yours by that id',
+      );
+    return { ...input.about, reasonCode: item.reasonCode };
+  }
+
   /** What the audit trail says of a new request: codes, never its words. */
   private facts(request: ManagementRequest, topic: TopicRef) {
     return {
@@ -342,6 +392,7 @@ export class RequestsService implements OnModuleInit {
       side: 'resident' | 'staff';
       openedById?: string;
       onBehalfReason?: string;
+      about?: { type: HoldType; id: string; reasonCode: string } | null;
     },
   ): Promise<ManagementRequest> {
     const body = this.messages.body(input.body);
@@ -369,6 +420,9 @@ export class RequestsService implements OnModuleInit {
         responseDueAt: responseDueAt(now, topic.targetResponseHours),
         lastActivityAt: now,
         createdAt: now,
+        aboutType: by.about?.type,
+        aboutId: by.about?.id,
+        aboutReason: by.about?.reasonCode,
       },
     });
     // Written by whoever typed it: the author, or the staff member who

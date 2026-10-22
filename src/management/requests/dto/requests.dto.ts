@@ -1,3 +1,7 @@
+import {
+  HOLD_TYPES,
+  type HoldType,
+} from '../../../core/resident-items/resident-items';
 import { ApiProperty } from '@nestjs/swagger';
 import { ManagementRequestStatus, ManagementRequestType } from '@prisma/client';
 import {
@@ -27,6 +31,22 @@ import { RATING, RATING_COMMENT_LENGTH } from '../rating.service';
 const BOOLEAN = ['true', 'false'] as const;
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** What a request to release a hold is about (ADR 0058). */
+export class RequestAboutDto {
+  @ApiProperty({
+    enum: HOLD_TYPES,
+    enumName: 'HoldType',
+    description:
+      '`maintenance`: a ticket on hold; `unit_permit`: a stopped works permit; `unit_credit`: the unit’s credit (its id is the unit’s).',
+  })
+  @IsIn(HOLD_TYPES, withParams({ allowed: [...HOLD_TYPES] }))
+  type: HoldType;
+
+  @ApiProperty({ type: String, format: 'uuid' })
+  @IsUUID()
+  id: string;
+}
 
 export class CreateRequestDto {
   @ApiProperty({
@@ -96,6 +116,17 @@ export class CreateRequestDto {
   @ValidateNested()
   @Type(() => SlotChoiceDto)
   appointment?: SlotChoiceDto;
+
+  @ApiProperty({
+    type: RequestAboutDto,
+    required: false,
+    description:
+      'A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RequestAboutDto)
+  about?: RequestAboutDto;
 }
 
 export class CreateRequestOnBehalfDto extends CreateRequestDto {

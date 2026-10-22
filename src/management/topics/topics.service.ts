@@ -3,7 +3,7 @@ import type { ManagementRequestTopic } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
-import { appError, ErrorCode } from '../../core/common/errors';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 
@@ -17,9 +17,16 @@ export interface TopicInput {
 export type TopicUpdate = Partial<
   Pick<
     ManagementRequestTopic,
-    'nameAr' | 'nameEn' | 'targetResponseHours' | 'active'
+    'nameAr' | 'nameEn' | 'targetResponseHours' | 'active' | 'ownerRoleId'
   >
 >;
+
+/** A topic and the role that owns it, by key and name (ADR 0058). */
+export type TopicRead = ManagementRequestTopic & {
+  ownerRole: { key: string; name: string | null } | null;
+};
+
+const WITH_OWNER = { ownerRole: { select: { key: true, name: true } } };
 
 export const topicNotFound = () =>
   appError.notFound(
@@ -38,6 +45,7 @@ function audited(t: ManagementRequestTopic) {
     nameEn: t.nameEn,
     targetResponseHours: t.targetResponseHours,
     active: t.active,
+    ownerRoleId: t.ownerRoleId,
   };
 }
 
@@ -55,24 +63,28 @@ export class TopicsService {
   ) {}
 
   /** Every topic, retired ones included (a compound has a handful). */
-  list(): Promise<ManagementRequestTopic[]> {
+  list(): Promise<TopicRead[]> {
     return this.tenantTx.withTenantTx((tx) =>
-      tx.managementRequestTopic.findMany({ orderBy: [{ key: 'asc' }] }),
+      tx.managementRequestTopic.findMany({
+        orderBy: [{ key: 'asc' }],
+        include: WITH_OWNER,
+      }),
     );
   }
 
-  /** What a request may be opened under. */
-  options(): Promise<ManagementRequestTopic[]> {
+  /** What a request may be opened under, and who owns each. */
+  options(): Promise<TopicRead[]> {
     return this.tenantTx.withTenantTx((tx) =>
       tx.managementRequestTopic.findMany({
         where: { active: true },
         orderBy: [{ key: 'asc' }],
+        include: WITH_OWNER,
       }),
     );
   }
 
   /** A duplicate key is DUPLICATE_RESOURCE on `key` (db-constraints). */
-  create(input: TopicInput): Promise<ManagementRequestTopic> {
+  create(input: TopicInput): Promise<TopicRead> {
     const tenantId = this.ctx.tenantId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const topic = await tx.managementRequestTopic.create({
@@ -84,6 +96,7 @@ export class TopicsService {
           nameEn: input.nameEn.trim(),
           targetResponseHours: input.targetResponseHours,
         },
+        include: WITH_OWNER,
       });
       await this.audit.record(tx, {
         action: 'management_request_topic.created',
@@ -102,12 +115,34 @@ export class TopicsService {
    * The key never changes: apps and reports may hold on to it. A new target
    * applies from the next cycle on; a running cycle keeps its due time.
    */
-  update(id: string, input: TopicUpdate): Promise<ManagementRequestTopic> {
+  update(id: string, input: TopicUpdate): Promise<TopicRead> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const before = await tx.managementRequestTopic.findUnique({
         where: { id },
       });
       if (!before) throw topicNotFound();
+      if (input.ownerRoleId) {
+        // A staff role of the compound (RLS), or none.
+        const role = await tx.role.findUnique({
+          where: { id: input.ownerRoleId },
+          select: { kind: true },
+        });
+        if (!role)
+          throw appError.notFound(ErrorCode.ROLE_NOT_FOUND, 'Role not found');
+        if (role.kind !== 'staff' && role.kind !== 'manager')
+          throw appError.badRequest(
+            ErrorCode.VALIDATION_FAILED,
+            'The owner is a staff role',
+            {
+              fields: [
+                {
+                  field: 'ownerRoleId',
+                  code: FieldErrorCode.TOPIC_OWNER_NOT_STAFF,
+                },
+              ],
+            },
+          );
+      }
       const topic = await tx.managementRequestTopic.update({
         where: { id },
         data: {
@@ -115,7 +150,9 @@ export class TopicsService {
           nameEn: input.nameEn?.trim(),
           targetResponseHours: input.targetResponseHours,
           active: input.active,
+          ownerRoleId: input.ownerRoleId,
         },
+        include: WITH_OWNER,
       });
       const changes = diffChanges(
         audited(before),

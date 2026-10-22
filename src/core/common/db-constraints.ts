@@ -234,6 +234,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Numbers come from the counter under its row lock; server ids.
   management_requests_tenant_id_id_key: null,
   management_requests_tenant_id_number_key: null,
+  // One live request to release each held item (ADR 0058).
+  management_requests_one_live_about: ['about'],
   management_request_messages_tenant_id_id_key: null,
   management_request_messages_request_message_key: null,
   // A file is claimed under its row lock before it is attached.

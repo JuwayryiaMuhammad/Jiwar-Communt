@@ -14,9 +14,20 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import type { OfficeWindow } from './defaults';
 import {
   officeHoursProblems,
+  officeStatus,
   sortedWindows,
   windowCode,
 } from './office-hours-rules';
+import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { dbNow } from '../db-clock';
+
+export interface ResidentOfficeHours {
+  timeZone: string;
+  windows: OfficeWindow[];
+  openNow: boolean;
+  closesAt: Date | null;
+  nextOpensAt: Date | null;
+}
 import { RequestSettingsService } from './request-settings.service';
 
 const plain = (w: OfficeWindow): OfficeWindow => ({
@@ -39,6 +50,7 @@ export class OfficeHoursService {
     private readonly ctx: RequestContext,
     private readonly audit: AuditService,
     private readonly settings: RequestSettingsService,
+    private readonly tenantSettings: TenantSettingsService,
   ) {}
 
   async inTx(tx: TenantTxClient): Promise<OfficeWindow[]> {
@@ -50,6 +62,26 @@ export class OfficeHoursService {
 
   get(): Promise<OfficeWindow[]> {
     return this.tenantTx.withTenantTx((tx) => this.inTx(tx));
+  }
+
+  /**
+   * The office hours as residents read them (ADR 0058): the windows, the
+   * compound's time zone, and whether the office is open now and until
+   * when, or when it opens next, by the database's clock.
+   */
+  forResidents(): Promise<ResidentOfficeHours> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const windows = await this.inTx(tx);
+      const { timezone } = await this.tenantSettings.inTx(
+        tx,
+        this.ctx.tenantId,
+      );
+      return {
+        timeZone: timezone,
+        windows,
+        ...officeStatus(windows, await dbNow(tx), timezone),
+      };
+    });
   }
 
   /**

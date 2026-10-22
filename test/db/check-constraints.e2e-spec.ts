@@ -297,6 +297,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   management_request_settings_ranges: {},
   management_office_hours_window: {},
   management_requests_number_positive: {},
+  // Release requests (ADR 0058): nullable columns only under IS [NOT] NULL,
+  // and the list tested only on a value.
+  management_requests_about_shape: {},
+  management_requests_about_type_known: {
+    guarded:
+      'about_type IS NULL is tested first; the list runs only on a value',
+  },
   management_requests_cycle: {},
   management_request_messages_erased_shape: {},
   management_request_messages_staff_flags: {},

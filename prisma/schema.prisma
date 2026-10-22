@@ -1030,8 +1030,9 @@ model Role {
   createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  tenant      Tenant                   @relation(fields: [tenantId], references: [id])
   permissions RolePermission[]
+  ownedTopics ManagementRequestTopic[]
   accounts    Account[]
 
   @@unique([tenantId, key])
@@ -3821,11 +3822,15 @@ model ManagementRequestTopic {
   /// The hours management gives itself to answer a request of this topic.
   targetResponseHours Int      @map("target_response_hours")
   active              Boolean  @default(true)
+  /// The role that owns the topic (ADR 0058): residents see it, and an
+  /// unassigned request goes to that role's handlers. Never a person.
+  ownerRoleId         String?  @map("owner_role_id") @db.Uuid
   createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  requests ManagementRequest[]
+  tenant    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  ownerRole Role?               @relation(fields: [tenantId, ownerRoleId], references: [tenantId, id], onDelete: SetNull, onUpdate: Restrict, map: "management_request_topics_owner_role_fkey")
+  requests  ManagementRequest[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, key])
@@ -3902,6 +3907,12 @@ model ManagementRequest {
   closedBySide    ManagementActorSide?    @map("closed_by_side")
   /// What both lists are ordered by. Internal notes do not move it.
   lastActivityAt  DateTime                @map("last_activity_at") @db.Timestamptz(3)
+  /// What the request is about, when it asks to release a hold (ADR 0058):
+  /// maintenance (a ticket), unit_permit (a stopped work), unit_credit (a
+  /// unit's id). Fixed, with the hold's reason code as it was.
+  aboutType       String?                 @map("about_type")
+  aboutId         String?                 @map("about_id") @db.Uuid
+  aboutReason     String?                 @map("about_reason")
   createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
 

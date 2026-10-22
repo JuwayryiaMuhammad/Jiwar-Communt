@@ -9494,6 +9494,14 @@
       },
       "CreateRequestDto": {
         "properties": {
+          "about": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestAboutDto"
+              }
+            ],
+            "description": "A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf."
+          },
           "appointment": {
             "allOf": [
               {
@@ -9545,6 +9553,14 @@
       },
       "CreateRequestOnBehalfDto": {
         "properties": {
+          "about": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestAboutDto"
+              }
+            ],
+            "description": "A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf."
+          },
           "appointment": {
             "allOf": [
               {
@@ -19387,6 +19403,15 @@
           "holdReason"
         ],
         "type": "object"
+      },
+      "HoldType": {
+        "description": "`maintenance`: a ticket on hold; `unit_permit`: a stopped works permit; `unit_credit`: the unit’s credit (its id is the unit’s).",
+        "enum": [
+          "maintenance",
+          "unit_permit",
+          "unit_credit"
+        ],
+        "type": "string"
       },
       "HostRequestResponse": {
         "properties": {
@@ -30805,6 +30830,52 @@
         ],
         "type": "object"
       },
+      "RequestAboutDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HoldType"
+              }
+            ],
+            "description": "`maintenance`: a ticket on hold; `unit_permit`: a stopped works permit; `unit_credit`: the unit’s credit (its id is the unit’s)."
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "RequestAboutView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "Why it was held when the request was opened: a ticket’s hold reason, a work stop’s reason, or `unit_credit`.",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HoldType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "RequestCreatedView": {
         "properties": {
           "createdAt": {
@@ -31701,6 +31772,44 @@
         ],
         "type": "object"
       },
+      "ResidentOfficeHoursResponse": {
+        "properties": {
+          "closesAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "nextOpensAt": {
+            "description": "Within the coming week; null when no window is set.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "openNow": {
+            "description": "Open now, by the server’s clock.",
+            "type": "boolean"
+          },
+          "timeZone": {
+            "example": "Africa/Cairo",
+            "type": "string"
+          },
+          "windows": {
+            "description": "By weekday, then start. Empty: the office is closed.",
+            "items": {
+              "$ref": "#/components/schemas/OfficeWindowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "windows",
+          "timeZone",
+          "openNow",
+          "closesAt",
+          "nextOpensAt"
+        ],
+        "type": "object"
+      },
       "ResidentParcelView": {
         "properties": {
           "carrier": {
@@ -31956,6 +32065,16 @@
       },
       "ResidentRequestDetailView": {
         "properties": {
+          "about": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestAboutView"
+              }
+            ],
+            "description": "A request to release a hold: what it is about.",
+            "nullable": true,
+            "type": "object"
+          },
           "appointment": {
             "allOf": [
               {
@@ -32063,6 +32182,7 @@
           "closedAt",
           "createdAt",
           "lastActivityAt",
+          "about",
           "openedByManagement",
           "responseDueAt",
           "reopenUntil",
@@ -32143,6 +32263,16 @@
       },
       "ResidentRequestView": {
         "properties": {
+          "about": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestAboutView"
+              }
+            ],
+            "description": "A request to release a hold: what it is about.",
+            "nullable": true,
+            "type": "object"
+          },
           "closeReason": {
             "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
             "nullable": true,
@@ -32230,6 +32360,7 @@
           "closedAt",
           "createdAt",
           "lastActivityAt",
+          "about",
           "openedByManagement",
           "responseDueAt",
           "reopenUntil"
@@ -40632,6 +40763,16 @@
       },
       "StaffRequestDetailView": {
         "properties": {
+          "about": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestAboutView"
+              }
+            ],
+            "description": "A request to release a hold: what it is about.",
+            "nullable": true,
+            "type": "object"
+          },
           "answeredAt": {
             "format": "date-time",
             "nullable": true,
@@ -40774,6 +40915,7 @@
           "closedAt",
           "createdAt",
           "lastActivityAt",
+          "about",
           "author",
           "openedBy",
           "onBehalfReason",
@@ -40790,6 +40932,16 @@
       },
       "StaffRequestListItemView": {
         "properties": {
+          "about": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestAboutView"
+              }
+            ],
+            "description": "A request to release a hold: what it is about.",
+            "nullable": true,
+            "type": "object"
+          },
           "answeredAt": {
             "format": "date-time",
             "nullable": true,
@@ -40921,6 +41073,7 @@
           "closedAt",
           "createdAt",
           "lastActivityAt",
+          "about",
           "author",
           "openedBy",
           "onBehalfReason",
@@ -41034,6 +41187,16 @@
       },
       "StaffRequestView": {
         "properties": {
+          "about": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestAboutView"
+              }
+            ],
+            "description": "A request to release a hold: what it is about.",
+            "nullable": true,
+            "type": "object"
+          },
           "answeredAt": {
             "format": "date-time",
             "nullable": true,
@@ -41159,6 +41322,7 @@
           "closedAt",
           "createdAt",
           "lastActivityAt",
+          "about",
           "author",
           "openedBy",
           "onBehalfReason",
@@ -43798,6 +43962,16 @@
             "description": "Written by the compound.",
             "type": "string"
           },
+          "owner": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TopicOwnerView"
+              }
+            ],
+            "description": "Who answers it (ADR 0058): a role, never a person; null when any handler does.",
+            "nullable": true,
+            "type": "object"
+          },
           "targetResponseHours": {
             "description": "Hours the management gives itself to answer.",
             "type": "number"
@@ -43808,7 +43982,8 @@
           "key",
           "nameAr",
           "nameEn",
-          "targetResponseHours"
+          "targetResponseHours",
+          "owner"
         ],
         "type": "object"
       },
@@ -43828,6 +44003,24 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TopicOwnerView": {
+        "properties": {
+          "roleKey": {
+            "description": "The role’s key.",
+            "type": "string"
+          },
+          "roleName": {
+            "description": "Written by the compound; a default role has none (name it by key).",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "roleKey",
+          "roleName"
         ],
         "type": "object"
       },
@@ -43855,6 +44048,21 @@
             "description": "Written by the compound.",
             "type": "string"
           },
+          "owner": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TopicOwnerView"
+              }
+            ],
+            "description": "Who answers it (ADR 0058): a role, never a person; null when any handler does.",
+            "nullable": true,
+            "type": "object"
+          },
+          "ownerRoleId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "targetResponseHours": {
             "description": "Hours the management gives itself to answer.",
             "type": "number"
@@ -43870,7 +44078,9 @@
           "nameAr",
           "nameEn",
           "targetResponseHours",
+          "owner",
           "active",
+          "ownerRoleId",
           "createdAt",
           "updatedAt"
         ],
@@ -46117,6 +46327,12 @@
           "nameEn": {
             "maxLength": 80,
             "minLength": 1,
+            "type": "string"
+          },
+          "ownerRoleId": {
+            "description": "The staff role that owns the topic (ADR 0058): residents see its name, and an unassigned request goes to its handlers. Null: every handler. A role of a resident kind is TOPIC_OWNER_NOT_STAFF.",
+            "format": "uuid",
+            "nullable": true,
             "type": "string"
           },
           "targetResponseHours": {
@@ -61668,6 +61884,35 @@
           }
         ],
         "summary": "List the free appointment slots",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-office-hours": {
+      "get": {
+        "operationId": "ResidentOfficeHoursController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentOfficeHoursResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the office hours and whether it is open now",
         "tags": [
           "management-requests"
         ],

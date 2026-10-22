@@ -1,3 +1,4 @@
+import { HOLD_TYPES } from '../../../core/resident-items/resident-items';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   ManagementRequestStatus,
@@ -74,6 +75,20 @@ export class RequestUnitRefView {
 }
 
 /** What both sides see of a request. */
+/** What a request to release a hold is about (ADR 0058). */
+export class RequestAboutView {
+  @ApiProperty({ enum: HOLD_TYPES, enumName: 'HoldType' })
+  type: string;
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    type: String,
+    description:
+      'Why it was held when the request was opened: a ticket’s hold reason, a work stop’s reason, or `unit_credit`.',
+  })
+  reasonCode: string;
+}
+
 class RequestBaseView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -119,6 +134,12 @@ class RequestBaseView {
     description: 'What the lists are ordered by.',
   })
   lastActivityAt: Date;
+  @ApiProperty({
+    type: RequestAboutView,
+    nullable: true,
+    description: 'A request to release a hold: what it is about.',
+  })
+  about: RequestAboutView | null;
 
   protected static base(read: RequestRead): RequestBaseView {
     const r = read.request;
@@ -134,6 +155,10 @@ class RequestBaseView {
       closedAt: r.closedAt,
       createdAt: r.createdAt,
       lastActivityAt: r.lastActivityAt,
+      about:
+        r.aboutType && r.aboutId && r.aboutReason
+          ? { type: r.aboutType, id: r.aboutId, reasonCode: r.aboutReason }
+          : null,
     };
   }
 }

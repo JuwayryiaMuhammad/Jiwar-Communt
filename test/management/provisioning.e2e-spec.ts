@@ -1,7 +1,11 @@
 import {
   DEFAULT_OFFICE_HOURS,
-  DEFAULT_TOPICS,
+  DEFAULT_TOPICS as ADR_0039_TOPICS,
+  RELEASE_TOPIC,
 } from '../../src/management/settings/defaults';
+
+/** ADR 0039's five, and the release topic of ADR 0058. */
+const DEFAULT_TOPICS = [...ADR_0039_TOPICS, RELEASE_TOPIC];
 import { communityHelpers } from '../setup/community';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 

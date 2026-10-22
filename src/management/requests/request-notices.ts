@@ -49,8 +49,32 @@ export class RequestNotices {
   ): Promise<void> {
     const to = request.assigneeId
       ? [request.assigneeId]
-      : (await this.staff.holding(tx, 'requests.handle')).map((r) => r.id);
+      : await this.queueHandlers(tx, request.topicId);
     await this.send(tx, to, kind, request, except);
+  }
+
+  /**
+   * Who handles the unassigned queue of a topic (ADR 0058): the handlers of
+   * the role that owns it, or every handler when it has no owner or the
+   * owner has none.
+   */
+  private async queueHandlers(
+    tx: TenantTxClient,
+    topicId: string,
+  ): Promise<string[]> {
+    const all = (await this.staff.holding(tx, 'requests.handle')).map(
+      (r) => r.id,
+    );
+    const topic = await tx.managementRequestTopic.findUnique({
+      where: { id: topicId },
+      select: { ownerRoleId: true },
+    });
+    if (!topic?.ownerRoleId || !all.length) return all;
+    const owners = await tx.account.findMany({
+      where: { id: { in: all }, roleId: topic.ownerRoleId },
+      select: { id: true },
+    });
+    return owners.length ? owners.map((a) => a.id) : all;
   }
 
   /** Tells the assignee alone; nobody when the request is in the queue. */

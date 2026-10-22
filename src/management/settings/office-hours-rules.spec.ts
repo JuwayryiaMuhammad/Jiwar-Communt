@@ -1,5 +1,7 @@
+import { zonedInstant } from '../../core/common/slots/day-slots';
 import {
   officeHoursProblems,
+  officeStatus,
   sortedWindows,
   windowCode,
 } from './office-hours-rules';
@@ -55,5 +57,46 @@ describe('office hours rules', () => {
         windowCode,
       ),
     ).toEqual(['0:540-600', '0:720-900', '6:540-600']);
+  });
+
+  describe('the office now (ADR 0058)', () => {
+    const zone = 'Africa/Cairo';
+    // Saturday to Thursday, 09:00–17:00; 2026-10-22 is a Thursday.
+    const week = [6, 0, 1, 2, 3, 4].map((d) => w(d, 540, 1020));
+    const at = (date: string, minute: number) =>
+      zonedInstant(date, minute, zone)!;
+
+    it('open: until when, and when it opens next (Friday is off)', () => {
+      expect(officeStatus(week, at('2026-10-22', 600), zone)).toEqual({
+        openNow: true,
+        closesAt: at('2026-10-22', 1020),
+        nextOpensAt: at('2026-10-24', 540),
+      });
+    });
+
+    it('closed: when it opens next', () => {
+      expect(officeStatus(week, at('2026-10-22', 1080), zone)).toEqual({
+        openNow: false,
+        closesAt: null,
+        nextOpensAt: at('2026-10-24', 540),
+      });
+      expect(officeStatus(week, at('2026-10-24', 480), zone)).toMatchObject({
+        openNow: false,
+        nextOpensAt: at('2026-10-24', 540),
+      });
+    });
+
+    it('touching windows are one stretch; no windows, never open', () => {
+      const split = [w(4, 540, 720), w(4, 720, 1020)];
+      expect(officeStatus(split, at('2026-10-22', 660), zone)).toMatchObject({
+        openNow: true,
+        closesAt: at('2026-10-22', 1020),
+      });
+      expect(officeStatus([], at('2026-10-22', 600), zone)).toEqual({
+        openNow: false,
+        closesAt: null,
+        nextOpensAt: null,
+      });
+    });
   });
 });

@@ -96,6 +96,26 @@ export class ResidentGateItems implements OnModuleInit {
           ? this.fines(tx, 'unit_violations', open(take, caller), q.number)
           : Promise.resolve([]),
     });
+    // A works permit stopped at the gate, with the stop's reason (ADR 0058).
+    this.items.registerHold('unit_permit', async (tx, id) => {
+      const me = this.ctx.accountId;
+      const primary = await this.community.primaryUnits(tx, me);
+      const permit = await tx.unitPermit.findFirst({
+        where: {
+          id,
+          OR: [{ requestedById: me }, { unitId: { in: primary } }],
+        },
+        select: { unitId: true },
+      });
+      if (!permit) return null;
+      const stop = await tx.permitWorkStop.findFirst({
+        where: { permitId: id, endedAt: null },
+        select: { reasonCode: true },
+      });
+      return stop
+        ? { unitId: permit.unitId, reasonCode: stop.reasonCode }
+        : null;
+    });
     this.items.register({
       type: 'parcel',
       group: null,

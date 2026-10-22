@@ -63,6 +63,17 @@ export const MANAGEMENT_SETUP_ROUTES: Row[] = [
     },
     noStore: true,
   },
+  // When the office is open, for residents (ADR 0058).
+  {
+    method: 'GET',
+    path: '/management-office-hours',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
   {
     method: 'GET',
     path: '/management-request-topics',

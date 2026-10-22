@@ -31,6 +31,7 @@ import {
 import { OfficeHoursService } from './settings/office-hours.service';
 import {
   OfficeHoursController,
+  ResidentOfficeHoursController,
   RequestSettingsController,
 } from './settings/request-settings.controller';
 import { RequestSettingsService } from './settings/request-settings.service';
@@ -52,6 +53,7 @@ import { TopicsService } from './topics/topics.service';
     TopicOptionsController,
     RequestSettingsController,
     OfficeHoursController,
+    ResidentOfficeHoursController,
     ResidentRequestsController,
     StaffRequestsController,
     RequestAssigneesController,

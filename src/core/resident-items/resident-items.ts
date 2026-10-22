@@ -121,6 +121,33 @@ export interface ResidentItemSource {
 }
 
 /**
+ * What a resident may ask the management to release (ADR 0058): a ticket
+ * on hold, a stopped work permit, and the unit's credit awaiting a refund
+ * (the one held money there is).
+ */
+export const HOLD_TYPES = [
+  'maintenance',
+  'unit_permit',
+  'unit_credit',
+] as const;
+export type HoldType = (typeof HOLD_TYPES)[number];
+
+/** A held item the caller sees: its unit and why it is held (a code). */
+export interface HeldItem {
+  unitId: string | null;
+  reasonCode: string;
+}
+
+/**
+ * The item `id`, if the caller sees it by its domain's rule and it is held
+ * now; null otherwise (the one not-found).
+ */
+export type HoldReader = (
+  tx: TenantTxClient,
+  id: string,
+) => Promise<HeldItem | null>;
+
+/**
  * The registry of resident item sources (ADR 0058), modelled on
  * `ExportSections` and `BoardMatters`: each domain registers its own at
  * startup, so core lists what finance and governance hold without anyone
@@ -130,6 +157,19 @@ export interface ResidentItemSource {
 @Injectable()
 export class ResidentItems {
   private readonly sources = new Map<ResidentItemType, ResidentItemSource>();
+  private readonly holds = new Map<HoldType, HoldReader>();
+
+  registerHold(type: HoldType, reader: HoldReader): void {
+    if (this.holds.has(type))
+      throw new Error(`Hold reader ${type} registered twice`);
+    this.holds.set(type, reader);
+  }
+
+  hold(type: HoldType): HoldReader {
+    const reader = this.holds.get(type);
+    if (!reader) throw new Error(`No hold reader for ${type}`);
+    return reader;
+  }
 
   register(source: ResidentItemSource): void {
     if (this.sources.has(source.type))
@@ -147,9 +187,12 @@ export class ResidentItems {
     return [...this.sources.values()].filter((s) => s.search);
   }
 
-  /** The types no source registered (checked at bootstrap). */
-  missing(): ResidentItemType[] {
-    return RESIDENT_ITEM_TYPES.filter((t) => !this.sources.has(t));
+  /** The types no source or hold reader registered (checked at bootstrap). */
+  missing(): string[] {
+    return [
+      ...RESIDENT_ITEM_TYPES.filter((t) => !this.sources.has(t)),
+      ...HOLD_TYPES.filter((t) => !this.holds.has(t)).map((t) => `hold:${t}`),
+    ];
   }
 }
 

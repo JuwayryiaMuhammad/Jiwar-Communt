@@ -4648,6 +4648,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the quotes of a ticket */
+        get: operations["DispatchQuotesController_list"];
+        put?: never;
+        /** Quote a ticket for its residents to approve */
+        post: operations["DispatchQuotesController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/quotes/{quoteId}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a quote that waits */
+        post: operations["DispatchQuotesController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/reassign": {
         parameters: {
             query?: never;
@@ -12747,6 +12782,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets/{id}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the quotes of one of my tickets */
+        get: operations["ResidentQuotesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/quotes/{quoteId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a quote of my ticket */
+        post: operations["ResidentQuotesController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/quotes/{quoteId}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a quote of my ticket */
+        post: operations["ResidentQuotesController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tickets/{id}/reject": {
         parameters: {
             query?: never;
@@ -18153,6 +18239,34 @@ export interface components {
         };
         /** @enum {string} */
         DispatchOutcome: "assigned" | "no_candidate" | "skipped";
+        DispatchQuoteView: {
+            /**
+             * @description EGP.
+             * @example 350.00
+             */
+            amount: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: uuid */
+            decidedById: string | null;
+            declineReason: string | null;
+            /** Format: uuid */
+            id: string;
+            note: string | null;
+            /** Format: date-time */
+            proposedAt: string;
+            /** Format: uuid */
+            proposedById: string;
+            status: components["schemas"]["TicketQuoteStatus"];
+            /** Format: date-time */
+            withdrawnAt: string | null;
+            /** Format: uuid */
+            withdrawnById: string | null;
+        };
+        DispatchQuoteViewList: {
+            data: components["schemas"]["DispatchQuoteView"][];
+            nextCursor: string | null;
+        };
         DispatchReceiverView: {
             fullName: string | null;
             /** Format: uuid */
@@ -23552,6 +23666,12 @@ export interface components {
             /** @description The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. */
             rationale: string;
         };
+        ProposeQuoteDto: {
+            /** @description EGP, e.g. `350` or `350.50`; below ten million. */
+            amount: string;
+            /** @description What the residents read: the work and what it includes. */
+            note?: string;
+        };
         PublicReceiptView: {
             amount: string;
             compoundName: string;
@@ -23622,6 +23742,10 @@ export interface components {
             end: string;
             /** @example 22:00 */
             start: string;
+        };
+        QuoteCreatedView: {
+            /** Format: uuid */
+            id: string;
         };
         RaiseApprovalDto: {
             alternatives?: components["schemas"]["ApprovalAlternativeDto"][];
@@ -24401,6 +24525,33 @@ export interface components {
         };
         ResidentParcelViewList: {
             data: components["schemas"]["ResidentParcelView"][];
+            nextCursor: string | null;
+        };
+        ResidentQuoteView: {
+            /**
+             * @description EGP.
+             * @example 350.00
+             */
+            amount: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @description Decided by the caller (null while undecided). */
+            decidedByMe: boolean | null;
+            /** @description REASON_CODES.ticketQuoteDecline. */
+            declineReason: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller may approve or decline it now. */
+            mayDecide: boolean;
+            note: string | null;
+            /** Format: date-time */
+            proposedAt: string;
+            status: components["schemas"]["TicketQuoteStatus"];
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        ResidentQuoteViewList: {
+            data: components["schemas"]["ResidentQuoteView"][];
             nextCursor: string | null;
         };
         ResidentReceiverView: {
@@ -27758,6 +27909,8 @@ export interface components {
         };
         /** @enum {string} */
         TicketPriority: "normal" | "urgent" | "emergency";
+        /** @enum {string} */
+        TicketQuoteStatus: "proposed" | "approved" | "declined" | "withdrawn";
         TicketReporterView: {
             fullName: string | null;
             /** Format: uuid */
@@ -36007,6 +36160,75 @@ export interface operations {
                 "application/json": components["schemas"]["PriorityDto"];
             };
         };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DispatchQuotesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchQuoteViewList"];
+                };
+            };
+        };
+    };
+    DispatchQuotesController_propose: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeQuoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteCreatedView"];
+                };
+            };
+        };
+    };
+    DispatchQuotesController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             204: {
                 headers: {
@@ -48219,6 +48441,77 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PhotoAddedView"];
                 };
+            };
+        };
+    };
+    ResidentQuotesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentQuoteViewList"];
+                };
+            };
+        };
+    };
+    ResidentQuotesController_approve: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentQuotesController_decline: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

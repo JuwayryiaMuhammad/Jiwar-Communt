@@ -135,6 +135,11 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
   'ticket.escalated_by_resident',
   'preventive_service.created',
   'preventive_service.updated',
+  // Quotes (ADR 0058).
+  'ticket_quote.proposed',
+  'ticket_quote.withdrawn',
+  'ticket_quote.declined',
+  'ticket_quote.approved',
 ];
 
 /** Parcels (ADR 0035), covered by test/parcels/audit-coverage.e2e-spec.ts. */

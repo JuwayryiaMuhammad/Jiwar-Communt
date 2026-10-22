@@ -46,7 +46,7 @@ export const IN_HAND: readonly TicketStatus[] = [
  * `assigned` does, so a client that never sends a technician on the way
  * sees no change.
  */
-const NOT_STARTED: readonly TicketStatus[] = ['assigned', 'en_route'];
+export const NOT_STARTED: readonly TicketStatus[] = ['assigned', 'en_route'];
 
 const OPEN: readonly TicketStatus[] = ['new', ...IN_HAND];
 

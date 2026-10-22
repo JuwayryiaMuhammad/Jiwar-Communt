@@ -11491,6 +11491,95 @@
         ],
         "type": "string"
       },
+      "DispatchQuoteView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "example": "350.00",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "declineReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "proposedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "proposedById": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketQuoteStatus"
+              }
+            ]
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "withdrawnById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "note",
+          "status",
+          "proposedById",
+          "proposedAt",
+          "decidedById",
+          "decidedAt",
+          "declineReason",
+          "withdrawnById",
+          "withdrawnAt"
+        ],
+        "type": "object"
+      },
+      "DispatchQuoteViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DispatchQuoteView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "DispatchReceiverView": {
         "properties": {
           "fullName": {
@@ -29040,6 +29129,24 @@
         ],
         "type": "object"
       },
+      "ProposeQuoteDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, e.g. `350` or `350.50`; below ten million.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "note": {
+            "description": "What the residents read: the work and what it includes.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "type": "object"
+      },
       "PublicReceiptView": {
         "properties": {
           "amount": {
@@ -29240,6 +29347,18 @@
         "required": [
           "start",
           "end"
+        ],
+        "type": "object"
+      },
+      "QuoteCreatedView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
         ],
         "type": "object"
       },
@@ -31640,6 +31759,90 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/ResidentParcelView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ResidentQuoteView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "example": "350.00",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedByMe": {
+            "description": "Decided by the caller (null while undecided).",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "declineReason": {
+            "description": "REASON_CODES.ticketQuoteDecline.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mayDecide": {
+            "description": "The caller may approve or decline it now.",
+            "type": "boolean"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "proposedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketQuoteStatus"
+              }
+            ]
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "note",
+          "status",
+          "proposedAt",
+          "decidedAt",
+          "decidedByMe",
+          "declineReason",
+          "withdrawnAt",
+          "mayDecide"
+        ],
+        "type": "object"
+      },
+      "ResidentQuoteViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentQuoteView"
             },
             "type": "array"
           },
@@ -43262,6 +43465,15 @@
           "normal",
           "urgent",
           "emergency"
+        ],
+        "type": "string"
+      },
+      "TicketQuoteStatus": {
+        "enum": [
+          "proposed",
+          "approved",
+          "declined",
+          "withdrawn"
         ],
         "type": "string"
       },
@@ -60776,6 +60988,135 @@
           }
         ],
         "summary": "Change a ticket's priority",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/quotes": {
+      "get": {
+        "operationId": "DispatchQuotesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchQuoteViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the quotes of a ticket",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "DispatchQuotesController_propose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeQuoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Quote a ticket for its residents to approve",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/quotes/{quoteId}/withdraw": {
+      "post": {
+        "operationId": "DispatchQuotesController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a quote that waits",
         "tags": [
           "maintenance"
         ],
@@ -84964,6 +85305,147 @@
           }
         ],
         "summary": "Add a photo to my ticket",
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/quotes": {
+      "get": {
+        "operationId": "ResidentQuotesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentQuoteViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the quotes of one of my tickets",
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/quotes/{quoteId}/approve": {
+      "post": {
+        "operationId": "ResidentQuotesController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a quote of my ticket",
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/quotes/{quoteId}/decline": {
+      "post": {
+        "operationId": "ResidentQuotesController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a quote of my ticket",
         "tags": [
           "tickets"
         ],

@@ -10,7 +10,8 @@ import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { TicketAccess } from './ticket-access';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
-import { assertCan, type TicketAction } from './ticket-rules';
+import { assertQuoteAllowsStart } from '../quotes/quote-rules';
+import { assertCan, NOT_STARTED, type TicketAction } from './ticket-rules';
 
 /**
  * The technician's workflow (ADR 0032), on their own tickets only:
@@ -127,6 +128,9 @@ export class WorkService {
   ): Promise<void> {
     const me = this.ctx.accountId;
     const now = new Date();
+    // The work starts only on an approved quote, if it has one (ADR 0058).
+    if (to === 'in_progress' && NOT_STARTED.includes(ticket.status))
+      await assertQuoteAllowsStart(tx, ticket.id);
     await tx.ticket.update({
       where: { id: ticket.id },
       data: {

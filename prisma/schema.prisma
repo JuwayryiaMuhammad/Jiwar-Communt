@@ -3038,6 +3038,7 @@ model Ticket {
   attachments       TicketAttachment[]
   visits            TicketVisit[]
   slaClocks         TicketSlaClock[]
+  quotes            TicketQuote[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
@@ -3067,6 +3068,34 @@ model TicketStatusHistory {
 
   @@index([tenantId, ticketId, createdAt, id], map: "ticket_status_history_ticket_idx")
   @@map("ticket_status_history")
+}
+
+/// A quote on a ticket (ADR 0058): what the work will cost, stated by the
+/// dispatch before it starts and approved or declined by the reporter or
+/// the unit's primary. The terms never change; decided or withdrawn once.
+model TicketQuote {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  ticketId      String    @map("ticket_id") @db.Uuid
+  amount        Decimal   @db.Decimal(12, 2)
+  /// Staff's words for the residents, 1–1000 characters.
+  note          String?
+  /// proposed, approved, declined, withdrawn.
+  status        String    @default("proposed")
+  proposedById  String    @map("proposed_by_account_id") @db.Uuid
+  proposedAt    DateTime  @default(now()) @map("proposed_at") @db.Timestamptz(3)
+  decidedById   String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt     DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.ticketQuoteDecline.
+  declineReason String?   @map("decline_reason")
+  withdrawnById String?   @map("withdrawn_by_account_id") @db.Uuid
+  withdrawnAt   DateTime? @map("withdrawn_at") @db.Timestamptz(3)
+
+  ticket Ticket @relation(fields: [tenantId, ticketId], references: [tenantId, id], onUpdate: Restrict, map: "ticket_quotes_ticket_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, ticketId, proposedAt, id], map: "ticket_quotes_ticket_idx")
+  @@map("ticket_quotes")
 }
 
 /// A resident asked for attention on an overdue ticket (ADR 0038): once per

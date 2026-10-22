@@ -1303,3 +1303,92 @@ export const VISIT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Quotes (ADR 0058): another compound's ticket is just not found. */
+const QUOTE_ID = '0192a5f0-1c2b-7d3e-8f40-0000000058c1';
+export const QUOTE_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/tickets/{id}/quotes',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/tickets/{id}/quotes/{quoteId}/approve',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId, quoteId: QUOTE_ID }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/tickets/{id}/quotes/{quoteId}/decline',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId, quoteId: QUOTE_ID }),
+      body: () => ({ reasonCode: 'not_needed' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: CODE_INVALID,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}/quotes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/quotes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({ amount: '100' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { amount: '0', note: '' },
+      fields: [
+        { field: 'amount', code: 'INVALID_FORMAT' },
+        {
+          field: 'note',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1000 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/quotes/{quoteId}/withdraw',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId, quoteId: QUOTE_ID }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];

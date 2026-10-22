@@ -10,6 +10,7 @@ import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.
 import { EscalationService } from '../../src/maintenance/tickets/escalation.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
+import { QuotesService } from '../../src/maintenance/quotes/quotes.service';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -511,6 +512,76 @@ describe('Audit coverage — maintenance', () => {
         ),
       ).rejects.toMatchObject({ code: 'TICKET_ALREADY_ESCALATED' });
       await single(c, 'ticket.escalated_by_resident', ticket.id);
+    });
+  });
+
+  describe('quotes (ADR 0058)', () => {
+    it('ticket_quote.* — the ticket, the amount and codes; the note as changed only', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const reporter = await x.resident(c, [unit.id]);
+      const category = await x.asManager(c, () =>
+        x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'plumbing' },
+        }),
+      );
+      const asReporter = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: reporter.id, type: 'resident' }, fn);
+      const ticket = await asReporter(() =>
+        h.moduleRef.get(TicketsService).create({
+          unitId: unit.id,
+          categoryId: category.id,
+          description: 'AUDIT-DESCRIPTION dripping',
+        }),
+      );
+      const quotes = h.moduleRef.get(QuotesService);
+      const first = await x.asManager(c, () =>
+        quotes.propose(ticket.id, {
+          amount: '350.5',
+          note: 'AUDIT-NOTE pipes',
+        }),
+      );
+      const proposed = await single(c, 'ticket_quote.proposed', first.id);
+      expect(proposed).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'ticket_quote',
+        changes: {
+          ticketId: { from: null, to: ticket.id },
+          amount: { from: null, to: '350.50' },
+          note: { changed: true },
+        },
+      });
+      await x.asManager(c, () => quotes.withdraw(ticket.id, first.id));
+      expect(await single(c, 'ticket_quote.withdrawn', first.id)).toMatchObject(
+        {
+          actorId: c.managerId,
+          metadata: { ticketId: ticket.id },
+        },
+      );
+      const second = await x.asManager(c, () =>
+        quotes.propose(ticket.id, { amount: '300' }),
+      );
+      await asReporter(() =>
+        quotes.decide(ticket.id, second.id, 'decline', 'too_expensive'),
+      );
+      expect(await single(c, 'ticket_quote.declined', second.id)).toMatchObject(
+        {
+          actorId: reporter.id,
+          metadata: { ticketId: ticket.id, reasonCode: 'too_expensive' },
+        },
+      );
+      const third = await x.asManager(c, () =>
+        quotes.propose(ticket.id, { amount: '250' }),
+      );
+      await asReporter(() => quotes.decide(ticket.id, third.id, 'approve'));
+      const approved = await single(c, 'ticket_quote.approved', third.id);
+      expect(approved).toMatchObject({
+        actorId: reporter.id,
+        metadata: { ticketId: ticket.id },
+      });
+      for (const row of [proposed, approved])
+        expect(JSON.stringify(row)).not.toMatch(/AUDIT-|pipes|dripping/);
     });
   });
 

@@ -73,6 +73,11 @@ import {
   UnitVisitsController,
 } from './visits/visits.controller';
 import { VisitsService } from './visits/visits.service';
+import {
+  DispatchQuotesController,
+  ResidentQuotesController,
+} from './quotes/quotes.controller';
+import { QuotesService } from './quotes/quotes.service';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -104,6 +109,8 @@ import { VisitsService } from './visits/visits.service';
     TechnicianVisitsController,
     DispatchVisitsController,
     UnitVisitsController,
+    ResidentQuotesController,
+    DispatchQuotesController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -141,6 +148,7 @@ import { VisitsService } from './visits/visits.service';
     MaintenanceExportSections,
     ResidentTicketFeed,
     ResidentTicketSummary,
+    QuotesService,
   ],
   // What the management domain reads of a resident's tickets (ADR 0039).
   exports: [ResidentTicketFeed, ResidentTicketSummary],

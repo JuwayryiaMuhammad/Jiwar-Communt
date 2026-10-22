@@ -210,6 +210,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   sessions_tenant_id_id_key: null,
   account_logins_tenant_id_id_key: null,
   account_logins_session_key: null,
+  // Quotes (ADR 0058): one waits per ticket, checked under the ticket's
+  // lock (TICKET_QUOTE_EXISTS); a violation is a bug.
+  ticket_quotes_tenant_id_id_key: null,
+  ticket_quotes_one_proposed: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

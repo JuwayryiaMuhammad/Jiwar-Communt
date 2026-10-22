@@ -155,6 +155,8 @@ describe('audit catalog', () => {
         'gate_device',
         'gate_offline_flag',
         'gate_offline_batch',
+        // ADR 0058
+        'ticket_quote',
       ]).toContain(def.target);
     }
   });

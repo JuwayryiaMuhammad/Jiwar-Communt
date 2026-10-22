@@ -539,6 +539,20 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   known_devices_client_source: {},
   // The inbox (ADR 0058): nullable columns only under IS [NOT] NULL.
   notifications_archived_is_read: {},
+  // Quotes (ADR 0058).
+  ticket_quotes_amount_range: {},
+  ticket_quotes_note_length: {
+    guarded: 'note IS NULL is tested first; its length runs only on a value',
+  },
+  ticket_quotes_status_known: {},
+  ticket_quotes_decline_reason_known: {
+    guarded:
+      'decline_reason IS NULL is tested first; the list runs only on a value',
+  },
+  ticket_quotes_state_shape: {
+    guarded:
+      'a CASE on the NOT NULL status; each branch tests the nullable columns with IS [NOT] NULL only, and ELSE is false',
+  },
   // Data exports (ADR 0036): nullable columns only under IS [NOT] NULL.
   data_exports_shape: {},
   // The deletion queue (ADR 0036): nullable columns only under

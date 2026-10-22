@@ -186,6 +186,13 @@ export const REASON_CODES = {
     'other',
   ],
   ticketReopen: ['problem_returned', 'not_fixed', 'other'],
+  // A quote declined by the residents (ADR 0058).
+  ticketQuoteDecline: [
+    'too_expensive',
+    'not_needed',
+    'own_arrangement',
+    'other',
+  ],
   // Written by the system only: back to the queue.
   ticketRelease: ['escalated', 'technician_unavailable'],
   // Dispatch (ADR 0033): a dispatcher setting a technician's availability.

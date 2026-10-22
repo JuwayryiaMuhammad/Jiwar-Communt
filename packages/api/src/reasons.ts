@@ -45,6 +45,7 @@ export const REASON_CODES = {
   ticketReassign: ['technician_unavailable', 'workload', 'specialty', 'other'],
   ticketPriority: ['reassessed', 'safety_risk', 'reporter_request', 'other'],
   ticketCancel: ['duplicate', 'resolved_without_visit', 'reporter_request', 'invalid', 'other'],
+  ticketQuoteDecline: ['too_expensive', 'not_needed', 'own_arrangement', 'other'],
   ticketCategory: ['misclassified', 'reassessed', 'other'],
   availabilityChange: ['sick', 'leave', 'training', 'other'],
   visitChange: ['schedule_conflict', 'resident_request', 'technician_request', 'parts_unavailable', 'other'],

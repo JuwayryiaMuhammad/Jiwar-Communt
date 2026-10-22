@@ -223,6 +223,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'اكتمل العمل على البلاغ رقم {ticketNumber}. يرجى التأكيد.',
     },
   },
+  'ticket.quote_proposed': {
+    en: {
+      title: 'A quote to approve',
+      body: 'Ticket #{ticketNumber}: the work will cost {amount} EGP. Approve or decline it before it starts.',
+    },
+    ar: {
+      title: 'عرض سعر بانتظار موافقتك',
+      body: 'البلاغ رقم {ticketNumber}: تكلفة العمل {amount} جنيه. وافق عليها أو ارفضها قبل البدء.',
+    },
+  },
+  'ticket.quote_approved': {
+    en: {
+      title: 'Quote approved',
+      body: 'The residents approved the quote of ticket #{ticketNumber}. The work may start.',
+    },
+    ar: {
+      title: 'تمت الموافقة على عرض السعر',
+      body: 'وافق السكان على عرض سعر البلاغ رقم {ticketNumber}، ويمكن بدء العمل.',
+    },
+  },
+  'ticket.quote_declined': {
+    en: {
+      title: 'Quote declined',
+      body: 'The residents declined the quote of ticket #{ticketNumber}.',
+    },
+    ar: {
+      title: 'تم رفض عرض السعر',
+      body: 'رفض السكان عرض سعر البلاغ رقم {ticketNumber}.',
+    },
+  },
+  'ticket.quote_withdrawn': {
+    en: {
+      title: 'Quote withdrawn',
+      body: 'The quote of ticket #{ticketNumber} was withdrawn.',
+    },
+    ar: {
+      title: 'تم سحب عرض السعر',
+      body: 'سُحب عرض سعر البلاغ رقم {ticketNumber}.',
+    },
+  },
   'ticket.declined': {
     en: {
       title: 'Ticket declined',

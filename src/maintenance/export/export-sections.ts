@@ -6,6 +6,8 @@ import {
   type ExportSubject,
 } from '../../core/exports/export-sections';
 import { MessagesService } from '../tickets/messages.service';
+import { QuotesService } from '../quotes/quotes.service';
+import { ResidentQuoteView } from '../quotes/views/quote.views';
 import { ticketNumber } from '../tickets/ticket-rules';
 import { TicketsService } from '../tickets/tickets.service';
 import { ResidentMessageView } from '../tickets/views/message.views';
@@ -19,7 +21,8 @@ const MESSAGE_PAGE = 100;
  * ticket the account opened or reported, one entry each
  * (`tickets/MT-000123.json`), as the resident's own detail shows it
  * (`GET /tickets/{id}`), with its messages as the resident's thread shows
- * them (`GET /tickets/{id}/messages`). Photos are the ticket's records, not
+ * them (`GET /tickets/{id}/messages`) and its quotes as the resident reads
+ * them (`GET /tickets/{id}/quotes`, ADR 0058). Photos are the ticket's records, not
  * the account's files: only their count, never a URL.
  */
 @Injectable()
@@ -29,6 +32,7 @@ export class MaintenanceExportSections implements OnModuleInit {
     private readonly tenantTx: TenantTx,
     private readonly tickets: TicketsService,
     private readonly messages: MessagesService,
+    private readonly quotes: QuotesService,
   ) {}
 
   onModuleInit(): void {
@@ -63,7 +67,14 @@ export class MaintenanceExportSections implements OnModuleInit {
       } while (cursor);
       yield {
         path: `tickets/${ticketNumber(t.number)}.json`,
-        json: { ...view, photoCount: photos?.length ?? 0, messages: thread },
+        json: {
+          ...view,
+          photoCount: photos?.length ?? 0,
+          messages: thread,
+          quotes: (await this.quotes.list(t.id, 'resident')).map((q) =>
+            ResidentQuoteView.from(q, s.accountId),
+          ),
+        },
       };
     }
   }

@@ -203,6 +203,17 @@ export const ErrorCode = {
   TICKET_NOT_OVERDUE: 'TICKET_NOT_OVERDUE',
   /** Escalated already in this SLA cycle (409, ADR 0038). */
   TICKET_ALREADY_ESCALATED: 'TICKET_ALREADY_ESCALATED',
+  // quotes (ADR 0058)
+  /** Unknown, another ticket's, or not the caller's to see. */
+  TICKET_QUOTE_NOT_FOUND: 'TICKET_QUOTE_NOT_FOUND',
+  /** A common-area ticket, or one whose work started or ended (409, params.status). */
+  TICKET_QUOTE_NOT_ALLOWED: 'TICKET_QUOTE_NOT_ALLOWED',
+  /** A quote of the ticket already waits for the residents (409). */
+  TICKET_QUOTE_EXISTS: 'TICKET_QUOTE_EXISTS',
+  /** The quote was already decided or withdrawn (409, params.status). */
+  TICKET_QUOTE_INVALID_TRANSITION: 'TICKET_QUOTE_INVALID_TRANSITION',
+  /** The work cannot start: a quote waits, or the last was declined (409, params.status). */
+  TICKET_QUOTE_NOT_APPROVED: 'TICKET_QUOTE_NOT_APPROVED',
   // visits (ADR 0034)
   /** Unknown, another ticket's, or not the caller's to see. */
   VISIT_NOT_FOUND: 'VISIT_NOT_FOUND',

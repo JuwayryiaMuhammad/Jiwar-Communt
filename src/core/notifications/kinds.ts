@@ -261,6 +261,38 @@ export const NOTIFICATION_KINDS = {
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
   /** A technician declined it: it is back in the queue (dispatchers). */
+  /** A quote waits for the residents' approval (ADR 0058). */
+  'ticket.quote_proposed': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true }, amount: {} },
+  },
+  /** The residents approved the quote: the work may start (dispatch, technician). */
+  'ticket.quote_approved': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
+  /** The residents declined the quote, with a reason code (dispatch, technician). */
+  'ticket.quote_declined': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true }, reason: {} },
+  },
+  /** The dispatch withdrew a quote that waited (the residents). */
+  'ticket.quote_withdrawn': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
   'ticket.declined': {
     priority: 'normal',
     category: 'maintenance',

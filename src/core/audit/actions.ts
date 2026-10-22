@@ -258,6 +258,16 @@ export const AUDIT_ACTIONS = {
   },
   // ADR 0038. metadata: slaCycle, clocks (the overdue ones).
   'ticket.escalated_by_resident': { log: 'tenant', target: 'ticket' },
+  // Quotes (ADR 0058). metadata: ticketId, amount; reasonCode on a decline.
+  // The note as `{ changed: true }` only.
+  'ticket_quote.proposed': {
+    log: 'tenant',
+    target: 'ticket_quote',
+    sensitive: ['note'],
+  },
+  'ticket_quote.approved': { log: 'tenant', target: 'ticket_quote' },
+  'ticket_quote.declined': { log: 'tenant', target: 'ticket_quote' },
+  'ticket_quote.withdrawn': { log: 'tenant', target: 'ticket_quote' },
   // dispatch (ADR 0033). Codes and keys only, never a name.
   'specialty.created': { log: 'tenant', target: 'specialty' },
   'specialty.updated': { log: 'tenant', target: 'specialty' },

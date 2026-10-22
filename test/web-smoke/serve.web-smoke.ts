@@ -168,6 +168,66 @@ describe('Web smoke: the API behind apps/public', () => {
         h.moduleRef.get(RegistrationService).createLink(),
       );
 
+      // --- A partner's desk (ADR 0060): its live link, a revoked one, and
+      // two requests from the owner, both starting within two hours so the
+      // gate pass shows once one is accepted.
+      const partner = (
+        await h
+          .http()
+          .post(`${API}/staff/partners`)
+          .set(bearer(managerToken))
+          .send({
+            nameEn: 'Sparkle',
+            nameAr: 'سباركل',
+            businessPhone: '+20225550100',
+            notifyEmail: uniqueEmail('desk'),
+            services: [{ category: 'home_services' }],
+          })
+          .expect(201)
+      ).body as { id: string };
+      const deskLink = async () =>
+        (
+          (
+            await h
+              .http()
+              .post(`${API}/staff/partners/${partner.id}/desk-link`)
+              .set(bearer(managerToken))
+              .expect(201)
+          ).body as { token: string }
+        ).token;
+      // Rotated: the first link stops answering.
+      const revokedDesk = await deskLink();
+      const desk = await deskLink();
+      await h
+        .http()
+        .post(`${API}/me/consents/grant`)
+        .set(bearer(ownerToken))
+        .send({ code: 'partner_share_home_services', version: 1 })
+        .expect(200);
+      const ask = async (startsInMinutes: number) =>
+        (
+          await h
+            .http()
+            .post(`${API}/partner-requests`)
+            .set(bearer(ownerToken))
+            .send({
+              partnerId: partner.id,
+              unitId: home.id,
+              category: 'home_services',
+              windowStartsAt: new Date(
+                Date.now() + startsInMinutes * 60_000,
+              ).toISOString(),
+              windowEndsAt: new Date(
+                Date.now() + (startsInMinutes + 60) * 60_000,
+              ).toISOString(),
+              note: 'Web smoke',
+              gatePass: true,
+            })
+            .expect(201)
+        ).body as { id: string; number: string };
+      const toAccept = await ask(60);
+      const toDecline = await ask(90);
+
       await h.app.listen(PORT, '127.0.0.1');
       mkdirSync(DIR, { recursive: true });
       writeFileSync(
@@ -186,6 +246,13 @@ describe('Web smoke: the API behind apps/public', () => {
             notMe: { token: notMe },
             export: { token: exportToken, email: exported.email },
             invite: { token: invite.token, email: invitedEmail },
+            desk: {
+              token: desk,
+              revoked: revokedDesk,
+              unitCode: home.code,
+              accept: toAccept,
+              decline: toDecline,
+            },
             registration: {
               token: registration.token,
               unitCode: home.code,

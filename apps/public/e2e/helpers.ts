@@ -15,6 +15,7 @@ export type Seed = {
   export: { token: string; email: string };
   invite: { token: string; email: string };
   registration: { token: string; unitCode: string; email: string; phone: string; nationalId: string };
+  desk: { token: string; revoked: string; unitCode: string; accept: { id: string; number: string }; decline: { id: string; number: string } };
 };
 
 export function seed(): Seed {

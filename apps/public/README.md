@@ -61,4 +61,6 @@ WEB_SMOKE_DIR=/tmp/web-smoke pnpm --filter @jiwar/public smoke
 touch /tmp/web-smoke/stop     # ends step 1
 ```
 
+The partner's desk (`e2e/desk.spec.ts`) uses a seeded partner with a live desk link and a rotated one, and two requests starting within the hour: it accepts one (its gate pass shows) and declines the other. Run the API afresh before each smoke: a request is answered once.
+
 `playwright` is pinned to the version whose Chromium build is already installed on the development machine; `playwright install` is not part of the flow.

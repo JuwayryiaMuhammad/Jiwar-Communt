@@ -217,3 +217,17 @@ The full notes for the guard app (what the mobile team implements: keys, the env
 - Offline: visitor passes, derived worker cards, move trucks, event guests by plate or exact name, contractors by permit and ID last four, service vehicles, material entries, patrol scans, and children's exits (alone with leave, or a household adult with `idChecked: true`). Residents are "check ID" only.
 - The management (`gate_devices.manage`, new): `/staff/gate/devices` (health, `notCarried`, revoke with `gateDeviceRevoke`), `/staff/gate/offline/flags` (review with `offlineFlagReview`), `/staff/gate/offline/batches` (a revoked device's quarantined batch accepted or rejected). The gate's settings gain `offlineSyncAlertMinutes`; child alerts gain `outcome` (`left_unverified`).
 - Worker cards are now derived from `ENGAGEMENT_TOKEN_KEYS` (versioned); cards from before work online only until reissued. Seven notification kinds `gate_device.*` / `gate_offline.*` (three critical). `POST /gate/entries` with an `id` the device later uploads offline converges on one entry.
+
+### The resident's side (ADR 0058)
+
+The full notes for the household app are in [`notes/resident-decisions.md`](notes/resident-decisions.md).
+
+- `GET /me/logins` (90 days, the device's label, never a place) and `GET /me/devices`, `POST /me/devices/{id}/revoke` (its sessions end; its next login alerts). `GET /me/sessions` gains `device`.
+- The inbox: `?category=`, `?archived=true`, `POST /me/notifications/{id}/archive`, `/unarchive`, `DELETE /me/notifications/{id}`; items gain `archivedAt`.
+- `GET /tickets/{id}/timeline` (`by` a side, never a name). Quotes: `GET /tickets/{id}/quotes`, `…/{quoteId}/approve`, `…/decline`; the dispatch's `GET`/`POST /maintenance/tickets/{id}/quotes`, `…/withdraw`. The start waits for an approved quote (`TICKET_QUOTE_NOT_APPROVED`).
+- **`GET /me/requests` moved to core and widened** (disputes, permits, neighbour complaints), with `?state=open|closed`; items gain `kind` and `appeal`. A resident without either permission now gets an empty list, not 403. `GET /me/appeals`. `GET /me/search?q=` (references and the compound's names; 30 a minute).
+- Topics gain `owner` (a role). `GET /management-office-hours`. A request on `release_request` names `about` (a ticket on hold, a stopped permit, the unit's credit).
+- `GET /me/notices`, `GET /me/notices/{id}` (the first opening is the read proof). The staff: `/staff/finance/notice-settings` (the cure period), `GET /staff/finance/late-notices`.
+- Credit notes gain `compensationReason` (reason `compensation`); `GET /payment-sessions/{id}` gains `alternatives`. Kinds `credit_note.issued`, `compensation.granted`, `payment.failed`, `formal_notice.issued`, `ticket.quote_*`.
+- `GET /me/units/{unitId}/service-standing`: the services the unit is suspended from, and how to restore them.
+

@@ -207,6 +207,36 @@ export const PARTNER_CATALOGUE_ROUTES: Row[] = [
     noStore: true,
   },
   {
+    method: 'POST',
+    path: '/staff/partners/{id}/suspend',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPartnerId }),
+      code: 'PARTNER_NOT_FOUND',
+      body: () => ({ reasonCode: 'safety' }),
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/partners/{id}/reinstate',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPartnerId }),
+      code: 'PARTNER_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
     method: 'GET',
     path: '/staff/partner-subcategories',
     auth: 'tenant',

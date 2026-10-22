@@ -7418,7 +7418,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a partner */
+        /** Get a partner; a suspended one with its alternatives */
         get: operations["PartnersController_get"];
         put?: never;
         post?: never;
@@ -10918,6 +10918,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/partners/{id}/reinstate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reinstate a suspended partner */
+        post: operations["StaffPartnersController_reinstate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/partners/{id}/services": {
         parameters: {
             query?: never;
@@ -10929,6 +10946,23 @@ export interface paths {
         /** Replace what a partner does */
         put: operations["StaffPartnersController_replaceServices"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend a partner: its live requests are cancelled, those concerned told */
+        post: operations["StaffPartnersController_suspend"];
         delete?: never;
         options?: never;
         head?: never;
@@ -23709,6 +23743,50 @@ export interface components {
              */
             expiresAt: string;
         };
+        PartnerDetailView: {
+            /** @description While suspended: up to three active partners of its categories, open now first, then the best rated. Empty otherwise. */
+            alternatives: components["schemas"]["PartnerView"][];
+            /**
+             * @description The partner’s business phone, E.164: the one contact shown.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** @description One of the caller’s favourites. */
+            favourite: boolean;
+            /** @description It comes to the home. */
+            homeVisit: boolean;
+            /** @description Weekly hours, by weekday then start. */
+            hours: components["schemas"]["PartnerWindowView"][];
+            /** Format: uuid */
+            id: string;
+            /** @description Listed within the "new" days. */
+            isNew: boolean;
+            /** Format: date-time */
+            listedAt: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Open at some moment still ahead tonight, after the late hour. */
+            openLateTonight: boolean;
+            /** @description Open now. */
+            openNow: boolean;
+            priceItems: components["schemas"]["PartnerPriceItemView"][];
+            /** @description The residents’ average and count, once three have rated it; null before. */
+            rating: components["schemas"]["RatingSummaryView"] | null;
+            /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
+            serviceBuildings: string[];
+            services: components["schemas"]["PartnerServiceView"][];
+            /** @description A list holds active partners only; a suspended one is read by id, never told why. */
+            status: components["schemas"]["PartnerStatus"];
+            /**
+             * @description The time zone the hours are in.
+             * @example Africa/Cairo
+             */
+            timeZone: string;
+        };
         PartnerPriceItemDto: {
             /** @description Both languages are required; surrounding spaces are trimmed. */
             nameAr: string;
@@ -23901,6 +23979,8 @@ export interface components {
             /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
             serviceBuildings: string[];
             services: components["schemas"]["PartnerServiceView"][];
+            /** @description A list holds active partners only; a suspended one is read by id, never told why. */
+            status: components["schemas"]["PartnerStatus"];
             /**
              * @description The time zone the hours are in.
              * @example Africa/Cairo
@@ -29388,6 +29468,10 @@ export interface components {
             /** @description What the staff answered then, if they did. */
             response: string | null;
             status: components["schemas"]["SuggestionStatus"];
+        };
+        SuspendPartnerDto: {
+            /** @description From the closed list `partnerSuspend`. Residents are never told it. */
+            reasonCode: string;
         };
         SwapSlotView: {
             /** Format: date-time */
@@ -42263,7 +42347,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PartnerView"];
+                    "application/json": components["schemas"]["PartnerDetailView"];
                 };
             };
         };
@@ -47525,6 +47609,27 @@ export interface operations {
             };
         };
     };
+    StaffPartnersController_reinstate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
     StaffPartnersController_replaceServices: {
         parameters: {
             query?: never;
@@ -47537,6 +47642,31 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ReplacePartnerServicesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuspendPartnerDto"];
             };
         };
         responses: {

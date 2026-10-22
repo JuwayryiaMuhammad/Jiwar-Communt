@@ -280,6 +280,11 @@ describe('API v0 — enumeration', () => {
         WHERE partner_id = $1`,
       [expired.partnerId],
     );
+    const paused = await issue('a');
+    await call(w, 'POST', `/staff/partners/${paused.partnerId}/suspend`, {
+      token: w.a.tokens.manager,
+      body: { reasonCode: 'licence_issue' },
+    }).expect(200);
     const suspended = await issue('b');
     const globalDb = h.moduleRef.get(GlobalDbService);
     await globalDb.tenant.update({
@@ -292,6 +297,7 @@ describe('API v0 — enumeration', () => {
         'not-a-token',
         rotated.token,
         expired.token,
+        paused.token,
         suspended.token,
       ];
       for (const path of [

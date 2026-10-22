@@ -26666,6 +26666,138 @@
         ],
         "type": "object"
       },
+      "PartnerDetailView": {
+        "properties": {
+          "alternatives": {
+            "description": "While suspended: up to three active partners of its categories, open now first, then the best rated. Empty otherwise.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerView"
+            },
+            "type": "array"
+          },
+          "businessPhone": {
+            "description": "The partner’s business phone, E.164: the one contact shown.",
+            "example": "+20225550100",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "favourite": {
+            "description": "One of the caller’s favourites.",
+            "type": "boolean"
+          },
+          "homeVisit": {
+            "description": "It comes to the home.",
+            "type": "boolean"
+          },
+          "hours": {
+            "description": "Weekly hours, by weekday then start.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerWindowView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isNew": {
+            "description": "Listed within the \"new\" days.",
+            "type": "boolean"
+          },
+          "listedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "openLateTonight": {
+            "description": "Open at some moment still ahead tonight, after the late hour.",
+            "type": "boolean"
+          },
+          "openNow": {
+            "description": "Open now.",
+            "type": "boolean"
+          },
+          "priceItems": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerPriceItemView"
+            },
+            "type": "array"
+          },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatingSummaryView"
+              }
+            ],
+            "description": "The residents’ average and count, once three have rated it; null before.",
+            "nullable": true,
+            "type": "object"
+          },
+          "serviceBuildings": {
+            "description": "The buildings it serves, as the units name them. Empty: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "services": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerServiceView"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerStatus"
+              }
+            ],
+            "description": "A list holds active partners only; a suspended one is read by id, never told why."
+          },
+          "timeZone": {
+            "description": "The time zone the hours are in.",
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "descriptionEn",
+          "descriptionAr",
+          "businessPhone",
+          "serviceBuildings",
+          "homeVisit",
+          "services",
+          "hours",
+          "priceItems",
+          "listedAt",
+          "openNow",
+          "openLateTonight",
+          "isNew",
+          "favourite",
+          "timeZone",
+          "rating",
+          "status",
+          "alternatives"
+        ],
+        "type": "object"
+      },
       "PartnerPriceItemDto": {
         "properties": {
           "nameAr": {
@@ -27267,6 +27399,14 @@
             },
             "type": "array"
           },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerStatus"
+              }
+            ],
+            "description": "A list holds active partners only; a suspended one is read by id, never told why."
+          },
           "timeZone": {
             "description": "The time zone the hours are in.",
             "example": "Africa/Cairo",
@@ -27291,7 +27431,8 @@
           "isNew",
           "favourite",
           "timeZone",
-          "rating"
+          "rating",
+          "status"
         ],
         "type": "object"
       },
@@ -45432,6 +45573,18 @@
           "status",
           "response",
           "at"
+        ],
+        "type": "object"
+      },
+      "SuspendPartnerDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `partnerSuspend`. Residents are never told it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -72188,7 +72341,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PartnerView"
+                  "$ref": "#/components/schemas/PartnerDetailView"
                 }
               }
             },
@@ -72200,7 +72353,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get a partner",
+        "summary": "Get a partner; a suspended one with its alternatives",
         "tags": [
           "partners"
         ],
@@ -82596,6 +82749,44 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/partners/{id}/reinstate": {
+      "post": {
+        "operationId": "StaffPartnersController_reinstate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reinstate a suspended partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/partners/{id}/services": {
       "put": {
         "operationId": "StaffPartnersController_replaceServices",
@@ -82637,6 +82828,54 @@
           }
         ],
         "summary": "Replace what a partner does",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/suspend": {
+      "post": {
+        "operationId": "StaffPartnersController_suspend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuspendPartnerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suspend a partner: its live requests are cancelled, those concerned told",
         "tags": [
           "partners"
         ],

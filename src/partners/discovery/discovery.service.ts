@@ -19,6 +19,7 @@ import {
 } from '../feedback/ratings.service';
 import { PartnerSettingsService } from '../settings/partner-settings.service';
 import { PartnersService, partnerNotFound } from '../setup/partners.service';
+import { rankAlternatives } from '../setup/alternatives';
 import type { PartnerWithParts } from '../setup/views/partner.views';
 
 /** Favourite partners an account may keep. */
@@ -44,6 +45,11 @@ export interface ResidentPartner extends PartnerWithParts {
   timeZone: string;
   /** Once enough residents rated it; null before. */
   rating: RatingSummary | null;
+}
+
+/** A suspended partner as a resident reads it: with the alternatives. */
+export interface SuspendedPartnerRead extends ResidentPartner {
+  alternatives: ResidentPartner[];
 }
 
 /**
@@ -88,12 +94,38 @@ export class DiscoveryService {
     });
   }
 
-  /** A suspended partner is not found for a resident. */
-  get(id: string): Promise<ResidentPartner> {
+  /**
+   * A partner. A suspended one is read too — those told of its suspension
+   * open it — with up to three alternatives: active partners of one of its
+   * categories, open now first, then the best rated, then the newest. It
+   * says it is suspended, never why.
+   */
+  get(id: string): Promise<SuspendedPartnerRead> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const partner = await this.partners.inTx(tx, id);
-      if (partner.status !== 'active') throw partnerNotFound();
-      return (await this.read(tx, [partner]))[0];
+      const [read] = await this.read(tx, [partner]);
+      if (partner.status === 'active') return { ...read, alternatives: [] };
+      const candidates = await this.read(
+        tx,
+        await this.partners.listIn(tx, {
+          status: 'active',
+          id: { not: id },
+          services: {
+            some: {
+              category: {
+                in: [...new Set(partner.services.map((x) => x.category))],
+              },
+            },
+          },
+        }),
+      );
+      return {
+        ...read,
+        alternatives: rankAlternatives(
+          candidates.map((c) => ({ ...c, average: c.rating?.average ?? null })),
+          id,
+        ),
+      };
     });
   }
 

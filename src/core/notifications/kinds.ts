@@ -1994,6 +1994,18 @@ export const NOTIFICATION_KINDS = {
     target: 'partner_complaint',
     params: { outcome: {}, compensation: {} },
   },
+  /**
+   * A partner the resident asked or keeps as a favourite was suspended
+   * (ADR 0060): their live requests to it are cancelled. Its page offers
+   * alternatives in the same categories. Never why.
+   */
+  'partner.suspended': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

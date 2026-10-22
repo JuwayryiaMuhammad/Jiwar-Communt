@@ -2142,6 +2142,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'بتّت الإدارة في شكواك من مقدم خدمة.',
     },
   },
+  'partner.suspended': {
+    en: {
+      title: 'A service partner is unavailable',
+      body: 'A partner you asked or follow was suspended. See the alternatives.',
+    },
+    ar: {
+      title: 'مقدم خدمة غير متاح',
+      body: 'أُوقف مقدم خدمة طلبت منه أو تتابعه. اطّلع على البدائل.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

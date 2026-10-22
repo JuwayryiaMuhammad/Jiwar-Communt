@@ -27031,7 +27031,7 @@
           }
         },
         {
-          "name": "Get a partner",
+          "name": "Get a partner; a suspended one with its alternatives",
           "request": {
             "description": "**Responses:** 200",
             "header": [],
@@ -27987,6 +27987,35 @@
           }
         },
         {
+          "name": "Reinstate a suspended partner",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id",
+                "reinstate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id/reinstate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Replace what a partner does",
           "request": {
             "body": {
@@ -28020,6 +28049,50 @@
                 "services"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/partners/:id/services",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Suspend a partner: its live requests are cancelled, those concerned told",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `partnerSuspend`. Residents are never told it. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id",
+                "suspend"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id/suspend",
               "variable": [
                 {
                   "description": "",

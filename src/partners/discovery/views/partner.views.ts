@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RatingSummaryView } from '../../feedback/views/feedback.views';
 import { PartnerBaseView } from '../../setup/views/partner.views';
-import type { ResidentPartner } from '../discovery.service';
+import type {
+  ResidentPartner,
+  SuspendedPartnerRead,
+} from '../discovery.service';
 
 /**
  * A partner as residents see it: who it is, what it does, its prices and
@@ -38,15 +41,41 @@ export class PartnerView extends PartnerBaseView {
   })
   rating: RatingSummaryView | null;
 
+  @ApiProperty({
+    enum: ['active', 'suspended'],
+    enumName: 'PartnerStatus',
+    description:
+      'A list holds active partners only; a suspended one is read by id, never told why.',
+  })
+  status: 'active' | 'suspended';
+
   static from(p: ResidentPartner): PartnerView {
     return {
       ...PartnerBaseView.base(p),
+      status: p.status as PartnerView['status'],
       openNow: p.openNow,
       openLateTonight: p.openLateTonight,
       isNew: p.isNew,
       favourite: p.favourite,
       timeZone: p.timeZone,
       rating: p.rating && RatingSummaryView.from(p.rating),
+    };
+  }
+}
+
+/** A partner read by id: a suspended one with its alternatives. */
+export class PartnerDetailView extends PartnerView {
+  @ApiProperty({
+    type: [PartnerView],
+    description:
+      'While suspended: up to three active partners of its categories, open now first, then the best rated. Empty otherwise.',
+  })
+  alternatives: PartnerView[];
+
+  static fromDetail(p: SuspendedPartnerRead): PartnerDetailView {
+    return {
+      ...PartnerView.from(p),
+      alternatives: p.alternatives.map((a) => PartnerView.from(a)),
     };
   }
 }

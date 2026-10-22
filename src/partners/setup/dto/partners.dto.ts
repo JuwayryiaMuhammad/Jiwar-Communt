@@ -331,3 +331,13 @@ export class ReplacePartnerPricesDto {
   @Type(() => PartnerPriceItemDto)
   items: PartnerPriceItemDto[];
 }
+
+export class SuspendPartnerDto {
+  @ApiProperty({
+    type: String,
+    description:
+      'From the closed list `partnerSuspend`. Residents are never told it.',
+  })
+  @IsString()
+  reasonCode: string;
+}

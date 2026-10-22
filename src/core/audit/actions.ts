@@ -1528,6 +1528,10 @@ export const AUDIT_ACTIONS = {
   'partner_complaint.created': { log: 'tenant', target: 'partner_complaint' },
   // metadata: requestId, partnerId, outcome, compensation.
   'partner_complaint.decided': { log: 'tenant', target: 'partner_complaint' },
+  // metadata: reasonCode (partnerSuspend), cancelledCount, notifiedCount.
+  'partner.suspended': { log: 'tenant', target: 'partner' },
+  // metadata: reasonCode (the suspension's it ends).
+  'partner.reinstated': { log: 'tenant', target: 'partner' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

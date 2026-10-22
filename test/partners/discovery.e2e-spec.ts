@@ -36,9 +36,9 @@ describe('Partners: discovery and favourites (ADR 0060)', () => {
       unknown
     >;
     expect(body).toMatchObject({ id, businessPhone: '+20225550100' });
+    expect(body.status).toBe('active');
     for (const key of [
       'notifyEmail',
-      'status',
       'suspendedReason',
       'suspendedAt',
       'createdById',

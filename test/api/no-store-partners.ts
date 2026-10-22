@@ -231,6 +231,17 @@ export function partnerCalls(
           { nameEn: 'Visit', nameAr: 'زيارة', price: '150', unit: 'visit_fee' },
         ],
       }),
+    'POST /staff/partners/{id}/suspend': async () =>
+      manager('POST', `/staff/partners/${await partner()}/suspend`, {
+        reasonCode: 'contract_ended',
+      }),
+    'POST /staff/partners/{id}/reinstate': async () => {
+      const id = await partner();
+      await manager('POST', `/staff/partners/${id}/suspend`, {
+        reasonCode: 'partner_request',
+      });
+      return manager('POST', `/staff/partners/${id}/reinstate`);
+    },
     'GET /staff/partner-subcategories': () =>
       manager('GET', '/staff/partner-subcategories'),
     'POST /staff/partner-subcategories': () =>

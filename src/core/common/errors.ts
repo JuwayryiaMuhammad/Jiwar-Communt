@@ -1155,8 +1155,8 @@ export const ErrorCode = {
   GATE_OFFLINE_BATCH_REVIEWED: 'GATE_OFFLINE_BATCH_REVIEWED',
   // Partners (ADR 0060)
   /**
-   * Unknown or another compound's partner; for a resident also one that is
-   * suspended: one answer.
+   * Unknown or another compound's partner. A suspended one is still read,
+   * saying so, with its alternatives.
    */
   PARTNER_NOT_FOUND: 'PARTNER_NOT_FOUND',
   /** Unknown, or another compound's sub-category. */
@@ -1217,6 +1217,10 @@ export const ErrorCode = {
   PARTNER_COMPLAINT_NOT_FOUND: 'PARTNER_COMPLAINT_NOT_FOUND',
   /** Decided already: a complaint is decided once (409). */
   PARTNER_COMPLAINT_DECIDED: 'PARTNER_COMPLAINT_DECIDED',
+  /** Suspended already (409). */
+  PARTNER_ALREADY_SUSPENDED: 'PARTNER_ALREADY_SUSPENDED',
+  /** Not suspended: nothing to reinstate (409). */
+  PARTNER_NOT_SUSPENDED: 'PARTNER_NOT_SUSPENDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

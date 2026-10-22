@@ -488,6 +488,34 @@ describe('Audit coverage — partners', () => {
     });
   });
 
+  describe('suspension', () => {
+    it('partner.suspended and .reinstated — the code and counts; never who was told', async () => {
+      const id = await p.partner(s.c, s.keeper);
+      await p.consent(s.bob);
+      await p.request(s.bob, s.homeB.id, id);
+      await p
+        .http('put', `/partners/${id}/favourite`, s.alice.token)
+        .expect(204);
+      await p
+        .http('post', `/staff/partners/${id}/suspend`, s.keeper.token, {
+          reasonCode: 'quality_complaints',
+        })
+        .expect(200);
+      const suspended = await single('partner.suspended', id);
+      expect(suspended).toMatchObject(by(s.keeper, 'partner'));
+      expect(suspended.metadata).toEqual({
+        reasonCode: 'quality_complaints',
+        cancelledCount: 1,
+        notifiedCount: 2,
+      });
+      await p
+        .http('post', `/staff/partners/${id}/reinstate`, s.keeper.token)
+        .expect(200);
+      const reinstated = await single('partner.reinstated', id);
+      expect(reinstated.metadata).toEqual({ reasonCode: 'quality_complaints' });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every partners entry has a scenario above, and nothing of the domain is left out of the list', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

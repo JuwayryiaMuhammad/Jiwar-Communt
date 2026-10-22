@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Put,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
@@ -20,9 +29,11 @@ import {
   ReplacePartnerHoursDto,
   ReplacePartnerPricesDto,
   ReplacePartnerServicesDto,
+  SuspendPartnerDto,
   UpdatePartnerDto,
 } from './dto/partners.dto';
 import { PartnersService } from './partners.service';
+import { SuspensionService } from './suspension.service';
 import { StaffPartnerView, type PartnerWithParts } from './views/partner.views';
 
 /** The compound's partners, for the staff who list them (ADR 0060). */
@@ -34,6 +45,7 @@ export class StaffPartnersController {
     private readonly partners: PartnersService,
     private readonly deskLinks: DeskLinks,
     private readonly ratings: RatingsService,
+    private readonly suspension: SuspensionService,
   ) {}
 
   @Get()
@@ -115,6 +127,32 @@ export class StaffPartnersController {
     @Body() dto: ReplacePartnerPricesDto,
   ): Promise<StaffPartnerView> {
     return this.withLink(await this.partners.replacePrices(id, dto.items));
+  }
+
+  @Post(':id/suspend')
+  @HttpCode(200)
+  @NoStore()
+  @ApiOperation({
+    summary:
+      'Suspend a partner: its live requests are cancelled, those concerned told',
+  })
+  @ApiOkResponse({ type: StaffPartnerView })
+  async suspend(
+    @Param('id', parseId()) id: string,
+    @Body() dto: SuspendPartnerDto,
+  ): Promise<StaffPartnerView> {
+    return this.withLink(await this.suspension.suspend(id, dto.reasonCode));
+  }
+
+  @Post(':id/reinstate')
+  @HttpCode(200)
+  @NoStore()
+  @ApiOperation({ summary: 'Reinstate a suspended partner' })
+  @ApiOkResponse({ type: StaffPartnerView })
+  async reinstate(
+    @Param('id', parseId()) id: string,
+  ): Promise<StaffPartnerView> {
+    return this.withLink(await this.suspension.reinstate(id));
   }
 
   /** A partner with its live desk link and its ratings in short. */

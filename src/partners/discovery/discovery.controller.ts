@@ -22,7 +22,7 @@ import {
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { DiscoveryService } from './discovery.service';
 import { PartnersQueryDto } from './dto/discovery.dto';
-import { PartnerView } from './views/partner.views';
+import { PartnerDetailView, PartnerView } from './views/partner.views';
 
 /** The compound's partners, as residents find them (ADR 0060). */
 @ApiArea('partners')
@@ -56,10 +56,12 @@ export class PartnersController {
 
   @Get(':id')
   @NoStore()
-  @ApiOperation({ summary: 'Get a partner' })
-  @ApiOkResponse({ type: PartnerView })
-  async get(@Param('id', parseId()) id: string): Promise<PartnerView> {
-    return PartnerView.from(await this.discovery.get(id));
+  @ApiOperation({
+    summary: 'Get a partner; a suspended one with its alternatives',
+  })
+  @ApiOkResponse({ type: PartnerDetailView })
+  async get(@Param('id', parseId()) id: string): Promise<PartnerDetailView> {
+    return PartnerDetailView.fromDetail(await this.discovery.get(id));
   }
 
   @Put(':id/favourite')

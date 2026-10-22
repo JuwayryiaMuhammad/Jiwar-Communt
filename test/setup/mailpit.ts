@@ -2,9 +2,17 @@ import { required } from './test-env';
 
 interface MailpitSummary {
   ID: string;
+  /**
+   * RFC 3339 with the fraction's trailing zeros trimmed (Mailpit 1.31:
+   * `…:21.95Z` beside `…:21.951Z`): compare it as a time, never as text.
+   */
   Created: string;
   To: { Address: string }[];
 }
+
+/** Newest first, by the instant each arrived. */
+const newestFirst = (a: MailpitSummary, b: MailpitSummary) =>
+  Date.parse(b.Created) - Date.parse(a.Created);
 
 /**
  * Waits for the newest OTP email to `to` that arrived after `since`, and
@@ -25,7 +33,7 @@ export async function waitForOtp(
     const body = (await res.json()) as { messages: MailpitSummary[] };
     const fresh = body.messages
       .filter((m) => new Date(m.Created) >= since)
-      .sort((a, b) => b.Created.localeCompare(a.Created));
+      .sort(newestFirst);
     if (fresh[0]) {
       const msg = (await (
         await fetch(`${base}/api/v1/message/${fresh[0].ID}`)
@@ -83,7 +91,7 @@ export async function waitForMessage(
     const body = (await res.json()) as { messages: MailpitSummary[] };
     const fresh = body.messages
       .filter((m) => new Date(m.Created) >= since)
-      .sort((a, b) => b.Created.localeCompare(a.Created));
+      .sort(newestFirst);
     for (const summary of fresh) {
       const message = (await (
         await fetch(`${base}/api/v1/message/${summary.ID}`)

@@ -143,7 +143,9 @@ describe('Secrets scan — email action tokens', () => {
       installId: '0192a5f0-1c2b-7d3e-8f40-5ec4e7000002',
     });
     await drainOutbox(h);
-    const mail = await waitForMessage(p.email, since);
+    const mail = await waitForMessage(p.email, since, 10_000, (m) =>
+      NOT_ME_LINK.test(m.Text),
+    );
     const token = NOT_ME_LINK.exec(mail.Text)![1];
 
     await h.http().post(`${API}/public/not-me`).send({ token }).expect(204);
@@ -171,7 +173,11 @@ describe('Secrets scan — email action tokens', () => {
     const since = new Date();
     await buildExports(h);
     await drainOutbox(h);
-    const mail = await waitForMessage(p.email, since);
+    // The assisted request's own notice reaches the same address in this
+    // drain (AssistService.tell): the export's mail is the one with its link.
+    const mail = await waitForMessage(p.email, since, 10_000, (m) =>
+      EXPORT_LINK.test(m.Text),
+    );
     const token = EXPORT_LINK.exec(mail.Text)![1];
     const at = new Date();
     await h

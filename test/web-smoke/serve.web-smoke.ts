@@ -140,8 +140,15 @@ describe('Web smoke: the API behind apps/public', () => {
       const exportSince = new Date();
       await buildExports(h);
       await drainOutbox(h);
-      const exportToken = /\/a\/export#([0-9a-f-]{36}\.[0-9a-f]{64})/.exec(
-        (await waitForMessage(exported.email, exportSince)).Text,
+      // The assisted request's notice reaches the same address in this
+      // drain: wait for the mail that holds the link.
+      const exportLink = /\/a\/export#([0-9a-f-]{36}\.[0-9a-f]{64})/;
+      const exportToken = exportLink.exec(
+        (
+          await waitForMessage(exported.email, exportSince, 10_000, (m) =>
+            exportLink.test(m.Text),
+          )
+        ).Text,
       )?.[1];
       if (!exportToken) throw new Error('no export link in the email');
 

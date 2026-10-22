@@ -12781,6 +12781,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets/{id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the timeline of one of my tickets */
+        get: operations["ResidentTicketsController_timeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tickets/{id}/visit-slots": {
         parameters: {
             query?: never;
@@ -27775,6 +27792,20 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        TimelineEntryView: {
+            /** Format: date-time */
+            at: string;
+            by: Record<string, never>;
+            cycle: number;
+            from: components["schemas"]["TicketStatus"] | null;
+            /** @description A code: the hold reason, or the reason of a cancel or reopen. */
+            reasonCode: string | null;
+            to: components["schemas"]["TicketStatus"];
+        };
+        TimelineEntryViewList: {
+            data: components["schemas"]["TimelineEntryView"][];
+            nextCursor: string | null;
+        };
         TimelineStepView: {
             /** Format: date-time */
             at: string;
@@ -28082,7 +28113,14 @@ export interface components {
              */
             arrivalConfirmedAt: string | null;
             arrivalConfirmedBy: components["schemas"]["ConsenterView"] | null;
+            /** Format: date-time */
+            arrivedAt: string | null;
             category: components["schemas"]["TicketCategoryRefView"];
+            /**
+             * Format: date-time
+             * @description The visit’s stage times (ADR 0058), as on the ticket’s visits.
+             */
+            confirmedAt: string | null;
             /** Format: date-time */
             endsAt: string;
             /** Format: uuid */
@@ -48227,6 +48265,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ResidentTicketsController_timeline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineEntryViewList"];
+                };
             };
         };
     };

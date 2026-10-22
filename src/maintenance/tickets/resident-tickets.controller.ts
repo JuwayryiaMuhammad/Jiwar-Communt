@@ -18,6 +18,7 @@ import { RequirePermissions } from '../../core/access/require-permissions.decora
 import { RequestContext } from '../../core/common/cls/request-context';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
+  bounded,
   ListOf,
   PageQueryDto,
   toList,
@@ -44,6 +45,7 @@ import {
   ResidentTicketDetailView,
   ResidentTicketView,
   TicketCreatedView,
+  TimelineEntryView,
 } from './views/ticket.views';
 import { MessageCreatedView, ResidentMessageView } from './views/message.views';
 
@@ -95,6 +97,18 @@ export class ResidentTicketsController {
     return ResidentTicketDetailView.fromDetail(
       await this.tickets.detail(id, 'resident'),
       this.ctx.accountId,
+    );
+  }
+
+  /** Every status change with its time and side (ADR 0058). */
+  @Get(':id/timeline')
+  @ApiOperation({ summary: 'Get the timeline of one of my tickets' })
+  @ApiOkResponse({ type: ListOf(TimelineEntryView) })
+  async timeline(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<TimelineEntryView>> {
+    return bounded(await this.tickets.residentTimeline(id), (e) =>
+      TimelineEntryView.from(e),
     );
   }
 

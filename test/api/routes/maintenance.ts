@@ -433,6 +433,19 @@ export const TICKET_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  // The resident's timeline (ADR 0058).
+  {
+    method: 'GET',
+    path: '/tickets/{id}/timeline',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
   {
     method: 'POST',
     path: '/tickets/{id}/photos',

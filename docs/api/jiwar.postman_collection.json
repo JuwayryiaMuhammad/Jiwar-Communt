@@ -30969,6 +30969,34 @@
           }
         },
         {
+          "name": "Get the timeline of one of my tickets",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tickets",
+                ":id",
+                "timeline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/tickets/:id/timeline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List free windows to counter or reschedule with",
           "request": {
             "description": "**Responses:** 200",

@@ -422,6 +422,9 @@ describe('Maintenance — visits', () => {
       ticketId: id,
       ticketStatus: 'assigned',
       status: 'proposed',
+      // The stage times (ADR 0058), as on the ticket's visits.
+      confirmedAt: null,
+      arrivedAt: null,
     });
     expect(listed[0]).not.toHaveProperty('description');
     await asResident(family, id, visitId, 'confirm').expect(204);

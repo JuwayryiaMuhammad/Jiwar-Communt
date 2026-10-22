@@ -203,10 +203,22 @@ export class UnitVisitView extends ResidentVisitBase {
   ticketStatus: TicketStatus;
   @ApiProperty({ type: TicketCategoryRefView })
   category: TicketCategoryRefView;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'The visit’s stage times (ADR 0058), as on the ticket’s visits.',
+  })
+  confirmedAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  arrivedAt: Date | null;
 
   static from(r: UnitVisitRead, me: string): UnitVisitView {
     return {
       ...ResidentVisitBase.base(r, me),
+      confirmedAt: r.visit.confirmedAt,
+      arrivedAt: r.visit.arrivedAt,
       ticketId: r.ticket.id,
       ticketNumber: ticketNumber(r.ticket.number),
       ticketStatus: r.ticket.status,

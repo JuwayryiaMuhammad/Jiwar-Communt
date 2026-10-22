@@ -1332,6 +1332,8 @@ describe('API v0 — PII leak scan', () => {
       '/tickets/{id}': ticket.id,
       '/technician/tickets/{id}': ticket.id,
       '/tickets/{id}/messages': ticket.id,
+      // ADR 0058: the resident's timeline.
+      '/tickets/{id}/timeline': ticket.id,
       '/technician/tickets/{id}/messages': ticket.id,
       '/maintenance/tickets/{id}/messages': ticket.id,
       '/maintenance/tickets/{id}': ticket.id,
@@ -1561,6 +1563,7 @@ describe('API v0 — PII leak scan', () => {
       '/tickets/{id}': oldTicket.id,
       '/tickets/{id}/messages': oldTicket.id,
       '/tickets/{id}/visits': oldTicket.id,
+      '/tickets/{id}/timeline': oldTicket.id,
       '/household/members/{id}/permissions': rentedJoined.memberId,
       '/worker-engagements/{id}': rentedEngagement.engagementId,
       '/worker-engagements/{id}/attendance': rentedEngagement.engagementId,

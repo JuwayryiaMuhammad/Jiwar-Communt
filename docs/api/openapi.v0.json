@@ -43372,6 +43372,68 @@
         ],
         "type": "object"
       },
+      "TimelineEntryView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "by": {
+            "type": "object"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "from": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "reasonCode": {
+            "description": "A code: the hold reason, or the reason of a cancel or reopen.",
+            "nullable": true,
+            "type": "string"
+          },
+          "to": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "at",
+          "reasonCode",
+          "cycle",
+          "by"
+        ],
+        "type": "object"
+      },
+      "TimelineEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "TimelineStepView": {
         "properties": {
           "at": {
@@ -44433,8 +44495,19 @@
             "nullable": true,
             "type": "object"
           },
+          "arrivedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "category": {
             "$ref": "#/components/schemas/TicketCategoryRefView"
+          },
+          "confirmedAt": {
+            "description": "The visit’s stage times (ADR 0058), as on the ticket’s visits.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           },
           "endsAt": {
             "format": "date-time",
@@ -44504,7 +44577,9 @@
           "ticketId",
           "ticketNumber",
           "ticketStatus",
-          "category"
+          "category",
+          "confirmedAt",
+          "arrivedAt"
         ],
         "type": "object"
       },
@@ -84969,6 +85044,43 @@
           }
         ],
         "summary": "Reopen a closed ticket",
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/timeline": {
+      "get": {
+        "operationId": "ResidentTicketsController_timeline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the timeline of one of my tickets",
         "tags": [
           "tickets"
         ],

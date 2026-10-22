@@ -34,7 +34,10 @@ import type {
   ResidentTicketRead,
   TicketDetail,
   TicketRead,
+  TimelineEntry,
+  TimelineSide,
 } from '../tickets.service';
+import { TIMELINE_SIDES } from '../tickets.service';
 
 // ============================================================================
 // One view per audience (ADR 0032). Residents and the technician see people
@@ -749,6 +752,38 @@ function ref(people: Map<string, Person>, id: string | null) {
   if (!id) return null;
   const p = people.get(id);
   return p ? accountRef(p) : erased(id);
+}
+
+/** One status change, as a resident reads it (ADR 0058): a side, no name. */
+export class TimelineEntryView {
+  @ApiProperty({ enum: TicketStatus, enumName: 'TicketStatus', nullable: true })
+  from: TicketStatus | null;
+  @ApiProperty({ enum: TicketStatus, enumName: 'TicketStatus' })
+  to: TicketStatus;
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'A code: the hold reason, or the reason of a cancel or reopen.',
+  })
+  reasonCode: string | null;
+  @ApiProperty({ type: Number })
+  cycle: number;
+  @ApiProperty({ enum: TIMELINE_SIDES, enumName: 'TicketTimelineSide' })
+  by: TimelineSide;
+
+  static from(e: TimelineEntry): TimelineEntryView {
+    return {
+      from: e.from,
+      to: e.to,
+      at: e.at,
+      reasonCode: e.reasonCode,
+      cycle: e.cycle,
+      by: e.by,
+    };
+  }
 }
 
 export class StatusHistoryView {

@@ -207,6 +207,25 @@ const invalid = (fields: FieldError[]) =>
  * the dispatch, work and confirmation services; every one of them locks
  * the ticket and checks ticket-rules first.
  */
+/** Who made a status change, as a resident reads it (ADR 0058). */
+export const TIMELINE_SIDES = [
+  'you',
+  'household',
+  'management',
+  'technician',
+  'system',
+] as const;
+export type TimelineSide = (typeof TIMELINE_SIDES)[number];
+
+export interface TimelineEntry {
+  from: TicketStatus | null;
+  to: TicketStatus;
+  at: Date;
+  reasonCode: string | null;
+  cycle: number;
+  by: TimelineSide;
+}
+
 @Injectable()
 export class TicketsService implements OnModuleInit {
   constructor(
@@ -656,6 +675,59 @@ export class TicketsService implements OnModuleInit {
     ))
       ? reporter.phone
       : null;
+  }
+
+  /**
+   * A resident's timeline of the ticket (ADR 0058): every status change,
+   * oldest first, with when and which side made it — never a name. The
+   * technician is whoever was ever assigned to the ticket; other staff are
+   * the management. Statuses are what a resident already sees on the
+   * ticket, so one who lost `tickets` on the unit sees them all, as they
+   * see the current status.
+   */
+  residentTimeline(id: string): Promise<TimelineEntry[]> {
+    const me = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.load(tx, id, 'resident');
+      const rows = await tx.ticketStatusHistory.findMany({
+        where: { ticketId: id },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      const actors = [
+        ...new Set(rows.flatMap((r) => (r.actorId ? [r.actorId] : []))),
+      ];
+      const kinds = new Map(
+        (
+          await tx.account.findMany({
+            where: { id: { in: actors } },
+            select: { id: true, type: true },
+          })
+        ).map((a) => [a.id, a.type]),
+      );
+      const technicians = new Set(
+        (
+          await tx.ticketAssignment.findMany({
+            where: { ticketId: id, toId: { not: null } },
+            select: { toId: true },
+          })
+        ).map((a) => a.toId),
+      );
+      const side = (actorId: string | null): TimelineSide => {
+        if (!actorId) return 'system';
+        if (actorId === me) return 'you';
+        const type = kinds.get(actorId);
+        if (type === 'resident' || type === 'family') return 'household';
+        return technicians.has(actorId) ? 'technician' : 'management';
+      };
+      return rows.map((r) => ({
+        from: r.fromStatus,
+        to: r.toStatus,
+        at: r.createdAt,
+        reasonCode: r.reasonCode,
+        cycle: r.cycle,
+        by: side(r.actorId),
+      }));
+    });
   }
 
   /** Dispatch: the status history, oldest first (a ticket has a handful). */

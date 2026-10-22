@@ -1106,6 +1106,46 @@
           }
         },
         {
+          "name": "List my appeals and where each stands",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appeals"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`open`: still going; `closed`: finished (the archive). Both by default.",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/appeals"
+            }
+          }
+        },
+        {
           "name": "List the delegations I hold or gave",
           "request": {
             "description": "**Responses:** 200",
@@ -1371,6 +1411,73 @@
                 "photo"
               ],
               "raw": "{{baseUrl}}/api/v1/me/photo"
+            }
+          }
+        },
+        {
+          "name": "List everything I asked for: tickets, requests, disputes, permits, complaints",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "requests"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`open`: still going; `closed`: finished (the archive). Both by default.",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/requests"
+            }
+          }
+        },
+        {
+          "name": "Search my own items by reference or name",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "search"
+              ],
+              "query": [
+                {
+                  "description": "(required) A reference (`MT-000123`, `mt123`, `123`) or words of a name the compound wrote (a category, a topic, a facility).",
+                  "key": "q",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/search?q="
             }
           }
         },
@@ -22238,40 +22345,6 @@
                   "value": ""
                 }
               ]
-            }
-          }
-        },
-        {
-          "name": "List all my requests: tickets and requests to the management",
-          "request": {
-            "description": "**Responses:** 200",
-            "header": [],
-            "method": "GET",
-            "url": {
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "me",
-                "requests"
-              ],
-              "query": [
-                {
-                  "description": "Opaque cursor from the previous page (`nextCursor`).",
-                  "disabled": true,
-                  "key": "cursor",
-                  "value": ""
-                },
-                {
-                  "description": "",
-                  "disabled": true,
-                  "key": "limit",
-                  "value": ""
-                }
-              ],
-              "raw": "{{baseUrl}}/api/v1/me/requests"
             }
           }
         }

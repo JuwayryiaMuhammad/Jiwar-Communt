@@ -1662,6 +1662,8 @@ describe('API v0 — PII leak scan', () => {
       '/me/notifications': { limit: '100' },
       // ADR 0049: the guard's lookup takes a unit's code or a reference.
       '/gate/unit-permits': { unitCode: unit.code },
+      // ADR 0058: the resident's search, by a reference every compound has.
+      '/me/search': { q: 'MT-1' },
     };
 
     const leaks: string[] = [];

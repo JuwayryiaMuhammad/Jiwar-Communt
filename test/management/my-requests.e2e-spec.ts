@@ -33,7 +33,7 @@ describe('All my requests', () => {
   afterAll(() => h.close());
 
   type Item = {
-    type: 'maintenance' | 'management';
+    type: string;
     id: string;
     number: string;
     status: string;
@@ -170,6 +170,8 @@ describe('All my requests', () => {
         topicKey: null,
         requestType: null,
         unitId: s.unit.id,
+        kind: null,
+        appeal: null,
       });
       expect(data.find((x) => x.id === request.id)).toEqual({
         type: 'management',
@@ -181,6 +183,8 @@ describe('All my requests', () => {
         topicKey: 'general',
         requestType: 'question',
         unitId: s.unit.id,
+        kind: null,
+        appeal: null,
       });
       // The newest thing is first.
       expect(data[0].id).toBe(request.id);
@@ -351,8 +355,10 @@ describe('All my requests', () => {
       expect((await feed(who)).data.map((x) => x.id)).toEqual([request.id]);
       await setRole(['units.read', 'tickets.create']);
       expect((await feed(who)).data.map((x) => x.id)).toEqual([ticket]);
+      // Neither: nothing of either (ADR 0058: the list is every resident's,
+      // each source deciding what it shows).
       await setRole(['units.read']);
-      await m.http('get', '/me/requests', who.token).expect(403);
+      expect((await feed(who)).data).toEqual([]);
     });
   });
 

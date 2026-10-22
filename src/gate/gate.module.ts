@@ -1,3 +1,4 @@
+import { ResidentGateItems } from './resident-gate-items';
 import { Module } from '@nestjs/common';
 import { FineBoardAppeals } from './fines/fine-board-appeals';
 import { ViolationBoardAppeals } from './violations/violation-board-appeals';
@@ -412,6 +413,7 @@ import { PickupPageService } from './children/pickup-page.service';
     ChildAlertsController,
   ],
   providers: [
+    ResidentGateItems,
     FineBoardAppeals,
     ViolationBoardAppeals,
     SecurityOverview,

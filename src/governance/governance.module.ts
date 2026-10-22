@@ -1,3 +1,4 @@
+import { ResidentAppealItems } from './appeals/resident-appeal-items';
 import { Module } from '@nestjs/common';
 import { CommunityGovernancePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
@@ -82,6 +83,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     BoardOverviewController,
   ],
   providers: [
+    ResidentAppealItems,
     GovernanceAccess,
     GovernanceNotices,
     BoardSeat,

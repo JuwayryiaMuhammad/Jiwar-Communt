@@ -5371,6 +5371,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my appeals and where each stands */
+        get: operations["ResidentItemsController_appeals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/consents": {
         parameters: {
             query?: never;
@@ -5968,8 +5985,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List all my requests: tickets and requests to the management */
-        get: operations["MyRequestsController_list"];
+        /** List everything I asked for: tickets, requests, disputes, permits, complaints */
+        get: operations["ResidentItemsController_requests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search my own items by reference or name */
+        get: operations["ResidentItemsController_search"];
         put?: never;
         post?: never;
         delete?: never;
@@ -14779,6 +14813,11 @@ export interface components {
         };
         /** @enum {string} */
         AppealMotionOutcome: "uphold" | "overturn";
+        /**
+         * @description `upheld`: the decision stands; `overturned`: the appellant won.
+         * @enum {string}
+         */
+        AppealState: "pending" | "upheld" | "overturned" | "withdrawn";
         AppealViolationDto: {
             /**
              * Format: uuid
@@ -21242,6 +21281,19 @@ export interface components {
             /** Format: date-time */
             validUntil: string;
         };
+        ItemAppealView: {
+            /**
+             * Format: date-time
+             * @description Lodged.
+             */
+            at: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @enum {string} */
+            decidedBy: "management" | "board";
+            /** @description `upheld`: the decision stands; `overturned`: the appellant won. */
+            state: components["schemas"]["AppealState"];
+        };
         KeptCountsView: {
             /** @description They stay, pointing at a deleted user. */
             auditEntries: number;
@@ -21914,36 +21966,6 @@ export interface components {
              * @description A finalized `resident_photo` of the caller's.
              */
             fileId: string;
-        };
-        MyRequestView: {
-            /** @description A ticket’s category key; null for a request. */
-            categoryKey: string | null;
-            /** Format: uuid */
-            id: string;
-            /**
-             * Format: date-time
-             * @description What the list is ordered by, newest first.
-             */
-            lastActivityAt: string;
-            /** @example MR-000123 */
-            number: string;
-            /** @description A request’s kind; null for a ticket. */
-            requestType: components["schemas"]["ManagementRequestType"] | null;
-            /** @description The item’s own status: a TicketStatus for a ticket, a ManagementRequestStatus for a request. */
-            status: string;
-            /** @description A request’s topic key; null for a ticket. */
-            topicKey: string | null;
-            /**
-             * @description `maintenance`: a ticket (`/tickets/{id}`). `management`: a request to the management (`/management-requests/{id}`).
-             * @enum {string}
-             */
-            type: "maintenance" | "management";
-            /** Format: uuid */
-            unitId: string | null;
-        };
-        MyRequestViewList: {
-            data: components["schemas"]["MyRequestView"][];
-            nextCursor: string | null;
         };
         MyRoleView: {
             /** Format: uuid */
@@ -24463,6 +24485,32 @@ export interface components {
         };
         ResidentFineViewList: {
             data: components["schemas"]["ResidentFineView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "vehicle_fine" | "unit_violation" | "board_appeal" | "invoice" | "booking" | "parcel";
+        ResidentItemView: {
+            /** @description Where its appeal stands (the appeals list); null elsewhere. */
+            appeal: components["schemas"]["ItemAppealView"] | null;
+            categoryKey: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description A permit’s or an appeal’s kind; a violation’s kind. */
+            kind: string | null;
+            /** Format: date-time */
+            lastActivityAt: string;
+            /** @description Its reference, as its own screens show it. */
+            number: string | null;
+            requestType: string | null;
+            /** @description The item’s own status, a code of its kind of item. */
+            status: string;
+            topicKey: string | null;
+            type: components["schemas"]["ResidentItemType"];
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        ResidentItemViewList: {
+            data: components["schemas"]["ResidentItemView"][];
             nextCursor: string | null;
         };
         ResidentListItemView: {
@@ -37346,6 +37394,31 @@ export interface operations {
             };
         };
     };
+    ResidentItemsController_appeals: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `open`: still going; `closed`: finished (the archive). Both by default. */
+                state?: "open" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentItemViewList"];
+                };
+            };
+        };
+    };
     ConsentsController_mine: {
         parameters: {
             query?: never;
@@ -38191,12 +38264,14 @@ export interface operations {
             };
         };
     };
-    MyRequestsController_list: {
+    ResidentItemsController_requests: {
         parameters: {
             query?: {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
+                /** @description `open`: still going; `closed`: finished (the archive). Both by default. */
+                state?: "open" | "closed";
             };
             header?: never;
             path?: never;
@@ -38209,7 +38284,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MyRequestViewList"];
+                    "application/json": components["schemas"]["ResidentItemViewList"];
+                };
+            };
+        };
+    };
+    ResidentItemsController_search: {
+        parameters: {
+            query: {
+                /** @description A reference (`MT-000123`, `mt123`, `123`) or words of a name the compound wrote (a category, a topic, a facility). */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentItemViewList"];
                 };
             };
         };

@@ -1,3 +1,4 @@
+import { RESIDENT_ITEM_ROUTES } from './resident-items';
 import type { Row } from '../registry';
 import { APPROVALS_ROUTES } from './approvals';
 import { ASSIST_ROUTES } from './assist';
@@ -206,6 +207,7 @@ export const ROUTES: Row[] = [
   ...MESSAGE_ROUTES,
   ...PREVENTIVE_ROUTES,
   ...QUOTE_ROUTES,
+  ...RESIDENT_ITEM_ROUTES,
   ...VISIT_ROUTES,
   ...PREFERENCES_ROUTES,
   ...PUSH_TOKENS_ROUTES,

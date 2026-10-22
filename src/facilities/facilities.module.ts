@@ -1,3 +1,4 @@
+import { ResidentBookingItems } from './bookings/resident-booking-items';
 import { Module } from '@nestjs/common';
 import { CommunityFacilitiesPortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
@@ -67,6 +68,7 @@ import { FacilitiesService } from './setup/facilities.service';
     ClubMembershipsController,
   ],
   providers: [
+    ResidentBookingItems,
     FacilitiesAccess,
     SuspensionBoardAppeals,
     FacilitiesService,

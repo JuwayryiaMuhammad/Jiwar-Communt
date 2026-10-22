@@ -57,6 +57,7 @@ import { TechnicianTicketsController } from './tickets/technician-tickets.contro
 import { WorkService } from './tickets/work.service';
 import { ResidentTicketFeed } from './tickets/resident-ticket-feed';
 import { ResidentTicketSummary } from './tickets/resident-ticket-summary';
+import { ResidentTicketItems } from './tickets/resident-ticket-items';
 import { ResidentTicketsController } from './tickets/resident-tickets.controller';
 import { TicketAccess } from './tickets/ticket-access';
 import { TicketLog } from './tickets/ticket-log';
@@ -149,8 +150,9 @@ import { QuotesService } from './quotes/quotes.service';
     ResidentTicketFeed,
     ResidentTicketSummary,
     QuotesService,
+    ResidentTicketItems,
   ],
-  // What the management domain reads of a resident's tickets (ADR 0039).
-  exports: [ResidentTicketFeed, ResidentTicketSummary],
+  // What the daily brief reads of a resident's tickets (ADR 0040).
+  exports: [ResidentTicketSummary],
 })
 export class MaintenanceModule {}

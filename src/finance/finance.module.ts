@@ -1,3 +1,4 @@
+import { ResidentFinanceItems } from './invoices/resident-finance-items';
 import { Module } from '@nestjs/common';
 import { CommunityFinancePortModule } from '../community';
 import { FilesModule } from '../core/files/files.module';
@@ -113,6 +114,7 @@ import { PaymentsService } from './payments/payments.service';
     FinanceOverview,
     FinanceNotices,
     InvoicesService,
+    ResidentFinanceItems,
     InstalmentsService,
     DisputesService,
     RefundsService,

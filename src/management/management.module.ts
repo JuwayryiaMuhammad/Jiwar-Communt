@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { CommunityManagementPortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
-import { MaintenanceModule } from '../maintenance';
 import {
   ResidentAppointmentsController,
   ResidentAppointmentSlotsController,
@@ -10,8 +9,7 @@ import {
 } from './appointments/appointments.controller';
 import { AppointmentsService } from './appointments/appointments.service';
 import { ManagementExportSections } from './export/export-sections';
-import { MyRequestsController } from './feed/my-requests.controller';
-import { MyRequestsService } from './feed/my-requests.service';
+import { ResidentRequestItems } from './feed/resident-request-items';
 import { ResidentRequestSummary } from './feed/resident-request-summary';
 import { ManagementProvisioning } from './provisioning';
 import { RequestEscalation } from './requests/escalation.service';
@@ -48,12 +46,7 @@ import { TopicsService } from './topics/topics.service';
  * the gate.
  */
 @Module({
-  imports: [
-    AccountsModule,
-    CommunityManagementPortModule,
-    FilesModule,
-    MaintenanceModule,
-  ],
+  imports: [AccountsModule, CommunityManagementPortModule, FilesModule],
   controllers: [
     TopicsController,
     TopicOptionsController,
@@ -67,7 +60,6 @@ import { TopicsService } from './topics/topics.service';
     ResidentAppointmentSlotsController,
     ResidentAppointmentsController,
     StaffAppointmentsController,
-    MyRequestsController,
   ],
   providers: [
     ManagementProvisioning,
@@ -83,7 +75,7 @@ import { TopicsService } from './topics/topics.service';
     RequestEscalation,
     AppointmentsService,
     RatingService,
-    MyRequestsService,
+    ResidentRequestItems,
     RequestHandlerRelease,
     ManagementExportSections,
     ResidentRequestSummary,

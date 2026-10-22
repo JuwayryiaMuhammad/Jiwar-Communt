@@ -294,6 +294,15 @@ export class CommunityGatePort {
       .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
   }
 
+  /** The units the account is the primary of now (ADR 0058's lists). */
+  async primaryUnits(tx: TenantTxClient, accountId: string): Promise<string[]> {
+    const rows = await tx.unitOccupancy.findMany({
+      where: { accountId, status: 'active', isPrimary: true },
+      select: { unitId: true },
+    });
+    return rows.map((r) => r.unitId);
+  }
+
   /** The units where the account's capabilities carry `flag`. */
   unitsWhere(
     tx: TenantTxClient,

@@ -65,15 +65,22 @@ export class ResidentTicketFeed {
     private readonly community: CommunityMaintenancePort,
   ) {}
 
-  /** Up to `take` tickets past the cursor, newest activity first. */
+  /**
+   * Up to `take` tickets past the cursor, newest activity first; `only`
+   * narrows them (a status, a number, a category: ADR 0058's lists and
+   * search), never widens them.
+   */
   async page(
     tx: TenantTxClient,
     after: FeedCursor | null,
     take: number,
+    only: Prisma.TicketWhereInput = {},
   ): Promise<FeedTicket[]> {
     const me = this.ctx.accountId;
     const primaryOf = await this.community.primaryUnits(tx, me);
-    const visible = residentTickets(me, primaryOf);
+    const visible: Prisma.TicketWhereInput = {
+      AND: [residentTickets(me, primaryOf), only],
+    };
     const left = await this.unitsLeft(tx, visible);
 
     const rows = await tx.ticket.findMany({

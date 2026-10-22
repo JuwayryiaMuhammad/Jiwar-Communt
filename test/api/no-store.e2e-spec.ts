@@ -41,6 +41,7 @@ import { securityOpsCalls } from './no-store-security-ops';
 import { childrenCalls } from './no-store-children';
 import { gateCompletionCalls } from './no-store-gate-completion';
 import { offlineCalls } from './no-store-offline';
+import { residentItemCalls } from './no-store-resident-items';
 import { buildWorld, type World } from './world';
 
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
@@ -3087,6 +3088,7 @@ describe('API v0 — no-store', () => {
     ...appealCalls(() => w, aSittingBoard),
     ...gateCompletionCalls(() => w),
     ...offlineCalls(() => w),
+    ...residentItemCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

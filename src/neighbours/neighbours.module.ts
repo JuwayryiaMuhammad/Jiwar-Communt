@@ -13,6 +13,7 @@ import { ComplaintMessagesService } from './complaints/complaint-messages.servic
 import { ComplaintNotices } from './complaints/complaint-notices';
 import { ComplaintStatusService } from './complaints/complaint-status.service';
 import { ComplaintsService } from './complaints/complaints.service';
+import { ResidentComplaintItems } from './complaints/resident-complaint-items';
 import { NoticeNotices } from './complaints/notice-notices';
 import { NoticesService } from './complaints/notices.service';
 import { ResidentComplaintsController } from './complaints/resident-complaints.controller';
@@ -70,6 +71,7 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     NeighbourSettingsController,
   ],
   providers: [
+    ResidentComplaintItems,
     NeighbourAccess,
     NeighboursProvisioning,
     NeighbourSettingsService,

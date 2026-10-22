@@ -870,6 +870,16 @@
         ],
         "type": "string"
       },
+      "AppealState": {
+        "description": "`upheld`: the decision stands; `overturned`: the appellant won.",
+        "enum": [
+          "pending",
+          "upheld",
+          "overturned",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
       "AppealViolationDto": {
         "properties": {
           "photoFileId": {
@@ -21462,6 +21472,42 @@
         ],
         "type": "object"
       },
+      "ItemAppealView": {
+        "properties": {
+          "at": {
+            "description": "Lodged.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "enum": [
+              "management",
+              "board"
+            ],
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppealState"
+              }
+            ],
+            "description": "`upheld`: the decision stands; `overturned`: the appellant won."
+          }
+        },
+        "required": [
+          "state",
+          "at",
+          "decidedBy",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
       "KeptCountsView": {
         "properties": {
           "auditEntries": {
@@ -23612,90 +23658,6 @@
         },
         "required": [
           "fileId"
-        ],
-        "type": "object"
-      },
-      "MyRequestView": {
-        "properties": {
-          "categoryKey": {
-            "description": "A ticket’s category key; null for a request.",
-            "nullable": true,
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "lastActivityAt": {
-            "description": "What the list is ordered by, newest first.",
-            "format": "date-time",
-            "type": "string"
-          },
-          "number": {
-            "example": "MR-000123",
-            "type": "string"
-          },
-          "requestType": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ManagementRequestType"
-              }
-            ],
-            "description": "A request’s kind; null for a ticket.",
-            "nullable": true
-          },
-          "status": {
-            "description": "The item’s own status: a TicketStatus for a ticket, a ManagementRequestStatus for a request.",
-            "type": "string"
-          },
-          "topicKey": {
-            "description": "A request’s topic key; null for a ticket.",
-            "nullable": true,
-            "type": "string"
-          },
-          "type": {
-            "description": "`maintenance`: a ticket (`/tickets/{id}`). `management`: a request to the management (`/management-requests/{id}`).",
-            "enum": [
-              "maintenance",
-              "management"
-            ],
-            "type": "string"
-          },
-          "unitId": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "id",
-          "number",
-          "status",
-          "lastActivityAt",
-          "categoryKey",
-          "topicKey",
-          "requestType",
-          "unitId"
-        ],
-        "type": "object"
-      },
-      "MyRequestViewList": {
-        "properties": {
-          "data": {
-            "items": {
-              "$ref": "#/components/schemas/MyRequestView"
-            },
-            "type": "array"
-          },
-          "nextCursor": {
-            "nullable": true,
-            "type": "string"
-          }
-        },
-        "required": [
-          "data",
-          "nextCursor"
         ],
         "type": "object"
       },
@@ -31496,6 +31458,115 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/ResidentFineView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ResidentItemType": {
+        "enum": [
+          "maintenance",
+          "management",
+          "invoice_dispute",
+          "unit_permit",
+          "neighbour_complaint",
+          "vehicle_fine",
+          "unit_violation",
+          "board_appeal",
+          "invoice",
+          "booking",
+          "parcel"
+        ],
+        "type": "string"
+      },
+      "ResidentItemView": {
+        "properties": {
+          "appeal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemAppealView"
+              }
+            ],
+            "description": "Where its appeal stands (the appeals list); null elsewhere.",
+            "nullable": true,
+            "type": "object"
+          },
+          "categoryKey": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "description": "A permit’s or an appeal’s kind; a violation’s kind.",
+            "nullable": true,
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "description": "Its reference, as its own screens show it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "The item’s own status, a code of its kind of item.",
+            "type": "string"
+          },
+          "topicKey": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResidentItemType"
+              }
+            ]
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "number",
+          "status",
+          "lastActivityAt",
+          "unitId",
+          "kind",
+          "categoryKey",
+          "topicKey",
+          "requestType",
+          "appeal"
+        ],
+        "type": "object"
+      },
+      "ResidentItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentItemView"
             },
             "type": "array"
           },
@@ -63281,6 +63352,69 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/appeals": {
+      "get": {
+        "operationId": "ResidentItemsController_appeals",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`open`: still going; `closed`: finished (the archive). Both by default.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my appeals and where each stands",
+        "tags": [
+          "me"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/consents": {
       "get": {
         "operationId": "ConsentsController_mine",
@@ -64751,7 +64885,7 @@
     },
     "/api/v1/me/requests": {
       "get": {
-        "operationId": "MyRequestsController_list",
+        "operationId": "ResidentItemsController_requests",
         "parameters": [
           {
             "description": "Opaque cursor from the previous page (`nextCursor`).",
@@ -64772,6 +64906,19 @@
               "minimum": 1,
               "type": "number"
             }
+          },
+          {
+            "description": "`open`: still going; `closed`: finished (the archive). Both by default.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "closed"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -64779,7 +64926,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MyRequestViewList"
+                  "$ref": "#/components/schemas/ResidentItemViewList"
                 }
               }
             },
@@ -64791,9 +64938,50 @@
             "bearer": []
           }
         ],
-        "summary": "List all my requests: tickets and requests to the management",
+        "summary": "List everything I asked for: tickets, requests, disputes, permits, complaints",
         "tags": [
-          "management-requests"
+          "me"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/search": {
+      "get": {
+        "operationId": "ResidentItemsController_search",
+        "parameters": [
+          {
+            "description": "A reference (`MT-000123`, `mt123`, `123`) or words of a name the compound wrote (a category, a topic, a facility).",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 2,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search my own items by reference or name",
+        "tags": [
+          "me"
         ],
         "x-no-store": true,
         "x-stability": "draft"

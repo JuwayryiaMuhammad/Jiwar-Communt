@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityPartnersPortModule } from '../community';
+import { AccountsModule } from '../core/accounts/accounts.module';
 import { GateModule } from '../gate';
 import { ManagementModule } from '../management';
 import { PartnersAccess } from './access';
@@ -28,6 +29,8 @@ import { PartnerRequestsService } from './requests/requests.service';
 import { ResidentPartnerItems } from './requests/resident-partner-items';
 import { PartnersController } from './discovery/discovery.controller';
 import { DiscoveryService } from './discovery/discovery.service';
+import { PartnersExportSections } from './export/export-sections';
+import { PartnersLifecycle } from './privacy/partners-lifecycle';
 import { PartnersProvisioning } from './provisioning';
 import { PartnerSettingsController } from './settings/partner-settings.controller';
 import { PartnerSettingsService } from './settings/partner-settings.service';
@@ -46,7 +49,12 @@ import { SuspensionService } from './setup/suspension.service';
  * gate and management through their index; nothing imports it.
  */
 @Module({
-  imports: [CommunityPartnersPortModule, GateModule, ManagementModule],
+  imports: [
+    AccountsModule,
+    CommunityPartnersPortModule,
+    GateModule,
+    ManagementModule,
+  ],
   controllers: [
     PartnerCategoriesController,
     StaffPartnerSubcategoriesController,
@@ -83,6 +91,8 @@ import { SuspensionService } from './setup/suspension.service';
     RatingsService,
     PartnerComplaintsService,
     SuspensionService,
+    PartnersLifecycle,
+    PartnersExportSections,
   ],
 })
 export class PartnersModule {}

@@ -33,6 +33,8 @@ export const NOTIFICATION_CATEGORIES = [
   'guard_duty',
   // The owners' association: the board, its polls and elections (ADR 0051).
   'governance',
+  // A resident's requests to the compound's service partners (ADR 0060).
+  'partners',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

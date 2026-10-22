@@ -22461,7 +22461,7 @@ export interface components {
             lateNoticeCureDays: number;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty" | "governance";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty" | "governance" | "partners";
         NotificationView: {
             /**
              * Format: date-time

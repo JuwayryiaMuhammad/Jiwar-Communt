@@ -1744,6 +1744,8 @@ enum NotificationCategory {
   guard_duty
   /// The owners' board, its polls and elections (ADR 0051).
   governance
+  /// A resident's requests to the compound's service partners (ADR 0060).
+  partners
 
   @@map("notification_category")
 }

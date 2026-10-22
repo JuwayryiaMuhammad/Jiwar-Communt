@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { PartnerSubcategory } from '@prisma/client';
 import { PARTNER_CATEGORIES, type PartnerCategory } from '../../categories';
+import { partnerConsent } from '../../consents';
 import type { CategoryWithSubcategories } from '../subcategories.service';
 
 /** A sub-category as a resident sees it. */
@@ -54,7 +55,7 @@ export class PartnerCategoryView {
   static from(c: CategoryWithSubcategories): PartnerCategoryView {
     return {
       category: c.category,
-      consentCode: `partner_share_${c.category}`,
+      consentCode: partnerConsent(c.category),
       subcategories: c.subcategories.map((s) => PartnerSubcategoryView.from(s)),
     };
   }

@@ -17183,7 +17183,7 @@ export interface components {
             technicianRating?: number;
         };
         /** @enum {string} */
-        ConsentCode: "ticket_phone_share";
+        ConsentCode: "ticket_phone_share" | "partner_share_gas_water" | "partner_share_pharmacy" | "partner_share_grocery" | "partner_share_home_services" | "partner_share_laundry" | "partner_share_gardening" | "partner_share_beauty_at_home" | "partner_share_repair" | "partner_share_pets" | "partner_share_events" | "partner_share_moving_storage" | "partner_share_car_services" | "partner_share_elderly_care";
         ConsentView: {
             code: components["schemas"]["ConsentCode"];
             /** @description Granted at the current version. */

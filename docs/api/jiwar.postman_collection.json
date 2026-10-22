@@ -2285,7 +2285,7 @@
               },
               "raw": "{\n  \"code\": \"ticket_phone_share\",\n  \"version\": 1,\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | `ticket_phone_share` | yes |  |\n| `reasonCode` | string | yes | How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). |\n| `version` | number | yes | The version of the text the account agreed to: it must be the current one (CONSENT_VERSION_MISMATCH). |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | `ticket_phone_share` \\| `partner_share_gas_water` \\| `partner_share_pharmacy` \\| `partner_share_grocery` \\| `partner_share_home_services` \\| `partner_share_laundry` \\| `partner_share_gardening` \\| `partner_share_beauty_at_home` \\| `partner_share_repair` \\| `partner_share_pets` \\| `partner_share_events` \\| `partner_share_moving_storage` \\| `partner_share_car_services` \\| `partner_share_elderly_care` | yes |  |\n| `reasonCode` | string | yes | How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). |\n| `version` | number | yes | The version of the text the account agreed to: it must be the current one (CONSENT_VERSION_MISMATCH). |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -2329,7 +2329,7 @@
               },
               "raw": "{\n  \"code\": \"ticket_phone_share\",\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | `ticket_phone_share` | yes |  |\n| `reasonCode` | string | yes | How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | `ticket_phone_share` \\| `partner_share_gas_water` \\| `partner_share_pharmacy` \\| `partner_share_grocery` \\| `partner_share_home_services` \\| `partner_share_laundry` \\| `partner_share_gardening` \\| `partner_share_beauty_at_home` \\| `partner_share_repair` \\| `partner_share_pets` \\| `partner_share_events` \\| `partner_share_moving_storage` \\| `partner_share_car_services` \\| `partner_share_elderly_care` | yes |  |\n| `reasonCode` | string | yes | How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -6675,7 +6675,7 @@
               },
               "raw": "{\n  \"code\": \"ticket_phone_share\",\n  \"version\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | `ticket_phone_share` | yes |  |\n| `version` | number | yes | The version of the text the account agreed to: it must be the current one (CONSENT_VERSION_MISMATCH). |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | `ticket_phone_share` \\| `partner_share_gas_water` \\| `partner_share_pharmacy` \\| `partner_share_grocery` \\| `partner_share_home_services` \\| `partner_share_laundry` \\| `partner_share_gardening` \\| `partner_share_beauty_at_home` \\| `partner_share_repair` \\| `partner_share_pets` \\| `partner_share_events` \\| `partner_share_moving_storage` \\| `partner_share_car_services` \\| `partner_share_elderly_care` | yes |  |\n| `version` | number | yes | The version of the text the account agreed to: it must be the current one (CONSENT_VERSION_MISMATCH). |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -6711,7 +6711,7 @@
               },
               "raw": "{\n  \"code\": \"ticket_phone_share\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | `ticket_phone_share` | yes |  |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | `ticket_phone_share` \\| `partner_share_gas_water` \\| `partner_share_pharmacy` \\| `partner_share_grocery` \\| `partner_share_home_services` \\| `partner_share_laundry` \\| `partner_share_gardening` \\| `partner_share_beauty_at_home` \\| `partner_share_repair` \\| `partner_share_pets` \\| `partner_share_events` \\| `partner_share_moving_storage` \\| `partner_share_car_services` \\| `partner_share_elderly_care` | yes |  |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",

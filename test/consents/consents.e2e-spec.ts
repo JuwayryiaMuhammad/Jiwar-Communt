@@ -1,4 +1,7 @@
-import { CONSENT_CATALOG } from '../../src/core/consents/consent-catalog';
+import {
+  CONSENT_CATALOG,
+  CONSENT_CODES,
+} from '../../src/core/consents/consent-catalog';
 import { ConsentsService } from '../../src/core/consents/consents.service';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
@@ -99,16 +102,18 @@ describe('Consents', () => {
       .set(bearer(r.token))
       .expect(200);
     expect(list.body).toEqual({
-      data: [
-        {
-          code: 'ticket_phone_share',
-          version: 1,
-          granted: false,
-          grantedAt: null,
-        },
-      ],
+      data: CONSENT_CODES.map((code) => ({
+        code,
+        version: 1,
+        granted: false,
+        grantedAt: null,
+      })),
       nextCursor: null,
     });
+    // The technician's phone first, then one per partner category (ADR 0060).
+    expect((list.body as { data: { code: string }[] }).data[0].code).toBe(
+      'ticket_phone_share',
+    );
 
     const wrong = await grant(r.token, 2).expect(409);
     expect(wrong.body).toMatchObject({

@@ -1,10 +1,16 @@
+import { PARTNER_CATEGORIES } from '../../../src/partners/categories';
 import type { Row } from '../registry';
 
+/** The catalog's codes, in its order: ADR 0036's, then one per partner category (ADR 0060). */
+const CONSENT_CODES = [
+  'ticket_phone_share',
+  ...PARTNER_CATEGORIES.map((c) => `partner_share_${c}`),
+];
 const UNKNOWN_CODE = [
   {
     field: 'code',
     code: 'INVALID_VALUE',
-    params: { allowed: ['ticket_phone_share'] },
+    params: { allowed: CONSENT_CODES },
   },
 ];
 

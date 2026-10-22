@@ -608,3 +608,121 @@ export const PARTNER_DESK_ROUTES: Row[] = [
     },
   })),
 ];
+
+/** Ratings and complaints (ADR 0060). */
+export const PARTNER_FEEDBACK_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/partner-requests/{id}/rating',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPartnerRequestId }),
+      code: 'PARTNER_REQUEST_NOT_FOUND',
+      body: () => ({ stars: 4 }),
+    },
+    invalid: {
+      body: { stars: 6 },
+      fields: [
+        { field: 'stars', code: 'INVALID_NUMBER', params: { min: 1, max: 5 } },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/partner-requests/{id}/complaint',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPartnerRequestId }),
+      code: 'PARTNER_REQUEST_NOT_FOUND',
+      body: () => ({
+        reason: 'late',
+        compensationAsk: 'none',
+        message: 'They came two hours late.',
+      }),
+    },
+    invalid: {
+      body: { reason: 'late', compensationAsk: 'none', message: '' },
+      fields: [
+        {
+          field: 'message',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 4000 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/partner-complaints',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { decided: 'yes' },
+      fields: [
+        {
+          field: 'decided',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['true', 'false'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/partner-complaints/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bComplaintIdOfPartner }),
+      code: 'PARTNER_COMPLAINT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/partner-complaints/{id}/decide',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bComplaintIdOfPartner }),
+      code: 'PARTNER_COMPLAINT_NOT_FOUND',
+      body: () => ({ outcome: 'upheld', compensation: 'redo' }),
+    },
+    invalid: {
+      body: { outcome: 'maybe', compensation: 'none' },
+      fields: [
+        {
+          field: 'outcome',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['upheld', 'not_upheld'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/partner-ratings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { partnerId: 'x' },
+      fields: [{ field: 'partnerId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+];

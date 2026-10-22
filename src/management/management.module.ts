@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ManagementPartnersPort } from './partners-port';
 import { CommunityManagementPortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -64,6 +65,7 @@ import { TopicsService } from './topics/topics.service';
     StaffAppointmentsController,
   ],
   providers: [
+    ManagementPartnersPort,
     ManagementProvisioning,
     TopicsService,
     RequestSettingsService,
@@ -82,6 +84,6 @@ import { TopicsService } from './topics/topics.service';
     ManagementExportSections,
     ResidentRequestSummary,
   ],
-  exports: [ResidentRequestSummary],
+  exports: [ResidentRequestSummary, ManagementPartnersPort],
 })
 export class ManagementModule {}

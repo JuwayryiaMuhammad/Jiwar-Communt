@@ -75,7 +75,45 @@ export function partnerCalls(
     await desk(`/requests/${id}/propose`, proposal());
     return id;
   };
+  /** A request A's partner accepted and A's owner then said was done. */
+  const done = async (): Promise<string> => {
+    const id = await accepted();
+    await shiftWindow(id, 'started');
+    await owner('POST', `/partner-requests/${id}/done`);
+    return id;
+  };
+  /** A's owner's complaint about a request done: its id. */
+  const complaint = async (): Promise<string> => {
+    const res = await owner(
+      'POST',
+      `/partner-requests/${await done()}/complaint`,
+      { reason: 'late', compensationAsk: 'none', message: 'Two hours late.' },
+    );
+    return (res.body as { id: string }).id;
+  };
   return {
+    'POST /partner-requests/{id}/rating': async () =>
+      owner('POST', `/partner-requests/${await done()}/rating`, { stars: 5 }),
+    'POST /partner-requests/{id}/complaint': async () =>
+      owner('POST', `/partner-requests/${await done()}/complaint`, {
+        reason: 'poor_quality',
+        compensationAsk: 'refund',
+        requestedAmount: '120',
+        message: 'Nothing was cleaned.',
+      }),
+    'GET /staff/partner-complaints': async () => {
+      await complaint();
+      return manager('GET', '/staff/partner-complaints');
+    },
+    'GET /staff/partner-complaints/{id}': async () =>
+      manager('GET', `/staff/partner-complaints/${await complaint()}`),
+    'POST /staff/partner-complaints/{id}/decide': async () =>
+      manager('POST', `/staff/partner-complaints/${await complaint()}/decide`, {
+        outcome: 'upheld',
+        compensation: 'credit_note',
+      }),
+    'GET /staff/partner-ratings': () =>
+      manager('GET', '/staff/partner-ratings'),
     'POST /partner-requests': async () => {
       await request();
       return owner('GET', '/partner-requests').then(async () =>

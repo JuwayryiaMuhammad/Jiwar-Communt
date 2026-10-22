@@ -14,6 +14,7 @@ import {
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { DeskLinks } from '../desk/desk-links';
+import { RatingsService } from '../feedback/ratings.service';
 import {
   CreatePartnerDto,
   ReplacePartnerHoursDto,
@@ -32,6 +33,7 @@ export class StaffPartnersController {
   constructor(
     private readonly partners: PartnersService,
     private readonly deskLinks: DeskLinks,
+    private readonly ratings: RatingsService,
   ) {}
 
   @Get()
@@ -40,9 +42,15 @@ export class StaffPartnersController {
   @ApiOkResponse({ type: ListOf(StaffPartnerView) })
   async list(): Promise<ListResponse<StaffPartnerView>> {
     const partners = await this.partners.staffList();
-    const links = await this.deskLinks.liveOf(partners.map((p) => p.id));
+    const ids = partners.map((p) => p.id);
+    const links = await this.deskLinks.liveOf(ids);
+    const ratings = await this.ratings.summariesOf(ids);
     return bounded(partners, (p) =>
-      StaffPartnerView.from(p, links.get(p.id) ?? null),
+      StaffPartnerView.from(
+        p,
+        links.get(p.id) ?? null,
+        ratings.get(p.id) ?? null,
+      ),
     );
   }
 
@@ -51,9 +59,7 @@ export class StaffPartnersController {
   @ApiOperation({ summary: 'Get a partner' })
   @ApiOkResponse({ type: StaffPartnerView })
   async get(@Param('id', parseId()) id: string): Promise<StaffPartnerView> {
-    const partner = await this.partners.staffGet(id);
-    const links = await this.deskLinks.liveOf([id]);
-    return StaffPartnerView.from(partner, links.get(id) ?? null);
+    return this.withLink(await this.partners.staffGet(id));
   }
 
   @Post()
@@ -111,9 +117,14 @@ export class StaffPartnersController {
     return this.withLink(await this.partners.replacePrices(id, dto.items));
   }
 
-  /** A partner as changed, with its live desk link. */
+  /** A partner with its live desk link and its ratings in short. */
   private async withLink(p: PartnerWithParts): Promise<StaffPartnerView> {
     const links = await this.deskLinks.liveOf([p.id]);
-    return StaffPartnerView.from(p, links.get(p.id) ?? null);
+    const ratings = await this.ratings.summariesOf([p.id]);
+    return StaffPartnerView.from(
+      p,
+      links.get(p.id) ?? null,
+      ratings.get(p.id) ?? null,
+    );
   }
 }

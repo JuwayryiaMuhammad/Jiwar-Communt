@@ -7050,6 +7050,36 @@
         ],
         "type": "object"
       },
+      "ComplainPartnerRequestDto": {
+        "properties": {
+          "compensationAsk": {
+            "description": "From the closed list `partnerCompensationAsk`.",
+            "type": "string"
+          },
+          "message": {
+            "description": "The first message of the management request the complaint is.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reason": {
+            "description": "From the closed list `partnerComplaint`.",
+            "type": "string"
+          },
+          "requestedAmount": {
+            "description": "EGP, with a refund or damages asked only (PARTNER_AMOUNT_NOT_ASKED).",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,6}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "compensationAsk",
+          "message"
+        ],
+        "type": "object"
+      },
       "ComplaintAttachmentView": {
         "properties": {
           "contentType": {
@@ -7302,6 +7332,26 @@
         ],
         "type": "object"
       },
+      "ComplaintPartnerView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "ComplaintReasonDto": {
         "properties": {
           "reasonCode": {
@@ -7400,6 +7450,104 @@
         "required": [
           "total",
           "open"
+        ],
+        "type": "object"
+      },
+      "ComplaintView": {
+        "properties": {
+          "compensation": {
+            "description": "From the closed list `partnerCompensationDecision`: what the management arranges. A credit note is issued in finance.",
+            "nullable": true,
+            "type": "string"
+          },
+          "compensationAsk": {
+            "description": "From the closed list `partnerCompensationAsk`.",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "managementRequestId": {
+            "description": "The management request it is: the conversation is there.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "managementRequestNumber": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerComplaintOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "partner": {
+            "$ref": "#/components/schemas/ComplaintPartnerView"
+          },
+          "reason": {
+            "description": "From the closed list `partnerComplaint`.",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestNumber": {
+            "example": "SR-000123",
+            "type": "string"
+          },
+          "requestedAmount": {
+            "description": "EGP asked, with a refund or damages; never paid here.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "requestId",
+          "requestNumber",
+          "partner",
+          "reason",
+          "compensationAsk",
+          "requestedAmount",
+          "managementRequestId",
+          "managementRequestNumber",
+          "outcome",
+          "compensation",
+          "decidedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ComplaintViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -11087,6 +11235,26 @@
         },
         "required": [
           "decision"
+        ],
+        "type": "object"
+      },
+      "DecideComplaintDto": {
+        "properties": {
+          "compensation": {
+            "description": "From the closed list `partnerCompensationDecision`; `none` when not upheld.",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerComplaintOutcome"
+              }
+            ]
+          }
+        },
+        "required": [
+          "outcome",
+          "compensation"
         ],
         "type": "object"
       },
@@ -26473,6 +26641,13 @@
         ],
         "type": "object"
       },
+      "PartnerComplaintOutcome": {
+        "enum": [
+          "upheld",
+          "not_upheld"
+        ],
+        "type": "string"
+      },
       "PartnerDeskLinkView": {
         "properties": {
           "createdAt": {
@@ -26637,6 +26812,29 @@
         "required": [
           "priceItemId",
           "quantity"
+        ],
+        "type": "object"
+      },
+      "PartnerRequestRatingView": {
+        "properties": {
+          "comment": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "stars": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "stars",
+          "comment",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -27046,6 +27244,16 @@
             },
             "type": "array"
           },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatingSummaryView"
+              }
+            ],
+            "description": "The residents’ average and count, once three have rated it; null before.",
+            "nullable": true,
+            "type": "object"
+          },
           "serviceBuildings": {
             "description": "The buildings it serves, as the units name them. Empty: the whole compound.",
             "items": {
@@ -27082,7 +27290,8 @@
           "openLateTonight",
           "isNew",
           "favourite",
-          "timeZone"
+          "timeZone",
+          "rating"
         ],
         "type": "object"
       },
@@ -30858,6 +31067,26 @@
         ],
         "type": "object"
       },
+      "RatePartnerRequestDto": {
+        "properties": {
+          "comment": {
+            "description": "Read by the management alone; never by the partner.",
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "stars": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "stars"
+        ],
+        "type": "object"
+      },
       "RateRequestDto": {
         "properties": {
           "comment": {
@@ -30919,6 +31148,23 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RatingSummaryView": {
+        "properties": {
+          "average": {
+            "description": "One decimal.",
+            "example": "4.3",
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "average",
+          "count"
         ],
         "type": "object"
       },
@@ -32311,6 +32557,51 @@
         ],
         "type": "object"
       },
+      "RequestComplaintView": {
+        "properties": {
+          "compensation": {
+            "nullable": true,
+            "type": "string"
+          },
+          "compensationAsk": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "managementRequestId": {
+            "description": "The management request it is: the conversation is there.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "managementRequestNumber": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerComplaintOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "managementRequestId",
+          "managementRequestNumber",
+          "reason",
+          "compensationAsk",
+          "outcome",
+          "compensation"
+        ],
+        "type": "object"
+      },
       "RequestCreatedView": {
         "properties": {
           "createdAt": {
@@ -33479,6 +33770,15 @@
             ],
             "nullable": true
           },
+          "complaint": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestComplaintView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -33537,6 +33837,15 @@
             "nullable": true,
             "type": "string"
           },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestRatingView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "staffCount": {
             "description": "How many of the partner’s staff come (proposed or agreed).",
             "nullable": true,
@@ -33591,7 +33900,9 @@
           "note",
           "items",
           "lastActivityAt",
-          "passId"
+          "passId",
+          "rating",
+          "complaint"
         ],
         "type": "object"
       },
@@ -42241,6 +42552,16 @@
             },
             "type": "array"
           },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatingSummaryView"
+              }
+            ],
+            "description": "Every rating’s average and count; null with none.",
+            "nullable": true,
+            "type": "object"
+          },
           "serviceBuildings": {
             "description": "The buildings it serves, as the units name them. Empty: the whole compound.",
             "items": {
@@ -42294,6 +42615,7 @@
           "suspendedReason",
           "suspendedAt",
           "deskLink",
+          "rating",
           "updatedAt"
         ],
         "type": "object"
@@ -42774,6 +43096,64 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffPostView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffRatingView": {
+        "properties": {
+          "comment": {
+            "description": "As written; null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "partnerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestNumber": {
+            "example": "SR-000123",
+            "type": "string"
+          },
+          "stars": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "stars",
+          "comment",
+          "createdAt",
+          "requestId",
+          "requestNumber",
+          "partnerId"
+        ],
+        "type": "object"
+      },
+      "StaffRatingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffRatingView"
             },
             "type": "array"
           },
@@ -71472,6 +71852,63 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/partner-requests/{id}/complaint": {
+      "post": {
+        "operationId": "RequestFeedbackController_complain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplainPartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Complain about the partner on my request: a management request",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/partner-requests/{id}/decline-proposal": {
       "post": {
         "operationId": "PartnerRequestsController_declineProposal",
@@ -71579,6 +72016,54 @@
           }
         ],
         "summary": "Say the partner did not come",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}/rating": {
+      "post": {
+        "operationId": "RequestFeedbackController_rate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatePartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rate my request once it is done",
         "tags": [
           "partners"
         ],
@@ -81040,6 +81525,223 @@
         "summary": "Change a parking slot’s code or place",
         "tags": [
           "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-complaints": {
+      "get": {
+        "operationId": "StaffPartnerComplaintsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`false`: those waiting for a decision.",
+            "in": "query",
+            "name": "decided",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partnerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the complaints against partners, newest first",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-complaints/{id}": {
+      "get": {
+        "operationId": "StaffPartnerComplaintsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a complaint against a partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-complaints/{id}/decide": {
+      "post": {
+        "operationId": "StaffPartnerComplaintsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideComplaintDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decide a complaint, once",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-ratings": {
+      "get": {
+        "operationId": "StaffRatingsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partnerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffRatingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the ratings, newest first",
+        "tags": [
+          "partners"
         ],
         "x-no-store": true,
         "x-stability": "draft"

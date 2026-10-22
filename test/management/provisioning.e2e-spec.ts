@@ -2,6 +2,7 @@ import {
   DEFAULT_OFFICE_HOURS,
   DEFAULT_TOPICS as ADR_0039_TOPICS,
   RELEASE_TOPIC,
+  SYSTEM_TOPICS,
 } from '../../src/management/settings/defaults';
 
 /** ADR 0039's five, and the release topic of ADR 0058. */
@@ -60,7 +61,9 @@ describe('Management requests — a new compound', () => {
         }))
         .sort(byKey),
     ).toEqual(
-      [...DEFAULT_TOPICS].sort(byKey).map((t) => ({ ...t, active: true })),
+      [...DEFAULT_TOPICS, ...SYSTEM_TOPICS]
+        .sort(byKey)
+        .map((t) => ({ ...t, active: true })),
     );
     // Saturday to Thursday, 09:00 to 17:00; no Friday.
     expect(
@@ -80,8 +83,9 @@ describe('Management requests — a new compound', () => {
         ),
       );
     const [mine, theirs] = [await ids(a), await ids(b)];
-    expect(mine).toHaveLength(DEFAULT_TOPICS.length);
-    expect(theirs).toHaveLength(DEFAULT_TOPICS.length);
+    const count = DEFAULT_TOPICS.length + SYSTEM_TOPICS.length;
+    expect(mine).toHaveLength(count);
+    expect(theirs).toHaveLength(count);
     expect(mine.filter((id) => theirs.includes(id))).toEqual([]);
   });
 });

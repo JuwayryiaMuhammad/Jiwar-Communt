@@ -1201,6 +1201,22 @@ export const ErrorCode = {
    * revoked, expired, a suspended partner's or a suspended compound's (404).
    */
   PARTNER_DESK_NOT_FOUND: 'PARTNER_DESK_NOT_FOUND',
+  /** Rated already: a request is rated once (409). */
+  PARTNER_REQUEST_ALREADY_RATED: 'PARTNER_REQUEST_ALREADY_RATED',
+  /**
+   * Not a request this may be asked of (409, params.status): a rating needs
+   * one done; a complaint one done, not come, lapsed or cancelled by the
+   * partner.
+   */
+  PARTNER_REQUEST_NOT_CLOSED: 'PARTNER_REQUEST_NOT_CLOSED',
+  /** Too late: rated within params.days of done, complained within params.days of its end (409). */
+  PARTNER_REQUEST_WINDOW_CLOSED: 'PARTNER_REQUEST_WINDOW_CLOSED',
+  /** A complaint about this request exists already (409). */
+  PARTNER_COMPLAINT_EXISTS: 'PARTNER_COMPLAINT_EXISTS',
+  /** Unknown, or another compound's; for a resident also not theirs. */
+  PARTNER_COMPLAINT_NOT_FOUND: 'PARTNER_COMPLAINT_NOT_FOUND',
+  /** Decided already: a complaint is decided once (409). */
+  PARTNER_COMPLAINT_DECIDED: 'PARTNER_COMPLAINT_DECIDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1417,6 +1433,10 @@ export const FieldErrorCode = {
   PARTNER_WINDOW_LENGTH: 'PARTNER_WINDOW_LENGTH',
   /** Not one of the partner's announced price lines. */
   PARTNER_PRICE_ITEM_NOT_AVAILABLE: 'PARTNER_PRICE_ITEM_NOT_AVAILABLE',
+  /** An amount only with a refund or damages asked. */
+  PARTNER_AMOUNT_NOT_ASKED: 'PARTNER_AMOUNT_NOT_ASKED',
+  /** A complaint not upheld arranges no compensation. */
+  PARTNER_COMPENSATION_NOT_UPHELD: 'PARTNER_COMPENSATION_NOT_UPHELD',
 } as const;
 
 export type FieldErrorCode =

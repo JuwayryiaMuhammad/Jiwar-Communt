@@ -1899,6 +1899,22 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   partner_desk_links_revoked_shape: {},
   // pass_id only under IS NULL; gate_pass is NOT NULL.
   partner_requests_pass_shape: {},
+  partner_ratings_stars: {},
+  partner_ratings_comment: {
+    guarded: 'comment IS NULL is tested first; its length runs only on a value',
+  },
+  partner_complaints_reason: {},
+  partner_complaints_compensation_ask: {},
+  partner_complaints_amount: {
+    guarded:
+      'requested_amount IS NULL is tested first; its range runs only on a value',
+  },
+  // Nullable columns only under IS [NOT] NULL.
+  partner_complaints_decision_shape: {},
+  partner_complaints_decision: {
+    guarded:
+      'outcome IS NULL is tested first; with an outcome the decision shape has set the compensation',
+  },
 };
 
 interface Check {

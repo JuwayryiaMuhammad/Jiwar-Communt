@@ -8773,3 +8773,51 @@ model PartnerDeskLink {
   @@index([tenantId, partnerId, createdAt(sort: Desc)], map: "partner_desk_links_partner_idx")
   @@map("partner_desk_links")
 }
+
+/// A requester's rating of a request done (ADR 0060): once (the key),
+/// never changed but for its comment cleared by an erasure.
+model PartnerRating {
+  tenantId         String    @map("tenant_id") @db.Uuid
+  requestId        String    @map("request_id") @db.Uuid
+  partnerId        String    @map("partner_id") @db.Uuid
+  raterAccountId   String    @map("rater_account_id") @db.Uuid
+  stars            Int
+  comment          String?
+  commentClearedAt DateTime? @map("comment_cleared_at") @db.Timestamptz(3)
+  createdAt        DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@id([tenantId, requestId])
+  @@index([tenantId, partnerId, createdAt(sort: Desc), requestId], map: "partner_ratings_partner_idx")
+  @@map("partner_ratings")
+}
+
+/// A complaint against a partner about one request (ADR 0060): a
+/// management request on `partner_service`, linked here with what it asks
+/// and the management's decision, once. No money moves here.
+model PartnerComplaint {
+  id                   String    @id @db.Uuid
+  tenantId             String    @map("tenant_id") @db.Uuid
+  requestId            String    @map("request_id") @db.Uuid
+  partnerId            String    @map("partner_id") @db.Uuid
+  complainantId        String    @map("complainant_account_id") @db.Uuid
+  managementRequestId  String    @map("management_request_id") @db.Uuid
+  /// REASON_CODES.partnerComplaint
+  reason               String
+  /// REASON_CODES.partnerCompensationAsk
+  compensationAsk      String    @map("compensation_ask")
+  requestedAmount      Decimal?  @map("requested_amount") @db.Decimal(10, 2)
+  /// upheld | not_upheld
+  outcome              String?
+  /// REASON_CODES.partnerCompensationDecision
+  compensation         String?
+  decidedById          String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt            DateTime? @map("decided_at") @db.Timestamptz(3)
+  createdAt            DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, requestId], map: "partner_complaints_request_key")
+  @@unique([tenantId, managementRequestId], map: "partner_complaints_management_request_key")
+  @@index([tenantId, createdAt(sort: Desc), id], map: "partner_complaints_queue_idx")
+  @@index([tenantId, partnerId, createdAt(sort: Desc)], map: "partner_complaints_partner_idx")
+  @@map("partner_complaints")
+}

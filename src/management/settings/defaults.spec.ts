@@ -4,6 +4,7 @@ import {
   DEFAULT_OFFICE_HOURS,
   DEFAULT_TOPICS,
   RELEASE_TOPIC,
+  SYSTEM_TOPICS,
 } from './defaults';
 
 const backfill = readFileSync(
@@ -80,5 +81,27 @@ describe('default management topics and office hours', () => {
     expect(release).toContain(
       `'${t.key}', '${t.nameAr}', '${t.nameEn}', ${t.targetResponseHours}`,
     );
+  });
+
+  it('the system topics match their backfill (ADR 0060), row for row', () => {
+    const sql = readFileSync(
+      join(
+        __dirname,
+        '../../../prisma/migrations/20261112090500_partner_ratings_complaints/migration.sql',
+      ),
+      'utf8',
+    );
+    const rows = [
+      ...sql.matchAll(
+        /\('([a-z_]+)', '([^']+)', '([^']+)', (\d+)\)\) AS s\(key/g,
+      ),
+    ].map(([, key, nameAr, nameEn, hours]) => ({
+      key,
+      nameAr,
+      nameEn,
+      targetResponseHours: Number(hours),
+    }));
+    expect(rows).toEqual(SYSTEM_TOPICS);
+    expect(DEFAULT_TOPICS.map((t) => t.key)).not.toContain('partner_service');
   });
 });

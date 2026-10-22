@@ -31,19 +31,23 @@ describe('Management requests — topics, settings and office hours', () => {
       .data;
 
   describe('topics', () => {
-    it('the manager sees the five, by key; a resident sees the active ones without the state', async () => {
+    it('the manager sees the five and the system one, by key; a resident sees the active ones a person may pick, without the state', async () => {
       const all = await topics('/management/request-topics', s.manager.token);
       expect(all.map((t) => [t.key, t.targetResponseHours, t.active])).toEqual([
         ['billing_fees', 48, true],
         ['documents', 72, true],
         ['facilities', 72, true],
         ['general', 48, true],
+        // A complaint against a partner opens on it (ADR 0060).
+        ['partner_service', 48, true],
         // ADR 0058: the request to release a hold.
         ['release_request', 48, true],
         ['security_gate', 24, true],
       ]);
       const offered = await topics('/management-request-topics', s.owner.token);
-      expect(offered.map((t) => t.key)).toEqual(all.map((t) => t.key));
+      expect(offered.map((t) => t.key)).toEqual(
+        all.map((t) => t.key).filter((k) => k !== 'partner_service'),
+      );
       expect(Object.keys(offered[0]).sort()).toEqual([
         'id',
         'key',

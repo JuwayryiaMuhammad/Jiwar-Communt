@@ -2132,6 +2132,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'طلب أحد السكان خدمة من مقدم خدمة بلا رابط مكتب. حوّل الطلب إليه.',
     },
   },
+  'partner_complaint.decided': {
+    en: {
+      title: 'Your complaint was decided',
+      body: 'The management decided your complaint about a service partner.',
+    },
+    ar: {
+      title: 'تم البت في شكواك',
+      body: 'بتّت الإدارة في شكواك من مقدم خدمة.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -2,11 +2,17 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
+  requestRow as managementRequestRow,
+  topicRow,
+} from '../setup/management-rows';
+import {
   favouriteRow,
   partnerHoursRow,
   partnerRow,
   partnerServiceRow,
+  complaintRow,
   priceItemRow,
+  ratingRow,
   requestEventRow,
   requestItemRow,
   requestRow,
@@ -21,6 +27,7 @@ interface Side {
   partnerId: string;
   subcategoryId: string;
   requestId: string;
+  managementRequestId: string;
 }
 
 /**
@@ -138,6 +145,51 @@ const TABLES: Table[] = [
         actorAccountId: link.accountId,
       }),
   },
+  {
+    table: 'partner_ratings',
+    key: 'request_id',
+    insert: async (tx, own, link) =>
+      ratingRow(tx, {
+        tenantId: own.tenantId,
+        requestId:
+          own === link
+            ? await requestRow(tx, {
+                tenantId: own.tenantId,
+                partnerId: own.partnerId,
+                unitId: own.unitId,
+                requesterId: own.accountId,
+              })
+            : link.requestId,
+        partnerId: link.partnerId,
+        raterAccountId: link.accountId,
+      }),
+  },
+  {
+    table: 'partner_complaints',
+    insert: async (tx, own, link) =>
+      complaintRow(tx, {
+        tenantId: own.tenantId,
+        requestId:
+          own === link
+            ? await requestRow(tx, {
+                tenantId: own.tenantId,
+                partnerId: own.partnerId,
+                unitId: own.unitId,
+                requesterId: own.accountId,
+              })
+            : link.requestId,
+        partnerId: link.partnerId,
+        complainantId: link.accountId,
+        managementRequestId:
+          own === link
+            ? await managementRequestRow(tx, {
+                tenantId: own.tenantId,
+                topicId: await topicRow(tx, own.tenantId),
+                authorId: own.accountId,
+              })
+            : link.managementRequestId,
+      }),
+  },
 ];
 
 describe('RLS isolation — partners (ADR 0060)', () => {
@@ -158,6 +210,7 @@ describe('RLS isolation — partners (ADR 0060)', () => {
       partnerId: '',
       subcategoryId: '',
       requestId: '',
+      managementRequestId: '',
     };
     await inTenant(s, async (tx) => {
       s.partnerId = await partnerRow(tx, {
@@ -170,6 +223,11 @@ describe('RLS isolation — partners (ADR 0060)', () => {
         partnerId: s.partnerId,
         unitId: s.unitId,
         requesterId: s.accountId,
+      });
+      s.managementRequestId = await managementRequestRow(tx, {
+        tenantId,
+        topicId: await topicRow(tx, tenantId),
+        authorId: s.accountId,
       });
     });
     return s;

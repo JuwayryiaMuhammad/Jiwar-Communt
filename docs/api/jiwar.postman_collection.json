@@ -26799,6 +26799,54 @@
           }
         },
         {
+          "name": "Complain about the partner on my request: a management request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reason\": \"\",\n  \"compensationAsk\": \"\",\n  \"message\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `compensationAsk` | string | yes | From the closed list `partnerCompensationAsk`. |\n| `message` | string | yes | The first message of the management request the complaint is. |\n| `reason` | string | yes | From the closed list `partnerComplaint`. |\n| `requestedAmount` | string |  | EGP, with a refund or damages asked only (PARTNER_AMOUNT_NOT_ASKED). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests",
+                ":id",
+                "complaint"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests/:id/complaint",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Decline the window the partner proposed",
           "request": {
             "description": "**Responses:** 200",
@@ -26872,6 +26920,49 @@
                 "no-show"
               ],
               "raw": "{{baseUrl}}/api/v1/partner-requests/:id/no-show",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rate my request once it is done",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"stars\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `comment` | string |  | Read by the management alone; never by the partner. |\n| `stars` | number | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests",
+                ":id",
+                "rating"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests/:id/rating",
               "variable": [
                 {
                   "description": "",
@@ -27019,6 +27110,164 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "List the complaints against partners, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-complaints"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`false`: those waiting for a decision.",
+                  "disabled": true,
+                  "key": "decided",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "partnerId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-complaints"
+            }
+          }
+        },
+        {
+          "name": "Get a complaint against a partner",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-complaints",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-complaints/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decide a complaint, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"outcome\": \"upheld\",\n  \"compensation\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `compensation` | string | yes | From the closed list `partnerCompensationDecision`; `none` when not upheld. |\n| `outcome` | `upheld` \\| `not_upheld` | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-complaints",
+                ":id",
+                "decide"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-complaints/:id/decide",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the ratings, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-ratings"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "partnerId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-ratings"
             }
           }
         },

@@ -117,6 +117,8 @@ describe('Partners tables — CHECKs, triggers and privileges', () => {
       'partner_request_items',
       'partner_request_events',
       'partner_desk_links',
+      'partner_ratings',
+      'partner_complaints',
     ]) {
       const p = await privileges(table);
       expect({ table, select: p.select, truncate: p.truncate }).toEqual({
@@ -140,6 +142,8 @@ describe('Partners tables — CHECKs, triggers and privileges', () => {
       'partner_request_counters',
       'partner_requests',
       'partner_desk_links',
+      'partner_ratings',
+      'partner_complaints',
     ]);
   });
 
@@ -373,6 +377,69 @@ describe('Partners tables — CHECKs, triggers and privileges', () => {
            VALUES ('${newId()}', '${tenantId}', '${partnerId}', 'NOT-HEX', '${accountId}', now(), now() + interval '90 days')`,
         ),
       ).rejects.toThrow(/partner_desk_links_token_hash_hex/);
+    });
+  });
+
+  describe('ratings and complaints', () => {
+    it('a rating is one per request, 1 to 5; it never changes but for its comment cleared once', async () => {
+      const rate = (stars: number) =>
+        `INSERT INTO partner_ratings (tenant_id, request_id, partner_id, rater_account_id, stars, created_at)
+         VALUES ('${tenantId}', '${requestId}', '${partnerId}', '${accountId}', ${stars}, now())`;
+      await expect(asApp(rate(6))).rejects.toThrow(/partner_ratings_stars/);
+      await expect(asApp(rate(4), rate(5))).rejects.toThrow(
+        /partner_ratings_pkey/,
+      );
+      await expect(
+        asApp(
+          rate(4),
+          `UPDATE partner_ratings SET stars = 5 WHERE request_id = '${requestId}'`,
+        ),
+      ).rejects.toThrow(/never changes/);
+      await asApp(
+        rate(4),
+        `UPDATE partner_ratings SET comment = NULL, comment_cleared_at = now() WHERE request_id = '${requestId}'`,
+      );
+    });
+
+    it('a complaint keeps what it asked, is decided once, and a decision not upheld arranges nothing', async () => {
+      const id = newId();
+      const insert = (amount = 'NULL', ask = 'refund') =>
+        `INSERT INTO partner_complaints (id, tenant_id, request_id, partner_id, complainant_account_id, management_request_id, reason, compensation_ask, requested_amount, created_at)
+         SELECT '${id}', '${tenantId}', '${requestId}', '${partnerId}', '${accountId}', m.id, 'late', '${ask}', ${amount}, now()
+           FROM management_requests m LIMIT 1`;
+      const topic = `INSERT INTO management_request_topics (id, tenant_id, key, name_ar, name_en, target_response_hours, updated_at)
+         VALUES ('${newId()}', '${tenantId}', 'k_${id.slice(-8)}', 'م', 'T', 24, now())`;
+      const mr = `INSERT INTO management_requests (id, tenant_id, number, type, topic_id, author_account_id, cycle_started_at, response_due_at, last_activity_at, updated_at)
+         SELECT '${newId()}', '${tenantId}', 777777, 'question', t.id, '${accountId}', now(), now() + interval '1 day', now(), now()
+           FROM management_request_topics t WHERE t.key = 'k_${id.slice(-8)}'`;
+      await expect(asApp(topic, mr, insert('50', 'redo'))).rejects.toThrow(
+        /partner_complaints_amount/,
+      );
+      await expect(
+        asApp(
+          topic,
+          mr,
+          insert(),
+          `UPDATE partner_complaints SET outcome = 'not_upheld', compensation = 'credit_note', decided_at = now(), decided_by_account_id = '${accountId}' WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/partner_complaints_decision/);
+      await expect(
+        asApp(
+          topic,
+          mr,
+          insert(),
+          `UPDATE partner_complaints SET reason = 'damage' WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/decided once/);
+      await expect(
+        asApp(
+          topic,
+          mr,
+          insert(),
+          `UPDATE partner_complaints SET outcome = 'upheld', compensation = 'redo', decided_at = now(), decided_by_account_id = '${accountId}' WHERE id = '${id}'`,
+          `UPDATE partner_complaints SET compensation = 'none' WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/decided once/);
     });
   });
 });

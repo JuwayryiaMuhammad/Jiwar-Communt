@@ -12,6 +12,11 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { PartnersAccess } from '../access';
 import type { PartnerCategory } from '../categories';
 import { dbNow } from '../db-clock';
+import {
+  MIN_RATINGS_SHOWN,
+  RatingsService,
+  type RatingSummary,
+} from '../feedback/ratings.service';
 import { PartnerSettingsService } from '../settings/partner-settings.service';
 import { PartnersService, partnerNotFound } from '../setup/partners.service';
 import type { PartnerWithParts } from '../setup/views/partner.views';
@@ -37,6 +42,8 @@ export interface ResidentPartner extends PartnerWithParts {
   isNew: boolean;
   favourite: boolean;
   timeZone: string;
+  /** Once enough residents rated it; null before. */
+  rating: RatingSummary | null;
 }
 
 /**
@@ -54,6 +61,7 @@ export class DiscoveryService {
     private readonly access: PartnersAccess,
     private readonly partners: PartnersService,
     private readonly settings: PartnerSettingsService,
+    private readonly ratings: RatingsService,
   ) {}
 
   list(filter: PartnerFilter): Promise<ResidentPartner[]> {
@@ -113,6 +121,10 @@ export class DiscoveryService {
       ).map((f) => f.partnerId),
     );
     const newSince = now.getTime() - settings.newDays * DAY_MS;
+    const ratings = await this.ratings.summaries(
+      tx,
+      partners.map((p) => p.id),
+    );
     return partners.map((p) => ({
       ...p,
       openNow: openAt(p.hours, now, timezone),
@@ -125,6 +137,10 @@ export class DiscoveryService {
       isNew: p.listedAt.getTime() >= newSince,
       favourite: favourites.has(p.id),
       timeZone: timezone,
+      rating: (() => {
+        const r = ratings.get(p.id);
+        return r && r.count >= MIN_RATINGS_SHOWN ? r : null;
+      })(),
     }));
   }
 

@@ -7309,6 +7309,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/partner-requests/{id}/complaint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complain about the partner on my request: a management request */
+        post: operations["RequestFeedbackController_complain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/partner-requests/{id}/decline-proposal": {
         parameters: {
             query?: never;
@@ -7354,6 +7371,23 @@ export interface paths {
         put?: never;
         /** Say the partner did not come */
         post: operations["PartnerRequestsController_noShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rate my request once it is done */
+        post: operations["RequestFeedbackController_rate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10538,6 +10572,74 @@ export interface paths {
         head?: never;
         /** Change a parking slot’s code or place */
         patch: operations["ParkingSlotsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partner-complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the complaints against partners, newest first */
+        get: operations["StaffPartnerComplaintsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-complaints/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a complaint against a partner */
+        get: operations["StaffPartnerComplaintsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-complaints/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide a complaint, once */
+        post: operations["StaffPartnerComplaintsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the ratings, newest first */
+        get: operations["StaffRatingsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/partner-requests": {
@@ -17389,6 +17491,16 @@ export interface components {
             /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
             url: string | null;
         };
+        ComplainPartnerRequestDto: {
+            /** @description From the closed list `partnerCompensationAsk`. */
+            compensationAsk: string;
+            /** @description The first message of the management request the complaint is. */
+            message: string;
+            /** @description From the closed list `partnerComplaint`. */
+            reason: string;
+            /** @description EGP, with a refund or damages asked only (PARTNER_AMOUNT_NOT_ASKED). */
+            requestedAmount?: string | null;
+        };
         ComplaintAttachmentView: {
             /** @description image/jpeg, image/png, image/webp or application/pdf. */
             contentType: string;
@@ -17463,6 +17575,12 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        ComplaintPartnerView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
         ComplaintReasonDto: {
             /** @description A code of the action’s list: `neighbourComplaintResolve` or `neighbourComplaintDismiss` (INVALID_REASON_CODE names the allowed ones). */
             reasonCode: string;
@@ -17490,6 +17608,39 @@ export interface components {
         ComplaintUnitTallyView: {
             open: number;
             total: number;
+        };
+        ComplaintView: {
+            /** @description From the closed list `partnerCompensationDecision`: what the management arranges. A credit note is issued in finance. */
+            compensation: string | null;
+            /** @description From the closed list `partnerCompensationAsk`. */
+            compensationAsk: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The management request it is: the conversation is there.
+             */
+            managementRequestId: string;
+            /** @example MR-000123 */
+            managementRequestNumber: string;
+            outcome: components["schemas"]["PartnerComplaintOutcome"] | null;
+            partner: components["schemas"]["ComplaintPartnerView"];
+            /** @description From the closed list `partnerComplaint`. */
+            reason: string;
+            /** Format: uuid */
+            requestId: string;
+            /** @example SR-000123 */
+            requestNumber: string;
+            /** @description EGP asked, with a refund or damages; never paid here. */
+            requestedAmount: string | null;
+        };
+        ComplaintViewList: {
+            data: components["schemas"]["ComplaintView"][];
+            nextCursor: string | null;
         };
         CompleteGuardTaskDto: {
             note?: string;
@@ -18865,6 +19016,11 @@ export interface components {
             decision: "upheld" | "cancelled";
             /** @description With `cancelled` only, from `vehicleFineCancel` (default `appeal_accepted`). */
             reasonCode?: string;
+        };
+        DecideComplaintDto: {
+            /** @description From the closed list `partnerCompensationDecision`; `none` when not upheld. */
+            compensation: string;
+            outcome: components["schemas"]["PartnerComplaintOutcome"];
         };
         DecideDisputeDto: {
             /** @description On `accept` only: what to credit. */
@@ -23542,6 +23698,8 @@ export interface components {
             data: components["schemas"]["PartnerCategoryView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        PartnerComplaintOutcome: "upheld" | "not_upheld";
         PartnerDeskLinkView: {
             /** Format: date-time */
             createdAt: string;
@@ -23599,6 +23757,12 @@ export interface components {
              */
             priceItemId: string;
             quantity: number;
+        };
+        PartnerRequestRatingView: {
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            stars: number;
         };
         /** @enum {string} */
         PartnerRequestSide: "resident" | "partner" | "system";
@@ -23732,6 +23896,8 @@ export interface components {
             /** @description Open now. */
             openNow: boolean;
             priceItems: components["schemas"]["PartnerPriceItemView"][];
+            /** @description The residents’ average and count, once three have rated it; null before. */
+            rating: components["schemas"]["RatingSummaryView"] | null;
             /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
             serviceBuildings: string[];
             services: components["schemas"]["PartnerServiceView"][];
@@ -24980,6 +25146,11 @@ export interface components {
             /** @description Raised from the post of your open shift, a gate or a zone (ADR 0053). */
             type: components["schemas"]["EmergencyType"];
         };
+        RatePartnerRequestDto: {
+            /** @description Read by the management alone; never by the partner. */
+            comment?: string | null;
+            stars: number;
+        };
         RateRequestDto: {
             comment?: string;
             rating: number;
@@ -24995,6 +25166,14 @@ export interface components {
         RatingListItemViewList: {
             data: components["schemas"]["RatingListItemView"][];
             nextCursor: string | null;
+        };
+        RatingSummaryView: {
+            /**
+             * @description One decimal.
+             * @example 4.3
+             */
+            average: string;
+            count: number;
         };
         ReadAllView: {
             read: number;
@@ -25462,6 +25641,21 @@ export interface components {
             reasonCode: string;
             type: components["schemas"]["HoldType"];
         };
+        RequestComplaintView: {
+            compensation: string | null;
+            compensationAsk: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The management request it is: the conversation is there.
+             */
+            managementRequestId: string;
+            /** @example MR-000123 */
+            managementRequestNumber: string;
+            outcome: components["schemas"]["PartnerComplaintOutcome"] | null;
+            reason: string;
+        };
         RequestCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -25817,6 +26011,7 @@ export interface components {
             /** Format: date-time */
             closedAt: string | null;
             closedBy: components["schemas"]["PartnerRequestSide"] | null;
+            complaint: components["schemas"]["RequestComplaintView"] | null;
             /** Format: date-time */
             createdAt: string;
             /** @description Whether an accepted request gives the partner’s staff a gate pass. */
@@ -25845,6 +26040,7 @@ export interface components {
              * @description While proposed: the window the partner proposed.
              */
             proposedStartsAt: string | null;
+            rating: components["schemas"]["PartnerRequestRatingView"] | null;
             /** @description How many of the partner’s staff come (proposed or agreed). */
             staffCount: number | null;
             status: components["schemas"]["PartnerRequestStatus"];
@@ -28354,6 +28550,8 @@ export interface components {
             /** @description Where a new request is told (no resident data). Staff only. */
             notifyEmail: string | null;
             priceItems: components["schemas"]["PartnerPriceItemView"][];
+            /** @description Every rating’s average and count; null with none. */
+            rating: components["schemas"]["RatingSummaryView"] | null;
             /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
             serviceBuildings: string[];
             services: components["schemas"]["PartnerServiceView"][];
@@ -28502,6 +28700,23 @@ export interface components {
         };
         StaffPostViewList: {
             data: components["schemas"]["StaffPostView"][];
+            nextCursor: string | null;
+        };
+        StaffRatingView: {
+            /** @description As written; null once erased. */
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            requestId: string;
+            /** @example SR-000123 */
+            requestNumber: string;
+            stars: number;
+        };
+        StaffRatingViewList: {
+            data: components["schemas"]["StaffRatingView"][];
             nextCursor: string | null;
         };
         StaffRefView: {
@@ -41886,6 +42101,34 @@ export interface operations {
             };
         };
     };
+    RequestFeedbackController_complain: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplainPartnerRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintView"];
+                };
+            };
+        };
+    };
     PartnerRequestsController_declineProposal: {
         parameters: {
             query?: never;
@@ -41938,6 +42181,31 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RequestFeedbackController_rate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RatePartnerRequestDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -46697,6 +46965,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffParkingSlotView"];
+                };
+            };
+        };
+    };
+    StaffPartnerComplaintsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `false`: those waiting for a decision. */
+                decided?: "true" | "false";
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintViewList"];
+                };
+            };
+        };
+    };
+    StaffPartnerComplaintsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintView"];
+                };
+            };
+        };
+    };
+    StaffPartnerComplaintsController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideComplaintDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintView"];
+                };
+            };
+        };
+    };
+    StaffRatingsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRatingViewList"];
                 };
             };
         };

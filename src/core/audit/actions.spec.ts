@@ -84,6 +84,7 @@ describe('audit catalog', () => {
         'partner',
         'partner_subcategory',
         'partner_request',
+        'partner_complaint',
         'booking',
         'facility_closure',
         'booking_suspension',

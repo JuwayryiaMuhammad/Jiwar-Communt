@@ -62,6 +62,9 @@ import {
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ConsentsService } from '../../src/core/consents/consents.service';
 import { DeskLinks } from '../../src/partners/desk/desk-links';
+import { PartnerComplaintsService } from '../../src/partners/feedback/complaints.service';
+import { RelayService } from '../../src/partners/requests/relay.service';
+import { shiftWindow } from '../setup/partners';
 import { PartnerRequestsService } from '../../src/partners/requests/requests.service';
 import { PartnersService } from '../../src/partners/setup/partners.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
@@ -274,6 +277,9 @@ export interface World
   /** A's partner (a cleaner) and its live desk link's token (a secret). */
   aPartnerId: string;
   aDeskToken: string;
+  /** B's owner's complaint about a request B's partner did (accepted by
+   * B's relay, done). */
+  bComplaintIdOfPartner: string;
   /** B's vehicles and parking (ADR 0045): a pending vehicle of B's home. */
   bVehicleId: string;
   /** B's home's parking slot, a visitor area, and B's owner's booking there. */
@@ -889,6 +895,27 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       windowEndsAt: at(day(3), 12),
     }),
   );
+  const bDone = await asBOwner(() =>
+    h.moduleRef.get(PartnerRequestsService).create({
+      partnerId: bPartner.id,
+      unitId: b.homeUnitId,
+      category: 'home_services',
+      windowStartsAt: at(day(4), 10),
+      windowEndsAt: at(day(4), 11),
+    }),
+  );
+  await helpers.asManager(b, () =>
+    h.moduleRef.get(RelayService).act(bDone.id, 'accept', { staffCount: 1 }),
+  );
+  await shiftWindow(bDone.id, 'started');
+  await asBOwner(() => h.moduleRef.get(PartnerRequestsService).done(bDone.id));
+  const bPartnerComplaint = await asBOwner(() =>
+    h.moduleRef.get(PartnerComplaintsService).complain(bDone.id, {
+      reason: 'poor_quality',
+      compensationAsk: 'redo',
+      message: 'The kitchen was left as it was.',
+    }),
+  );
   const aPartner = await helpers.asManager(a, () =>
     h.moduleRef.get(PartnersService).create({
       nameEn: 'World desk cleaners',
@@ -1230,6 +1257,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPartnerRequestId: bPartnerRequest.id,
     aPartnerId: aPartner.id,
     aDeskToken: aDesk.token,
+    bComplaintIdOfPartner: bPartnerComplaint.id,
     bPreventiveServiceId: bPreventiveService.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,

@@ -644,4 +644,7 @@ export const PARTNERS_COVERAGE: readonly string[] = [
   'partner_desk.looked_up',
   'partner_desk_link.created',
   'partner_desk_link.revoked',
+  'partner_request.rated',
+  'partner_complaint.created',
+  'partner_complaint.decided',
 ];

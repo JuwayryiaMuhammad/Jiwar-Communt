@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import type {
   Partner,
+  PartnerComplaint,
+  PartnerRating,
   PartnerRequest,
   PartnerRequestEvent,
   PartnerRequestItem,
   PartnerSubcategory,
 } from '@prisma/client';
 import { CommunityPartnersPort } from '../../community';
+import { ManagementPartnersPort } from '../../management';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 
 /** The partner as a request names it. */
@@ -21,6 +24,8 @@ export interface RequestRead extends PartnerRequest {
   unitCode: string;
   subcategory: PartnerSubcategory | null;
   items: PartnerRequestItem[];
+  rating: PartnerRating | null;
+  complaint: (PartnerComplaint & { managementRequestNumber: string }) | null;
 }
 
 /**
@@ -30,7 +35,10 @@ export interface RequestRead extends PartnerRequest {
  */
 @Injectable()
 export class RequestReads {
-  constructor(private readonly community: CommunityPartnersPort) {}
+  constructor(
+    private readonly community: CommunityPartnersPort,
+    private readonly management: ManagementPartnersPort,
+  ) {}
 
   async many(
     tx: TenantTxClient,
@@ -73,12 +81,36 @@ export class RequestReads {
       where: { requestId: { in: rows.map((r) => r.id) } },
       orderBy: [{ requestId: 'asc' }, { position: 'asc' }],
     });
+    const ids = rows.map((r) => r.id);
+    const ratings = new Map(
+      (
+        await tx.partnerRating.findMany({ where: { requestId: { in: ids } } })
+      ).map((x) => [x.requestId, x]),
+    );
+    const complaints = await tx.partnerComplaint.findMany({
+      where: { requestId: { in: ids } },
+    });
+    const numbers = await this.management.numbers(
+      tx,
+      complaints.map((c) => c.managementRequestId),
+    );
+    const complaintOf = new Map(
+      complaints.map((c) => [
+        c.requestId,
+        {
+          ...c,
+          managementRequestNumber: numbers.get(c.managementRequestId) ?? '',
+        },
+      ]),
+    );
     return rows.map((r) => ({
       ...r,
       partner: partners.get(r.partnerId)!,
       unitCode: codes.get(r.unitId) ?? '',
       subcategory: r.subcategoryId ? (subs.get(r.subcategoryId) ?? null) : null,
       items: items.filter((i) => i.requestId === r.id),
+      rating: ratings.get(r.id) ?? null,
+      complaint: complaintOf.get(r.id) ?? null,
     }));
   }
 

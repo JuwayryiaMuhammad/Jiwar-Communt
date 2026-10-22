@@ -1,11 +1,19 @@
 import { Module } from '@nestjs/common';
 import { CommunityPartnersPortModule } from '../community';
 import { GateModule } from '../gate';
+import { ManagementModule } from '../management';
 import { PartnersAccess } from './access';
 import { DeskController } from './desk/desk.controller';
 import { DeskService } from './desk/desk.service';
 import { DeskLinks } from './desk/desk-links';
 import { DeskLinksController } from './desk/desk-links.controller';
+import {
+  RequestFeedbackController,
+  StaffPartnerComplaintsController,
+  StaffRatingsController,
+} from './feedback/feedback.controller';
+import { PartnerComplaintsService } from './feedback/complaints.service';
+import { RatingsService } from './feedback/ratings.service';
 import { PartnerEmailTemplates } from './notices/partner-email-templates';
 import { PartnerNotices } from './notices/partner-notices';
 import { PartnerActions } from './requests/partner-actions';
@@ -37,7 +45,7 @@ import { SubcategoriesService } from './setup/subcategories.service';
  * gate and management through their index; nothing imports it.
  */
 @Module({
-  imports: [CommunityPartnersPortModule, GateModule],
+  imports: [CommunityPartnersPortModule, GateModule, ManagementModule],
   controllers: [
     PartnerCategoriesController,
     StaffPartnerSubcategoriesController,
@@ -48,6 +56,9 @@ import { SubcategoriesService } from './setup/subcategories.service';
     DeskController,
     PartnerRequestsController,
     RelayController,
+    RequestFeedbackController,
+    StaffPartnerComplaintsController,
+    StaffRatingsController,
   ],
   providers: [
     PartnersAccess,
@@ -68,6 +79,8 @@ import { SubcategoriesService } from './setup/subcategories.service';
     PartnerRequestSweeps,
     ResidentPartnerItems,
     PartnerPasses,
+    RatingsService,
+    PartnerComplaintsService,
   ],
 })
 export class PartnersModule {}

@@ -9,6 +9,8 @@ import type {
 } from '@prisma/client';
 import { PARTNER_CATEGORIES, type PartnerCategory } from '../../categories';
 import { PARTNER_PRICE_UNITS, type PartnerPriceUnit } from '../defaults';
+import { RatingSummaryView } from '../../feedback/views/feedback.views';
+import type { RatingSummary } from '../../feedback/ratings.service';
 import { PartnerSubcategoryView } from './subcategory.views';
 
 /** A partner with what the views show of it. */
@@ -194,12 +196,19 @@ export class StaffPartnerView extends PartnerBaseView {
       'The live desk link, or null: none, revoked or expired (the management relays its requests).',
   })
   deskLink: PartnerDeskLinkView | null;
+  @ApiProperty({
+    type: RatingSummaryView,
+    nullable: true,
+    description: 'Every rating’s average and count; null with none.',
+  })
+  rating: RatingSummaryView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
 
   static from(
     p: PartnerWithParts,
     link: PartnerDeskLink | null = null,
+    rating: RatingSummary | null = null,
   ): StaffPartnerView {
     return {
       ...PartnerBaseView.base(p),
@@ -208,6 +217,7 @@ export class StaffPartnerView extends PartnerBaseView {
       suspendedReason: p.suspendedReason,
       suspendedAt: p.suspendedAt,
       deskLink: link && PartnerDeskLinkView.from(link),
+      rating: rating && RatingSummaryView.from(rating),
       updatedAt: p.updatedAt,
     };
   }

@@ -226,6 +226,42 @@ export class PartnerRequestStepView {
   }
 }
 
+/** A request's complaint, in short, as its requester sees it. */
+export class RequestComplaintView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'The management request it is: the conversation is there.',
+  })
+  managementRequestId: string;
+  @ApiProperty({ type: String, example: 'MR-000123' })
+  managementRequestNumber: string;
+  @ApiProperty({ type: String })
+  reason: string;
+  @ApiProperty({ type: String })
+  compensationAsk: string;
+  @ApiProperty({
+    enum: ['upheld', 'not_upheld'],
+    enumName: 'PartnerComplaintOutcome',
+    nullable: true,
+  })
+  outcome: 'upheld' | 'not_upheld' | null;
+  @ApiProperty({ type: String, nullable: true })
+  compensation: string | null;
+}
+
+/** A request's rating, as its requester gave it. */
+export class PartnerRequestRatingView {
+  @ApiProperty({ type: Number, minimum: 1, maximum: 5 })
+  stars: number;
+  @ApiProperty({ type: String, nullable: true })
+  comment: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+}
+
 /** A request as its requester sees it: everything it asked, and the partner to call. */
 export class ResidentPartnerRequestView extends PartnerRequestBaseView {
   @ApiProperty({ type: RequestPartnerView })
@@ -252,6 +288,10 @@ export class ResidentPartnerRequestView extends PartnerRequestBaseView {
       'The partner’s staff’s gate pass, in the requester’s name: open it as any of one’s passes (`GET /visitor-passes/{id}`).',
   })
   passId: string | null;
+  @ApiProperty({ type: PartnerRequestRatingView, nullable: true })
+  rating: PartnerRequestRatingView | null;
+  @ApiProperty({ type: RequestComplaintView, nullable: true })
+  complaint: RequestComplaintView | null;
   @ApiProperty({
     type: [PartnerRequestStepView],
     required: false,
@@ -276,6 +316,20 @@ export class ResidentPartnerRequestView extends PartnerRequestBaseView {
       items: r.items.map((i) => PartnerRequestItemView.from(i)),
       lastActivityAt: r.lastActivityAt,
       passId: r.passId,
+      rating: r.rating && {
+        stars: r.rating.stars,
+        comment: r.rating.comment,
+        createdAt: r.rating.createdAt,
+      },
+      complaint: r.complaint && {
+        id: r.complaint.id,
+        managementRequestId: r.complaint.managementRequestId,
+        managementRequestNumber: r.complaint.managementRequestNumber,
+        reason: r.complaint.reason,
+        compensationAsk: r.complaint.compensationAsk,
+        outcome: r.complaint.outcome as RequestComplaintView['outcome'],
+        compensation: r.complaint.compensation,
+      },
       ...(r.history
         ? { history: r.history.map((e) => PartnerRequestStepView.from(e)) }
         : {}),

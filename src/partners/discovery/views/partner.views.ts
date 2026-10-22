@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { RatingSummaryView } from '../../feedback/views/feedback.views';
 import { PartnerBaseView } from '../../setup/views/partner.views';
 import type { ResidentPartner } from '../discovery.service';
 
@@ -29,6 +30,13 @@ export class PartnerView extends PartnerBaseView {
     description: 'The time zone the hours are in.',
   })
   timeZone: string;
+  @ApiProperty({
+    type: RatingSummaryView,
+    nullable: true,
+    description:
+      'The residents’ average and count, once three have rated it; null before.',
+  })
+  rating: RatingSummaryView | null;
 
   static from(p: ResidentPartner): PartnerView {
     return {
@@ -38,6 +46,7 @@ export class PartnerView extends PartnerBaseView {
       isNew: p.isNew,
       favourite: p.favourite,
       timeZone: p.timeZone,
+      rating: p.rating && RatingSummaryView.from(p.rating),
     };
   }
 }

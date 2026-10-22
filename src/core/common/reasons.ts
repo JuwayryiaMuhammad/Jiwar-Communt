@@ -711,4 +711,24 @@ export const REASON_CODES = {
   partnerRequestDecline: ['unavailable', 'out_of_area', 'not_offered', 'other'],
   partnerRequestPartnerCancel: ['unavailable', 'emergency', 'other'],
   partnerRequestSystemCancel: ['partner_suspended', 'requester_left'],
+  // A complaint against a partner (ADR 0060): what went wrong, what the
+  // requester asks for, and what the management decided to arrange (a
+  // credit note is issued in finance, by its own route: no money moves
+  // here).
+  partnerComplaint: [
+    'no_show',
+    'late',
+    'poor_quality',
+    'overcharged',
+    'damage',
+    'conduct',
+    'other',
+  ],
+  partnerCompensationAsk: ['none', 'refund', 'redo', 'damages'],
+  partnerCompensationDecision: [
+    'none',
+    'redo',
+    'partner_refund',
+    'credit_note',
+  ],
 } as const;

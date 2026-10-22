@@ -610,4 +610,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   partner_desk_links_one_live: null,
   // A pass is one request's, set once by the service under its lock.
   partner_requests_pass_key: null,
+  // Complaints (ADR 0060): one per request, checked first under the
+  // request's lock (PARTNER_COMPLAINT_EXISTS); its management request is
+  // opened in the same transaction.
+  partner_complaints_tenant_id_id_key: null,
+  partner_complaints_request_key: null,
+  partner_complaints_management_request_key: null,
 };

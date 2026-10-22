@@ -400,6 +400,94 @@ describe('Audit coverage — partners', () => {
     });
   });
 
+  describe('ratings and complaints', () => {
+    let partnerId: string;
+    let token: string;
+    /** A request done: accepted on the desk, its window started, said done. */
+    const done = async () => {
+      const id = (await p.request(s.alice, s.homeA.id, partnerId)).id;
+      await p.desk(token, `/requests/${id}/accept`).expect(200);
+      await shiftWindow(id, 'started');
+      await p
+        .http('post', `/partner-requests/${id}/done`, s.alice.token)
+        .expect(200);
+      return id;
+    };
+
+    beforeAll(async () => {
+      partnerId = await p.partner(s.c, s.keeper);
+      token = await p.deskLink(s.keeper, partnerId);
+      await p.consent(s.alice);
+    });
+
+    it('partner_request.rated — that it was, never how', async () => {
+      const id = await done();
+      await p
+        .http('post', `/partner-requests/${id}/rating`, s.alice.token, {
+          stars: 2,
+          comment: `${MARKER} late again`,
+        })
+        .expect(200);
+      const row = await single('partner_request.rated', id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: s.alice.id,
+        targetType: 'partner_request',
+      });
+      expect(row.metadata).toEqual({
+        number: expect.any(Number) as number,
+        partnerId,
+        comment: true,
+      });
+    });
+
+    it('partner_complaint.created and .decided — codes, ids and the amount; never the words', async () => {
+      const id = await done();
+      const res = await p
+        .http('post', `/partner-requests/${id}/complaint`, s.alice.token, {
+          reason: 'damage',
+          compensationAsk: 'damages',
+          requestedAmount: '300',
+          message: `${MARKER} they broke the vase`,
+        })
+        .expect(201);
+      const complaintId = (res.body as { id: string }).id;
+      const created = await single('partner_complaint.created', complaintId);
+      expect(created).toMatchObject({
+        actorType: 'account',
+        actorId: s.alice.id,
+        targetType: 'partner_complaint',
+      });
+      expect(created.metadata).toMatchObject({
+        requestId: id,
+        partnerId,
+        reason: 'damage',
+        compensationAsk: 'damages',
+        requestedAmount: '300',
+        managementRequestId: expect.any(String) as string,
+      });
+      await p
+        .http(
+          'post',
+          `/staff/partner-complaints/${complaintId}/decide`,
+          s.keeper.token,
+          { outcome: 'upheld', compensation: 'partner_refund' },
+        )
+        .expect(200);
+      const decided = await single('partner_complaint.decided', complaintId);
+      expect(decided).toMatchObject({
+        actorType: 'account',
+        actorId: s.keeper.id,
+      });
+      expect(decided.metadata).toEqual({
+        requestId: id,
+        partnerId,
+        outcome: 'upheld',
+        compensation: 'partner_refund',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every partners entry has a scenario above, and nothing of the domain is left out of the list', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

@@ -6,6 +6,12 @@ import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
 import { TenantTx } from '../../core/database/tenant-tx.service';
+import { SYSTEM_TOPICS } from '../settings/defaults';
+
+/** The system topics' keys: never offered to residents, never picked by them (ADR 0060). */
+export const SYSTEM_TOPIC_KEYS: readonly string[] = SYSTEM_TOPICS.map(
+  (t) => t.key,
+);
 
 export interface TopicInput {
   key: string;
@@ -76,7 +82,7 @@ export class TopicsService {
   options(): Promise<TopicRead[]> {
     return this.tenantTx.withTenantTx((tx) =>
       tx.managementRequestTopic.findMany({
-        where: { active: true },
+        where: { active: true, key: { notIn: [...SYSTEM_TOPIC_KEYS] } },
         orderBy: [{ key: 'asc' }],
         include: WITH_OWNER,
       }),

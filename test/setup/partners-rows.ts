@@ -197,3 +197,44 @@ export async function requestEventRow(
   });
   return id;
 }
+
+/** A rating of a request, four stars. */
+export async function ratingRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    requestId: string;
+    partnerId: string;
+    raterAccountId: string;
+  },
+): Promise<string> {
+  await tx.partnerRating.create({
+    data: { ...input, stars: 4, comment: 'On time', createdAt: new Date() },
+  });
+  return input.requestId;
+}
+
+/** A complaint about a request, linked to a management request. */
+export async function complaintRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    requestId: string;
+    partnerId: string;
+    complainantId: string;
+    managementRequestId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerComplaint.create({
+    data: {
+      id,
+      ...input,
+      reason: 'late',
+      compensationAsk: 'refund',
+      requestedAmount: '100.00',
+      createdAt: new Date(),
+    },
+  });
+  return id;
+}

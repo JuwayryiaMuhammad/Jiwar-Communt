@@ -1518,6 +1518,16 @@ export const AUDIT_ACTIONS = {
   // revokedCount. Never the token or its hash.
   'partner_desk_link.created': { log: 'tenant', target: 'partner' },
   'partner_desk_link.revoked': { log: 'tenant', target: 'partner' },
+  // A rating (that it was, never how). metadata: number, partnerId,
+  // comment (whether there is one).
+  'partner_request.rated': { log: 'tenant', target: 'partner_request' },
+  // A complaint against a partner (a management request on
+  // `partner_service`). metadata: requestId, requestNumber, partnerId,
+  // managementRequestId, reason, compensationAsk, requestedAmount. Never
+  // its words: they are the management request's first message.
+  'partner_complaint.created': { log: 'tenant', target: 'partner_complaint' },
+  // metadata: requestId, partnerId, outcome, compensation.
+  'partner_complaint.decided': { log: 'tenant', target: 'partner_complaint' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

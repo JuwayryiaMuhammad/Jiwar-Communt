@@ -1982,6 +1982,18 @@ export const NOTIFICATION_KINDS = {
     target: 'partner_request',
     params: { category: {} },
   },
+  /**
+   * The management decided the requester's complaint against a partner
+   * (ADR 0060): `outcome` and `compensation` are codes. Its conversation is
+   * the management request's, with its own notices.
+   */
+  'partner_complaint.decided': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner_complaint',
+    params: { outcome: {}, compensation: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type {
   Partner,
+  PartnerDeskLink,
   PartnerHours,
   PartnerPriceItem,
   PartnerService,
@@ -149,6 +150,22 @@ export class PartnerBaseView {
   }
 }
 
+/** A partner's live desk link as the staff see it: never its token. */
+export class PartnerDeskLinkView {
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'It stops working then: make a new one before.',
+  })
+  expiresAt: Date;
+
+  static from(l: PartnerDeskLink): PartnerDeskLinkView {
+    return { createdAt: l.createdAt, expiresAt: l.expiresAt };
+  }
+}
+
 export const PARTNER_STATUSES = ['active', 'suspended'] as const;
 export type PartnerStatus = (typeof PARTNER_STATUSES)[number];
 
@@ -170,16 +187,27 @@ export class StaffPartnerView extends PartnerBaseView {
   suspendedReason: string | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   suspendedAt: Date | null;
+  @ApiProperty({
+    type: PartnerDeskLinkView,
+    nullable: true,
+    description:
+      'The live desk link, or null: none, revoked or expired (the management relays its requests).',
+  })
+  deskLink: PartnerDeskLinkView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
 
-  static from(p: PartnerWithParts): StaffPartnerView {
+  static from(
+    p: PartnerWithParts,
+    link: PartnerDeskLink | null = null,
+  ): StaffPartnerView {
     return {
       ...PartnerBaseView.base(p),
       notifyEmail: p.notifyEmail,
       status: p.status as PartnerStatus,
       suspendedReason: p.suspendedReason,
       suspendedAt: p.suspendedAt,
+      deskLink: link && PartnerDeskLinkView.from(link),
       updatedAt: p.updatedAt,
     };
   }

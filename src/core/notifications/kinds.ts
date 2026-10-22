@@ -1920,6 +1920,68 @@ export const NOTIFICATION_KINDS = {
     target: 'gate_device',
     params: { reason: {} },
   },
+  // Partners (ADR 0060): to the requester, of the partner's and the
+  // system's moves on their request (their own tell nobody); codes only,
+  // never the partner's name, a time or a unit.
+  /** The partner accepted the request. */
+  'partner_request.accepted': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner_request',
+    params: {},
+  },
+  /** The partner declined it; `reason` from `partnerRequestDecline`. */
+  'partner_request.declined': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner_request',
+    params: { reason: {} },
+  },
+  /** The partner proposed another window: the requester accepts or declines. */
+  'partner_request.proposed': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner_request',
+    params: {},
+  },
+  /** The partner cancelled an accepted request; `side` and `reason` are codes. */
+  'partner_request.cancelled': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner_request',
+    params: { side: {}, reason: {} },
+  },
+  /** The partner marked it done: the requester may rate it. */
+  'partner_request.done': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner_request',
+    params: {},
+  },
+  /** Nobody accepted it before its window started. */
+  'partner_request.expired': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner_request',
+    params: {},
+  },
+  /**
+   * A request to a partner with no live desk link, to the `partners.manage`
+   * holders: the management relays it. `category` the code.
+   */
+  'partner_request.awaiting_relay': {
+    priority: 'normal',
+    category: 'partners',
+    critical: false,
+    target: 'partner_request',
+    params: { category: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

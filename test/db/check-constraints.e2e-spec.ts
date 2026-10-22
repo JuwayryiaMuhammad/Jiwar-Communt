@@ -1857,6 +1857,46 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   partner_price_items_price_range: {},
   partner_price_items_unit: {},
   partner_price_items_position_range: {},
+  partner_requests_number_positive: {},
+  partner_requests_category: {},
+  partner_requests_status: {},
+  partner_requests_windows: {
+    guarded:
+      'proposed_starts_at IS NULL and agreed_starts_at IS NULL are tested first; each comparison runs only on a window that is there (the state shape sets its end with its start)',
+  },
+  partner_requests_note_length: {
+    guarded: 'note IS NULL is tested first; its length runs only on a value',
+  },
+  partner_requests_note_cleared: {},
+  partner_requests_staff_count: {
+    guarded:
+      'staff_count IS NULL is tested first; its range runs only on a value',
+  },
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  partner_requests_state_shape: {},
+  partner_requests_closed_by: {
+    guarded:
+      'closed_by IS NULL is tested first; the comparisons run only on a value',
+  },
+  partner_requests_close_reason: {
+    guarded:
+      'close_reason IS NULL is tested first; with a reason the state shape has set closed_by',
+  },
+  partner_request_items_shape: {},
+  partner_request_items_unit: {},
+  partner_request_events_kind: {},
+  partner_request_events_actor: {},
+  partner_request_events_window: {
+    guarded:
+      'starts_at IS NULL is tested first; ends_at is then NOT NULL by the conjunct before',
+  },
+  partner_request_events_reason_format: {
+    guarded:
+      'reason_code IS NULL is tested first; the pattern runs only on a value',
+  },
+  partner_desk_links_token_hash_hex: {},
+  partner_desk_links_validity: {},
+  partner_desk_links_revoked_shape: {},
 };
 
 interface Check {

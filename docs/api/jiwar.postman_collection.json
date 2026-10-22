@@ -26623,6 +26623,266 @@
           }
         },
         {
+          "name": "List my requests to partners, newest activity first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`live`: pending, proposed, accepted. `closed`: the rest.",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests"
+            }
+          }
+        },
+        {
+          "name": "Ask a partner for a service at a unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"partnerId\": \"\",\n  \"unitId\": \"\",\n  \"category\": \"gas_water\",\n  \"windowStartsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"windowEndsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `category` | `gas_water` \\| `pharmacy` \\| `grocery` \\| `home_services` \\| `laundry` \\| `gardening` \\| `beauty_at_home` \\| `repair` \\| `pets` \\| `events` \\| `moving_storage` \\| `car_services` \\| `elderly_care` | yes | One the partner offers; its consent `partner_share_<category>` granted at the current version (CONSENT_REQUIRED). |\n| `gatePass` | boolean |  | Default true: once accepted, the partner’s staff get a one-time gate pass for the window, in the requester’s name. |\n| `items` | object[] |  | Announced price lines, copied with the request as they are now. |\n| `note` | string |  | For the partner, while the category’s consent holds. Never put a phone or anyone’s name here. |\n| `partnerId` | string (uuid) | yes |  |\n| `subcategoryId` | string (uuid) |  | An active sub-category of the category, offered by the partner or covered by its whole category. |\n| `unitId` | string (uuid) | yes | A unit the caller may invite visitors to (PARTNER_REQUEST_NOT_ALLOWED otherwise). |\n| `windowEndsAt` | string (date-time) | yes | 30 minutes to 8 hours after the start (PARTNER_WINDOW_LENGTH). |\n| `windowStartsAt` | string (date-time) | yes | 15 minutes to 14 days from now (PARTNER_WINDOW_TOO_SOON / _TOO_FAR). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests"
+            }
+          }
+        },
+        {
+          "name": "Get one of my requests, with its history",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take the window the partner proposed",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests",
+                ":id",
+                "accept-proposal"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests/:id/accept-proposal",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel my request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `partnerRequestResidentCancel`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decline the window the partner proposed",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests",
+                ":id",
+                "decline-proposal"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests/:id/decline-proposal",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Say the service was given",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests",
+                ":id",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests/:id/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Say the partner did not come",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-requests",
+                ":id",
+                "no-show"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-requests/:id/no-show",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the active partners: by category, open now, open late tonight, new, favourites",
           "request": {
             "description": "**Responses:** 200",
@@ -26752,6 +27012,285 @@
                 "favourite"
               ],
               "raw": "{{baseUrl}}/api/v1/partners/:id/favourite",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the requests to partners, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-requests"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "partnerId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-requests"
+            }
+          }
+        },
+        {
+          "name": "Get a request to a partner",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-requests",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-requests/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept a request for its partner",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"staffCount\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `staffCount` | number |  | How many of its staff come (the gate pass lets in as many). Default 1. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-requests",
+                ":id",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-requests/:id/accept",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel an accepted request for its partner",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `partnerRequestPartnerCancel`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-requests",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-requests/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decline a request for its partner",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `partnerRequestDecline`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-requests",
+                ":id",
+                "decline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-requests/:id/decline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a request done for its partner",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-requests",
+                ":id",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-requests/:id/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Propose another window for its partner",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"windowStartsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"windowEndsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `staffCount` | number |  | How many of its staff come (the gate pass lets in as many). Default 1. |\n| `windowEndsAt` | string (date-time) | yes | 30 minutes to 8 hours after the start. |\n| `windowStartsAt` | string (date-time) | yes | 15 minutes to 14 days from now. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-requests",
+                ":id",
+                "propose"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-requests/:id/propose",
               "variable": [
                 {
                   "description": "",
@@ -27041,6 +27580,65 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/partners/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Make a new desk link for a partner (the one before stops working)",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id",
+                "desk-link"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id/desk-link",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stop a partner’s desk link now",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id",
+                "desk-link",
+                "revoke"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id/desk-link/revoke",
               "variable": [
                 {
                   "description": "",
@@ -29749,6 +30347,285 @@
                 "lookup"
               ],
               "raw": "{{baseUrl}}/api/v1/public/child-pickups/lookup"
+            }
+          }
+        },
+        {
+          "name": "Open a partner’s desk from its link",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes | The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "partner-desk",
+                "lookup"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/partner-desk/lookup"
+            }
+          }
+        },
+        {
+          "name": "Accept a request on the desk",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `staffCount` | number |  | How many of its staff come (the gate pass lets in as many). Default 1. |\n| `token` | string | yes | The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "partner-desk",
+                "requests",
+                ":id",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/partner-desk/requests/:id/accept",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel an accepted request on the desk",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\",\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `partnerRequestPartnerCancel`. |\n| `token` | string | yes | The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "partner-desk",
+                "requests",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/partner-desk/requests/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decline a request on the desk",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\",\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `partnerRequestDecline`. |\n| `token` | string | yes | The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "partner-desk",
+                "requests",
+                ":id",
+                "decline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/partner-desk/requests/:id/decline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a request done on the desk",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes | The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "partner-desk",
+                "requests",
+                ":id",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/partner-desk/requests/:id/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Propose another window on the desk",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"windowStartsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"windowEndsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `staffCount` | number |  | How many of its staff come (the gate pass lets in as many). Default 1. |\n| `token` | string | yes | The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. |\n| `windowEndsAt` | string (date-time) | yes | 30 minutes to 8 hours after the start. |\n| `windowStartsAt` | string (date-time) | yes | 15 minutes to 14 days from now. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "partner-desk",
+                "requests",
+                ":id",
+                "propose"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/partner-desk/requests/:id/propose",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

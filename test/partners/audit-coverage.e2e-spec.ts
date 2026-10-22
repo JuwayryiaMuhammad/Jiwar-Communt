@@ -1,9 +1,15 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
+import {
+  PARTNER_EXPIRE_SWEEP,
+  PARTNER_LAPSE_SWEEP,
+} from '../../src/partners/requests/request-sweeps';
 import { PARTNERS_COVERAGE } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import {
+  asSuperuser,
   partnersHelpers,
+  shiftWindow,
   type PartnersSetUp,
   type Who,
 } from '../setup/partners';
@@ -205,6 +211,192 @@ describe('Audit coverage — partners', () => {
         newDays: { from: 30, to: 10 },
         deskLinkDays: { from: 90, to: 30 },
       });
+    });
+  });
+
+  describe('requests, the desk and the relay', () => {
+    let partnerId: string;
+    let token: string;
+    const ask = async (over: Record<string, unknown> = {}) =>
+      (await p.request(s.alice, s.homeA.id, partnerId, over)).id;
+    const actor = (who: Who) => ({
+      actorType: 'account',
+      actorId: who.id,
+      targetType: 'partner_request',
+    });
+    const system = { actorType: 'system', actorId: null };
+
+    beforeAll(async () => {
+      partnerId = await p.partner(s.c, s.keeper);
+      await p.consent(s.alice);
+      await p
+        .http('patch', '/staff/partner-settings', s.manager.token, {
+          maxLiveRequests: 20,
+        })
+        .expect(200);
+    });
+
+    it('partner_desk_link.created and .revoked — ids, the end and counts; never the token', async () => {
+      const first = await p.deskLink(s.keeper, partnerId);
+      token = await p.deskLink(s.keeper, partnerId);
+      const created = await rows('partner_desk_link.created', partnerId);
+      expect(created).toHaveLength(2);
+      expect(created[1]).toMatchObject({
+        ...actor(s.keeper),
+        targetType: 'partner',
+      });
+      expect(created.map((r) => r.metadata)).toEqual(
+        expect.arrayContaining([
+          {
+            deskLinkId: expect.any(String) as string,
+            expiresAt: expect.any(String) as string,
+            revokedCount: 1,
+          },
+        ]),
+      );
+      for (const row of created) {
+        expect(JSON.stringify(row)).not.toContain(first);
+        expect(JSON.stringify(row)).not.toContain(token);
+      }
+      const other = await p.partner(s.c, s.keeper);
+      await p.deskLink(s.keeper, other);
+      await p
+        .http(
+          'post',
+          `/staff/partners/${other}/desk-link/revoke`,
+          s.keeper.token,
+        )
+        .expect(204);
+      const revoked = await single('partner_desk_link.revoked', other);
+      expect(revoked.metadata).toEqual({ revokedCount: 1 });
+    });
+
+    it('partner_request.created — ids, codes, counts and the window; never the note', async () => {
+      const id = await ask({ note: `${MARKER} ring twice` });
+      const row = await single('partner_request.created', id);
+      expect(row).toMatchObject(actor(s.alice));
+      expect(row.metadata).toMatchObject({
+        partnerId,
+        unitId: s.homeA.id,
+        category: 'home_services',
+        gatePass: true,
+        itemCount: 0,
+        note: true,
+        startsAt: expect.any(String) as string,
+        endsAt: expect.any(String) as string,
+      });
+    });
+
+    it('partner_desk.looked_up — the system, ids and counts', async () => {
+      await p.desk(token, '/lookup').expect(200);
+      const found = await rows('partner_desk.looked_up', partnerId);
+      expect(found.at(-1)).toMatchObject({ ...system, targetType: 'partner' });
+      expect(found.at(-1)!.metadata).toEqual({
+        deskLinkId: expect.any(String) as string,
+        requestCount: expect.any(Number) as number,
+        withheldCount: 0,
+      });
+    });
+
+    it('partner_request.accepted on the desk — the system, via the desk, the window and the staff', async () => {
+      const id = await ask();
+      await p
+        .desk(token, `/requests/${id}/accept`, { staffCount: 2 })
+        .expect(200);
+      const row = await single('partner_request.accepted', id);
+      expect(row).toMatchObject({ ...system, targetType: 'partner_request' });
+      expect(row.metadata).toMatchObject({
+        from: 'pending',
+        to: 'accepted',
+        via: 'partner_desk',
+        deskLinkId: expect.any(String) as string,
+        staffCount: 2,
+      });
+    });
+
+    it('partner_request.declined through the relay — the staff member, via the relay, the code', async () => {
+      const id = await ask();
+      await p
+        .http('post', `/staff/partner-requests/${id}/decline`, s.keeper.token, {
+          reasonCode: 'not_offered',
+        })
+        .expect(200);
+      const row = await single('partner_request.declined', id);
+      expect(row).toMatchObject(actor(s.keeper));
+      expect(row.metadata).toMatchObject({
+        via: 'relay',
+        reasonCode: 'not_offered',
+      });
+    });
+
+    it('partner_request.proposed, .proposal_accepted and .cancelled (a proposal declined)', async () => {
+      const window = p.windowOf(15, 16, 3);
+      const yes = await ask();
+      await p.desk(token, `/requests/${yes}/propose`, window).expect(200);
+      await p
+        .http('post', `/partner-requests/${yes}/accept-proposal`, s.alice.token)
+        .expect(200);
+      expect(
+        (await single('partner_request.proposed', yes)).metadata,
+      ).toMatchObject({ via: 'partner_desk', startsAt: window.windowStartsAt });
+      expect(
+        await single('partner_request.proposal_accepted', yes),
+      ).toMatchObject(actor(s.alice));
+      const no = await ask();
+      await p.desk(token, `/requests/${no}/propose`, window).expect(200);
+      await p
+        .http('post', `/partner-requests/${no}/decline-proposal`, s.alice.token)
+        .expect(200);
+      expect(
+        (await single('partner_request.cancelled', no)).metadata,
+      ).toMatchObject({ via: 'resident', reasonCode: 'proposal_declined' });
+    });
+
+    it('partner_request.done and .no_show — the resident, once the window allows', async () => {
+      const done = await ask();
+      await p.desk(token, `/requests/${done}/accept`).expect(200);
+      await shiftWindow(done, 'started');
+      await p
+        .http('post', `/partner-requests/${done}/done`, s.alice.token)
+        .expect(200);
+      expect(await single('partner_request.done', done)).toMatchObject(
+        actor(s.alice),
+      );
+      const absent = await ask();
+      await p.desk(token, `/requests/${absent}/accept`).expect(200);
+      await shiftWindow(absent, 'ended');
+      await p
+        .http('post', `/partner-requests/${absent}/no-show`, s.alice.token)
+        .expect(200);
+      expect(await single('partner_request.no_show', absent)).toMatchObject(
+        actor(s.alice),
+      );
+    });
+
+    it('partner_request.expired and .lapsed — the system, by the sweeps', async () => {
+      const expired = await ask();
+      await shiftWindow(expired, 'started');
+      await p.sweep(PARTNER_EXPIRE_SWEEP);
+      expect(await single('partner_request.expired', expired)).toMatchObject({
+        ...system,
+        targetType: 'partner_request',
+      });
+      const lapsed = await ask();
+      await p.desk(token, `/requests/${lapsed}/accept`).expect(200);
+      await shiftWindow(lapsed, 'ended');
+      await asSuperuser(
+        `UPDATE partner_requests
+            SET asked_starts_at = asked_starts_at - interval '8 days',
+                asked_ends_at = asked_ends_at - interval '8 days',
+                agreed_starts_at = agreed_starts_at - interval '8 days',
+                agreed_ends_at = agreed_ends_at - interval '8 days'
+          WHERE id = $1`,
+        [lapsed],
+      );
+      await p.sweep(PARTNER_LAPSE_SWEEP);
+      expect(
+        (await single('partner_request.lapsed', lapsed)).metadata,
+      ).toMatchObject({ from: 'accepted', to: 'lapsed', via: 'system' });
     });
   });
 

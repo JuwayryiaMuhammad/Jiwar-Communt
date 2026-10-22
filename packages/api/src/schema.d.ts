@@ -7240,6 +7240,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/partner-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my requests to partners, newest activity first */
+        get: operations["PartnerRequestsController_mine"];
+        put?: never;
+        /** Ask a partner for a service at a unit */
+        post: operations["PartnerRequestsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my requests, with its history */
+        get: operations["PartnerRequestsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/accept-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take the window the partner proposed */
+        post: operations["PartnerRequestsController_acceptProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel my request */
+        post: operations["PartnerRequestsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/decline-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline the window the partner proposed */
+        post: operations["PartnerRequestsController_declineProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Say the service was given */
+        post: operations["PartnerRequestsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Say the partner did not come */
+        post: operations["PartnerRequestsController_noShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/partners": {
         parameters: {
             query?: never;
@@ -7892,6 +8012,108 @@ export interface paths {
         put?: never;
         /** "Not me" from the alert email: freeze the account */
         post: operations["PublicNotMeController_notMeFromEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a partner’s desk from its link */
+        post: operations["DeskController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a request on the desk */
+        post: operations["DeskController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an accepted request on the desk */
+        post: operations["DeskController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a request on the desk */
+        post: operations["DeskController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a request done on the desk */
+        post: operations["DeskController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/propose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose another window on the desk */
+        post: operations["DeskController_propose"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10318,6 +10540,125 @@ export interface paths {
         patch: operations["ParkingSlotsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/partner-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the requests to partners, newest first */
+        get: operations["RelayController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a request to a partner */
+        get: operations["RelayController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a request for its partner */
+        post: operations["RelayController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an accepted request for its partner */
+        post: operations["RelayController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a request for its partner */
+        post: operations["RelayController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a request done for its partner */
+        post: operations["RelayController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/propose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose another window for its partner */
+        post: operations["RelayController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/partner-settings": {
         parameters: {
             query?: never;
@@ -10405,6 +10746,40 @@ export interface paths {
         head?: never;
         /** Update a partner: names, description, phone, email, area */
         patch: operations["StaffPartnersController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/desk-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make a new desk link for a partner (the one before stops working) */
+        post: operations["DeskLinksController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/desk-link/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop a partner’s desk link now */
+        post: operations["DeskLinksController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/partners/{id}/hours": {
@@ -14861,6 +15236,10 @@ export interface components {
              */
             etaMinutes?: 2 | 5 | 10 | 15;
         };
+        AcceptPartnerRequestDto: {
+            /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
+            staffCount?: number;
+        };
         AccessCodeView: {
             /** @description 8 digits, shown once. */
             accessCode: string | null;
@@ -17831,6 +18210,38 @@ export interface components {
             /** @description What it does: at least one category. */
             services: components["schemas"]["PartnerServiceDto"][];
         };
+        CreatePartnerRequestDto: {
+            /** @description One the partner offers; its consent `partner_share_<category>` granted at the current version (CONSENT_REQUIRED). */
+            category: components["schemas"]["PartnerCategory"];
+            /** @description Default true: once accepted, the partner’s staff get a one-time gate pass for the window, in the requester’s name. */
+            gatePass?: boolean;
+            /** @description Announced price lines, copied with the request as they are now. */
+            items?: components["schemas"]["PartnerRequestLineDto"][];
+            /** @description For the partner, while the category’s consent holds. Never put a phone or anyone’s name here. */
+            note?: string | null;
+            /** Format: uuid */
+            partnerId: string;
+            /**
+             * Format: uuid
+             * @description An active sub-category of the category, offered by the partner or covered by its whole category.
+             */
+            subcategoryId?: string | null;
+            /**
+             * Format: uuid
+             * @description A unit the caller may invite visitors to (PARTNER_REQUEST_NOT_ALLOWED otherwise).
+             */
+            unitId: string;
+            /**
+             * Format: date-time
+             * @description 30 minutes to 8 hours after the start (PARTNER_WINDOW_LENGTH).
+             */
+            windowEndsAt: string;
+            /**
+             * Format: date-time
+             * @description 15 minutes to 14 days from now (PARTNER_WINDOW_TOO_SOON / _TOO_FAR).
+             */
+            windowStartsAt: string;
+        };
         CreatePartnerSubcategoryDto: {
             /** @description One of the closed list; never changes. */
             category: components["schemas"]["PartnerCategory"];
@@ -18487,6 +18898,10 @@ export interface components {
             id: string;
             status: components["schemas"]["GateRequestStatus"];
         };
+        DeclinePartnerRequestDto: {
+            /** @description From the closed list `partnerRequestDecline`. */
+            reasonCode: string;
+        };
         DeferredActionResponse: {
             /** Format: date-time */
             createdAt: string;
@@ -18526,6 +18941,61 @@ export interface components {
         DeletionRequestStatus: "pending" | "cancelled" | "completed" | "queued" | "closed";
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DeskAcceptDto: {
+            /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
+            staffCount?: number;
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+        };
+        DeskCancelDto: {
+            /** @description From the closed list `partnerRequestPartnerCancel`. */
+            reasonCode: string;
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+        };
+        DeskDeclineDto: {
+            /** @description From the closed list `partnerRequestDecline`. */
+            reasonCode: string;
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+        };
+        DeskPageView: {
+            compoundName: string;
+            partner: components["schemas"]["DeskPartnerView"];
+            /** @description Live requests and those closed in the last 24 hours, soonest window first, at most 100. */
+            requests: components["schemas"]["PartnerSideRequestView"][];
+            /**
+             * @description The compound’s time zone, for showing the windows.
+             * @example Africa/Cairo
+             */
+            timeZone: string;
+        };
+        DeskPartnerView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        DeskProposeDto: {
+            /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
+            staffCount?: number;
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+            /**
+             * Format: date-time
+             * @description 30 minutes to 8 hours after the start.
+             */
+            windowEndsAt: string;
+            /**
+             * Format: date-time
+             * @description 15 minutes to 14 days from now.
+             */
+            windowStartsAt: string;
+        };
+        DeskTokenDto: {
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+        };
         /**
          * @description `app`, or the browser family.
          * @enum {string}
@@ -21601,6 +22071,17 @@ export interface components {
             /** @description The unit’s code (UNIT_CODE_UNKNOWN). Contractor hours may give the works permit instead. */
             unitCode?: string;
         };
+        IssuedDeskLinkView: {
+            /** Format: date-time */
+            expiresAt: string;
+            /**
+             * @description What to give the partner (printed, or sent from the office).
+             * @example https://app.example/p#…
+             */
+            link: string;
+            /** @description Shown once; the server keeps only its hash. */
+            token: string;
+        };
         IssuedEntryCredentialView: {
             /** Format: uuid */
             id: string;
@@ -23031,6 +23512,10 @@ export interface components {
             /** @example Basement 2, row C */
             place: string;
         };
+        PartnerCancelPartnerRequestDto: {
+            /** @description From the closed list `partnerRequestPartnerCancel`. */
+            reasonCode: string;
+        };
         /** @enum {string} */
         PartnerCategory: "gas_water" | "pharmacy" | "grocery" | "home_services" | "laundry" | "gardening" | "beauty_at_home" | "repair" | "pets" | "events" | "moving_storage" | "car_services" | "elderly_care";
         PartnerCategoryView: {
@@ -23042,6 +23527,15 @@ export interface components {
         PartnerCategoryViewList: {
             data: components["schemas"]["PartnerCategoryView"][];
             nextCursor: string | null;
+        };
+        PartnerDeskLinkView: {
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description It stops working then: make a new one before.
+             */
+            expiresAt: string;
         };
         PartnerPriceItemDto: {
             /** @description Both languages are required; surrounding spaces are trimmed. */
@@ -23076,6 +23570,39 @@ export interface components {
          * @enum {string}
          */
         PartnerPriceUnit: "fixed" | "per_visit" | "visit_fee" | "per_hour" | "per_item" | "per_kg" | "per_sqm";
+        PartnerRequestItemView: {
+            nameAr: string;
+            nameEn: string;
+            /** @description EGP, two decimals, per unit. */
+            price: string;
+            quantity: number;
+            unit: components["schemas"]["PartnerPriceUnit"];
+        };
+        PartnerRequestLineDto: {
+            /**
+             * Format: uuid
+             * @description One of the partner’s announced price lines now (PARTNER_PRICE_ITEM_NOT_AVAILABLE), once.
+             */
+            priceItemId: string;
+            quantity: number;
+        };
+        /** @enum {string} */
+        PartnerRequestSide: "resident" | "partner" | "system";
+        /** @enum {string} */
+        PartnerRequestStatus: "pending" | "proposed" | "accepted" | "declined" | "cancelled" | "expired" | "done" | "partner_no_show" | "lapsed";
+        PartnerRequestStepView: {
+            /** Format: date-time */
+            at: string;
+            /** @description The partner’s desk and the management’s relay are both `partner`. */
+            by: components["schemas"]["PartnerRequestSide"];
+            /** Format: date-time */
+            endsAt: string | null;
+            /** @description created, accepted, declined, proposed, proposal_accepted, proposal_declined, cancelled, done, no_show, expired, lapsed, pass_issued, pass_skipped, pass_cancelled. */
+            kind: string;
+            reasonCode: string | null;
+            /** Format: date-time */
+            startsAt: string | null;
+        };
         PartnerServiceDto: {
             category: components["schemas"]["PartnerCategory"];
             /**
@@ -23101,6 +23628,53 @@ export interface components {
             newDays: number;
             /** @description Days after a request is done that it may be rated. */
             ratingDays: number;
+        };
+        PartnerSideRequestView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** Format: date-time */
+            agreedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description From acceptance on: the window agreed.
+             */
+            agreedStartsAt: string | null;
+            /** Format: date-time */
+            askedEndsAt: string;
+            /** Format: date-time */
+            askedStartsAt: string;
+            category: components["schemas"]["PartnerCategory"];
+            /** @description A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["PartnerRequestSide"] | null;
+            /** @description The requester withdrew the category’s consent: nothing of them is shown and the request takes no action. */
+            consentWithdrawn: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The requester’s first name, while their account is active. */
+            firstName: string | null;
+            /** @description Whether an accepted request gives the partner’s staff a gate pass. */
+            gatePass: boolean;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["PartnerRequestItemView"][];
+            note: string | null;
+            /** @example SR-000123 */
+            number: string;
+            /** Format: date-time */
+            proposedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description While proposed: the window the partner proposed.
+             */
+            proposedStartsAt: string | null;
+            /** @description How many of the partner’s staff come (proposed or agreed). */
+            staffCount: number | null;
+            status: components["schemas"]["PartnerRequestStatus"];
+            subcategory: components["schemas"]["PartnerSubcategoryView"] | null;
+            unitCode: string | null;
         };
         /** @enum {string} */
         PartnerStatus: "active" | "suspended";
@@ -24251,6 +24825,20 @@ export interface components {
             /** @description The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. */
             rationale: string;
         };
+        ProposePartnerRequestDto: {
+            /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
+            staffCount?: number;
+            /**
+             * Format: date-time
+             * @description 30 minutes to 8 hours after the start.
+             */
+            windowEndsAt: string;
+            /**
+             * Format: date-time
+             * @description 15 minutes to 14 days from now.
+             */
+            windowStartsAt: string;
+        };
         ProposeQuoteDto: {
             /** @description EGP, e.g. `350` or `350.50`; below ten million. */
             amount: string;
@@ -24887,6 +25475,17 @@ export interface components {
             /** @description Email or phone (local Egyptian format or international). */
             identifier: string;
         };
+        RequestPartnerView: {
+            /**
+             * @description Its business phone: the requester calls it, never the reverse.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
         RequestPersonView: {
             fullName: string | null;
             /** Format: uuid */
@@ -24945,6 +25544,10 @@ export interface components {
         };
         ResidenceDto: {
             resides: boolean;
+        };
+        ResidentCancelPartnerRequestDto: {
+            /** @description From the closed list `partnerRequestResidentCancel`. */
+            reasonCode: string;
         };
         ResidentComplaintDetailView: {
             category: components["schemas"]["ComplaintCategoryOptionView"];
@@ -25076,7 +25679,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "vehicle_fine" | "unit_violation" | "board_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
+        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "vehicle_fine" | "unit_violation" | "board_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
         ResidentItemView: {
             /** @description Where its appeal stands (the appeals list); null elsewhere. */
             appeal: components["schemas"]["ItemAppealView"] | null;
@@ -25176,6 +25779,61 @@ export interface components {
         };
         ResidentParcelViewList: {
             data: components["schemas"]["ResidentParcelView"][];
+            nextCursor: string | null;
+        };
+        ResidentPartnerRequestView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** Format: date-time */
+            agreedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description From acceptance on: the window agreed.
+             */
+            agreedStartsAt: string | null;
+            /** Format: date-time */
+            askedEndsAt: string;
+            /** Format: date-time */
+            askedStartsAt: string;
+            category: components["schemas"]["PartnerCategory"];
+            /** @description A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["PartnerRequestSide"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Whether an accepted request gives the partner’s staff a gate pass. */
+            gatePass: boolean;
+            /** @description One request’s history, oldest first; absent on a list. */
+            history?: components["schemas"]["PartnerRequestStepView"][];
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["PartnerRequestItemView"][];
+            /** Format: date-time */
+            lastActivityAt: string;
+            /** @description The requester’s note, as written; null once erased. */
+            note: string | null;
+            /** @example SR-000123 */
+            number: string;
+            partner: components["schemas"]["RequestPartnerView"];
+            /** Format: date-time */
+            proposedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description While proposed: the window the partner proposed.
+             */
+            proposedStartsAt: string | null;
+            /** @description How many of the partner’s staff come (proposed or agreed). */
+            staffCount: number | null;
+            status: components["schemas"]["PartnerRequestStatus"];
+            subcategory: components["schemas"]["PartnerSubcategoryView"] | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        ResidentPartnerRequestViewList: {
+            data: components["schemas"]["ResidentPartnerRequestView"][];
             nextCursor: string | null;
         };
         ResidentQuoteView: {
@@ -27578,6 +28236,60 @@ export interface components {
             data: components["schemas"]["StaffParkingSlotView"][];
             nextCursor: string | null;
         };
+        StaffPartnerRequestView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** Format: date-time */
+            agreedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description From acceptance on: the window agreed.
+             */
+            agreedStartsAt: string | null;
+            /** Format: date-time */
+            askedEndsAt: string;
+            /** Format: date-time */
+            askedStartsAt: string;
+            category: components["schemas"]["PartnerCategory"];
+            /** @description A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["PartnerRequestSide"] | null;
+            /** @description The requester withdrew the category’s consent: nothing of them is shown and the request takes no action. */
+            consentWithdrawn: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The requester’s first name, while their account is active. */
+            firstName: string | null;
+            /** @description Whether an accepted request gives the partner’s staff a gate pass. */
+            gatePass: boolean;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["PartnerRequestItemView"][];
+            /** Format: date-time */
+            lastActivityAt: string;
+            note: string | null;
+            /** @example SR-000123 */
+            number: string;
+            partner: components["schemas"]["RequestPartnerView"];
+            /** Format: date-time */
+            proposedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description While proposed: the window the partner proposed.
+             */
+            proposedStartsAt: string | null;
+            /** @description How many of the partner’s staff come (proposed or agreed). */
+            staffCount: number | null;
+            status: components["schemas"]["PartnerRequestStatus"];
+            subcategory: components["schemas"]["PartnerSubcategoryView"] | null;
+            unitCode: string | null;
+        };
+        StaffPartnerRequestViewList: {
+            data: components["schemas"]["StaffPartnerRequestView"][];
+            nextCursor: string | null;
+        };
         StaffPartnerSubcategoryView: {
             active: boolean;
             category: components["schemas"]["PartnerCategory"];
@@ -27602,6 +28314,8 @@ export interface components {
             businessPhone: string;
             descriptionAr: string | null;
             descriptionEn: string | null;
+            /** @description The live desk link, or null: none, revoked or expired (the management relays its requests). */
+            deskLink: components["schemas"]["PartnerDeskLinkView"] | null;
             /** @description It comes to the home. */
             homeVisit: boolean;
             /** @description Weekly hours, by weekday then start. */
@@ -41031,6 +41745,187 @@ export interface operations {
             };
         };
     };
+    PartnerRequestsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `live`: pending, proposed, accepted. `closed`: the rest. */
+                state?: "live" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestViewList"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartnerRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_acceptProposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResidentCancelPartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_declineProposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_noShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
     PartnersController_list: {
         parameters: {
             query?: {
@@ -42004,6 +42899,154 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DeskController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeskPageView"];
+                };
+            };
+        };
+    };
+    DeskController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskAcceptDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
+            };
+        };
+    };
+    DeskController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskCancelDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
+            };
+        };
+    };
+    DeskController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskDeclineDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
+            };
+        };
+    };
+    DeskController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
+            };
+        };
+    };
+    DeskController_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskProposeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
             };
         };
     };
@@ -45635,6 +46678,173 @@ export interface operations {
             };
         };
     };
+    RelayController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["PartnerRequestStatus"];
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestViewList"];
+                };
+            };
+        };
+    };
+    RelayController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptPartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerCancelPartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclinePartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposePartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
     PartnerSettingsController_get: {
         parameters: {
             query?: never;
@@ -45835,6 +47045,46 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StaffPartnerView"];
                 };
+            };
+        };
+    };
+    DeskLinksController_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedDeskLinkView"];
+                };
+            };
+        };
+    };
+    DeskLinksController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

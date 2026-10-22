@@ -599,4 +599,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // never overlap), under the partner's row lock: a violation is a race.
   partner_services_once_key: null,
   partner_hours_window_key: null,
+  // Requests to partners (ADR 0060): the number from the counter under its
+  // lock; a line's position and a desk link's hash are the service's own.
+  partner_requests_tenant_id_id_key: null,
+  partner_requests_number_key: null,
+  partner_request_items_position_key: null,
+  partner_desk_links_token_hash_key: null,
+  // One live link per partner: a new one revokes the one before under the
+  // partner's row lock, so a violation is a race.
+  partner_desk_links_one_live: null,
 };

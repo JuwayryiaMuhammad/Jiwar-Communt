@@ -7,6 +7,9 @@ import {
   partnerRow,
   partnerServiceRow,
   priceItemRow,
+  requestEventRow,
+  requestItemRow,
+  requestRow,
   subcategoryRow,
 } from '../setup/partners-rows';
 
@@ -17,6 +20,7 @@ interface Side {
   accountId: string;
   partnerId: string;
   subcategoryId: string;
+  requestId: string;
 }
 
 /**
@@ -101,6 +105,39 @@ const TABLES: Table[] = [
             : link.partnerId,
       }),
   },
+  {
+    table: 'partner_request_counters',
+    key: 'tenant_id',
+    linked: false,
+    // Provisioned with the compound too.
+    insert: (tx, own) => Promise.resolve(own.tenantId),
+    forge: (tx, own) =>
+      tx.partnerRequestCounter.create({ data: { tenantId: own.tenantId } }),
+  },
+  {
+    table: 'partner_requests',
+    insert: (tx, own, link) =>
+      requestRow(tx, {
+        tenantId: own.tenantId,
+        partnerId: link.partnerId,
+        unitId: link.unitId,
+        requesterId: link.accountId,
+      }),
+  },
+  {
+    table: 'partner_request_items',
+    insert: (tx, own, link) =>
+      requestItemRow(tx, { tenantId: own.tenantId, requestId: link.requestId }),
+  },
+  {
+    table: 'partner_request_events',
+    insert: (tx, own, link) =>
+      requestEventRow(tx, {
+        tenantId: own.tenantId,
+        requestId: link.requestId,
+        actorAccountId: link.accountId,
+      }),
+  },
 ];
 
 describe('RLS isolation — partners (ADR 0060)', () => {
@@ -120,6 +157,7 @@ describe('RLS isolation — partners (ADR 0060)', () => {
       accountId: (await createAccountRow(h, tenantId)).id,
       partnerId: '',
       subcategoryId: '',
+      requestId: '',
     };
     await inTenant(s, async (tx) => {
       s.partnerId = await partnerRow(tx, {
@@ -127,6 +165,12 @@ describe('RLS isolation — partners (ADR 0060)', () => {
         createdById: s.accountId,
       });
       s.subcategoryId = await subcategoryRow(tx, tenantId);
+      s.requestId = await requestRow(tx, {
+        tenantId,
+        partnerId: s.partnerId,
+        unitId: s.unitId,
+        requesterId: s.accountId,
+      });
     });
     return s;
   };

@@ -1,12 +1,13 @@
 import { Client } from 'pg';
 import type { Response, Test } from 'supertest';
+import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
 import type { Permission } from '../../src/core/access/permissions';
 import { RolesService } from '../../src/core/access/roles.service';
-import { clock } from './compound-clock';
+import { at, clock, day } from './compound-clock';
 import type { Compound } from './community';
 import { engagementHelpers, type Who } from './engagement';
 import { gateHelpers } from './gate';
-import type { HttpHarness } from './http-app';
+import { API, type HttpHarness } from './http-app';
 import { required } from './test-env';
 
 export type { Who } from './engagement';
@@ -51,6 +52,64 @@ export const rewindListing = (partnerId: string, days: number) =>
       WHERE id = $1`,
     [partnerId, days],
   );
+
+/**
+ * A request's windows moved into the past (asked, proposed and agreed
+ * alike, by the same interval): its window `started` a minute ago, or
+ * `ended` a minute ago, without waiting.
+ */
+export const shiftWindow = (requestId: string, to: 'started' | 'ended') =>
+  asSuperuser(
+    `UPDATE partner_requests r
+        SET asked_starts_at = r.asked_starts_at - x.d,
+            asked_ends_at = r.asked_ends_at - x.d,
+            proposed_starts_at = r.proposed_starts_at - x.d,
+            proposed_ends_at = r.proposed_ends_at - x.d,
+            agreed_starts_at = r.agreed_starts_at - x.d,
+            agreed_ends_at = r.agreed_ends_at - x.d
+       FROM (SELECT id,
+                    (CASE WHEN $2 = 'started'
+                          THEN COALESCE(agreed_starts_at, proposed_starts_at, asked_starts_at)
+                          ELSE COALESCE(agreed_ends_at, proposed_ends_at, asked_ends_at)
+                     END) - now() + interval '1 minute' AS d
+               FROM partner_requests WHERE id = $1) x
+      WHERE r.id = x.id`,
+    [requestId, to],
+  );
+
+/** A request as the requester's views return it. */
+export interface RequestBody {
+  id: string;
+  number: string;
+  status: string;
+  category: string;
+  askedStartsAt: string;
+  askedEndsAt: string;
+  proposedStartsAt: string | null;
+  agreedStartsAt: string | null;
+  agreedEndsAt: string | null;
+  staffCount: number | null;
+  closedBy: string | null;
+  closeReason: string | null;
+  note: string | null;
+  unitCode: string;
+  items: { nameEn: string; price: string; unit: string; quantity: number }[];
+  history?: { kind: string; by: string; reasonCode: string | null }[];
+  [key: string]: unknown;
+}
+
+/** A request as a desk (or the relay) shows it. */
+export interface DeskRequestBody {
+  id: string;
+  number: string;
+  status: string;
+  consentWithdrawn: boolean;
+  unitCode: string | null;
+  firstName: string | null;
+  note: string | null;
+  items: unknown[];
+  [key: string]: unknown;
+}
 
 /** A partner as the residents' views return it. */
 export interface PartnerBody {
@@ -207,6 +266,93 @@ export function partnersHelpers(h: HttpHarness) {
     return ALWAYS.filter((w) => w.weekday !== today);
   }
 
+  /** The account grants the category's consent (ADR 0036). */
+  async function consent(as: Who, category = 'home_services') {
+    await http('post', '/me/consents/grant', as.token, {
+      code: `partner_share_${category}`,
+      version: 1,
+    }).expect(200);
+  }
+
+  /** The window two days ahead, `from`–`to` o'clock in the compound. */
+  const windowOf = (from = 10, to = 12, days = 2) => ({
+    windowStartsAt: at(day(days), from).toISOString(),
+    windowEndsAt: at(day(days), to).toISOString(),
+  });
+
+  /** `POST /partner-requests`: the response. */
+  function ask(
+    as: Who,
+    unitId: string,
+    partnerId: string,
+    over: Record<string, unknown> = {},
+    headers: Record<string, string> = {},
+  ): Promise<Response> {
+    return (async () =>
+      await http(
+        'post',
+        '/partner-requests',
+        as.token,
+        {
+          partnerId,
+          unitId,
+          category: 'home_services',
+          ...windowOf(),
+          ...over,
+        },
+        headers,
+      ))();
+  }
+
+  /** A request that must be made: its body. */
+  async function request(
+    as: Who,
+    unitId: string,
+    partnerId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<RequestBody> {
+    const res = await ask(as, unitId, partnerId, over);
+    if (res.status !== 201)
+      throw new Error(
+        `request refused: ${res.status} ${JSON.stringify(res.body)}`,
+      );
+    return res.body as RequestBody;
+  }
+
+  /** A desk link for the partner, made by `by`: its token. */
+  async function deskLink(by: Who, partnerId: string): Promise<string> {
+    const res = await http(
+      'post',
+      `/staff/partners/${partnerId}/desk-link`,
+      by.token,
+    ).expect(201);
+    return (res.body as { token: string }).token;
+  }
+
+  /** A call on a desk: `POST /public/partner-desk<path>` with the token. */
+  function desk(token: string, path: string, body: object = {}) {
+    return h
+      .http()
+      .post(`${API}/public/partner-desk${path}`)
+      .send({ token, ...body });
+  }
+
+  /** The request's row. */
+  function row(c: Compound, id: string) {
+    return inTx(c, (tx) =>
+      tx.partnerRequest.findUniqueOrThrow({ where: { id } }),
+    );
+  }
+
+  /** The member's grant of `visitors_invite`, given by the primary. */
+  function grantInvite(c: Compound, primary: Who, memberId: string) {
+    return x.as(c, { id: primary.id, type: 'resident' }, () =>
+      h.moduleRef
+        .get(MemberPermissionsService)
+        .grant(memberId, 'visitors_invite'),
+    );
+  }
+
   return {
     ...e,
     x,
@@ -224,6 +370,14 @@ export function partnersHelpers(h: HttpHarness) {
     get,
     openNowHours,
     closedTodayHours,
+    consent,
+    windowOf,
+    ask,
+    request,
+    deskLink,
+    desk,
+    row,
+    grantInvite,
   };
 }
 

@@ -6,8 +6,12 @@ import { createAccountRow, createTenant } from '../setup/fixtures';
 import {
   partnerRow,
   partnerServiceRow,
+  requestEventRow,
+  requestItemRow,
+  requestRow,
   subcategoryRow,
 } from '../setup/partners-rows';
+import { createUnit } from '../setup/fixtures';
 import { required } from '../setup/test-env';
 
 /**
@@ -24,6 +28,9 @@ describe('Partners tables — CHECKs, triggers and privileges', () => {
   let partnerId: string;
   let subcategoryId: string;
   let petsSubcategoryId: string;
+  let requestId: string;
+  let itemId: string;
+  let eventId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -35,6 +42,23 @@ describe('Partners tables — CHECKs, triggers and privileges', () => {
         subcategoryId = await subcategoryRow(tx, tenantId);
         petsSubcategoryId = await subcategoryRow(tx, tenantId, 'pets');
         await partnerServiceRow(tx, { tenantId, partnerId, subcategoryId });
+      }),
+    );
+    const unitId = (await createUnit(h, tenantId)).id;
+    await h.asTenant(tenantId, () =>
+      h.tenantTx.withTenantTx(async (tx: TenantTxClient) => {
+        requestId = await requestRow(tx, {
+          tenantId,
+          partnerId,
+          unitId,
+          requesterId: accountId,
+        });
+        itemId = await requestItemRow(tx, { tenantId, requestId });
+        eventId = await requestEventRow(tx, {
+          tenantId,
+          requestId,
+          actorAccountId: accountId,
+        });
       }),
     );
     app = new Client({ connectionString: process.env.DATABASE_URL });
@@ -88,6 +112,11 @@ describe('Partners tables — CHECKs, triggers and privileges', () => {
       'partner_hours',
       'partner_price_items',
       'partner_favourites',
+      'partner_request_counters',
+      'partner_requests',
+      'partner_request_items',
+      'partner_request_events',
+      'partner_desk_links',
     ]) {
       const p = await privileges(table);
       expect({ table, select: p.select, truncate: p.truncate }).toEqual({
@@ -108,6 +137,9 @@ describe('Partners tables — CHECKs, triggers and privileges', () => {
       'partner_settings',
       'partner_subcategories',
       'partners',
+      'partner_request_counters',
+      'partner_requests',
+      'partner_desk_links',
     ]);
   });
 
@@ -194,5 +226,153 @@ describe('Partners tables — CHECKs, triggers and privileges', () => {
       /partner_price_items_unit/,
     );
     await asApp(price('0', 'fixed'));
+  });
+
+  describe.each([
+    ['partner_request_items', () => itemId, 'quantity = 2'],
+    ['partner_request_events', () => eventId, "reason_code = 'x'"],
+  ])('%s is append-only', (table, id, change) => {
+    it('the app holds SELECT and INSERT, and nothing else', async () => {
+      expect(await privileges(table)).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: false,
+        truncate: false,
+      });
+    });
+
+    it('the tables’ owner cannot update, delete or truncate it either', async () => {
+      await expect(
+        attempt(migrator, `UPDATE ${table} SET ${change} WHERE id = '${id()}'`),
+      ).rejects.toThrow(/append-only/);
+      await expect(
+        attempt(migrator, `DELETE FROM ${table} WHERE id = '${id()}'`),
+      ).rejects.toThrow(/append-only/);
+      await expect(
+        attempt(migrator, `TRUNCATE ${table} CASCADE`),
+      ).rejects.toThrow(/append-only|cannot truncate/);
+    });
+  });
+
+  describe('a request', () => {
+    const set = (assignments: string) =>
+      asApp(
+        `UPDATE partner_requests SET ${assignments} WHERE id = '${requestId}'`,
+      );
+
+    it('keeps what it asked, and is never deleted', async () => {
+      await expect(
+        set(`asked_starts_at = asked_starts_at + interval '1 hour'`),
+      ).rejects.toThrow(/keeps what it asked/);
+      await expect(set(`gate_pass = false`)).rejects.toThrow(
+        /keeps what it asked/,
+      );
+      await expect(set(`category = 'pets'`)).rejects.toThrow(
+        /keeps what it asked/,
+      );
+      await expect(
+        attempt(
+          migrator,
+          `DELETE FROM partner_requests WHERE id = '${requestId}'`,
+        ),
+      ).rejects.toThrow(/keeps what it asked/);
+    });
+
+    it('its note is cleared once, by an erasure, never rewritten', async () => {
+      await expect(set(`note = 'Third floor'`)).rejects.toThrow(
+        /keeps what it asked/,
+      );
+      await expect(set(`note = NULL`)).rejects.toThrow(/keeps what it asked/);
+      await asApp(
+        `UPDATE partner_requests SET note = NULL, note_cleared_at = now() WHERE id = '${requestId}'`,
+      );
+    });
+
+    it('each status sets exactly its columns; who closes and why are the status’s', async () => {
+      await expect(set(`status = 'accepted'`)).rejects.toThrow(
+        /partner_requests_state_shape/,
+      );
+      await expect(
+        set(
+          `status = 'declined', closed_at = now(), closed_by = 'resident', close_reason = 'unavailable'`,
+        ),
+      ).rejects.toThrow(/partner_requests_closed_by/);
+      await expect(
+        set(
+          `status = 'declined', closed_at = now(), closed_by = 'partner', close_reason = 'emergency'`,
+        ),
+      ).rejects.toThrow(/partner_requests_close_reason/);
+      await expect(
+        set(
+          `status = 'proposed', proposed_starts_at = asked_starts_at, proposed_ends_at = asked_starts_at + interval '9 hours', staff_count = 1`,
+        ),
+      ).rejects.toThrow(/partner_requests_windows/);
+      await expect(
+        set(
+          `status = 'proposed', proposed_starts_at = asked_starts_at, proposed_ends_at = asked_ends_at`,
+        ),
+      ).rejects.toThrow(/partner_requests_state_shape/);
+    });
+
+    it('accepted once, the agreement stays; closed once, it stays closed', async () => {
+      await expect(
+        asApp(
+          `UPDATE partner_requests SET status = 'accepted', agreed_starts_at = asked_starts_at,
+             agreed_ends_at = asked_ends_at, staff_count = 2, accepted_at = now()
+           WHERE id = '${requestId}'`,
+          `UPDATE partner_requests SET staff_count = 3 WHERE id = '${requestId}'`,
+        ),
+      ).rejects.toThrow(/keeps what it asked/);
+      await expect(
+        asApp(
+          `UPDATE partner_requests SET status = 'expired', closed_at = now(), closed_by = 'system'
+           WHERE id = '${requestId}'`,
+          `UPDATE partner_requests SET status = 'pending', closed_at = NULL, closed_by = NULL
+           WHERE id = '${requestId}'`,
+        ),
+      ).rejects.toThrow(/keeps what it asked/);
+    });
+  });
+
+  describe('a desk link', () => {
+    it('is revoked once and otherwise never changes; nothing deletes it', async () => {
+      const id = newId();
+      const insert = `INSERT INTO partner_desk_links (id, tenant_id, partner_id, token_hash, created_by_account_id, created_at, expires_at)
+        VALUES ('${id}', '${tenantId}', '${partnerId}', '${'a'.repeat(64)}', '${accountId}', now(), now() + interval '90 days')`;
+      await expect(
+        asApp(
+          insert,
+          `UPDATE partner_desk_links SET expires_at = now() + interval '1 year' WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/revoked once/);
+      await expect(
+        asApp(
+          insert,
+          `UPDATE partner_desk_links SET revoked_at = now(), revoked_by_account_id = '${accountId}' WHERE id = '${id}'`,
+          `UPDATE partner_desk_links SET revoked_at = now() + interval '1 hour' WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/revoked once/);
+      await expect(
+        attempt(
+          migrator,
+          insert,
+          `DELETE FROM partner_desk_links WHERE id = '${id}'`,
+        ),
+      ).rejects.toThrow(/revoked once/);
+      await expect(
+        asApp(
+          insert,
+          `INSERT INTO partner_desk_links (id, tenant_id, partner_id, token_hash, created_by_account_id, created_at, expires_at)
+           VALUES ('${newId()}', '${tenantId}', '${partnerId}', '${'b'.repeat(64)}', '${accountId}', now(), now() + interval '90 days')`,
+        ),
+      ).rejects.toThrow(/partner_desk_links_one_live/);
+      await expect(
+        asApp(
+          `INSERT INTO partner_desk_links (id, tenant_id, partner_id, token_hash, created_by_account_id, created_at, expires_at)
+           VALUES ('${newId()}', '${tenantId}', '${partnerId}', 'NOT-HEX', '${accountId}', now(), now() + interval '90 days')`,
+        ),
+      ).rejects.toThrow(/partner_desk_links_token_hash_hex/);
+    });
   });
 });

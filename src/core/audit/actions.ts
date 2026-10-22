@@ -1490,6 +1490,34 @@ export const AUDIT_ACTIONS = {
   },
   // changes: the settings by value.
   'partner.settings_changed': { log: 'tenant', target: 'tenant' },
+  // A request to a partner (ADR 0060). metadata: number, partnerId, unitId,
+  // category, subcategoryId, gatePass, itemCount, note (whether there is
+  // one), the window. Never the note's words or anyone's name.
+  'partner_request.created': { log: 'tenant', target: 'partner_request' },
+  // Its moves. metadata: number, partnerId, unitId, from, to, via
+  // (resident, partner_desk, relay or system), deskLinkId on the desk,
+  // reasonCode, the window and staffCount where the move names them. A
+  // desk's move is the system's (the desk is no account); the relay's is
+  // the staff member's.
+  'partner_request.accepted': { log: 'tenant', target: 'partner_request' },
+  'partner_request.declined': { log: 'tenant', target: 'partner_request' },
+  'partner_request.proposed': { log: 'tenant', target: 'partner_request' },
+  'partner_request.proposal_accepted': {
+    log: 'tenant',
+    target: 'partner_request',
+  },
+  'partner_request.cancelled': { log: 'tenant', target: 'partner_request' },
+  'partner_request.done': { log: 'tenant', target: 'partner_request' },
+  'partner_request.no_show': { log: 'tenant', target: 'partner_request' },
+  'partner_request.expired': { log: 'tenant', target: 'partner_request' },
+  'partner_request.lapsed': { log: 'tenant', target: 'partner_request' },
+  // A desk opened (the system). metadata: deskLinkId, requestCount,
+  // withheldCount (requests whose consent was withdrawn).
+  'partner_desk.looked_up': { log: 'tenant', target: 'partner' },
+  // A desk link made or revoked. metadata: deskLinkId, expiresAt,
+  // revokedCount. Never the token or its hash.
+  'partner_desk_link.created': { log: 'tenant', target: 'partner' },
+  'partner_desk_link.revoked': { log: 'tenant', target: 'partner' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

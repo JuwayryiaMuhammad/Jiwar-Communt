@@ -13,6 +13,7 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { DeskLinks } from '../desk/desk-links';
 import {
   CreatePartnerDto,
   ReplacePartnerHoursDto,
@@ -21,22 +22,27 @@ import {
   UpdatePartnerDto,
 } from './dto/partners.dto';
 import { PartnersService } from './partners.service';
-import { StaffPartnerView } from './views/partner.views';
+import { StaffPartnerView, type PartnerWithParts } from './views/partner.views';
 
 /** The compound's partners, for the staff who list them (ADR 0060). */
 @ApiArea('partners')
 @RequirePermissions('partners.manage')
 @Controller('staff/partners')
 export class StaffPartnersController {
-  constructor(private readonly partners: PartnersService) {}
+  constructor(
+    private readonly partners: PartnersService,
+    private readonly deskLinks: DeskLinks,
+  ) {}
 
   @Get()
   @NoStore()
   @ApiOperation({ summary: 'List every partner, suspended ones included' })
   @ApiOkResponse({ type: ListOf(StaffPartnerView) })
   async list(): Promise<ListResponse<StaffPartnerView>> {
-    return bounded(await this.partners.staffList(), (p) =>
-      StaffPartnerView.from(p),
+    const partners = await this.partners.staffList();
+    const links = await this.deskLinks.liveOf(partners.map((p) => p.id));
+    return bounded(partners, (p) =>
+      StaffPartnerView.from(p, links.get(p.id) ?? null),
     );
   }
 
@@ -45,7 +51,9 @@ export class StaffPartnersController {
   @ApiOperation({ summary: 'Get a partner' })
   @ApiOkResponse({ type: StaffPartnerView })
   async get(@Param('id', parseId()) id: string): Promise<StaffPartnerView> {
-    return StaffPartnerView.from(await this.partners.staffGet(id));
+    const partner = await this.partners.staffGet(id);
+    const links = await this.deskLinks.liveOf([id]);
+    return StaffPartnerView.from(partner, links.get(id) ?? null);
   }
 
   @Post()
@@ -67,7 +75,7 @@ export class StaffPartnersController {
     @Param('id', parseId()) id: string,
     @Body() dto: UpdatePartnerDto,
   ): Promise<StaffPartnerView> {
-    return StaffPartnerView.from(await this.partners.update(id, dto));
+    return this.withLink(await this.partners.update(id, dto));
   }
 
   @Put(':id/services')
@@ -78,9 +86,7 @@ export class StaffPartnersController {
     @Param('id', parseId()) id: string,
     @Body() dto: ReplacePartnerServicesDto,
   ): Promise<StaffPartnerView> {
-    return StaffPartnerView.from(
-      await this.partners.replaceServices(id, dto.services),
-    );
+    return this.withLink(await this.partners.replaceServices(id, dto.services));
   }
 
   @Put(':id/hours')
@@ -91,9 +97,7 @@ export class StaffPartnersController {
     @Param('id', parseId()) id: string,
     @Body() dto: ReplacePartnerHoursDto,
   ): Promise<StaffPartnerView> {
-    return StaffPartnerView.from(
-      await this.partners.replaceHours(id, dto.windows),
-    );
+    return this.withLink(await this.partners.replaceHours(id, dto.windows));
   }
 
   @Put(':id/prices')
@@ -104,8 +108,12 @@ export class StaffPartnersController {
     @Param('id', parseId()) id: string,
     @Body() dto: ReplacePartnerPricesDto,
   ): Promise<StaffPartnerView> {
-    return StaffPartnerView.from(
-      await this.partners.replacePrices(id, dto.items),
-    );
+    return this.withLink(await this.partners.replacePrices(id, dto.items));
+  }
+
+  /** A partner as changed, with its live desk link. */
+  private async withLink(p: PartnerWithParts): Promise<StaffPartnerView> {
+    const links = await this.deskLinks.liveOf([p.id]);
+    return StaffPartnerView.from(p, links.get(p.id) ?? null);
   }
 }

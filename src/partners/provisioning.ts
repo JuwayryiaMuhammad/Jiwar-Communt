@@ -6,7 +6,8 @@ import { DEFAULT_SUBCATEGORIES } from './setup/defaults';
 
 /**
  * What a new compound gets from the partners domain (ADR 0060), in the
- * creation's transaction: its settings row and the seeded sub-categories.
+ * creation's transaction: its settings row, its request counter and the
+ * seeded sub-categories.
  * No partner: the compound lists its own. Existing compounds got the same
  * from the migration.
  */
@@ -20,6 +21,7 @@ export class PartnersProvisioning implements OnModuleInit {
 
   async provision(tx: TenantTxClient, tenantId: string): Promise<void> {
     await tx.partnerSettings.create({ data: { tenantId } });
+    await tx.partnerRequestCounter.create({ data: { tenantId } });
     await tx.partnerSubcategory.createMany({
       data: DEFAULT_SUBCATEGORIES.map((s) => ({ id: newId(), tenantId, ...s })),
     });

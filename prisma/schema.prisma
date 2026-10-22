@@ -506,6 +506,7 @@ model Tenant {
   settings                     TenantSettings?
   registrationLinks            RegistrationLink[]
   visitorPassLinks             VisitorPassLink[]
+  partnerDeskLinks             PartnerDeskLink[]
   childPickupLinks             ChildPickupLink[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
@@ -8654,4 +8655,118 @@ model PartnerFavourite {
   @@id([tenantId, accountId, partnerId])
   @@index([tenantId, partnerId, accountId], map: "partner_favourites_partner_idx")
   @@map("partner_favourites")
+}
+
+/// The compound's counter of partner requests (SR-000123), taken under the
+/// row's lock, last in the transaction.
+model PartnerRequestCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+
+  @@map("partner_request_counters")
+}
+
+/// A resident's request to a partner (ADR 0060): what it asked never
+/// changes (trigger); it moves forward only. LIVE = pending, proposed,
+/// accepted. The note is the requester's words, cleared by an erasure.
+model PartnerRequest {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  number             Int
+  partnerId          String    @map("partner_id") @db.Uuid
+  unitId             String    @map("unit_id") @db.Uuid
+  requesterId        String    @map("requester_account_id") @db.Uuid
+  /// PARTNER_CATEGORIES
+  category           String
+  subcategoryId      String?   @map("subcategory_id") @db.Uuid
+  askedStartsAt      DateTime  @map("asked_starts_at") @db.Timestamptz(3)
+  askedEndsAt        DateTime  @map("asked_ends_at") @db.Timestamptz(3)
+  note               String?
+  noteClearedAt      DateTime? @map("note_cleared_at") @db.Timestamptz(3)
+  gatePass           Boolean   @map("gate_pass")
+  /// pending | proposed | accepted | declined | cancelled | expired | done | partner_no_show | lapsed
+  status             String
+  proposedStartsAt   DateTime? @map("proposed_starts_at") @db.Timestamptz(3)
+  proposedEndsAt     DateTime? @map("proposed_ends_at") @db.Timestamptz(3)
+  agreedStartsAt     DateTime? @map("agreed_starts_at") @db.Timestamptz(3)
+  agreedEndsAt       DateTime? @map("agreed_ends_at") @db.Timestamptz(3)
+  staffCount         Int?      @map("staff_count")
+  acceptedAt         DateTime? @map("accepted_at") @db.Timestamptz(3)
+  closedAt           DateTime? @map("closed_at") @db.Timestamptz(3)
+  /// resident | partner | system
+  closedBy           String?   @map("closed_by")
+  /// REASON_CODES.partnerRequest*
+  closeReason        String?   @map("close_reason")
+  lastActivityAt     DateTime  @map("last_activity_at") @db.Timestamptz(3)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  items  PartnerRequestItem[]
+  events PartnerRequestEvent[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "partner_requests_number_key")
+  @@index([tenantId, requesterId, lastActivityAt(sort: Desc), id], map: "partner_requests_requester_idx")
+  @@index([tenantId, partnerId, status, askedStartsAt], map: "partner_requests_partner_idx")
+  @@index([tenantId, createdAt(sort: Desc), id], map: "partner_requests_queue_idx")
+  @@map("partner_requests")
+}
+
+/// An announced price line a request named, copied as it was. Append-only.
+model PartnerRequestItem {
+  id        String  @id @db.Uuid
+  tenantId  String  @map("tenant_id") @db.Uuid
+  requestId String  @map("request_id") @db.Uuid
+  nameEn    String  @map("name_en")
+  nameAr    String  @map("name_ar")
+  price     Decimal @db.Decimal(10, 2)
+  unit      String
+  quantity  Int
+  position  Int
+
+  request PartnerRequest @relation(fields: [tenantId, requestId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "partner_request_items_request_fkey")
+
+  @@unique([tenantId, requestId, position], map: "partner_request_items_position_key")
+  @@map("partner_request_items")
+}
+
+/// A step of a request's history: who took it, a reason's code, the
+/// window it named. Append-only; codes and times only.
+model PartnerRequestEvent {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  requestId      String    @map("request_id") @db.Uuid
+  kind           String
+  /// resident | partner_desk | relay | system
+  actor          String
+  actorAccountId String?   @map("actor_account_id") @db.Uuid
+  reasonCode     String?   @map("reason_code")
+  startsAt       DateTime? @map("starts_at") @db.Timestamptz(3)
+  endsAt         DateTime? @map("ends_at") @db.Timestamptz(3)
+  at             DateTime  @db.Timestamptz(3)
+
+  request PartnerRequest @relation(fields: [tenantId, requestId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "partner_request_events_request_fkey")
+
+  @@index([tenantId, requestId, at, id], map: "partner_request_events_request_idx")
+  @@map("partner_request_events")
+}
+
+/// GLOBAL (no RLS): a partner's desk link (ADR 0060), resolved before any
+/// compound is known. SHA-256 of the token with a domain label, never the
+/// token; one live per partner; revoked once; stops at `expiresAt`.
+model PartnerDeskLink {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  partnerId     String    @map("partner_id") @db.Uuid
+  tokenHash     String    @unique(map: "partner_desk_links_token_hash_key") @map("token_hash") @db.Char(64)
+  createdById   String    @map("created_by_account_id") @db.Uuid
+  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(3)
+  revokedById   String?   @map("revoked_by_account_id") @db.Uuid
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([tenantId, partnerId, createdAt(sort: Desc)], map: "partner_desk_links_partner_idx")
+  @@map("partner_desk_links")
 }

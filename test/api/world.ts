@@ -60,6 +60,9 @@ import {
   publicationRows,
 } from '../setup/governance-rows';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
+import { ConsentsService } from '../../src/core/consents/consents.service';
+import { DeskLinks } from '../../src/partners/desk/desk-links';
+import { PartnerRequestsService } from '../../src/partners/requests/requests.service';
 import { PartnersService } from '../../src/partners/setup/partners.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { addDays } from '../../src/core/common/slots/day-slots';
@@ -266,6 +269,11 @@ export interface World
   bSubcategoryId: string;
   /** A's `cleaning` sub-category, for valid bodies. */
   aSubcategoryId: string;
+  /** B's owner's pending request to B's partner, for the cleaning. */
+  bPartnerRequestId: string;
+  /** A's partner (a cleaner) and its live desk link's token (a secret). */
+  aPartnerId: string;
+  aDeskToken: string;
   /** B's vehicles and parking (ADR 0045): a pending vehicle of B's home. */
   bVehicleId: string;
   /** B's home's parking slot, a visitor area, and B's owner's booking there. */
@@ -868,6 +876,30 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       services: [{ category: 'home_services', subcategoryId: bSubcategory.id }],
     }),
   );
+  await asBOwner(() =>
+    h.moduleRef.get(ConsentsService).grant('partner_share_home_services', 1),
+  );
+  const bPartnerRequest = await asBOwner(() =>
+    h.moduleRef.get(PartnerRequestsService).create({
+      partnerId: bPartner.id,
+      unitId: b.homeUnitId,
+      category: 'home_services',
+      subcategoryId: bSubcategory.id,
+      windowStartsAt: at(day(3), 10),
+      windowEndsAt: at(day(3), 12),
+    }),
+  );
+  const aPartner = await helpers.asManager(a, () =>
+    h.moduleRef.get(PartnersService).create({
+      nameEn: 'World desk cleaners',
+      nameAr: 'منظفون',
+      businessPhone: '+20225550100',
+      services: [{ category: 'home_services', subcategoryId: aSubcategory.id }],
+    }),
+  );
+  const aDesk = await helpers.asManager(a, () =>
+    h.moduleRef.get(DeskLinks).issue(aPartner.id),
+  );
   // Vehicles and parking (ADR 0045).
   const bVehicle = await asBOwner(() =>
     h.moduleRef.get(VehiclesService).create(b.homeUnitId, {
@@ -1195,6 +1227,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPartnerId: bPartner.id,
     bSubcategoryId: bSubcategory.id,
     aSubcategoryId: aSubcategory.id,
+    bPartnerRequestId: bPartnerRequest.id,
+    aPartnerId: aPartner.id,
+    aDeskToken: aDesk.token,
     bPreventiveServiceId: bPreventiveService.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,

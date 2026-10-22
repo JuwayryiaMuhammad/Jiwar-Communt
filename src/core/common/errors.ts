@@ -1167,6 +1167,40 @@ export const ErrorCode = {
   PARTNER_SUBCATEGORY_LIMIT_REACHED: 'PARTNER_SUBCATEGORY_LIMIT_REACHED',
   /** The account keeps params.max favourite partners already (409). */
   PARTNER_FAVOURITES_LIMIT_REACHED: 'PARTNER_FAVOURITES_LIMIT_REACHED',
+  /**
+   * The account has not granted params.code at its current version (409):
+   * grant it, then ask again (ADR 0036, 0060).
+   */
+  CONSENT_REQUIRED: 'CONSENT_REQUIRED',
+  /** The partner is suspended: it takes no request (409). */
+  PARTNER_SUSPENDED: 'PARTNER_SUSPENDED',
+  /** The partner does not serve the unit's building (409). */
+  PARTNER_OUT_OF_AREA: 'PARTNER_OUT_OF_AREA',
+  /**
+   * Unknown or another compound's request; for a resident also one they
+   * did not make; on a desk also another partner's: one answer.
+   */
+  PARTNER_REQUEST_NOT_FOUND: 'PARTNER_REQUEST_NOT_FOUND',
+  /** The caller may not invite visitors to the unit, so may not ask a partner there (403). */
+  PARTNER_REQUEST_NOT_ALLOWED: 'PARTNER_REQUEST_NOT_ALLOWED',
+  /** The account has params.max requests open already (409). */
+  PARTNER_REQUEST_LIMIT_REACHED: 'PARTNER_REQUEST_LIMIT_REACHED',
+  /** Its status does not take the action (409, params.status). */
+  PARTNER_REQUEST_INVALID_TRANSITION: 'PARTNER_REQUEST_INVALID_TRANSITION',
+  /** The window's start (or, to cancel, its end) has passed (409). */
+  PARTNER_REQUEST_WINDOW_PASSED: 'PARTNER_REQUEST_WINDOW_PASSED',
+  /** Too early: the window has not started (done) or not ended (no-show) (409). */
+  PARTNER_REQUEST_TOO_EARLY: 'PARTNER_REQUEST_TOO_EARLY',
+  /**
+   * The requester withdrew the category's consent: the partner sees nothing
+   * of the request and acts on none of it (409).
+   */
+  PARTNER_REQUEST_CONSENT_WITHDRAWN: 'PARTNER_REQUEST_CONSENT_WITHDRAWN',
+  /**
+   * Every desk link that does not open a desk: unknown, malformed,
+   * revoked, expired, a suspended partner's or a suspended compound's (404).
+   */
+  PARTNER_DESK_NOT_FOUND: 'PARTNER_DESK_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1375,6 +1409,14 @@ export const FieldErrorCode = {
   PARTNER_SUBCATEGORY_NOT_AVAILABLE: 'PARTNER_SUBCATEGORY_NOT_AVAILABLE',
   /** Not a category or sub-category the partner offers. */
   PARTNER_SERVICE_NOT_OFFERED: 'PARTNER_SERVICE_NOT_OFFERED',
+  /** A window starts at least params.minutes from now. */
+  PARTNER_WINDOW_TOO_SOON: 'PARTNER_WINDOW_TOO_SOON',
+  /** A window starts within params.days. */
+  PARTNER_WINDOW_TOO_FAR: 'PARTNER_WINDOW_TOO_FAR',
+  /** A window lasts params.min to params.max minutes. */
+  PARTNER_WINDOW_LENGTH: 'PARTNER_WINDOW_LENGTH',
+  /** Not one of the partner's announced price lines. */
+  PARTNER_PRICE_ITEM_NOT_AVAILABLE: 'PARTNER_PRICE_ITEM_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

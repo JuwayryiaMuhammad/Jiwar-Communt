@@ -1,6 +1,21 @@
 import { Module } from '@nestjs/common';
 import { CommunityPartnersPortModule } from '../community';
 import { PartnersAccess } from './access';
+import { DeskController } from './desk/desk.controller';
+import { DeskService } from './desk/desk.service';
+import { DeskLinks } from './desk/desk-links';
+import { DeskLinksController } from './desk/desk-links.controller';
+import { PartnerEmailTemplates } from './notices/partner-email-templates';
+import { PartnerNotices } from './notices/partner-notices';
+import { PartnerActions } from './requests/partner-actions';
+import { RelayController } from './requests/relay.controller';
+import { RelayService } from './requests/relay.service';
+import { PartnerRequestEngine } from './requests/request-engine';
+import { RequestReads } from './requests/request-reads';
+import { PartnerRequestSweeps } from './requests/request-sweeps';
+import { PartnerRequestsController } from './requests/requests.controller';
+import { PartnerRequestsService } from './requests/requests.service';
+import { ResidentPartnerItems } from './requests/resident-partner-items';
 import { PartnersController } from './discovery/discovery.controller';
 import { DiscoveryService } from './discovery/discovery.service';
 import { PartnersProvisioning } from './provisioning';
@@ -27,6 +42,10 @@ import { SubcategoriesService } from './setup/subcategories.service';
     StaffPartnersController,
     PartnersController,
     PartnerSettingsController,
+    DeskLinksController,
+    DeskController,
+    PartnerRequestsController,
+    RelayController,
   ],
   providers: [
     PartnersAccess,
@@ -35,6 +54,17 @@ import { SubcategoriesService } from './setup/subcategories.service';
     SubcategoriesService,
     PartnersService,
     DiscoveryService,
+    PartnerNotices,
+    PartnerEmailTemplates,
+    DeskLinks,
+    DeskService,
+    RequestReads,
+    PartnerRequestEngine,
+    PartnerActions,
+    PartnerRequestsService,
+    RelayService,
+    PartnerRequestSweeps,
+    ResidentPartnerItems,
   ],
 })
 export class PartnersModule {}

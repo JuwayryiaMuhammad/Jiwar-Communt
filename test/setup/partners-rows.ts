@@ -121,3 +121,79 @@ export async function favouriteRow(
   });
   return input.partnerId;
 }
+
+let nextNumber = 1_000_000;
+
+/** A pending request for a cleaning, two days ahead, two hours long. */
+export async function requestRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    partnerId: string;
+    unitId: string;
+    requesterId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  const start = new Date(Date.now() + 2 * 86_400_000);
+  await tx.partnerRequest.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      number: nextNumber++,
+      partnerId: input.partnerId,
+      unitId: input.unitId,
+      requesterId: input.requesterId,
+      category: 'home_services',
+      askedStartsAt: start,
+      askedEndsAt: new Date(start.getTime() + 2 * 3_600_000),
+      note: 'Second floor',
+      gatePass: true,
+      status: 'pending',
+      lastActivityAt: new Date(),
+    },
+  });
+  return id;
+}
+
+/** A price line a request named. */
+export async function requestItemRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; requestId: string; position?: number },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerRequestItem.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      requestId: input.requestId,
+      nameEn: 'Visit',
+      nameAr: 'زيارة',
+      price: '150.00',
+      unit: 'visit_fee',
+      quantity: 1,
+      position: input.position ?? 0,
+    },
+  });
+  return id;
+}
+
+/** A step of a request's history, by the resident. */
+export async function requestEventRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; requestId: string; actorAccountId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerRequestEvent.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      requestId: input.requestId,
+      kind: 'created',
+      actor: 'resident',
+      actorAccountId: input.actorAccountId,
+      at: new Date(),
+    },
+  });
+  return id;
+}

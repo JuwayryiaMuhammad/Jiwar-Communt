@@ -698,4 +698,17 @@ export const REASON_CODES = {
     'safety',
     'other',
   ],
+  // A request to a partner (ADR 0060): why the resident cancels it, why the
+  // partner (on its desk, or the management relaying) declines or cancels
+  // it, and the system's own reasons. A resident who declines a proposed
+  // window closes it with `proposal_declined`, never picked from a list.
+  partnerRequestResidentCancel: [
+    'no_longer_needed',
+    'found_another',
+    'wrong_details',
+    'other',
+  ],
+  partnerRequestDecline: ['unavailable', 'out_of_area', 'not_offered', 'other'],
+  partnerRequestPartnerCancel: ['unavailable', 'emergency', 'other'],
+  partnerRequestSystemCancel: ['partner_suspended', 'requester_left'],
 } as const;

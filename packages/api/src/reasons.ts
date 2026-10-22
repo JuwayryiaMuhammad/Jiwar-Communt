@@ -146,6 +146,15 @@ export const REASON_CODES = {
   gateExceptionReject: ['not_expected', 'identity_unclear', 'outside_policy', 'other'],
   gateDeviceRevoke: ['lost', 'stolen', 'replaced', 'retired', 'compromised', 'other'],
   offlineFlagReview: ['confirmed', 'followed_up', 'false_alarm', 'other'],
+  // Partners (ADR 0060).
+  partnerSuspend: ['quality_complaints', 'licence_issue', 'contract_ended', 'partner_request', 'safety', 'other'],
+  partnerRequestResidentCancel: ['no_longer_needed', 'found_another', 'wrong_details', 'other'],
+  partnerRequestDecline: ['unavailable', 'out_of_area', 'not_offered', 'other'],
+  partnerRequestPartnerCancel: ['unavailable', 'emergency', 'other'],
+  partnerRequestSystemCancel: ['partner_suspended', 'requester_left'],
+  partnerComplaint: ['no_show', 'late', 'poor_quality', 'overcharged', 'damage', 'conduct', 'other'],
+  partnerCompensationAsk: ['none', 'refund', 'redo', 'damages'],
+  partnerCompensationDecision: ['none', 'redo', 'partner_refund', 'credit_note'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

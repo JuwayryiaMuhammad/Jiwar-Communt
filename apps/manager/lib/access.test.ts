@@ -49,6 +49,11 @@ test('a staff role that only decides the permits enters', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['permits.manage'] }), true);
 });
 
+test('a staff role that only keeps the partners enters; asking one admits nobody (ADR 0060)', () => {
+  assert.equal(mayEnter({ type: 'staff', permissions: ['partners.manage'] }), true);
+  assert.equal(mayEnter({ type: 'resident', permissions: ['partners.request'] }), false);
+});
+
 test('a guard, a technician and a resident do not', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle'] }), false);
   assert.equal(mayEnter({ type: 'staff', permissions: ['tickets.work'] }), false);

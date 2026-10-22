@@ -13,6 +13,59 @@ export const CONSENT_TEXT: Record<string, { title: string; body: string }> = {
     title: 'Share phone with the technician',
     body: 'The technician working on their ticket sees their phone number while the work is open.',
   },
+  // One per category of service (ADR 0060).
+  partner_share_gas_water: {
+    title: 'Share a request’s details with gas and water partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_pharmacy: {
+    title: 'Share a request’s details with the pharmacy partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_grocery: {
+    title: 'Share a request’s details with groceries partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_home_services: {
+    title: 'Share a request’s details with home services partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_laundry: {
+    title: 'Share a request’s details with laundry and carpets partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_gardening: {
+    title: 'Share a request’s details with gardening partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_beauty_at_home: {
+    title: 'Share a request’s details with barber and salon at home partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_repair: {
+    title: 'Share a request’s details with repairs partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_pets: {
+    title: 'Share a request’s details with pets partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_events: {
+    title: 'Share a request’s details with event setup partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_moving_storage: {
+    title: 'Share a request’s details with moving and storage partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_car_services: {
+    title: 'Share a request’s details with car services partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
+  partner_share_elderly_care: {
+    title: 'Share a request’s details with elderly care partners',
+    body: 'A partner they ask sees the unit’s code, their first name, the time, the note and the lines of that one request.',
+  },
 };
 
 export const NOTIFICATION_CATEGORY_TEXT: Record<string, string> = {
@@ -28,6 +81,7 @@ export const NOTIFICATION_CATEGORY_TEXT: Record<string, string> = {
   safety: 'Emergencies and gate services',
   permits: 'Permits: works and contractors, moves, material exits, events',
   governance: 'The owners’ board: its polls, elections and results',
+  partners: 'Requests to the compound’s service partners',
 };
 
 /** Personal fields an erasure blanks, as the scope lists them. */

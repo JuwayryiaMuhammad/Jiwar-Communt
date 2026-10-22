@@ -408,6 +408,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       ],
     },
     {
+      // The compound's service partners (ADR 0060).
+      label: 'Partners',
+      items: [
+        { href: '/partners', label: 'Partners', icon: <Handshake aria-hidden />, exact: true, show: can('partners.manage') },
+        { href: '/partners/requests', label: 'Partner requests', icon: <Inbox aria-hidden />, show: can('partners.manage') },
+        { href: '/partners/complaints', label: 'Partner complaints', icon: <Scale aria-hidden />, show: can('partners.manage') },
+        { href: '/partners/settings', label: 'Partner settings', icon: <SlidersHorizontal aria-hidden />, show: can('partners.manage') },
+      ],
+    },
+    {
       label: 'Security',
       items: [
         { href: '/security/roster', label: 'Roster', icon: <CalendarCog aria-hidden />, show: can('guard_roster.manage') },

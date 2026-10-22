@@ -272,3 +272,10 @@ test('the gate offline (ADR 0057): its kinds read as sentences and lead to its p
   assert.equal(notificationHref(n('gate_offline.conflicts', { flags: 1 }, 'gate_offline_batch', 'b1'), manages), '/security/offline-flags?batch=b1');
   assert.equal(notificationHref(n('gate_offline.conflicts', { flags: 1 }, 'gate_offline_batch', 'b1'), () => false), null);
 });
+
+test('a request to relay says the category, never a name, and leads its keeper to it (ADR 0060)', () => {
+  const relay = n('partner_request.awaiting_relay', { category: 'home_services' }, 'partner_request', 'r-1');
+  assert.equal(notificationText(relay), 'A resident asked a partner without a desk link: home services');
+  assert.equal(notificationHref(relay, (p) => p === 'partners.manage'), '/partners/requests/r-1');
+  assert.equal(notificationHref(relay, () => false), null);
+});

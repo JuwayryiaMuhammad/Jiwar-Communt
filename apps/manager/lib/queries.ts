@@ -246,6 +246,21 @@ export interface PermitFilters {
   live?: boolean;
 }
 
+// Partners (ADR 0060).
+export type StaffPartner = Schema<'StaffPartnerView'>;
+export type PartnerSubcategory = Schema<'StaffPartnerSubcategoryView'>;
+export type PartnerSettings = Schema<'PartnerSettingsResponse'>;
+export type PartnerRequest = Schema<'StaffPartnerRequestView'>;
+export type PartnerRequestStatus = Schema<'PartnerRequestStatus'>;
+export type PartnerComplaint = Schema<'ComplaintView'>;
+export type PartnerRating = Schema<'StaffRatingView'>;
+export type PartnerCategory = Schema<'PartnerCategory'>;
+export type PartnerPriceUnit = Schema<'PartnerPriceUnit'>;
+export interface PartnerRequestFilters {
+  status?: PartnerRequestStatus | '';
+  partnerId?: string;
+}
+
 // Governance (ADR 0051).
 export type StaffBoardTerm = Schema<'StaffBoardTermView'>;
 export type StaffBoardSeat = Schema<'StaffBoardSeatView'>;
@@ -565,6 +580,16 @@ export const keys = {
   permit: (id: string) => ['unit-permits', 'detail', id] as const,
   materialEntries: ['unit-permits', 'materials'] as const,
   permitSettings: ['permit-settings'] as const,
+  partnersAll: ['partners'] as const,
+  partners: ['partners', 'list'] as const,
+  partner: (id: string) => ['partners', 'detail', id] as const,
+  partnerSubcategories: ['partners', 'subcategories'] as const,
+  partnerSettings: ['partners', 'settings'] as const,
+  partnerRequests: (filters: object) => ['partners', 'requests', filters] as const,
+  partnerRequest: (id: string) => ['partners', 'request', id] as const,
+  partnerComplaints: (decided: string) => ['partners', 'complaints', decided] as const,
+  partnerComplaint: (id: string) => ['partners', 'complaint', id] as const,
+  partnerRatings: (partnerId: string) => ['partners', 'ratings', partnerId] as const,
   // Guard shifts and tasks (ADR 0050).
   securityPosts: ['security', 'posts'] as const,
   securityGuards: ['security', 'guards'] as const,
@@ -930,6 +955,33 @@ export const fetchers = {
   materialEntries: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/material-entries', { params: { query: { cursor, limit } } })),
   permitSettings: () => unwrap(api.GET('/api/v1/staff/permit-settings')),
+  // Partners (ADR 0060).
+  partners: () => unwrap(api.GET('/api/v1/staff/partners')),
+  partner: (id: string) => unwrap(api.GET('/api/v1/staff/partners/{id}', { params: { path: { id } } })),
+  partnerSubcategories: () => unwrap(api.GET('/api/v1/staff/partner-subcategories')),
+  partnerSettings: () => unwrap(api.GET('/api/v1/staff/partner-settings')),
+  partnerRequests: (filters: PartnerRequestFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/partner-requests', {
+        params: {
+          query: {
+            ...(clean(filters) as { status?: PartnerRequestStatus; partnerId?: string }),
+            cursor,
+            limit,
+          },
+        },
+      }),
+    ),
+  partnerRequest: (id: string) => unwrap(api.GET('/api/v1/staff/partner-requests/{id}', { params: { path: { id } } })),
+  partnerComplaints: (decided: 'true' | 'false' | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/partner-complaints', {
+        params: { query: { ...(decided ? { decided } : {}), cursor, limit } },
+      }),
+    ),
+  partnerComplaint: (id: string) => unwrap(api.GET('/api/v1/staff/partner-complaints/{id}', { params: { path: { id } } })),
+  partnerRatings: (partnerId: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/partner-ratings', { params: { query: { partnerId, cursor, limit } } })),
   // Guard shifts and tasks (ADR 0050).
   securityPosts: () => unwrap(api.GET('/api/v1/staff/security/posts')),
   securityGuards: () => unwrap(api.GET('/api/v1/staff/security/guards')),

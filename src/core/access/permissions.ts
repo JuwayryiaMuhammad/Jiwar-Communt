@@ -232,6 +232,14 @@ export const PERMISSIONS = {
   // revoked here), their sync health, the flags their uploads raised, and
   // the quarantined batches of a revoked one, accepted or rejected.
   'gate_devices.manage': { kinds: ['staff', 'manager'] },
+  // Partners (ADR 0060). Residents and family find the compound's service
+  // partners, keep favourites and request a service for a unit
+  // (capabilities.visitorsInvite decides per unit: the partner's staff
+  // come to the door); `partners.manage` lists the partners, their
+  // services, prices, hours and desk links, suspends and reinstates them,
+  // relays requests for a partner who phones, and decides complaints.
+  'partners.request': { kinds: ['resident', 'family'] },
+  'partners.manage': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

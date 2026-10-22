@@ -56,3 +56,5 @@ export {
   CommunityGovernancePort,
   type GovernanceOwner,
 } from './governance-port';
+export { CommunityPartnersPortModule } from './partners-port.module';
+export { CommunityPartnersPort, type PartnerUnit } from './partners-port';

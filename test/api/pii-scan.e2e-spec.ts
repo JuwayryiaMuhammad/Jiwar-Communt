@@ -1496,6 +1496,9 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0049: the requester's and the primary's; the last four nowhere.
       '/units/{unitId}/permits': unit.id,
       '/permits/{id}': piiPermit,
+      // ADR 0060: A's partner as each reader sees it.
+      '/partners/{id}': w.aPartnerId,
+      '/staff/partners/{id}': w.aPartnerId,
       '/staff/unit-permits/{id}': piiPermit,
       '/gate/unit-permits/{id}': piiPermit,
       '/staff/security/handovers/{id}': piiHandover,

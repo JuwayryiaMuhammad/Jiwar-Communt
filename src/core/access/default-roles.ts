@@ -88,6 +88,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate_exceptions.decide',
       'gate_log.search',
       'gate_devices.manage',
+      'partners.manage',
     ],
   },
   {
@@ -114,6 +115,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate_services.request',
       'permits.request',
       'governance.read',
+      'partners.request',
     ],
   },
   {
@@ -139,6 +141,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'emergencies.report',
       'gate_services.request',
       'permits.request',
+      'partners.request',
     ],
   },
   {

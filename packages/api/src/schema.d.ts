@@ -7223,6 +7223,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/partner-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the partner categories with their sub-categories */
+        get: operations["PartnerCategoriesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the active partners: by category, open now, open late tonight, new, favourites */
+        get: operations["PartnersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a partner */
+        get: operations["PartnersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{id}/favourite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Keep a partner among the caller’s favourites */
+        put: operations["PartnersController_favourite"];
+        post?: never;
+        /** Take a partner off the caller’s favourites */
+        delete: operations["PartnersController_unfavourite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payment-sessions/{id}": {
         parameters: {
             query?: never;
@@ -10247,6 +10316,146 @@ export interface paths {
         head?: never;
         /** Change a parking slot’s code or place */
         patch: operations["ParkingSlotsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partner-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the partner settings */
+        get: operations["PartnerSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the partner settings */
+        patch: operations["PartnerSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partner-subcategories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the sub-categories, retired ones included */
+        get: operations["StaffPartnerSubcategoriesController_list"];
+        put?: never;
+        /** Name a sub-category under a category */
+        post: operations["StaffPartnerSubcategoriesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-subcategories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, reorder, retire or restore a sub-category */
+        patch: operations["StaffPartnerSubcategoriesController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List every partner, suspended ones included */
+        get: operations["StaffPartnersController_list"];
+        put?: never;
+        /** List a partner, with what it does */
+        post: operations["StaffPartnersController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a partner */
+        get: operations["StaffPartnersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a partner: names, description, phone, email, area */
+        patch: operations["StaffPartnersController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a partner’s weekly hours */
+        put: operations["StaffPartnersController_replaceHours"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a partner’s announced price list */
+        put: operations["StaffPartnersController_replacePrices"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace what a partner does */
+        put: operations["StaffPartnersController_replaceServices"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/payments": {
@@ -17599,6 +17808,39 @@ export interface components {
             /** @description The unit’s code (UNIT_CODE_UNKNOWN). */
             unitCode: string;
         };
+        CreatePartnerDto: {
+            /**
+             * @description The business phone residents call, stored E.164. Never a person’s own number.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionAr?: string | null;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionEn?: string | null;
+            /** @description It comes to the home. Default false. */
+            homeVisit?: boolean;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameAr: string;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameEn: string;
+            /** @description Where a new request is told, with no resident data and no link. Staff only. */
+            notifyEmail?: string | null;
+            /** @description Buildings as `GET /community/buildings` lists them. Empty or absent: the whole compound. */
+            serviceBuildings?: string[];
+            /** @description What it does: at least one category. */
+            services: components["schemas"]["PartnerServiceDto"][];
+        };
+        CreatePartnerSubcategoryDto: {
+            /** @description One of the closed list; never changes. */
+            category: components["schemas"]["PartnerCategory"];
+            /** @description Unique in the compound (DUPLICATE_RESOURCE); never changes. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description Order within its category. Default 0. */
+            position?: number;
+        };
         CreatePlaceDto: {
             /** @example المرحلة ج */
             nameAr: string;
@@ -22789,6 +23031,144 @@ export interface components {
             /** @example Basement 2, row C */
             place: string;
         };
+        /** @enum {string} */
+        PartnerCategory: "gas_water" | "pharmacy" | "grocery" | "home_services" | "laundry" | "gardening" | "beauty_at_home" | "repair" | "pets" | "events" | "moving_storage" | "car_services" | "elderly_care";
+        PartnerCategoryView: {
+            category: components["schemas"]["PartnerCategory"];
+            /** @description The consent a request in this category needs (ADR 0036, 0060), granted at its current version. */
+            consentCode: string;
+            subcategories: components["schemas"]["PartnerSubcategoryView"][];
+        };
+        PartnerCategoryViewList: {
+            data: components["schemas"]["PartnerCategoryView"][];
+            nextCursor: string | null;
+        };
+        PartnerPriceItemDto: {
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameAr: string;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameEn: string;
+            /** @description EGP, e.g. `150` or `150.50`; `0` for free. */
+            price: string;
+            /**
+             * Format: uuid
+             * @description One of the partner’s sub-categories (PARTNER_SERVICE_NOT_OFFERED), or none.
+             */
+            subcategoryId?: string | null;
+            unit: components["schemas"]["PartnerPriceUnit"];
+        };
+        PartnerPriceItemView: {
+            /** Format: uuid */
+            id: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description EGP, two decimals. */
+            price: string;
+            /** Format: uuid */
+            subcategoryId: string | null;
+            /** @description `visit_fee`: what coming to the home costs. */
+            unit: components["schemas"]["PartnerPriceUnit"];
+        };
+        /**
+         * @description `visit_fee`: what coming to the home costs.
+         * @enum {string}
+         */
+        PartnerPriceUnit: "fixed" | "per_visit" | "visit_fee" | "per_hour" | "per_item" | "per_kg" | "per_sqm";
+        PartnerServiceDto: {
+            category: components["schemas"]["PartnerCategory"];
+            /**
+             * Format: uuid
+             * @description An active sub-category of the compound under that category (PARTNER_SUBCATEGORY_NOT_AVAILABLE). Absent or null: the category as a whole.
+             */
+            subcategoryId?: string | null;
+        };
+        PartnerServiceView: {
+            category: components["schemas"]["PartnerCategory"];
+            subcategory: components["schemas"]["PartnerSubcategoryView"] | null;
+        };
+        PartnerSettingsResponse: {
+            /** @description Days after a request ends that a complaint may be made. */
+            complaintDays: number;
+            /** @description Days a desk link works. */
+            deskLinkDays: number;
+            /** @description "Open late tonight" means open after this minute of the local day. */
+            lateFromMinute: number;
+            /** @description Requests an account may have open at once. */
+            maxLiveRequests: number;
+            /** @description A partner is shown as new this many days after it was listed. */
+            newDays: number;
+            /** @description Days after a request is done that it may be rated. */
+            ratingDays: number;
+        };
+        /** @enum {string} */
+        PartnerStatus: "active" | "suspended";
+        PartnerSubcategoryView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        PartnerView: {
+            /**
+             * @description The partner’s business phone, E.164: the one contact shown.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** @description One of the caller’s favourites. */
+            favourite: boolean;
+            /** @description It comes to the home. */
+            homeVisit: boolean;
+            /** @description Weekly hours, by weekday then start. */
+            hours: components["schemas"]["PartnerWindowView"][];
+            /** Format: uuid */
+            id: string;
+            /** @description Listed within the "new" days. */
+            isNew: boolean;
+            /** Format: date-time */
+            listedAt: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Open at some moment still ahead tonight, after the late hour. */
+            openLateTonight: boolean;
+            /** @description Open now. */
+            openNow: boolean;
+            priceItems: components["schemas"]["PartnerPriceItemView"][];
+            /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
+            serviceBuildings: string[];
+            services: components["schemas"]["PartnerServiceView"][];
+            /**
+             * @description The time zone the hours are in.
+             * @example Africa/Cairo
+             */
+            timeZone: string;
+        };
+        PartnerViewList: {
+            data: components["schemas"]["PartnerView"][];
+            nextCursor: string | null;
+        };
+        PartnerWindowDto: {
+            endMinute: number;
+            /** @description Minutes after local midnight, in the compound’s time zone. */
+            startMinute: number;
+            /** @description 0 is Sunday. */
+            weekday: number;
+        };
+        PartnerWindowView: {
+            endMinute: number;
+            /** @description Minutes after local midnight, in the compound’s time zone. */
+            startMinute: number;
+            /** @description 0 is Sunday. */
+            weekday: number;
+        };
         PassDetailView: {
             /** @description 6 digits. Active passes, for the host and the primary; null otherwise, and on a pass issued before this field existed (reissue its link). */
             code: string | null;
@@ -24349,6 +24729,18 @@ export interface components {
         ReplaceOfficeHoursDto: {
             /** @description The whole week. Windows of one weekday may touch, never overlap (OFFICE_HOURS_OVERLAP). An empty list closes the office. */
             windows: components["schemas"]["OfficeWindowDto"][];
+        };
+        ReplacePartnerHoursDto: {
+            /** @description The whole week. Windows of one weekday may touch, never overlap (WINDOW_OVERLAP). Open past midnight: a window to 1440 and the next day’s from 0. Empty: no hours (never open). */
+            windows: components["schemas"]["PartnerWindowDto"][];
+        };
+        ReplacePartnerPricesDto: {
+            /** @description The whole list, in order. Requests already made keep the lines they named. */
+            items: components["schemas"]["PartnerPriceItemDto"][];
+        };
+        ReplacePartnerServicesDto: {
+            /** @description The whole set; each pair once (DUPLICATE_VALUE). */
+            services: components["schemas"]["PartnerServiceDto"][];
         };
         ReplacePermissionsDto: {
             /** @description The whole set; keys from GET /permissions. The manager role keeps roles.manage and residents.manage. */
@@ -27186,6 +27578,60 @@ export interface components {
             data: components["schemas"]["StaffParkingSlotView"][];
             nextCursor: string | null;
         };
+        StaffPartnerSubcategoryView: {
+            active: boolean;
+            category: components["schemas"]["PartnerCategory"];
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            position: number;
+        };
+        StaffPartnerSubcategoryViewList: {
+            data: components["schemas"]["StaffPartnerSubcategoryView"][];
+            nextCursor: string | null;
+        };
+        StaffPartnerView: {
+            /**
+             * @description The partner’s business phone, E.164: the one contact shown.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** @description It comes to the home. */
+            homeVisit: boolean;
+            /** @description Weekly hours, by weekday then start. */
+            hours: components["schemas"]["PartnerWindowView"][];
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            listedAt: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Where a new request is told (no resident data). Staff only. */
+            notifyEmail: string | null;
+            priceItems: components["schemas"]["PartnerPriceItemView"][];
+            /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
+            serviceBuildings: string[];
+            services: components["schemas"]["PartnerServiceView"][];
+            status: components["schemas"]["PartnerStatus"];
+            /** Format: date-time */
+            suspendedAt: string | null;
+            /** @description From the closed list `partnerSuspend`. */
+            suspendedReason: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        StaffPartnerViewList: {
+            data: components["schemas"]["StaffPartnerView"][];
+            nextCursor: string | null;
+        };
         StaffPermitView: {
             building: string | null;
             cancelReason: components["schemas"]["UnitPermitCancelReason"] | null;
@@ -28916,6 +29362,44 @@ export interface components {
         UpdateParkingSlotDto: {
             code?: string;
             place?: string;
+        };
+        UpdatePartnerDto: {
+            /** @example +20225550100 */
+            businessPhone?: string;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionAr?: string | null;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionEn?: string | null;
+            homeVisit?: boolean;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameAr?: string;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameEn?: string;
+            /** @description Null clears it. */
+            notifyEmail?: string | null;
+            /** @description Buildings as `GET /community/buildings` lists them. Empty or absent: the whole compound. */
+            serviceBuildings?: string[];
+        };
+        UpdatePartnerSettingsDto: {
+            /** @description Days after a request ends that a complaint may be made about it. */
+            complaintDays?: number;
+            /** @description Days a partner’s desk link works; then the management makes a new one. */
+            deskLinkDays?: number;
+            /** @description "Open late tonight" means open after this minute of the local day. */
+            lateFromMinute?: number;
+            /** @description Requests an account may have open at once. */
+            maxLiveRequests?: number;
+            /** @description A partner is shown as new this many days after it was listed. */
+            newDays?: number;
+            /** @description Days after a request is done that it may be rated. */
+            ratingDays?: number;
+        };
+        UpdatePartnerSubcategoryDto: {
+            /** @description False retires it: offered for nothing new; the partners that name it keep it. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+            position?: number;
         };
         UpdatePermitSettingsDto: {
             /**
@@ -40528,6 +41012,114 @@ export interface operations {
             };
         };
     };
+    PartnerCategoriesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerCategoryViewList"];
+                };
+            };
+        };
+    };
+    PartnersController_list: {
+        parameters: {
+            query?: {
+                category?: components["schemas"]["PartnerCategory"];
+                subcategoryId?: string;
+                /** @description `true`: open now, in the compound’s time zone. */
+                openNow?: "true" | "false";
+                /** @description `true`: open at some moment still ahead tonight, after the compound’s late hour (22:00 by default). */
+                openLate?: "true" | "false";
+                /** @description `true`: listed within the compound’s "new" days (30 by default). */
+                new?: "true" | "false";
+                /** @description `true`: the caller’s favourites only. */
+                favourites?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerViewList"];
+                };
+            };
+        };
+    };
+    PartnersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerView"];
+                };
+            };
+        };
+    };
+    PartnersController_favourite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PartnersController_unfavourite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PaymentSessionsController_status: {
         parameters: {
             query?: never;
@@ -45039,6 +45631,284 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffParkingSlotView"];
+                };
+            };
+        };
+    };
+    PartnerSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSettingsResponse"];
+                };
+            };
+        };
+    };
+    PartnerSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSettingsResponse"];
+                };
+            };
+        };
+    };
+    StaffPartnerSubcategoriesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerSubcategoryViewList"];
+                };
+            };
+        };
+    };
+    StaffPartnerSubcategoriesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartnerSubcategoryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerSubcategoryView"];
+                };
+            };
+        };
+    };
+    StaffPartnerSubcategoriesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerSubcategoryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerSubcategoryView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerViewList"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartnerDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_replaceHours: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplacePartnerHoursDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_replacePrices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplacePartnerPricesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_replaceServices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplacePartnerServicesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
                 };
             };
         };

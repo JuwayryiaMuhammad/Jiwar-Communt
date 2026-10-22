@@ -688,4 +688,14 @@ export const REASON_CODES = {
     'compromised',
     'other',
   ],
+  // Partners (ADR 0060): why the management suspends a partner. Residents
+  // are told it is suspended, never why.
+  partnerSuspend: [
+    'quality_complaints',
+    'licence_issue',
+    'contract_ended',
+    'partner_request',
+    'safety',
+    'other',
+  ],
 } as const;

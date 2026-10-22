@@ -8503,3 +8503,155 @@ model EventChildRegistration {
   @@index([tenantId, registeredById], map: "event_child_registrations_by_idx")
   @@map("event_child_registrations")
 }
+
+// ============================================================================
+// PARTNERS (ADR 0060)
+// ============================================================================
+
+/// A compound's partner settings (ADR 0060): one row per compound,
+/// provisioned with it. Ranges in partner_settings_ranges.
+model PartnerSettings {
+  tenantId        String   @id @map("tenant_id") @db.Uuid
+  /// A partner is "new" this many days after it was listed.
+  newDays         Int      @default(30) @map("new_days")
+  /// "Open late tonight" means open after this local minute.
+  lateFromMinute  Int      @default(1320) @map("late_from_minute")
+  maxLiveRequests Int      @default(5) @map("max_live_requests")
+  ratingDays      Int      @default(14) @map("rating_days")
+  complaintDays   Int      @default(14) @map("complaint_days")
+  /// A desk link stops working this many days after it was made.
+  deskLinkDays    Int      @default(90) @map("desk_link_days")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("partner_settings")
+}
+
+/// A compound's named sub-category under one of the closed categories
+/// (PARTNER_CATEGORIES). Its key and category never change (trigger);
+/// retired with `active`, never deleted.
+model PartnerSubcategory {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  category  String
+  key       String
+  nameEn    String   @map("name_en")
+  nameAr    String   @map("name_ar")
+  active    Boolean  @default(true)
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  services   PartnerService[]
+  priceItems PartnerPriceItem[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, id, category], map: "partner_subcategories_tenant_id_id_category_key")
+  @@unique([tenantId, key], map: "partner_subcategories_key_key")
+  @@map("partner_subcategories")
+}
+
+/// An external service partner the management lists (ADR 0060). The
+/// business phone is the one contact residents see; the notify email is
+/// the staff's alone. `serviceBuildings` empty is the whole compound. Never
+/// deleted (trigger): suspended with a reason code, reinstated.
+model Partner {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  nameEn           String    @map("name_en")
+  nameAr           String    @map("name_ar")
+  descriptionEn    String?   @map("description_en")
+  descriptionAr    String?   @map("description_ar")
+  businessPhone    String    @map("business_phone")
+  notifyEmail      String?   @map("notify_email")
+  serviceBuildings String[]  @default([]) @map("service_buildings")
+  homeVisit        Boolean   @default(false) @map("home_visit")
+  /// active | suspended
+  status           String    @default("active")
+  /// REASON_CODES.partnerSuspend
+  suspendedReason  String?   @map("suspended_reason")
+  suspendedAt      DateTime? @map("suspended_at") @db.Timestamptz(3)
+  suspendedById    String?   @map("suspended_by_account_id") @db.Uuid
+  listedAt         DateTime  @map("listed_at") @db.Timestamptz(3)
+  createdById      String    @map("created_by_account_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  services   PartnerService[]
+  hours      PartnerHours[]
+  priceItems PartnerPriceItem[]
+  favourites PartnerFavourite[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, listedAt(sort: Desc), id], map: "partners_listed_idx")
+  @@map("partners")
+}
+
+/// What a partner does: a category, and optionally one of its named
+/// sub-categories. Replaced as a whole under the partner's row lock. Unique
+/// per partner, category and sub-category, NULLS NOT DISTINCT
+/// (partner_services_once_key, in the migration).
+model PartnerService {
+  id            String  @id @db.Uuid
+  tenantId      String  @map("tenant_id") @db.Uuid
+  partnerId     String  @map("partner_id") @db.Uuid
+  category      String
+  subcategoryId String? @map("subcategory_id") @db.Uuid
+
+  partner     Partner             @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  subcategory PartnerSubcategory? @relation(fields: [tenantId, subcategoryId, category], references: [tenantId, id, category], onDelete: Restrict, onUpdate: Restrict, map: "partner_services_subcategory_fkey")
+
+  @@index([tenantId, category, partnerId], map: "partner_services_category_idx")
+  @@map("partner_services")
+}
+
+/// A partner's weekly hours in the compound's time zone (weekday 0 is
+/// Sunday; minutes after local midnight). Replaced as a whole.
+model PartnerHours {
+  id          String @id @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+  partnerId   String @map("partner_id") @db.Uuid
+  weekday     Int
+  startMinute Int    @map("start_minute")
+  endMinute   Int    @map("end_minute")
+
+  partner Partner @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, partnerId, weekday, startMinute], map: "partner_hours_window_key")
+  @@map("partner_hours")
+}
+
+/// A line of a partner's announced price list, in EGP. Replaced as a whole;
+/// a request keeps its own copy of what it named.
+model PartnerPriceItem {
+  id            String  @id @db.Uuid
+  tenantId      String  @map("tenant_id") @db.Uuid
+  partnerId     String  @map("partner_id") @db.Uuid
+  subcategoryId String? @map("subcategory_id") @db.Uuid
+  nameEn        String  @map("name_en")
+  nameAr        String  @map("name_ar")
+  price         Decimal @db.Decimal(10, 2)
+  /// PARTNER_PRICE_UNITS
+  unit          String
+  position      Int
+
+  partner     Partner             @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  subcategory PartnerSubcategory? @relation(fields: [tenantId, subcategoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, partnerId, position], map: "partner_price_items_partner_idx")
+  @@map("partner_price_items")
+}
+
+/// A resident's favourite partner: the account's own.
+model PartnerFavourite {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  partnerId String   @map("partner_id") @db.Uuid
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  partner Partner @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, accountId, partnerId])
+  @@index([tenantId, partnerId, accountId], map: "partner_favourites_partner_idx")
+  @@map("partner_favourites")
+}

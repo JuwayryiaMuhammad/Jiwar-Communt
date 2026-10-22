@@ -26604,6 +26604,591 @@
     {
       "item": [
         {
+          "name": "List the partner categories with their sub-categories",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partner-categories"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partner-categories"
+            }
+          }
+        },
+        {
+          "name": "List the active partners: by category, open now, open late tonight, new, favourites",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partners"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "subcategoryId",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: open now, in the compound’s time zone.",
+                  "disabled": true,
+                  "key": "openNow",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: open at some moment still ahead tonight, after the compound’s late hour (22:00 by default).",
+                  "disabled": true,
+                  "key": "openLate",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: listed within the compound’s \"new\" days (30 by default).",
+                  "disabled": true,
+                  "key": "new",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: the caller’s favourites only.",
+                  "disabled": true,
+                  "key": "favourites",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/partners"
+            }
+          }
+        },
+        {
+          "name": "Get a partner",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partners",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partners/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Keep a partner among the caller’s favourites",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partners",
+                ":id",
+                "favourite"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partners/:id/favourite",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a partner off the caller’s favourites",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partners",
+                ":id",
+                "favourite"
+              ],
+              "raw": "{{baseUrl}}/api/v1/partners/:id/favourite",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the partner settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-settings"
+            }
+          }
+        },
+        {
+          "name": "Update the partner settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"complaintDays\": 1,\n  \"deskLinkDays\": 7,\n  \"lateFromMinute\": 960,\n  \"maxLiveRequests\": 1,\n  \"newDays\": 1,\n  \"ratingDays\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `complaintDays` | number |  | Days after a request ends that a complaint may be made about it. |\n| `deskLinkDays` | number |  | Days a partner’s desk link works; then the management makes a new one. |\n| `lateFromMinute` | number |  | \"Open late tonight\" means open after this minute of the local day. |\n| `maxLiveRequests` | number |  | Requests an account may have open at once. |\n| `newDays` | number |  | A partner is shown as new this many days after it was listed. |\n| `ratingDays` | number |  | Days after a request is done that it may be rated. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-settings"
+            }
+          }
+        },
+        {
+          "name": "List the sub-categories, retired ones included",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-subcategories"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-subcategories"
+            }
+          }
+        },
+        {
+          "name": "Name a sub-category under a category",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"category\": \"gas_water\",\n  \"key\": \"\",\n  \"nameEn\": \"\",\n  \"nameAr\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `category` | `gas_water` \\| `pharmacy` \\| `grocery` \\| `home_services` \\| `laundry` \\| `gardening` \\| `beauty_at_home` \\| `repair` \\| `pets` \\| `events` \\| `moving_storage` \\| `car_services` \\| `elderly_care` | yes | One of the closed list; never changes. |\n| `key` | string | yes | Unique in the compound (DUPLICATE_RESOURCE); never changes. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `position` | number |  | Order within its category. Default 0. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-subcategories"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-subcategories"
+            }
+          }
+        },
+        {
+          "name": "Rename, reorder, retire or restore a sub-category",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"position\": 0\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires it: offered for nothing new; the partners that name it keep it. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `position` | number |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-subcategories",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-subcategories/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List every partner, suspended ones included",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners"
+            }
+          }
+        },
+        {
+          "name": "List a partner, with what it does",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameEn\": \"\",\n  \"nameAr\": \"\",\n  \"businessPhone\": \"+20225550100\",\n  \"services\": [\n    {\n      \"category\": \"gas_water\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `businessPhone` | string | yes | The business phone residents call, stored E.164. Never a person’s own number. |\n| `descriptionAr` | string |  | Optional, per language. On an update, null clears it. |\n| `descriptionEn` | string |  | Optional, per language. On an update, null clears it. |\n| `homeVisit` | boolean |  | It comes to the home. Default false. |\n| `nameAr` | string | yes | Both languages are required; surrounding spaces are trimmed. |\n| `nameEn` | string | yes | Both languages are required; surrounding spaces are trimmed. |\n| `notifyEmail` | string |  | Where a new request is told, with no resident data and no link. Staff only. |\n| `serviceBuildings` | string[] |  | Buildings as `GET /community/buildings` lists them. Empty or absent: the whole compound. |\n| `services` | object[] | yes | What it does: at least one category. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners"
+            }
+          }
+        },
+        {
+          "name": "Get a partner",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update a partner: names, description, phone, email, area",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"businessPhone\": \"+20225550100\",\n  \"descriptionAr\": \"\",\n  \"descriptionEn\": \"\",\n  \"homeVisit\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"notifyEmail\": \"\",\n  \"serviceBuildings\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `businessPhone` | string |  |  |\n| `descriptionAr` | string |  | Optional, per language. On an update, null clears it. |\n| `descriptionEn` | string |  | Optional, per language. On an update, null clears it. |\n| `homeVisit` | boolean |  |  |\n| `nameAr` | string |  | Both languages are required; surrounding spaces are trimmed. |\n| `nameEn` | string |  | Both languages are required; surrounding spaces are trimmed. |\n| `notifyEmail` | string |  | Null clears it. |\n| `serviceBuildings` | string[] |  | Buildings as `GET /community/buildings` lists them. Empty or absent: the whole compound. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace a partner’s weekly hours",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"windows\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `windows` | object[] | yes | The whole week. Windows of one weekday may touch, never overlap (WINDOW_OVERLAP). Open past midnight: a window to 1440 and the next day’s from 0. Empty: no hours (never open). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id",
+                "hours"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id/hours",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace a partner’s announced price list",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"items\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes | The whole list, in order. Requests already made keep the lines they named. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id",
+                "prices"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id/prices",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace what a partner does",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"services\": [\n    {\n      \"category\": \"gas_water\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `services` | object[] | yes | The whole set; each pair once (DUPLICATE_VALUE). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id",
+                "services"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id/services",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "partners"
+    },
+    {
+      "item": [
+        {
           "name": "My patrols at my post",
           "request": {
             "description": "**Responses:** 200",

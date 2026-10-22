@@ -27,6 +27,7 @@ import {
   SUSPENSION_ROUTES,
 } from './facilities';
 import { FILES_ROUTES } from './files';
+import { PARTNER_CATALOGUE_ROUTES } from './partners';
 import {
   FINANCE_BILLING_ROUTES,
   FINANCE_DISPUTE_ROUTES,
@@ -308,4 +309,5 @@ export const ROUTES: Row[] = [
   ...GATE_DEVICE_ROUTES,
   ...GATE_BUNDLE_ROUTES,
   ...OFFLINE_UPLOAD_ROUTES,
+  ...PARTNER_CATALOGUE_ROUTES,
 ];

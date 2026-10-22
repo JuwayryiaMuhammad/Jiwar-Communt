@@ -8,7 +8,13 @@
 // and peak times (ADR 0044) are sets of them. Pure functions: the services
 // and the dashboard's forms say the same.
 
-import { slotsOfDay, weekdayOf, type LocalDate, type Slot } from './day-slots';
+import {
+  localParts,
+  slotsOfDay,
+  weekdayOf,
+  type LocalDate,
+  type Slot,
+} from './day-slots';
 
 export interface WeeklyWindow {
   weekday: number;
@@ -108,4 +114,42 @@ export function weeklySlotsOfDay(
         timeZone,
       ),
   );
+}
+
+/**
+ * Whether the windows hold `instant`: a window of its local weekday holds
+ * its local minute, the end excluded. A place open all day has 0–1440; one
+ * open past midnight has a window to 1440 and the next day's from 0, which
+ * join (ADR 0060). Read on the local clock, so a clock change moves
+ * nothing.
+ */
+export function openAt(
+  windows: readonly WeeklyWindow[],
+  instant: Date,
+  timeZone: string,
+): boolean {
+  const { date, minute } = localParts(instant, timeZone);
+  const weekday = weekdayOf(date);
+  return windows.some(
+    (w) =>
+      w.weekday === weekday && w.startMinute <= minute && minute < w.endMinute,
+  );
+}
+
+/**
+ * Whether the windows are open at some moment of tonight still ahead:
+ * between `lateFromMinute` (or now, when later) and the local midnight
+ * that ends `instant`'s day (ADR 0060's "open late tonight"). A place that
+ * closes exactly at `lateFromMinute` is not.
+ */
+export function openLateTonight(
+  windows: readonly WeeklyWindow[],
+  instant: Date,
+  timeZone: string,
+  lateFromMinute: number,
+): boolean {
+  const { date, minute } = localParts(instant, timeZone);
+  const weekday = weekdayOf(date);
+  const from = Math.max(minute, lateFromMinute);
+  return windows.some((w) => w.weekday === weekday && w.endMinute > from);
 }

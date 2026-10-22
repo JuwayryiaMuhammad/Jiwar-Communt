@@ -1444,6 +1444,52 @@ export const AUDIT_ACTIONS = {
   },
   // metadata: kind, reviewCode.
   'gate_offline_flag.reviewed': { log: 'tenant', target: 'gate_offline_flag' },
+  // Partners (ADR 0060). changes: standing, area and flags by value, the
+  // services as `category` or `category:<subcategoryId>` codes; names,
+  // descriptions, the business phone and the notify email as
+  // `{ changed: true }` only.
+  'partner.created': {
+    log: 'tenant',
+    target: 'partner',
+    sensitive: [
+      'nameEn',
+      'nameAr',
+      'descriptionEn',
+      'descriptionAr',
+      'businessPhone',
+      'notifyEmail',
+    ],
+  },
+  'partner.updated': {
+    log: 'tenant',
+    target: 'partner',
+    sensitive: [
+      'nameEn',
+      'nameAr',
+      'descriptionEn',
+      'descriptionAr',
+      'businessPhone',
+      'notifyEmail',
+    ],
+  },
+  'partner.services_changed': { log: 'tenant', target: 'partner' },
+  // changes: windows as `weekday:start-end` codes.
+  'partner.hours_changed': { log: 'tenant', target: 'partner' },
+  // changes: the lines as `unit:price` codes, in order; never their names.
+  'partner.prices_changed': { log: 'tenant', target: 'partner' },
+  // changes: category, key, state and order by value; names as changed.
+  'partner_subcategory.created': {
+    log: 'tenant',
+    target: 'partner_subcategory',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  'partner_subcategory.updated': {
+    log: 'tenant',
+    target: 'partner_subcategory',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  // changes: the settings by value.
+  'partner.settings_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

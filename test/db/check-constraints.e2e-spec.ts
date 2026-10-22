@@ -1828,6 +1828,35 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'token_seq IS NULL and token_key_version IS NULL are tested before each comparison',
   },
+  // Partners (ADR 0060).
+  partner_settings_ranges: {},
+  partner_subcategories_category: {},
+  partner_subcategories_key_format: {},
+  partner_subcategories_names_length: {},
+  partner_subcategories_position_range: {},
+  partners_names_length: {},
+  partners_descriptions_length: {
+    guarded:
+      'each description IS NULL is tested first; its length runs only on a value',
+  },
+  partners_business_phone_e164: {},
+  partners_notify_email_shape: {
+    guarded:
+      'notify_email IS NULL is tested first; its length and shape run only on a value',
+  },
+  partners_service_buildings: {},
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  partners_status_shape: {},
+  partners_suspended_reason: {
+    guarded:
+      'suspended_reason IS NULL is tested first; the list runs only on a value',
+  },
+  partner_services_category: {},
+  partner_hours_window: {},
+  partner_price_items_names_length: {},
+  partner_price_items_price_range: {},
+  partner_price_items_unit: {},
+  partner_price_items_position_range: {},
 };
 
 interface Check {

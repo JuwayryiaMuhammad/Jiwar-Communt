@@ -28,6 +28,7 @@ const DOMAINS = [
   'maintenance',
   'management',
   'neighbours',
+  'partners',
 ];
 
 /**
@@ -41,11 +42,14 @@ const DOMAINS = [
  * nothing imports it (ADR 0046; every domain lists it since ADR 0055).
  * Governance reads community, and engagement for the board's notices, and
  * nothing imports it (ADR 0051): the domains register what the board's
- * decisions do with core's BoardMatters (ADR 0055).
+ * decisions do with core's BoardMatters (ADR 0055). Partners reads
+ * community, the gate (a service pass for an accepted request) and
+ * management (a complaint is a management request) through their
+ * index.ts, and nothing imports it (ADR 0060).
  */
 const NO_IMPORT = {
-  community: ['finance', 'governance'],
-  engagement: ['finance', 'governance'],
+  community: ['finance', 'governance', 'partners'],
+  engagement: ['finance', 'governance', 'partners'],
   facilities: [
     'engagement',
     'finance',
@@ -54,6 +58,7 @@ const NO_IMPORT = {
     'maintenance',
     'management',
     'neighbours',
+    'partners',
   ],
   finance: [
     'engagement',
@@ -63,8 +68,9 @@ const NO_IMPORT = {
     'maintenance',
     'management',
     'neighbours',
+    'partners',
   ],
-  gate: ['finance', 'governance'],
+  gate: ['finance', 'governance', 'partners'],
   governance: [
     'facilities',
     'finance',
@@ -72,9 +78,10 @@ const NO_IMPORT = {
     'maintenance',
     'management',
     'neighbours',
+    'partners',
   ],
-  maintenance: ['finance', 'gate', 'governance'],
-  management: ['finance', 'gate', 'governance'],
+  maintenance: ['finance', 'gate', 'governance', 'partners'],
+  management: ['finance', 'gate', 'governance', 'partners'],
   neighbours: [
     'engagement',
     'finance',
@@ -82,6 +89,15 @@ const NO_IMPORT = {
     'governance',
     'maintenance',
     'management',
+    'partners',
+  ],
+  partners: [
+    'engagement',
+    'facilities',
+    'finance',
+    'governance',
+    'maintenance',
+    'neighbours',
   ],
 };
 
@@ -115,7 +131,7 @@ function otherDomainsInternals(domain) {
     banned.includes(d)
       ? {
           group: [`**/${d}`, `**/${d}/**`],
-          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042, 0044, 0046, 0051, 0055).`,
+          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042, 0044, 0046, 0051, 0055, 0060).`,
         }
       : {
           group: [`**/${d}/**`, `!**/${d}/index`],

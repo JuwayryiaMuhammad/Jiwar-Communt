@@ -588,4 +588,15 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_offline_actions_material_entry_key: null,
   gate_offline_actions_patrol_scan_key: null,
   gate_offline_actions_child_pickup_key: null,
+  // Partners (ADR 0060): technical keys that back composite foreign keys.
+  partner_subcategories_tenant_id_id_key: null,
+  partner_subcategories_tenant_id_id_category_key: null,
+  partners_tenant_id_id_key: null,
+  partner_price_items_tenant_id_id_key: null,
+  // A sub-category's key names it in the compound.
+  partner_subcategories_key_key: ['key'],
+  // Checked first by the service (DUPLICATE_VALUE on the pair; windows
+  // never overlap), under the partner's row lock: a violation is a race.
+  partner_services_once_key: null,
+  partner_hours_window_key: null,
 };

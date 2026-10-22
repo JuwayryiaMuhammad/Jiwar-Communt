@@ -60,6 +60,7 @@ import {
   publicationRows,
 } from '../setup/governance-rows';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
+import { PartnersService } from '../../src/partners/setup/partners.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { addDays } from '../../src/core/common/slots/day-slots';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -259,6 +260,12 @@ export interface World
   aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
   aFacilityId: string;
+  /** B's partners (ADR 0060): a cleaner listed by B's manager, and one of
+   * B's sub-categories (`cleaning`). */
+  bPartnerId: string;
+  bSubcategoryId: string;
+  /** A's `cleaning` sub-category, for valid bodies. */
+  aSubcategoryId: string;
   /** B's vehicles and parking (ADR 0045): a pending vehicle of B's home. */
   bVehicleId: string;
   /** B's home's parking slot, a visitor area, and B's owner's booking there. */
@@ -844,6 +851,23 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     });
     return { membershipId: membership.membership.id, paymentId: payment.id };
   });
+  // Partners (ADR 0060).
+  const cleaningOf = (c: typeof a) =>
+    helpers.asManager(c, () =>
+      helpers.prisma.tenant.partnerSubcategory.findFirstOrThrow({
+        where: { key: 'cleaning' },
+      }),
+    );
+  const bSubcategory = await cleaningOf(b);
+  const aSubcategory = await cleaningOf(a);
+  const bPartner = await helpers.asManager(b, () =>
+    h.moduleRef.get(PartnersService).create({
+      nameEn: 'World cleaners',
+      nameAr: 'منظفون',
+      businessPhone: '+20225550100',
+      services: [{ category: 'home_services', subcategoryId: bSubcategory.id }],
+    }),
+  );
   // Vehicles and parking (ADR 0045).
   const bVehicle = await asBOwner(() =>
     h.moduleRef.get(VehiclesService).create(b.homeUnitId, {
@@ -1168,6 +1192,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bFacilityId: bFacility.id,
     bBookingId: bBooking.id,
     aFacilityId: aFacility.id,
+    bPartnerId: bPartner.id,
+    bSubcategoryId: bSubcategory.id,
+    aSubcategoryId: aSubcategory.id,
     bPreventiveServiceId: bPreventiveService.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,

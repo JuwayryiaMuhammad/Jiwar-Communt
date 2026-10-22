@@ -81,6 +81,8 @@ describe('audit catalog', () => {
         'neighbour_report',
         'neighbour_welcome',
         'facility',
+        'partner',
+        'partner_subcategory',
         'booking',
         'facility_closure',
         'booking_suspension',

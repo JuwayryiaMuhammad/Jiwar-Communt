@@ -1153,6 +1153,20 @@ export const ErrorCode = {
   GATE_OFFLINE_BATCH_NOT_QUARANTINED: 'GATE_OFFLINE_BATCH_NOT_QUARANTINED',
   /** The quarantined batch was decided already (409). */
   GATE_OFFLINE_BATCH_REVIEWED: 'GATE_OFFLINE_BATCH_REVIEWED',
+  // Partners (ADR 0060)
+  /**
+   * Unknown or another compound's partner; for a resident also one that is
+   * suspended: one answer.
+   */
+  PARTNER_NOT_FOUND: 'PARTNER_NOT_FOUND',
+  /** Unknown, or another compound's sub-category. */
+  PARTNER_SUBCATEGORY_NOT_FOUND: 'PARTNER_SUBCATEGORY_NOT_FOUND',
+  /** The compound lists params.max partners already (409). */
+  PARTNER_LIMIT_REACHED: 'PARTNER_LIMIT_REACHED',
+  /** The compound names params.max sub-categories already (409). */
+  PARTNER_SUBCATEGORY_LIMIT_REACHED: 'PARTNER_SUBCATEGORY_LIMIT_REACHED',
+  /** The account keeps params.max favourite partners already (409). */
+  PARTNER_FAVOURITES_LIMIT_REACHED: 'PARTNER_FAVOURITES_LIMIT_REACHED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1356,6 +1370,11 @@ export const FieldErrorCode = {
   ESCORT_NOT_ELIGIBLE: 'ESCORT_NOT_ELIGIBLE',
   /** A recording longer than the gate allows (params.maxSeconds; ADR 0056). */
   MEDIA_TOO_LONG: 'MEDIA_TOO_LONG',
+  // partners (ADR 0060)
+  /** Not a sub-category of this compound under that category. */
+  PARTNER_SUBCATEGORY_NOT_AVAILABLE: 'PARTNER_SUBCATEGORY_NOT_AVAILABLE',
+  /** Not a category or sub-category the partner offers. */
+  PARTNER_SERVICE_NOT_OFFERED: 'PARTNER_SERVICE_NOT_OFFERED',
 } as const;
 
 export type FieldErrorCode =

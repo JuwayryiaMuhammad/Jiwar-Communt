@@ -13,10 +13,21 @@ ALTER TABLE "known_devices"
   ADD COLUMN "client" TEXT,
   ADD COLUMN "revoked_at" TIMESTAMPTZ(3);
 -- Devices recorded before this phase: the app's are known to be the app;
--- the rest is read again at their next login.
-UPDATE "known_devices"
-   SET "os" = CASE "device_type" WHEN 'ios' THEN 'ios' WHEN 'android' THEN 'android' ELSE 'other' END,
-       "client" = CASE "source" WHEN 'app' THEN 'app' ELSE 'other' END;
+-- the rest is read again at their next login. FORCE RLS applies to the
+-- migrator too (a bare UPDATE sees no row): one compound at a time.
+DO $$
+DECLARE
+  t record;
+BEGIN
+  FOR t IN SELECT "id" FROM "tenants" LOOP
+    PERFORM set_config('app.tenant_id', t."id"::text, true);
+    UPDATE "known_devices"
+       SET "os" = CASE "device_type" WHEN 'ios' THEN 'ios' WHEN 'android' THEN 'android' ELSE 'other' END,
+           "client" = CASE "source" WHEN 'app' THEN 'app' ELSE 'other' END
+     WHERE "tenant_id" = t."id";
+  END LOOP;
+  PERFORM set_config('app.tenant_id', '', true);
+END $$;
 ALTER TABLE "known_devices"
   ALTER COLUMN "os" SET NOT NULL,
   ALTER COLUMN "client" SET NOT NULL;

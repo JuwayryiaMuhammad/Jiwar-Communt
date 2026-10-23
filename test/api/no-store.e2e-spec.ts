@@ -284,6 +284,7 @@ describe('API v0 — no-store', () => {
   }
 
   // Community life (ADR 0040).
+  // eslint-disable-next-line no-restricted-syntax -- any future instant: events and polls compare instants only
   const day = (n: number) => new Date(Date.now() + n * 86_400_000);
   const created = async (path: string, token: string, payload: object) =>
     body<{ id: string }>(
@@ -757,6 +758,7 @@ describe('API v0 — no-store', () => {
       if (now) await lapse(now.id);
       return as('manager', 'POST', '/staff/governance/board/appoint', {
         seats: 15,
+        // eslint-disable-next-line no-restricted-syntax -- the board term's length is measured in ms / 86_400_000
         endsAt: new Date(Date.now() + 365 * 86_400_000).toISOString(),
         members: [w.a.ids.owner, w.a.ids.landlord, await aNewOwner()].map(
           (accountId) => ({ accountId, role: 'member' }),

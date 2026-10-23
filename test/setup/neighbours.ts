@@ -78,14 +78,13 @@ export function neighboursHelpers(h: HttpHarness) {
     scopes: ('household' | 'workers')[] = ['household'],
   ) {
     return x.as(c, { id: primary.id, type: 'resident' }, () =>
-      h.moduleRef
-        .get(DelegationsService)
-        .create(
-          unitId,
-          member.id,
-          scopes,
-          new Date(Date.now() + 30 * 86_400_000),
-        ),
+      h.moduleRef.get(DelegationsService).create(
+        unitId,
+        member.id,
+        scopes,
+        // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+        new Date(Date.now() + 30 * 86_400_000),
+      ),
     );
   }
 

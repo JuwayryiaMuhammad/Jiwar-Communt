@@ -20,6 +20,7 @@ interface ViolationBody {
   cancelReason?: string | null;
 }
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the appeal window runs from created_at, in ms
 const DAY = 86_400_000;
 
 /**

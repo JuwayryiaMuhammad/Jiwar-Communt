@@ -36,6 +36,7 @@ const PAGE = [
   'visitorDirections',
 ];
 const LINK = /^https:\/\/app\.jiwar\.test\/v#([A-Za-z0-9_-]{43})$/;
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: pass windows and visitor-data expiry are in ms
 const DAY = 86_400_000;
 
 /**

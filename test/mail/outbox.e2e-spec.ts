@@ -401,6 +401,7 @@ describe('Email outbox', () => {
 
   it('retention deletes old sent rows and strips old dead ones, keeping the evidence', async () => {
     const now = new Date();
+    // eslint-disable-next-line no-restricted-syntax -- a real 31 × 24 h: outbox retention is in ms
     const old = new Date(now.getTime() - 31 * 24 * 60 * MINUTE);
     const base = {
       channel: 'email' as const,

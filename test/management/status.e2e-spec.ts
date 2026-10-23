@@ -7,6 +7,7 @@ import {
   type Who,
 } from '../setup/management';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the reopen window and auto-close are in ms
 const DAY = 86_400_000;
 
 /**

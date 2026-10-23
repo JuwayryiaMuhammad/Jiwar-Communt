@@ -14,6 +14,7 @@ import { auditReaders } from '../setup/audit';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { parcelHelpers, parcelScenes } from '../setup/parcels';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: parcel reminders and retention are now − days × 24 h
 const DAY = 86_400_000;
 
 describe('Parcels — the sweeps (ADR 0035)', () => {

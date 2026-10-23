@@ -6,6 +6,7 @@ import { required } from './test-env';
 
 export type { Who } from './engagement';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the board term's length is checked in ms
 const DAY = 86_400_000;
 
 /** A board term as the staff view returns it. */

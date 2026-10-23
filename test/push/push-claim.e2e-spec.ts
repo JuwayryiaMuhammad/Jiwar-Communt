@@ -155,6 +155,7 @@ describe('Push outbox — claim once, send at most once (ADR 0041)', () => {
         lockedUntil: null,
       },
     ]);
+    // eslint-disable-next-line no-restricted-syntax -- any later instant: push claims compare next_attempt_at with now
     await drainPush(h, new Date(t0.getTime() + 86_400_000));
     expect(fake.sent).toEqual([]);
   });

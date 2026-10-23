@@ -74,6 +74,7 @@ describe('Governance — the board', () => {
     const tooFew = await post({ members: [seat(a()), seat(b())] }).expect(400);
     expect(fields(tooFew)).toEqual([['members', 'BOARD_SIZE']]);
     const tooSoon = await post({
+      // eslint-disable-next-line no-restricted-syntax -- a real 24 h: the term's length is measured in ms
       endsAt: new Date(Date.now() + 86_400_000).toISOString(),
       members: [seat(a()), seat(b()), seat(c())],
     }).expect(400);

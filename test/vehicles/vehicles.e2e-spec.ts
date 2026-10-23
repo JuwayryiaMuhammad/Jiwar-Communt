@@ -14,6 +14,7 @@ import {
 } from '../setup/vehicles';
 import { daysLater, dbDate } from '../setup/compound-clock';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the licence photo is kept 30 × 24 h after removal
 const DAY = 86_400_000;
 
 /**

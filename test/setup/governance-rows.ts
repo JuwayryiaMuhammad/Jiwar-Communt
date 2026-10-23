@@ -8,6 +8,7 @@ import { dbDate, localDay } from './compound-clock';
 // Each returns the row's id.
 // ============================================================================
 
+// eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
 const DAY = 86_400_000;
 
 /**

@@ -466,6 +466,7 @@ describe('Maintenance — preventive requests', () => {
     const id = await requested();
     const attempts: Record<string, unknown>[] = [
       { kind: 'repair' },
+      // eslint-disable-next-line no-restricted-syntax -- any other instant: the trigger refuses every change of the request
       { requestedStartsAt: new Date(Date.now() + 5 * 24 * 60 * MINUTE) },
       { preventiveServiceId: await serviceId('ac_service') },
     ];

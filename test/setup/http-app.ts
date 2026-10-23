@@ -147,6 +147,7 @@ export async function createHttpHarness(
           accountId: claims.sub,
           tenantId: claims.tid,
           refreshTokenHash: '0'.repeat(64),
+          // eslint-disable-next-line no-restricted-syntax -- a real 24 h: the session's TTL is in ms
           expiresAt: new Date(Date.now() + 86_400_000),
         },
       });

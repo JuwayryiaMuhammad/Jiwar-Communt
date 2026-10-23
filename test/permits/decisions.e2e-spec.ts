@@ -3,6 +3,7 @@ import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { permitRow } from '../setup/permits-rows';
 import { at, day, permitHelpers, type PermitBody } from '../setup/permits';
 
+// eslint-disable-next-line no-restricted-syntax -- past instants only: approval is refused once endsAt <= now
 const DAY = 86_400_000;
 
 describe('Permits — the management decides (ADR 0049)', () => {

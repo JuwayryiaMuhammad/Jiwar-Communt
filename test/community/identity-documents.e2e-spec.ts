@@ -224,14 +224,13 @@ describe('Identity documents', () => {
       expect(iso(account.birthDate!)).toBe(doc.birthDate);
 
       const delegation = await asPrimary(() =>
-        h.moduleRef
-          .get(DelegationsService)
-          .create(
-            u.id,
-            member.id,
-            ['household'],
-            new Date(Date.now() + 86_400_000),
-          ),
+        h.moduleRef.get(DelegationsService).create(
+          u.id,
+          member.id,
+          ['household'],
+          // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+          new Date(Date.now() + 86_400_000),
+        ),
       );
       expect(delegation.delegateAccountId).toBe(member.id);
     });
@@ -250,14 +249,13 @@ describe('Identity documents', () => {
       expect(
         await code(
           x.as(c, { id: primary.id, type: 'resident' }, () =>
-            h.moduleRef
-              .get(DelegationsService)
-              .create(
-                u.id,
-                member.id,
-                ['household'],
-                new Date(Date.now() + 86_400_000),
-              ),
+            h.moduleRef.get(DelegationsService).create(
+              u.id,
+              member.id,
+              ['household'],
+              // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+              new Date(Date.now() + 86_400_000),
+            ),
           ),
         ),
       ).toBe('DELEGATE_NOT_ELIGIBLE');

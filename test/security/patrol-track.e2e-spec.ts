@@ -8,6 +8,7 @@ const code = (res: { status: number; body: unknown }) => ({
   code: (res.body as { code?: string }).code,
 });
 const MINUTE = 60_000;
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: track points are kept for a duration in ms
 const DAY = 86_400_000;
 
 /**

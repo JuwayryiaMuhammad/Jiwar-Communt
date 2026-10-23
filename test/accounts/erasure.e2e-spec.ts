@@ -57,7 +57,9 @@ describe('Account erasure', () => {
       x.prisma.tenant.accountDeletionRequest.update({
         where: { id: requestId },
         data: {
+          // eslint-disable-next-line no-restricted-syntax -- any instant before effectiveAt: requestedAt is only shown
           requestedAt: new Date(Date.now() - (daysAgo + 14) * 86_400_000),
+          // eslint-disable-next-line no-restricted-syntax -- daysOverdue is floor(ms / 86_400_000) on the server
           effectiveAt: new Date(Date.now() - daysAgo * 86_400_000),
         },
       }),
@@ -84,6 +86,7 @@ describe('Account erasure', () => {
       deletion.requestDeletion('حذف'),
     );
     expect(req.effectiveAt.getTime() - req.requestedAt.getTime()).toBe(
+      // eslint-disable-next-line no-restricted-syntax -- the server's grace is DELETION_GRACE_DAYS × 86_400_000 ms
       14 * 86_400_000,
     );
     expect(

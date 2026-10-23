@@ -87,6 +87,7 @@ export async function eventRow(
       titleEn: 'Event',
       descriptionEn: 'An event.',
       place: 'The garden',
+      // eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
       startsAt: new Date(Date.now() + 24 * HOUR),
       endsAt: new Date(Date.now() + 26 * HOUR),
       createdById: row.createdById,
@@ -107,6 +108,7 @@ export async function pollRow(
       tenantId: row.tenantId,
       questionEn: 'Question?',
       opensAt: new Date(Date.now() - HOUR),
+      // eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
       closesAt: new Date(Date.now() + 24 * HOUR),
       ballotSalt: new Uint8Array(randomBytes(32)),
       createdById: row.createdById,

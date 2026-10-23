@@ -9,6 +9,7 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
  * Suites that test behaviour go through the API instead.
  */
 
+// eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
 const DAY = 86_400_000;
 
 export async function categoryRow(

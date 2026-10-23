@@ -318,7 +318,9 @@ describe('API v0 — worker photos', () => {
       w.helpers.prisma.tenant.accountDeletionRequest.update({
         where: { id: request.id },
         data: {
+          // eslint-disable-next-line no-restricted-syntax -- any instant before effectiveAt: requestedAt is only shown
           requestedAt: new Date(Date.now() - 31 * 86_400_000),
+          // eslint-disable-next-line no-restricted-syntax -- past the grace: erase() compares effectiveAt with now, in ms
           effectiveAt: new Date(Date.now() - 86_400_000),
         },
       }),
@@ -335,6 +337,7 @@ describe('API v0 — worker photos', () => {
       w.helpers.asManager(w.a, () =>
         w.helpers.prisma.tenant.workerEngagement.update({
           where: { id: engagementId },
+          // eslint-disable-next-line no-restricted-syntax -- a real n × 24 h: the photo retention cutoff is in ms
           data: { updatedAt: new Date(Date.now() - days * 86_400_000) },
         }),
       );

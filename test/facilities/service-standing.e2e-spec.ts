@@ -66,6 +66,7 @@ describe('Facilities — the unit’s service standing', () => {
       restore: ['wait_until', 'appeal_board'],
     });
     expect(new Date(one.appealUntil!).getTime()).toBe(
+      // eslint-disable-next-line no-restricted-syntax -- a real 15 × 24 h: appealUntil is startsAt + BOARD_APPEAL_DAYS × 86_400_000
       new Date(one.since).getTime() + 15 * 86_400_000,
     );
     // Appealed: waiting is what is left.

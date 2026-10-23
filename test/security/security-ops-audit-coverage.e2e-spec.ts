@@ -76,6 +76,7 @@ describe('Audit coverage — security (ADR 0053)', () => {
     actorId: null,
     targetType,
   });
+  // eslint-disable-next-line no-restricted-syntax -- a real 24 h: blocklist expiry and purge are in ms
   const DAY = 86_400_000;
 
   describe('the lockdown', () => {

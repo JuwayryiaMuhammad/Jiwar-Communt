@@ -15,6 +15,7 @@ import {
 } from '../setup/permits';
 import { leakText } from '../setup/leak-text';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the people-data purge measures from the permit's end, in ms
 const DAY = 86_400_000;
 
 describe('Permits — privacy (ADR 0049)', () => {

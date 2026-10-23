@@ -1,6 +1,7 @@
 import type { Row } from '../registry';
 
 export const inAMonth = () =>
+  // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
   new Date(Date.now() + 30 * 86_400_000).toISOString();
 
 export const DELEGATIONS_ROUTES: Row[] = [

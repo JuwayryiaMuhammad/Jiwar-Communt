@@ -155,6 +155,7 @@ describe('Push delivery (ADR 0041)', () => {
       expect(sent.sentAt).toBeInstanceOf(Date);
 
       // At most once: nothing is left to send, whatever the hour.
+      // eslint-disable-next-line no-restricted-syntax -- any later instant: push claims compare next_attempt_at with now
       expect(await drainPush(h, new Date(Date.now() + 86_400_000))).toEqual({
         sent: 0,
         retried: 0,
@@ -389,6 +390,7 @@ describe('Push delivery (ADR 0041)', () => {
         await globalDb.pushDevice.count({ where: { accountId: p.id } }),
       ).toBe(1);
       // Dead is final.
+      // eslint-disable-next-line no-restricted-syntax -- any later instant: push claims compare next_attempt_at with now
       await drainPush(h, new Date(Date.now() + 86_400_000));
       expect(fake.sent).toHaveLength(1);
     });
@@ -492,6 +494,7 @@ describe('Push delivery (ADR 0041)', () => {
       expect(await deliveries(thrown.id)).toMatchObject([
         { status: 'dead', lastErrorCode: 'BoomError' },
       ]);
+      // eslint-disable-next-line no-restricted-syntax -- any later instant: push claims compare next_attempt_at with now
       await drainPush(h, new Date(Date.now() + 86_400_000));
       expect(fake.sent).toHaveLength(2);
     });

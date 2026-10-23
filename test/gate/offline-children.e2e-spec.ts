@@ -12,6 +12,7 @@ import {
   type TestDevice,
 } from '../setup/offline';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the child-records purge is now − 30 × 24 h, in ms
 const DAY = 86_400_000;
 
 interface ChildSection {

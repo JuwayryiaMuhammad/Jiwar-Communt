@@ -329,6 +329,7 @@ describe('Audit coverage — patrols', () => {
             tenantId: s.c.tenantId,
             runId: run.id,
             guardAccountId: walker.id,
+            // eslint-disable-next-line no-restricted-syntax -- a real 31 × 24 h: track points are kept for a duration in ms
             recordedAt: new Date(Date.now() - 31 * 86_400_000 - lat * 1000),
             lat,
             lng: 31.1,

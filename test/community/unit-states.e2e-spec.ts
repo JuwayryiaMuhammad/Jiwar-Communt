@@ -72,6 +72,7 @@ describe('Unit states', () => {
 
   const asPrimary = <T>(hm: Home, fn: () => Promise<T>) =>
     x.as(hm.c, { id: hm.primary.id, type: 'resident' }, fn);
+  // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
   const inAYear = () => new Date(Date.now() + 30 * 86_400_000);
   const minor = () => ({
     fullName: 'Kid States',

@@ -284,6 +284,7 @@ describe('Audit coverage — preferences, consents, export, deletion', () => {
     );
     await h.moduleRef
       .get(SweepRunner)
+      // eslint-disable-next-line no-restricted-syntax -- a real 15 × 24 h: the deletion grace is in ms
       .run(DELETION_SWEEP, new Date(Date.now() + 15 * 86_400_000));
     const queued = await single(c, 'account.deletion_queued', t.id);
     expect(queued).toMatchObject({

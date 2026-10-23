@@ -198,6 +198,7 @@ describe('API v0 — me', () => {
   });
 
   it("my delegations, by the other side's name only", async () => {
+    // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
     const inMonths = new Date(Date.now() + 90 * 86_400_000);
     await w.helpers.as(w.a, { id: w.a.ids.owner, type: 'resident' }, () =>
       h.moduleRef

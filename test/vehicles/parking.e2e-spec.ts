@@ -3,6 +3,7 @@ import { VISITOR_NAMES_SWEEP } from '../../src/gate/parking/parking-sweeps';
 import { vehicleHelpers, type Who } from '../setup/vehicles';
 import { localDay } from '../setup/compound-clock';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the visitor's name is kept 30 × 24 h after the booking
 const DAY = 86_400_000;
 
 interface BookingBody {

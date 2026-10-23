@@ -9,6 +9,7 @@ import {
   type Who,
 } from '../setup/management';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: auto-close and escalation are in ms
 const DAY = 86_400_000;
 /** Planted in everything anyone types: no notification may carry it. */
 const MARKER = 'NOTICE-FREE-TEXT';

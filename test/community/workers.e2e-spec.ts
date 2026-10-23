@@ -231,14 +231,13 @@ describe('Domestic workers', () => {
       ).toBe('FORBIDDEN');
 
       await asResident(hm, () =>
-        h.moduleRef
-          .get(DelegationsService)
-          .create(
-            hm.unitId,
-            member.id,
-            ['workers'],
-            new Date(Date.now() + 30 * 86_400_000),
-          ),
+        h.moduleRef.get(DelegationsService).create(
+          hm.unitId,
+          member.id,
+          ['workers'],
+          // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+          new Date(Date.now() + 30 * 86_400_000),
+        ),
       );
       const reg = await asMember(() => workers.register(hm.unitId, nanny()));
       const [entry] = await auditReaders(h).tenant(hm.c.tenantId, {
@@ -366,6 +365,7 @@ describe('Domestic workers', () => {
       await x.asManager(hm.c, () =>
         x.prisma.tenant.workerEngagement.update({
           where: { id: w.engagementId },
+          // eslint-disable-next-line no-restricted-syntax -- any long-past instant: the code has no expiry
           data: { codeIssuedAt: new Date(Date.now() - 2 * 365 * 86_400_000) },
         }),
       );
@@ -554,6 +554,7 @@ describe('Domestic workers', () => {
         hm,
         nanny({
           capacity: 'temporary',
+          // eslint-disable-next-line no-restricted-syntax -- any future instant: valid_until is a timestamptz compared with now
           validUntil: new Date(Date.now() + 86_400_000),
         }),
       );

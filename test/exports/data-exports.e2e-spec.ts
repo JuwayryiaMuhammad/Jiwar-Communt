@@ -28,6 +28,7 @@ import {
 } from '../setup/http-app';
 import { month } from '../setup/compound-clock';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the export request window is 24 × HOUR, in ms
 const DAY = 86_400_000;
 
 /**

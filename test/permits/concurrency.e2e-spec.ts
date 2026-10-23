@@ -15,6 +15,7 @@ import {
 } from '../setup/permits-rows';
 
 const ROUNDS = 5;
+// eslint-disable-next-line no-restricted-syntax -- past instants only: the purge compares ends_at with now − 30 × 24 h
 const DAY = 86_400_000;
 
 /**

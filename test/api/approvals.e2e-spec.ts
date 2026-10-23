@@ -197,6 +197,7 @@ describe('API v0 — approvals at the gate (ADR 0028)', () => {
       const sweep = h.moduleRef.get(SweepRunner);
       await sweep.run(
         REQUEST_PHOTOS_SWEEP,
+        // eslint-disable-next-line no-restricted-syntax -- a real 6 × 24 h: the photo cutoff is now − 7 × 24 h, in ms
         new Date(Date.now() + 6 * 86_400_000),
       );
       const after = (when: number) =>
@@ -208,6 +209,7 @@ describe('API v0 — approvals at the gate (ADR 0028)', () => {
           }).expect(200)
         ).body,
       ).toMatchObject({ photoUrl: expect.any(String) as string });
+      // eslint-disable-next-line no-restricted-syntax -- a real 7 × 24 h: the photo cutoff is in ms
       await after(7 * 86_400_000 + 60_000);
       const gone = await w.helpers.asManager(w.a, () =>
         w.helpers.prisma.tenant.gateApprovalRequest.findUniqueOrThrow({
@@ -519,6 +521,7 @@ describe('API v0 — approvals at the gate (ADR 0028)', () => {
     const id = await askId({ visitorName: 'Fading Guest' });
     await h.moduleRef
       .get(SweepRunner)
+      // eslint-disable-next-line no-restricted-syntax -- past the 30 × 24 h visitor-data TTL, in ms
       .run(VISITOR_DATA_SWEEP, new Date(Date.now() + 31 * 86_400_000));
     const rows = await notified(id);
     expect(rows.length).toBeGreaterThan(0);

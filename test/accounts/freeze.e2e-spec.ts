@@ -56,14 +56,13 @@ describe('Frozen accounts', () => {
   it('freezes at once: the phone leaves the account and login, every session ends, the unit goes under review', async () => {
     const { c, unitId, primary, family } = await primaryWithFamily();
     await x.as(c, { id: primary.id, type: 'resident' }, () =>
-      h.moduleRef
-        .get(DelegationsService)
-        .create(
-          unitId,
-          family.accountId,
-          ['household'],
-          new Date(Date.now() + 86_400_000),
-        ),
+      h.moduleRef.get(DelegationsService).create(
+        unitId,
+        family.accountId,
+        ['household'],
+        // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+        new Date(Date.now() + 86_400_000),
+      ),
     );
     const tokens = await loginViaOtp(h, primary.email, primary.id);
     await freeze(c, primary.id);

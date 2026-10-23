@@ -306,6 +306,7 @@ describe('Maintenance — the SLA clocks', () => {
     const after = await clock(id, 'resolution');
     expect(after.targetMinutes).toBe(24 * 60);
     expect(after.dueAt!.getTime()).toBe(
+      // eslint-disable-next-line no-restricted-syntax -- a real 24 h: the emergency target is 1440 wall-clock minutes
       before.startedAt.getTime() + 24 * 60 * MINUTE,
     );
     expect(await trail(id)).toEqual(

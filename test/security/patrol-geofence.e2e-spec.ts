@@ -8,6 +8,7 @@ import { incidentRow } from '../setup/security-ops-rows';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: track points are kept for a duration in ms
 const DAY = 24 * 60 * MINUTE;
 const code = (res: { status: number; body: unknown }) => ({
   status: res.status,

@@ -182,14 +182,13 @@ describe('Minors reaching majority', () => {
     // A household delegate cannot lift a minor's status.
     const family = await x.joinFamily(hm.c, hm.unitId, hm.primary);
     await asPrimary(hm, () =>
-      h.moduleRef
-        .get(DelegationsService)
-        .create(
-          hm.unitId,
-          family.accountId,
-          ['household'],
-          new Date(Date.now() + 86_400_000),
-        ),
+      h.moduleRef.get(DelegationsService).create(
+        hm.unitId,
+        family.accountId,
+        ['household'],
+        // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+        new Date(Date.now() + 86_400_000),
+      ),
     );
     expect(
       await codeOf(

@@ -58,6 +58,7 @@ describe('API v0 — delegations', () => {
       body: {
         delegateAccountId: family.id,
         scopes: ['workers'],
+        // eslint-disable-next-line no-restricted-syntax -- well past the one-year limit, an instant
         expiresAt: new Date(Date.now() + 400 * 86_400_000).toISOString(),
       },
     });

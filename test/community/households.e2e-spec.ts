@@ -494,14 +494,13 @@ describe('Households', () => {
         expect(m).not.toHaveProperty('grants');
 
       await asPrimary(hm, () =>
-        h.moduleRef
-          .get(DelegationsService)
-          .create(
-            hm.unitId,
-            joined.accountId,
-            ['household'],
-            new Date(Date.now() + 30 * 86_400_000),
-          ),
+        h.moduleRef.get(DelegationsService).create(
+          hm.unitId,
+          joined.accountId,
+          ['household'],
+          // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+          new Date(Date.now() + 30 * 86_400_000),
+        ),
       );
       const delegateView = await asFamily(hm, joined.accountId, () =>
         households.household(hm.unitId),

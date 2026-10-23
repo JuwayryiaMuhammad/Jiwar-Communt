@@ -295,6 +295,7 @@ describe('Devices and the login history', () => {
 
     const at = new Date(mine.at);
     const sweep = h.moduleRef.get(SweepRunner);
+    // eslint-disable-next-line no-restricted-syntax -- a real 90 × 24 h: the logins purge is now − LOGIN_RETENTION_DAYS × 86_400_000
     const ninety = 90 * 86_400_000;
     await sweep.run(LOGINS_RETENTION_SWEEP, new Date(at.getTime() + ninety));
     expect(await logins(t)).toHaveLength(1);

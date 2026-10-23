@@ -209,12 +209,15 @@ describe('Management requests — escalation', () => {
       topicId: await m.topicId(s.c, 'facilities'),
     });
     const [fastRow, slowRow] = [await row(fast.id), await row(slow.id)];
+    // A topic's target is in wall-clock hours.
     expect(
-      fastRow.responseDueAt.getTime() - fastRow.cycleStartedAt.getTime(),
-    ).toBe(24 * HOUR);
+      (fastRow.responseDueAt.getTime() - fastRow.cycleStartedAt.getTime()) /
+        HOUR,
+    ).toBe(24);
     expect(
-      slowRow.responseDueAt.getTime() - slowRow.cycleStartedAt.getTime(),
-    ).toBe(72 * HOUR);
+      (slowRow.responseDueAt.getTime() - slowRow.cycleStartedAt.getTime()) /
+        HOUR,
+    ).toBe(72);
     await run(await afterDue(fast.id));
     expect((await escalations(fast.id)).map((e) => e.cycle)).toEqual([1]);
     expect(await escalations(slow.id)).toEqual([]);

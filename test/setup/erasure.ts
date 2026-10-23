@@ -25,7 +25,9 @@ export async function eraseNow(
         tenantId: c.tenantId,
         accountId,
         requestedById: accountId,
+        // eslint-disable-next-line no-restricted-syntax -- any instant before effectiveAt: requestedAt is only shown
         requestedAt: new Date(Date.now() - 31 * 86_400_000),
+        // eslint-disable-next-line no-restricted-syntax -- past the grace: erase() compares effectiveAt with now, in ms
         effectiveAt: new Date(Date.now() - 86_400_000),
       },
     }),

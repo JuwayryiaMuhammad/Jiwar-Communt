@@ -20,6 +20,7 @@ import {
 } from '../setup/http-app';
 import { month } from '../setup/compound-clock';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the deletion grace, reminder and sweep are in ms
 const DAY = 86_400_000;
 const HOLD = { code: 'litigation', text: 'Keep it' };
 

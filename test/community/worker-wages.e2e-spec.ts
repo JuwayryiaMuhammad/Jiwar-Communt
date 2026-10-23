@@ -78,14 +78,13 @@ describe('Worker wages — the employer side', () => {
     const asDelegate = <T>(fn: () => Promise<T>) =>
       x.as(c, { id: delegate.id, type: 'family' }, fn);
     await asOwner(() =>
-      h.moduleRef
-        .get(DelegationsService)
-        .create(
-          unit.id,
-          delegate.id,
-          ['workers'],
-          new Date(Date.now() + 30 * 86_400_000),
-        ),
+      h.moduleRef.get(DelegationsService).create(
+        unit.id,
+        delegate.id,
+        ['workers'],
+        // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+        new Date(Date.now() + 30 * 86_400_000),
+      ),
     );
 
     const ofOwner = await engaged(unit.id, asOwner);

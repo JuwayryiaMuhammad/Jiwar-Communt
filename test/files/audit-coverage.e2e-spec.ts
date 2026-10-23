@@ -132,6 +132,7 @@ describe('Audit coverage — files', () => {
     await x.asManager(c, () =>
       x.prisma.tenant.workerEngagement.updateMany({
         where: { workerId },
+        // eslint-disable-next-line no-restricted-syntax -- a real 91 × 24 h: photo retention is now − days × 24 h, in ms
         data: { updatedAt: new Date(Date.now() - 91 * 86_400_000) },
       }),
     );

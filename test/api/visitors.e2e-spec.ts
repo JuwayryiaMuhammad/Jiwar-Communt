@@ -69,10 +69,12 @@ const tokenOf = (body: unknown) => {
   if (!m) throw new Error(`not a visitor link: ${link}`);
   return m[1];
 };
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the pass window and the visitor-data TTL are in ms
 const DAY = 86_400_000;
 
 const RECURRING = {
   kind: 'recurring',
+  // eslint-disable-next-line no-restricted-syntax -- within the pass's window, which the server checks in ms (maxDays × 24 h)
   validUntil: new Date(Date.now() + 30 * 86_400_000).toISOString(),
   schedule: { days: [4, 5], windows: [{ from: '22:00', to: '02:00' }] },
 };
@@ -258,6 +260,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
     expect(
       (
         await bad({
+          // eslint-disable-next-line no-restricted-syntax -- past the one-time pass's 7 × 24 h, in ms
           validUntil: new Date(Date.now() + 8 * 86_400_000).toISOString(),
         })
       ).fields,
@@ -711,6 +714,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
     });
     await sweep.run(
       VISITOR_DATA_SWEEP,
+      // eslint-disable-next-line no-restricted-syntax -- past validUntil + 30 × 24 h, in ms
       new Date(Date.now() + 31 * 86_400_000 + 2 * 3_600_000),
     );
     expect(await passRow(id)).toMatchObject({

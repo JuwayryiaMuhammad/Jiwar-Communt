@@ -12,6 +12,7 @@ let next = 1;
 /** A number nobody else in the run takes (the unique per compound and kind). */
 const number = () => 900_000 + next++ + Math.floor(Math.random() * 90_000);
 
+// eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
 const DAY = 86_400_000;
 /** A 64-character hex string, as a keyed hash would be. */
 export const HASH = 'a'.repeat(64);

@@ -107,6 +107,7 @@ describe('Management appointments', () => {
           30 * 60_000,
         );
         expect(start.getTime()).toBeGreaterThanOrEqual(now + HOUR - 60_000);
+        // eslint-disable-next-line no-restricted-syntax -- a real 30 × 24 h: slots end MAX_AHEAD_MS from now
         expect(start.getTime()).toBeLessThanOrEqual(now + 30 * 24 * HOUR);
         // 09:00 to 17:00 in Cairo, never on a Friday.
         const local = clockAt(start);

@@ -97,6 +97,7 @@ describe('Governance — approval requests (ADR 0055)', () => {
       const days =
         (new Date(r.deadlineAt).getTime() -
           new Date((r as unknown as { raisedAt: string }).raisedAt).getTime()) /
+        // eslint-disable-next-line no-restricted-syntax -- a real 24 h: the deadline is raisedAt + days × 24 h, in ms
         86_400_000;
       expect(days).toBe(14);
       for (const member of [o(0), o(1), o(2)]) {
@@ -433,6 +434,7 @@ describe('Governance — approval requests (ADR 0055)', () => {
       expect(
         (new Date(r.deadlineAt).getTime() -
           new Date((r as unknown as { raisedAt: string }).raisedAt).getTime()) /
+          // eslint-disable-next-line no-restricted-syntax -- a real 24 h: the deadline is raisedAt + days × 24 h, in ms
           86_400_000,
       ).toBe(3);
       const contract = await b.raise(s.manager, {

@@ -111,6 +111,7 @@ const TABLES: Table[] = [
           id,
           tenantId: own.tenantId,
           fullName: 'Visitor',
+          // eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
           expiresAt: new Date(Date.now() + 86_400_000),
         },
       });

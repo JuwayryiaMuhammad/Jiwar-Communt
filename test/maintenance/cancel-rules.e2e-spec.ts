@@ -247,6 +247,7 @@ describe('Maintenance — cancel rules', () => {
 
   it('the reporter cancels an assigned ticket: the technician is told, and the active visit ends', async () => {
     const id = await inStatus('assigned', s.owner);
+    // eslint-disable-next-line no-restricted-syntax -- within a visit's lead (15 min to 30 × 24 h), checked in ms
     const start = Date.now() + 24 * 60 * MINUTE;
     const proposed = await d
       .http('post', `/technician/tickets/${id}/visits`, tech().token, {

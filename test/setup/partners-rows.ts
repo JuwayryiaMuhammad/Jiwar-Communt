@@ -135,6 +135,7 @@ export async function requestRow(
   },
 ): Promise<string> {
   const id = newId();
+  // eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: the schema and isolation suites read no compound day
   const start = new Date(Date.now() + 2 * 86_400_000);
   await tx.partnerRequest.create({
     data: {

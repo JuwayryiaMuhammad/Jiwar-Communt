@@ -550,6 +550,7 @@ describe('Audit coverage — Phase 2.2', () => {
       const [third] = (await x.asManager(c, () => reg.pending())).items;
       await h.moduleRef
         .get(SweepRunner)
+        // eslint-disable-next-line no-restricted-syntax -- past the pending period: created_at < now − pendingMs
         .run(REGISTRATION_EXPIRY_SWEEP, new Date(Date.now() + 40 * 86_400_000));
       expect(
         await single(c, 'resident.registration_expired', third.id),
@@ -628,7 +629,9 @@ describe('Audit coverage — Phase 2.2', () => {
         x.prisma.tenant.accountDeletionRequest.update({
           where: { id: second.id },
           data: {
+            // eslint-disable-next-line no-restricted-syntax -- any instant before effectiveAt: requestedAt is only shown
             requestedAt: new Date(Date.now() - 50 * 86_400_000),
+            // eslint-disable-next-line no-restricted-syntax -- past the grace: erase() compares effectiveAt with now, in ms
             effectiveAt: new Date(Date.now() - 10 * 86_400_000),
           },
         }),

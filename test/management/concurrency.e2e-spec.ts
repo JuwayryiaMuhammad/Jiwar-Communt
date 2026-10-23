@@ -9,6 +9,7 @@ import {
 } from '../setup/management';
 import { required } from '../setup/test-env';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: auto-close is answeredAt + days × 24 h, in ms
 const DAY = 86_400_000;
 
 /**

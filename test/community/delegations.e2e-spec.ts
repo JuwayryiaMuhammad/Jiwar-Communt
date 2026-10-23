@@ -288,6 +288,7 @@ describe('Delegation', () => {
         x.prisma.tenant.householdDelegation.update({
           where: { id: d.id },
           data: {
+            // eslint-disable-next-line no-restricted-syntax -- any instant before expiresAt, for the DB check
             createdAt: new Date(Date.now() - 2 * 86_400_000),
             expiresAt: new Date(Date.now() - 1000),
           },
@@ -344,6 +345,7 @@ describe('Delegation', () => {
         x.prisma.tenant.householdDelegation.update({
           where: { id: d.id },
           data: {
+            // eslint-disable-next-line no-restricted-syntax -- any instant before expiresAt, for the DB check
             createdAt: new Date(Date.now() - 2 * 86_400_000),
             expiresAt: new Date(Date.now() - 1000),
           },

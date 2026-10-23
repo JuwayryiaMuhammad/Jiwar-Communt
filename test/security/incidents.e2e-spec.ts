@@ -25,6 +25,7 @@ interface IncidentBody {
   post?: { gateId: string | null } | null;
 }
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the report's look-back is now − 30 × 24 h, in ms
 const DAY = 86_400_000;
 
 /**

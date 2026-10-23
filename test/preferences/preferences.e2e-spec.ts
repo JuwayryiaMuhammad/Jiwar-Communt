@@ -360,6 +360,7 @@ describe('Notification preferences', () => {
       });
 
       // Never claimed while held.
+      // eslint-disable-next-line no-restricted-syntax -- any far-off instant: the outbox claims by next_attempt_at <= now
       await processor.processDue(new Date(Date.now() + 365 * 86_400_000));
       expect(await row(twin)).toMatchObject({ status: 'held', attempts: 0 });
 

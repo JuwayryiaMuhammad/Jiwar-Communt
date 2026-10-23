@@ -226,14 +226,13 @@ describe('API v0 — PII leak scan', () => {
       birthDate: rwp.birthDate,
     };
     await asTenant(() =>
-      h.moduleRef
-        .get(DelegationsService)
-        .create(
-          rented.id,
-          rentedFamily.id,
-          ['workers'],
-          new Date(Date.now() + 30 * 86_400_000),
-        ),
+      h.moduleRef.get(DelegationsService).create(
+        rented.id,
+        rentedFamily.id,
+        ['workers'],
+        // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+        new Date(Date.now() + 30 * 86_400_000),
+      ),
     );
     // The spare unit's own primary: `leaving` lives there beside them,
     // since a primary may not ask to be deleted (ADR 0036).
@@ -723,6 +722,7 @@ describe('API v0 — PII leak scan', () => {
       }),
     );
     await asManagerA(() => dispatch.assign(visitTicket.id, a.ids.technician));
+    // eslint-disable-next-line no-restricted-syntax -- within a visit's lead (15 min to 30 × 24 h), checked in ms
     const visitStart = new Date(Date.now() + 2 * 86_400_000);
     visitStart.setUTCMilliseconds(777);
     const visitEnd = new Date(visitStart.getTime() + 90 * 60_000);
@@ -760,6 +760,7 @@ describe('API v0 — PII leak scan', () => {
     await asTenant(() =>
       messages.post(oldTicket.id, 'resident', 'PII-THREAD-after'),
     );
+    // eslint-disable-next-line no-restricted-syntax -- within a visit's lead (15 min to 30 × 24 h), checked in ms
     const oldStart = new Date(Date.now() + 3 * 86_400_000);
     oldStart.setUTCMilliseconds(555);
     const oldEnd = new Date(oldStart.getTime() + 60 * 60_000);
@@ -851,6 +852,7 @@ describe('API v0 — PII leak scan', () => {
       titleEn: 'PII-EVENT-title',
       descriptionEn: 'PII-EVENT-description',
       place: 'PII-EVENT-place',
+      // eslint-disable-next-line no-restricted-syntax -- any future instant: events and polls compare instants only
       startsAt: new Date(Date.now() + 86_400_000),
       endsAt: new Date(Date.now() + 90_000_000),
     });
@@ -861,6 +863,7 @@ describe('API v0 — PII leak scan', () => {
     const piiPoll = await staffPost('/community/polls', {
       questionEn: 'PII-POLL-question?',
       options: [{ labelEn: 'Yes' }, { labelEn: 'No' }],
+      // eslint-disable-next-line no-restricted-syntax -- any future instant: events and polls compare instants only
       closesAt: new Date(Date.now() + 86_400_000),
     });
     const piiSuggestionTopic = await manager(() =>

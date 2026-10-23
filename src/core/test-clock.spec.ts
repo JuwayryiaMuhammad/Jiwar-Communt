@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ESLint, type Linter } from 'eslint';
 import tseslint from 'typescript-eslint';
@@ -77,6 +78,62 @@ describe('tests read the compound’s day from one helper', () => {
         'test/setup/compound-clock.ts',
       ),
     ).toEqual([]);
+  });
+
+  it.each([
+    'const later = new Date(Date.now() + 7 * 86_400_000);',
+    'const DAY = 86400000;',
+    'const at = new Date(Date.now() + 24 * 3_600_000);',
+    'const at = new Date(now.getTime() + 3_600_000 * 24);',
+    'const at = new Date(Date.now() + 24 * HOUR);',
+    'const start = Date.now() + 24 * 60 * MINUTE;',
+    'const until = now + 30 * 24 * HOUR;',
+    'const before = now - 31 * 24 * 60 * MINUTE;',
+    'const ms = 24 * 60 * 60_000;',
+    'const ms = 24 * 60 * 60 * 1000;',
+    'const ms = 86_400 * 1_000;',
+  ])('refuses a day in milliseconds: %s', async (source) => {
+    const found = await problems(source);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain('daysLater(n)');
+  });
+
+  it.each([
+    'const later = daysLater(7);',
+    'const at2 = at(day(7), 12);',
+    'const perDay = 24 * 60;',
+    'const soon = new Date(Date.now() + 2 * 3_600_000);',
+    'const start = new Date(Date.now() + (r.inHours ?? 24) * HOUR);',
+    [
+      '// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the TTL is in ms',
+      'const ttl = 86_400_000;',
+    ].join('\n'),
+  ])('allows %s', async (source) => {
+    expect(await problems(source)).toEqual([]);
+  });
+
+  it('every test that turns the rule off says why', () => {
+    const missing: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (path.endsWith('.ts'))
+          readFileSync(path, 'utf8')
+            .split('\n')
+            .forEach((line, i) => {
+              if (
+                /eslint-disable(-next-line|-line)? .*no-restricted-syntax/.test(
+                  line,
+                ) &&
+                !/no-restricted-syntax\s+--\s+\S/.test(line)
+              )
+                missing.push(`${path}:${i + 1}`);
+            });
+      }
+    };
+    walk(join(repo, 'test'));
+    expect(missing).toEqual([]);
   });
 
   it('keeps the base client and the transaction rules in test/', async () => {

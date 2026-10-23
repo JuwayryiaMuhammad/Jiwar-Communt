@@ -245,6 +245,7 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
     const pass = await newPass({
       kind: 'recurring',
       partySize: 2,
+      // eslint-disable-next-line no-restricted-syntax -- within the pass's window, which the server checks in ms (maxDays × 24 h)
       validUntil: new Date(Date.now() + 30 * 86_400_000).toISOString(),
       schedule: aroundTheClock(),
     });
@@ -337,6 +338,7 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
   it('a recurring overnight pass is read in the compound’s own time zone', async () => {
     const pass = await newPass({
       kind: 'recurring',
+      // eslint-disable-next-line no-restricted-syntax -- within the pass's window, which the server checks in ms (maxDays × 24 h)
       validUntil: new Date(Date.now() + 179 * 86_400_000).toISOString(),
       // Thursday 22:00 → Friday 02:00, local time.
       schedule: { days: [4], windows: [{ from: '22:00', to: '02:00' }] },

@@ -499,6 +499,7 @@ describe('Audit coverage — guard shifts and tasks', () => {
       });
       await x.sweep(
         FOUND_ITEM_RETENTION_SWEEP,
+        // eslint-disable-next-line no-restricted-syntax -- a real 31 × 24 h: the claimant name expires 30 × 24 h after, in ms
         new Date(Date.now() + 31 * 86_400_000),
       );
       expect(

@@ -331,6 +331,7 @@ describe('Audit coverage — community', () => {
       const member = await x.joinFamily(c, u.id, primary);
       const asPrimary = <T>(fn: () => Promise<T>) =>
         x.as(c, { id: primary.id, type: 'resident' }, fn);
+      // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
       const expiresAt = new Date(Date.now() + 30 * 86_400_000);
 
       const first = await asPrimary(() =>

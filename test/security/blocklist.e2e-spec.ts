@@ -9,6 +9,7 @@ import {
   type Who,
 } from '../setup/security-ops';
 
+// eslint-disable-next-line no-restricted-syntax -- a real 24 h: expiry and purge are checked against now, in ms
 const DAY = 86_400_000;
 const ID = '29001011234567';
 

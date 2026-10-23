@@ -1009,7 +1009,9 @@ export const AVAILABILITY_ROUTES: Row[] = [
 
 /** A valid window: tomorrow, one hour (computed when the row runs). */
 const visitWindow = () => ({
+  // eslint-disable-next-line no-restricted-syntax -- within a visit's lead (15 min to 30 × 24 h), checked in ms
   startsAt: new Date(Date.now() + 86_400_000).toISOString(),
+  // eslint-disable-next-line no-restricted-syntax -- within a visit's lead (15 min to 30 × 24 h), checked in ms
   endsAt: new Date(Date.now() + 86_400_000 + 3_600_000).toISOString(),
 });
 

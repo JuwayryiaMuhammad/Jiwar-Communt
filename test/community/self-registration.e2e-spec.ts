@@ -408,12 +408,14 @@ describe('Self-registration', () => {
     expect(
       await sweep.run(
         REGISTRATION_EXPIRY_SWEEP,
+        // eslint-disable-next-line no-restricted-syntax -- inside the pending period: created_at < now − pendingMs, in ms
         new Date(Date.now() + 29 * 86_400_000),
       ),
     ).toBe(0);
     expect(
       await sweep.run(
         REGISTRATION_EXPIRY_SWEEP,
+        // eslint-disable-next-line no-restricted-syntax -- past the pending period: created_at < now − pendingMs, in ms
         new Date(Date.now() + 31 * 86_400_000),
       ),
     ).toBeGreaterThanOrEqual(1);

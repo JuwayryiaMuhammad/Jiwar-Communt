@@ -109,6 +109,7 @@ describe('Identity documents and outbox schema', () => {
             relation: 'parent',
             tokenHash:
               'f'.repeat(48) + uniqueSuffix().padEnd(16, '0').slice(0, 16),
+            // eslint-disable-next-line no-restricted-syntax -- any future instant: the invite TTL is in ms
             expiresAt: new Date(Date.now() + 86_400_000),
           },
         });

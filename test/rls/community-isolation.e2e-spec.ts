@@ -34,6 +34,7 @@ describe('RLS isolation — household and worker tables', () => {
     noticeId: string;
   };
 
+  // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
   const inYear = () => new Date(Date.now() + 30 * 86_400_000);
 
   beforeAll(async () => {
@@ -501,6 +502,7 @@ describe('RLS isolation — household and worker tables', () => {
         );
       expect(
         await delegation({
+          // eslint-disable-next-line no-restricted-syntax -- over a year whatever the calendar: the check compares with created_at + 1 year
           expiresAt: new Date(Date.now() + 367 * 86_400_000),
         }),
       ).toMatchObject(violation('household_delegations_expiry_within_a_year'));

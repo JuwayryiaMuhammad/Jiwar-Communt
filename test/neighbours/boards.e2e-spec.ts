@@ -35,6 +35,7 @@ describe('Neighbours — the lost-and-found and lending boards', () => {
     n.http('get', `/neighbour-posts/${id}`, who.token);
   const fields = (res: { body: unknown }) =>
     (res.body as { fields: unknown[] }).fields;
+  // eslint-disable-next-line no-restricted-syntax -- a real 24 h: a post expires createdAt + days × 24 h
   const DAY = 86_400_000;
 
   describe('posting', () => {

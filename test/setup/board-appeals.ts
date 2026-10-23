@@ -95,6 +95,7 @@ export function boardAppealHelpers(h: HttpHarness) {
   const decidedDaysAgo = (disputeId: string, days: number) =>
     superuserSql(`UPDATE invoice_disputes SET decided_at = $2 WHERE id = $1`, [
       disputeId,
+      // eslint-disable-next-line no-restricted-syntax -- a real n × 24 h: the board-appeal window runs from decided_at, in ms
       new Date(dbClock().getTime() - days * 86_400_000),
     ]);
 

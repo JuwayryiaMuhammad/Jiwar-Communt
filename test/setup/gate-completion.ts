@@ -299,6 +299,7 @@ export function gateCompletionHelpers(h: HttpHarness) {
       `UPDATE gate_entry_photos
           SET entered_at = $2, purge_after = $2::timestamptz + interval '720 hours'
         WHERE entry_id = $1`,
+      // eslint-disable-next-line no-restricted-syntax -- a real 31 × 24 h: purge_after is entered_at + 720 h
       [entryId, new Date(dbClock().getTime() - 31 * 86_400_000)],
     );
 

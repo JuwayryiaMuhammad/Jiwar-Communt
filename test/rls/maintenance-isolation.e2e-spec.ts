@@ -367,6 +367,7 @@ const TABLES: Table[] = [
     table: 'ticket_visits',
     insert: async (tx, own, link) => {
       const id = newId();
+      // eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
       const startsAt = new Date(Date.now() + 86_400_000);
       await tx.ticketVisit.create({
         data: {

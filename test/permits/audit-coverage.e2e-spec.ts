@@ -360,6 +360,7 @@ describe('Audit coverage — permits', () => {
         title: true,
         photo: false,
       });
+      // eslint-disable-next-line no-restricted-syntax -- a real 40 × 24 h: people data is purged 30 × 24 h after the end, in ms
       await p.sweep(PEOPLE_DATA_SWEEP, new Date(Date.now() + 40 * 86_400_000));
       const purged = (
         await read.tenant(c.c.tenantId, {

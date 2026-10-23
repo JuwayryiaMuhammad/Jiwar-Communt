@@ -51,6 +51,69 @@ const CLOCK_SYNTAX = [
   },
 ];
 
+// A day in milliseconds: n × 24 h is the compound's n days only when no
+// clock change falls in between (Egypt's does, every spring and autumn).
+// "Days later" comes from the helper (daysLater, day, at). A real 24-hour
+// duration the server measures in milliseconds (a TTL, a retention cutoff)
+// stays, with `// eslint-disable-next-line no-restricted-syntax -- <why>`:
+// the unit test of this file refuses a disable without its reason.
+const DAY_MS = `A day in milliseconds is 24 h, not one of the compound's days: a clock change in between moves it. Use daysLater(n), day(n) or at() from ${HELPER}; a real 24-hour duration the server measures in ms takes "// eslint-disable-next-line no-restricted-syntax -- <why>".`;
+const DAY_MS_SYNTAX = [
+  // 86_400_000 and 86400000.
+  { selector: 'Literal[value=86400000]', message: DAY_MS },
+  // 86_400 * 1_000.
+  {
+    selector:
+      "BinaryExpression[operator='*'][left.value=86400][right.value=1000]",
+    message: DAY_MS,
+  },
+  // 24 * 3_600_000, either way round.
+  {
+    selector:
+      "BinaryExpression[operator='*'][left.value=24][right.value=3600000]",
+    message: DAY_MS,
+  },
+  {
+    selector:
+      "BinaryExpression[operator='*'][left.value=3600000][right.value=24]",
+    message: DAY_MS,
+  },
+  // 24 * HOUR (any constant named for an hour).
+  {
+    selector:
+      "BinaryExpression[operator='*'][left.value=24][right.name=/^(HOUR|HOURS|HOUR_MS|ONE_HOUR)$/]",
+    message: DAY_MS,
+  },
+  // n * 24 * HOUR.
+  {
+    selector:
+      "BinaryExpression[operator='*'][left.operator='*'][left.right.value=24][right.name=/^(HOUR|HOURS|HOUR_MS|ONE_HOUR)$/]",
+    message: DAY_MS,
+  },
+  // 24 * 60 * MINUTE, n * 24 * 60 * MINUTE, 24 * 60 * 60_000 and
+  // 24 * 60 * 60 * 1000.
+  {
+    selector:
+      "BinaryExpression[operator='*'][left.type='BinaryExpression'][left.left.value=24][left.right.value=60][right.name=/^(MINUTE|MINUTES|MINUTE_MS|ONE_MINUTE)$/]",
+    message: DAY_MS,
+  },
+  {
+    selector:
+      "BinaryExpression[operator='*'][left.operator='*'][left.left.operator='*'][left.left.right.value=24][left.right.value=60][right.name=/^(MINUTE|MINUTES|MINUTE_MS|ONE_MINUTE)$/]",
+    message: DAY_MS,
+  },
+  {
+    selector:
+      "BinaryExpression[operator='*'][left.left.value=24][left.right.value=60][right.value=60000]",
+    message: DAY_MS,
+  },
+  {
+    selector:
+      "BinaryExpression[operator='*'][right.value=1000][left.right.value=60][left.left.left.value=24][left.left.right.value=60]",
+    message: DAY_MS,
+  },
+];
+
 // Whatever src module exports them (day-slots, visit-slots re-exports,
 // zoned-time, egyptian-national-id).
 const CLOCK_IMPORTS = [
@@ -74,7 +137,12 @@ const testClockConfigs = [
     files: ['test/**/*.ts'],
     ignores: [HELPER],
     rules: {
-      'no-restricted-syntax': ['error', TX_CONCURRENCY, ...CLOCK_SYNTAX],
+      'no-restricted-syntax': [
+        'error',
+        TX_CONCURRENCY,
+        ...CLOCK_SYNTAX,
+        ...DAY_MS_SYNTAX,
+      ],
       'no-restricted-imports': [
         'error',
         { patterns: [BASE_PRISMA, ...CLOCK_IMPORTS] },

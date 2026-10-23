@@ -83,6 +83,7 @@ describe('Bookings: no-shows and suspensions (ADR 0044)', () => {
     const suspension = (await standing(member, unit.id))!;
     expect(suspension).not.toBeNull();
     const days =
+      // eslint-disable-next-line no-restricted-syntax -- a real 24 h: the suspension ends suspensionDays × 24 h after now
       (new Date(suspension.endsAt).getTime() - Date.now()) / 86_400_000;
     expect(days).toBeGreaterThan(13.9);
     expect(days).toBeLessThanOrEqual(14);
@@ -163,6 +164,7 @@ describe('Bookings: no-shows and suspensions (ADR 0044)', () => {
       await noShow(await ended(unit.id, owner)).expect(204);
       const suspension = (await standing(owner, unit.id))!;
       const days =
+        // eslint-disable-next-line no-restricted-syntax -- a real 24 h: the suspension ends suspensionDays × 24 h after now
         (new Date(suspension.endsAt).getTime() - Date.now()) / 86_400_000;
       expect(days).toBeGreaterThan(1.9);
       expect(days).toBeLessThanOrEqual(2);

@@ -502,14 +502,13 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     b,
     { id: b.ids.owner, type: 'resident' },
     () =>
-      h.moduleRef
-        .get(DelegationsService)
-        .create(
-          b.homeUnitId,
-          b.ids.family,
-          ['workers'],
-          new Date(Date.now() + 30 * 86_400_000),
-        ),
+      h.moduleRef.get(DelegationsService).create(
+        b.homeUnitId,
+        b.ids.family,
+        ['workers'],
+        // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+        new Date(Date.now() + 30 * 86_400_000),
+      ),
   );
   const workers = h.moduleRef.get(WorkersService);
   const asBOwner = <T>(fn: () => Promise<T>) =>
@@ -566,6 +565,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       kind: 'one_time',
       partySize: 1,
       validFrom: new Date(),
+      // eslint-disable-next-line no-restricted-syntax -- within the pass's window, which the server checks in ms (maxDays × 24 h)
       validUntil: new Date(Date.now() + 86_400_000),
     }),
   );
@@ -623,7 +623,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       h.moduleRef.get(VisitsService).propose(
         bTicket.id,
         {
+          // eslint-disable-next-line no-restricted-syntax -- within a visit's lead (15 min to 30 × 24 h), checked in ms
           startsAt: new Date(Date.now() + 86_400_000),
+          // eslint-disable-next-line no-restricted-syntax -- within a visit's lead (15 min to 30 × 24 h), checked in ms
           endsAt: new Date(Date.now() + 86_400_000 + 3_600_000),
         },
         'technician',
@@ -661,7 +663,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       titleEn: 'World',
       descriptionEn: 'World',
       place: 'World',
+      // eslint-disable-next-line no-restricted-syntax -- any future instant: events and polls compare instants only
       startsAt: new Date(Date.now() + 86_400_000),
+      // eslint-disable-next-line no-restricted-syntax -- any future instant: events and polls compare instants only
       endsAt: new Date(Date.now() + 86_400_000 + 3_600_000),
     }),
   );
@@ -669,6 +673,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     h.moduleRef.get(PollsService).create({
       questionEn: 'World?',
       options: [{ labelEn: 'Yes' }, { labelEn: 'No' }],
+      // eslint-disable-next-line no-restricted-syntax -- any future instant: events and polls compare instants only
       closesAt: new Date(Date.now() + 7 * 86_400_000),
     }),
   );
@@ -837,6 +842,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         tenantId: b.tenantId,
         unitId: b.homeUnitId,
         startsAt: new Date(),
+        // eslint-disable-next-line no-restricted-syntax -- a suspension in force: endsAt is compared as an instant
         endsAt: new Date(Date.now() + 86_400_000),
         triggerBookingId: ended,
         noShowCount: 3,

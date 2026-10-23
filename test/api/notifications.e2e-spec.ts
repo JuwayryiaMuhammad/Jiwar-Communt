@@ -338,6 +338,7 @@ describe('API v0 — notifications inbox (ADR 0027)', () => {
     // 91 days on, the read one goes, the unread one stays.
     await sweep.run(
       NOTIFICATIONS_RETENTION_SWEEP,
+      // eslint-disable-next-line no-restricted-syntax -- past the 90 × 24 h retention, in ms
       new Date(Date.now() + 91 * 86_400_000),
     );
     const later = await call(w, 'GET', '/me/notifications', {
@@ -364,7 +365,9 @@ describe('API v0 — notifications inbox (ADR 0027)', () => {
       w.helpers.prisma.tenant.accountDeletionRequest.update({
         where: { id: request.id },
         data: {
+          // eslint-disable-next-line no-restricted-syntax -- any instant before effectiveAt: requestedAt is only shown
           requestedAt: new Date(Date.now() - 31 * 86_400_000),
+          // eslint-disable-next-line no-restricted-syntax -- past the grace: erase() compares effectiveAt with now, in ms
           effectiveAt: new Date(Date.now() - 86_400_000),
         },
       }),

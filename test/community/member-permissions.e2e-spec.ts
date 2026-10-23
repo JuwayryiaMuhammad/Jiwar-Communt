@@ -187,14 +187,13 @@ describe('Member permissions', () => {
     const hm = await home();
     const other = await x.joinFamily(hm.c, hm.unitId, hm.primary);
     await asPrimary(hm, () =>
-      h.moduleRef
-        .get(DelegationsService)
-        .create(
-          hm.unitId,
-          hm.family.accountId,
-          ['household'],
-          new Date(Date.now() + 86_400_000),
-        ),
+      h.moduleRef.get(DelegationsService).create(
+        hm.unitId,
+        hm.family.accountId,
+        ['household'],
+        // eslint-disable-next-line no-restricted-syntax -- any future instant within a year: a delegation's expiry is an instant
+        new Date(Date.now() + 86_400_000),
+      ),
     );
     const asDelegate = <T>(fn: () => Promise<T>) =>
       asFamily(hm, hm.family.accountId, fn);

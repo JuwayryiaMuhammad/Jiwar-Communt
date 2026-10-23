@@ -76,6 +76,7 @@ export async function bookingRow(
   // A slot of its own each time: a unit holds one slot once.
   const startsAt = new Date(
     Math.ceil(Date.now() / 3_600_000) * 3_600_000 +
+      // eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
       86_400_000 +
       bookingRows++ * 3_600_000,
   );
@@ -111,6 +112,7 @@ export async function closureRow(
   input: { tenantId: string; facilityId: string; createdById: string },
 ): Promise<string> {
   const id = newId();
+  // eslint-disable-next-line no-restricted-syntax -- any instant for a raw row: no server code reads its compound day
   const startsAt = new Date(Date.now() + 30 * 86_400_000);
   await tx.facilityClosure.create({
     data: {
@@ -135,6 +137,7 @@ export async function suspensionRow(
       id,
       ...input,
       startsAt: new Date(),
+      // eslint-disable-next-line no-restricted-syntax -- a real 24 h: a suspension in force until an instant
       endsAt: new Date(Date.now() + 86_400_000),
       noShowCount: 3,
     },

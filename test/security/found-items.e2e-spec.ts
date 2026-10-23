@@ -196,6 +196,7 @@ describe('Lost and found at the gate', () => {
       .expect(200);
     await x.sweep(
       FOUND_ITEM_RETENTION_SWEEP,
+      // eslint-disable-next-line no-restricted-syntax -- a real 29 × 24 h: the claimant name expires 30 × 24 h after, in ms
       new Date(Date.now() + 29 * 86_400_000),
     );
     let row = await x.inTx(s.c, (tx) =>
@@ -204,6 +205,7 @@ describe('Lost and found at the gate', () => {
     expect(row.claimantName).toBe('Dina');
     await x.sweep(
       FOUND_ITEM_RETENTION_SWEEP,
+      // eslint-disable-next-line no-restricted-syntax -- a real 31 × 24 h: the claimant name expires 30 × 24 h after, in ms
       new Date(Date.now() + 31 * 86_400_000),
     );
     row = await x.inTx(s.c, (tx) =>

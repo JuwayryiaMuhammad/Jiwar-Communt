@@ -12,7 +12,7 @@ import {
   type VehicleBody,
   type Who,
 } from '../setup/vehicles';
-import { dbDate } from '../setup/compound-clock';
+import { daysLater, dbDate } from '../setup/compound-clock';
 
 const DAY = 86_400_000;
 
@@ -597,8 +597,8 @@ describe('Vehicles', () => {
       expect(
         await v.notifications(s.c, owner.id, 'vehicle.permit_expiring'),
       ).toHaveLength(0);
-      await v.sweep(PERMIT_EXPIRING_SWEEP, new Date(Date.now() + 11 * DAY));
-      await v.sweep(PERMIT_EXPIRING_SWEEP, new Date(Date.now() + 12 * DAY));
+      await v.sweep(PERMIT_EXPIRING_SWEEP, daysLater(11));
+      await v.sweep(PERMIT_EXPIRING_SWEEP, daysLater(12));
       expect(
         await v.notifications(s.c, owner.id, 'vehicle.permit_expiring'),
       ).toHaveLength(1);
@@ -607,7 +607,7 @@ describe('Vehicles', () => {
           permitValidUntil: day(45),
         })
         .expect(200);
-      await v.sweep(PERMIT_EXPIRING_SWEEP, new Date(Date.now() + 16 * DAY));
+      await v.sweep(PERMIT_EXPIRING_SWEEP, daysLater(16));
       const told = await v.notifications(
         s.c,
         owner.id,

@@ -3,6 +3,7 @@ import {
   PATROL_SCHEDULE_SWEEP,
   PATROL_WATCH_SWEEP,
 } from '../../src/gate/patrols/patrol-sweeps';
+import { daysLater } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import {
   patrolHelpers,
@@ -77,7 +78,7 @@ describe('Patrol runs', () => {
     for (const r of made) {
       expect(r.status).toBe('scheduled');
       expect(r.plannedAt.getTime()).toBeGreaterThan(Date.now() - MINUTE);
-      expect(r.plannedAt.getTime()).toBeLessThan(Date.now() + 9 * 86_400_000);
+      expect(r.plannedAt.getTime()).toBeLessThan(daysLater(9).getTime());
       expect(r.windowEndsAt!.getTime() - r.scheduledStart!.getTime()).toBe(
         30 * MINUTE,
       );

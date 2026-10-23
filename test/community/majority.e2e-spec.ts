@@ -21,7 +21,7 @@ import {
   type HttpHarness,
 } from '../setup/http-app';
 import { waitForOtp } from '../setup/mailpit';
-import { day, wallClock } from '../setup/compound-clock';
+import { clock, wallClock } from '../setup/compound-clock';
 
 /** A minor turning 18 (ADR 0021): told, never raised automatically. */
 describe('Minors reaching majority', () => {
@@ -90,7 +90,8 @@ describe('Minors reaching majority', () => {
     const kidWest = await addKid(west, 2, 'Kid West');
     // The birthday (UTC date), 10:00 UTC: already the next day in
     // Kiritimati, still the day before in Pago Pago.
-    const now = wallClock(day(2), '10:00:00', 'Z');
+    const c = clock();
+    const now = wallClock(c.day(2), '10:00:00', 'Z');
 
     await sweep.run(MAJORITY_SWEEP, now);
     const row = (hm: Home, id: string) =>
@@ -144,7 +145,7 @@ describe('Minors reaching majority', () => {
       }),
     ).toBe(2);
     // The day after, the west compound's kid is told too.
-    await sweep.run(MAJORITY_SWEEP, new Date(now.getTime() + 86_400_000));
+    await sweep.run(MAJORITY_SWEEP, wallClock(c.day(3), '10:00:00', 'Z'));
     expect((await row(west, kidWest.id)).majorityNotifiedAt).toBeInstanceOf(
       Date,
     );

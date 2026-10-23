@@ -121,6 +121,27 @@ export const at = (date: LocalDate, hour: number, minute = 0): Date =>
 /** The compound's local month `n` months from this one, `YYYY-MM`. */
 export const month = (n = 0): string => clock().month(n);
 
+/**
+ * The same local wall time `n` of the compound's calendar days after
+ * `from` (the database's clock by default): "a week later" as the server
+ * counts days, never n × 24 h, which a clock change in between turns into
+ * a day more or less. A time the clock skips that day moves to the next
+ * minute that exists.
+ */
+export function daysLater(
+  n: number,
+  from: Date = dbClock(),
+  zone: string = ZONE,
+): Date {
+  const { date, minute } = localParts(from, zone);
+  const target = addDays(date, n);
+  for (let m = minute; m < 1440; m++) {
+    const instant = zonedInstant(target, m, zone);
+    if (instant) return new Date(instant.getTime() + (from.getTime() % MINUTE));
+  }
+  throw new Error(`No instant at or after ${hhmm(minute)} on ${target}`);
+}
+
 /** The local day of an instant. */
 export const localDay = (instant: Date, zone: string = ZONE): LocalDate =>
   localParts(instant, zone).date;

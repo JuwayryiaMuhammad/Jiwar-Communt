@@ -1,6 +1,6 @@
 import { newId } from '../../src/core/common/uuid';
 import { auditReaders } from '../setup/audit';
-import { day } from '../setup/compound-clock';
+import { day, dbDate } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { leakText } from '../setup/leak-text';
 import { permitRow } from '../setup/permits-rows';
@@ -251,7 +251,7 @@ describe('Violations', () => {
           number: 990_001,
           kind: 'pets',
           unitId: s.home.id,
-          occurredOn: new Date(Date.now() - 40 * DAY),
+          occurredOn: dbDate(day(-40)),
           issuedById: s.manager.id,
           createdAt: new Date(Date.now() - 31 * DAY),
         },

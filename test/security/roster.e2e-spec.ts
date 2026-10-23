@@ -100,8 +100,10 @@ describe('The roster', () => {
         new Date(slots[0].startsAt).getTime(),
     ).toBe(8 * 3_600_000);
 
-    // The sweep a week later adds the next seven, and nothing twice.
-    const later = new Date(Date.now() + 7 * 86_400_000);
+    // The sweep a week later adds the next seven, and nothing twice: seven
+    // of the compound's days, never 7 × 24 h (on 2026-10-22 21:xx UTC, that
+    // was 6 days and 23 hours across the end of daylight saving).
+    const later = at(addDays(today(), 7), 12);
     expect(
       await x.sweep(ROSTER_MATERIALIZE_SWEEP, later),
     ).toBeGreaterThanOrEqual(7);
@@ -263,10 +265,7 @@ describe('The roster', () => {
       ),
     ).toEqual({ status: 409, code: 'ROSTER_TEMPLATE_ENDED' });
     // An ended template makes nothing more.
-    await x.sweep(
-      ROSTER_MATERIALIZE_SWEEP,
-      new Date(Date.now() + 7 * 86_400_000),
-    );
+    await x.sweep(ROSTER_MATERIALIZE_SWEEP, at(addDays(today(), 7), 12));
     expect(
       await x.inTx(s.c, (tx) =>
         tx.guardRosterSlot.count({ where: { templateId: t.id } }),

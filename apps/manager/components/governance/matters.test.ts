@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { columnLabel, subjectParts, tallyText } from './matters.ts';
+import { columnLabel, matterOutcomeText, objectionState, subjectParts, tallyText } from './matters.ts';
 
 test('a tally reads as the votes cast against the seats that count', () => {
   assert.equal(tallyText({ seats: 5, quorum: 3, for: 2, against: 1 }), '2 for · 1 against · 3 of 5 seats voted, quorum 3');
@@ -40,4 +40,21 @@ test('a subject’s scalars are rows, nested objects flattened, lists of objects
 
 test('no subject is nothing to show', () => {
   assert.deepEqual(subjectParts(null), { rows: [], tables: [] });
+});
+
+test('a representative matter decided reads as what it changed, or why an approval changed nothing (ADR 0059)', () => {
+  assert.equal(matterOutcomeText({ decision: 'rejected', effect: null, effectReason: null }), 'Rejected: nothing changed');
+  assert.equal(matterOutcomeText({ decision: 'approved', effect: 'applied', effectReason: null }), 'Approved and applied');
+  assert.equal(
+    matterOutcomeText({ decision: 'approved', effect: 'not_applied', effectReason: 'not_an_owner' }),
+    'Approved, not applied: they no longer own a unit in the building',
+  );
+});
+
+test('a decision takes objections until its day, and none once answered (ADR 0059)', () => {
+  const now = new Date('2026-11-10T10:00:00Z');
+  assert.equal(objectionState(null, now), null);
+  assert.equal(objectionState({ until: '2026-11-12T00:00:00Z', answered: false }, now), 'open');
+  assert.equal(objectionState({ until: '2026-11-10T10:00:00Z', answered: false }, now), 'closed');
+  assert.equal(objectionState({ until: '2026-11-12T00:00:00Z', answered: true }, now), 'answered');
 });

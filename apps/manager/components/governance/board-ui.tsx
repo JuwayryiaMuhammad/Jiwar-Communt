@@ -81,34 +81,44 @@ export function Attachments({ items }: { items: { fileId: string; url: string | 
   );
 }
 
-type Matter = 'approval' | 'appeal';
+type Matter = 'approval' | 'appeal' | 'representative';
 type Vote = BoardMotion['votes'][number];
 
 function Propose({ matter, matterId, onClose }: { matter: Matter; matterId: string; onClose: () => void }) {
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
-  const [outcome, setOutcome] = useState(matter === 'approval' ? 'approve' : 'uphold');
+  const [outcome, setOutcome] = useState(matter === 'appeal' ? 'uphold' : 'approve');
   const [rationale, setRationale] = useState('');
   const [note, setNote] = useState('');
   const propose = useAction(
-    () =>
-      matter === 'approval'
-        ? unwrap(
-            api.POST('/api/v1/board/approvals/{id}/motions', {
-              params: { path: { id: matterId }, header: { 'Idempotency-Key': key } },
-              body: {
-                outcome: outcome as 'approve' | 'reject',
-                rationale: rationale.trim(),
-                ...(note.trim() ? { alternativesNote: note.trim() } : {}),
-              },
-            }),
-          )
-        : unwrap(
-            api.POST('/api/v1/board/appeals/{id}/motions', {
-              params: { path: { id: matterId }, header: { 'Idempotency-Key': key } },
-              body: { outcome: outcome as 'uphold' | 'overturn', rationale: rationale.trim() },
-            }),
-          ),
+    () => {
+      const params = { path: { id: matterId }, header: { 'Idempotency-Key': key } };
+      if (matter === 'approval')
+        return unwrap(
+          api.POST('/api/v1/board/approvals/{id}/motions', {
+            params,
+            body: {
+              outcome: outcome as 'approve' | 'reject',
+              rationale: rationale.trim(),
+              ...(note.trim() ? { alternativesNote: note.trim() } : {}),
+            },
+          }),
+        );
+      // A representative matter (ADR 0059): approve or reject, no alternatives.
+      if (matter === 'representative')
+        return unwrap(
+          api.POST('/api/v1/board/representatives/matters/{id}/motions', {
+            params,
+            body: { outcome: outcome as 'approve' | 'reject', rationale: rationale.trim() },
+          }),
+        );
+      return unwrap(
+        api.POST('/api/v1/board/appeals/{id}/motions', {
+          params,
+          body: { outcome: outcome as 'uphold' | 'overturn', rationale: rationale.trim() },
+        }),
+      );
+    },
     {
       invalidate: [keys.governanceAll],
       onDone: () => {
@@ -117,7 +127,7 @@ function Propose({ matter, matterId, onClose }: { matter: Matter; matterId: stri
       },
     },
   );
-  const outcomes = matter === 'approval' ? ['approve', 'reject'] : ['uphold', 'overturn'];
+  const outcomes = matter === 'appeal' ? ['uphold', 'overturn'] : ['approve', 'reject'];
   return (
     <Dialog
       open
@@ -240,7 +250,9 @@ function MotionCard({ m }: { m: BoardMotion }) {
           {tallyText(m.tally)}
           {m.recused ? ` · ${m.recused} recused, left out of the count` : ''}
         </p>
-        {m.myRecusal ? <p className="t-secondary">You are recused: you live in or own the unit, or appealed. You may not vote or close it.</p> : null}
+        {m.myRecusal ? (
+          <p className="t-secondary">You are recused: you live in or own the unit, appealed, or the matter names you. You may not vote or close it.</p>
+        ) : null}
         {m.myVote ? <p className="t-secondary">You voted {m.myVote}.</p> : null}
         {open ? (
           <p className="t-secondary">

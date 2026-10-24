@@ -279,3 +279,24 @@ test('a request to relay says the category, never a name, and leads its keeper t
   assert.equal(notificationHref(relay, (p) => p === 'partners.manage'), '/partners/requests/r-1');
   assert.equal(notificationHref(relay, () => false), null);
 });
+
+test('a decision appealed says what of, never who, and leads its deciders to it (ADR 0059)', () => {
+  const lodged = n('decision_appeal.lodged', { kind: 'permit_rejection' }, 'decision_appeal', 'ap-1');
+  assert.equal(notificationText(lodged), 'A resident appealed a staff decision: permit rejection');
+  assert.equal(notificationHref(lodged, (p) => p === 'appeals.decide'), '/appeals/ap-1');
+  assert.equal(notificationHref(lodged, () => false), null);
+});
+
+test('the owners’ voice leads a sitting member to the board’s page, never saying who (ADR 0059)', () => {
+  const board = (p: string) => p === 'governance.board';
+  const proposed = n('governance_agenda.proposed', {}, 'governance_agenda_proposal', 'ag-1');
+  assert.equal(notificationText(proposed), 'An owner proposed a matter for the board’s agenda');
+  assert.equal(notificationHref(proposed, board), '/board/agenda/ag-1');
+  assert.equal(notificationHref(proposed, () => false), null);
+  const objected = n('governance_objection.lodged', {}, 'board_publication', 'pub-1');
+  assert.equal(notificationText(objected), 'An owner objected to a decision of the board');
+  assert.equal(notificationHref(objected, board), '/board/objections/pub-1');
+  const motion = n('governance_motion.proposed', { matter: 'representative' }, 'board_motion', 'm1');
+  assert.equal(notificationText(motion), 'A motion on a building’s representative awaits your vote');
+  assert.equal(notificationHref(motion, board), '/board/representatives');
+});

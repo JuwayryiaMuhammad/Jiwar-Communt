@@ -306,6 +306,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           show: can('requests.handle'),
         },
         { href: '/appointments', label: 'Appointments', icon: <CalendarClock aria-hidden />, show: can('requests.handle') },
+        // A staff decision appealed by those it is about (ADR 0059).
+        { href: '/appeals', label: 'Decision appeals', icon: <Gavel aria-hidden />, show: can('appeals.decide') },
         { href: '/announcements', label: 'Announcements', icon: <Megaphone aria-hidden />, show: can('community.publish') },
         { href: '/events', label: 'Events', icon: <CalendarDays aria-hidden />, show: can('community.publish') },
         { href: '/polls', label: 'Polls', icon: <Vote aria-hidden />, show: can('community.publish') },
@@ -530,6 +532,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/board/approvals', label: 'Inbox', icon: <Inbox aria-hidden />, show: can('governance.board') },
         { href: '/board/appeals', label: 'Appeals', icon: <Scale aria-hidden />, show: can('governance.board') },
         { href: '/board/overview', label: 'Overview', icon: <LayoutDashboard aria-hidden />, show: can('governance.board') },
+        // The owners' voice (ADR 0059): representatives by the board's motions; proposals and objections answered once.
+        { href: '/board/representatives', label: 'Representatives', icon: <Users aria-hidden />, show: can('governance.board') },
+        { href: '/board/agenda', label: 'Agenda proposals', icon: <Lightbulb aria-hidden />, show: can('governance.board') },
+        { href: '/board/objections', label: 'Objections', icon: <MessageSquareWarning aria-hidden />, show: can('governance.board') },
       ],
     },
     {
@@ -538,6 +544,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/finance/invoices', label: 'Invoices', icon: <FileText aria-hidden />, show: can('finance.invoice') },
         { href: '/finance/instalments', label: 'Instalment plans', icon: <CalendarRange aria-hidden />, show: can('finance.invoice') },
         { href: '/finance/disputes', label: 'Disputes', icon: <MessageSquareWarning aria-hidden />, show: can('finance.invoice') },
+        // The formal late-payment notices and their proofs (ADR 0058).
+        { href: '/finance/late-notices', label: 'Late notices', icon: <Scale aria-hidden />, show: can('finance.invoice') },
         { href: '/finance/payments', label: 'Payments', icon: <Banknote aria-hidden />, show: can('finance.payments') },
         { href: '/finance/plans', label: 'Billing plans', icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
         { href: '/finance/refunds', label: 'Refunds', icon: <Undo2 aria-hidden />, show: can('finance.refund') },

@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { personName, PriorityBadge, SlaBadges, ticketPlace } from '@/components/maintenance/sla';
 import { TicketActions } from '@/components/maintenance/ticket-actions';
+import { TicketQuotes } from '@/components/maintenance/ticket-quotes';
 import { TicketThread } from '@/components/maintenance/ticket-thread';
 import { TicketTrail } from '@/components/maintenance/ticket-trail';
 import { TicketVisits } from '@/components/maintenance/ticket-visits';
@@ -251,6 +252,7 @@ export default function TicketPage() {
             <div className="stack">
               <Details ticket={t} />
               <TicketThread ticketId={t.id} status={t.status} />
+              <TicketQuotes ticket={t} />
               <TicketVisits ticket={t} />
             </div>
             <div className="stack">

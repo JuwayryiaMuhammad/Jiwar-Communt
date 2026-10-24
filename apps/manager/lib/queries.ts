@@ -261,6 +261,12 @@ export interface PartnerRequestFilters {
   partnerId?: string;
 }
 
+// Decision appeals, ticket quotes, late-payment notices (ADR 0058, 0059).
+export type DecisionAppeal = Schema<'StaffDecisionAppealView'>;
+export type DecisionAppealStatus = Schema<'DecisionAppealStatus'>;
+export type TicketQuote = Schema<'DispatchQuoteView'>;
+export type LateNotice = Schema<'StaffLateNoticeView'>;
+
 // Governance (ADR 0051).
 export type StaffBoardTerm = Schema<'StaffBoardTermView'>;
 export type StaffBoardSeat = Schema<'StaffBoardSeatView'>;
@@ -283,6 +289,14 @@ export type BoardAppealStatus = Schema<'BoardAppealStatus'>;
 export type StaffBoardAppeal = Schema<'StaffBoardAppealView'>;
 export type BoardAppealForBoard = Schema<'BoardAppealBoardView'>;
 export type BoardOverview = Schema<'BoardOverviewView'>;
+// The board's pages for the owners' voice (ADR 0059).
+export type Representative = Schema<'RepresentativeView'>;
+export type RepresentativeMatter = Schema<'RepresentativeMatterView'>;
+export type BoardRepresentativeMatter = Schema<'BoardRepresentativeMatterView'>;
+export type RepresentativeMatterStatus = Schema<'RepresentativeMatterStatus'>;
+export type AgendaProposal = Schema<'AgendaProposalView'>;
+export type AgendaProposalStatus = Schema<'AgendaProposalStatus'>;
+export type BoardObjections = Schema<'BoardObjectionsView'>;
 export type Budget = Schema<'BudgetView'>;
 export type BudgetStatus = Schema<'BudgetStatus'>;
 export type BudgetCategory = Schema<'BudgetCategory'>;
@@ -590,6 +604,12 @@ export const keys = {
   partnerComplaints: (decided: string) => ['partners', 'complaints', decided] as const,
   partnerComplaint: (id: string) => ['partners', 'complaint', id] as const,
   partnerRatings: (partnerId: string) => ['partners', 'ratings', partnerId] as const,
+  // Decision appeals, quotes, late-payment notices (ADR 0058, 0059).
+  decisionAppealsAll: ['decision-appeals'] as const,
+  decisionAppeals: (status: string) => ['decision-appeals', 'list', status] as const,
+  decisionAppeal: (id: string) => ['decision-appeals', 'detail', id] as const,
+  lateNotices: ['finance', 'late-notices'] as const,
+  noticeSettings: ['finance', 'notice-settings'] as const,
   // Guard shifts and tasks (ADR 0050).
   securityPosts: ['security', 'posts'] as const,
   securityGuards: ['security', 'guards'] as const,
@@ -631,6 +651,16 @@ export const keys = {
   boardAppeals: (status: string) => ['governance', 'board', 'appeals', status] as const,
   boardAppeal: (id: string) => ['governance', 'board', 'appeal', id] as const,
   boardOverview: (from: string, to: string) => ['governance', 'overview', from, to] as const,
+  // The owners' voice, the board's side (ADR 0059): under governance too.
+  boardRepresentatives: ['governance', 'board', 'representatives'] as const,
+  boardRepresentativeMatters: (status: string) => ['governance', 'board', 'representative-matters', status] as const,
+  boardRepresentativeMatter: (id: string) => ['governance', 'board', 'representative-matter', id] as const,
+  boardBuildings: ['governance', 'board', 'buildings'] as const,
+  boardCandidates: (building: string) => ['governance', 'board', 'candidates', building] as const,
+  boardAgenda: (status: string) => ['governance', 'board', 'agenda', status] as const,
+  boardAgendaProposal: (id: string) => ['governance', 'board', 'agenda-proposal', id] as const,
+  ownersPublications: ['governance', 'owners-publications'] as const,
+  boardObjections: (publicationId: string) => ['governance', 'board', 'objections', publicationId] as const,
   budgetsAll: ['budgets'] as const,
   budgets: (status: string) => ['budgets', 'list', status] as const,
   budget: (id: string) => ['budgets', 'detail', id] as const,
@@ -982,6 +1012,19 @@ export const fetchers = {
   partnerComplaint: (id: string) => unwrap(api.GET('/api/v1/staff/partner-complaints/{id}', { params: { path: { id } } })),
   partnerRatings: (partnerId: string, cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/partner-ratings', { params: { query: { partnerId, cursor, limit } } })),
+  // Decision appeals (ADR 0059).
+  decisionAppeals: (status: DecisionAppealStatus | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/decision-appeals', {
+        params: { query: { ...(status ? { status } : {}), cursor, limit } },
+      }),
+    ),
+  decisionAppeal: (id: string) =>
+    unwrap(api.GET('/api/v1/staff/decision-appeals/{id}', { params: { path: { id } } })),
+  // Late-payment notices and their cure period (ADR 0058).
+  lateNotices: (cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/finance/late-notices', { params: { query: { cursor, limit } } })),
+  noticeSettings: () => unwrap(api.GET('/api/v1/staff/finance/notice-settings')),
   // Guard shifts and tasks (ADR 0050).
   securityPosts: () => unwrap(api.GET('/api/v1/staff/security/posts')),
   securityGuards: () => unwrap(api.GET('/api/v1/staff/security/guards')),
@@ -1075,6 +1118,32 @@ export const fetchers = {
   boardAppeal: (id: string) => unwrap(api.GET('/api/v1/board/appeals/{id}', { params: { path: { id } } })),
   boardOverview: (from: string, to: string) =>
     unwrap(api.GET('/api/v1/board/overview', { params: { query: clean({ from, to }) } })),
+  // The owners' voice, the board's side (ADR 0059).
+  boardRepresentatives: () => unwrap(api.GET('/api/v1/board/representatives')),
+  boardRepresentativeMatters: (status: RepresentativeMatterStatus | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/board/representatives/matters', {
+        params: { query: { ...(status ? { status } : {}), cursor, limit } },
+      }),
+    ),
+  boardRepresentativeMatter: (id: string) =>
+    unwrap(api.GET('/api/v1/board/representatives/matters/{id}', { params: { path: { id } } })),
+  boardBuildings: () => unwrap(api.GET('/api/v1/board/representatives/buildings')),
+  boardCandidates: (building: string) =>
+    unwrap(api.GET('/api/v1/board/representatives/candidates', { params: { query: { building } } })),
+  boardAgenda: (status: AgendaProposalStatus | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/board/agenda-proposals', {
+        params: { query: { ...(status ? { status } : {}), cursor, limit } },
+      }),
+    ),
+  boardAgendaProposal: (id: string) =>
+    unwrap(api.GET('/api/v1/board/agenda-proposals/{id}', { params: { path: { id } } })),
+  /** The owners' list of the board's decisions: what an objection is made on. */
+  ownersPublications: (cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/governance/publications', { params: { query: { cursor, limit } } })),
+  boardObjections: (publicationId: string) =>
+    unwrap(api.GET('/api/v1/board/publications/{id}/objections', { params: { path: { id: publicationId } } })),
   budgets: (status: BudgetStatus | '', cursor?: string, limit = 50) =>
     unwrap(
       api.GET('/api/v1/staff/finance/budgets', {

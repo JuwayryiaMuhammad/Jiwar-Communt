@@ -37,7 +37,7 @@ export default function StaffBoardAppealPage() {
     <>
       <PageHeader
         back={back}
-        title={a ? `${a.reference} · ${APPEAL_KIND_TEXT[a.kind]} · unit ${a.unitCode}` : 'Appeal'}
+        title={a ? `${a.reference} · ${APPEAL_KIND_TEXT[a.kind]}${a.unitCode ? ` · unit ${a.unitCode}` : ''}` : 'Appeal'}
         actions={
           toFollow ? (
             <Button variant="primary" loading={followed.isPending} onClick={() => followed.mutate(undefined)}>
@@ -81,6 +81,24 @@ export default function StaffBoardAppealPage() {
                   <dd>
                     {EFFECT_TEXT[a.effect]}
                     {a.followedUpAt ? ` · followed up ${formatDateTime(a.followedUpAt)}` : ''}
+                  </dd>
+                </>
+              ) : null}
+              {a.kind === 'management_appeal' && can('appeals.decide') ? (
+                <>
+                  <dt>The management’s decision</dt>
+                  <dd>
+                    <Link href={`/appeals/${a.subjectId}`}>Open the appeal it decided</Link>
+                    {toFollow ? ' to act on what the board overturned, then mark this followed up.' : ''}
+                  </dd>
+                </>
+              ) : null}
+              {a.kind === 'management_complaint' ? (
+                <>
+                  <dt>The complaint</dt>
+                  <dd>
+                    Whose it is and its grounds are the board’s alone.
+                    {toFollow ? ' The board found it founded: act on it, then mark this followed up.' : ''}
                   </dd>
                 </>
               ) : null}

@@ -54,7 +54,8 @@ export default function StaffBoardAppealsPage() {
             columns={[
               { key: 'r', header: 'Appeal', cell: (a) => <Link href={`/governance/board-appeals/${a.id}`}>{a.reference}</Link> },
               { key: 'k', header: 'Of', cell: (a) => APPEAL_KIND_TEXT[a.kind] },
-              { key: 'u', header: 'Unit', cell: (a) => <span className="t-mono">{a.unitCode}</span> },
+              // A complaint about the management never names its unit to the staff (ADR 0059).
+              { key: 'u', header: 'Unit', cell: (a) => (a.unitCode ? <span className="t-mono">{a.unitCode}</span> : '—') },
               { key: 'd', header: 'Deadline', cell: (a) => `${formatDateTime(a.deadlineAt)}${a.overdue ? ' · overdue' : ''}` },
               { key: 's', header: 'Status', cell: (a) => <StatusBadge status={a.status} /> },
               {

@@ -34,6 +34,9 @@ export const APPEAL_KIND_TEXT: Record<string, string> = {
   unit_violation: 'Violation',
   booking_suspension: 'Booking suspension',
   invoice_dispute: 'Invoice dispute',
+  // ADR 0059.
+  management_appeal: 'Management decision appealed',
+  management_complaint: 'Complaint about the management',
 };
 
 export const APPEAL_STATUS_TEXT: Record<string, string> = {
@@ -157,4 +160,61 @@ export function subjectParts(subject: unknown): { rows: SubjectRow[]; tables: Su
 /** A column's header, as a row's label would read. */
 export function columnLabel(key: string): string {
   return labelOf([key]);
+}
+
+// ---------------------------------------------------------------------------
+// The owners' voice, the board's side (ADR 0059)
+// ---------------------------------------------------------------------------
+
+export const REPRESENTATIVE_ACTION_TEXT: Record<string, string> = {
+  appoint: 'Name a representative',
+  end: 'End a term',
+};
+
+export const REPRESENTATIVE_MATTER_STATUS_TEXT: Record<string, string> = {
+  pending: 'Awaiting the board',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn',
+};
+
+export const REPRESENTATIVE_END_TEXT: Record<string, string> = {
+  ended: 'Ended by the board',
+  replaced: 'Replaced by the next',
+  no_longer_owner: 'No longer owns a unit there',
+  account_closed: 'Account closed',
+};
+
+const NOT_APPLIED_TEXT: Record<string, string> = {
+  not_an_owner: 'they no longer own a unit in the building',
+  already_sitting: 'they were the representative already',
+  already_ended: 'the term had ended already',
+};
+
+/** What became of a matter the board decided: applied, rejected, or why an approval changed nothing. */
+export function matterOutcomeText(d: { decision: string; effect: string | null; effectReason: string | null }): string {
+  if (d.decision !== 'approved') return 'Rejected: nothing changed';
+  if (d.effect === 'applied') return 'Approved and applied';
+  return `Approved, not applied: ${d.effectReason ? (NOT_APPLIED_TEXT[d.effectReason] ?? d.effectReason) : 'unknown'}`;
+}
+
+export const AGENDA_STATUS_TEXT: Record<string, string> = {
+  open: 'Awaiting the board',
+  accepted: 'Accepted',
+  declined: 'Declined',
+  withdrawn: 'Withdrawn by the owner',
+};
+
+/**
+ * Where a decision stands for objections at `now` (the database's clock
+ * the page read): answered (no more), open until its day, or closed;
+ * null for minutes or an archived decision.
+ */
+export function objectionState(
+  o: { until: string; answered: boolean } | null,
+  now: Date,
+): 'answered' | 'open' | 'closed' | null {
+  if (!o) return null;
+  if (o.answered) return 'answered';
+  return new Date(o.until) > now ? 'open' : 'closed';
 }

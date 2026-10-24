@@ -116,6 +116,13 @@ const TEXT: Record<string, (p: P) => string> = {
   'partner_request.awaiting_relay': (p) => `A resident asked a partner without a desk link: ${words(p.category)}`,
   'partner_complaint.decided': (p) => `Your complaint about a partner was decided: ${words(p.outcome)}`,
   'partner.suspended': () => 'A partner you asked or follow was suspended',
+  // Decision appeals (ADR 0059).
+  'decision_appeal.lodged': (p) => `A resident appealed a staff decision: ${words(p.kind)}`,
+  'decision_appeal.decided': (p) =>
+    `An appeal was ${p.outcome === 'overturned' ? 'overturned' : 'upheld'}: ${words(p.kind)}`,
+  // The owners' voice, the board's side (ADR 0059): never who.
+  'governance_agenda.proposed': () => 'An owner proposed a matter for the board’s agenda',
+  'governance_objection.lodged': () => 'An owner objected to a decision of the board',
   'unit_permit.requested': (p) => `A unit asked for a permit: ${words(p.permitKind)}`,
   'unit_permit.approved': (p) => `Your permit was approved: ${words(p.permitKind)}`,
   'unit_permit.rejected': (p) => `Your permit was not approved (${words(p.reason)})`,
@@ -134,7 +141,11 @@ const TEXT: Record<string, (p: P) => string> = {
   'governance_approval.implemented': (p) => `The management implemented an approved ${words(p.type)} request`,
   'governance_approval.withdrawn': (p) => `${cap(aWords(p.type))} request was withdrawn`,
   'governance_motion.proposed': (p) =>
-    p.matter === 'appeal' ? 'A motion on an appeal awaits your vote' : 'A motion on a request awaits your vote',
+    p.matter === 'appeal'
+      ? 'A motion on an appeal awaits your vote'
+      : p.matter === 'representative'
+        ? 'A motion on a building’s representative awaits your vote'
+        : 'A motion on a request awaits your vote',
   'governance_appeal.lodged': (p) => `${cap(aWords(p.kind))} was appealed to the board`,
   'governance_appeal.decided': (p) => `The board ${p.outcome === 'overturned' ? 'overturned' : 'upheld'} ${aWords(p.kind)} on appeal`,
   'governance_appeal.overdue': (p) => `An appeal of ${aWords(p.kind)} is past its deadline, undecided`,
@@ -322,6 +333,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'partner_complaint' && n.targetId)
     return can('partners.manage') ? `/partners/complaints/${n.targetId}` : null;
   if (n.targetType === 'partner' && n.targetId) return can('partners.manage') ? `/partners/${n.targetId}` : null;
+  // Decision appeals (ADR 0059): to the appeal, for whoever decides them.
+  if (n.targetType === 'decision_appeal' && n.targetId)
+    return can('appeals.decide') ? `/appeals/${n.targetId}` : null;
   // Guard shifts and tasks (ADR 0050): the keepers' pages. A task, an
   // instruction or a swap to answer is a guard's, in the app.
   if (n.targetType === 'guard_roster_slot') return can('guard_roster.manage') ? '/security/roster' : null;
@@ -337,8 +351,16 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     if (can('governance.board')) return `/board/approvals/${n.targetId}`;
     return can('governance.approvals') ? `/governance/approvals/${n.targetId}` : null;
   }
-  if (n.targetType === 'board_motion')
-    return can('governance.board') ? (n.params.matter === 'appeal' ? '/board/appeals' : '/board/approvals') : null;
+  if (n.targetType === 'board_motion') {
+    if (!can('governance.board')) return null;
+    if (n.params.matter === 'appeal') return '/board/appeals';
+    return n.params.matter === 'representative' ? '/board/representatives' : '/board/approvals';
+  }
+  // The owners' voice (ADR 0059): a proposal or a decision's objections, to the board's page.
+  if (n.targetType === 'governance_agenda_proposal' && n.targetId)
+    return can('governance.board') ? `/board/agenda/${n.targetId}` : null;
+  if (n.targetType === 'board_publication' && n.kind === 'governance_objection.lodged' && n.targetId)
+    return can('governance.board') ? `/board/objections/${n.targetId}` : null;
   if (n.targetType === 'governance_board_appeal' && n.targetId) {
     if (can('governance.board')) return `/board/appeals/${n.targetId}`;
     return can('governance.manage') ? `/governance/board-appeals/${n.targetId}` : null;

@@ -2,7 +2,7 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, Input, useToast } from '@jiwar/ui';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -27,13 +27,22 @@ function TopicDialog({ topic, open, onClose }: { topic: RequestTopic | null; ope
   const [names, setNames] = useState<Names>(topic ? { key: topic.key, nameEn: topic.nameEn, nameAr: topic.nameAr } : NO_NAMES);
   const [hours, setHours] = useState(topic ? String(topic.targetResponseHours) : '48');
   const [active, setActive] = useState(topic?.active ?? true);
+  // The role whose handlers answer it (ADR 0058): a staff or manager role.
+  const [owner, setOwner] = useState(topic?.ownerRoleId ?? '');
+  const roles = useQuery({ queryKey: keys.roles, queryFn: fetchers.roles, enabled: !!topic });
   const save = useAction(
     () =>
       topic
         ? unwrap(
             api.PATCH('/api/v1/management/request-topics/{id}', {
               params: { path: { id: topic.id } },
-              body: { nameEn: names.nameEn.trim(), nameAr: names.nameAr.trim(), targetResponseHours: Number(hours), active },
+              body: {
+                nameEn: names.nameEn.trim(),
+                nameAr: names.nameAr.trim(),
+                targetResponseHours: Number(hours),
+                active,
+                ownerRoleId: owner || null,
+              },
             }),
           )
         : unwrap(
@@ -76,6 +85,26 @@ function TopicDialog({ topic, open, onClose }: { topic: RequestTopic | null; ope
         >
           {(p) => <Input {...p} type="number" min={HOURS.min} max={HOURS.max} step={1} value={hours} onChange={(e) => setHours(e.target.value)} />}
         </Field>
+        {topic ? (
+          <Field
+            label="Answered by"
+            hint="A request of this topic waits for the handlers of this role (or every handler when it has none). Residents see the role, never a person."
+            error={fieldError(save.error, 'ownerRoleId')}
+          >
+            {(p) => (
+              <Select {...p} value={owner} onChange={(e) => setOwner(e.target.value)}>
+                <option value="">Every handler</option>
+                {(roles.data?.data ?? [])
+                  .filter((r) => r.kind === 'staff' || r.kind === 'manager')
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name ?? r.key}
+                    </option>
+                  ))}
+              </Select>
+            )}
+          </Field>
+        ) : null}
         {topic ? (
           <Checkbox
             label="Offered to residents (unticked: retired, kept on the requests that used it)"
@@ -127,6 +156,11 @@ export function Topics() {
               },
               { key: 'key', header: 'Code', cell: (t) => <span className="t-mono">{t.key}</span> },
               { key: 'target', header: 'Response target', cell: (t) => targetText(t.targetResponseHours) },
+              {
+                key: 'owner',
+                header: 'Answered by',
+                cell: (t) => (t.owner ? (t.owner.roleName ?? t.owner.roleKey) : 'Every handler'),
+              },
               {
                 key: 'actions',
                 header: '',

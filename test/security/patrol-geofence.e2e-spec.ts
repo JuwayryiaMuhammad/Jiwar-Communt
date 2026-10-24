@@ -349,6 +349,7 @@ describe('Patrol geofence (ADR 0056)', () => {
               tenantId: s.c.tenantId,
               runId,
               guardAccountId: guardId,
+              // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: past the track points kept 30 × 24 h, in ms
               recordedAt: new Date(dbClock().getTime() - 31 * DAY),
               lat: INSIDE.lat,
               lng: INSIDE.lng,

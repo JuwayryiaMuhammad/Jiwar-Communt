@@ -261,11 +261,14 @@ describe('Permits concurrency', () => {
           unitId: unit.id,
           requestedById: owner.id,
           data: {
+            // eslint-disable-next-line test-clock/day-multiple -- past instants only: the purge compares ends_at with now − 30 × 24 h
             startsAt: new Date(Date.now() - 45 * DAY),
+            // eslint-disable-next-line test-clock/day-multiple -- past instants only: the purge compares ends_at with now − 30 × 24 h
             endsAt: new Date(Date.now() - 40 * DAY),
             status: 'approved',
             decisionSource: 'manager',
             decidedById: c.manager.id,
+            // eslint-disable-next-line test-clock/day-multiple -- past instants only: decided before it started, no compound day read
             decidedAt: new Date(Date.now() - 46 * DAY),
           },
         });

@@ -254,6 +254,7 @@ describe('Violations', () => {
           unitId: s.home.id,
           occurredOn: dbDate(day(-40)),
           issuedById: s.manager.id,
+          // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: past the appeal window, which runs from created_at in ms
           createdAt: new Date(Date.now() - 31 * DAY),
         },
       }),

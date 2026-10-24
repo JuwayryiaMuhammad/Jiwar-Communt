@@ -112,6 +112,42 @@ describe('tests read the compound’s day from one helper', () => {
     expect(await problems(source)).toEqual([]);
   });
 
+  /** A file-level day, disabled with its reason, as the suites keep it. */
+  const DAY = [
+    '// eslint-disable-next-line no-restricted-syntax -- a real 24 h: the TTL is in ms',
+    'const DAY = 86_400_000;',
+  ].join('\n');
+
+  it.each([
+    `${DAY}\nconst later = new Date(Date.now() + 7 * DAY);`,
+    `${DAY}\nconst before = now - DAY * 30;`,
+    `${DAY}\nfunction f(n: number) { return n * DAY; }`,
+    // A day built from other file-level constants.
+    'const HOUR = 3_600_000;\nconst ONE_DAY = HOUR * 24;\nconst later = 2 * ONE_DAY;',
+  ])('refuses a multiple of a file-level day: %s', async (source) => {
+    const found = await problems(source);
+    expect(found.filter((m) => m.startsWith('n × DAY'))).toHaveLength(1);
+    expect(found.find((m) => m.startsWith('n × DAY'))).toContain(
+      'daysLater(n)',
+    );
+  });
+
+  it.each([
+    // One day: its definition's reason holds.
+    `${DAY}\nconst tomorrow = new Date(Date.now() + DAY);`,
+    // A local of the same name is not the file's day.
+    `${DAY}\nfunction f(DAY: number) { return 2 * DAY; }`,
+    // Minutes are not milliseconds.
+    'const DAY = 24 * 60;\nconst week = 7 * DAY;',
+    [
+      DAY,
+      '// eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: the retention is in ms',
+      'const cutoff = now - 30 * DAY;',
+    ].join('\n'),
+  ])('allows %s', async (source) => {
+    expect(await problems(source)).toEqual([]);
+  });
+
   it('every test that turns the rule off says why', () => {
     const missing: string[] = [];
     const walk = (dir: string): void => {
@@ -123,10 +159,12 @@ describe('tests read the compound’s day from one helper', () => {
             .split('\n')
             .forEach((line, i) => {
               if (
-                /eslint-disable(-next-line|-line)? .*no-restricted-syntax/.test(
+                /eslint-disable(-next-line|-line)? .*(no-restricted-syntax|test-clock\/day-multiple)/.test(
                   line,
                 ) &&
-                !/no-restricted-syntax\s+--\s+\S/.test(line)
+                !/(no-restricted-syntax|test-clock\/day-multiple)\s+--\s+\S/.test(
+                  line,
+                )
               )
                 missing.push(`${path}:${i + 1}`);
             });

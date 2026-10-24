@@ -465,6 +465,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
       kind: 'recurring',
       partySize: 4,
       validFrom: from.toISOString(),
+      // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: the pass window ends at an instant, in ms
       validUntil: new Date(from.getTime() + 30 * DAY).toISOString(),
       schedule: {
         days: [2, 4],
@@ -748,6 +749,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
       tokenHash: hasher().hashVisitorLink(token),
       tenantId: w.a.tenantId,
       passId: body.id,
+      // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: the visitor-data TTL is validUntil + 30 × 24 h
       expiresAt: new Date(row.validUntil.getTime() + 30 * DAY),
       createdAt: expect.any(Date) as Date,
     });

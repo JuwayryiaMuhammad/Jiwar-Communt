@@ -214,6 +214,7 @@ describe('Management requests — concurrency', () => {
     for (let i = 0; i < ROUNDS; i++) {
       const id = await open();
       await answer(id).expect(201);
+      // eslint-disable-next-line test-clock/day-multiple -- a real 8 × 24 h: auto-close is answeredAt + autoCloseDays × 24 h, in ms
       const due = new Date((await row(id)).answeredAt!.getTime() + 8 * DAY);
       const [reply] = await Promise.all([
         mine(id, 'messages', { body: 'Wait' }),
@@ -240,6 +241,7 @@ describe('Management requests — concurrency', () => {
   it('the sweep skips a request someone holds, and takes it on its next run', async () => {
     const id = await open();
     await answer(id).expect(201);
+    // eslint-disable-next-line test-clock/day-multiple -- a real 8 × 24 h: auto-close is answeredAt + autoCloseDays × 24 h, in ms
     const due = new Date((await row(id)).answeredAt!.getTime() + 8 * DAY);
     const held = await holding(id);
     // SKIP LOCKED: the sweep returns without waiting, having closed nothing here.

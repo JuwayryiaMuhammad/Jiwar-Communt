@@ -206,6 +206,7 @@ describe('Management requests — notifications', () => {
       official: true,
     }).expect(201);
     let before = await told(answered);
+    // eslint-disable-next-line test-clock/day-multiple -- a real 8 × 24 h: past the auto-close cutoff, in ms
     await sweep.run(AUTO_CLOSE_SWEEP, new Date(Date.now() + 8 * DAY));
     expect(await since(answered, before)).toEqual([
       'management_request.auto_closed → author',

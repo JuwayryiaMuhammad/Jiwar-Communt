@@ -26,6 +26,7 @@ describe('Parcels — the sweeps (ADR 0035)', () => {
   let tokens: ParcelTokens;
   /** The reminders of every other suite's parcels run too: ours is by id. */
   const later = (days: number, hours = 1) =>
+    // eslint-disable-next-line test-clock/day-multiple -- a real n × 24 h: parcel reminders are now − days × 24 h, in ms
     new Date(Date.now() + days * DAY + hours * 3_600_000);
 
   beforeAll(async () => {
@@ -281,8 +282,10 @@ describe('Parcels — the sweeps (ADR 0035)', () => {
       const closed = before.closedAt!.getTime();
       await sweep.run(
         PARCEL_RETENTION_SWEEP,
+        // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: the retention is closedAt + PARCEL_RETENTION_DAYS × 24 h
         new Date(closed + PARCEL_RETENTION_DAYS * DAY - 3_600_000),
       );
+      // eslint-disable-next-line test-clock/day-multiple -- a real 29 × 24 h: inside the retention, closedAt + 30 × 24 h
       await sweep.run(FILES_SWEEP, new Date(closed + 29 * DAY));
       const kept = await parcelRow(p.id);
       expect(kept).toMatchObject({
@@ -297,6 +300,7 @@ describe('Parcels — the sweeps (ADR 0035)', () => {
       expect(await storage.head(photoKey)).not.toBeNull();
 
       // At thirty days: cleared.
+      // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: the retention is closedAt + PARCEL_RETENTION_DAYS × 24 h
       const at30 = new Date(closed + PARCEL_RETENTION_DAYS * DAY);
       await sweep.run(PARCEL_RETENTION_SWEEP, at30);
       const gone = await parcelRow(p.id);
@@ -350,6 +354,7 @@ describe('Parcels — the sweeps (ADR 0035)', () => {
     it('the parcel and its events stay, and a second run changes nothing', async () => {
       const { p } = await withEverything();
       const closed = (await parcelRow(p.id)).closedAt!.getTime();
+      // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: past the retention, closedAt + 30 × 24 h
       const at = new Date(closed + 31 * DAY);
       await sweep.run(PARCEL_RETENTION_SWEEP, at);
       const first = await parcelRow(p.id);
@@ -389,11 +394,13 @@ describe('Parcels — the sweeps (ADR 0035)', () => {
       const returnedAt = (await parcelRow(rejected.id)).returnedAt!;
       await sweep.run(
         PARCEL_RETENTION_SWEEP,
+        // eslint-disable-next-line test-clock/day-multiple -- a real 29 × 24 h: inside the retention, returnedAt + 30 × 24 h
         new Date(returnedAt.getTime() + 29 * DAY),
       );
       expect((await parcelRow(rejected.id)).labelName).toBe('Not Ours');
       await sweep.run(
         PARCEL_RETENTION_SWEEP,
+        // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: the retention is returnedAt + PARCEL_RETENTION_DAYS × 24 h
         new Date(returnedAt.getTime() + 30 * DAY),
       );
       expect(await parcelRow(rejected.id)).toMatchObject({
@@ -456,6 +463,7 @@ describe('Parcels — the sweeps (ADR 0035)', () => {
       ).closedAt!;
 
       await h.suspendTenant(c.tenantId);
+      // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: past the retention, closedAt + 30 × 24 h
       const at = new Date(closedAt.getTime() + 31 * DAY);
       await sweep.run(PARCEL_REMINDER_SWEEP, at);
       await sweep.run(PARCEL_RETENTION_SWEEP, at);

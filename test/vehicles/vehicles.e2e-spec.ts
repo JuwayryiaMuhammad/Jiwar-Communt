@@ -393,8 +393,10 @@ describe('Vehicles', () => {
         licencePhotoFileId: photo,
       });
       await v.http('delete', `/vehicles/${car.id}`, s.alice.token).expect(204);
+      // eslint-disable-next-line test-clock/day-multiple -- a real 29 × 24 h: the licence photo is kept 30 × 24 h after removal
       await v.sweep(LICENCE_PHOTO_SWEEP, new Date(Date.now() + 29 * DAY));
       expect((await v.row(s.c, car.id)).licencePhotoFileId).toBe(photo);
+      // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: the licence photo is kept 30 × 24 h after removal
       await v.sweep(LICENCE_PHOTO_SWEEP, new Date(Date.now() + 31 * DAY));
       expect((await v.row(s.c, car.id)).licencePhotoFileId).toBeNull();
       const file = await v.inTx(s.c, (tx) =>

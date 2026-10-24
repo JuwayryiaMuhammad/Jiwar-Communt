@@ -200,7 +200,9 @@ describe('Patrol track points', () => {
           },
         }),
       );
+    // eslint-disable-next-line test-clock/day-multiple -- a real 29 × 24 h: track points are kept 30 × 24 h, in ms
     const kept = await row(29 * DAY);
+    // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: track points are kept 30 × 24 h, in ms
     const gone = await row(30 * DAY + MINUTE);
     await x.sweep(PATROL_TRACK_PURGE_SWEEP, new Date());
     const left = await x.inTx(s.c, (tx) =>

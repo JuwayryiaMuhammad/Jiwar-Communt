@@ -209,6 +209,7 @@ describe('Blocklist — entries', () => {
         kind: 'watch',
         note: 'Calmer now',
         photoFileId: second,
+        // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: an expiry instant, compared with now in ms
         expiresAt: new Date(Date.now() + 30 * DAY).toISOString(),
       })
       .expect(200);
@@ -378,8 +379,10 @@ describe('Blocklist — entries', () => {
           reasonCode: 'resolved',
         })
         .expect(200);
+    // eslint-disable-next-line test-clock/day-multiple -- a real 29 × 24 h: inside the purge window, checked against now in ms
     await x.sweep(BLOCKLIST_SWEEP, new Date(Date.now() + 29 * DAY));
     expect((await rowOf(person.id)).purgedAt).toBeNull();
+    // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: past the purge window, checked against now in ms
     await x.sweep(BLOCKLIST_SWEEP, new Date(Date.now() + 31 * DAY));
     expect(await rowOf(person.id)).toMatchObject({
       fullName: null,
@@ -398,6 +401,7 @@ describe('Blocklist — entries', () => {
       actorType: 'system',
       metadata: { photo: true },
     });
+    // eslint-disable-next-line test-clock/day-multiple -- a real 32 × 24 h: past the purge window, checked against now in ms
     await x.sweep(BLOCKLIST_SWEEP, new Date(Date.now() + 32 * DAY));
     expect(await audit('blocklist_entry.purged', person.id)).toHaveLength(1);
     expect(

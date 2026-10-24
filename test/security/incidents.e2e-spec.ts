@@ -158,6 +158,7 @@ describe('Incidents', () => {
     ]);
     expect(
       await fields({
+        // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: before the report’s look-back, now − 30 × 24 h
         occurredAt: new Date(Date.now() - 31 * DAY).toISOString(),
       }),
     ).toEqual([['occurredAt', 'INVALID_VALUE']]);

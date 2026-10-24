@@ -172,6 +172,7 @@ describe('Gate — the visitor page (ADR 0030)', () => {
     // A recurring pass shows its schedule.
     const recurring = await pass({
       kind: 'recurring',
+      // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: a recurring pass window ends at an instant, in ms
       validUntil: new Date(Date.now() + 30 * DAY).toISOString(),
       schedule: { days: [4, 5], windows: [{ from: '22:00', to: '02:00' }] },
     });
@@ -317,6 +318,7 @@ describe('Gate — the visitor page (ADR 0030)', () => {
     });
     await h.moduleRef
       .get(SweepRunner)
+      // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: past the visitor-data expiry, checked in ms
       .run(VISITOR_DATA_SWEEP, new Date(Date.now() + 31 * DAY + 2 * 3_600_000));
     // A suspended compound's live pass.
     const inB = await pass({}, w.b.tokens.owner, w.b.homeUnitId);

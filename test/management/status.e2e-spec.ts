@@ -151,6 +151,7 @@ describe('Management requests — status, reopening and auto-close', () => {
       expect(
         new Date(body.reopenUntil).getTime() -
           new Date(body.closedAt).getTime(),
+        // eslint-disable-next-line test-clock/day-multiple -- a real 7 × 24 h: reopenUntil is closedAt + REOPEN_DAYS × 24 h, in ms
       ).toBe(7 * DAY);
     });
   });
@@ -288,6 +289,7 @@ describe('Management requests — status, reopening and auto-close', () => {
           }),
         );
       // A second past the window.
+      // eslint-disable-next-line test-clock/day-multiple -- a real 7 × 24 h: the reopen window is closedAt + REOPEN_DAYS × 24 h
       await setClosedAt(new Date(Date.now() - 7 * DAY - 1000));
       const res = await mine(id, 'reopen', { body: 'Too late' }).expect(409);
       expect(res.body).toMatchObject({
@@ -296,6 +298,7 @@ describe('Management requests — status, reopening and auto-close', () => {
       });
       expect((await row(id)).status).toBe('closed');
       // An hour inside it.
+      // eslint-disable-next-line test-clock/day-multiple -- a real 7 × 24 h: the reopen window is closedAt + REOPEN_DAYS × 24 h
       await setClosedAt(new Date(Date.now() - 7 * DAY + 3_600_000));
       await mine(id, 'reopen', { body: 'Just in time' }).expect(204);
       expect((await row(id)).status).toBe('open');
@@ -327,8 +330,10 @@ describe('Management requests — status, reopening and auto-close', () => {
       await answer(id);
       const at = await answeredAt(id);
       // The default: seven days.
+      // eslint-disable-next-line test-clock/day-multiple -- a real 7 × 24 h: the auto-close cutoff is now − autoCloseDays × 24 h
       await sweep.run(AUTO_CLOSE_SWEEP, new Date(at.getTime() + 7 * DAY - 1));
       expect((await row(id)).status).toBe('answered');
+      // eslint-disable-next-line test-clock/day-multiple -- a real 7 × 24 h: the auto-close cutoff is now − autoCloseDays × 24 h
       const now = new Date(at.getTime() + 7 * DAY);
       await sweep.run(AUTO_CLOSE_SWEEP, now);
       expect(await row(id)).toMatchObject({
@@ -343,6 +348,7 @@ describe('Management requests — status, reopening and auto-close', () => {
     it('run again, and on two instances at once, it closes a request once', async () => {
       const { id } = await m.open(s.c, s.owner);
       await answer(id);
+      // eslint-disable-next-line test-clock/day-multiple -- a real 8 × 24 h: past the auto-close cutoff, now − autoCloseDays × 24 h
       const now = new Date((await answeredAt(id)).getTime() + 8 * DAY);
       await Promise.all([
         sweep.run(AUTO_CLOSE_SWEEP, now),
@@ -364,10 +370,12 @@ describe('Management requests — status, reopening and auto-close', () => {
       await answer(id);
       const at = await answeredAt(id);
       await mine(id, 'messages', { body: 'One more thing' }).expect(201);
+      // eslint-disable-next-line test-clock/day-multiple -- a real 30 × 24 h: far past the auto-close cutoff, in ms
       await sweep.run(AUTO_CLOSE_SWEEP, new Date(at.getTime() + 30 * DAY));
       expect((await row(id)).status).toBe('in_progress');
       // Open and in-progress requests never close by themselves.
       const waiting = await m.open(s.c, s.owner);
+      // eslint-disable-next-line test-clock/day-multiple -- a real 365 × 24 h: far past any auto-close cutoff, in ms
       await sweep.run(AUTO_CLOSE_SWEEP, new Date(Date.now() + 365 * DAY));
       expect((await row(waiting.id)).status).toBe('open');
     });
@@ -381,6 +389,7 @@ describe('Management requests — status, reopening and auto-close', () => {
       expect(second.getTime()).toBeGreaterThan(first.getTime());
       await sweep.run(
         AUTO_CLOSE_SWEEP,
+        // eslint-disable-next-line test-clock/day-multiple -- a real 7 × 24 h: the cutoff counts from the last official reply, in ms
         new Date(second.getTime() + 7 * DAY - 1),
       );
       expect((await row(id)).status).toBe('answered');
@@ -408,6 +417,7 @@ describe('Management requests — status, reopening and auto-close', () => {
         (await row(theirs.id, other.c)).answeredAt!.getTime(),
         (await answeredAt(ours.id)).getTime(),
       );
+      // eslint-disable-next-line test-clock/day-multiple -- a real 3 × 24 h: past a 2-day auto-close cutoff, not a 7-day one, in ms
       await sweep.run(AUTO_CLOSE_SWEEP, new Date(base + 3 * DAY));
       expect((await row(theirs.id, other.c)).status).toBe('closed');
       expect((await row(ours.id)).status).toBe('answered');
@@ -420,6 +430,7 @@ describe('Management requests — status, reopening and auto-close', () => {
       await m.x.asManager(s.c, () =>
         m.x.prisma.tenant.managementRequest.update({
           where: { id },
+          // eslint-disable-next-line test-clock/day-multiple -- a real 8 × 24 h: answeredAt past the auto-close cutoff, in ms
           data: { answeredAt: new Date(Date.now() - 8 * DAY) },
         }),
       );

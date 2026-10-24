@@ -20,6 +20,7 @@ export async function boardTermRow(
   r: { tenantId: string; createdById: string; open?: boolean; seats?: number },
 ): Promise<string> {
   const id = newId();
+  // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: a term started long ago, no compound day read
   const startsAt = new Date(Date.now() - 400 * DAY);
   await tx.boardTerm.create({
     data: {
@@ -28,10 +29,12 @@ export async function boardTermRow(
       source: 'appointed',
       seats: r.seats ?? 3,
       startsAt,
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: the term sits while now < ends_at, in ms
       endsAt: new Date(Date.now() + (r.open ? 365 : -35) * DAY),
       ...(r.open
         ? {}
-        : { endedAt: new Date(Date.now() - 35 * DAY), endReason: 'replaced' }),
+        : // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: an ended term, no compound day read
+          { endedAt: new Date(Date.now() - 35 * DAY), endReason: 'replaced' }),
       createdById: r.createdById,
       createdAt: startsAt,
     },
@@ -51,6 +54,7 @@ export async function boardMemberRow(
       termId: r.termId,
       accountId: r.accountId,
       role: 'member',
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: a seat added long ago, no compound day read
       addedAt: new Date(Date.now() - 400 * DAY),
       addedById: r.addedById,
     },
@@ -72,6 +76,7 @@ export async function contestRow(
       secret: r.secret ?? true,
       maxChoices: 1,
       opensAt: new Date(Date.now() + DAY),
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: a contest closing later, compared in ms
       closesAt: new Date(Date.now() + 2 * DAY),
     },
   });
@@ -192,6 +197,7 @@ export async function electionRows(
       secret: true,
       maxChoices: 3,
       opensAt: new Date(now + DAY),
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: a contest closing later, compared in ms
       closesAt: new Date(now + 2 * DAY),
     },
   });
@@ -289,6 +295,7 @@ export async function approvalRequestRow(
       raisedById: r.raisedById,
       context: 'A row',
       impact: 'None',
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: a deadline instant, as the server writes it in ms
       deadlineAt: new Date(createdAt.getTime() + 14 * DAY),
       createdAt,
     },
@@ -348,6 +355,7 @@ export async function appealRow(
       grounds: 'A row',
       decisionAt: new Date(lodgedAt.getTime() - DAY),
       lodgedAt,
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: a deadline instant, as the server writes it in ms
       deadlineAt: new Date(lodgedAt.getTime() + 30 * DAY),
     },
   });

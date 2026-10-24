@@ -217,6 +217,7 @@ describe('Permits — privacy (ADR 0049)', () => {
         photoFileId: photo,
       });
       const sweep = (now: Date) => p.sweep(PEOPLE_DATA_SWEEP, now);
+      // eslint-disable-next-line test-clock/day-multiple -- a real n × 24 h: the people-data purge measures from the permit’s end, in ms
       const after = (days: number) => new Date(Date.now() + days * DAY);
       // 29 days after the last end: nothing yet.
       await sweep(after(1 + 29));

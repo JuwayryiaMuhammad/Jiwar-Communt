@@ -561,8 +561,10 @@ describe('Parking', () => {
             where: { id: booking.id },
           }),
         );
+      // eslint-disable-next-line test-clock/day-multiple -- a real 29 × 24 h: the visitor’s name is kept 30 × 24 h after the booking
       await v.sweep(VISITOR_NAMES_SWEEP, new Date(Date.now() + 29 * DAY));
       expect((await row()).visitorName).toBe('Forgotten guest');
+      // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: the visitor’s name is kept 30 × 24 h after the booking
       await v.sweep(VISITOR_NAMES_SWEEP, new Date(Date.now() + 31 * DAY));
       expect(await row()).toMatchObject({
         visitorName: null,

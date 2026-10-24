@@ -97,6 +97,7 @@ export async function permitRow(
       unitId: input.unitId,
       requestedById: input.requestedById,
       startsAt: new Date(now + DAY),
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: no server code reads its compound day
       endsAt: new Date(now + 3 * DAY),
       ...permitShape(kind),
       ...input.data,

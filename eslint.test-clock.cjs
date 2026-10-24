@@ -114,6 +114,101 @@ const DAY_MS_SYNTAX = [
   },
 ];
 
+// n × DAY, where DAY is a file-level constant of 86_400_000 (written as
+// such, or as a product of literals and other file-level constants: 24 ×
+// HOUR). Its definition already carries a reason; every multiple of it is
+// a span of days of its own, and says why it is a real duration, or comes
+// from the helper. Selectors cannot see a constant's value, so a rule.
+const DAY_MULTIPLE = `n × DAY is n × 24 h, not n of the compound's days: a clock change in between moves it. Use daysLater(n), day(n) or at() from ${HELPER}; a real duration the server measures in ms takes "// eslint-disable-next-line test-clock/day-multiple -- <why>".`;
+const DAY_MS_VALUE = 86_400_000;
+
+/** A numeric constant expression's value, through file-level constants; null otherwise. */
+function constantValue(node, consts, seen = new Set()) {
+  if (!node) return null;
+  if (node.type === 'Literal' && typeof node.value === 'number')
+    return node.value;
+  if (node.type === 'TSAsExpression' || node.type === 'TSSatisfiesExpression')
+    return constantValue(node.expression, consts, seen);
+  if (node.type === 'BinaryExpression' && node.operator === '*') {
+    const left = constantValue(node.left, consts, seen);
+    const right = constantValue(node.right, consts, seen);
+    return left === null || right === null ? null : left * right;
+  }
+  if (
+    node.type === 'Identifier' &&
+    consts.has(node.name) &&
+    !seen.has(node.name)
+  )
+    return constantValue(
+      consts.get(node.name),
+      consts,
+      new Set([...seen, node.name]),
+    );
+  return null;
+}
+
+/** The variable a name resolves to from a scope, or null. */
+function resolve(scope, name) {
+  for (let s = scope; s; s = s.upper) {
+    const found = s.set.get(name);
+    if (found) return found;
+  }
+  return null;
+}
+
+/** @type {import('eslint').Rule.RuleModule} */
+const dayMultiple = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: { dayMultiple: DAY_MULTIPLE },
+  },
+  create(context) {
+    /** File-level `const` names whose value is a day in milliseconds. */
+    const days = new Set();
+    return {
+      Program(program) {
+        const consts = new Map();
+        for (const statement of program.body) {
+          const declaration =
+            statement.type === 'ExportNamedDeclaration'
+              ? statement.declaration
+              : statement;
+          if (
+            declaration?.type !== 'VariableDeclaration' ||
+            declaration.kind !== 'const'
+          )
+            continue;
+          for (const d of declaration.declarations)
+            if (d.id.type === 'Identifier' && d.init)
+              consts.set(d.id.name, d.init);
+        }
+        for (const [name, init] of consts)
+          if (constantValue(init, consts) === DAY_MS_VALUE) days.add(name);
+      },
+      "BinaryExpression[operator='*']"(node) {
+        if (!days.size) return;
+        for (const side of [node.left, node.right]) {
+          if (side.type !== 'Identifier' || !days.has(side.name)) continue;
+          // The file-level constant, not a local of the same name.
+          const variable = resolve(
+            context.sourceCode.getScope(side),
+            side.name,
+          );
+          if (
+            variable &&
+            (variable.scope.type === 'module' ||
+              variable.scope.type === 'global')
+          ) {
+            context.report({ node, messageId: 'dayMultiple' });
+            return;
+          }
+        }
+      },
+    };
+  },
+};
+
 // Whatever src module exports them (day-slots, visit-slots re-exports,
 // zoned-time, egyptian-national-id).
 const CLOCK_IMPORTS = [
@@ -136,7 +231,9 @@ const testClockConfigs = [
   {
     files: ['test/**/*.ts'],
     ignores: [HELPER],
+    plugins: { 'test-clock': { rules: { 'day-multiple': dayMultiple } } },
     rules: {
+      'test-clock/day-multiple': 'error',
       'no-restricted-syntax': [
         'error',
         TX_CONCURRENCY,

@@ -257,6 +257,7 @@ describe('Permits — the management decides (ADR 0049)', () => {
         unitId: c.home.id,
         requestedById: c.alice.id,
         data: {
+          // eslint-disable-next-line test-clock/day-multiple -- past instants only: approval is refused once endsAt <= now
           startsAt: new Date(Date.now() - 2 * DAY),
           endsAt: new Date(Date.now() - DAY),
         },

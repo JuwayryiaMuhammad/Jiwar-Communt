@@ -50,6 +50,7 @@ describe('Account deletion', () => {
   const asResident = <T>(id: string, fn: () => Promise<T>) =>
     x.as(c, { id, type: 'resident' }, fn);
   const later = (days: number, extraMs = 60_000) =>
+    // eslint-disable-next-line test-clock/day-multiple -- a real n × 24 h: the deletion grace, reminder and sweep are in ms
     new Date(Date.now() + days * DAY + extraMs);
 
   /** A unit with its owner (the primary) and a tenant beside them. */
@@ -88,6 +89,7 @@ describe('Account deletion', () => {
       x.prisma.tenant.accountDeletionRequest.update({
         where: { id },
         data: {
+          // eslint-disable-next-line test-clock/day-multiple -- a real 15 × 24 h: past the 14 × 24 h grace, in ms
           requestedAt: new Date(Date.now() - 15 * DAY),
           effectiveAt: new Date(Date.now() - DAY),
         },
@@ -208,6 +210,7 @@ describe('Account deletion', () => {
         blockers: [],
       });
       expect(req.effectiveAt.getTime() - req.requestedAt.getTime()).toBe(
+        // eslint-disable-next-line test-clock/day-multiple -- a real 14 × 24 h: effectiveAt is requestedAt + the grace, in ms
         14 * DAY,
       );
       const [n] = await kinds(tenant.id, 'account.deletion_requested');

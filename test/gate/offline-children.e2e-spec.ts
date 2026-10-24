@@ -271,6 +271,7 @@ describe('Gate offline — children’s exits (ADR 0057)', () => {
     const up = await o.upload(s.guard, s.c, t.d, [a]);
     await superuserSql(`UPDATE child_pickups SET at = $2 WHERE id = $1`, [
       a.clientId,
+      // eslint-disable-next-line test-clock/day-multiple -- a real 31 × 24 h: past the child-records purge, now − 30 × 24 h
       new Date(dbClock().getTime() - 31 * DAY),
     ]);
     await o.sweep(CHILD_RECORDS_PURGE_SWEEP, dbClock());

@@ -164,6 +164,7 @@ export async function postRow(
       authorUnitId: row.authorUnitId,
       body: 'A set of keys',
       place: 'Gate 2',
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: an expiry compared with now, in ms
       expiresAt: new Date(Date.now() + 30 * DAY),
     },
   });

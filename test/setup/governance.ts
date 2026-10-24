@@ -182,6 +182,7 @@ export function governanceHelpers(h: HttpHarness) {
     return { c, manager, owners: o };
   }
 
+  // eslint-disable-next-line test-clock/day-multiple -- a real 365 × 24 h: a term ends at an instant; its length is checked in ms
   const inAYear = () => new Date(Date.now() + 365 * DAY).toISOString();
 
   /** `POST /staff/governance/board/appoint`: the first member chairs. */

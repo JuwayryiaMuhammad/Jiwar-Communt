@@ -1,5 +1,6 @@
 import { ResidentGateItems } from './resident-gate-items';
 import { Module } from '@nestjs/common';
+import { GatePartnersPort } from './gate-partners-port';
 import { FineBoardAppeals } from './fines/fine-board-appeals';
 import { ViolationBoardAppeals } from './violations/violation-board-appeals';
 import { SecurityOverview } from './reports/security-overview';
@@ -559,6 +560,9 @@ import { PickupPageService } from './children/pickup-page.service';
     ChildGateService,
     ChildRecordsService,
     ChildExportSections,
+    // The partners' service passes (ADR 0060).
+    GatePartnersPort,
   ],
+  exports: [GatePartnersPort],
 })
 export class GateModule {}

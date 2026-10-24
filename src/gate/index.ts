@@ -3,3 +3,9 @@
 export { GateModule } from './gate.module';
 export { GateStatusPortModule } from './gate-status-port.module';
 export { GateStatusPort, type GateStatus } from './gate-status-port';
+export {
+  GatePartnersPort,
+  type ServicePass,
+  type ServicePassInput,
+  type ServicePassResult,
+} from './gate-partners-port';

@@ -7223,6 +7223,229 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/partner-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the partner categories with their sub-categories */
+        get: operations["PartnerCategoriesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my requests to partners, newest activity first */
+        get: operations["PartnerRequestsController_mine"];
+        put?: never;
+        /** Ask a partner for a service at a unit */
+        post: operations["PartnerRequestsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my requests, with its history */
+        get: operations["PartnerRequestsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/accept-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take the window the partner proposed */
+        post: operations["PartnerRequestsController_acceptProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel my request */
+        post: operations["PartnerRequestsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/complaint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complain about the partner on my request: a management request */
+        post: operations["RequestFeedbackController_complain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/decline-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline the window the partner proposed */
+        post: operations["PartnerRequestsController_declineProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Say the service was given */
+        post: operations["PartnerRequestsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Say the partner did not come */
+        post: operations["PartnerRequestsController_noShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partner-requests/{id}/rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rate my request once it is done */
+        post: operations["RequestFeedbackController_rate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the active partners: by category, open now, open late tonight, new, favourites */
+        get: operations["PartnersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a partner; a suspended one with its alternatives */
+        get: operations["PartnersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{id}/favourite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Keep a partner among the caller’s favourites */
+        put: operations["PartnersController_favourite"];
+        post?: never;
+        /** Take a partner off the caller’s favourites */
+        delete: operations["PartnersController_unfavourite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payment-sessions/{id}": {
         parameters: {
             query?: never;
@@ -7823,6 +8046,108 @@ export interface paths {
         put?: never;
         /** "Not me" from the alert email: freeze the account */
         post: operations["PublicNotMeController_notMeFromEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a partner’s desk from its link */
+        post: operations["DeskController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a request on the desk */
+        post: operations["DeskController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an accepted request on the desk */
+        post: operations["DeskController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a request on the desk */
+        post: operations["DeskController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a request done on the desk */
+        post: operations["DeskController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/partner-desk/requests/{id}/propose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose another window on the desk */
+        post: operations["DeskController_propose"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10247,6 +10572,401 @@ export interface paths {
         head?: never;
         /** Change a parking slot’s code or place */
         patch: operations["ParkingSlotsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partner-complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the complaints against partners, newest first */
+        get: operations["StaffPartnerComplaintsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-complaints/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a complaint against a partner */
+        get: operations["StaffPartnerComplaintsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-complaints/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide a complaint, once */
+        post: operations["StaffPartnerComplaintsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the ratings, newest first */
+        get: operations["StaffRatingsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the requests to partners, newest first */
+        get: operations["RelayController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a request to a partner */
+        get: operations["RelayController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a request for its partner */
+        post: operations["RelayController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an accepted request for its partner */
+        post: operations["RelayController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a request for its partner */
+        post: operations["RelayController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a request done for its partner */
+        post: operations["RelayController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-requests/{id}/propose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose another window for its partner */
+        post: operations["RelayController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the partner settings */
+        get: operations["PartnerSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the partner settings */
+        patch: operations["PartnerSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partner-subcategories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the sub-categories, retired ones included */
+        get: operations["StaffPartnerSubcategoriesController_list"];
+        put?: never;
+        /** Name a sub-category under a category */
+        post: operations["StaffPartnerSubcategoriesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-subcategories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, reorder, retire or restore a sub-category */
+        patch: operations["StaffPartnerSubcategoriesController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List every partner, suspended ones included */
+        get: operations["StaffPartnersController_list"];
+        put?: never;
+        /** List a partner, with what it does */
+        post: operations["StaffPartnersController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a partner */
+        get: operations["StaffPartnersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a partner: names, description, phone, email, area */
+        patch: operations["StaffPartnersController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/desk-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make a new desk link for a partner (the one before stops working) */
+        post: operations["DeskLinksController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/desk-link/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop a partner’s desk link now */
+        post: operations["DeskLinksController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a partner’s weekly hours */
+        put: operations["StaffPartnersController_replaceHours"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a partner’s announced price list */
+        put: operations["StaffPartnersController_replacePrices"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/reinstate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reinstate a suspended partner */
+        post: operations["StaffPartnersController_reinstate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace what a partner does */
+        put: operations["StaffPartnersController_replaceServices"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend a partner: its live requests are cancelled, those concerned told */
+        post: operations["StaffPartnersController_suspend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/payments": {
@@ -14652,6 +15372,10 @@ export interface components {
              */
             etaMinutes?: 2 | 5 | 10 | 15;
         };
+        AcceptPartnerRequestDto: {
+            /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
+            staffCount?: number;
+        };
         AccessCodeView: {
             /** @description 8 digits, shown once. */
             accessCode: string | null;
@@ -16801,6 +17525,16 @@ export interface components {
             /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
             url: string | null;
         };
+        ComplainPartnerRequestDto: {
+            /** @description From the closed list `partnerCompensationAsk`. */
+            compensationAsk: string;
+            /** @description The first message of the management request the complaint is. */
+            message: string;
+            /** @description From the closed list `partnerComplaint`. */
+            reason: string;
+            /** @description EGP, with a refund or damages asked only (PARTNER_AMOUNT_NOT_ASKED). */
+            requestedAmount?: string | null;
+        };
         ComplaintAttachmentView: {
             /** @description image/jpeg, image/png, image/webp or application/pdf. */
             contentType: string;
@@ -16875,6 +17609,12 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        ComplaintPartnerView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
         ComplaintReasonDto: {
             /** @description A code of the action’s list: `neighbourComplaintResolve` or `neighbourComplaintDismiss` (INVALID_REASON_CODE names the allowed ones). */
             reasonCode: string;
@@ -16902,6 +17642,39 @@ export interface components {
         ComplaintUnitTallyView: {
             open: number;
             total: number;
+        };
+        ComplaintView: {
+            /** @description From the closed list `partnerCompensationDecision`: what the management arranges. A credit note is issued in finance. */
+            compensation: string | null;
+            /** @description From the closed list `partnerCompensationAsk`. */
+            compensationAsk: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The management request it is: the conversation is there.
+             */
+            managementRequestId: string;
+            /** @example MR-000123 */
+            managementRequestNumber: string;
+            outcome: components["schemas"]["PartnerComplaintOutcome"] | null;
+            partner: components["schemas"]["ComplaintPartnerView"];
+            /** @description From the closed list `partnerComplaint`. */
+            reason: string;
+            /** Format: uuid */
+            requestId: string;
+            /** @example SR-000123 */
+            requestNumber: string;
+            /** @description EGP asked, with a refund or damages; never paid here. */
+            requestedAmount: string | null;
+        };
+        ComplaintViewList: {
+            data: components["schemas"]["ComplaintView"][];
+            nextCursor: string | null;
         };
         CompleteGuardTaskDto: {
             note?: string;
@@ -16974,7 +17747,7 @@ export interface components {
             technicianRating?: number;
         };
         /** @enum {string} */
-        ConsentCode: "ticket_phone_share";
+        ConsentCode: "ticket_phone_share" | "partner_share_gas_water" | "partner_share_pharmacy" | "partner_share_grocery" | "partner_share_home_services" | "partner_share_laundry" | "partner_share_gardening" | "partner_share_beauty_at_home" | "partner_share_repair" | "partner_share_pets" | "partner_share_events" | "partner_share_moving_storage" | "partner_share_car_services" | "partner_share_elderly_care";
         ConsentView: {
             code: components["schemas"]["ConsentCode"];
             /** @description Granted at the current version. */
@@ -17599,6 +18372,71 @@ export interface components {
             /** @description The unit’s code (UNIT_CODE_UNKNOWN). */
             unitCode: string;
         };
+        CreatePartnerDto: {
+            /**
+             * @description The business phone residents call, stored E.164. Never a person’s own number.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionAr?: string | null;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionEn?: string | null;
+            /** @description It comes to the home. Default false. */
+            homeVisit?: boolean;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameAr: string;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameEn: string;
+            /** @description Where a new request is told, with no resident data and no link. Staff only. */
+            notifyEmail?: string | null;
+            /** @description Buildings as `GET /community/buildings` lists them. Empty or absent: the whole compound. */
+            serviceBuildings?: string[];
+            /** @description What it does: at least one category. */
+            services: components["schemas"]["PartnerServiceDto"][];
+        };
+        CreatePartnerRequestDto: {
+            /** @description One the partner offers; its consent `partner_share_<category>` granted at the current version (CONSENT_REQUIRED). */
+            category: components["schemas"]["PartnerCategory"];
+            /** @description Default true: once accepted, the partner’s staff get a one-time gate pass for the window, in the requester’s name. */
+            gatePass?: boolean;
+            /** @description Announced price lines, copied with the request as they are now. */
+            items?: components["schemas"]["PartnerRequestLineDto"][];
+            /** @description For the partner, while the category’s consent holds. Never put a phone or anyone’s name here. */
+            note?: string | null;
+            /** Format: uuid */
+            partnerId: string;
+            /**
+             * Format: uuid
+             * @description An active sub-category of the category, offered by the partner or covered by its whole category.
+             */
+            subcategoryId?: string | null;
+            /**
+             * Format: uuid
+             * @description A unit the caller may invite visitors to (PARTNER_REQUEST_NOT_ALLOWED otherwise).
+             */
+            unitId: string;
+            /**
+             * Format: date-time
+             * @description 30 minutes to 8 hours after the start (PARTNER_WINDOW_LENGTH).
+             */
+            windowEndsAt: string;
+            /**
+             * Format: date-time
+             * @description 15 minutes to 14 days from now (PARTNER_WINDOW_TOO_SOON / _TOO_FAR).
+             */
+            windowStartsAt: string;
+        };
+        CreatePartnerSubcategoryDto: {
+            /** @description One of the closed list; never changes. */
+            category: components["schemas"]["PartnerCategory"];
+            /** @description Unique in the compound (DUPLICATE_RESOURCE); never changes. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description Order within its category. Default 0. */
+            position?: number;
+        };
         CreatePlaceDto: {
             /** @example المرحلة ج */
             nameAr: string;
@@ -18213,6 +19051,11 @@ export interface components {
             /** @description With `cancelled` only, from `vehicleFineCancel` (default `appeal_accepted`). */
             reasonCode?: string;
         };
+        DecideComplaintDto: {
+            /** @description From the closed list `partnerCompensationDecision`; `none` when not upheld. */
+            compensation: string;
+            outcome: components["schemas"]["PartnerComplaintOutcome"];
+        };
         DecideDisputeDto: {
             /** @description On `accept` only: what to credit. */
             amount?: string;
@@ -18244,6 +19087,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             status: components["schemas"]["GateRequestStatus"];
+        };
+        DeclinePartnerRequestDto: {
+            /** @description From the closed list `partnerRequestDecline`. */
+            reasonCode: string;
         };
         DeferredActionResponse: {
             /** Format: date-time */
@@ -18284,6 +19131,75 @@ export interface components {
         DeletionRequestStatus: "pending" | "cancelled" | "completed" | "queued" | "closed";
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DeskAcceptDto: {
+            /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
+            staffCount?: number;
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+        };
+        DeskCancelDto: {
+            /** @description From the closed list `partnerRequestPartnerCancel`. */
+            reasonCode: string;
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+        };
+        DeskDeclineDto: {
+            /** @description From the closed list `partnerRequestDecline`. */
+            reasonCode: string;
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+        };
+        DeskPageView: {
+            compoundName: string;
+            partner: components["schemas"]["DeskPartnerView"];
+            /** @description Live requests and those closed in the last 24 hours, soonest window first, at most 100. */
+            requests: components["schemas"]["PartnerSideRequestView"][];
+            /**
+             * @description The compound’s time zone, for showing the windows.
+             * @example Africa/Cairo
+             */
+            timeZone: string;
+        };
+        DeskPartnerView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        DeskPassView: {
+            /** @description The 6-digit gate code. */
+            code: string;
+            /** @description The pass’s public page (`/v#…`), for the staff’s phones. */
+            link: string | null;
+            /** @description People it lets in, one entry each. */
+            partySize: number;
+            /** @description For the QR. */
+            qrPayload: string | null;
+            /** Format: date-time */
+            validFrom: string;
+            /** Format: date-time */
+            validUntil: string;
+        };
+        DeskProposeDto: {
+            /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
+            staffCount?: number;
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+            /**
+             * Format: date-time
+             * @description 30 minutes to 8 hours after the start.
+             */
+            windowEndsAt: string;
+            /**
+             * Format: date-time
+             * @description 15 minutes to 14 days from now.
+             */
+            windowStartsAt: string;
+        };
+        DeskTokenDto: {
+            /** @description The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND. */
+            token: string;
+        };
         /**
          * @description `app`, or the browser family.
          * @enum {string}
@@ -21359,6 +22275,17 @@ export interface components {
             /** @description The unit’s code (UNIT_CODE_UNKNOWN). Contractor hours may give the works permit instead. */
             unitCode?: string;
         };
+        IssuedDeskLinkView: {
+            /** Format: date-time */
+            expiresAt: string;
+            /**
+             * @description What to give the partner (printed, or sent from the office).
+             * @example https://app.example/p#…
+             */
+            link: string;
+            /** @description Shown once; the server keeps only its hash. */
+            token: string;
+        };
         IssuedEntryCredentialView: {
             /** Format: uuid */
             id: string;
@@ -22461,7 +23388,7 @@ export interface components {
             lateNoticeCureDays: number;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty" | "governance";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty" | "governance" | "partners";
         NotificationView: {
             /**
              * Format: date-time
@@ -22788,6 +23715,295 @@ export interface components {
             code: string;
             /** @example Basement 2, row C */
             place: string;
+        };
+        PartnerCancelPartnerRequestDto: {
+            /** @description From the closed list `partnerRequestPartnerCancel`. */
+            reasonCode: string;
+        };
+        /** @enum {string} */
+        PartnerCategory: "gas_water" | "pharmacy" | "grocery" | "home_services" | "laundry" | "gardening" | "beauty_at_home" | "repair" | "pets" | "events" | "moving_storage" | "car_services" | "elderly_care";
+        PartnerCategoryView: {
+            category: components["schemas"]["PartnerCategory"];
+            /** @description The consent a request in this category needs (ADR 0036, 0060), granted at its current version. */
+            consentCode: string;
+            subcategories: components["schemas"]["PartnerSubcategoryView"][];
+        };
+        PartnerCategoryViewList: {
+            data: components["schemas"]["PartnerCategoryView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        PartnerComplaintOutcome: "upheld" | "not_upheld";
+        PartnerDeskLinkView: {
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description It stops working then: make a new one before.
+             */
+            expiresAt: string;
+        };
+        PartnerDetailView: {
+            /** @description While suspended: up to three active partners of its categories, open now first, then the best rated. Empty otherwise. */
+            alternatives: components["schemas"]["PartnerView"][];
+            /**
+             * @description The partner’s business phone, E.164: the one contact shown.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** @description One of the caller’s favourites. */
+            favourite: boolean;
+            /** @description It comes to the home. */
+            homeVisit: boolean;
+            /** @description Weekly hours, by weekday then start. */
+            hours: components["schemas"]["PartnerWindowView"][];
+            /** Format: uuid */
+            id: string;
+            /** @description Listed within the "new" days. */
+            isNew: boolean;
+            /** Format: date-time */
+            listedAt: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Open at some moment still ahead tonight, after the late hour. */
+            openLateTonight: boolean;
+            /** @description Open now. */
+            openNow: boolean;
+            priceItems: components["schemas"]["PartnerPriceItemView"][];
+            /** @description The residents’ average and count, once three have rated it; null before. */
+            rating: components["schemas"]["RatingSummaryView"] | null;
+            /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
+            serviceBuildings: string[];
+            services: components["schemas"]["PartnerServiceView"][];
+            /** @description A list holds active partners only; a suspended one is read by id, never told why. */
+            status: components["schemas"]["PartnerStatus"];
+            /**
+             * @description The time zone the hours are in.
+             * @example Africa/Cairo
+             */
+            timeZone: string;
+        };
+        PartnerPriceItemDto: {
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameAr: string;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameEn: string;
+            /** @description EGP, e.g. `150` or `150.50`; `0` for free. */
+            price: string;
+            /**
+             * Format: uuid
+             * @description One of the partner’s sub-categories (PARTNER_SERVICE_NOT_OFFERED), or none.
+             */
+            subcategoryId?: string | null;
+            unit: components["schemas"]["PartnerPriceUnit"];
+        };
+        PartnerPriceItemView: {
+            /** Format: uuid */
+            id: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description EGP, two decimals. */
+            price: string;
+            /** Format: uuid */
+            subcategoryId: string | null;
+            /** @description `visit_fee`: what coming to the home costs. */
+            unit: components["schemas"]["PartnerPriceUnit"];
+        };
+        /**
+         * @description `visit_fee`: what coming to the home costs.
+         * @enum {string}
+         */
+        PartnerPriceUnit: "fixed" | "per_visit" | "visit_fee" | "per_hour" | "per_item" | "per_kg" | "per_sqm";
+        PartnerRequestItemView: {
+            nameAr: string;
+            nameEn: string;
+            /** @description EGP, two decimals, per unit. */
+            price: string;
+            quantity: number;
+            unit: components["schemas"]["PartnerPriceUnit"];
+        };
+        PartnerRequestLineDto: {
+            /**
+             * Format: uuid
+             * @description One of the partner’s announced price lines now (PARTNER_PRICE_ITEM_NOT_AVAILABLE), once.
+             */
+            priceItemId: string;
+            quantity: number;
+        };
+        PartnerRequestRatingView: {
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            stars: number;
+        };
+        /** @enum {string} */
+        PartnerRequestSide: "resident" | "partner" | "system";
+        /** @enum {string} */
+        PartnerRequestStatus: "pending" | "proposed" | "accepted" | "declined" | "cancelled" | "expired" | "done" | "partner_no_show" | "lapsed";
+        PartnerRequestStepView: {
+            /** Format: date-time */
+            at: string;
+            /** @description The partner’s desk and the management’s relay are both `partner`. */
+            by: components["schemas"]["PartnerRequestSide"];
+            /** Format: date-time */
+            endsAt: string | null;
+            /** @description created, accepted, declined, proposed, proposal_accepted, proposal_declined, cancelled, done, no_show, expired, lapsed, pass_issued, pass_skipped, pass_cancelled. */
+            kind: string;
+            reasonCode: string | null;
+            /** Format: date-time */
+            startsAt: string | null;
+        };
+        PartnerServiceDto: {
+            category: components["schemas"]["PartnerCategory"];
+            /**
+             * Format: uuid
+             * @description An active sub-category of the compound under that category (PARTNER_SUBCATEGORY_NOT_AVAILABLE). Absent or null: the category as a whole.
+             */
+            subcategoryId?: string | null;
+        };
+        PartnerServiceView: {
+            category: components["schemas"]["PartnerCategory"];
+            subcategory: components["schemas"]["PartnerSubcategoryView"] | null;
+        };
+        PartnerSettingsResponse: {
+            /** @description Days after a request ends that a complaint may be made. */
+            complaintDays: number;
+            /** @description Days a desk link works. */
+            deskLinkDays: number;
+            /** @description "Open late tonight" means open after this minute of the local day. */
+            lateFromMinute: number;
+            /** @description Requests an account may have open at once. */
+            maxLiveRequests: number;
+            /** @description A partner is shown as new this many days after it was listed. */
+            newDays: number;
+            /** @description Days after a request is done that it may be rated. */
+            ratingDays: number;
+        };
+        PartnerSideRequestView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** Format: date-time */
+            agreedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description From acceptance on: the window agreed.
+             */
+            agreedStartsAt: string | null;
+            /** Format: date-time */
+            askedEndsAt: string;
+            /** Format: date-time */
+            askedStartsAt: string;
+            category: components["schemas"]["PartnerCategory"];
+            /** @description A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["PartnerRequestSide"] | null;
+            /** @description The requester withdrew the category’s consent: nothing of them is shown and the request takes no action. */
+            consentWithdrawn: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The requester’s first name, while their account is active. */
+            firstName: string | null;
+            /** @description Whether an accepted request gives the partner’s staff a gate pass. */
+            gatePass: boolean;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["PartnerRequestItemView"][];
+            note: string | null;
+            /** @example SR-000123 */
+            number: string;
+            /** @description From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise. */
+            pass: components["schemas"]["DeskPassView"] | null;
+            /** Format: date-time */
+            proposedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description While proposed: the window the partner proposed.
+             */
+            proposedStartsAt: string | null;
+            /** @description How many of the partner’s staff come (proposed or agreed). */
+            staffCount: number | null;
+            status: components["schemas"]["PartnerRequestStatus"];
+            subcategory: components["schemas"]["PartnerSubcategoryView"] | null;
+            unitCode: string | null;
+        };
+        /** @enum {string} */
+        PartnerStatus: "active" | "suspended";
+        PartnerSubcategoryView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        PartnerView: {
+            /**
+             * @description The partner’s business phone, E.164: the one contact shown.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** @description One of the caller’s favourites. */
+            favourite: boolean;
+            /** @description It comes to the home. */
+            homeVisit: boolean;
+            /** @description Weekly hours, by weekday then start. */
+            hours: components["schemas"]["PartnerWindowView"][];
+            /** Format: uuid */
+            id: string;
+            /** @description Listed within the "new" days. */
+            isNew: boolean;
+            /** Format: date-time */
+            listedAt: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Open at some moment still ahead tonight, after the late hour. */
+            openLateTonight: boolean;
+            /** @description Open now. */
+            openNow: boolean;
+            priceItems: components["schemas"]["PartnerPriceItemView"][];
+            /** @description The residents’ average and count, once three have rated it; null before. */
+            rating: components["schemas"]["RatingSummaryView"] | null;
+            /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
+            serviceBuildings: string[];
+            services: components["schemas"]["PartnerServiceView"][];
+            /** @description A list holds active partners only; a suspended one is read by id, never told why. */
+            status: components["schemas"]["PartnerStatus"];
+            /**
+             * @description The time zone the hours are in.
+             * @example Africa/Cairo
+             */
+            timeZone: string;
+        };
+        PartnerViewList: {
+            data: components["schemas"]["PartnerView"][];
+            nextCursor: string | null;
+        };
+        PartnerWindowDto: {
+            endMinute: number;
+            /** @description Minutes after local midnight, in the compound’s time zone. */
+            startMinute: number;
+            /** @description 0 is Sunday. */
+            weekday: number;
+        };
+        PartnerWindowView: {
+            endMinute: number;
+            /** @description Minutes after local midnight, in the compound’s time zone. */
+            startMinute: number;
+            /** @description 0 is Sunday. */
+            weekday: number;
         };
         PassDetailView: {
             /** @description 6 digits. Active passes, for the host and the primary; null otherwise, and on a pass issued before this field existed (reissue its link). */
@@ -23871,6 +25087,20 @@ export interface components {
             /** @description The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. */
             rationale: string;
         };
+        ProposePartnerRequestDto: {
+            /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
+            staffCount?: number;
+            /**
+             * Format: date-time
+             * @description 30 minutes to 8 hours after the start.
+             */
+            windowEndsAt: string;
+            /**
+             * Format: date-time
+             * @description 15 minutes to 14 days from now.
+             */
+            windowStartsAt: string;
+        };
         ProposeQuoteDto: {
             /** @description EGP, e.g. `350` or `350.50`; below ten million. */
             amount: string;
@@ -23996,6 +25226,11 @@ export interface components {
             /** @description Raised from the post of your open shift, a gate or a zone (ADR 0053). */
             type: components["schemas"]["EmergencyType"];
         };
+        RatePartnerRequestDto: {
+            /** @description Read by the management alone; never by the partner. */
+            comment?: string | null;
+            stars: number;
+        };
         RateRequestDto: {
             comment?: string;
             rating: number;
@@ -24011,6 +25246,14 @@ export interface components {
         RatingListItemViewList: {
             data: components["schemas"]["RatingListItemView"][];
             nextCursor: string | null;
+        };
+        RatingSummaryView: {
+            /**
+             * @description One decimal.
+             * @example 4.3
+             */
+            average: string;
+            count: number;
         };
         ReadAllView: {
             read: number;
@@ -24350,6 +25593,18 @@ export interface components {
             /** @description The whole week. Windows of one weekday may touch, never overlap (OFFICE_HOURS_OVERLAP). An empty list closes the office. */
             windows: components["schemas"]["OfficeWindowDto"][];
         };
+        ReplacePartnerHoursDto: {
+            /** @description The whole week. Windows of one weekday may touch, never overlap (WINDOW_OVERLAP). Open past midnight: a window to 1440 and the next day’s from 0. Empty: no hours (never open). */
+            windows: components["schemas"]["PartnerWindowDto"][];
+        };
+        ReplacePartnerPricesDto: {
+            /** @description The whole list, in order. Requests already made keep the lines they named. */
+            items: components["schemas"]["PartnerPriceItemDto"][];
+        };
+        ReplacePartnerServicesDto: {
+            /** @description The whole set; each pair once (DUPLICATE_VALUE). */
+            services: components["schemas"]["PartnerServiceDto"][];
+        };
         ReplacePermissionsDto: {
             /** @description The whole set; keys from GET /permissions. The manager role keeps roles.manage and residents.manage. */
             permissions: string[];
@@ -24466,6 +25721,21 @@ export interface components {
             reasonCode: string;
             type: components["schemas"]["HoldType"];
         };
+        RequestComplaintView: {
+            compensation: string | null;
+            compensationAsk: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The management request it is: the conversation is there.
+             */
+            managementRequestId: string;
+            /** @example MR-000123 */
+            managementRequestNumber: string;
+            outcome: components["schemas"]["PartnerComplaintOutcome"] | null;
+            reason: string;
+        };
         RequestCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -24494,6 +25764,17 @@ export interface components {
         RequestOtpDto: {
             /** @description Email or phone (local Egyptian format or international). */
             identifier: string;
+        };
+        RequestPartnerView: {
+            /**
+             * @description Its business phone: the requester calls it, never the reverse.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
         };
         RequestPersonView: {
             fullName: string | null;
@@ -24553,6 +25834,10 @@ export interface components {
         };
         ResidenceDto: {
             resides: boolean;
+        };
+        ResidentCancelPartnerRequestDto: {
+            /** @description From the closed list `partnerRequestResidentCancel`. */
+            reasonCode: string;
         };
         ResidentComplaintDetailView: {
             category: components["schemas"]["ComplaintCategoryOptionView"];
@@ -24684,7 +25969,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "vehicle_fine" | "unit_violation" | "board_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
+        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "vehicle_fine" | "unit_violation" | "board_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
         ResidentItemView: {
             /** @description Where its appeal stands (the appeals list); null elsewhere. */
             appeal: components["schemas"]["ItemAppealView"] | null;
@@ -24784,6 +26069,68 @@ export interface components {
         };
         ResidentParcelViewList: {
             data: components["schemas"]["ResidentParcelView"][];
+            nextCursor: string | null;
+        };
+        ResidentPartnerRequestView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** Format: date-time */
+            agreedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description From acceptance on: the window agreed.
+             */
+            agreedStartsAt: string | null;
+            /** Format: date-time */
+            askedEndsAt: string;
+            /** Format: date-time */
+            askedStartsAt: string;
+            category: components["schemas"]["PartnerCategory"];
+            /** @description A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["PartnerRequestSide"] | null;
+            complaint: components["schemas"]["RequestComplaintView"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Whether an accepted request gives the partner’s staff a gate pass. */
+            gatePass: boolean;
+            /** @description One request’s history, oldest first; absent on a list. */
+            history?: components["schemas"]["PartnerRequestStepView"][];
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["PartnerRequestItemView"][];
+            /** Format: date-time */
+            lastActivityAt: string;
+            /** @description The requester’s note, as written; null once erased. */
+            note: string | null;
+            /** @example SR-000123 */
+            number: string;
+            partner: components["schemas"]["RequestPartnerView"];
+            /**
+             * Format: uuid
+             * @description The partner’s staff’s gate pass, in the requester’s name: open it as any of one’s passes (`GET /visitor-passes/{id}`).
+             */
+            passId: string | null;
+            /** Format: date-time */
+            proposedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description While proposed: the window the partner proposed.
+             */
+            proposedStartsAt: string | null;
+            rating: components["schemas"]["PartnerRequestRatingView"] | null;
+            /** @description How many of the partner’s staff come (proposed or agreed). */
+            staffCount: number | null;
+            status: components["schemas"]["PartnerRequestStatus"];
+            subcategory: components["schemas"]["PartnerSubcategoryView"] | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        ResidentPartnerRequestViewList: {
+            data: components["schemas"]["ResidentPartnerRequestView"][];
             nextCursor: string | null;
         };
         ResidentQuoteView: {
@@ -27186,6 +28533,120 @@ export interface components {
             data: components["schemas"]["StaffParkingSlotView"][];
             nextCursor: string | null;
         };
+        StaffPartnerRequestView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** Format: date-time */
+            agreedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description From acceptance on: the window agreed.
+             */
+            agreedStartsAt: string | null;
+            /** Format: date-time */
+            askedEndsAt: string;
+            /** Format: date-time */
+            askedStartsAt: string;
+            category: components["schemas"]["PartnerCategory"];
+            /** @description A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["PartnerRequestSide"] | null;
+            /** @description The requester withdrew the category’s consent: nothing of them is shown and the request takes no action. */
+            consentWithdrawn: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The requester’s first name, while their account is active. */
+            firstName: string | null;
+            /** @description Whether an accepted request gives the partner’s staff a gate pass. */
+            gatePass: boolean;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["PartnerRequestItemView"][];
+            /** Format: date-time */
+            lastActivityAt: string;
+            note: string | null;
+            /** @example SR-000123 */
+            number: string;
+            partner: components["schemas"]["RequestPartnerView"];
+            /** @description From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise. */
+            pass: components["schemas"]["DeskPassView"] | null;
+            /** Format: date-time */
+            proposedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description While proposed: the window the partner proposed.
+             */
+            proposedStartsAt: string | null;
+            /** @description How many of the partner’s staff come (proposed or agreed). */
+            staffCount: number | null;
+            status: components["schemas"]["PartnerRequestStatus"];
+            subcategory: components["schemas"]["PartnerSubcategoryView"] | null;
+            unitCode: string | null;
+        };
+        StaffPartnerRequestViewList: {
+            data: components["schemas"]["StaffPartnerRequestView"][];
+            nextCursor: string | null;
+        };
+        StaffPartnerSubcategoryView: {
+            active: boolean;
+            category: components["schemas"]["PartnerCategory"];
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            position: number;
+        };
+        StaffPartnerSubcategoryViewList: {
+            data: components["schemas"]["StaffPartnerSubcategoryView"][];
+            nextCursor: string | null;
+        };
+        StaffPartnerView: {
+            /**
+             * @description The partner’s business phone, E.164: the one contact shown.
+             * @example +20225550100
+             */
+            businessPhone: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** @description The live desk link, or null: none, revoked or expired (the management relays its requests). */
+            deskLink: components["schemas"]["PartnerDeskLinkView"] | null;
+            /** @description It comes to the home. */
+            homeVisit: boolean;
+            /** @description Weekly hours, by weekday then start. */
+            hours: components["schemas"]["PartnerWindowView"][];
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            listedAt: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Where a new request is told (no resident data). Staff only. */
+            notifyEmail: string | null;
+            priceItems: components["schemas"]["PartnerPriceItemView"][];
+            /** @description Every rating’s average and count; null with none. */
+            rating: components["schemas"]["RatingSummaryView"] | null;
+            /** @description The buildings it serves, as the units name them. Empty: the whole compound. */
+            serviceBuildings: string[];
+            services: components["schemas"]["PartnerServiceView"][];
+            status: components["schemas"]["PartnerStatus"];
+            /** Format: date-time */
+            suspendedAt: string | null;
+            /** @description From the closed list `partnerSuspend`. */
+            suspendedReason: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        StaffPartnerViewList: {
+            data: components["schemas"]["StaffPartnerView"][];
+            nextCursor: string | null;
+        };
         StaffPermitView: {
             building: string | null;
             cancelReason: components["schemas"]["UnitPermitCancelReason"] | null;
@@ -27319,6 +28780,23 @@ export interface components {
         };
         StaffPostViewList: {
             data: components["schemas"]["StaffPostView"][];
+            nextCursor: string | null;
+        };
+        StaffRatingView: {
+            /** @description As written; null once erased. */
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            requestId: string;
+            /** @example SR-000123 */
+            requestNumber: string;
+            stars: number;
+        };
+        StaffRatingViewList: {
+            data: components["schemas"]["StaffRatingView"][];
             nextCursor: string | null;
         };
         StaffRefView: {
@@ -27990,6 +29468,10 @@ export interface components {
             /** @description What the staff answered then, if they did. */
             response: string | null;
             status: components["schemas"]["SuggestionStatus"];
+        };
+        SuspendPartnerDto: {
+            /** @description From the closed list `partnerSuspend`. Residents are never told it. */
+            reasonCode: string;
         };
         SwapSlotView: {
             /** Format: date-time */
@@ -28916,6 +30398,44 @@ export interface components {
         UpdateParkingSlotDto: {
             code?: string;
             place?: string;
+        };
+        UpdatePartnerDto: {
+            /** @example +20225550100 */
+            businessPhone?: string;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionAr?: string | null;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionEn?: string | null;
+            homeVisit?: boolean;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameAr?: string;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameEn?: string;
+            /** @description Null clears it. */
+            notifyEmail?: string | null;
+            /** @description Buildings as `GET /community/buildings` lists them. Empty or absent: the whole compound. */
+            serviceBuildings?: string[];
+        };
+        UpdatePartnerSettingsDto: {
+            /** @description Days after a request ends that a complaint may be made about it. */
+            complaintDays?: number;
+            /** @description Days a partner’s desk link works; then the management makes a new one. */
+            deskLinkDays?: number;
+            /** @description "Open late tonight" means open after this minute of the local day. */
+            lateFromMinute?: number;
+            /** @description Requests an account may have open at once. */
+            maxLiveRequests?: number;
+            /** @description A partner is shown as new this many days after it was listed. */
+            newDays?: number;
+            /** @description Days after a request is done that it may be rated. */
+            ratingDays?: number;
+        };
+        UpdatePartnerSubcategoryDto: {
+            /** @description False retires it: offered for nothing new; the partners that name it keep it. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+            position?: number;
         };
         UpdatePermitSettingsDto: {
             /**
@@ -40528,6 +42048,348 @@ export interface operations {
             };
         };
     };
+    PartnerCategoriesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerCategoryViewList"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `live`: pending, proposed, accepted. `closed`: the rest. */
+                state?: "live" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestViewList"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartnerRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_acceptProposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResidentCancelPartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RequestFeedbackController_complain: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplainPartnerRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_declineProposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerRequestsController_noShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RequestFeedbackController_rate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RatePartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnersController_list: {
+        parameters: {
+            query?: {
+                category?: components["schemas"]["PartnerCategory"];
+                subcategoryId?: string;
+                /** @description `true`: open now, in the compound’s time zone. */
+                openNow?: "true" | "false";
+                /** @description `true`: open at some moment still ahead tonight, after the compound’s late hour (22:00 by default). */
+                openLate?: "true" | "false";
+                /** @description `true`: listed within the compound’s "new" days (30 by default). */
+                new?: "true" | "false";
+                /** @description `true`: the caller’s favourites only. */
+                favourites?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerViewList"];
+                };
+            };
+        };
+    };
+    PartnersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetailView"];
+                };
+            };
+        };
+    };
+    PartnersController_favourite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PartnersController_unfavourite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PaymentSessionsController_status: {
         parameters: {
             query?: never;
@@ -41412,6 +43274,154 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DeskController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeskPageView"];
+                };
+            };
+        };
+    };
+    DeskController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskAcceptDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
+            };
+        };
+    };
+    DeskController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskCancelDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
+            };
+        };
+    };
+    DeskController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskDeclineDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
+            };
+        };
+    };
+    DeskController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
+            };
+        };
+    };
+    DeskController_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskProposeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSideRequestView"];
+                };
             };
         };
     };
@@ -45039,6 +47049,633 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffParkingSlotView"];
+                };
+            };
+        };
+    };
+    StaffPartnerComplaintsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `false`: those waiting for a decision. */
+                decided?: "true" | "false";
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintViewList"];
+                };
+            };
+        };
+    };
+    StaffPartnerComplaintsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintView"];
+                };
+            };
+        };
+    };
+    StaffPartnerComplaintsController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideComplaintDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintView"];
+                };
+            };
+        };
+    };
+    StaffRatingsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRatingViewList"];
+                };
+            };
+        };
+    };
+    RelayController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["PartnerRequestStatus"];
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestViewList"];
+                };
+            };
+        };
+    };
+    RelayController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptPartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerCancelPartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclinePartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    RelayController_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposePartnerRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerRequestView"];
+                };
+            };
+        };
+    };
+    PartnerSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSettingsResponse"];
+                };
+            };
+        };
+    };
+    PartnerSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSettingsResponse"];
+                };
+            };
+        };
+    };
+    StaffPartnerSubcategoriesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerSubcategoryViewList"];
+                };
+            };
+        };
+    };
+    StaffPartnerSubcategoriesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartnerSubcategoryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerSubcategoryView"];
+                };
+            };
+        };
+    };
+    StaffPartnerSubcategoriesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerSubcategoryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerSubcategoryView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerViewList"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartnerDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    DeskLinksController_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedDeskLinkView"];
+                };
+            };
+        };
+    };
+    DeskLinksController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffPartnersController_replaceHours: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplacePartnerHoursDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_replacePrices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplacePartnerPricesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_reinstate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_replaceServices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplacePartnerServicesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnersController_suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuspendPartnerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPartnerView"];
                 };
             };
         };

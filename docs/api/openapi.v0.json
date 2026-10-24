@@ -62,6 +62,17 @@
         },
         "type": "object"
       },
+      "AcceptPartnerRequestDto": {
+        "properties": {
+          "staffCount": {
+            "description": "How many of its staff come (the gate pass lets in as many). Default 1.",
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "AccessCodeView": {
         "properties": {
           "accessCode": {
@@ -7039,6 +7050,36 @@
         ],
         "type": "object"
       },
+      "ComplainPartnerRequestDto": {
+        "properties": {
+          "compensationAsk": {
+            "description": "From the closed list `partnerCompensationAsk`.",
+            "type": "string"
+          },
+          "message": {
+            "description": "The first message of the management request the complaint is.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reason": {
+            "description": "From the closed list `partnerComplaint`.",
+            "type": "string"
+          },
+          "requestedAmount": {
+            "description": "EGP, with a refund or damages asked only (PARTNER_AMOUNT_NOT_ASKED).",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,6}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "compensationAsk",
+          "message"
+        ],
+        "type": "object"
+      },
       "ComplaintAttachmentView": {
         "properties": {
           "contentType": {
@@ -7291,6 +7332,26 @@
         ],
         "type": "object"
       },
+      "ComplaintPartnerView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "ComplaintReasonDto": {
         "properties": {
           "reasonCode": {
@@ -7389,6 +7450,104 @@
         "required": [
           "total",
           "open"
+        ],
+        "type": "object"
+      },
+      "ComplaintView": {
+        "properties": {
+          "compensation": {
+            "description": "From the closed list `partnerCompensationDecision`: what the management arranges. A credit note is issued in finance.",
+            "nullable": true,
+            "type": "string"
+          },
+          "compensationAsk": {
+            "description": "From the closed list `partnerCompensationAsk`.",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "managementRequestId": {
+            "description": "The management request it is: the conversation is there.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "managementRequestNumber": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerComplaintOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "partner": {
+            "$ref": "#/components/schemas/ComplaintPartnerView"
+          },
+          "reason": {
+            "description": "From the closed list `partnerComplaint`.",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestNumber": {
+            "example": "SR-000123",
+            "type": "string"
+          },
+          "requestedAmount": {
+            "description": "EGP asked, with a refund or damages; never paid here.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "requestId",
+          "requestNumber",
+          "partner",
+          "reason",
+          "compensationAsk",
+          "requestedAmount",
+          "managementRequestId",
+          "managementRequestNumber",
+          "outcome",
+          "compensation",
+          "decidedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ComplaintViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -7634,7 +7793,20 @@
       },
       "ConsentCode": {
         "enum": [
-          "ticket_phone_share"
+          "ticket_phone_share",
+          "partner_share_gas_water",
+          "partner_share_pharmacy",
+          "partner_share_grocery",
+          "partner_share_home_services",
+          "partner_share_laundry",
+          "partner_share_gardening",
+          "partner_share_beauty_at_home",
+          "partner_share_repair",
+          "partner_share_pets",
+          "partner_share_events",
+          "partner_share_moving_storage",
+          "partner_share_car_services",
+          "partner_share_elderly_care"
         ],
         "type": "string"
       },
@@ -9283,6 +9455,178 @@
         ],
         "type": "object"
       },
+      "CreatePartnerDto": {
+        "properties": {
+          "businessPhone": {
+            "description": "The business phone residents call, stored E.164. Never a person’s own number.",
+            "example": "+20225550100",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "description": "Optional, per language. On an update, null clears it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "description": "Optional, per language. On an update, null clears it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "homeVisit": {
+            "description": "It comes to the home. Default false.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "notifyEmail": {
+            "description": "Where a new request is told, with no resident data and no link. Staff only.",
+            "nullable": true,
+            "type": "string"
+          },
+          "serviceBuildings": {
+            "description": "Buildings as `GET /community/buildings` lists them. Empty or absent: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "services": {
+            "description": "What it does: at least one category.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerServiceDto"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr",
+          "businessPhone",
+          "services"
+        ],
+        "type": "object"
+      },
+      "CreatePartnerRequestDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ],
+            "description": "One the partner offers; its consent `partner_share_<category>` granted at the current version (CONSENT_REQUIRED)."
+          },
+          "gatePass": {
+            "description": "Default true: once accepted, the partner’s staff get a one-time gate pass for the window, in the requester’s name.",
+            "type": "boolean"
+          },
+          "items": {
+            "description": "Announced price lines, copied with the request as they are now.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerRequestLineDto"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "note": {
+            "description": "For the partner, while the category’s consent holds. Never put a phone or anyone’s name here.",
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "partnerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subcategoryId": {
+            "description": "An active sub-category of the category, offered by the partner or covered by its whole category.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "description": "A unit the caller may invite visitors to (PARTNER_REQUEST_NOT_ALLOWED otherwise).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "description": "30 minutes to 8 hours after the start (PARTNER_WINDOW_LENGTH).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "windowStartsAt": {
+            "description": "15 minutes to 14 days from now (PARTNER_WINDOW_TOO_SOON / _TOO_FAR).",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "partnerId",
+          "unitId",
+          "category",
+          "windowStartsAt",
+          "windowEndsAt"
+        ],
+        "type": "object"
+      },
+      "CreatePartnerSubcategoryDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ],
+            "description": "One of the closed list; never changes."
+          },
+          "key": {
+            "description": "Unique in the compound (DUPLICATE_RESOURCE); never changes.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "description": "Order within its category. Default 0.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "category",
+          "key",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "CreatePlaceDto": {
         "properties": {
           "nameAr": {
@@ -10894,6 +11238,26 @@
         ],
         "type": "object"
       },
+      "DecideComplaintDto": {
+        "properties": {
+          "compensation": {
+            "description": "From the closed list `partnerCompensationDecision`; `none` when not upheld.",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerComplaintOutcome"
+              }
+            ]
+          }
+        },
+        "required": [
+          "outcome",
+          "compensation"
+        ],
+        "type": "object"
+      },
       "DecideDisputeDto": {
         "properties": {
           "amount": {
@@ -10989,6 +11353,18 @@
           "id",
           "status",
           "decisionSource"
+        ],
+        "type": "object"
+      },
+      "DeclinePartnerRequestDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `partnerRequestDecline`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -11122,6 +11498,188 @@
           "deny"
         ],
         "type": "string"
+      },
+      "DeskAcceptDto": {
+        "properties": {
+          "staffCount": {
+            "description": "How many of its staff come (the gate pass lets in as many). Default 1.",
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "token": {
+            "description": "The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "DeskCancelDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `partnerRequestPartnerCancel`.",
+            "type": "string"
+          },
+          "token": {
+            "description": "The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "token"
+        ],
+        "type": "object"
+      },
+      "DeskDeclineDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `partnerRequestDecline`.",
+            "type": "string"
+          },
+          "token": {
+            "description": "The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "token"
+        ],
+        "type": "object"
+      },
+      "DeskPageView": {
+        "properties": {
+          "compoundName": {
+            "type": "string"
+          },
+          "partner": {
+            "$ref": "#/components/schemas/DeskPartnerView"
+          },
+          "requests": {
+            "description": "Live requests and those closed in the last 24 hours, soonest window first, at most 100.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerSideRequestView"
+            },
+            "type": "array"
+          },
+          "timeZone": {
+            "description": "The compound’s time zone, for showing the windows.",
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "partner",
+          "compoundName",
+          "timeZone",
+          "requests"
+        ],
+        "type": "object"
+      },
+      "DeskPartnerView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "DeskPassView": {
+        "properties": {
+          "code": {
+            "description": "The 6-digit gate code.",
+            "type": "string"
+          },
+          "link": {
+            "description": "The pass’s public page (`/v#…`), for the staff’s phones.",
+            "nullable": true,
+            "type": "string"
+          },
+          "partySize": {
+            "description": "People it lets in, one entry each.",
+            "type": "number"
+          },
+          "qrPayload": {
+            "description": "For the QR.",
+            "nullable": true,
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "link",
+          "qrPayload",
+          "validFrom",
+          "validUntil",
+          "partySize"
+        ],
+        "type": "object"
+      },
+      "DeskProposeDto": {
+        "properties": {
+          "staffCount": {
+            "description": "How many of its staff come (the gate pass lets in as many). Default 1.",
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "token": {
+            "description": "The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND.",
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "description": "30 minutes to 8 hours after the start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "windowStartsAt": {
+            "description": "15 minutes to 14 days from now.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "windowStartsAt",
+          "windowEndsAt",
+          "token"
+        ],
+        "type": "object"
+      },
+      "DeskTokenDto": {
+        "properties": {
+          "token": {
+            "description": "The fragment of the desk link (`/p#<token>`). Anything that is not a live link answers 404 PARTNER_DESK_NOT_FOUND.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
       },
       "DeviceClient": {
         "description": "`app`, or the browser family.",
@@ -21412,6 +21970,29 @@
         ],
         "type": "object"
       },
+      "IssuedDeskLinkView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "link": {
+            "description": "What to give the partner (printed, or sent from the office).",
+            "example": "https://app.example/p#…",
+            "type": "string"
+          },
+          "token": {
+            "description": "Shown once; the server keeps only its hash.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "link",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "IssuedEntryCredentialView": {
         "properties": {
           "id": {
@@ -24874,7 +25455,8 @@
           "safety",
           "permits",
           "guard_duty",
-          "governance"
+          "governance",
+          "partners"
         ],
         "type": "string"
       },
@@ -25980,6 +26562,950 @@
         "required": [
           "code",
           "place"
+        ],
+        "type": "object"
+      },
+      "PartnerCancelPartnerRequestDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `partnerRequestPartnerCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "PartnerCategory": {
+        "enum": [
+          "gas_water",
+          "pharmacy",
+          "grocery",
+          "home_services",
+          "laundry",
+          "gardening",
+          "beauty_at_home",
+          "repair",
+          "pets",
+          "events",
+          "moving_storage",
+          "car_services",
+          "elderly_care"
+        ],
+        "type": "string"
+      },
+      "PartnerCategoryView": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ]
+          },
+          "consentCode": {
+            "description": "The consent a request in this category needs (ADR 0036, 0060), granted at its current version.",
+            "type": "string"
+          },
+          "subcategories": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerSubcategoryView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "category",
+          "consentCode",
+          "subcategories"
+        ],
+        "type": "object"
+      },
+      "PartnerCategoryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerCategoryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PartnerComplaintOutcome": {
+        "enum": [
+          "upheld",
+          "not_upheld"
+        ],
+        "type": "string"
+      },
+      "PartnerDeskLinkView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "It stops working then: make a new one before.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "PartnerDetailView": {
+        "properties": {
+          "alternatives": {
+            "description": "While suspended: up to three active partners of its categories, open now first, then the best rated. Empty otherwise.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerView"
+            },
+            "type": "array"
+          },
+          "businessPhone": {
+            "description": "The partner’s business phone, E.164: the one contact shown.",
+            "example": "+20225550100",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "favourite": {
+            "description": "One of the caller’s favourites.",
+            "type": "boolean"
+          },
+          "homeVisit": {
+            "description": "It comes to the home.",
+            "type": "boolean"
+          },
+          "hours": {
+            "description": "Weekly hours, by weekday then start.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerWindowView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isNew": {
+            "description": "Listed within the \"new\" days.",
+            "type": "boolean"
+          },
+          "listedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "openLateTonight": {
+            "description": "Open at some moment still ahead tonight, after the late hour.",
+            "type": "boolean"
+          },
+          "openNow": {
+            "description": "Open now.",
+            "type": "boolean"
+          },
+          "priceItems": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerPriceItemView"
+            },
+            "type": "array"
+          },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatingSummaryView"
+              }
+            ],
+            "description": "The residents’ average and count, once three have rated it; null before.",
+            "nullable": true,
+            "type": "object"
+          },
+          "serviceBuildings": {
+            "description": "The buildings it serves, as the units name them. Empty: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "services": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerServiceView"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerStatus"
+              }
+            ],
+            "description": "A list holds active partners only; a suspended one is read by id, never told why."
+          },
+          "timeZone": {
+            "description": "The time zone the hours are in.",
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "descriptionEn",
+          "descriptionAr",
+          "businessPhone",
+          "serviceBuildings",
+          "homeVisit",
+          "services",
+          "hours",
+          "priceItems",
+          "listedAt",
+          "openNow",
+          "openLateTonight",
+          "isNew",
+          "favourite",
+          "timeZone",
+          "rating",
+          "status",
+          "alternatives"
+        ],
+        "type": "object"
+      },
+      "PartnerPriceItemDto": {
+        "properties": {
+          "nameAr": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "price": {
+            "description": "EGP, e.g. `150` or `150.50`; `0` for free.",
+            "pattern": "^\\d{1,6}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "subcategoryId": {
+            "description": "One of the partner’s sub-categories (PARTNER_SERVICE_NOT_OFFERED), or none.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerPriceUnit"
+              }
+            ]
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr",
+          "price",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "PartnerPriceItemView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "price": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "subcategoryId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerPriceUnit"
+              }
+            ],
+            "description": "`visit_fee`: what coming to the home costs."
+          }
+        },
+        "required": [
+          "id",
+          "subcategoryId",
+          "nameEn",
+          "nameAr",
+          "price",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "PartnerPriceUnit": {
+        "description": "`visit_fee`: what coming to the home costs.",
+        "enum": [
+          "fixed",
+          "per_visit",
+          "visit_fee",
+          "per_hour",
+          "per_item",
+          "per_kg",
+          "per_sqm"
+        ],
+        "type": "string"
+      },
+      "PartnerRequestItemView": {
+        "properties": {
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "price": {
+            "description": "EGP, two decimals, per unit.",
+            "type": "string"
+          },
+          "quantity": {
+            "maximum": 99,
+            "minimum": 1,
+            "type": "number"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerPriceUnit"
+              }
+            ]
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr",
+          "price",
+          "unit",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "PartnerRequestLineDto": {
+        "properties": {
+          "priceItemId": {
+            "description": "One of the partner’s announced price lines now (PARTNER_PRICE_ITEM_NOT_AVAILABLE), once.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "maximum": 99,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "priceItemId",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "PartnerRequestRatingView": {
+        "properties": {
+          "comment": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "stars": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "stars",
+          "comment",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PartnerRequestSide": {
+        "enum": [
+          "resident",
+          "partner",
+          "system"
+        ],
+        "type": "string"
+      },
+      "PartnerRequestStatus": {
+        "enum": [
+          "pending",
+          "proposed",
+          "accepted",
+          "declined",
+          "cancelled",
+          "expired",
+          "done",
+          "partner_no_show",
+          "lapsed"
+        ],
+        "type": "string"
+      },
+      "PartnerRequestStepView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestSide"
+              }
+            ],
+            "description": "The partner’s desk and the management’s relay are both `partner`."
+          },
+          "endsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "description": "created, accepted, declined, proposed, proposal_accepted, proposal_declined, cancelled, done, no_show, expired, lapsed, pass_issued, pass_skipped, pass_cancelled.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "by",
+          "reasonCode",
+          "startsAt",
+          "endsAt",
+          "at"
+        ],
+        "type": "object"
+      },
+      "PartnerServiceDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ]
+          },
+          "subcategoryId": {
+            "description": "An active sub-category of the compound under that category (PARTNER_SUBCATEGORY_NOT_AVAILABLE). Absent or null: the category as a whole.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "type": "object"
+      },
+      "PartnerServiceView": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ]
+          },
+          "subcategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerSubcategoryView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "category",
+          "subcategory"
+        ],
+        "type": "object"
+      },
+      "PartnerSettingsResponse": {
+        "properties": {
+          "complaintDays": {
+            "description": "Days after a request ends that a complaint may be made.",
+            "type": "number"
+          },
+          "deskLinkDays": {
+            "description": "Days a desk link works.",
+            "type": "number"
+          },
+          "lateFromMinute": {
+            "description": "\"Open late tonight\" means open after this minute of the local day.",
+            "type": "number"
+          },
+          "maxLiveRequests": {
+            "description": "Requests an account may have open at once.",
+            "type": "number"
+          },
+          "newDays": {
+            "description": "A partner is shown as new this many days after it was listed.",
+            "type": "number"
+          },
+          "ratingDays": {
+            "description": "Days after a request is done that it may be rated.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "newDays",
+          "lateFromMinute",
+          "maxLiveRequests",
+          "ratingDays",
+          "complaintDays",
+          "deskLinkDays"
+        ],
+        "type": "object"
+      },
+      "PartnerSideRequestView": {
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "agreedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "agreedStartsAt": {
+            "description": "From acceptance on: the window agreed.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "askedEndsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "askedStartsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ]
+          },
+          "closeReason": {
+            "description": "A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestSide"
+              }
+            ],
+            "nullable": true
+          },
+          "consentWithdrawn": {
+            "description": "The requester withdrew the category’s consent: nothing of them is shown and the request takes no action.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "firstName": {
+            "description": "The requester’s first name, while their account is active.",
+            "nullable": true,
+            "type": "string"
+          },
+          "gatePass": {
+            "description": "Whether an accepted request gives the partner’s staff a gate pass.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerRequestItemView"
+            },
+            "type": "array"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "SR-000123",
+            "type": "string"
+          },
+          "pass": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeskPassView"
+              }
+            ],
+            "description": "From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise.",
+            "nullable": true,
+            "type": "object"
+          },
+          "proposedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "proposedStartsAt": {
+            "description": "While proposed: the window the partner proposed.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "staffCount": {
+            "description": "How many of the partner’s staff come (proposed or agreed).",
+            "nullable": true,
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestStatus"
+              }
+            ]
+          },
+          "subcategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerSubcategoryView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "category",
+          "subcategory",
+          "status",
+          "askedStartsAt",
+          "askedEndsAt",
+          "proposedStartsAt",
+          "proposedEndsAt",
+          "agreedStartsAt",
+          "agreedEndsAt",
+          "staffCount",
+          "gatePass",
+          "closedBy",
+          "closeReason",
+          "acceptedAt",
+          "closedAt",
+          "createdAt",
+          "consentWithdrawn",
+          "unitCode",
+          "firstName",
+          "note",
+          "items",
+          "pass"
+        ],
+        "type": "object"
+      },
+      "PartnerStatus": {
+        "enum": [
+          "active",
+          "suspended"
+        ],
+        "type": "string"
+      },
+      "PartnerSubcategoryView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "PartnerView": {
+        "properties": {
+          "businessPhone": {
+            "description": "The partner’s business phone, E.164: the one contact shown.",
+            "example": "+20225550100",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "favourite": {
+            "description": "One of the caller’s favourites.",
+            "type": "boolean"
+          },
+          "homeVisit": {
+            "description": "It comes to the home.",
+            "type": "boolean"
+          },
+          "hours": {
+            "description": "Weekly hours, by weekday then start.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerWindowView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isNew": {
+            "description": "Listed within the \"new\" days.",
+            "type": "boolean"
+          },
+          "listedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "openLateTonight": {
+            "description": "Open at some moment still ahead tonight, after the late hour.",
+            "type": "boolean"
+          },
+          "openNow": {
+            "description": "Open now.",
+            "type": "boolean"
+          },
+          "priceItems": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerPriceItemView"
+            },
+            "type": "array"
+          },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatingSummaryView"
+              }
+            ],
+            "description": "The residents’ average and count, once three have rated it; null before.",
+            "nullable": true,
+            "type": "object"
+          },
+          "serviceBuildings": {
+            "description": "The buildings it serves, as the units name them. Empty: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "services": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerServiceView"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerStatus"
+              }
+            ],
+            "description": "A list holds active partners only; a suspended one is read by id, never told why."
+          },
+          "timeZone": {
+            "description": "The time zone the hours are in.",
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "descriptionEn",
+          "descriptionAr",
+          "businessPhone",
+          "serviceBuildings",
+          "homeVisit",
+          "services",
+          "hours",
+          "priceItems",
+          "listedAt",
+          "openNow",
+          "openLateTonight",
+          "isNew",
+          "favourite",
+          "timeZone",
+          "rating",
+          "status"
+        ],
+        "type": "object"
+      },
+      "PartnerViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PartnerWindowDto": {
+        "properties": {
+          "endMinute": {
+            "maximum": 1440,
+            "minimum": 1,
+            "type": "number"
+          },
+          "startMinute": {
+            "description": "Minutes after local midnight, in the compound’s time zone.",
+            "maximum": 1439,
+            "minimum": 0,
+            "type": "number"
+          },
+          "weekday": {
+            "description": "0 is Sunday.",
+            "maximum": 6,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "weekday",
+          "startMinute",
+          "endMinute"
+        ],
+        "type": "object"
+      },
+      "PartnerWindowView": {
+        "properties": {
+          "endMinute": {
+            "maximum": 1440,
+            "minimum": 1,
+            "type": "number"
+          },
+          "startMinute": {
+            "description": "Minutes after local midnight, in the compound’s time zone.",
+            "maximum": 1439,
+            "minimum": 0,
+            "type": "number"
+          },
+          "weekday": {
+            "description": "0 is Sunday.",
+            "maximum": 6,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "weekday",
+          "startMinute",
+          "endMinute"
         ],
         "type": "object"
       },
@@ -29301,6 +30827,31 @@
         ],
         "type": "object"
       },
+      "ProposePartnerRequestDto": {
+        "properties": {
+          "staffCount": {
+            "description": "How many of its staff come (the gate pass lets in as many). Default 1.",
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "windowEndsAt": {
+            "description": "30 minutes to 8 hours after the start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "windowStartsAt": {
+            "description": "15 minutes to 14 days from now.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "windowStartsAt",
+          "windowEndsAt"
+        ],
+        "type": "object"
+      },
       "ProposeQuoteDto": {
         "properties": {
           "amount": {
@@ -29657,6 +31208,26 @@
         ],
         "type": "object"
       },
+      "RatePartnerRequestDto": {
+        "properties": {
+          "comment": {
+            "description": "Read by the management alone; never by the partner.",
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "stars": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "stars"
+        ],
+        "type": "object"
+      },
       "RateRequestDto": {
         "properties": {
           "comment": {
@@ -29718,6 +31289,23 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RatingSummaryView": {
+        "properties": {
+          "average": {
+            "description": "One decimal.",
+            "example": "4.3",
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "average",
+          "count"
         ],
         "type": "object"
       },
@@ -30697,6 +32285,55 @@
         ],
         "type": "object"
       },
+      "ReplacePartnerHoursDto": {
+        "properties": {
+          "windows": {
+            "description": "The whole week. Windows of one weekday may touch, never overlap (WINDOW_OVERLAP). Open past midnight: a window to 1440 and the next day’s from 0. Empty: no hours (never open).",
+            "items": {
+              "$ref": "#/components/schemas/PartnerWindowDto"
+            },
+            "maxItems": 28,
+            "type": "array"
+          }
+        },
+        "required": [
+          "windows"
+        ],
+        "type": "object"
+      },
+      "ReplacePartnerPricesDto": {
+        "properties": {
+          "items": {
+            "description": "The whole list, in order. Requests already made keep the lines they named.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerPriceItemDto"
+            },
+            "maxItems": 100,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "ReplacePartnerServicesDto": {
+        "properties": {
+          "services": {
+            "description": "The whole set; each pair once (DUPLICATE_VALUE).",
+            "items": {
+              "$ref": "#/components/schemas/PartnerServiceDto"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "services"
+        ],
+        "type": "object"
+      },
       "ReplacePermissionsDto": {
         "properties": {
           "permissions": {
@@ -31061,6 +32698,51 @@
         ],
         "type": "object"
       },
+      "RequestComplaintView": {
+        "properties": {
+          "compensation": {
+            "nullable": true,
+            "type": "string"
+          },
+          "compensationAsk": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "managementRequestId": {
+            "description": "The management request it is: the conversation is there.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "managementRequestNumber": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerComplaintOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "managementRequestId",
+          "managementRequestNumber",
+          "reason",
+          "compensationAsk",
+          "outcome",
+          "compensation"
+        ],
+        "type": "object"
+      },
       "RequestCreatedView": {
         "properties": {
           "createdAt": {
@@ -31141,6 +32823,32 @@
         },
         "required": [
           "identifier"
+        ],
+        "type": "object"
+      },
+      "RequestPartnerView": {
+        "properties": {
+          "businessPhone": {
+            "description": "Its business phone: the requester calls it, never the reverse.",
+            "example": "+20225550100",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "businessPhone"
         ],
         "type": "object"
       },
@@ -31305,6 +33013,18 @@
         },
         "required": [
           "resides"
+        ],
+        "type": "object"
+      },
+      "ResidentCancelPartnerRequestDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `partnerRequestResidentCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -31735,6 +33455,7 @@
           "invoice_dispute",
           "unit_permit",
           "neighbour_complaint",
+          "partner_request",
           "vehicle_fine",
           "unit_violation",
           "board_appeal",
@@ -32125,6 +33846,212 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/ResidentParcelView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ResidentPartnerRequestView": {
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "agreedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "agreedStartsAt": {
+            "description": "From acceptance on: the window agreed.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "askedEndsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "askedStartsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ]
+          },
+          "closeReason": {
+            "description": "A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestSide"
+              }
+            ],
+            "nullable": true
+          },
+          "complaint": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestComplaintView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gatePass": {
+            "description": "Whether an accepted request gives the partner’s staff a gate pass.",
+            "type": "boolean"
+          },
+          "history": {
+            "description": "One request’s history, oldest first; absent on a list.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerRequestStepView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerRequestItemView"
+            },
+            "type": "array"
+          },
+          "lastActivityAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "note": {
+            "description": "The requester’s note, as written; null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "SR-000123",
+            "type": "string"
+          },
+          "partner": {
+            "$ref": "#/components/schemas/RequestPartnerView"
+          },
+          "passId": {
+            "description": "The partner’s staff’s gate pass, in the requester’s name: open it as any of one’s passes (`GET /visitor-passes/{id}`).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "proposedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "proposedStartsAt": {
+            "description": "While proposed: the window the partner proposed.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestRatingView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "staffCount": {
+            "description": "How many of the partner’s staff come (proposed or agreed).",
+            "nullable": true,
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestStatus"
+              }
+            ]
+          },
+          "subcategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerSubcategoryView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "category",
+          "subcategory",
+          "status",
+          "askedStartsAt",
+          "askedEndsAt",
+          "proposedStartsAt",
+          "proposedEndsAt",
+          "agreedStartsAt",
+          "agreedEndsAt",
+          "staffCount",
+          "gatePass",
+          "closedBy",
+          "closeReason",
+          "acceptedAt",
+          "closedAt",
+          "createdAt",
+          "partner",
+          "unitId",
+          "unitCode",
+          "note",
+          "items",
+          "lastActivityAt",
+          "passId",
+          "rating",
+          "complaint"
+        ],
+        "type": "object"
+      },
+      "ResidentPartnerRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentPartnerRequestView"
             },
             "type": "array"
           },
@@ -40453,6 +42380,406 @@
         ],
         "type": "object"
       },
+      "StaffPartnerRequestView": {
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "agreedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "agreedStartsAt": {
+            "description": "From acceptance on: the window agreed.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "askedEndsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "askedStartsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ]
+          },
+          "closeReason": {
+            "description": "A code: the decline’s (`partnerRequestDecline`) or the cancel’s, by side; `proposal_declined` when the requester declined a proposal.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestSide"
+              }
+            ],
+            "nullable": true
+          },
+          "consentWithdrawn": {
+            "description": "The requester withdrew the category’s consent: nothing of them is shown and the request takes no action.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "firstName": {
+            "description": "The requester’s first name, while their account is active.",
+            "nullable": true,
+            "type": "string"
+          },
+          "gatePass": {
+            "description": "Whether an accepted request gives the partner’s staff a gate pass.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerRequestItemView"
+            },
+            "type": "array"
+          },
+          "lastActivityAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "SR-000123",
+            "type": "string"
+          },
+          "partner": {
+            "$ref": "#/components/schemas/RequestPartnerView"
+          },
+          "pass": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeskPassView"
+              }
+            ],
+            "description": "From two hours before the agreed window until it ends, while the consent holds and the pass is active; null otherwise.",
+            "nullable": true,
+            "type": "object"
+          },
+          "proposedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "proposedStartsAt": {
+            "description": "While proposed: the window the partner proposed.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "staffCount": {
+            "description": "How many of the partner’s staff come (proposed or agreed).",
+            "nullable": true,
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerRequestStatus"
+              }
+            ]
+          },
+          "subcategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerSubcategoryView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "category",
+          "subcategory",
+          "status",
+          "askedStartsAt",
+          "askedEndsAt",
+          "proposedStartsAt",
+          "proposedEndsAt",
+          "agreedStartsAt",
+          "agreedEndsAt",
+          "staffCount",
+          "gatePass",
+          "closedBy",
+          "closeReason",
+          "acceptedAt",
+          "closedAt",
+          "createdAt",
+          "consentWithdrawn",
+          "unitCode",
+          "firstName",
+          "note",
+          "items",
+          "pass",
+          "partner",
+          "lastActivityAt"
+        ],
+        "type": "object"
+      },
+      "StaffPartnerRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffPartnerRequestView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffPartnerSubcategoryView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerCategory"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameEn",
+          "nameAr",
+          "category",
+          "active",
+          "position"
+        ],
+        "type": "object"
+      },
+      "StaffPartnerSubcategoryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffPartnerSubcategoryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffPartnerView": {
+        "properties": {
+          "businessPhone": {
+            "description": "The partner’s business phone, E.164: the one contact shown.",
+            "example": "+20225550100",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "deskLink": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerDeskLinkView"
+              }
+            ],
+            "description": "The live desk link, or null: none, revoked or expired (the management relays its requests).",
+            "nullable": true,
+            "type": "object"
+          },
+          "homeVisit": {
+            "description": "It comes to the home.",
+            "type": "boolean"
+          },
+          "hours": {
+            "description": "Weekly hours, by weekday then start.",
+            "items": {
+              "$ref": "#/components/schemas/PartnerWindowView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "listedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "notifyEmail": {
+            "description": "Where a new request is told (no resident data). Staff only.",
+            "nullable": true,
+            "type": "string"
+          },
+          "priceItems": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerPriceItemView"
+            },
+            "type": "array"
+          },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatingSummaryView"
+              }
+            ],
+            "description": "Every rating’s average and count; null with none.",
+            "nullable": true,
+            "type": "object"
+          },
+          "serviceBuildings": {
+            "description": "The buildings it serves, as the units name them. Empty: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "services": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerServiceView"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerStatus"
+              }
+            ]
+          },
+          "suspendedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "suspendedReason": {
+            "description": "From the closed list `partnerSuspend`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "descriptionEn",
+          "descriptionAr",
+          "businessPhone",
+          "serviceBuildings",
+          "homeVisit",
+          "services",
+          "hours",
+          "priceItems",
+          "listedAt",
+          "notifyEmail",
+          "status",
+          "suspendedReason",
+          "suspendedAt",
+          "deskLink",
+          "rating",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "StaffPartnerViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffPartnerView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffPermitView": {
         "properties": {
           "building": {
@@ -40910,6 +43237,64 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffPostView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffRatingView": {
+        "properties": {
+          "comment": {
+            "description": "As written; null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "partnerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestNumber": {
+            "example": "SR-000123",
+            "type": "string"
+          },
+          "stars": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "stars",
+          "comment",
+          "createdAt",
+          "requestId",
+          "requestNumber",
+          "partnerId"
+        ],
+        "type": "object"
+      },
+      "StaffRatingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffRatingView"
             },
             "type": "array"
           },
@@ -43188,6 +45573,18 @@
           "status",
           "response",
           "at"
+        ],
+        "type": "object"
+      },
+      "SuspendPartnerDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `partnerSuspend`. Residents are never told it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -46339,6 +48736,122 @@
             "maxLength": 80,
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePartnerDto": {
+        "properties": {
+          "businessPhone": {
+            "example": "+20225550100",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "description": "Optional, per language. On an update, null clears it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "description": "Optional, per language. On an update, null clears it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "homeVisit": {
+            "type": "boolean"
+          },
+          "nameAr": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "notifyEmail": {
+            "description": "Null clears it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "serviceBuildings": {
+            "description": "Buildings as `GET /community/buildings` lists them. Empty or absent: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePartnerSettingsDto": {
+        "properties": {
+          "complaintDays": {
+            "description": "Days after a request ends that a complaint may be made about it.",
+            "maximum": 60,
+            "minimum": 1,
+            "type": "number"
+          },
+          "deskLinkDays": {
+            "description": "Days a partner’s desk link works; then the management makes a new one.",
+            "maximum": 365,
+            "minimum": 7,
+            "type": "number"
+          },
+          "lateFromMinute": {
+            "description": "\"Open late tonight\" means open after this minute of the local day.",
+            "maximum": 1439,
+            "minimum": 960,
+            "type": "number"
+          },
+          "maxLiveRequests": {
+            "description": "Requests an account may have open at once.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          },
+          "newDays": {
+            "description": "A partner is shown as new this many days after it was listed.",
+            "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          },
+          "ratingDays": {
+            "description": "Days after a request is done that it may be rated.",
+            "maximum": 60,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePartnerSubcategoryDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it: offered for nothing new; the partners that name it keep it.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
           }
         },
         "type": "object"
@@ -69229,6 +71742,683 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/partner-categories": {
+      "get": {
+        "operationId": "PartnerCategoriesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerCategoryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the partner categories with their sub-categories",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests": {
+      "get": {
+        "operationId": "PartnerRequestsController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`live`: pending, proposed, accepted. `closed`: the rest.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "live",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my requests to partners, newest activity first",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "PartnerRequestsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask a partner for a service at a unit",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}": {
+      "get": {
+        "operationId": "PartnerRequestsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my requests, with its history",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}/accept-proposal": {
+      "post": {
+        "operationId": "PartnerRequestsController_acceptProposal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take the window the partner proposed",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}/cancel": {
+      "post": {
+        "operationId": "PartnerRequestsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidentCancelPartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel my request",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}/complaint": {
+      "post": {
+        "operationId": "RequestFeedbackController_complain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplainPartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Complain about the partner on my request: a management request",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}/decline-proposal": {
+      "post": {
+        "operationId": "PartnerRequestsController_declineProposal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline the window the partner proposed",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}/done": {
+      "post": {
+        "operationId": "PartnerRequestsController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say the service was given",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}/no-show": {
+      "post": {
+        "operationId": "PartnerRequestsController_noShow",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say the partner did not come",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partner-requests/{id}/rating": {
+      "post": {
+        "operationId": "RequestFeedbackController_rate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatePartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rate my request once it is done",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partners": {
+      "get": {
+        "operationId": "PartnersController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PartnerCategory"
+            }
+          },
+          {
+            "in": "query",
+            "name": "subcategoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: open now, in the compound’s time zone.",
+            "in": "query",
+            "name": "openNow",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: open at some moment still ahead tonight, after the compound’s late hour (22:00 by default).",
+            "in": "query",
+            "name": "openLate",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: listed within the compound’s \"new\" days (30 by default).",
+            "in": "query",
+            "name": "new",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: the caller’s favourites only.",
+            "in": "query",
+            "name": "favourites",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the active partners: by category, open now, open late tonight, new, favourites",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partners/{id}": {
+      "get": {
+        "operationId": "PartnersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a partner; a suspended one with its alternatives",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/partners/{id}/favourite": {
+      "delete": {
+        "operationId": "PartnersController_unfavourite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a partner off the caller’s favourites",
+        "tags": [
+          "partners"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "PartnersController_favourite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Keep a partner among the caller’s favourites",
+        "tags": [
+          "partners"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/payment-sessions/{id}": {
       "get": {
         "operationId": "PaymentSessionsController_status",
@@ -70913,6 +74103,255 @@
         "tags": [
           "security"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/partner-desk/lookup": {
+      "post": {
+        "operationId": "DeskController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeskTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeskPageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Open a partner’s desk from its link",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/partner-desk/requests/{id}/accept": {
+      "post": {
+        "operationId": "DeskController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeskAcceptDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSideRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Accept a request on the desk",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/partner-desk/requests/{id}/cancel": {
+      "post": {
+        "operationId": "DeskController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeskCancelDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSideRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Cancel an accepted request on the desk",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/partner-desk/requests/{id}/decline": {
+      "post": {
+        "operationId": "DeskController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeskDeclineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSideRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Decline a request on the desk",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/partner-desk/requests/{id}/done": {
+      "post": {
+        "operationId": "DeskController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeskTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSideRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Mark a request done on the desk",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/partner-desk/requests/{id}/propose": {
+      "post": {
+        "operationId": "DeskController_propose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeskProposeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSideRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Propose another window on the desk",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -78239,6 +81678,1206 @@
         "summary": "Change a parking slot’s code or place",
         "tags": [
           "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-complaints": {
+      "get": {
+        "operationId": "StaffPartnerComplaintsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`false`: those waiting for a decision.",
+            "in": "query",
+            "name": "decided",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partnerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the complaints against partners, newest first",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-complaints/{id}": {
+      "get": {
+        "operationId": "StaffPartnerComplaintsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a complaint against a partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-complaints/{id}/decide": {
+      "post": {
+        "operationId": "StaffPartnerComplaintsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideComplaintDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decide a complaint, once",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-ratings": {
+      "get": {
+        "operationId": "StaffRatingsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partnerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffRatingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the ratings, newest first",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-requests": {
+      "get": {
+        "operationId": "RelayController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PartnerRequestStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partnerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the requests to partners, newest first",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-requests/{id}": {
+      "get": {
+        "operationId": "RelayController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a request to a partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-requests/{id}/accept": {
+      "post": {
+        "operationId": "RelayController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptPartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept a request for its partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-requests/{id}/cancel": {
+      "post": {
+        "operationId": "RelayController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerCancelPartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an accepted request for its partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-requests/{id}/decline": {
+      "post": {
+        "operationId": "RelayController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeclinePartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a request for its partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-requests/{id}/done": {
+      "post": {
+        "operationId": "RelayController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a request done for its partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-requests/{id}/propose": {
+      "post": {
+        "operationId": "RelayController_propose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposePartnerRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Propose another window for its partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-settings": {
+      "get": {
+        "operationId": "PartnerSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the partner settings",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "PartnerSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePartnerSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the partner settings",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-subcategories": {
+      "get": {
+        "operationId": "StaffPartnerSubcategoriesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerSubcategoryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the sub-categories, retired ones included",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffPartnerSubcategoriesController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePartnerSubcategoryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerSubcategoryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Name a sub-category under a category",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-subcategories/{id}": {
+      "patch": {
+        "operationId": "StaffPartnerSubcategoriesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePartnerSubcategoryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerSubcategoryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename, reorder, retire or restore a sub-category",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners": {
+      "get": {
+        "operationId": "StaffPartnersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List every partner, suspended ones included",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffPartnersController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePartnerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a partner, with what it does",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}": {
+      "get": {
+        "operationId": "StaffPartnersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StaffPartnersController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePartnerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a partner: names, description, phone, email, area",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/desk-link": {
+      "post": {
+        "operationId": "DeskLinksController_issue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedDeskLinkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Make a new desk link for a partner (the one before stops working)",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/desk-link/revoke": {
+      "post": {
+        "operationId": "DeskLinksController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stop a partner’s desk link now",
+        "tags": [
+          "partners"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/hours": {
+      "put": {
+        "operationId": "StaffPartnersController_replaceHours",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacePartnerHoursDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace a partner’s weekly hours",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/prices": {
+      "put": {
+        "operationId": "StaffPartnersController_replacePrices",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacePartnerPricesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace a partner’s announced price list",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/reinstate": {
+      "post": {
+        "operationId": "StaffPartnersController_reinstate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reinstate a suspended partner",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/services": {
+      "put": {
+        "operationId": "StaffPartnersController_replaceServices",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacePartnerServicesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace what a partner does",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/suspend": {
+      "post": {
+        "operationId": "StaffPartnersController_suspend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuspendPartnerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPartnerView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suspend a partner: its live requests are cancelled, those concerned told",
+        "tags": [
+          "partners"
         ],
         "x-no-store": true,
         "x-stability": "draft"

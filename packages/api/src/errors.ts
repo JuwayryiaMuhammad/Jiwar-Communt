@@ -387,6 +387,23 @@ const ERROR_TEXT: Record<string, string> = {
   GATE_EXCEPTION_NOT_FOUND: 'This field exception does not exist.',
   GATE_EXCEPTION_DECIDED: 'This exception was answered already, withdrawn or expired: the first answer stands.',
   GATE_DEVICE_ALREADY_REVOKED: 'This device was revoked already.',
+  // Partners (ADR 0060).
+  PARTNER_NOT_FOUND: 'This partner does not exist.',
+  PARTNER_SUBCATEGORY_NOT_FOUND: 'This sub-category does not exist.',
+  PARTNER_LIMIT_REACHED: 'The compound lists as many partners as it may.',
+  PARTNER_SUBCATEGORY_LIMIT_REACHED: 'The compound names as many sub-categories as it may.',
+  PARTNER_FAVOURITES_LIMIT_REACHED: 'As many favourites as an account may keep.',
+  PARTNER_SUSPENDED: 'This partner is suspended: it takes no request and gets no desk link.',
+  PARTNER_ALREADY_SUSPENDED: 'This partner is suspended already.',
+  PARTNER_NOT_SUSPENDED: 'This partner is not suspended.',
+  PARTNER_REQUEST_NOT_FOUND: 'This request does not exist.',
+  PARTNER_REQUEST_INVALID_TRANSITION: 'The request has moved on: refresh to see where it stands.',
+  PARTNER_REQUEST_WINDOW_PASSED: 'The request’s time has passed.',
+  PARTNER_REQUEST_TOO_EARLY: 'Too early: the time has not come yet.',
+  PARTNER_REQUEST_CONSENT_WITHDRAWN: 'The resident withdrew their consent: the request takes no answer.',
+  PARTNER_COMPLAINT_NOT_FOUND: 'This complaint does not exist.',
+  PARTNER_COMPLAINT_DECIDED: 'This complaint is decided already.',
+  PARTNER_DESK_NOT_FOUND: 'This desk link does not work.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -476,6 +493,15 @@ const FIELD_TEXT: Record<string, string> = {
   BOARD_SIZE: 'A board of 3 to 15 seats.',
   PATROL_SCHEDULE_OVERLAP: 'Two start times are closer than a run’s window.',
   CHECKPOINT_NOT_AVAILABLE: 'A checkpoint is not in service.',
+  // Partners (ADR 0060).
+  PARTNER_SUBCATEGORY_NOT_AVAILABLE: 'Not an active sub-category of that category.',
+  PARTNER_SERVICE_NOT_OFFERED: 'Not something this partner offers.',
+  PARTNER_WINDOW_TOO_SOON: 'At least 15 minutes from now.',
+  PARTNER_WINDOW_TOO_FAR: 'Within 14 days.',
+  PARTNER_WINDOW_LENGTH: 'From 30 minutes to 8 hours long.',
+  PARTNER_PRICE_ITEM_NOT_AVAILABLE: 'Not one of the partner’s prices now.',
+  PARTNER_AMOUNT_NOT_ASKED: 'An amount goes with a refund or damages only.',
+  PARTNER_COMPENSATION_NOT_UPHELD: 'A complaint not upheld arranges nothing.',
 };
 
 export function errorText(error: unknown): string {

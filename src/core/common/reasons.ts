@@ -688,4 +688,47 @@ export const REASON_CODES = {
     'compromised',
     'other',
   ],
+  // Partners (ADR 0060): why the management suspends a partner. Residents
+  // are told it is suspended, never why.
+  partnerSuspend: [
+    'quality_complaints',
+    'licence_issue',
+    'contract_ended',
+    'partner_request',
+    'safety',
+    'other',
+  ],
+  // A request to a partner (ADR 0060): why the resident cancels it, why the
+  // partner (on its desk, or the management relaying) declines or cancels
+  // it, and the system's own reasons. A resident who declines a proposed
+  // window closes it with `proposal_declined`, never picked from a list.
+  partnerRequestResidentCancel: [
+    'no_longer_needed',
+    'found_another',
+    'wrong_details',
+    'other',
+  ],
+  partnerRequestDecline: ['unavailable', 'out_of_area', 'not_offered', 'other'],
+  partnerRequestPartnerCancel: ['unavailable', 'emergency', 'other'],
+  partnerRequestSystemCancel: ['partner_suspended', 'requester_left'],
+  // A complaint against a partner (ADR 0060): what went wrong, what the
+  // requester asks for, and what the management decided to arrange (a
+  // credit note is issued in finance, by its own route: no money moves
+  // here).
+  partnerComplaint: [
+    'no_show',
+    'late',
+    'poor_quality',
+    'overcharged',
+    'damage',
+    'conduct',
+    'other',
+  ],
+  partnerCompensationAsk: ['none', 'refund', 'redo', 'damages'],
+  partnerCompensationDecision: [
+    'none',
+    'redo',
+    'partner_refund',
+    'credit_note',
+  ],
 } as const;

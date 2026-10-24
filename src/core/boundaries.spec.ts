@@ -369,6 +369,7 @@ describe('import boundaries', () => {
       'src/maintenance/tickets/x.ts',
       'src/management/requests/x.ts',
       'src/neighbours/complaints/x.ts',
+      'src/partners/requests/x.ts',
     ]) {
       const found = await problems(from, "import { A } from '../../finance';");
       expect(found).toHaveLength(1);
@@ -442,6 +443,7 @@ describe('import boundaries', () => {
       'src/maintenance/tickets/x.ts',
       'src/management/requests/x.ts',
       'src/neighbours/complaints/x.ts',
+      'src/partners/requests/x.ts',
     ]) {
       const found = await problems(
         from,
@@ -496,6 +498,73 @@ describe('import boundaries', () => {
     );
     expect(gate).toHaveLength(1);
     expect(gate[0]).toContain('maintenance must not import gate at all');
+  });
+
+  it('the partners domain imports core, community, the gate and management through their index.ts, and no domain imports it (ADR 0060)', async () => {
+    const partners = 'src/partners/requests/x.ts';
+    expect(
+      await problems(
+        partners,
+        "import { A } from '../../core/audit/audit.service';",
+      ),
+    ).toEqual([]);
+    for (const domain of ['community', 'gate', 'management'])
+      expect(
+        await problems(partners, `import { A } from '../../${domain}';`),
+      ).toEqual([]);
+    const port = await problems(
+      partners,
+      "import { A } from '../../community/partners-port';",
+    );
+    expect(port).toHaveLength(1);
+    expect(port[0]).toContain(
+      'Import community only through its public index.ts',
+    );
+    const deepGate = await problems(
+      partners,
+      "import { A } from '../../gate/visitors/visitor-passes.service';",
+    );
+    expect(deepGate).toHaveLength(1);
+    expect(deepGate[0]).toContain(
+      'Import gate only through its public index.ts',
+    );
+    for (const domain of [
+      'engagement',
+      'facilities',
+      'finance',
+      'governance',
+      'maintenance',
+      'neighbours',
+    ]) {
+      const found = await problems(
+        partners,
+        `import { A } from '../../${domain}';`,
+      );
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain(`partners must not import ${domain} at all`);
+    }
+    // Nothing imports partners, not even its index.
+    for (const from of [
+      'src/community/residents/x.ts',
+      'src/engagement/polls/x.ts',
+      'src/facilities/club/x.ts',
+      'src/finance/invoices/x.ts',
+      'src/gate/visitors/x.ts',
+      'src/governance/board/x.ts',
+      'src/maintenance/tickets/x.ts',
+      'src/management/requests/x.ts',
+      'src/neighbours/complaints/x.ts',
+    ]) {
+      const found = await problems(from, "import { A } from '../../partners';");
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain('must not import partners at all');
+    }
+    const fromCore = await problems(
+      'src/core/sweep/x.ts',
+      "import { A } from '../../partners';",
+    );
+    expect(fromCore).toHaveLength(1);
+    expect(fromCore[0]).toContain('src/core must not import a domain');
   });
 
   it('a domain may import core', async () => {

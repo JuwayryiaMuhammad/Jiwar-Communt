@@ -45,6 +45,7 @@ import { RequestNotices } from './request-notices';
 import { RequestProgress } from './request-progress';
 import { assertCan, responseDueAt } from './request-rules';
 import { RequestCreatedView } from './views/request.views';
+import { SYSTEM_TOPIC_KEYS } from '../topics/topics.service';
 
 export const REQUEST_RESOURCE = 'management_request';
 
@@ -303,6 +304,47 @@ export class RequestsService implements OnModuleInit {
     });
   }
 
+  /**
+   * A request its author opens through another domain, in that domain's
+   * transaction, on a system topic (ADR 0060: a complaint against a
+   * partner is a management request on `partner_service`). The caller has
+   * locked the author's account. The unit is named while it is still one
+   * of the author's; the topic is used even when retired. The same row,
+   * first message, audit entry and handlers' notice as any request.
+   */
+  async openOnTopic(
+    tx: TenantTxClient,
+    input: {
+      authorId: string;
+      topicKey: string;
+      unitId: string | null;
+      body: string;
+    },
+  ): Promise<ManagementRequest> {
+    const topic = await tx.managementRequestTopic.findFirstOrThrow({
+      where: { key: input.topicKey },
+    });
+    const unitId =
+      input.unitId &&
+      (await this.community.hasUnit(tx, input.authorId, input.unitId))
+        ? input.unitId
+        : undefined;
+    const request = await this.insert(
+      tx,
+      newId(),
+      { type: 'general', topicId: topic.id, unitId, body: input.body },
+      topic,
+      { authorId: input.authorId, side: 'resident' },
+    );
+    await this.audit.record(tx, {
+      action: 'management_request.created',
+      targetId: request.id,
+      metadata: this.facts(request, topic),
+    });
+    await this.notices.toHandlers(tx, request, 'management_request.created');
+    return request;
+  }
+
   /** An appointment request names its slot; no other request has one. */
   private assertSlot(input: NewRequest): void {
     if ((input.type === 'appointment') === (input.appointment !== undefined))
@@ -360,13 +402,20 @@ export class RequestsService implements OnModuleInit {
     };
   }
 
-  /** An active topic of the compound, or a field error on `topicId`. */
+  /**
+   * An active topic of the compound a person may pick (never a system
+   * one, ADR 0060), or a field error on `topicId`.
+   */
   private async topic(
     tx: TenantTxClient,
     topicId: string,
   ): Promise<ManagementRequestTopic> {
     const topic = await tx.managementRequestTopic.findFirst({
-      where: { id: topicId, active: true },
+      where: {
+        id: topicId,
+        active: true,
+        key: { notIn: [...SYSTEM_TOPIC_KEYS] },
+      },
     });
     if (!topic)
       throw invalid([

@@ -197,6 +197,32 @@ describe('capabilitiesFor', () => {
     expect(on(c)).toEqual(['conductGuide', 'contactPrimary', 'emergency']);
   });
 
+  it('who may ask a partner to the unit (ADR 0060) is who may invite visitors: a member only with the grant, a minor never', () => {
+    const asks = (subject: Subject) =>
+      capabilitiesFor(subject, OPEN).visitorsInvite;
+    expect(asks(occ({ isPrimary: true }))).toBe(true);
+    expect(asks(occ({ resides: false }))).toBe(false); // a landlord
+    expect(asks(member())).toBe(false);
+    expect(
+      asks(
+        member({
+          grants: [{ permission: 'visitors_invite', capPerOperation: null }],
+        }),
+      ),
+    ).toBe(true);
+    // A minor holds nothing, even with a grant recorded and an account.
+    expect(
+      asks(
+        member({
+          isMinor: true,
+          hasAccount: true,
+          grants: [{ permission: 'visitors_invite', capPerOperation: null }],
+        }),
+      ),
+    ).toBe(false);
+    expect(asks(member({ status: 'pending_approval' }))).toBe(false);
+  });
+
   it('pending or removed member: nothing', () => {
     expect(capabilitiesFor(member({ status: 'removed' }), OPEN)).toEqual(NONE);
     expect(

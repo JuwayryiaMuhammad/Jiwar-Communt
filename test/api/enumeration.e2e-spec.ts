@@ -1,6 +1,8 @@
+import { newId } from '../../src/core/common/uuid';
 import type { Response } from 'supertest';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
+import { asSuperuser } from '../setup/partners';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { bornYearsAgo, nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
@@ -237,6 +239,79 @@ describe('API v0 — enumeration', () => {
           answers.push(await call(w, 'POST', path, { body: { token } }));
         same(answers);
         expect(answers[0].status).toBe(404);
+        expect(answers[0].headers['x-robots-tag']).toBe('noindex');
+      }
+    } finally {
+      await globalDb.tenant.update({
+        where: { id: w.b.tenantId },
+        data: { status: 'active' },
+      });
+    }
+  });
+
+  it('the partner desk: the same 404 for every link that does not open a desk (ADR 0060)', async () => {
+    const issue = async (side: 'a' | 'b', partnerId?: string) => {
+      const id =
+        partnerId ??
+        (
+          (
+            await call(w, 'POST', '/staff/partners', {
+              token: w[side].tokens.manager,
+              body: {
+                nameEn: 'Enumerated',
+                nameAr: 'مكتب',
+                businessPhone: '+20225550100',
+                services: [{ category: 'pets' }],
+              },
+            }).expect(201)
+          ).body as { id: string }
+        ).id;
+      const res = await call(w, 'POST', `/staff/partners/${id}/desk-link`, {
+        token: w[side].tokens.manager,
+      }).expect(201);
+      return { partnerId: id, token: (res.body as { token: string }).token };
+    };
+    const rotated = await issue('a');
+    await issue('a', rotated.partnerId);
+    const expired = await issue('a');
+    await asSuperuser(
+      `UPDATE partner_desk_links SET expires_at = now() - interval '1 minute',
+              created_at = now() - interval '2 days'
+        WHERE partner_id = $1`,
+      [expired.partnerId],
+    );
+    const paused = await issue('a');
+    await call(w, 'POST', `/staff/partners/${paused.partnerId}/suspend`, {
+      token: w.a.tokens.manager,
+      body: { reasonCode: 'licence_issue' },
+    }).expect(200);
+    const suspended = await issue('b');
+    const globalDb = h.moduleRef.get(GlobalDbService);
+    await globalDb.tenant.update({
+      where: { id: w.b.tenantId },
+      data: { status: 'suspended' },
+    });
+    try {
+      const tokens = [
+        'A'.repeat(43),
+        'not-a-token',
+        rotated.token,
+        expired.token,
+        paused.token,
+        suspended.token,
+      ];
+      for (const path of [
+        '/public/partner-desk/lookup',
+        `/public/partner-desk/requests/${newId()}/accept`,
+      ]) {
+        const answers: Response[] = [];
+        for (const token of tokens)
+          answers.push(await call(w, 'POST', path, { body: { token } }));
+        same(answers);
+        expect(answers[0].status).toBe(404);
+        expect(answers[0].body).toMatchObject({
+          code: 'PARTNER_DESK_NOT_FOUND',
+        });
         expect(answers[0].headers['x-robots-tag']).toBe('noindex');
       }
     } finally {

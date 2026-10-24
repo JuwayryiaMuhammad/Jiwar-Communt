@@ -13,6 +13,7 @@ export const RESIDENT_ITEM_TYPES = [
   'invoice_dispute',
   'unit_permit',
   'neighbour_complaint',
+  'partner_request',
   // Appeals (`GET /me/appeals`).
   'vehicle_fine',
   'unit_violation',

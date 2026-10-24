@@ -12,7 +12,8 @@
  * or keeps the guards' roster, tasks, instructions, daily report or found
  * items (ADR 0050), raises matters for the board or keeps the budget and
  * its expenses, or sits on the owners' board (its derived `governance.board`,
- * ADR 0055). Closing parking reports admits nobody since every
+ * ADR 0055), or keeps the compound's service partners (ADR 0060).
+ * Closing parking reports admits nobody since every
  * guard does it from the app (ADR 0050).
  * Decided from `GET /me`, by the BFF at sign-in and by the shell on every
  * load; the API still checks each call.
@@ -55,6 +56,8 @@ export const ENTRY_PERMISSIONS = [
   'governance.approvals',
   'finance.budget',
   'governance.board',
+  // The compound's service partners, their requests and complaints (ADR 0060).
+  'partners.manage',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

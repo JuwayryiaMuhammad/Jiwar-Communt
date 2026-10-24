@@ -1828,6 +1828,93 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'token_seq IS NULL and token_key_version IS NULL are tested before each comparison',
   },
+  // Partners (ADR 0060).
+  partner_settings_ranges: {},
+  partner_subcategories_category: {},
+  partner_subcategories_key_format: {},
+  partner_subcategories_names_length: {},
+  partner_subcategories_position_range: {},
+  partners_names_length: {},
+  partners_descriptions_length: {
+    guarded:
+      'each description IS NULL is tested first; its length runs only on a value',
+  },
+  partners_business_phone_e164: {},
+  partners_notify_email_shape: {
+    guarded:
+      'notify_email IS NULL is tested first; its length and shape run only on a value',
+  },
+  partners_service_buildings: {},
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  partners_status_shape: {},
+  partners_suspended_reason: {
+    guarded:
+      'suspended_reason IS NULL is tested first; the list runs only on a value',
+  },
+  partner_services_category: {},
+  partner_hours_window: {},
+  partner_price_items_names_length: {},
+  partner_price_items_price_range: {},
+  partner_price_items_unit: {},
+  partner_price_items_position_range: {},
+  partner_requests_number_positive: {},
+  partner_requests_category: {},
+  partner_requests_status: {},
+  partner_requests_windows: {
+    guarded:
+      'proposed_starts_at IS NULL and agreed_starts_at IS NULL are tested first; each comparison runs only on a window that is there (the state shape sets its end with its start)',
+  },
+  partner_requests_note_length: {
+    guarded: 'note IS NULL is tested first; its length runs only on a value',
+  },
+  partner_requests_note_cleared: {},
+  partner_requests_staff_count: {
+    guarded:
+      'staff_count IS NULL is tested first; its range runs only on a value',
+  },
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  partner_requests_state_shape: {},
+  partner_requests_closed_by: {
+    guarded:
+      'closed_by IS NULL is tested first; the comparisons run only on a value',
+  },
+  partner_requests_close_reason: {
+    guarded:
+      'close_reason IS NULL is tested first; with a reason the state shape has set closed_by',
+  },
+  partner_request_items_shape: {},
+  partner_request_items_unit: {},
+  partner_request_events_kind: {},
+  partner_request_events_actor: {},
+  partner_request_events_window: {
+    guarded:
+      'starts_at IS NULL is tested first; ends_at is then NOT NULL by the conjunct before',
+  },
+  partner_request_events_reason_format: {
+    guarded:
+      'reason_code IS NULL is tested first; the pattern runs only on a value',
+  },
+  partner_desk_links_token_hash_hex: {},
+  partner_desk_links_validity: {},
+  partner_desk_links_revoked_shape: {},
+  // pass_id only under IS NULL; gate_pass is NOT NULL.
+  partner_requests_pass_shape: {},
+  partner_ratings_stars: {},
+  partner_ratings_comment: {
+    guarded: 'comment IS NULL is tested first; its length runs only on a value',
+  },
+  partner_complaints_reason: {},
+  partner_complaints_compensation_ask: {},
+  partner_complaints_amount: {
+    guarded:
+      'requested_amount IS NULL is tested first; its range runs only on a value',
+  },
+  // Nullable columns only under IS [NOT] NULL.
+  partner_complaints_decision_shape: {},
+  partner_complaints_decision: {
+    guarded:
+      'outcome IS NULL is tested first; with an outcome the decision shape has set the compensation',
+  },
 };
 
 interface Check {

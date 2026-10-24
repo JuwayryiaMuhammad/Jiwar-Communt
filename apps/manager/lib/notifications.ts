@@ -107,6 +107,15 @@ const TEXT: Record<string, (p: P) => string> = {
   'emergency.family_alert': () => 'An emergency was reported from your unit',
   'emergency.responder_on_the_way': (p) => `A responder is on the way, about ${p.etaMinutes} minutes`,
   'gate_service.requested': (p) => `A resident asked security for ${words(p.serviceKind)}`,
+  'partner_request.accepted': () => 'The partner accepted your request',
+  'partner_request.declined': (p) => `The partner declined your request (${words(p.reason)})`,
+  'partner_request.proposed': () => 'The partner proposed another time for your request',
+  'partner_request.cancelled': (p) => `A partner request was cancelled (${words(p.reason)})`,
+  'partner_request.done': () => 'The partner marked your request done',
+  'partner_request.expired': () => 'Nobody accepted your partner request in time',
+  'partner_request.awaiting_relay': (p) => `A resident asked a partner without a desk link: ${words(p.category)}`,
+  'partner_complaint.decided': (p) => `Your complaint about a partner was decided: ${words(p.outcome)}`,
+  'partner.suspended': () => 'A partner you asked or follow was suspended',
   'unit_permit.requested': (p) => `A unit asked for a permit: ${words(p.permitKind)}`,
   'unit_permit.approved': (p) => `Your permit was approved: ${words(p.permitKind)}`,
   'unit_permit.rejected': (p) => `Your permit was not approved (${words(p.reason)})`,
@@ -307,6 +316,12 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('emergencies.manage') || can('emergencies.respond') ? '/emergencies' : null;
   if (n.targetType === 'gate_service_request') return can('gate_services.handle') ? '/gate-services' : null;
   if (n.targetType === 'unit_permit' && n.targetId) return can('permits.manage') ? `/permits/${n.targetId}` : null;
+  // Partners (ADR 0060): a request to relay, to its page for whoever keeps the partners.
+  if (n.targetType === 'partner_request' && n.targetId)
+    return can('partners.manage') ? `/partners/requests/${n.targetId}` : null;
+  if (n.targetType === 'partner_complaint' && n.targetId)
+    return can('partners.manage') ? `/partners/complaints/${n.targetId}` : null;
+  if (n.targetType === 'partner' && n.targetId) return can('partners.manage') ? `/partners/${n.targetId}` : null;
   // Guard shifts and tasks (ADR 0050): the keepers' pages. A task, an
   // instruction or a swap to answer is a guard's, in the app.
   if (n.targetType === 'guard_roster_slot') return can('guard_roster.manage') ? '/security/roster' : null;

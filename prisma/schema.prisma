@@ -506,6 +506,7 @@ model Tenant {
   settings                     TenantSettings?
   registrationLinks            RegistrationLink[]
   visitorPassLinks             VisitorPassLink[]
+  partnerDeskLinks             PartnerDeskLink[]
   childPickupLinks             ChildPickupLink[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
@@ -1744,6 +1745,8 @@ enum NotificationCategory {
   guard_duty
   /// The owners' board, its polls and elections (ADR 0051).
   governance
+  /// A resident's requests to the compound's service partners (ADR 0060).
+  partners
 
   @@map("notification_category")
 }
@@ -8500,4 +8503,321 @@ model EventChildRegistration {
   @@index([tenantId, memberId], map: "event_child_registrations_member_idx")
   @@index([tenantId, registeredById], map: "event_child_registrations_by_idx")
   @@map("event_child_registrations")
+}
+
+// ============================================================================
+// PARTNERS (ADR 0060)
+// ============================================================================
+
+/// A compound's partner settings (ADR 0060): one row per compound,
+/// provisioned with it. Ranges in partner_settings_ranges.
+model PartnerSettings {
+  tenantId        String   @id @map("tenant_id") @db.Uuid
+  /// A partner is "new" this many days after it was listed.
+  newDays         Int      @default(30) @map("new_days")
+  /// "Open late tonight" means open after this local minute.
+  lateFromMinute  Int      @default(1320) @map("late_from_minute")
+  maxLiveRequests Int      @default(5) @map("max_live_requests")
+  ratingDays      Int      @default(14) @map("rating_days")
+  complaintDays   Int      @default(14) @map("complaint_days")
+  /// A desk link stops working this many days after it was made.
+  deskLinkDays    Int      @default(90) @map("desk_link_days")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("partner_settings")
+}
+
+/// A compound's named sub-category under one of the closed categories
+/// (PARTNER_CATEGORIES). Its key and category never change (trigger);
+/// retired with `active`, never deleted.
+model PartnerSubcategory {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  category  String
+  key       String
+  nameEn    String   @map("name_en")
+  nameAr    String   @map("name_ar")
+  active    Boolean  @default(true)
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  services   PartnerService[]
+  priceItems PartnerPriceItem[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, id, category], map: "partner_subcategories_tenant_id_id_category_key")
+  @@unique([tenantId, key], map: "partner_subcategories_key_key")
+  @@map("partner_subcategories")
+}
+
+/// An external service partner the management lists (ADR 0060). The
+/// business phone is the one contact residents see; the notify email is
+/// the staff's alone. `serviceBuildings` empty is the whole compound. Never
+/// deleted (trigger): suspended with a reason code, reinstated.
+model Partner {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  nameEn           String    @map("name_en")
+  nameAr           String    @map("name_ar")
+  descriptionEn    String?   @map("description_en")
+  descriptionAr    String?   @map("description_ar")
+  businessPhone    String    @map("business_phone")
+  notifyEmail      String?   @map("notify_email")
+  serviceBuildings String[]  @default([]) @map("service_buildings")
+  homeVisit        Boolean   @default(false) @map("home_visit")
+  /// active | suspended
+  status           String    @default("active")
+  /// REASON_CODES.partnerSuspend
+  suspendedReason  String?   @map("suspended_reason")
+  suspendedAt      DateTime? @map("suspended_at") @db.Timestamptz(3)
+  suspendedById    String?   @map("suspended_by_account_id") @db.Uuid
+  listedAt         DateTime  @map("listed_at") @db.Timestamptz(3)
+  createdById      String    @map("created_by_account_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  services   PartnerService[]
+  hours      PartnerHours[]
+  priceItems PartnerPriceItem[]
+  favourites PartnerFavourite[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, listedAt(sort: Desc), id], map: "partners_listed_idx")
+  @@map("partners")
+}
+
+/// What a partner does: a category, and optionally one of its named
+/// sub-categories. Replaced as a whole under the partner's row lock. Unique
+/// per partner, category and sub-category, NULLS NOT DISTINCT
+/// (partner_services_once_key, in the migration).
+model PartnerService {
+  id            String  @id @db.Uuid
+  tenantId      String  @map("tenant_id") @db.Uuid
+  partnerId     String  @map("partner_id") @db.Uuid
+  category      String
+  subcategoryId String? @map("subcategory_id") @db.Uuid
+
+  partner     Partner             @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  subcategory PartnerSubcategory? @relation(fields: [tenantId, subcategoryId, category], references: [tenantId, id, category], onDelete: Restrict, onUpdate: Restrict, map: "partner_services_subcategory_fkey")
+
+  @@index([tenantId, category, partnerId], map: "partner_services_category_idx")
+  @@map("partner_services")
+}
+
+/// A partner's weekly hours in the compound's time zone (weekday 0 is
+/// Sunday; minutes after local midnight). Replaced as a whole.
+model PartnerHours {
+  id          String @id @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+  partnerId   String @map("partner_id") @db.Uuid
+  weekday     Int
+  startMinute Int    @map("start_minute")
+  endMinute   Int    @map("end_minute")
+
+  partner Partner @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, partnerId, weekday, startMinute], map: "partner_hours_window_key")
+  @@map("partner_hours")
+}
+
+/// A line of a partner's announced price list, in EGP. Replaced as a whole;
+/// a request keeps its own copy of what it named.
+model PartnerPriceItem {
+  id            String  @id @db.Uuid
+  tenantId      String  @map("tenant_id") @db.Uuid
+  partnerId     String  @map("partner_id") @db.Uuid
+  subcategoryId String? @map("subcategory_id") @db.Uuid
+  nameEn        String  @map("name_en")
+  nameAr        String  @map("name_ar")
+  price         Decimal @db.Decimal(10, 2)
+  /// PARTNER_PRICE_UNITS
+  unit          String
+  position      Int
+
+  partner     Partner             @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  subcategory PartnerSubcategory? @relation(fields: [tenantId, subcategoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, partnerId, position], map: "partner_price_items_partner_idx")
+  @@map("partner_price_items")
+}
+
+/// A resident's favourite partner: the account's own.
+model PartnerFavourite {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  partnerId String   @map("partner_id") @db.Uuid
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  partner Partner @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, accountId, partnerId])
+  @@index([tenantId, partnerId, accountId], map: "partner_favourites_partner_idx")
+  @@map("partner_favourites")
+}
+
+/// The compound's counter of partner requests (SR-000123), taken under the
+/// row's lock, last in the transaction.
+model PartnerRequestCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+
+  @@map("partner_request_counters")
+}
+
+/// A resident's request to a partner (ADR 0060): what it asked never
+/// changes (trigger); it moves forward only. LIVE = pending, proposed,
+/// accepted. The note is the requester's words, cleared by an erasure.
+model PartnerRequest {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  number             Int
+  partnerId          String    @map("partner_id") @db.Uuid
+  unitId             String    @map("unit_id") @db.Uuid
+  requesterId        String    @map("requester_account_id") @db.Uuid
+  /// PARTNER_CATEGORIES
+  category           String
+  subcategoryId      String?   @map("subcategory_id") @db.Uuid
+  askedStartsAt      DateTime  @map("asked_starts_at") @db.Timestamptz(3)
+  askedEndsAt        DateTime  @map("asked_ends_at") @db.Timestamptz(3)
+  note               String?
+  noteClearedAt      DateTime? @map("note_cleared_at") @db.Timestamptz(3)
+  gatePass           Boolean   @map("gate_pass")
+  /// pending | proposed | accepted | declined | cancelled | expired | done | partner_no_show | lapsed
+  status             String
+  proposedStartsAt   DateTime? @map("proposed_starts_at") @db.Timestamptz(3)
+  proposedEndsAt     DateTime? @map("proposed_ends_at") @db.Timestamptz(3)
+  agreedStartsAt     DateTime? @map("agreed_starts_at") @db.Timestamptz(3)
+  agreedEndsAt       DateTime? @map("agreed_ends_at") @db.Timestamptz(3)
+  staffCount         Int?      @map("staff_count")
+  acceptedAt         DateTime? @map("accepted_at") @db.Timestamptz(3)
+  closedAt           DateTime? @map("closed_at") @db.Timestamptz(3)
+  /// resident | partner | system
+  closedBy           String?   @map("closed_by")
+  /// REASON_CODES.partnerRequest*
+  closeReason        String?   @map("close_reason")
+  lastActivityAt     DateTime  @map("last_activity_at") @db.Timestamptz(3)
+  /// The gate's one-time pass for the partner's staff (ADR 0060), once.
+  passId             String?   @map("pass_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  items  PartnerRequestItem[]
+  events PartnerRequestEvent[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "partner_requests_number_key")
+  @@unique([tenantId, passId], map: "partner_requests_pass_key")
+  @@index([tenantId, requesterId, lastActivityAt(sort: Desc), id], map: "partner_requests_requester_idx")
+  @@index([tenantId, partnerId, status, askedStartsAt], map: "partner_requests_partner_idx")
+  @@index([tenantId, createdAt(sort: Desc), id], map: "partner_requests_queue_idx")
+  @@map("partner_requests")
+}
+
+/// An announced price line a request named, copied as it was. Append-only.
+model PartnerRequestItem {
+  id        String  @id @db.Uuid
+  tenantId  String  @map("tenant_id") @db.Uuid
+  requestId String  @map("request_id") @db.Uuid
+  nameEn    String  @map("name_en")
+  nameAr    String  @map("name_ar")
+  price     Decimal @db.Decimal(10, 2)
+  unit      String
+  quantity  Int
+  position  Int
+
+  request PartnerRequest @relation(fields: [tenantId, requestId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "partner_request_items_request_fkey")
+
+  @@unique([tenantId, requestId, position], map: "partner_request_items_position_key")
+  @@map("partner_request_items")
+}
+
+/// A step of a request's history: who took it, a reason's code, the
+/// window it named. Append-only; codes and times only.
+model PartnerRequestEvent {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  requestId      String    @map("request_id") @db.Uuid
+  kind           String
+  /// resident | partner_desk | relay | system
+  actor          String
+  actorAccountId String?   @map("actor_account_id") @db.Uuid
+  reasonCode     String?   @map("reason_code")
+  startsAt       DateTime? @map("starts_at") @db.Timestamptz(3)
+  endsAt         DateTime? @map("ends_at") @db.Timestamptz(3)
+  at             DateTime  @db.Timestamptz(3)
+
+  request PartnerRequest @relation(fields: [tenantId, requestId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "partner_request_events_request_fkey")
+
+  @@index([tenantId, requestId, at, id], map: "partner_request_events_request_idx")
+  @@map("partner_request_events")
+}
+
+/// GLOBAL (no RLS): a partner's desk link (ADR 0060), resolved before any
+/// compound is known. SHA-256 of the token with a domain label, never the
+/// token; one live per partner; revoked once; stops at `expiresAt`.
+model PartnerDeskLink {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  partnerId     String    @map("partner_id") @db.Uuid
+  tokenHash     String    @unique(map: "partner_desk_links_token_hash_key") @map("token_hash") @db.Char(64)
+  createdById   String    @map("created_by_account_id") @db.Uuid
+  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(3)
+  revokedById   String?   @map("revoked_by_account_id") @db.Uuid
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([tenantId, partnerId, createdAt(sort: Desc)], map: "partner_desk_links_partner_idx")
+  @@map("partner_desk_links")
+}
+
+/// A requester's rating of a request done (ADR 0060): once (the key),
+/// never changed but for its comment cleared by an erasure.
+model PartnerRating {
+  tenantId         String    @map("tenant_id") @db.Uuid
+  requestId        String    @map("request_id") @db.Uuid
+  partnerId        String    @map("partner_id") @db.Uuid
+  raterAccountId   String    @map("rater_account_id") @db.Uuid
+  stars            Int
+  comment          String?
+  commentClearedAt DateTime? @map("comment_cleared_at") @db.Timestamptz(3)
+  createdAt        DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@id([tenantId, requestId])
+  @@index([tenantId, partnerId, createdAt(sort: Desc), requestId], map: "partner_ratings_partner_idx")
+  @@map("partner_ratings")
+}
+
+/// A complaint against a partner about one request (ADR 0060): a
+/// management request on `partner_service`, linked here with what it asks
+/// and the management's decision, once. No money moves here.
+model PartnerComplaint {
+  id                   String    @id @db.Uuid
+  tenantId             String    @map("tenant_id") @db.Uuid
+  requestId            String    @map("request_id") @db.Uuid
+  partnerId            String    @map("partner_id") @db.Uuid
+  complainantId        String    @map("complainant_account_id") @db.Uuid
+  managementRequestId  String    @map("management_request_id") @db.Uuid
+  /// REASON_CODES.partnerComplaint
+  reason               String
+  /// REASON_CODES.partnerCompensationAsk
+  compensationAsk      String    @map("compensation_ask")
+  requestedAmount      Decimal?  @map("requested_amount") @db.Decimal(10, 2)
+  /// upheld | not_upheld
+  outcome              String?
+  /// REASON_CODES.partnerCompensationDecision
+  compensation         String?
+  decidedById          String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt            DateTime? @map("decided_at") @db.Timestamptz(3)
+  createdAt            DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, requestId], map: "partner_complaints_request_key")
+  @@unique([tenantId, managementRequestId], map: "partner_complaints_management_request_key")
+  @@index([tenantId, createdAt(sort: Desc), id], map: "partner_complaints_queue_idx")
+  @@index([tenantId, partnerId, createdAt(sort: Desc)], map: "partner_complaints_partner_idx")
+  @@map("partner_complaints")
 }

@@ -1,0 +1,240 @@
+import { newId } from '../../src/core/common/uuid';
+import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
+
+/**
+ * Raw rows of the partners tables (ADR 0060), written straight through the
+ * tenant client: for the database-level suites (RLS isolation, schema),
+ * which test what the tables refuse whatever the services would do.
+ */
+
+/** A sub-category under `home_services`, with a fresh key. */
+export async function subcategoryRow(
+  tx: TenantTxClient,
+  tenantId: string,
+  category = 'home_services',
+): Promise<string> {
+  const id = newId();
+  await tx.partnerSubcategory.create({
+    data: {
+      id,
+      tenantId,
+      category,
+      key: `k_${id.replace(/-/g, '').slice(-12)}`,
+      nameEn: 'Cleaning',
+      nameAr: 'تنظيف',
+    },
+  });
+  return id;
+}
+
+/** An active partner, created by `createdById`. */
+export async function partnerRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.partner.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      nameEn: 'Clean Co',
+      nameAr: 'كلين',
+      businessPhone: '+20225550100',
+      listedAt: new Date(),
+      createdById: input.createdById,
+    },
+  });
+  return id;
+}
+
+/** What a partner does: a category and (optionally) a sub-category. */
+export async function partnerServiceRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    partnerId: string;
+    category?: string;
+    subcategoryId?: string | null;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerService.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      partnerId: input.partnerId,
+      category: input.category ?? 'home_services',
+      subcategoryId: input.subcategoryId ?? null,
+    },
+  });
+  return id;
+}
+
+/** A weekly window of a partner, Monday 09:00–10:00. */
+export async function partnerHoursRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; partnerId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerHours.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      partnerId: input.partnerId,
+      weekday: 1,
+      startMinute: 540,
+      endMinute: 600,
+    },
+  });
+  return id;
+}
+
+/** A price line: a visit fee of 150 EGP. */
+export async function priceItemRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; partnerId: string; subcategoryId?: string },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerPriceItem.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      partnerId: input.partnerId,
+      subcategoryId: input.subcategoryId ?? null,
+      nameEn: 'Visit',
+      nameAr: 'زيارة',
+      price: '150.00',
+      unit: 'visit_fee',
+      position: 0,
+    },
+  });
+  return id;
+}
+
+/** A partner among an account's favourites. */
+export async function favouriteRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; accountId: string; partnerId: string },
+): Promise<string> {
+  await tx.partnerFavourite.create({
+    data: { ...input, createdAt: new Date() },
+  });
+  return input.partnerId;
+}
+
+let nextNumber = 1_000_000;
+
+/** A pending request for a cleaning, two days ahead, two hours long. */
+export async function requestRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    partnerId: string;
+    unitId: string;
+    requesterId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  const start = new Date(Date.now() + 2 * 86_400_000);
+  await tx.partnerRequest.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      number: nextNumber++,
+      partnerId: input.partnerId,
+      unitId: input.unitId,
+      requesterId: input.requesterId,
+      category: 'home_services',
+      askedStartsAt: start,
+      askedEndsAt: new Date(start.getTime() + 2 * 3_600_000),
+      note: 'Second floor',
+      gatePass: true,
+      status: 'pending',
+      lastActivityAt: new Date(),
+    },
+  });
+  return id;
+}
+
+/** A price line a request named. */
+export async function requestItemRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; requestId: string; position?: number },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerRequestItem.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      requestId: input.requestId,
+      nameEn: 'Visit',
+      nameAr: 'زيارة',
+      price: '150.00',
+      unit: 'visit_fee',
+      quantity: 1,
+      position: input.position ?? 0,
+    },
+  });
+  return id;
+}
+
+/** A step of a request's history, by the resident. */
+export async function requestEventRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; requestId: string; actorAccountId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerRequestEvent.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      requestId: input.requestId,
+      kind: 'created',
+      actor: 'resident',
+      actorAccountId: input.actorAccountId,
+      at: new Date(),
+    },
+  });
+  return id;
+}
+
+/** A rating of a request, four stars. */
+export async function ratingRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    requestId: string;
+    partnerId: string;
+    raterAccountId: string;
+  },
+): Promise<string> {
+  await tx.partnerRating.create({
+    data: { ...input, stars: 4, comment: 'On time', createdAt: new Date() },
+  });
+  return input.requestId;
+}
+
+/** A complaint about a request, linked to a management request. */
+export async function complaintRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    requestId: string;
+    partnerId: string;
+    complainantId: string;
+    managementRequestId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.partnerComplaint.create({
+    data: {
+      id,
+      ...input,
+      reason: 'late',
+      compensationAsk: 'refund',
+      requestedAmount: '100.00',
+      createdAt: new Date(),
+    },
+  });
+  return id;
+}

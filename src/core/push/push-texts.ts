@@ -2062,6 +2062,96 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'سجّل أحد الحراس جهازاً للعمل على البوابة دون اتصال. ألغِه إن لم تتعرف عليه.',
     },
   },
+  'partner_request.accepted': {
+    en: {
+      title: 'Request accepted',
+      body: 'The partner accepted your service request.',
+    },
+    ar: {
+      title: 'تم قبول الطلب',
+      body: 'قبل مقدم الخدمة طلبك.',
+    },
+  },
+  'partner_request.declined': {
+    en: {
+      title: 'Request declined',
+      body: 'The partner could not take your service request.',
+    },
+    ar: {
+      title: 'تم رفض الطلب',
+      body: 'لم يتمكن مقدم الخدمة من قبول طلبك.',
+    },
+  },
+  'partner_request.proposed': {
+    en: {
+      title: 'Another time proposed',
+      body: 'The partner proposed another time for your request. Accept or decline it.',
+    },
+    ar: {
+      title: 'موعد آخر مقترح',
+      body: 'اقترح مقدم الخدمة موعداً آخر لطلبك. اقبله أو ارفضه.',
+    },
+  },
+  'partner_request.cancelled': {
+    en: {
+      title: 'Request cancelled',
+      body: 'Your service request was cancelled.',
+    },
+    ar: {
+      title: 'تم إلغاء الطلب',
+      body: 'أُلغي طلب الخدمة الخاص بك.',
+    },
+  },
+  'partner_request.done': {
+    en: {
+      title: 'Service done',
+      body: 'The partner marked your request done. How did it go?',
+    },
+    ar: {
+      title: 'تمت الخدمة',
+      body: 'أشار مقدم الخدمة إلى إتمام طلبك. كيف كانت الخدمة؟',
+    },
+  },
+  'partner_request.expired': {
+    en: {
+      title: 'Request expired',
+      body: 'Nobody accepted your service request in time.',
+    },
+    ar: {
+      title: 'انتهت صلاحية الطلب',
+      body: 'لم يُقبل طلب الخدمة الخاص بك في الوقت المناسب.',
+    },
+  },
+  'partner_request.awaiting_relay': {
+    en: {
+      title: 'A request to relay',
+      body: 'A resident asked a partner without a desk link. Relay the request.',
+    },
+    ar: {
+      title: 'طلب للتحويل',
+      body: 'طلب أحد السكان خدمة من مقدم خدمة بلا رابط مكتب. حوّل الطلب إليه.',
+    },
+  },
+  'partner_complaint.decided': {
+    en: {
+      title: 'Your complaint was decided',
+      body: 'The management decided your complaint about a service partner.',
+    },
+    ar: {
+      title: 'تم البت في شكواك',
+      body: 'بتّت الإدارة في شكواك من مقدم خدمة.',
+    },
+  },
+  'partner.suspended': {
+    en: {
+      title: 'A service partner is unavailable',
+      body: 'A partner you asked or follow was suspended. See the alternatives.',
+    },
+    ar: {
+      title: 'مقدم خدمة غير متاح',
+      body: 'أُوقف مقدم خدمة طلبت منه أو تتابعه. اطّلع على البدائل.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

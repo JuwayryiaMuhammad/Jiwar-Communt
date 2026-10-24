@@ -44,3 +44,9 @@ test('a receipt code is 22 base64url characters', () => {
   assert.equal(parseFragment(`#${code.slice(1)}`, 'receipt'), null);
   assert.equal(parseFragment(`#${VISITOR}`, 'receipt'), null);
 });
+
+test('a desk token is 43 base64url characters (ADR 0060)', () => {
+  assert.equal(parseFragment(`#${VISITOR}`, 'desk'), VISITOR);
+  assert.equal(parseFragment(`#${VISITOR}=`, 'desk'), null);
+  assert.equal(parseFragment(`#${ACTION}`, 'desk'), null);
+});

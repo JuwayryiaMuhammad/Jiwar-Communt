@@ -7,3 +7,5 @@ export {
   ResidentRequestSummary,
   type RequestSummary,
 } from './feed/resident-request-summary';
+// What the partners domain opens: a complaint against a partner (ADR 0060).
+export { ManagementPartnersPort, type OpenedRequest } from './partners-port';

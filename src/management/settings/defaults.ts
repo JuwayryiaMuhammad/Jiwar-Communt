@@ -53,6 +53,24 @@ export const RELEASE_TOPIC: DefaultTopic = {
   targetResponseHours: 48,
 };
 
+/**
+ * Topics the system opens requests on, seeded with every compound beside
+ * the defaults and never named by a resident: a complaint against a
+ * partner is a management request on `partner_service` (ADR 0060). The
+ * manager may rename it or set its target; retiring it hides it from the
+ * residents' list, and complaints still open on it. The migration
+ * 20261112090500_partner_ratings_complaints backfills existing compounds;
+ * a unit test keeps the two in step.
+ */
+export const SYSTEM_TOPICS: readonly DefaultTopic[] = [
+  {
+    key: 'partner_service',
+    nameAr: 'خدمات مقدمي الخدمة',
+    nameEn: 'Partner services',
+    targetResponseHours: 48,
+  },
+];
+
 export interface OfficeWindow {
   /** 0 is Sunday. */
   weekday: number;

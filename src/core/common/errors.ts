@@ -1153,6 +1153,74 @@ export const ErrorCode = {
   GATE_OFFLINE_BATCH_NOT_QUARANTINED: 'GATE_OFFLINE_BATCH_NOT_QUARANTINED',
   /** The quarantined batch was decided already (409). */
   GATE_OFFLINE_BATCH_REVIEWED: 'GATE_OFFLINE_BATCH_REVIEWED',
+  // Partners (ADR 0060)
+  /**
+   * Unknown or another compound's partner. A suspended one is still read,
+   * saying so, with its alternatives.
+   */
+  PARTNER_NOT_FOUND: 'PARTNER_NOT_FOUND',
+  /** Unknown, or another compound's sub-category. */
+  PARTNER_SUBCATEGORY_NOT_FOUND: 'PARTNER_SUBCATEGORY_NOT_FOUND',
+  /** The compound lists params.max partners already (409). */
+  PARTNER_LIMIT_REACHED: 'PARTNER_LIMIT_REACHED',
+  /** The compound names params.max sub-categories already (409). */
+  PARTNER_SUBCATEGORY_LIMIT_REACHED: 'PARTNER_SUBCATEGORY_LIMIT_REACHED',
+  /** The account keeps params.max favourite partners already (409). */
+  PARTNER_FAVOURITES_LIMIT_REACHED: 'PARTNER_FAVOURITES_LIMIT_REACHED',
+  /**
+   * The account has not granted params.code at its current version (409):
+   * grant it, then ask again (ADR 0036, 0060).
+   */
+  CONSENT_REQUIRED: 'CONSENT_REQUIRED',
+  /** The partner is suspended: it takes no request (409). */
+  PARTNER_SUSPENDED: 'PARTNER_SUSPENDED',
+  /** The partner does not serve the unit's building (409). */
+  PARTNER_OUT_OF_AREA: 'PARTNER_OUT_OF_AREA',
+  /**
+   * Unknown or another compound's request; for a resident also one they
+   * did not make; on a desk also another partner's: one answer.
+   */
+  PARTNER_REQUEST_NOT_FOUND: 'PARTNER_REQUEST_NOT_FOUND',
+  /** The caller may not invite visitors to the unit, so may not ask a partner there (403). */
+  PARTNER_REQUEST_NOT_ALLOWED: 'PARTNER_REQUEST_NOT_ALLOWED',
+  /** The account has params.max requests open already (409). */
+  PARTNER_REQUEST_LIMIT_REACHED: 'PARTNER_REQUEST_LIMIT_REACHED',
+  /** Its status does not take the action (409, params.status). */
+  PARTNER_REQUEST_INVALID_TRANSITION: 'PARTNER_REQUEST_INVALID_TRANSITION',
+  /** The window's start (or, to cancel, its end) has passed (409). */
+  PARTNER_REQUEST_WINDOW_PASSED: 'PARTNER_REQUEST_WINDOW_PASSED',
+  /** Too early: the window has not started (done) or not ended (no-show) (409). */
+  PARTNER_REQUEST_TOO_EARLY: 'PARTNER_REQUEST_TOO_EARLY',
+  /**
+   * The requester withdrew the category's consent: the partner sees nothing
+   * of the request and acts on none of it (409).
+   */
+  PARTNER_REQUEST_CONSENT_WITHDRAWN: 'PARTNER_REQUEST_CONSENT_WITHDRAWN',
+  /**
+   * Every desk link that does not open a desk: unknown, malformed,
+   * revoked, expired, a suspended partner's or a suspended compound's (404).
+   */
+  PARTNER_DESK_NOT_FOUND: 'PARTNER_DESK_NOT_FOUND',
+  /** Rated already: a request is rated once (409). */
+  PARTNER_REQUEST_ALREADY_RATED: 'PARTNER_REQUEST_ALREADY_RATED',
+  /**
+   * Not a request this may be asked of (409, params.status): a rating needs
+   * one done; a complaint one done, not come, lapsed or cancelled by the
+   * partner.
+   */
+  PARTNER_REQUEST_NOT_CLOSED: 'PARTNER_REQUEST_NOT_CLOSED',
+  /** Too late: rated within params.days of done, complained within params.days of its end (409). */
+  PARTNER_REQUEST_WINDOW_CLOSED: 'PARTNER_REQUEST_WINDOW_CLOSED',
+  /** A complaint about this request exists already (409). */
+  PARTNER_COMPLAINT_EXISTS: 'PARTNER_COMPLAINT_EXISTS',
+  /** Unknown, or another compound's; for a resident also not theirs. */
+  PARTNER_COMPLAINT_NOT_FOUND: 'PARTNER_COMPLAINT_NOT_FOUND',
+  /** Decided already: a complaint is decided once (409). */
+  PARTNER_COMPLAINT_DECIDED: 'PARTNER_COMPLAINT_DECIDED',
+  /** Suspended already (409). */
+  PARTNER_ALREADY_SUSPENDED: 'PARTNER_ALREADY_SUSPENDED',
+  /** Not suspended: nothing to reinstate (409). */
+  PARTNER_NOT_SUSPENDED: 'PARTNER_NOT_SUSPENDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1356,6 +1424,23 @@ export const FieldErrorCode = {
   ESCORT_NOT_ELIGIBLE: 'ESCORT_NOT_ELIGIBLE',
   /** A recording longer than the gate allows (params.maxSeconds; ADR 0056). */
   MEDIA_TOO_LONG: 'MEDIA_TOO_LONG',
+  // partners (ADR 0060)
+  /** Not a sub-category of this compound under that category. */
+  PARTNER_SUBCATEGORY_NOT_AVAILABLE: 'PARTNER_SUBCATEGORY_NOT_AVAILABLE',
+  /** Not a category or sub-category the partner offers. */
+  PARTNER_SERVICE_NOT_OFFERED: 'PARTNER_SERVICE_NOT_OFFERED',
+  /** A window starts at least params.minutes from now. */
+  PARTNER_WINDOW_TOO_SOON: 'PARTNER_WINDOW_TOO_SOON',
+  /** A window starts within params.days. */
+  PARTNER_WINDOW_TOO_FAR: 'PARTNER_WINDOW_TOO_FAR',
+  /** A window lasts params.min to params.max minutes. */
+  PARTNER_WINDOW_LENGTH: 'PARTNER_WINDOW_LENGTH',
+  /** Not one of the partner's announced price lines. */
+  PARTNER_PRICE_ITEM_NOT_AVAILABLE: 'PARTNER_PRICE_ITEM_NOT_AVAILABLE',
+  /** An amount only with a refund or damages asked. */
+  PARTNER_AMOUNT_NOT_ASKED: 'PARTNER_AMOUNT_NOT_ASKED',
+  /** A complaint not upheld arranges no compensation. */
+  PARTNER_COMPENSATION_NOT_UPHELD: 'PARTNER_COMPENSATION_NOT_UPHELD',
 } as const;
 
 export type FieldErrorCode =

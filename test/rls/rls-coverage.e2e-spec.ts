@@ -23,6 +23,9 @@ const GLOBAL_WITH_TENANT_ID = [
   'registration_links',
   // Resolves a visitor's link before the tenant is known (ADR 0030); no PII.
   'visitor_pass_links',
+  // Resolves a partner's desk link before the tenant is known (ADR 0060):
+  // a SHA-256 with a domain label and the partner's id; no PII.
+  'partner_desk_links',
   // Resolves an outside escort's pickup link before the tenant is known
   // (ADR 0054); no PII.
   'child_pickup_links',

@@ -524,6 +524,8 @@ describe('API v0 — PII leak scan', () => {
       incident.accessCode,
       invite.token,
       link.token,
+      // A partner's desk link (ADR 0060): shown once, never read back.
+      w.aDeskToken,
       'PII-NOTE-card',
       'PII-NOTE-flag',
       'PII-NOTE-hold',
@@ -1496,6 +1498,13 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0049: the requester's and the primary's; the last four nowhere.
       '/units/{unitId}/permits': unit.id,
       '/permits/{id}': piiPermit,
+      // ADR 0060: A's partner as each reader sees it; B's request and
+      // complaint, not found for everyone of A.
+      '/partners/{id}': w.aPartnerId,
+      '/staff/partners/{id}': w.aPartnerId,
+      '/partner-requests/{id}': w.bPartnerRequestId,
+      '/staff/partner-requests/{id}': w.bPartnerRequestId,
+      '/staff/partner-complaints/{id}': w.bComplaintIdOfPartner,
       '/staff/unit-permits/{id}': piiPermit,
       '/gate/unit-permits/{id}': piiPermit,
       '/staff/security/handovers/{id}': piiHandover,
@@ -2551,6 +2560,10 @@ describe('API v0 — PII leak scan', () => {
       '/public/receipts/lookup',
       // ADR 0054: an outside escort's page names nobody (test/children/escorts).
       '/public/child-pickups/lookup',
+      // ADR 0060: a partner's desk shows a unit's code, a first name, the
+      // window, the note and the lines while the consent holds, never a
+      // phone, a full name or an id (test/partners/requests, privacy).
+      '/public/partner-desk/lookup',
     ]);
     const ids = [...people.map((p) => p.id), ...Object.values(a.ids)].filter(
       Boolean,

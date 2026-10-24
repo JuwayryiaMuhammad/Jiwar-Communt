@@ -1444,6 +1444,94 @@ export const AUDIT_ACTIONS = {
   },
   // metadata: kind, reviewCode.
   'gate_offline_flag.reviewed': { log: 'tenant', target: 'gate_offline_flag' },
+  // Partners (ADR 0060). changes: standing, area and flags by value, the
+  // services as `category` or `category:<subcategoryId>` codes; names,
+  // descriptions, the business phone and the notify email as
+  // `{ changed: true }` only.
+  'partner.created': {
+    log: 'tenant',
+    target: 'partner',
+    sensitive: [
+      'nameEn',
+      'nameAr',
+      'descriptionEn',
+      'descriptionAr',
+      'businessPhone',
+      'notifyEmail',
+    ],
+  },
+  'partner.updated': {
+    log: 'tenant',
+    target: 'partner',
+    sensitive: [
+      'nameEn',
+      'nameAr',
+      'descriptionEn',
+      'descriptionAr',
+      'businessPhone',
+      'notifyEmail',
+    ],
+  },
+  'partner.services_changed': { log: 'tenant', target: 'partner' },
+  // changes: windows as `weekday:start-end` codes.
+  'partner.hours_changed': { log: 'tenant', target: 'partner' },
+  // changes: the lines as `unit:price` codes, in order; never their names.
+  'partner.prices_changed': { log: 'tenant', target: 'partner' },
+  // changes: category, key, state and order by value; names as changed.
+  'partner_subcategory.created': {
+    log: 'tenant',
+    target: 'partner_subcategory',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  'partner_subcategory.updated': {
+    log: 'tenant',
+    target: 'partner_subcategory',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  // changes: the settings by value.
+  'partner.settings_changed': { log: 'tenant', target: 'tenant' },
+  // A request to a partner (ADR 0060). metadata: number, partnerId, unitId,
+  // category, subcategoryId, gatePass, itemCount, note (whether there is
+  // one), the window. Never the note's words or anyone's name.
+  'partner_request.created': { log: 'tenant', target: 'partner_request' },
+  // Its moves. metadata: number, partnerId, unitId, from, to, via
+  // (resident, partner_desk, relay or system), deskLinkId on the desk,
+  // reasonCode, the window and staffCount where the move names them. A
+  // desk's move is the system's (the desk is no account); the relay's is
+  // the staff member's.
+  'partner_request.accepted': { log: 'tenant', target: 'partner_request' },
+  'partner_request.declined': { log: 'tenant', target: 'partner_request' },
+  'partner_request.proposed': { log: 'tenant', target: 'partner_request' },
+  'partner_request.proposal_accepted': {
+    log: 'tenant',
+    target: 'partner_request',
+  },
+  'partner_request.cancelled': { log: 'tenant', target: 'partner_request' },
+  'partner_request.done': { log: 'tenant', target: 'partner_request' },
+  'partner_request.no_show': { log: 'tenant', target: 'partner_request' },
+  'partner_request.expired': { log: 'tenant', target: 'partner_request' },
+  'partner_request.lapsed': { log: 'tenant', target: 'partner_request' },
+  // A desk opened (the system). metadata: deskLinkId, requestCount,
+  // withheldCount (requests whose consent was withdrawn).
+  'partner_desk.looked_up': { log: 'tenant', target: 'partner' },
+  // A desk link made or revoked. metadata: deskLinkId, expiresAt,
+  // revokedCount. Never the token or its hash.
+  'partner_desk_link.created': { log: 'tenant', target: 'partner' },
+  'partner_desk_link.revoked': { log: 'tenant', target: 'partner' },
+  // A rating (that it was, never how). metadata: number, partnerId,
+  // comment (whether there is one).
+  'partner_request.rated': { log: 'tenant', target: 'partner_request' },
+  // A complaint against a partner (a management request on
+  // `partner_service`). metadata: requestId, requestNumber, partnerId,
+  // managementRequestId, reason, compensationAsk, requestedAmount. Never
+  // its words: they are the management request's first message.
+  'partner_complaint.created': { log: 'tenant', target: 'partner_complaint' },
+  // metadata: requestId, partnerId, outcome, compensation.
+  'partner_complaint.decided': { log: 'tenant', target: 'partner_complaint' },
+  // metadata: reasonCode (partnerSuspend), cancelledCount, notifiedCount.
+  'partner.suspended': { log: 'tenant', target: 'partner' },
+  // metadata: reasonCode (the suspension's it ends).
+  'partner.reinstated': { log: 'tenant', target: 'partner' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

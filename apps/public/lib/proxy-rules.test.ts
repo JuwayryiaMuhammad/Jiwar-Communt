@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { backendPath, clientIp, forwardedHeaders, isJson } from './proxy-rules.ts';
 
-test('only the ten public routes are proxied; never the Paymob webhook', () => {
+test('only the public routes are proxied; never the Paymob webhook', () => {
   assert.equal(backendPath(['public', 'not-me']), '/api/v1/public/not-me');
   assert.equal(backendPath(['public', 'visitor-passes', 'lookup']), '/api/v1/public/visitor-passes/lookup');
   assert.equal(backendPath(['registrations', 'complete']), '/api/v1/registrations/complete');
   assert.equal(backendPath(['public', 'receipts', 'lookup']), '/api/v1/public/receipts/lookup');
+  assert.equal(backendPath(['public', 'partner-desk', 'lookup']), '/api/v1/public/partner-desk/lookup');
   for (const path of [
     [],
     ['auth', 'request-code'],
@@ -70,4 +71,19 @@ test('only content-type, accept-language and the client address go upstream', ()
     'accept-language': 'en',
     'x-forwarded-for': '203.0.113.7',
   });
+});
+
+test('a desk action is one request id and one of five verbs (ADR 0060)', () => {
+  const id = '0190a1b2-0000-7000-8000-000000000001';
+  for (const verb of ['accept', 'decline', 'propose', 'done', 'cancel'])
+    assert.equal(backendPath(['public', 'partner-desk', 'requests', id, verb]), `/api/v1/public/partner-desk/requests/${id}/${verb}`);
+  for (const path of [
+    ['public', 'partner-desk', 'requests', id, 'delete'],
+    ['public', 'partner-desk', 'requests', 'not-an-id', 'accept'],
+    ['public', 'partner-desk', 'requests', id.toUpperCase(), 'accept'],
+    ['public', 'partner-desk', 'requests', id, 'accept', 'x'],
+    ['public', 'partner-desk', 'requests', id],
+    ['public', 'partner-desk', 'requests', '..', 'lookup'],
+  ])
+    assert.equal(backendPath(path), null, path.join('/'));
 });

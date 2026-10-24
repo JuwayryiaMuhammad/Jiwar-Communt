@@ -588,4 +588,32 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_offline_actions_material_entry_key: null,
   gate_offline_actions_patrol_scan_key: null,
   gate_offline_actions_child_pickup_key: null,
+  // Partners (ADR 0060): technical keys that back composite foreign keys.
+  partner_subcategories_tenant_id_id_key: null,
+  partner_subcategories_tenant_id_id_category_key: null,
+  partners_tenant_id_id_key: null,
+  partner_price_items_tenant_id_id_key: null,
+  // A sub-category's key names it in the compound.
+  partner_subcategories_key_key: ['key'],
+  // Checked first by the service (DUPLICATE_VALUE on the pair; windows
+  // never overlap), under the partner's row lock: a violation is a race.
+  partner_services_once_key: null,
+  partner_hours_window_key: null,
+  // Requests to partners (ADR 0060): the number from the counter under its
+  // lock; a line's position and a desk link's hash are the service's own.
+  partner_requests_tenant_id_id_key: null,
+  partner_requests_number_key: null,
+  partner_request_items_position_key: null,
+  partner_desk_links_token_hash_key: null,
+  // One live link per partner: a new one revokes the one before under the
+  // partner's row lock, so a violation is a race.
+  partner_desk_links_one_live: null,
+  // A pass is one request's, set once by the service under its lock.
+  partner_requests_pass_key: null,
+  // Complaints (ADR 0060): one per request, checked first under the
+  // request's lock (PARTNER_COMPLAINT_EXISTS); its management request is
+  // opened in the same transaction.
+  partner_complaints_tenant_id_id_key: null,
+  partner_complaints_request_key: null,
+  partner_complaints_management_request_key: null,
 };

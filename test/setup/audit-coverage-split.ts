@@ -617,3 +617,36 @@ export const OFFLINE_COVERAGE: readonly string[] = [
   'gate_offline_flag.reviewed',
   'gate_offline_batch.reviewed',
 ];
+
+/**
+ * Partners (ADR 0060): the catalogue, requests, the desk, ratings,
+ * complaints and suspensions. test/partners/audit-coverage.
+ */
+export const PARTNERS_COVERAGE: readonly string[] = [
+  'partner.created',
+  'partner.updated',
+  'partner.services_changed',
+  'partner.hours_changed',
+  'partner.prices_changed',
+  'partner_subcategory.created',
+  'partner_subcategory.updated',
+  'partner.settings_changed',
+  'partner_request.created',
+  'partner_request.accepted',
+  'partner_request.declined',
+  'partner_request.proposed',
+  'partner_request.proposal_accepted',
+  'partner_request.cancelled',
+  'partner_request.done',
+  'partner_request.no_show',
+  'partner_request.expired',
+  'partner_request.lapsed',
+  'partner_desk.looked_up',
+  'partner_desk_link.created',
+  'partner_desk_link.revoked',
+  'partner_request.rated',
+  'partner_complaint.created',
+  'partner_complaint.decided',
+  'partner.suspended',
+  'partner.reinstated',
+];

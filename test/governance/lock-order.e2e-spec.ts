@@ -149,7 +149,12 @@ describe('Governance — lock order (ADR 0055)', () => {
       } else if (put.status === 409) {
         expect(code(put)).toBe('GOVERNANCE_BUSY');
       } else {
-        expect(code(put)).toBe('BOARD_SEAT_REQUIRED');
+        // The seat ended first. Both refusals are the rule (ADR 0051): the
+        // guard asks for `governance.board` on every request (FORBIDDEN when
+        // the seat ended before it read it), and the service checks the seat
+        // again under its lock (BOARD_SEAT_REQUIRED when it ended after).
+        // Either way nothing was opened.
+        expect(['FORBIDDEN', 'BOARD_SEAT_REQUIRED']).toContain(code(put));
       }
       await reseat(member);
     }
@@ -190,7 +195,12 @@ describe('Governance — lock order (ADR 0055)', () => {
       } else if (put.status === 409) {
         expect(code(put)).toBe('GOVERNANCE_BUSY');
       } else {
-        expect(code(put)).toBe('BOARD_SEAT_REQUIRED');
+        // The seat ended first. Both refusals are the rule (ADR 0051): the
+        // guard asks for `governance.board` on every request (FORBIDDEN when
+        // the seat ended before it read it), and the service checks the seat
+        // again under its lock (BOARD_SEAT_REQUIRED when it ended after).
+        // Either way nothing was opened.
+        expect(['FORBIDDEN', 'BOARD_SEAT_REQUIRED']).toContain(code(put));
       }
       await reseat(member);
     }

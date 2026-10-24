@@ -18,6 +18,8 @@ export const RESIDENT_ITEM_TYPES = [
   'vehicle_fine',
   'unit_violation',
   'board_appeal',
+  // A staff decision appealed to the management (ADR 0059).
+  'decision_appeal',
   // Found by the search alone.
   'invoice',
   'booking',
@@ -65,6 +67,11 @@ export interface ItemAppeal {
   /** Who decides it, or decided it: the management or the owners' board. */
   decidedBy: 'management' | 'board';
   decidedAt: Date | null;
+  /**
+   * The deciding manager's role as it was named then (ADR 0059's decision
+   * appeals); never a person. Absent or null elsewhere.
+   */
+  deciderRole?: { key: string; name: string | null } | null;
 }
 
 export interface ItemCursor {

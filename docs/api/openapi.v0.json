@@ -11258,6 +11258,38 @@
         ],
         "type": "object"
       },
+      "DecideDecisionAppealDto": {
+        "properties": {
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealOutcome"
+              }
+            ]
+          },
+          "permitValidUntil": {
+            "description": "A vehicle overturned: its permit’s last local day, as its normal approval asks (`permit_date` when out of range).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "rationale": {
+            "description": "The reasoned decision, as the appellant and the unit’s primary will read it. Write no one’s name.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "stickerNumber": {
+            "description": "A vehicle overturned: the sticker its normal approval issues (`sticker_used` when issued before). Without it the overturn is left to follow up (`needs_sticker`).",
+            "pattern": "^[A-Za-z0-9-]{1,20}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "rationale"
+        ],
+        "type": "object"
+      },
       "DecideDisputeDto": {
         "properties": {
           "amount": {
@@ -11324,6 +11356,261 @@
         },
         "required": [
           "decision"
+        ],
+        "type": "object"
+      },
+      "DecisionAppealAttachmentView": {
+        "properties": {
+          "fileId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A short-lived read URL; null once the file is gone.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "url"
+        ],
+        "type": "object"
+      },
+      "DecisionAppealDeciderView": {
+        "properties": {
+          "roleKey": {
+            "description": "The deciding manager’s role key as it was then (never a person).",
+            "type": "string"
+          },
+          "roleName": {
+            "description": "The role’s name in the compound then; null when unnamed.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "roleKey",
+          "roleName"
+        ],
+        "type": "object"
+      },
+      "DecisionAppealDecisionView": {
+        "properties": {
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedBy": {
+            "$ref": "#/components/schemas/DecisionAppealDeciderView"
+          },
+          "effect": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealEffect"
+              }
+            ],
+            "description": "What the decision did: applied by its domain (a permit approved, a vehicle activated, a notice withdrawn), left to the management to follow up, or nothing."
+          },
+          "effectReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealEffectReason"
+              }
+            ],
+            "description": "Why an overturn was left to the management, or did nothing: the check that refused it.",
+            "nullable": true
+          },
+          "followedUpAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealOutcome"
+              }
+            ]
+          },
+          "rationale": {
+            "description": "The manager’s reasons, as the appellant reads them.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "decidedAt",
+          "rationale",
+          "decidedBy",
+          "effect",
+          "effectReason",
+          "followedUpAt"
+        ],
+        "type": "object"
+      },
+      "DecisionAppealEffect": {
+        "description": "What the decision did: applied by its domain (a permit approved, a vehicle activated, a notice withdrawn), left to the management to follow up, or nothing.",
+        "enum": [
+          "applied",
+          "follow_up",
+          "none"
+        ],
+        "type": "string"
+      },
+      "DecisionAppealEffectReason": {
+        "description": "Why an overturn was left to the management, or did nothing: the check that refused it.",
+        "enum": [
+          "window_passed",
+          "purged",
+          "requester_gone",
+          "unit_limit",
+          "work_rules",
+          "blocklisted",
+          "needs_sticker",
+          "registrant_gone",
+          "plate_active",
+          "permit_date",
+          "sticker_used",
+          "changed",
+          "needs_review"
+        ],
+        "type": "string"
+      },
+      "DecisionAppealKind": {
+        "enum": [
+          "permit_rejection",
+          "vehicle_rejection",
+          "worker_rejection",
+          "neighbour_notice"
+        ],
+        "type": "string"
+      },
+      "DecisionAppealOutcome": {
+        "enum": [
+          "upheld",
+          "overturned"
+        ],
+        "type": "string"
+      },
+      "DecisionAppealStatus": {
+        "enum": [
+          "pending",
+          "upheld",
+          "overturned",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "DecisionAppealView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionAppealAttachmentView"
+            },
+            "type": "array"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "decisionAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "grounds": {
+            "description": "The appellant’s words, to the appellant only; null once cleared.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealKind"
+              }
+            ]
+          },
+          "lodgedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller appealed.",
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "AP-000001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealStatus"
+              }
+            ]
+          },
+          "subject": {
+            "description": "The decision appealed, as its domain describes it: codes and dates.",
+            "nullable": true,
+            "type": "object"
+          },
+          "subjectId": {
+            "description": "The decision appealed: a permit, a vehicle, a worker’s engagement, a neighbour notice.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "subjectId",
+          "unitCode",
+          "status",
+          "decisionAt",
+          "lodgedAt",
+          "withdrawnAt",
+          "decision",
+          "subject",
+          "mine",
+          "grounds",
+          "attachments"
+        ],
+        "type": "object"
+      },
+      "DecisionAppealViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionAppealView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -15319,7 +15606,8 @@
           "patrol_note_video",
           "incident_audio",
           "incident_video",
-          "incident_signature"
+          "incident_signature",
+          "decision_appeal_attachment"
         ],
         "type": "string"
       },
@@ -22113,6 +22401,16 @@
             ],
             "type": "string"
           },
+          "deciderRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemDeciderRoleView"
+              }
+            ],
+            "description": "The deciding manager’s role as it was then (a decision appeal); never a person. Null for the board and for the rest.",
+            "nullable": true,
+            "type": "object"
+          },
           "state": {
             "allOf": [
               {
@@ -22126,7 +22424,24 @@
           "state",
           "at",
           "decidedBy",
-          "decidedAt"
+          "decidedAt",
+          "deciderRole"
+        ],
+        "type": "object"
+      },
+      "ItemDeciderRoleView": {
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name"
         ],
         "type": "object"
       },
@@ -22515,6 +22830,41 @@
           },
           "subjectId": {
             "description": "The decision: a vehicle fine or a violation whose appeal the staff upheld, a facility suspension in force, a rejected invoice dispute.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "subjectId",
+          "grounds"
+        ],
+        "type": "object"
+      },
+      "LodgeDecisionAppealDto": {
+        "properties": {
+          "attachmentIds": {
+            "description": "The caller’s uploads of purpose `decision_appeal_attachment` (FILE_NOT_AVAILABLE).",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "grounds": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealKind"
+              }
+            ]
+          },
+          "subjectId": {
+            "description": "The decision: a rejected permit, a rejected vehicle, a rejected worker’s engagement, a neighbour notice the unit received.",
             "format": "uuid",
             "type": "string"
           }
@@ -33459,6 +33809,7 @@
           "vehicle_fine",
           "unit_violation",
           "board_appeal",
+          "decision_appeal",
           "invoice",
           "booking",
           "parcel",
@@ -39237,6 +39588,118 @@
         ],
         "type": "object"
       },
+      "StaffDecisionAppealView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionAppealAttachmentView"
+            },
+            "type": "array"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "decisionAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "grounds": {
+            "description": "The appellant’s words; null once cleared by their erasure.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealKind"
+              }
+            ]
+          },
+          "lodgedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "ownDecision": {
+            "description": "The caller took the decision appealed: another manager decides it.",
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "AP-000001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DecisionAppealStatus"
+              }
+            ]
+          },
+          "subject": {
+            "description": "The decision appealed, as its domain describes it: codes and dates.",
+            "nullable": true,
+            "type": "object"
+          },
+          "subjectId": {
+            "description": "The decision appealed: a permit, a vehicle, a worker’s engagement, a neighbour notice.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "subjectId",
+          "unitCode",
+          "status",
+          "decisionAt",
+          "lodgedAt",
+          "withdrawnAt",
+          "decision",
+          "subject",
+          "ownDecision",
+          "grounds",
+          "attachments"
+        ],
+        "type": "object"
+      },
+      "StaffDecisionAppealViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffDecisionAppealView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffDeviceResponse": {
         "properties": {
           "ackedSeq": {
@@ -42202,6 +42665,12 @@
           },
           "sentBy": {
             "$ref": "#/components/schemas/AccountRefView"
+          },
+          "withdrawnAt": {
+            "description": "Withdrawn by an overturned decision appeal (ADR 0059).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -42210,7 +42679,8 @@
           "recipientKind",
           "sentBy",
           "recipients",
-          "sentAt"
+          "sentAt",
+          "withdrawnAt"
         ],
         "type": "object"
       },
@@ -47461,6 +47931,12 @@
           "unitCode": {
             "description": "The caller’s unit it was sent to.",
             "type": "string"
+          },
+          "withdrawnAt": {
+            "description": "Withdrawn by an overturned appeal (ADR 0059): it no longer stands against the unit.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -47469,7 +47945,8 @@
           "unitCode",
           "body",
           "open",
-          "sentAt"
+          "sentAt",
+          "withdrawnAt"
         ],
         "type": "object"
       },
@@ -55050,6 +55527,182 @@
         "tags": [
           "workers"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/decision-appeals": {
+      "get": {
+        "description": "Their own, and those of the units they are the primary of (without the grounds); newest first.",
+        "operationId": "DecisionAppealsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionAppealViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller’s decision appeals",
+        "tags": [
+          "management"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A rejected permit (its unit’s primary), a rejected vehicle (its keepers or the primary), a rejected worker (the household that employs them), a neighbour notice (its recipients): DECISION_APPEAL_NOT_ALLOWED otherwise. Within 15 days of the decision (DECISION_APPEAL_WINDOW_PASSED), once per decision (DECISION_APPEAL_EXISTS); DECISION_APPEAL_NOT_ELIGIBLE when it no longer stands. A manager who did not take the decision decides it.",
+        "operationId": "DecisionAppealsController_lodge",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LodgeDecisionAppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Appeal a staff decision about the caller’s unit",
+        "tags": [
+          "management"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/decision-appeals/{id}": {
+      "get": {
+        "operationId": "DecisionAppealsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a decision appeal",
+        "tags": [
+          "management"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/decision-appeals/{id}/withdraw": {
+      "post": {
+        "description": "The appellant only (DECISION_APPEAL_NOT_YOURS).",
+        "operationId": "DecisionAppealsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a pending decision appeal",
+        "tags": [
+          "management"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -76392,6 +77045,191 @@
         "summary": "List the unit’s people a membership may cover",
         "tags": [
           "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/decision-appeals": {
+      "get": {
+        "description": "What awaits a decision (`status=pending`) and the rest, newest first, with the grounds.",
+        "operationId": "StaffDecisionAppealsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DecisionAppealStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDecisionAppealViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The decision appeals",
+        "tags": [
+          "management"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/decision-appeals/{id}": {
+      "get": {
+        "operationId": "StaffDecisionAppealsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDecisionAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a decision appeal with its attachments",
+        "tags": [
+          "management"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/decision-appeals/{id}/decide": {
+      "post": {
+        "description": "Once (DECISION_APPEAL_NOT_PENDING), never by the one who took the decision (APPEAL_DECIDER_CONFLICT), with the reasons. An overturn runs the decision’s normal approval with all its checks: a permit approved (its window, its requester, the unit’s limit, the work days and hours, the blocklist), a vehicle activated (with the sticker and permit date given here, its plate and the unit’s limit), a notice withdrawn; a worker is always left to follow up. A check that refuses leaves it to follow up, with the reason.",
+        "operationId": "StaffDecisionAppealsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideDecisionAppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDecisionAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Uphold or overturn a decision appeal",
+        "tags": [
+          "management"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/decision-appeals/{id}/followed-up": {
+      "post": {
+        "description": "An overturn its domain left to the management (a worker’s review, a check that refused), once (DECISION_APPEAL_NO_FOLLOW_UP).",
+        "operationId": "StaffDecisionAppealsController_followedUp",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDecisionAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark an overturn followed up",
+        "tags": [
+          "management"
         ],
         "x-no-store": true,
         "x-stability": "draft"

@@ -1,3 +1,4 @@
+import { DECISION_APPEAL_ROUTES } from './decision-appeals';
 import { FORMAL_NOTICE_ROUTES } from './formal-notices';
 import { RESIDENT_ITEM_ROUTES } from './resident-items';
 import type { Row } from '../registry';
@@ -216,6 +217,7 @@ export const ROUTES: Row[] = [
   ...QUOTE_ROUTES,
   ...RESIDENT_ITEM_ROUTES,
   ...FORMAL_NOTICE_ROUTES,
+  ...DECISION_APPEAL_ROUTES,
   ...VISIT_ROUTES,
   ...PREFERENCES_ROUTES,
   ...PUSH_TOKENS_ROUTES,

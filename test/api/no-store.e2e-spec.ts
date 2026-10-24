@@ -43,6 +43,7 @@ import { gateCompletionCalls } from './no-store-gate-completion';
 import { offlineCalls } from './no-store-offline';
 import { residentItemCalls } from './no-store-resident-items';
 import { partnerCalls } from './no-store-partners';
+import { decisionAppealCalls } from './no-store-decision-appeals';
 import { buildWorld, type World } from './world';
 
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
@@ -3097,6 +3098,7 @@ describe('API v0 — no-store', () => {
     ...offlineCalls(() => w),
     ...residentItemCalls(() => w),
     ...partnerCalls(() => w),
+    ...decisionAppealCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

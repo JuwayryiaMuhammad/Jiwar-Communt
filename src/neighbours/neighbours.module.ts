@@ -15,6 +15,7 @@ import { ComplaintStatusService } from './complaints/complaint-status.service';
 import { ComplaintsService } from './complaints/complaints.service';
 import { ResidentComplaintItems } from './complaints/resident-complaint-items';
 import { NoticeNotices } from './complaints/notice-notices';
+import { NoticeDecisionAppeals } from './complaints/notice-decision-appeals';
 import { NoticesService } from './complaints/notices.service';
 import { ResidentComplaintsController } from './complaints/resident-complaints.controller';
 import { StaffComplaintsController } from './complaints/staff-complaints.controller';
@@ -83,6 +84,7 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ComplaintsService,
     ComplaintStatusService,
     NoticesService,
+    NoticeDecisionAppeals,
     BoardNotices,
     PostVisibility,
     ClaimDecisions,

@@ -4,13 +4,9 @@ import { FILE_PURPOSES, FILE_TYPES, mediaOf } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0056 recreated both, with every purpose). */
+/** Both CHECKs as they stand now (ADR 0059 recreated both, with every purpose). */
 const sizeCheck = readFileSync(
-  join(
-    __dirname,
-    migrations,
-    '20261104091500_incident_signatures/migration.sql',
-  ),
+  join(__dirname, migrations, '20261115090100_decision_appeals/migration.sql'),
   'utf8',
 );
 const typeCheck = sizeCheck;
@@ -119,6 +115,7 @@ describe('file purposes', () => {
       'approval_attachment',
       'board_appeal_attachment',
       'expense_invoice',
+      'decision_appeal_attachment',
     ] as const) {
       expect(sizeCheck).not.toContain(`WHEN '${purpose}'`);
       expect(FILE_PURPOSES[purpose].maxBytes).toBe(
@@ -227,7 +224,7 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,

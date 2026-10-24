@@ -6,6 +6,9 @@ import {
   type ExportSubject,
 } from '../../core/exports/export-sections';
 import { AppointmentView } from '../appointments/views/appointment.views';
+import { decisionAppealReference } from '../decision-appeals/appeal-rules';
+import { DecisionAppealsService } from '../decision-appeals/decision-appeals.service';
+import { DecisionAppealView } from '../decision-appeals/views/decision-appeal.views';
 import { MessagesService } from '../requests/messages.service';
 import { requestNumber } from '../requests/request-rules';
 import { RequestsService } from '../requests/requests.service';
@@ -35,10 +38,37 @@ export class ManagementExportSections implements OnModuleInit {
     private readonly tenantTx: TenantTx,
     private readonly requests: RequestsService,
     private readonly messages: MessagesService,
+    private readonly appeals: DecisionAppealsService,
   ) {}
 
   onModuleInit(): void {
     this.sections.register('management-requests', (s) => this.authored(s));
+    this.sections.register('decision-appeals', (s) => this.appealed(s));
+  }
+
+  /**
+   * The account's decision appeals (ADR 0059), one entry each
+   * (`decision-appeals/AP-000123.json`), as the appellant reads them
+   * (`GET /decision-appeals/{id}`): their grounds, the decision and its
+   * rationale. Attachments as a count, never a URL.
+   */
+  private async *appealed(s: ExportSubject): AsyncIterable<ExportEntry> {
+    const ids = await this.tenantTx.withTenantTx((tx) =>
+      tx.decisionAppeal.findMany({
+        where: { appellantId: s.accountId },
+        orderBy: { number: 'asc' },
+        select: { id: true, number: true },
+      }),
+    );
+    for (const a of ids) {
+      const { attachments, ...view } = DecisionAppealView.from(
+        await this.appeals.residentGet(a.id),
+      );
+      yield {
+        path: `decision-appeals/${decisionAppealReference(a.number)}.json`,
+        json: { ...view, attachmentCount: attachments.length },
+      };
+    }
   }
 
   private async *authored(s: ExportSubject): AsyncIterable<ExportEntry> {

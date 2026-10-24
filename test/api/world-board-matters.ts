@@ -9,6 +9,7 @@ import {
   motionRow,
 } from '../setup/governance-rows';
 import type { HttpHarness } from '../setup/http-app';
+import { decisionAppealRow } from '../setup/management-rows';
 import type { Side } from './world';
 
 /**
@@ -26,6 +27,8 @@ export interface BoardMattersWorld {
   bExpenseId: string;
   /** A pending appeal of B's owner about B's home. */
   bBoardAppealId: string;
+  /** A pending decision appeal of B's owner about B's home (ADR 0059). */
+  bDecisionAppealId: string;
 }
 
 export async function boardMattersWorld(
@@ -73,6 +76,11 @@ export async function boardMattersWorld(
       return {
         bApprovalId,
         bBoardAppealId: await appealRow(tx, {
+          tenantId: b.tenantId,
+          unitId: b.homeUnitId,
+          appellantId: b.ids.owner,
+        }),
+        bDecisionAppealId: await decisionAppealRow(tx, {
           tenantId: b.tenantId,
           unitId: b.homeUnitId,
           appellantId: b.ids.owner,

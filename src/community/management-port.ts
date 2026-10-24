@@ -15,7 +15,7 @@ const AUTHOR_TYPES = ['resident', 'family'] as const;
  * What the management domain reads from the community domain (ADR 0015,
  * 0039), and nothing else: whether an account may be a request's author
  * (an active resident or family account), whether a unit is one of the
- * author's, a unit's people, and unit codes. Every method takes the
+ * author's, a unit's people, its primary (ADR 0059), and unit codes. Every method takes the
  * management transaction, so the answer is consistent with its write.
  */
 @Injectable()
@@ -99,6 +99,24 @@ export class CommunityManagementPort {
       where: { id: unitId },
       select: { id: true, code: true },
     });
+  }
+
+  /** The unit's primary resident now, or null (ADR 0059: told of an appeal). */
+  async primaryOf(tx: TenantTxClient, unitId: string): Promise<string | null> {
+    const row = await tx.unitOccupancy.findFirst({
+      where: { unitId, status: 'active', isPrimary: true },
+      select: { accountId: true },
+    });
+    return row?.accountId ?? null;
+  }
+
+  /** The units the account is the primary resident of now (ADR 0059). */
+  async primaryUnits(tx: TenantTxClient, accountId: string): Promise<string[]> {
+    const rows = await tx.unitOccupancy.findMany({
+      where: { accountId, status: 'active', isPrimary: true },
+      select: { unitId: true },
+    });
+    return rows.map((r) => r.unitId);
   }
 
   async unitCodes(

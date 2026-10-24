@@ -326,8 +326,14 @@ describe('Management requests — notifications', () => {
     expect(rows.length).toBeGreaterThan(30);
     const kinds = new Set(rows.map((r) => r.kind));
     // Every kind of the phase was sent above.
+    // A request's kinds (the category also carries ADR 0059's decision
+    // appeals, on their own target).
     const all = Object.entries(NOTIFICATION_KINDS)
-      .filter(([, spec]) => spec.category === 'management')
+      .filter(
+        ([, spec]) =>
+          spec.category === 'management' &&
+          spec.target === 'management_request',
+      )
       .map(([kind]) => kind);
     expect([...kinds].sort()).toEqual(all.sort());
     expect(all).toHaveLength(17);

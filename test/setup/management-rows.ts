@@ -90,3 +90,36 @@ export async function attachmentFileRow(
   });
   return id;
 }
+
+/**
+ * A pending decision appeal (ADR 0059) of a decision that does not exist:
+ * enough for the schema and isolation suites, which never ask its domain.
+ */
+export async function decisionAppealRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; unitId: string; appellantId: string },
+): Promise<string> {
+  const id = newId();
+  const [{ number }] = await tx.$queryRaw<{ number: number }[]>`
+    INSERT INTO decision_appeal_counters (tenant_id, last_number)
+    VALUES (${r.tenantId}::uuid, 1)
+    ON CONFLICT (tenant_id) DO UPDATE
+      SET last_number = decision_appeal_counters.last_number + 1
+    RETURNING last_number AS number`;
+  const at = new Date();
+  await tx.decisionAppeal.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      number,
+      kind: 'permit_rejection',
+      subjectId: newId(),
+      unitId: r.unitId,
+      appellantId: r.appellantId,
+      grounds: 'The work was within the hours.',
+      decisionAt: at,
+      lodgedAt: at,
+    },
+  });
+  return id;
+}

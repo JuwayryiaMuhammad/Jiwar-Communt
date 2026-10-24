@@ -9,6 +9,12 @@ import {
   StaffAppointmentsController,
 } from './appointments/appointments.controller';
 import { AppointmentsService } from './appointments/appointments.service';
+import {
+  DecisionAppealsController,
+  StaffDecisionAppealsController,
+} from './decision-appeals/decision-appeals.controller';
+import { DecisionAppealsService } from './decision-appeals/decision-appeals.service';
+import { ResidentDecisionAppealItems } from './decision-appeals/resident-decision-appeal-items';
 import { ManagementExportSections } from './export/export-sections';
 import { ResidentRequestItems } from './feed/resident-request-items';
 import { ResidentRequestSummary } from './feed/resident-request-summary';
@@ -43,7 +49,8 @@ import {
 import { TopicsService } from './topics/topics.service';
 
 /**
- * Requests to the management (ADR 0039). The domain imports core freely,
+ * Requests to the management (ADR 0039), and the appeals of staff
+ * decisions it decides (ADR 0059). The domain imports core freely,
  * community and maintenance only through their index.ts (ADR 0015); never
  * the gate.
  */
@@ -63,6 +70,8 @@ import { TopicsService } from './topics/topics.service';
     ResidentAppointmentSlotsController,
     ResidentAppointmentsController,
     StaffAppointmentsController,
+    DecisionAppealsController,
+    StaffDecisionAppealsController,
   ],
   providers: [
     ManagementPartnersPort,
@@ -83,6 +92,8 @@ import { TopicsService } from './topics/topics.service';
     RequestHandlerRelease,
     ManagementExportSections,
     ResidentRequestSummary,
+    DecisionAppealsService,
+    ResidentDecisionAppealItems,
   ],
   exports: [ResidentRequestSummary, ManagementPartnersPort],
 })

@@ -2152,6 +2152,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أُوقف مقدم خدمة طلبت منه أو تتابعه. اطّلع على البدائل.',
     },
   },
+  'decision_appeal.lodged': {
+    en: {
+      title: 'A decision was appealed',
+      body: 'A resident appealed a staff decision. Review the appeal.',
+    },
+    ar: {
+      title: 'تظلم من قرار',
+      body: 'تظلم أحد السكان من قرار للإدارة. راجع التظلم.',
+    },
+  },
+  'decision_appeal.decided': {
+    en: {
+      title: 'Your appeal was decided',
+      body: 'The management decided an appeal about your unit. Open the app to see why.',
+    },
+    ar: {
+      title: 'صدر قرار في التظلم',
+      body: 'قررت الإدارة في تظلم يخص وحدتك. افتح التطبيق لمعرفة الأسباب.',
+    },
+  },
+  'worker.engagement_rejected': {
+    en: {
+      title: 'A worker was not approved',
+      body: 'The management did not approve a worker you registered. You may appeal within 15 days.',
+    },
+    ar: {
+      title: 'لم تتم الموافقة على عامل',
+      body: 'لم توافق الإدارة على عامل سجلته. يمكنك التظلم خلال 15 يومًا.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

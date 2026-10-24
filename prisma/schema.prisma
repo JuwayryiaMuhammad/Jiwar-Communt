@@ -1376,6 +1376,9 @@ model WorkerEngagement {
   reviewedById          String?                @map("reviewed_by") @db.Uuid
   /// What the household agreed to pay a month (ADR 0037); null until set.
   monthlyWage           Decimal?               @map("monthly_wage") @db.Decimal(10, 2)
+  /// When a review decided it, and a rejection's code (ADR 0059).
+  decidedAt             DateTime?              @map("decided_at") @db.Timestamptz(3)
+  rejectReason          String?                @map("reject_reason")
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -2734,6 +2737,8 @@ enum FilePurpose {
   incident_video
   /// A drawn signature on an incident report (ADR 0056): PNG, 256 KB.
   incident_signature
+  /// A decision appeal's attachment (ADR 0059): an image or a PDF, 10 MB.
+  decision_appeal_attachment
 
   @@map("file_purpose")
 }
@@ -4109,6 +4114,67 @@ model ManagementAppointmentSlot {
   @@map("management_appointment_slots")
 }
 
+/// The compound's last decision appeal number (ADR 0059).
+model DecisionAppealCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+
+  @@map("decision_appeal_counters")
+}
+
+/// A resident's appeal of a staff decision about their unit, to the
+/// management (ADR 0059): a rejected permit, vehicle or worker, a neighbour
+/// notice. Decided once by a manager who did not take the decision, with a
+/// rationale; its domain applies an overturn through its normal approval,
+/// or leaves it to be followed up.
+model DecisionAppeal {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  number           Int
+  kind             String
+  subjectId        String    @map("subject_id") @db.Uuid
+  unitId           String    @map("unit_id") @db.Uuid
+  appellantId      String    @map("appellant_account_id") @db.Uuid
+  grounds          String?
+  groundsClearedAt DateTime? @map("grounds_cleared_at") @db.Timestamptz(3)
+  decisionAt       DateTime  @map("decision_at") @db.Timestamptz(3)
+  /// Who took the decision appealed (they may not decide the appeal).
+  decisionById     String?   @map("decision_by_account_id") @db.Uuid
+  lodgedAt         DateTime  @map("lodged_at") @db.Timestamptz(3)
+  status           String    @default("pending")
+  decidedAt        DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedById      String?   @map("decided_by_account_id") @db.Uuid
+  /// The decider's role as it was then: its key, and its name if named.
+  deciderRoleKey   String?   @map("decider_role_key")
+  deciderRoleName  String?   @map("decider_role_name")
+  rationale        String?
+  withdrawnAt      DateTime? @map("withdrawn_at") @db.Timestamptz(3)
+  effect           String?
+  effectReason     String?   @map("effect_reason")
+  followedUpAt     DateTime? @map("followed_up_at") @db.Timestamptz(3)
+  followedUpById   String?   @map("followed_up_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "decision_appeals_number_key")
+  @@unique([tenantId, kind, subjectId], map: "decision_appeals_one_per_decision")
+  @@index([tenantId, status, lodgedAt, id], map: "decision_appeals_status_idx")
+  @@index([tenantId, unitId, lodgedAt, id], map: "decision_appeals_unit_idx")
+  @@index([tenantId, appellantId, lodgedAt, id], map: "decision_appeals_appellant_idx")
+  @@map("decision_appeals")
+}
+
+/// A decision appeal's attached file, in order (ADR 0059). Never changed.
+model DecisionAppealAttachment {
+  tenantId String @map("tenant_id") @db.Uuid
+  appealId String @map("appeal_id") @db.Uuid
+  fileId   String @map("file_id") @db.Uuid
+  position Int    @db.SmallInt
+
+  @@id([tenantId, appealId, position])
+  @@unique([tenantId, fileId], map: "decision_appeal_attachments_file_key")
+  @@map("decision_appeal_attachments")
+}
+
 // ============================================================================
 // Community life (ADR 0040): announcements, works and closures, events,
 // consultative polls, suggestions. The domain is src/engagement.
@@ -4764,6 +4830,8 @@ model NeighbourComplaintNotice {
   recipientKind NeighbourRecipientKind @map("recipient_kind")
   sentById      String                 @map("sent_by_account_id") @db.Uuid
   createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Withdrawn once, by an overturned decision appeal (ADR 0059).
+  withdrawnAt   DateTime?              @map("withdrawn_at") @db.Timestamptz(3)
 
   complaint  NeighbourComplaint                  @relation(fields: [tenantId, complaintId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   sentBy     Account                             @relation("NeighbourNoticeSender", fields: [tenantId, sentById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaint_notices_tenant_id_sent_by_fkey")
@@ -6714,6 +6782,12 @@ model UnitPermit {
   cancelReason      String?          @map("cancel_reason")
   textClearedAt     DateTime?        @map("text_cleared_at") @db.Timestamptz(3)
   purgedAt          DateTime?        @map("purged_at") @db.Timestamptz(3)
+  /// A decision appeal against the rejection (ADR 0059): its mark (the
+  /// purge waits), its closing, and the overturn that approved it, once.
+  decisionAppealAt       DateTime? @map("decision_appeal_at") @db.Timestamptz(3)
+  decisionAppealClosedAt DateTime? @map("decision_appeal_closed_at") @db.Timestamptz(3)
+  appealOverturnedAt     DateTime? @map("appeal_overturned_at") @db.Timestamptz(3)
+  appealOverturnedById   String?   @map("appeal_overturned_by_account_id") @db.Uuid
   createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 

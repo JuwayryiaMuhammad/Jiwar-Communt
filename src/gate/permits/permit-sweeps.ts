@@ -35,7 +35,8 @@ export class PermitSweeps implements OnModuleInit {
 
   /**
    * The people of permits that ended 30 days ago (or were rejected,
-   * cancelled, revoked or used then): the workers' names, faces and ID
+   * cancelled, revoked or used then; a rejection under a decision appeal
+   * waits for it, ADR 0059): the workers' names, faces and ID
    * hashes, the guests' names and plates, the truck's plate and the goods'
    * photo. One permit per transaction, its row locked first and then its
    * workers' and guests' rows, as the gate locks them; judged again under
@@ -49,7 +50,9 @@ export class PermitSweeps implements OnModuleInit {
           SELECT id FROM unit_permits
            WHERE purged_at IS NULL
              AND LEAST(ends_at, cancelled_at, revoked_at, used_at,
-                       CASE WHEN status = 'rejected' THEN decided_at END) <= ${due}
+                       CASE WHEN status = 'rejected'
+                             AND (decision_appeal_at IS NULL OR decision_appeal_closed_at IS NOT NULL)
+                            THEN decided_at END) <= ${due}
            ORDER BY ends_at, id
            LIMIT ${BATCH}`;
         return rows.map((r) => r.id);
@@ -63,7 +66,11 @@ export class PermitSweeps implements OnModuleInit {
           p.cancelledAt,
           p.revokedAt,
           p.usedAt,
-          p.status === 'rejected' ? p.decidedAt : null,
+          // A rejection under appeal waits for its appeal (ADR 0059).
+          p.status === 'rejected' &&
+          (!p.decisionAppealAt || p.decisionAppealClosedAt)
+            ? p.decidedAt
+            : null,
         ].filter((d): d is Date => d !== null);
         if (
           p.purgedAt ||

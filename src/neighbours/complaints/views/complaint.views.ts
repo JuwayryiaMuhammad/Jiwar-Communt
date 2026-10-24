@@ -257,6 +257,13 @@ export class StaffNoticeView {
   recipients: AccountRefView[];
   @ApiProperty({ type: String, format: 'date-time' })
   sentAt: Date;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Withdrawn by an overturned decision appeal (ADR 0059).',
+  })
+  withdrawnAt: Date | null;
 
   static from(n: NoticeFacts): StaffNoticeView {
     return {
@@ -266,6 +273,7 @@ export class StaffNoticeView {
       sentBy: accountRef(n.sentBy),
       recipients: n.recipients.map((r) => accountRef(r)),
       sentAt: n.createdAt,
+      withdrawnAt: n.withdrawnAt,
     };
   }
 }

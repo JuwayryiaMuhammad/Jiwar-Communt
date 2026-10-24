@@ -1221,6 +1221,33 @@ export const ErrorCode = {
   PARTNER_ALREADY_SUSPENDED: 'PARTNER_ALREADY_SUSPENDED',
   /** Not suspended: nothing to reinstate (409). */
   PARTNER_NOT_SUSPENDED: 'PARTNER_NOT_SUSPENDED',
+  // Decision appeals to the management (ADR 0059)
+  /** Unknown, another compound's, or not the caller's to see: one answer. */
+  DECISION_APPEAL_NOT_FOUND: 'DECISION_APPEAL_NOT_FOUND',
+  /** No such decision of that kind, or not one the caller sees (404). */
+  DECISION_APPEAL_SUBJECT_NOT_FOUND: 'DECISION_APPEAL_SUBJECT_NOT_FOUND',
+  /**
+   * The caller may not appeal this decision (403): a permit's primary, a
+   * vehicle's keepers, a worker's employer side, a notice's recipients do.
+   */
+  DECISION_APPEAL_NOT_ALLOWED: 'DECISION_APPEAL_NOT_ALLOWED',
+  /** The decision was appealed already: once per decision (409). */
+  DECISION_APPEAL_EXISTS: 'DECISION_APPEAL_EXISTS',
+  /**
+   * The decision cannot be appealed now (409, params.reason:
+   * `not_decided` | `not_in_force` | `appealed`).
+   */
+  DECISION_APPEAL_NOT_ELIGIBLE: 'DECISION_APPEAL_NOT_ELIGIBLE',
+  /** The 15 days to appeal have passed (409, params.until). */
+  DECISION_APPEAL_WINDOW_PASSED: 'DECISION_APPEAL_WINDOW_PASSED',
+  /** Decided or withdrawn already (409, params.status). */
+  DECISION_APPEAL_NOT_PENDING: 'DECISION_APPEAL_NOT_PENDING',
+  /** Only the appellant withdraws an appeal (403). */
+  DECISION_APPEAL_NOT_YOURS: 'DECISION_APPEAL_NOT_YOURS',
+  /** The caller took the decision appealed: another manager decides (409). */
+  APPEAL_DECIDER_CONFLICT: 'APPEAL_DECIDER_CONFLICT',
+  /** No follow-up is due: not an overturn left to the management, or done (409). */
+  DECISION_APPEAL_NO_FOLLOW_UP: 'DECISION_APPEAL_NO_FOLLOW_UP',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

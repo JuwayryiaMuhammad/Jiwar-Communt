@@ -1535,6 +1535,9 @@ describe('API v0 — PII leak scan', () => {
       '/governance/board-appeals/{id}': w.bBoardAppealId,
       '/staff/governance/board-appeals/{id}': w.bBoardAppealId,
       '/board/appeals/{id}': w.bBoardAppealId,
+      // ADR 0059: a decision appeal of B's: not found for everyone of A.
+      '/decision-appeals/{id}': w.bDecisionAppealId,
+      '/staff/decision-appeals/{id}': w.bDecisionAppealId,
       // A route and a run of B's: not found for everyone of A.
       '/staff/security/patrols/routes/{id}': w.bRouteId,
       '/staff/security/patrols/runs/{id}': w.bRunId,

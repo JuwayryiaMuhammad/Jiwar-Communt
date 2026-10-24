@@ -4,6 +4,7 @@ import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
   attachmentFileRow,
+  decisionAppealRow,
   messageRow,
   requestRow,
   topicRow,
@@ -17,6 +18,7 @@ interface Side {
   topicId: string;
   requestId: string;
   messageId: string;
+  appealId: string;
 }
 
 /**
@@ -200,6 +202,46 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  // Decision appeals (ADR 0059).
+  {
+    table: 'decision_appeal_counters',
+    key: 'tenant_id',
+    linked: false,
+    insert: async (tx, own) => {
+      await tx.decisionAppealCounter.upsert({
+        where: { tenantId: own.tenantId },
+        create: { tenantId: own.tenantId },
+        update: {},
+      });
+      return own.tenantId;
+    },
+  },
+  {
+    table: 'decision_appeals',
+    insert: (tx, own, link) =>
+      decisionAppealRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        appellantId: link.accountId,
+      }),
+  },
+  {
+    table: 'decision_appeal_attachments',
+    key: 'file_id',
+    insert: async (tx, own, link) => {
+      // The file is the row's own; the appeal is linked.
+      const fileId = await attachmentFileRow(tx, own.tenantId);
+      await tx.decisionAppealAttachment.create({
+        data: {
+          tenantId: own.tenantId,
+          appealId: link.appealId,
+          fileId,
+          position: 1 + (slots++ % 3),
+        },
+      });
+      return fileId;
+    },
+  },
 ];
 
 describe('RLS isolation — management tables', () => {
@@ -224,6 +266,7 @@ describe('RLS isolation — management tables', () => {
       topicId: '',
       requestId: '',
       messageId: '',
+      appealId: '',
     };
     await inTenant(s, async (tx) => {
       s.topicId = await topicRow(tx, tenantId);
@@ -236,6 +279,11 @@ describe('RLS isolation — management tables', () => {
         tenantId,
         requestId: s.requestId,
         senderId: s.accountId,
+      });
+      s.appealId = await decisionAppealRow(tx, {
+        tenantId,
+        unitId: s.unitId,
+        appellantId: s.accountId,
       });
     });
     return s;

@@ -616,4 +616,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   partner_complaints_tenant_id_id_key: null,
   partner_complaints_request_key: null,
   partner_complaints_management_request_key: null,
+  // Decision appeals (ADR 0059): numbers from the counter under its row
+  // lock; one per decision, checked first under the decision's lock
+  // (DECISION_APPEAL_EXISTS); attachments claimed once.
+  decision_appeals_tenant_id_id_key: null,
+  decision_appeals_number_key: null,
+  decision_appeals_one_per_decision: null,
+  decision_appeal_attachments_file_key: null,
 };

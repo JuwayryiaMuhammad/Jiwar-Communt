@@ -2006,6 +2006,35 @@ export const NOTIFICATION_KINDS = {
     target: 'partner',
     params: {},
   },
+  // Decision appeals (ADR 0059). Codes only: the kind of decision and the
+  // outcome, never the grounds or the rationale.
+  /** A resident appealed a staff decision: the `appeals.decide` holders. */
+  'decision_appeal.lodged': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'decision_appeal',
+    params: { kind: {} },
+  },
+  /** A manager decided it: the appellant and the unit's primary. */
+  'decision_appeal.decided': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'decision_appeal',
+    params: { kind: {}, outcome: {} },
+  },
+  /**
+   * The management rejected a worker the household registered: who
+   * registered them, with the reason's code (they may appeal it).
+   */
+  'worker.engagement_rejected': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'worker_engagement',
+    params: { reason: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

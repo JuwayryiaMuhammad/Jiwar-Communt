@@ -244,6 +244,11 @@ export const PERMISSIONS = {
   // relays requests for a partner who phones, and decides complaints.
   'partners.request': { kinds: ['resident', 'family'] },
   'partners.manage': { kinds: ['staff', 'manager'] },
+  // Decision appeals (ADR 0059): a resident's appeal of a staff decision
+  // about their unit (a rejected permit, vehicle or worker, a neighbour
+  // notice), decided by a manager who did not take it, with a rationale;
+  // an overturn left to the management is followed up here too.
+  'appeals.decide': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

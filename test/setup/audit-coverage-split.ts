@@ -248,6 +248,8 @@ export const NEIGHBOURS_COVERAGE: readonly string[] = [
   'neighbour_complaint.created',
   'neighbour_complaint.review_started',
   'neighbour_complaint.notice_sent',
+  // ADR 0059: an overturned decision appeal withdrew the notice.
+  'neighbour_complaint.notice_withdrawn',
   'neighbour_complaint.mediation_started',
   'neighbour_complaint.resolved',
   'neighbour_complaint.dismissed',
@@ -649,4 +651,17 @@ export const PARTNERS_COVERAGE: readonly string[] = [
   'partner_complaint.decided',
   'partner.suspended',
   'partner.reinstated',
+];
+
+/**
+ * Decision appeals to the management (ADR 0059): lodged, withdrawn,
+ * decided, followed up, and the grounds cleared at the appellant's
+ * erasure. test/decision-appeals/audit-coverage.
+ */
+export const DECISION_APPEALS_COVERAGE: readonly string[] = [
+  'decision_appeal.lodged',
+  'decision_appeal.withdrawn',
+  'decision_appeal.decided',
+  'decision_appeal.followed_up',
+  'decision_appeal.grounds_cleared',
 ];

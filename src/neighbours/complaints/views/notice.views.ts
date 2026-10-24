@@ -43,6 +43,14 @@ export class UnitNoticeView {
   open: boolean;
   @ApiProperty({ type: String, format: 'date-time' })
   sentAt: Date;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Withdrawn by an overturned appeal (ADR 0059): it no longer stands against the unit.',
+  })
+  withdrawnAt: Date | null;
 
   static from(r: NoticeRead): UnitNoticeView {
     return {
@@ -52,6 +60,7 @@ export class UnitNoticeView {
       body: r.notice.body,
       open: isOpen(r.status),
       sentAt: r.notice.createdAt,
+      withdrawnAt: r.notice.withdrawnAt,
     };
   }
 }

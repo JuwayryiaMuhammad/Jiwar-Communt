@@ -60,6 +60,7 @@ export const FILES_ROUTES: Row[] = [
               'incident_audio',
               'incident_video',
               'incident_signature',
+              'decision_appeal_attachment',
             ],
           },
         },

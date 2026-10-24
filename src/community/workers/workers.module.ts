@@ -6,6 +6,7 @@ import { HouseholdsModule } from '../households/households.module';
 import { NoticesModule } from '../notices/notices.module';
 import { EngagementTokens } from './engagement-tokens';
 import { WorkerPhotoRetention } from './photo-retention';
+import { WorkerDecisionAppeals } from './worker-decision-appeals';
 import { WorkerWagesService } from './worker-wages.service';
 import { WorkersAuthority } from './workers-authority';
 import { WorkersService } from './workers.service';
@@ -20,6 +21,7 @@ import { WorkersService } from './workers.service';
     EngagementTokens,
     WorkerWagesService,
     WorkerPhotoRetention,
+    WorkerDecisionAppeals,
   ],
   exports: [WorkersService, WorkersAuthority, EngagementTokens],
 })

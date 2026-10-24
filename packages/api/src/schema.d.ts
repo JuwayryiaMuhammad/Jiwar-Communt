@@ -1260,6 +1260,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/decision-appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller’s decision appeals
+         * @description Their own, and those of the units they are the primary of (without the grounds); newest first.
+         */
+        get: operations["DecisionAppealsController_list"];
+        put?: never;
+        /**
+         * Appeal a staff decision about the caller’s unit
+         * @description A rejected permit (its unit’s primary), a rejected vehicle (its keepers or the primary), a rejected worker (the household that employs them), a neighbour notice (its recipients): DECISION_APPEAL_NOT_ALLOWED otherwise. Within 15 days of the decision (DECISION_APPEAL_WINDOW_PASSED), once per decision (DECISION_APPEAL_EXISTS); DECISION_APPEAL_NOT_ELIGIBLE when it no longer stands. A manager who did not take the decision decides it.
+         */
+        post: operations["DecisionAppealsController_lodge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decision-appeals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a decision appeal */
+        get: operations["DecisionAppealsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decision-appeals/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw a pending decision appeal
+         * @description The appellant only (DECISION_APPEAL_NOT_YOURS).
+         */
+        post: operations["DecisionAppealsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/deferred-actions/{id}/decide": {
         parameters: {
             query?: never;
@@ -8877,6 +8938,83 @@ export interface paths {
         get: operations["ClubMembershipsController_people"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/decision-appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The decision appeals
+         * @description What awaits a decision (`status=pending`) and the rest, newest first, with the grounds.
+         */
+        get: operations["StaffDecisionAppealsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/decision-appeals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a decision appeal with its attachments */
+        get: operations["StaffDecisionAppealsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/decision-appeals/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Uphold or overturn a decision appeal
+         * @description Once (DECISION_APPEAL_NOT_PENDING), never by the one who took the decision (APPEAL_DECIDER_CONFLICT), with the reasons. An overturn runs the decision’s normal approval with all its checks: a permit approved (its window, its requester, the unit’s limit, the work days and hours, the blocklist), a vehicle activated (with the sticker and permit date given here, its plate and the unit’s limit), a notice withdrawn; a worker is always left to follow up. A check that refuses leaves it to follow up, with the reason.
+         */
+        post: operations["StaffDecisionAppealsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/decision-appeals/{id}/followed-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark an overturn followed up
+         * @description An overturn its domain left to the management (a worker’s review, a check that refused), once (DECISION_APPEAL_NO_FOLLOW_UP).
+         */
+        post: operations["StaffDecisionAppealsController_followedUp"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19059,6 +19197,15 @@ export interface components {
             compensation: string;
             outcome: components["schemas"]["PartnerComplaintOutcome"];
         };
+        DecideDecisionAppealDto: {
+            outcome: components["schemas"]["DecisionAppealOutcome"];
+            /** @description A vehicle overturned: its permit’s last local day, as its normal approval asks (`permit_date` when out of range). */
+            permitValidUntil?: string;
+            /** @description The reasoned decision, as the appellant and the unit’s primary will read it. Write no one’s name. */
+            rationale: string;
+            /** @description A vehicle overturned: the sticker its normal approval issues (`sticker_used` when issued before). Without it the overturn is left to follow up (`needs_sticker`). */
+            stickerNumber?: string;
+        };
         DecideDisputeDto: {
             /** @description On `accept` only: what to credit. */
             amount?: string;
@@ -19084,6 +19231,80 @@ export interface components {
             decision: "upheld" | "cancelled";
             /** @description With `cancelled` only, from `violationCancel` (default `appeal_accepted`). */
             reasonCode?: string;
+        };
+        DecisionAppealAttachmentView: {
+            /** Format: uuid */
+            fileId: string;
+            /** @description A short-lived read URL; null once the file is gone. */
+            url: string | null;
+        };
+        DecisionAppealDeciderView: {
+            /** @description The deciding manager’s role key as it was then (never a person). */
+            roleKey: string;
+            /** @description The role’s name in the compound then; null when unnamed. */
+            roleName: string | null;
+        };
+        DecisionAppealDecisionView: {
+            /** Format: date-time */
+            decidedAt: string;
+            decidedBy: components["schemas"]["DecisionAppealDeciderView"];
+            /** @description What the decision did: applied by its domain (a permit approved, a vehicle activated, a notice withdrawn), left to the management to follow up, or nothing. */
+            effect: components["schemas"]["DecisionAppealEffect"];
+            /** @description Why an overturn was left to the management, or did nothing: the check that refused it. */
+            effectReason: components["schemas"]["DecisionAppealEffectReason"] | null;
+            /** Format: date-time */
+            followedUpAt: string | null;
+            outcome: components["schemas"]["DecisionAppealOutcome"];
+            /** @description The manager’s reasons, as the appellant reads them. */
+            rationale: string;
+        };
+        /**
+         * @description What the decision did: applied by its domain (a permit approved, a vehicle activated, a notice withdrawn), left to the management to follow up, or nothing.
+         * @enum {string}
+         */
+        DecisionAppealEffect: "applied" | "follow_up" | "none";
+        /**
+         * @description Why an overturn was left to the management, or did nothing: the check that refused it.
+         * @enum {string}
+         */
+        DecisionAppealEffectReason: "window_passed" | "purged" | "requester_gone" | "unit_limit" | "work_rules" | "blocklisted" | "needs_sticker" | "registrant_gone" | "plate_active" | "permit_date" | "sticker_used" | "changed" | "needs_review";
+        /** @enum {string} */
+        DecisionAppealKind: "permit_rejection" | "vehicle_rejection" | "worker_rejection" | "neighbour_notice";
+        /** @enum {string} */
+        DecisionAppealOutcome: "upheld" | "overturned";
+        /** @enum {string} */
+        DecisionAppealStatus: "pending" | "upheld" | "overturned" | "withdrawn";
+        DecisionAppealView: {
+            attachments: components["schemas"]["DecisionAppealAttachmentView"][];
+            decision: components["schemas"]["DecisionAppealDecisionView"] | null;
+            /** Format: date-time */
+            decisionAt: string;
+            /** @description The appellant’s words, to the appellant only; null once cleared. */
+            grounds: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["DecisionAppealKind"];
+            /** Format: date-time */
+            lodgedAt: string;
+            /** @description The caller appealed. */
+            mine: boolean;
+            /** @example AP-000001 */
+            reference: string;
+            status: components["schemas"]["DecisionAppealStatus"];
+            /** @description The decision appealed, as its domain describes it: codes and dates. */
+            subject: Record<string, never> | null;
+            /**
+             * Format: uuid
+             * @description The decision appealed: a permit, a vehicle, a worker’s engagement, a neighbour notice.
+             */
+            subjectId: string;
+            unitCode: string;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        DecisionAppealViewList: {
+            data: components["schemas"]["DecisionAppealView"][];
+            nextCursor: string | null;
         };
         DecisionResponse: {
             decisionSource: components["schemas"]["GateDecisionSource"] | null;
@@ -20276,7 +20497,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -22339,8 +22560,14 @@ export interface components {
             decidedAt: string | null;
             /** @enum {string} */
             decidedBy: "management" | "board";
+            /** @description The deciding manager’s role as it was then (a decision appeal); never a person. Null for the board and for the rest. */
+            deciderRole: components["schemas"]["ItemDeciderRoleView"] | null;
             /** @description `upheld`: the decision stands; `overturned`: the appellant won. */
             state: components["schemas"]["AppealState"];
+        };
+        ItemDeciderRoleView: {
+            key: string;
+            name: string | null;
         };
         KeptCountsView: {
             /** @description They stay, pointing at a deleted user. */
@@ -22479,6 +22706,17 @@ export interface components {
             /**
              * Format: uuid
              * @description The decision: a vehicle fine or a violation whose appeal the staff upheld, a facility suspension in force, a rejected invoice dispute.
+             */
+            subjectId: string;
+        };
+        LodgeDecisionAppealDto: {
+            /** @description The caller’s uploads of purpose `decision_appeal_attachment` (FILE_NOT_AVAILABLE). */
+            attachmentIds?: string[];
+            grounds: string;
+            kind: components["schemas"]["DecisionAppealKind"];
+            /**
+             * Format: uuid
+             * @description The decision: a rejected permit, a rejected vehicle, a rejected worker’s engagement, a neighbour notice the unit received.
              */
             subjectId: string;
         };
@@ -25972,7 +26210,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "vehicle_fine" | "unit_violation" | "board_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
+        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "vehicle_fine" | "unit_violation" | "board_appeal" | "decision_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
         ResidentItemView: {
             /** @description Where its appeal stands (the appeals list); null elsewhere. */
             appeal: components["schemas"]["ItemAppealView"] | null;
@@ -27693,6 +27931,38 @@ export interface components {
             data: components["schemas"]["StaffComplaintView"][];
             nextCursor: string | null;
         };
+        StaffDecisionAppealView: {
+            attachments: components["schemas"]["DecisionAppealAttachmentView"][];
+            decision: components["schemas"]["DecisionAppealDecisionView"] | null;
+            /** Format: date-time */
+            decisionAt: string;
+            /** @description The appellant’s words; null once cleared by their erasure. */
+            grounds: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["DecisionAppealKind"];
+            /** Format: date-time */
+            lodgedAt: string;
+            /** @description The caller took the decision appealed: another manager decides it. */
+            ownDecision: boolean;
+            /** @example AP-000001 */
+            reference: string;
+            status: components["schemas"]["DecisionAppealStatus"];
+            /** @description The decision appealed, as its domain describes it: codes and dates. */
+            subject: Record<string, never> | null;
+            /**
+             * Format: uuid
+             * @description The decision appealed: a permit, a vehicle, a worker’s engagement, a neighbour notice.
+             */
+            subjectId: string;
+            unitCode: string;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        StaffDecisionAppealViewList: {
+            data: components["schemas"]["StaffDecisionAppealView"][];
+            nextCursor: string | null;
+        };
         StaffDeviceResponse: {
             /** @description Every action up to this one was received. */
             ackedSeq: number;
@@ -28491,6 +28761,11 @@ export interface components {
             /** Format: date-time */
             sentAt: string;
             sentBy: components["schemas"]["AccountRefView"];
+            /**
+             * Format: date-time
+             * @description Withdrawn by an overturned decision appeal (ADR 0059).
+             */
+            withdrawnAt: string | null;
         };
         StaffParkingReportView: {
             closeReason: string | null;
@@ -30015,6 +30290,11 @@ export interface components {
             sentAt: string;
             /** @description The caller’s unit it was sent to. */
             unitCode: string;
+            /**
+             * Format: date-time
+             * @description Withdrawn by an overturned appeal (ADR 0059): it no longer stands against the unit.
+             */
+            withdrawnAt: string | null;
         };
         UnitNoticeViewList: {
             data: components["schemas"]["UnitNoticeView"][];
@@ -33198,6 +33478,97 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DecisionAppealsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionAppealViewList"];
+                };
+            };
+        };
+    };
+    DecisionAppealsController_lodge: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LodgeDecisionAppealDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionAppealView"];
+                };
+            };
+        };
+    };
+    DecisionAppealsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionAppealView"];
+                };
+            };
+        };
+    };
+    DecisionAppealsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionAppealView"];
+                };
             };
         };
     };
@@ -44545,6 +44916,97 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClubPersonViewList"];
+                };
+            };
+        };
+    };
+    StaffDecisionAppealsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["DecisionAppealStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDecisionAppealViewList"];
+                };
+            };
+        };
+    };
+    StaffDecisionAppealsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDecisionAppealView"];
+                };
+            };
+        };
+    };
+    StaffDecisionAppealsController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideDecisionAppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDecisionAppealView"];
+                };
+            };
+        };
+    };
+    StaffDecisionAppealsController_followedUp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDecisionAppealView"];
                 };
             };
         };

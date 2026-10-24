@@ -635,6 +635,8 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'incident_audio',
       'incident_video',
       'incident_signature',
+      // R11b-2 (ADR 0059) recreated both after G7.
+      'decision_appeal_attachment',
     ])
       expect(purposes).toContain(purpose);
     for (const purpose of purposes) {

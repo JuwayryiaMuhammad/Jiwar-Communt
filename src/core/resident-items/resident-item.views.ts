@@ -20,6 +20,20 @@ export class ItemAppealView {
   decidedBy: 'management' | 'board';
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   decidedAt: Date | null;
+  @ApiProperty({
+    type: () => ItemDeciderRoleView,
+    nullable: true,
+    description:
+      'The deciding manager’s role as it was then (a decision appeal); never a person. Null for the board and for the rest.',
+  })
+  deciderRole: ItemDeciderRoleView | null;
+}
+
+export class ItemDeciderRoleView {
+  @ApiProperty({ type: String })
+  key: string;
+  @ApiProperty({ type: String, nullable: true })
+  name: string | null;
 }
 
 /**
@@ -84,6 +98,7 @@ export class ResidentItemView {
             at: i.appeal.at,
             decidedBy: i.appeal.decidedBy,
             decidedAt: i.appeal.decidedAt,
+            deciderRole: i.appeal.deciderRole ?? null,
           }
         : null,
     };

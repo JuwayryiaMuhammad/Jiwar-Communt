@@ -50,7 +50,9 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { Notifier } from '../../core/notifications/notifier';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { dbNow } from '../db-clock';
 import { COMMUNITY_NOTICES } from '../notices/community-notices';
 import { CommunityNotifier } from '../notices/community-notifier';
 import { lockUnits } from '../units/unit-lock';
@@ -274,6 +276,7 @@ export class WorkersService {
     private readonly globalDb: GlobalDbService,
     private readonly settings: TenantSettingsService,
     private readonly files: FilesService,
+    private readonly inbox: Notifier,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -1079,10 +1082,18 @@ export class WorkersService {
     const outcome = await this.change(engagementId, async (tx, e) => {
       if (e.status !== 'pending_review') throw engagementNotFound();
       const reviewedById = this.ctx.accountId;
+      // When and why it was decided (ADR 0059: a rejection may be appealed).
+      const decidedAt = await dbNow(tx);
       if (decision === 'reject') {
         await tx.workerEngagement.update({
           where: { id: e.id },
-          data: { status: 'rejected', statusReason: why, reviewedById },
+          data: {
+            status: 'rejected',
+            statusReason: why,
+            reviewedById,
+            decidedAt,
+            rejectReason: rejection!.code,
+          },
         });
         await this.record(
           tx,
@@ -1095,6 +1106,7 @@ export class WorkersService {
             reasonCode: rejection!.code,
           },
         );
+        await this.toldRejected(tx, e, rejection!.code);
         return null;
       }
       const worker = await tx.domesticWorker.findUniqueOrThrow({
@@ -1120,7 +1132,13 @@ export class WorkersService {
       if (!isAdult(birthDate)) {
         await tx.workerEngagement.update({
           where: { id: e.id },
-          data: { status: 'rejected', statusReason: 'underage', reviewedById },
+          data: {
+            status: 'rejected',
+            statusReason: 'underage',
+            reviewedById,
+            decidedAt,
+            rejectReason: 'underage',
+          },
         });
         await this.record(
           tx,
@@ -1133,6 +1151,7 @@ export class WorkersService {
             reason: 'underage',
           },
         );
+        await this.toldRejected(tx, e, 'underage');
         await this.suspendAllUnderage(tx, worker.id, 'review');
         return { underage: true as const };
       }
@@ -1140,7 +1159,12 @@ export class WorkersService {
       const code = await this.newCode(tx, e);
       await tx.workerEngagement.update({
         where: { id: e.id },
-        data: { status: 'active', ...codeFields(code), reviewedById },
+        data: {
+          status: 'active',
+          ...codeFields(code),
+          reviewedById,
+          decidedAt,
+        },
       });
       await this.record(tx, e, 'worker.engagement_reviewed', 'active', null, {
         decision,
@@ -1149,6 +1173,29 @@ export class WorkersService {
     });
     if (outcome && 'underage' in outcome) throw underage();
     return outcome;
+  }
+
+  /**
+   * Whoever registered the worker learns of the rejection, with its code
+   * (ADR 0059): they may appeal it to the management within 15 days. Only
+   * an active account, never the reviewer.
+   */
+  private async toldRejected(
+    tx: TenantTxClient,
+    e: { id: string; requestedById: string },
+    reason: string,
+  ): Promise<void> {
+    if (e.requestedById === this.ctx.accountId) return;
+    const active = await tx.account.findFirst({
+      where: { id: e.requestedById, status: 'active' },
+      select: { id: true },
+    });
+    if (!active) return;
+    await this.inbox.notify(tx, [active.id], {
+      kind: 'worker.engagement_rejected',
+      params: { reason },
+      targetId: e.id,
+    });
   }
 
   /**

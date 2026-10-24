@@ -3,6 +3,8 @@ import { Module } from '@nestjs/common';
 import { GatePartnersPort } from './gate-partners-port';
 import { FineBoardAppeals } from './fines/fine-board-appeals';
 import { ViolationBoardAppeals } from './violations/violation-board-appeals';
+import { PermitDecisionAppeals } from './permits/permit-decision-appeals';
+import { VehicleDecisionAppeals } from './vehicles/vehicle-decision-appeals';
 import { SecurityOverview } from './reports/security-overview';
 import {
   GuardDevicesController,
@@ -417,6 +419,8 @@ import { PickupPageService } from './children/pickup-page.service';
     ResidentGateItems,
     FineBoardAppeals,
     ViolationBoardAppeals,
+    PermitDecisionAppeals,
+    VehicleDecisionAppeals,
     SecurityOverview,
     // The gate offline (ADR 0057).
     GateDevicesService,

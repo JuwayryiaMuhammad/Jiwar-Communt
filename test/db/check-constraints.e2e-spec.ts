@@ -1915,6 +1915,28 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'outcome IS NULL is tested first; with an outcome the decision shape has set the compensation',
   },
+  // Decision appeals (ADR 0059).
+  decision_appeal_counters_last_number_nonnegative: {},
+  decision_appeals_kind: {},
+  decision_appeals_number_positive: {},
+  decision_appeals_grounds: {
+    guarded: 'grounds IS NULL is tested first; its length runs only on a value',
+  },
+  decision_appeals_state_shape: {
+    guarded:
+      'rationale, effect_reason, decided_at and withdrawn_at are tested IS NULL first; effect and decided_by by IS [NOT] DISTINCT FROM or IS NOT NULL before IN; lodged_at and decision_at are NOT NULL',
+  },
+  decision_appeal_attachments_position: {},
+  // Nullable columns only under IS [NOT] NULL.
+  unit_permits_decision_appeal: {},
+  worker_engagements_reject_reason: {
+    guarded:
+      'reject_reason IS NULL is tested first; the list runs only on a value',
+  },
+  worker_engagements_decided: {},
+  neighbour_complaint_notices_withdrawn: {
+    guarded: 'withdrawn_at IS NULL is tested first; created_at is NOT NULL',
+  },
 };
 
 interface Check {

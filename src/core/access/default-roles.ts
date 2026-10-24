@@ -89,6 +89,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate_log.search',
       'gate_devices.manage',
       'partners.manage',
+      'appeals.decide',
     ],
   },
   {

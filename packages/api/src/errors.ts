@@ -404,6 +404,11 @@ const ERROR_TEXT: Record<string, string> = {
   PARTNER_COMPLAINT_NOT_FOUND: 'This complaint does not exist.',
   PARTNER_COMPLAINT_DECIDED: 'This complaint is decided already.',
   PARTNER_DESK_NOT_FOUND: 'This desk link does not work.',
+  // Decision appeals, complaints and representatives (ADR 0059).
+  DECISION_APPEAL_NOT_FOUND: 'This appeal does not exist.',
+  DECISION_APPEAL_NOT_PENDING: 'This appeal is decided or withdrawn already.',
+  APPEAL_DECIDER_CONFLICT: 'You took the decision appealed: another manager decides it.',
+  DECISION_APPEAL_NO_FOLLOW_UP: 'No follow-up is due on this appeal.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

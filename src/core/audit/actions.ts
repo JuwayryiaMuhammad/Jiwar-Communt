@@ -1532,6 +1532,39 @@ export const AUDIT_ACTIONS = {
   'partner.suspended': { log: 'tenant', target: 'partner' },
   // metadata: reasonCode (the suspension's it ends).
   'partner.reinstated': { log: 'tenant', target: 'partner' },
+  // Decision appeals (ADR 0059): ids, codes and times; the grounds and the
+  // rationale as changed, never their words.
+  // changes: number, kind, subjectId, unitId, decisionAt, attachments (how
+  // many), the grounds as changed.
+  'decision_appeal.lodged': {
+    log: 'tenant',
+    target: 'decision_appeal',
+    sensitive: ['grounds'],
+  },
+  // The appellant withdrew it. No metadata.
+  'decision_appeal.withdrawn': { log: 'tenant', target: 'decision_appeal' },
+  // A manager decided it. changes: the rationale as changed; metadata:
+  // outcome (upheld | overturned), effect (applied | follow_up | none),
+  // effectReason (a code or null), deciderRoleKey.
+  'decision_appeal.decided': {
+    log: 'tenant',
+    target: 'decision_appeal',
+    sensitive: ['rationale'],
+  },
+  // The manager followed an overturn up. No metadata.
+  'decision_appeal.followed_up': { log: 'tenant', target: 'decision_appeal' },
+  // The appellant's erasure: its grounds and attachments went. metadata:
+  // attachments (how many files were marked deleted).
+  'decision_appeal.grounds_cleared': {
+    log: 'tenant',
+    target: 'decision_appeal',
+  },
+  // An overturned decision appeal withdrew the unit's notice. metadata:
+  // noticeId, appealId.
+  'neighbour_complaint.notice_withdrawn': {
+    log: 'tenant',
+    target: 'neighbour_complaint',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -161,6 +161,8 @@ describe('audit catalog', () => {
         'gate_offline_batch',
         // ADR 0058
         'ticket_quote',
+        // ADR 0059
+        'decision_appeal',
       ]).toContain(def.target);
     }
   });

@@ -82,6 +82,7 @@ describe('Neighbour complaints — the notice to the unit', () => {
         body: 'NOTICE-TEXT about the dog',
         open: true,
         sentAt: expect.any(String) as string,
+        withdrawnAt: null,
       });
       expect((await notices(s.bob)).map((x) => x.id)).toEqual([noticeId]);
     });

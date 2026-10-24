@@ -837,6 +837,57 @@ describe('Neighbours tables — CHECKs, triggers and privileges', () => {
     });
   });
 
+  // A notice stays as sent; an overturned decision appeal withdraws it,
+  // once (ADR 0059): the app may set `withdrawn_at` and nothing else.
+  describe('neighbour_complaint_notices stays as sent, withdrawn once', () => {
+    it('the app holds SELECT, INSERT and an UPDATE of withdrawn_at only', async () => {
+      expect(await privileges('neighbour_complaint_notices')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: false,
+        truncate: false,
+      });
+      const { rows } = await app.query<Record<string, boolean>>(
+        `SELECT has_column_privilege('neighbour_complaint_notices', 'withdrawn_at', 'UPDATE') AS withdrawn,
+                has_column_privilege('neighbour_complaint_notices', 'body', 'UPDATE') AS body`,
+      );
+      expect(rows[0]).toEqual({ withdrawn: true, body: false });
+    });
+
+    it('the tables’ owner cannot rewrite, delete or truncate it, nor withdraw it twice', async () => {
+      const where = `id = '${noticeId}'`;
+      await expect(
+        attempt(
+          migrator,
+          `UPDATE neighbour_complaint_notices SET body = 'Rewritten' WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/stays as sent/);
+      await expect(
+        attempt(
+          migrator,
+          `DELETE FROM neighbour_complaint_notices WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/stays as sent/);
+      await expect(
+        attempt(migrator, `TRUNCATE neighbour_complaint_notices`),
+      ).rejects.toThrow(/append-only|cannot truncate/);
+      await expect(
+        attempt(
+          migrator,
+          `UPDATE neighbour_complaint_notices SET withdrawn_at = now() WHERE ${where}`,
+          `UPDATE neighbour_complaint_notices SET withdrawn_at = now() WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/withdrawn once/);
+      await expect(
+        attempt(
+          migrator,
+          `UPDATE neighbour_complaint_notices SET withdrawn_at = now() WHERE ${where}`,
+        ),
+      ).resolves.toBeDefined();
+    });
+  });
+
   describe.each([
     [
       'neighbour_complaint_status_history',
@@ -847,11 +898,6 @@ describe('Neighbours tables — CHECKs, triggers and privileges', () => {
       'neighbour_complaint_attachments',
       () => `id = '${attachmentId}'`,
       'created_at = now()',
-    ],
-    [
-      'neighbour_complaint_notices',
-      () => `id = '${noticeId}'`,
-      `body = 'Rewritten'`,
     ],
     [
       'neighbour_complaint_notice_recipients',

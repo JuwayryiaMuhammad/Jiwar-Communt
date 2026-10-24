@@ -30,6 +30,7 @@ import { AuditModule } from './core/audit/audit.module';
 import { AssistModule } from './core/assist/assist.module';
 import { AuthModule } from './core/auth/auth.module';
 import { BoardMattersModule } from './core/board-matters/board-matters.module';
+import { DecisionAppealsModule } from './core/decision-appeals/decision-appeals.module';
 import { ResidentItemsModule } from './core/resident-items/resident-items.module';
 import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
 import { ConsentsModule } from './core/consents/consents.module';
@@ -117,6 +118,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     FilesModule,
     ExportsModule,
     BoardMattersModule,
+    DecisionAppealsModule,
     ResidentItemsModule,
     FormalNoticesModule,
     AssistModule,

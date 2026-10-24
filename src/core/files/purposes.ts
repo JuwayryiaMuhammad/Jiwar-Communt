@@ -284,6 +284,13 @@ export const FILE_PURPOSES = {
     maxBytes: 256 * 1024,
     uploaders: ['gate.operate', 'incidents.manage'],
   },
+  // A decision appeal's attachment (ADR 0059): a photo or a PDF, uploaded
+  // by a resident who appeals a staff decision about their unit.
+  decision_appeal_attachment: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['units.read'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

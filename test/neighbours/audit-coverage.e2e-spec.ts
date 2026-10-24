@@ -15,6 +15,7 @@ import {
   RESIDENT_SCREENS_COVERAGE,
   VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
+import { decisionAppealHelpers } from '../setup/decision-appeals';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import {
   neighboursHelpers,
@@ -214,6 +215,18 @@ describe('Audit coverage — neighbours', () => {
       const row = await single('neighbour_complaint.withdrawn', id);
       expect(row).toMatchObject(by(s.alice, 'neighbour_complaint'));
       expect(row.metadata).toMatchObject({ reasonCode: 'withdrawn' });
+    });
+
+    it('neighbour_complaint.notice_withdrawn — the notice and the appeal that overturned it (ADR 0059)', async () => {
+      const d = decisionAppealHelpers(h);
+      const { id } = await n.complain(s.c, s.alice, s.homeB.code);
+      const noticeId = await n.noticed(s.handler, id, `${MARKER} quiet`);
+      const appeal = await d.lodge(s.bob, 'neighbour_notice', noticeId);
+      const decider = await d.secondManager(s.c);
+      await d.decide(decider, appeal.id, { outcome: 'overturned' });
+      const row = await single('neighbour_complaint.notice_withdrawn', id);
+      expect(row).toMatchObject(by(decider, 'neighbour_complaint'));
+      expect(row.metadata).toEqual({ noticeId, appealId: appeal.id });
     });
   });
 

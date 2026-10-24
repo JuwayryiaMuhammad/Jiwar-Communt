@@ -88,6 +88,8 @@ export interface NoticeFacts {
   body: string;
   recipientKind: 'household' | 'owners';
   createdAt: Date;
+  /** Withdrawn by an overturned decision appeal (ADR 0059). */
+  withdrawnAt: Date | null;
   sentBy: Sender;
   recipients: Sender[];
 }
@@ -355,6 +357,7 @@ export class ComplaintsService implements OnModuleInit {
           body: notice.body,
           recipientKind: notice.recipientKind,
           createdAt: notice.createdAt,
+          withdrawnAt: notice.withdrawnAt,
           sentBy: notice.sentBy,
           recipients: notice.recipients.map((r) => r.account),
         },

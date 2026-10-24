@@ -24,9 +24,11 @@ import { BoardMotionView } from '../motions/views/motions.views';
 import { BoardAppealsService } from './appeals.service';
 import {
   BoardAppealsQueryDto,
+  FileManagementComplaintDto,
   LodgeBoardAppealDto,
   ProposeAppealMotionDto,
 } from './dto/appeals.dto';
+import { ManagementComplaints } from './management-complaints';
 import {
   BoardAppealBoardView,
   BoardAppealView,
@@ -84,6 +86,29 @@ export class BoardAppealsController {
   @ApiOkResponse({ type: BoardAppealView })
   async withdraw(@Param('id', parseId()) id: string): Promise<BoardAppealView> {
     return BoardAppealView.from(await this.appeals.withdraw(id));
+  }
+}
+
+/** Complaints about the management, to the board (ADR 0059). */
+@ApiArea('governance')
+@RequirePermissions('governance.read')
+@Controller('governance/management-complaints')
+export class ManagementComplaintsController {
+  constructor(private readonly complaints: ManagementComplaints) {}
+
+  @Post()
+  @NoStore()
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Complain about the management to the board',
+    description:
+      'An owner of the unit, or its primary (BOARD_APPEAL_NOT_ALLOWED), at most three open at once (MANAGEMENT_COMPLAINT_LIMIT). Lodged as a board appeal of kind `management_complaint`, read and withdrawn as one; its author alone sees it, and the management never learns its unit or its grounds. Overturned means founded: the management follows it up.',
+  })
+  @ApiCreatedResponse({ type: BoardAppealView })
+  async file(
+    @Body() dto: FileManagementComplaintDto,
+  ): Promise<BoardAppealView> {
+    return BoardAppealView.from(await this.complaints.file(dto));
   }
 }
 

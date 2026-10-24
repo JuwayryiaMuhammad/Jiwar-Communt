@@ -100,6 +100,14 @@ class DecisionAppealBase {
   lodgedAt: Date;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   withdrawnAt: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Upheld and taken on to the board (a board appeal of kind `management_appeal`).',
+  })
+  takenToBoardAt: Date | null;
   @ApiProperty({ type: DecisionAppealDecisionView, nullable: true })
   decision: DecisionAppealDecisionView | null;
   @ApiProperty({
@@ -122,6 +130,7 @@ class DecisionAppealBase {
       decisionAt: a.decisionAt,
       lodgedAt: a.lodgedAt,
       withdrawnAt: a.withdrawnAt,
+      takenToBoardAt: a.boardAppealAt,
       decision:
         a.decidedAt && a.rationale && a.deciderRoleKey
           ? {

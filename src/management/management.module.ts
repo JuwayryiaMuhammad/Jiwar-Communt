@@ -13,6 +13,7 @@ import {
   DecisionAppealsController,
   StaffDecisionAppealsController,
 } from './decision-appeals/decision-appeals.controller';
+import { DecisionAppealBoardAppeals } from './decision-appeals/decision-appeal-board-appeals';
 import { DecisionAppealsService } from './decision-appeals/decision-appeals.service';
 import { ResidentDecisionAppealItems } from './decision-appeals/resident-decision-appeal-items';
 import { ManagementExportSections } from './export/export-sections';
@@ -94,6 +95,7 @@ import { TopicsService } from './topics/topics.service';
     ResidentRequestSummary,
     DecisionAppealsService,
     ResidentDecisionAppealItems,
+    DecisionAppealBoardAppeals,
   ],
   exports: [ResidentRequestSummary, ManagementPartnersPort],
 })

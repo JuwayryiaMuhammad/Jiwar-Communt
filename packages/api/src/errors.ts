@@ -409,6 +409,7 @@ const ERROR_TEXT: Record<string, string> = {
   DECISION_APPEAL_NOT_PENDING: 'This appeal is decided or withdrawn already.',
   APPEAL_DECIDER_CONFLICT: 'You took the decision appealed: another manager decides it.',
   DECISION_APPEAL_NO_FOLLOW_UP: 'No follow-up is due on this appeal.',
+  MANAGEMENT_COMPLAINT_LIMIT: 'This owner has as many complaints open as they may.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

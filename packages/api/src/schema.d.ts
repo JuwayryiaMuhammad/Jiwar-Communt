@@ -3760,6 +3760,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/governance/management-complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complain about the management to the board
+         * @description An owner of the unit, or its primary (BOARD_APPEAL_NOT_ALLOWED), at most three open at once (MANAGEMENT_COMPLAINT_LIMIT). Lodged as a board appeal of kind `management_complaint`, read and withdrawn as one; its author alone sees it, and the management never learns its unit or its grounds. Overturned means founded: the management follows it up.
+         */
+        post: operations["ManagementComplaintsController_file"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/governance/polls": {
         parameters: {
             query?: never;
@@ -16286,7 +16306,8 @@ export interface components {
              * @description The decision appealed: a fine, a violation, a suspension or a dispute.
              */
             subjectId: string;
-            unitCode: string;
+            /** @description Null in the management’s view of a complaint about the management (ADR 0059): the staff never learn whose it is. */
+            unitCode: string | null;
             /** Format: date-time */
             withdrawnAt: string | null;
         };
@@ -16303,7 +16324,7 @@ export interface components {
          */
         BoardAppealEffect: "applied" | "follow_up" | "none";
         /** @enum {string} */
-        BoardAppealKind: "vehicle_fine" | "unit_violation" | "booking_suspension" | "invoice_dispute";
+        BoardAppealKind: "vehicle_fine" | "unit_violation" | "booking_suspension" | "invoice_dispute" | "management_appeal" | "management_complaint";
         /** @enum {string} */
         BoardAppealOutcome: "upheld" | "overturned";
         /** @enum {string} */
@@ -16332,7 +16353,8 @@ export interface components {
              * @description The decision appealed: a fine, a violation, a suspension or a dispute.
              */
             subjectId: string;
-            unitCode: string;
+            /** @description Null in the management’s view of a complaint about the management (ADR 0059): the staff never learn whose it is. */
+            unitCode: string | null;
             /** Format: date-time */
             withdrawnAt: string | null;
         };
@@ -19298,6 +19320,11 @@ export interface components {
              * @description The decision appealed: a permit, a vehicle, a worker’s engagement, a neighbour notice.
              */
             subjectId: string;
+            /**
+             * Format: date-time
+             * @description Upheld and taken on to the board (a board appeal of kind `management_appeal`).
+             */
+            takenToBoardAt: string | null;
             unitCode: string;
             /** Format: date-time */
             withdrawnAt: string | null;
@@ -20495,6 +20522,19 @@ export interface components {
             reasonCode: string | null;
             /** @description 1–5, the technician who did the work (ADR 0038); optional. */
             technicianRating: number | null;
+        };
+        FileManagementComplaintDto: {
+            /** @description The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE). */
+            attachmentIds?: string[];
+            category: components["schemas"]["ManagementComplaintCategory"];
+            grounds: string;
+            /** @description The number of the management request it is about (MR-000123 is 123), if any. */
+            requestNumber?: number;
+            /**
+             * Format: uuid
+             * @description A unit the caller owns or is the primary of (BOARD_APPEAL_NOT_ALLOWED).
+             */
+            unitId: string;
         };
         /** @enum {string} */
         FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment";
@@ -22860,6 +22900,8 @@ export interface components {
          * @enum {string}
          */
         ManagementAppointmentStatus: "requested" | "proposed" | "confirmed" | "cancelled" | "superseded";
+        /** @enum {string} */
+        ManagementComplaintCategory: "conduct" | "delay" | "unfair_decision" | "service_quality" | "other";
         ManagementContactView: {
             /** @example +20225550101 */
             phone: string;
@@ -27732,7 +27774,8 @@ export interface components {
              * @description The decision appealed: a fine, a violation, a suspension or a dispute.
              */
             subjectId: string;
-            unitCode: string;
+            /** @description Null in the management’s view of a complaint about the management (ADR 0059): the staff never learn whose it is. */
+            unitCode: string | null;
             /** Format: date-time */
             withdrawnAt: string | null;
         };
@@ -27955,6 +27998,11 @@ export interface components {
              * @description The decision appealed: a permit, a vehicle, a worker’s engagement, a neighbour notice.
              */
             subjectId: string;
+            /**
+             * Format: date-time
+             * @description Upheld and taken on to the board (a board appeal of kind `management_appeal`).
+             */
+            takenToBoardAt: string | null;
             unitCode: string;
             /** Format: date-time */
             withdrawnAt: string | null;
@@ -36895,6 +36943,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GovernanceElectionVoteReceipt"];
+                };
+            };
+        };
+    };
+    ManagementComplaintsController_file: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileManagementComplaintDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardAppealView"];
                 };
             };
         };

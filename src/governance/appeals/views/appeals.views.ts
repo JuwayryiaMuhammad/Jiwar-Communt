@@ -49,8 +49,13 @@ class AppealBase {
       'The decision appealed: a fine, a violation, a suspension or a dispute.',
   })
   subjectId: string;
-  @ApiProperty({ type: String })
-  unitCode: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'Null in the management’s view of a complaint about the management (ADR 0059): the staff never learn whose it is.',
+  })
+  unitCode: string | null;
   @ApiProperty({ enum: APPEAL_STATUSES, enumName: 'BoardAppealStatus' })
   status: AppealStatus;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -144,6 +149,7 @@ export class StaffBoardAppealView extends AppealBase {
     const a = r.appeal;
     return {
       ...AppealBase.base(r),
+      unitCode: a.kind === 'management_complaint' ? null : r.unitCode,
       overdue: a.status === 'pending' && a.deadlineAt <= r.now,
       effect: a.effect as AppealEffect | null,
       followedUpAt: a.followedUpAt,
@@ -169,6 +175,8 @@ export class BoardAppealBoardView extends StaffBoardAppealView {
   static fromBoard(r: BoardAppealRecord): BoardAppealBoardView {
     return {
       ...StaffBoardAppealView.from(r),
+      // The board sees whose it is: who is recused depends on it.
+      unitCode: r.unitCode,
       grounds: r.appeal.grounds,
       attachments: r.attachments,
       subject: r.subject,

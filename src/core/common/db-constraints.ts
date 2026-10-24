@@ -623,4 +623,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   decision_appeals_number_key: null,
   decision_appeals_one_per_decision: null,
   decision_appeal_attachments_file_key: null,
+  // A complaint about the management (ADR 0059): its board appeal is the
+  // one per subject; the id key backs the composite foreign keys.
+  management_complaints_tenant_id_id_key: null,
 };

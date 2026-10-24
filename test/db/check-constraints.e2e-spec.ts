@@ -1934,6 +1934,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'reject_reason IS NULL is tested first; the list runs only on a value',
   },
   worker_engagements_decided: {},
+  decision_appeals_board_appeal: {},
+  management_complaints_category: {},
+  management_complaints_request_number: {
+    guarded:
+      'request_number IS NULL is tested first; the bound runs only on a value',
+  },
   neighbour_complaint_notices_withdrawn: {
     guarded: 'withdrawn_at IS NULL is tested first; created_at is NOT NULL',
   },

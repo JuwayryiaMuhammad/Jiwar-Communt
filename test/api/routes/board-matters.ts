@@ -440,6 +440,8 @@ const APPEAL_KINDS = [
   'unit_violation',
   'booking_suspension',
   'invoice_dispute',
+  'management_appeal',
+  'management_complaint',
 ];
 const APPEAL_STATUSES = ['pending', 'upheld', 'overturned', 'withdrawn'];
 
@@ -463,6 +465,38 @@ export const BOARD_APPEAL_ROUTES: Row[] = [
           field: 'kind',
           code: 'INVALID_VALUE',
           params: { allowed: APPEAL_KINDS },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    // ADR 0059.
+    method: 'POST',
+    path: '/governance/management-complaints',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: {
+        unitId: '0193b8a4-0000-7000-8000-000000000000',
+        category: 'rude',
+        grounds: 'g',
+      },
+      fields: [
+        {
+          field: 'category',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: [
+              'conduct',
+              'delay',
+              'unfair_decision',
+              'service_quality',
+              'other',
+            ],
+          },
         },
       ],
     },

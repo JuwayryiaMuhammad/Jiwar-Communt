@@ -19,7 +19,8 @@ import { daysOf, UNIT_LIMIT } from './permits.service';
 /**
  * A rejected permit appealed to the management (ADR 0059), registered with
  * core's DecisionAppeals. The unit's primary appeals it. While the appeal
- * is open the permit is marked, so the purge keeps its data.
+ * is open the permit is marked, so the purge keeps its data; taken on to
+ * the board, it is marked again until the board decides.
  *
  * An overturn approves it through the checks a permit passes to be asked
  * and approved, in the permits' lock order (the unit's lock, the
@@ -62,10 +63,19 @@ export class PermitDecisionAppeals implements OnModuleInit {
               : null,
         };
       },
+      // Marked at the appeal, and marked again when the management's
+      // decision goes to the board (the first time stays).
       lodged: async (tx, id, now) => {
+        const p = await tx.unitPermit.findUniqueOrThrow({
+          where: { id },
+          select: { decisionAppealAt: true },
+        });
         await tx.unitPermit.update({
           where: { id },
-          data: { decisionAppealAt: now },
+          data: {
+            decisionAppealAt: p.decisionAppealAt ?? now,
+            decisionAppealClosedAt: null,
+          },
         });
       },
       closed: (tx, id, outcome, ev) => this.closed(tx, id, outcome, ev),

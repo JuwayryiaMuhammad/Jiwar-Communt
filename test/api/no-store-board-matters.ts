@@ -350,6 +350,12 @@ export function appealCalls(
     'POST /governance/board-appeals': () => lodgeOne(),
     'GET /governance/board-appeals': () =>
       owner('GET', '/governance/board-appeals'),
+    'POST /governance/management-complaints': () =>
+      owner('POST', '/governance/management-complaints', {
+        unitId: world().a.homeUnitId,
+        category: 'service_quality',
+        grounds: 'No-store grounds',
+      }),
     'GET /governance/board-appeals/{id}': async () =>
       owner('GET', `/governance/board-appeals/${await anAppeal()}`),
     'POST /governance/board-appeals/{id}/withdraw': async () =>

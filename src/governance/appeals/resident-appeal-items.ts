@@ -15,7 +15,8 @@ import { appealReference } from './appeal-rules';
 /**
  * Appeals to the board in the resident's appeals list and search (ADR
  * 0055, 0058), as `GET /governance/board-appeals` lists them: the caller's
- * own, and those of the units they own or are the primary of. By their
+ * own, and those of the units they own or are the primary of (a
+ * complaint about the management, ADR 0059: its author's alone). By their
  * last move (lodged, decided, withdrawn); decided by the board.
  */
 @Injectable()
@@ -48,7 +49,7 @@ export class ResidentAppealItems implements OnModuleInit {
     const units = await this.community.appealUnits(tx, me);
     const conds: Prisma.Sql[] = [
       units.length
-        ? Prisma.sql`(a.appellant_account_id = ${me}::uuid OR a.unit_id IN (${Prisma.join(units.map((u) => Prisma.sql`${u}::uuid`))}))`
+        ? Prisma.sql`(a.appellant_account_id = ${me}::uuid OR (a.kind <> 'management_complaint' AND a.unit_id IN (${Prisma.join(units.map((u) => Prisma.sql`${u}::uuid`))})))`
         : Prisma.sql`a.appellant_account_id = ${me}::uuid`,
     ];
     if (q.state === 'open') conds.push(Prisma.sql`a.status = 'pending'`);

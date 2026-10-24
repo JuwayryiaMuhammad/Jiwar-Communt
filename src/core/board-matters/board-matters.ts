@@ -37,12 +37,18 @@ export const THRESHOLD_TYPES = [
 ] as const satisfies readonly ApprovalType[];
 export type ThresholdType = (typeof THRESHOLD_TYPES)[number];
 
-/** The staff decisions an owner or a unit's primary may take to the board. */
+/**
+ * The staff decisions an owner or a unit's primary may take to the board,
+ * and (ADR 0059) a decision appeal the management upheld and a complaint
+ * about the management.
+ */
 export const BOARD_APPEAL_KINDS = [
   'vehicle_fine',
   'unit_violation',
   'booking_suspension',
   'invoice_dispute',
+  'management_appeal',
+  'management_complaint',
 ] as const;
 export type BoardAppealKind = (typeof BOARD_APPEAL_KINDS)[number];
 

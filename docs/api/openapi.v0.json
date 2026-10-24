@@ -2595,6 +2595,8 @@
             "type": "string"
           },
           "unitCode": {
+            "description": "Null in the management’s view of a complaint about the management (ADR 0059): the staff never learn whose it is.",
+            "nullable": true,
             "type": "string"
           },
           "withdrawnAt": {
@@ -2663,7 +2665,9 @@
           "vehicle_fine",
           "unit_violation",
           "booking_suspension",
-          "invoice_dispute"
+          "invoice_dispute",
+          "management_appeal",
+          "management_complaint"
         ],
         "type": "string"
       },
@@ -2750,6 +2754,8 @@
             "type": "string"
           },
           "unitCode": {
+            "description": "Null in the management’s view of a complaint about the management (ADR 0059): the staff never learn whose it is.",
+            "nullable": true,
             "type": "string"
           },
           "withdrawnAt": {
@@ -11568,6 +11574,12 @@
             "format": "uuid",
             "type": "string"
           },
+          "takenToBoardAt": {
+            "description": "Upheld and taken on to the board (a board appeal of kind `management_appeal`).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "unitCode": {
             "type": "string"
           },
@@ -11587,6 +11599,7 @@
           "decisionAt",
           "lodgedAt",
           "withdrawnAt",
+          "takenToBoardAt",
           "decision",
           "subject",
           "mine",
@@ -15566,6 +15579,46 @@
           "comment",
           "author",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "FileManagementComplaintDto": {
+        "properties": {
+          "attachmentIds": {
+            "description": "The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE).",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementComplaintCategory"
+              }
+            ]
+          },
+          "grounds": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "requestNumber": {
+            "description": "The number of the management request it is about (MR-000123 is 123), if any.",
+            "minimum": 1,
+            "type": "number"
+          },
+          "unitId": {
+            "description": "A unit the caller owns or is the primary of (BOARD_APPEAL_NOT_ALLOWED).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "category",
+          "grounds"
         ],
         "type": "object"
       },
@@ -23302,6 +23355,16 @@
           "confirmed",
           "cancelled",
           "superseded"
+        ],
+        "type": "string"
+      },
+      "ManagementComplaintCategory": {
+        "enum": [
+          "conduct",
+          "delay",
+          "unfair_decision",
+          "service_quality",
+          "other"
         ],
         "type": "string"
       },
@@ -38867,6 +38930,8 @@
             "type": "string"
           },
           "unitCode": {
+            "description": "Null in the management’s view of a complaint about the management (ADR 0059): the staff never learn whose it is.",
+            "nullable": true,
             "type": "string"
           },
           "withdrawnAt": {
@@ -39654,6 +39719,12 @@
             "format": "uuid",
             "type": "string"
           },
+          "takenToBoardAt": {
+            "description": "Upheld and taken on to the board (a board appeal of kind `management_appeal`).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "unitCode": {
             "type": "string"
           },
@@ -39673,6 +39744,7 @@
           "decisionAt",
           "lodgedAt",
           "withdrawnAt",
+          "takenToBoardAt",
           "decision",
           "subject",
           "ownDecision",
@@ -62038,6 +62110,56 @@
           }
         ],
         "summary": "Cast a unit’s vote",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/management-complaints": {
+      "post": {
+        "description": "An owner of the unit, or its primary (BOARD_APPEAL_NOT_ALLOWED), at most three open at once (MANAGEMENT_COMPLAINT_LIMIT). Lodged as a board appeal of kind `management_complaint`, read and withdrawn as one; its author alone sees it, and the management never learns its unit or its grounds. Overturned means founded: the management follows it up.",
+        "operationId": "ManagementComplaintsController_file",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileManagementComplaintDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardAppealView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Complain about the management to the board",
         "tags": [
           "governance"
         ],

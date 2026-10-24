@@ -290,6 +290,23 @@ const TABLES: Table[] = [
       }),
   },
   {
+    // ADR 0059: a complaint about the management.
+    table: 'management_complaints',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.managementComplaint.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          unitId: link.unitId,
+          authorId: link.accountId,
+          category: 'delay',
+        },
+      });
+      return id;
+    },
+  },
+  {
     table: 'board_motion_recusals',
     insert: async (tx, own, link) => {
       const appealId = await appealRow(tx, {

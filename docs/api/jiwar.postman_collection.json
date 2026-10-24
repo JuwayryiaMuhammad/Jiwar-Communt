@@ -14253,7 +14253,7 @@
               },
               "raw": "{\n  \"kind\": \"vehicle_fine\",\n  \"subjectId\": \"\",\n  \"grounds\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentIds` | string[] |  | The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE). |\n| `grounds` | string | yes |  |\n| `kind` | `vehicle_fine` \\| `unit_violation` \\| `booking_suspension` \\| `invoice_dispute` | yes |  |\n| `subjectId` | string (uuid) | yes | The decision: a vehicle fine or a violation whose appeal the staff upheld, a facility suspension in force, a rejected invoice dispute. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentIds` | string[] |  | The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE). |\n| `grounds` | string | yes |  |\n| `kind` | `vehicle_fine` \\| `unit_violation` \\| `booking_suspension` \\| `invoice_dispute` \\| `management_appeal` \\| `management_complaint` | yes |  |\n| `subjectId` | string (uuid) | yes | The decision: a vehicle fine or a violation whose appeal the staff upheld, a facility suspension in force, a rejected invoice dispute. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -14693,6 +14693,46 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Complain about the management to the board",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"category\": \"conduct\",\n  \"grounds\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentIds` | string[] |  | The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE). |\n| `category` | `conduct` \\| `delay` \\| `unfair_decision` \\| `service_quality` \\| `other` | yes |  |\n| `grounds` | string | yes |  |\n| `requestNumber` | number |  | The number of the management request it is about (MR-000123 is 123), if any. |\n| `unitId` | string (uuid) | yes | A unit the caller owns or is the primary of (BOARD_APPEAL_NOT_ALLOWED). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "management-complaints"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/management-complaints"
             }
           }
         },

@@ -166,6 +166,21 @@ export class BoardAppealsService
   // --------------------------------------------------------------------------
 
   lodge(input: NewAppeal): Promise<AppealRecord> {
+    return this.tenantTx.withTenantTx((tx) => this.lodgeIn(tx, input));
+  }
+
+  /**
+   * The lodge, in the caller's transaction. A subject made with its appeal
+   * (ADR 0059's complaint about the management) is written by the
+   * `subjectId` function, after the account locks and before its domain
+   * locks and judges it.
+   */
+  async lodgeIn(
+    tx: TenantTxClient,
+    input: Omit<NewAppeal, 'subjectId'> & {
+      subjectId: string | ((tx: TenantTxClient) => Promise<string>);
+    },
+  ): Promise<AppealRecord> {
     const ids = input.attachmentIds ?? [];
     if (new Set(ids).size !== ids.length)
       throw invalid([
@@ -173,122 +188,128 @@ export class BoardAppealsService
       ]);
     const handler = this.matters.appeal(input.kind);
     if (!handler) throw subjectNotFound();
-    return this.tenantTx.withTenantTx(async (tx) => {
-      await this.access.lockSelf(tx);
-      // Accounts first: the board it tells.
-      await this.access.lockAccounts(
+    await this.access.lockSelf(tx);
+    // Accounts first: the board it tells.
+    await this.access.lockAccounts(
+      tx,
+      await this.board.seatedAccounts(tx, await dbNow(tx)),
+    );
+    const subjectId =
+      typeof input.subjectId === 'string'
+        ? input.subjectId
+        : await input.subjectId(tx);
+    // The decision, locked and judged by its domain.
+    const resolved = await handler.resolve(tx, subjectId);
+    if (!resolved) throw subjectNotFound();
+    if (
+      !(await this.community.mayAppealFor(
         tx,
-        await this.board.seatedAccounts(tx, await dbNow(tx)),
+        this.ctx.accountId,
+        resolved.unitId,
+      ))
+    )
+      throw appError.forbidden(
+        ErrorCode.BOARD_APPEAL_NOT_ALLOWED,
+        'Only an owner of the unit, or its primary, appeals to the board',
       );
-      // The decision, locked and judged by its domain.
-      const resolved = await handler.resolve(tx, input.subjectId);
-      if (!resolved) throw subjectNotFound();
-      if (
-        !(await this.community.mayAppealFor(
-          tx,
-          this.ctx.accountId,
-          resolved.unitId,
-        ))
-      )
-        throw appError.forbidden(
-          ErrorCode.BOARD_APPEAL_NOT_ALLOWED,
-          'Only an owner of the unit, or its primary, appeals to the board',
-        );
-      if (
-        await tx.governanceBoardAppeal.findFirst({
-          where: { kind: input.kind, subjectId: input.subjectId },
-          select: { id: true },
-        })
-      )
-        throw appError.conflict(
-          ErrorCode.BOARD_APPEAL_EXISTS,
-          'The decision was taken to the board already',
-        );
-      if (resolved.refused || !resolved.decidedAt)
-        throw appError.conflict(
-          ErrorCode.BOARD_APPEAL_NOT_ELIGIBLE,
-          'The decision does not stand against the unit now',
-          { params: { reason: resolved.refused ?? 'not_decided' } },
-        );
-      const now = await dbNow(tx);
-      const until = new Date(
-        resolved.decidedAt.getTime() + APPEAL_WINDOW_DAYS * DAY,
+    if (
+      await tx.governanceBoardAppeal.findFirst({
+        where: { kind: input.kind, subjectId },
+        select: { id: true },
+      })
+    )
+      throw appError.conflict(
+        ErrorCode.BOARD_APPEAL_EXISTS,
+        'The decision was taken to the board already',
       );
-      if (now >= until)
-        throw appError.conflict(
-          ErrorCode.BOARD_APPEAL_WINDOW_PASSED,
-          'The days to appeal to the board have passed',
-          { params: { until: until.toISOString() } },
-        );
-      const id = newId();
-      await this.idempotency.claim(tx, { type: BOARD_APPEAL_RESOURCE, id });
-      const days = await this.settings.deadlineDays(tx, 'board_appeal');
-      const appeal = await tx.governanceBoardAppeal.create({
+    if (resolved.refused || !resolved.decidedAt)
+      throw appError.conflict(
+        ErrorCode.BOARD_APPEAL_NOT_ELIGIBLE,
+        'The decision does not stand against the unit now',
+        { params: { reason: resolved.refused ?? 'not_decided' } },
+      );
+    const now = await dbNow(tx);
+    const until = new Date(
+      resolved.decidedAt.getTime() + APPEAL_WINDOW_DAYS * DAY,
+    );
+    if (now >= until)
+      throw appError.conflict(
+        ErrorCode.BOARD_APPEAL_WINDOW_PASSED,
+        'The days to appeal to the board have passed',
+        { params: { until: until.toISOString() } },
+      );
+    const id = newId();
+    await this.idempotency.claim(tx, { type: BOARD_APPEAL_RESOURCE, id });
+    const days = await this.settings.deadlineDays(tx, 'board_appeal');
+    const appeal = await tx.governanceBoardAppeal.create({
+      data: {
+        id,
+        tenantId: this.ctx.txTenantId,
+        number: await nextGovernanceNumber(tx, this.ctx.txTenantId, 'appeal'),
+        kind: input.kind,
+        subjectId,
+        unitId: resolved.unitId,
+        appellantId: this.ctx.accountId,
+        grounds: input.grounds,
+        decisionAt: resolved.decidedAt,
+        lodgedAt: now,
+        deadlineAt: new Date(now.getTime() + days * DAY),
+      },
+    });
+    for (const [i, fileId] of ids.entries()) {
+      const file = await this.files.claim(
+        tx,
+        fileId,
+        'board_appeal_attachment',
+      );
+      if (!file)
+        throw invalid([
+          {
+            field: `attachmentIds[${i}]`,
+            code: FieldErrorCode.FILE_NOT_AVAILABLE,
+          },
+        ]);
+      await this.files.attach(tx, file);
+      await tx.governanceBoardAppealAttachment.create({
         data: {
-          id,
           tenantId: this.ctx.txTenantId,
-          number: await nextGovernanceNumber(tx, this.ctx.txTenantId, 'appeal'),
-          kind: input.kind,
-          subjectId: input.subjectId,
-          unitId: resolved.unitId,
-          appellantId: this.ctx.accountId,
-          grounds: input.grounds,
-          decisionAt: resolved.decidedAt,
-          lodgedAt: now,
-          deadlineAt: new Date(now.getTime() + days * DAY),
+          appealId: id,
+          fileId,
+          position: i + 1,
         },
       });
-      for (const [i, fileId] of ids.entries()) {
-        const file = await this.files.claim(
-          tx,
-          fileId,
-          'board_appeal_attachment',
-        );
-        if (!file)
-          throw invalid([
-            {
-              field: `attachmentIds[${i}]`,
-              code: FieldErrorCode.FILE_NOT_AVAILABLE,
-            },
-          ]);
-        await this.files.attach(tx, file);
-        await tx.governanceBoardAppealAttachment.create({
-          data: {
-            tenantId: this.ctx.txTenantId,
-            appealId: id,
-            fileId,
-            position: i + 1,
-          },
-        });
-      }
-      await handler.lodged(tx, input.subjectId, now);
-      await this.audit.record(tx, {
-        action: 'governance_board_appeal.lodged',
-        targetId: id,
-        changes: diffChanges(
-          null,
-          {
-            number: appeal.number,
-            kind: input.kind,
-            subjectId: input.subjectId,
-            unitId: resolved.unitId,
-            decisionAt: resolved.decidedAt,
-            deadlineAt: appeal.deadlineAt,
-            attachments: ids.length,
-            grounds: input.grounds,
-          },
-          'governance_board_appeal.lodged',
-        ),
-      });
-      await this.notices.send(
-        tx,
-        await this.board.seatedAccounts(tx, now),
-        'governance_appeal.lodged',
-        id,
-        { kind: input.kind },
-      );
-      return this.load(tx, appeal, true);
+    }
+    await handler.lodged(tx, subjectId, now);
+    await this.audit.record(tx, {
+      action: 'governance_board_appeal.lodged',
+      targetId: id,
+      changes: diffChanges(
+        null,
+        {
+          number: appeal.number,
+          kind: input.kind,
+          subjectId,
+          // A complaint about the management never names its unit to the
+          // staff, the audit trail included (ADR 0059).
+          ...(input.kind === 'management_complaint'
+            ? {}
+            : { unitId: resolved.unitId }),
+          decisionAt: resolved.decidedAt,
+          deadlineAt: appeal.deadlineAt,
+          attachments: ids.length,
+          grounds: input.grounds,
+        },
+        'governance_board_appeal.lodged',
+      ),
     });
+    await this.notices.send(
+      tx,
+      await this.board.seatedAccounts(tx, now),
+      'governance_appeal.lodged',
+      id,
+      { kind: input.kind },
+    );
+    return this.load(tx, appeal, true);
   }
 
   /** The appellant withdraws a pending appeal (the decision's mark closes). */
@@ -348,7 +369,12 @@ export class BoardAppealsService
           AND: [
             {
               OR: [
-                { unitId: { in: units } },
+                // A complaint about the management is its author's alone
+                // (ADR 0059).
+                {
+                  unitId: { in: units },
+                  kind: { not: 'management_complaint' },
+                },
                 { appellantId: this.ctx.accountId },
               ],
             },
@@ -612,7 +638,12 @@ export class BoardAppealsService
   ): Promise<boolean> {
     return (
       appeal.appellantId === this.ctx.accountId ||
-      (await this.community.mayAppealFor(tx, this.ctx.accountId, appeal.unitId))
+      (appeal.kind !== 'management_complaint' &&
+        (await this.community.mayAppealFor(
+          tx,
+          this.ctx.accountId,
+          appeal.unitId,
+        )))
     );
   }
 

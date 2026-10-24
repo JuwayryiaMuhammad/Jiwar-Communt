@@ -4153,6 +4153,10 @@ model DecisionAppeal {
   effectReason     String?   @map("effect_reason")
   followedUpAt     DateTime? @map("followed_up_at") @db.Timestamptz(3)
   followedUpById   String?   @map("followed_up_by_account_id") @db.Uuid
+  /// Taken to the board once upheld (`management_appeal`), and the board's
+  /// decision: set once each.
+  boardAppealAt       DateTime? @map("board_appeal_at") @db.Timestamptz(3)
+  boardAppealClosedAt DateTime? @map("board_appeal_closed_at") @db.Timestamptz(3)
 
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "decision_appeals_number_key")
@@ -7688,6 +7692,24 @@ model GovernanceBoardAppeal {
   @@index([tenantId, unitId, lodgedAt, id], map: "governance_board_appeals_unit_idx")
   @@index([tenantId, appellantId], map: "governance_board_appeals_appellant_idx")
   @@map("governance_board_appeals")
+}
+
+/// A complaint about the management to the board (ADR 0059): what it is
+/// about; its grounds are its board appeal's (`management_complaint`).
+/// Never changed.
+model ManagementComplaint {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  unitId        String   @map("unit_id") @db.Uuid
+  authorId      String   @map("author_account_id") @db.Uuid
+  category      String
+  /// The management request it is about (its MR- number), if any.
+  requestNumber Int?     @map("request_number")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, authorId, createdAt], map: "management_complaints_author_idx")
+  @@map("management_complaints")
 }
 
 /// An appeal's attached file, in order (ADR 0055). Never changed.

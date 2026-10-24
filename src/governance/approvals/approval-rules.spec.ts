@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BOARD_APPEAL_KINDS } from '../../core/board-matters/board-matters';
+import { MANAGEMENT_COMPLAINT_CATEGORIES } from '../appeals/management-complaints';
 import { REASON_CODES } from '../../core/common/reasons';
 import {
   APPROVAL_TYPES,
@@ -35,10 +36,20 @@ describe('board matters’ lists (ADR 0055)', () => {
       );
   });
 
-  it('the appeal kinds are their CHECK’s', () => {
+  it('the appeal kinds are their CHECK’s (widened by ADR 0059)', () => {
     expect(
-      read('prisma/migrations/20261102090700_board_appeals/migration.sql'),
+      read(
+        'prisma/migrations/20261115090300_board_management_kinds/migration.sql',
+      ),
     ).toContain(`"kind" IN (${quoted(BOARD_APPEAL_KINDS)})`);
+  });
+
+  it('a complaint’s categories are their CHECK’s', () => {
+    expect(
+      read(
+        'prisma/migrations/20261115090300_board_management_kinds/migration.sql',
+      ),
+    ).toContain(`"category" IN (${quoted(MANAGEMENT_COMPLAINT_CATEGORIES)})`);
   });
 
   it('a withdrawal’s codes are its CHECK’s and the mirror’s', () => {

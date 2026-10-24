@@ -8,9 +8,11 @@ import { GovernanceAccess } from './access';
 import {
   BoardAppealsBoardController,
   BoardAppealsController,
+  ManagementComplaintsController,
   StaffBoardAppealsController,
 } from './appeals/appeals.controller';
 import { BoardAppealsService } from './appeals/appeals.service';
+import { ManagementComplaints } from './appeals/management-complaints';
 import {
   BoardApprovalsController,
   StaffApprovalsController,
@@ -78,6 +80,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     BoardMotionsController,
     GovernanceSettingsController,
     BoardAppealsController,
+    ManagementComplaintsController,
     StaffBoardAppealsController,
     BoardAppealsBoardController,
     BoardOverviewController,
@@ -101,6 +104,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     MotionsService,
     ApprovalsService,
     BoardAppealsService,
+    ManagementComplaints,
     BoardOverviewService,
     MatterSweeps,
   ],

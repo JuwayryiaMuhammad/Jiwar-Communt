@@ -1248,6 +1248,11 @@ export const ErrorCode = {
   APPEAL_DECIDER_CONFLICT: 'APPEAL_DECIDER_CONFLICT',
   /** No follow-up is due: not an overturn left to the management, or done (409). */
   DECISION_APPEAL_NO_FOLLOW_UP: 'DECISION_APPEAL_NO_FOLLOW_UP',
+  /**
+   * The owner has as many complaints about the management open as they
+   * may (409, params.max: 3).
+   */
+  MANAGEMENT_COMPLAINT_LIMIT: 'MANAGEMENT_COMPLAINT_LIMIT',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -1275,6 +1275,30 @@ export const ErrorCode = {
   REPRESENTATIVE_MATTER_PENDING: 'REPRESENTATIVE_MATTER_PENDING',
   /** Only its raiser withdraws a matter (403). */
   REPRESENTATIVE_MATTER_NOT_YOURS: 'REPRESENTATIVE_MATTER_NOT_YOURS',
+  // Agenda proposals, objections, the follow-up of decisions (ADR 0059)
+  /** Unknown, or not the caller's own (an owner) or the board's to read. */
+  AGENDA_PROPOSAL_NOT_FOUND: 'AGENDA_PROPOSAL_NOT_FOUND',
+  /** As many proposals are open as an owner may have (409, params.max: 3). */
+  AGENDA_PROPOSAL_LIMIT: 'AGENDA_PROPOSAL_LIMIT',
+  /** Decided or withdrawn already (409, params.status). */
+  AGENDA_PROPOSAL_NOT_OPEN: 'AGENDA_PROPOSAL_NOT_OPEN',
+  /** An owner objects for a unit they own (403). */
+  OBJECTION_NOT_ALLOWED: 'OBJECTION_NOT_ALLOWED',
+  /**
+   * The publication takes no objection (409, params.reason:
+   * `not_a_decision` | `archived` | `answered`).
+   */
+  OBJECTION_NOT_OPEN: 'OBJECTION_NOT_OPEN',
+  /** The days to object have passed (409, params.until). */
+  OBJECTION_WINDOW_PASSED: 'OBJECTION_WINDOW_PASSED',
+  /** The unit objected to the decision already: once per unit (409). */
+  OBJECTION_EXISTS: 'OBJECTION_EXISTS',
+  /** The board answered the decision's objections already (409). */
+  OBJECTIONS_ANSWERED: 'OBJECTIONS_ANSWERED',
+  /** Nobody objected to the decision: nothing to answer (409). */
+  OBJECTIONS_NONE: 'OBJECTIONS_NONE',
+  /** The request's follow-up is final: implemented or not implementable (409). */
+  APPROVAL_PROGRESS_FINAL: 'APPROVAL_PROGRESS_FINAL',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

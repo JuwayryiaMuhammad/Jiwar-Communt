@@ -13801,6 +13801,118 @@
     {
       "item": [
         {
+          "name": "The owners’ agenda proposals",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "agenda-proposals"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/agenda-proposals"
+            }
+          }
+        },
+        {
+          "name": "Read an agenda proposal",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "agenda-proposals",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/agenda-proposals/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept or decline an agenda proposal",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"outcome\": \"accepted\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  | The board’s words to the proposer. Write no one’s name. |\n| `outcome` | `accepted` \\| `declined` | yes |  |\n| `reasonCode` | string |  | Required to decline: from the closed list `agendaDecline`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "agenda-proposals",
+                ":id",
+                "decide"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/agenda-proposals/:id/decide",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "The appeals to the board",
           "request": {
             "description": "**Responses:** 200",
@@ -14188,6 +14300,80 @@
           }
         },
         {
+          "name": "A decision’s objections",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "publications",
+                ":id",
+                "objections"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/publications/:id/objections",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Answer a decision’s objections",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string | yes | The board’s reasoned answer, to every objector. Write no one’s name. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "publications",
+                ":id",
+                "objections",
+                "answer"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/publications/:id/objections/answer",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "The buildings’ representatives, sitting first",
           "request": {
             "description": "**Responses:** 200",
@@ -14437,6 +14623,132 @@
                 "withdraw"
               ],
               "raw": "{{baseUrl}}/api/v1/board/representatives/matters/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The caller’s agenda proposals, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "agenda-proposals"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/agenda-proposals"
+            }
+          }
+        },
+        {
+          "name": "Propose a matter for the board’s agenda",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"title\": \"\",\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string | yes |  |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "agenda-proposals"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/agenda-proposals"
+            }
+          }
+        },
+        {
+          "name": "Read one of the caller’s agenda proposals",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "agenda-proposals",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/agenda-proposals/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw an open agenda proposal",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "agenda-proposals",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/agenda-proposals/:id/withdraw",
               "variable": [
                 {
                   "description": "",
@@ -14997,6 +15309,26 @@
           }
         },
         {
+          "name": "The caller’s objections, with the board’s answers",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "objections"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/objections"
+            }
+          }
+        },
+        {
           "name": "List the owners’ polls",
           "request": {
             "description": "**Responses:** 200",
@@ -15376,6 +15708,50 @@
                 "archive"
               ],
               "raw": "{{baseUrl}}/api/v1/governance/publications/:id/archive",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Object to a decision of the board",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"grounds\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `grounds` | string | yes |  |\n| `unitId` | string (uuid) | yes | A unit the caller owns (OBJECTION_NOT_ALLOWED). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "publications",
+                ":id",
+                "objections"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/publications/:id/objections",
               "variable": [
                 {
                   "description": "",
@@ -15775,6 +16151,51 @@
                 "implemented"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/governance/approvals/:id/implemented",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record how an approved request is followed up",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"status\": \"in_progress\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  | What was done, or why it cannot be. Write no one’s name. |\n| `status` | `in_progress` \\| `implemented` \\| `cannot_implement` | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "approvals",
+                ":id",
+                "progress"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/approvals/:id/progress",
               "variable": [
                 {
                   "description": "",

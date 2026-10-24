@@ -124,7 +124,9 @@ export const STAFF_APPROVAL_ROUTES: Row[] = [
         {
           field: 'items.0.type',
           code: 'INVALID_VALUE',
-          params: { allowed: [...APPROVAL_TYPES, 'board_appeal'] },
+          params: {
+            allowed: [...APPROVAL_TYPES, 'board_appeal', 'objection'],
+          },
         },
       ],
     },

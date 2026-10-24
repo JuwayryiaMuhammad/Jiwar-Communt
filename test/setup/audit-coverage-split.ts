@@ -664,6 +664,14 @@ export const GOVERNANCE_VOICE_COVERAGE: readonly string[] = [
   'governance_representative_matter.raised',
   'governance_representative_matter.withdrawn',
   'governance_representative_matter.decided',
+  'governance_agenda_proposal.proposed',
+  'governance_agenda_proposal.withdrawn',
+  'governance_agenda_proposal.decided',
+  'governance_agenda_proposal.text_cleared',
+  'governance_objection.lodged',
+  'governance_objection.answered',
+  'governance_objection.grounds_cleared',
+  'governance_approval_progress.recorded',
 ];
 
 /**

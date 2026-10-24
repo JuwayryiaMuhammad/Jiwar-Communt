@@ -1951,6 +1951,23 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'CASE tests effect IS NULL first; effect_reason IS NOT NULL comes before its list and its comparison; action is NOT NULL',
   },
+  governance_agenda_proposals_text: {
+    guarded:
+      'title and body are tested IS NULL first; their lengths run only on values',
+  },
+  governance_agenda_proposals_state_shape: {
+    guarded:
+      'decline_reason, decision_note, decided_at and withdrawn_at are tested IS NULL first (decided_at IS NOT NULL before the note’s length); created_at is NOT NULL',
+  },
+  governance_objections_grounds: {
+    guarded: 'grounds IS NULL is tested first; its length runs only on a value',
+  },
+  governance_objection_replies_body: {},
+  governance_approval_progress_status: {},
+  governance_approval_progress_note: {
+    guarded: 'note IS NULL is tested first; its length runs only on a value',
+  },
+  board_publications_request_kind: {},
   representative_messages_side: {},
   representative_messages_body: {
     guarded: 'body IS NULL is tested first; its length runs only on a value',

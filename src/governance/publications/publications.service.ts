@@ -17,9 +17,12 @@ import { BoardNotices, type BoardNoticeText } from '../../engagement';
 import { GovernanceAccess } from '../access';
 import { BoardService } from '../board/board.service';
 import { dbNow } from '../db-clock';
+import { GovernanceSettingsService } from '../settings/governance-settings.service';
 
 export const BOARD_PUBLICATION_RESOURCE = 'board_publication';
 const PAGE = keysetCursor('createdAt', 'desc');
+// A real 24 h: objections run from the publication's instant (ADR 0059).
+const DAY = 86_400_000;
 /** How long ago a published decision may have been taken. */
 export const DECIDED_WITHIN_DAYS = 366;
 
@@ -34,6 +37,10 @@ export interface NewPublication extends BoardNoticeText {
 export interface PublicationRecord {
   publication: BoardPublication;
   text: BoardNoticeText & { attachments: number; editedAt: Date | null };
+  /** How the decided request is followed up, last step (ADR 0059). */
+  followUp: { status: string; at: Date } | null;
+  /** Until when owners may object to a decision, and whether answered. */
+  objections: { until: Date; answered: boolean } | null;
 }
 
 export const publicationNotFound = () =>
@@ -61,6 +68,7 @@ export class BoardPublicationsService implements OnModuleInit {
     private readonly settings: TenantSettingsService,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly governanceSettings: GovernanceSettingsService,
   ) {}
 
   onModuleInit(): void {
@@ -142,6 +150,7 @@ export class BoardPublicationsService implements OnModuleInit {
     text: BoardNoticeText,
     termId: string,
     now: Date,
+    approvalRequestId: string | null = null,
   ): Promise<string> {
     const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
     const decidedOn = localDate(now, timezone);
@@ -158,6 +167,7 @@ export class BoardPublicationsService implements OnModuleInit {
         authorSide: 'board',
         publishedById: this.ctx.accountId,
         createdAt: now,
+        approvalRequestId,
       },
     });
     await this.audit.record(tx, {
@@ -265,9 +275,34 @@ export class BoardPublicationsService implements OnModuleInit {
     tx: TenantTxClient,
     publication: BoardPublication,
   ): Promise<PublicationRecord> {
-    return {
-      publication,
-      text: await this.notices.text(tx, publication.announcementId),
-    };
+    const text = await this.notices.text(tx, publication.announcementId);
+    let followUp: PublicationRecord['followUp'] = null;
+    if (publication.approvalRequestId) {
+      const last = await tx.governanceApprovalProgress.findFirst({
+        where: { requestId: publication.approvalRequestId },
+        orderBy: [{ recordedAt: 'desc' }, { id: 'desc' }],
+      });
+      followUp = last ? { status: last.status, at: last.recordedAt } : null;
+    }
+    const objections =
+      publication.kind === 'decision' && !publication.archivedAt
+        ? {
+            until: new Date(
+              publication.createdAt.getTime() +
+                (await this.governanceSettings.deadlineDays(tx, 'objection')) *
+                  DAY,
+            ),
+            answered: !!(await tx.governanceObjectionReply.findUnique({
+              where: {
+                tenantId_publicationId: {
+                  tenantId: this.ctx.txTenantId,
+                  publicationId: publication.id,
+                },
+              },
+              select: { publicationId: true },
+            })),
+          }
+        : null;
+    return { publication, text, followUp, objections };
   }
 }

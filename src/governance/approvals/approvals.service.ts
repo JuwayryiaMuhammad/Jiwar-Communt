@@ -4,6 +4,7 @@ import {
   type OnModuleInit,
 } from '@nestjs/common';
 import type {
+  GovernanceApprovalProgress,
   BoardMotion,
   GovernanceApprovalAlternative,
   GovernanceApprovalRequest,
@@ -46,6 +47,7 @@ import {
   SUBJECT_TYPES,
   THRESHOLD_TYPES,
   type ApprovalFilter,
+  type ApprovalProgressStatus,
 } from './approval-rules';
 import { ApprovalView } from './views/approvals.views';
 
@@ -80,6 +82,8 @@ export interface ApprovalRecord {
   /** The type's threshold now, for the four thresholded types. */
   threshold: string | null;
   raisedByMe: boolean;
+  /** How it is followed up once approved (ADR 0059), oldest first. */
+  progress: GovernanceApprovalProgress[];
   /** The database's clock at the read: what `overdue` is judged by. */
   now: Date;
 }
@@ -380,9 +384,70 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
     });
   }
 
+  /**
+   * The manager records how an approved request is followed up (ADR
+   * 0059): in progress (as often as it moves), then once implemented or
+   * not implementable — the final row; implemented is the mark too.
+   */
+  progress(
+    id: string,
+    input: {
+      status: ApprovalProgressStatus;
+      note?: string;
+    },
+  ): Promise<ApprovalRecord> {
+    const note = input.note?.trim() || null;
+    if (input.status === 'implemented')
+      return this.tenantTx.withTenantTx(async (tx) => {
+        const done = await this.implementIn(tx, id, note ?? undefined);
+        await this.audit.record(tx, {
+          action: 'governance_approval_progress.recorded',
+          targetId: id,
+          metadata: { status: 'implemented', note: note !== null },
+        });
+        return this.load(tx, done);
+      });
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const row = await this.lockRow(tx, id);
+      const request = await tx.governanceApprovalRequest.findUniqueOrThrow({
+        where: { id: row.id },
+      });
+      if (request.status !== 'approved')
+        throw appError.conflict(
+          ErrorCode.APPROVAL_NOT_APPROVED,
+          'Only an approved request is followed up',
+          { params: { status: request.status } },
+        );
+      if (request.implementedAt || (await this.finalProgress(tx, id)))
+        throw appError.conflict(
+          ErrorCode.APPROVAL_PROGRESS_FINAL,
+          'The follow-up of this request is final',
+        );
+      await this.recordProgress(tx, id, input.status, note, await dbNow(tx));
+      await this.audit.record(tx, {
+        action: 'governance_approval_progress.recorded',
+        targetId: id,
+        metadata: { status: input.status, note: note !== null },
+      });
+      return this.load(tx, request);
+    });
+  }
+
   /** The manager: an approved request was carried out, once. */
   implemented(id: string, note: string | undefined): Promise<ApprovalRecord> {
-    return this.tenantTx.withTenantTx(async (tx) => {
+    return this.tenantTx.withTenantTx(async (tx) =>
+      this.load(tx, await this.implementIn(tx, id, note)),
+    );
+  }
+
+  /** The implemented mark, in the caller's transaction: the updated request. */
+  private async implementIn(
+    tx: TenantTxClient,
+    id: string,
+    note: string | undefined,
+  ): Promise<GovernanceApprovalRequest> {
+    {
       await this.access.lockSelf(tx);
       await this.access.lockAccounts(
         tx,
@@ -398,7 +463,7 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
           'Only an approved request is implemented',
           { params: { status: request.status } },
         );
-      if (request.implementedAt)
+      if (request.implementedAt || (await this.finalProgress(tx, id)))
         throw appError.conflict(
           ErrorCode.APPROVAL_ALREADY_IMPLEMENTED,
           'The request is implemented already',
@@ -412,6 +477,8 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
           implementationNote: note ?? null,
         },
       });
+      // The implemented mark is the follow-up's final row (ADR 0059).
+      await this.recordProgress(tx, id, 'implemented', note ?? null, now);
       await this.audit.record(tx, {
         action: 'governance_approval.implemented',
         targetId: id,
@@ -424,8 +491,8 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
         id,
         { type: request.type },
       );
-      return this.load(tx, done);
-    });
+      return done;
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -506,6 +573,16 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
         ...(approved && applied.implemented ? { implementedAt: ev.now } : {}),
       },
     });
+    // The decision implemented it: the follow-up's final row, by nobody.
+    if (approved && applied.implemented)
+      await this.recordProgress(
+        tx,
+        request.id,
+        'implemented',
+        null,
+        ev.now,
+        null,
+      );
     const announcementId =
       approved && applied.notice
         ? await this.publications.publishDecision(
@@ -513,6 +590,7 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
             applied.notice,
             ev.motion.termId,
             ev.now,
+            request.id,
           )
         : null;
     await this.audit.record(tx, {
@@ -627,6 +705,41 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
     return request;
   }
 
+  private async recordProgress(
+    tx: TenantTxClient,
+    requestId: string,
+    status: ApprovalProgressStatus,
+    note: string | null,
+    now: Date,
+    by: string | null = this.ctx.accountId,
+  ): Promise<void> {
+    await tx.governanceApprovalProgress.create({
+      data: {
+        id: newId(),
+        tenantId: this.ctx.txTenantId,
+        requestId,
+        status,
+        note,
+        recordedAt: now,
+        recordedById: by,
+      },
+    });
+  }
+
+  private async finalProgress(
+    tx: TenantTxClient,
+    requestId: string,
+  ): Promise<boolean> {
+    return (
+      (await tx.governanceApprovalProgress.count({
+        where: {
+          requestId,
+          status: { in: ['implemented', 'cannot_implement'] },
+        },
+      })) > 0
+    );
+  }
+
   private async load(
     tx: TenantTxClient,
     request: GovernanceApprovalRequest,
@@ -656,7 +769,12 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
     )
       ? await this.plainThreshold(tx, request.type)
       : null;
+    const progress = await tx.governanceApprovalProgress.findMany({
+      where: { requestId: request.id },
+      orderBy: [{ recordedAt: 'asc' }, { id: 'asc' }],
+    });
     return {
+      progress,
       request,
       alternatives,
       attachments,

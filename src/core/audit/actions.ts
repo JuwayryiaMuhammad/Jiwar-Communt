@@ -1598,6 +1598,53 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'governance_representative_matter',
   },
+  // Agenda proposals (ADR 0059). changes: the title and the words as
+  // changed.
+  'governance_agenda_proposal.proposed': {
+    log: 'tenant',
+    target: 'governance_agenda_proposal',
+    sensitive: ['title', 'body'],
+  },
+  // The proposer withdrew it. No metadata.
+  'governance_agenda_proposal.withdrawn': {
+    log: 'tenant',
+    target: 'governance_agenda_proposal',
+  },
+  // metadata: outcome (accepted | declined), reasonCode (agendaDecline, or
+  // null), note (a boolean: never the words).
+  'governance_agenda_proposal.decided': {
+    log: 'tenant',
+    target: 'governance_agenda_proposal',
+  },
+  // The proposer's erasure cleared its words. No metadata.
+  'governance_agenda_proposal.text_cleared': {
+    log: 'tenant',
+    target: 'governance_agenda_proposal',
+  },
+  // An objection to a published decision. changes: publicationId, the
+  // grounds as changed; never the unit.
+  'governance_objection.lodged': {
+    log: 'tenant',
+    target: 'governance_objection',
+    sensitive: ['grounds'],
+  },
+  // The board answered a decision's objections, on the publication.
+  // metadata: objections (how many it answered).
+  'governance_objection.answered': {
+    log: 'tenant',
+    target: 'board_publication',
+  },
+  // The objector's erasure cleared the grounds. No metadata.
+  'governance_objection.grounds_cleared': {
+    log: 'tenant',
+    target: 'governance_objection',
+  },
+  // A step of an approved request's follow-up. metadata: status
+  // (in_progress | implemented | cannot_implement), note (a boolean).
+  'governance_approval_progress.recorded': {
+    log: 'tenant',
+    target: 'governance_approval',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

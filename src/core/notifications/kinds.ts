@@ -2069,6 +2069,38 @@ export const NOTIFICATION_KINDS = {
     target: 'representative_thread',
     params: {},
   },
+  /** An owner proposed a matter for the agenda: the sitting board. */
+  'governance_agenda.proposed': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_agenda_proposal',
+    params: {},
+  },
+  /** The board accepted or declined the proposal: its proposer. */
+  'governance_agenda.decided': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_agenda_proposal',
+    params: { outcome: {} },
+  },
+  /** An owner objected to a published decision: the sitting board. */
+  'governance_objection.lodged': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'board_publication',
+    params: {},
+  },
+  /** The board answered a decision's objections: every objector. */
+  'governance_objection.answered': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'board_publication',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

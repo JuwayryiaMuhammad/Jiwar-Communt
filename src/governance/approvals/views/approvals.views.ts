@@ -3,6 +3,8 @@ import {
   APPROVAL_STATUSES,
   APPROVAL_TYPES,
   approvalReference,
+  APPROVAL_PROGRESS_STATUSES,
+  type ApprovalProgressStatus,
 } from '../approval-rules';
 import type { ApprovalRecord, BoardApprovalRecord } from '../approvals.service';
 import type { ApprovalType } from '../../../core/board-matters/board-matters';
@@ -63,6 +65,24 @@ export class ApprovalImplementationView {
   note: string | null;
 }
 
+/** One step of an approved request's follow-up (ADR 0059). */
+export class ApprovalProgressView {
+  @ApiProperty({
+    enum: APPROVAL_PROGRESS_STATUSES,
+    enumName: 'ApprovalProgressStatus',
+  })
+  status: ApprovalProgressStatus;
+  @ApiProperty({ type: String, nullable: true })
+  note: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+  @ApiProperty({
+    type: Boolean,
+    description: 'Recorded by the decision itself (it implemented it).',
+  })
+  byDecision: boolean;
+}
+
 /**
  * An approval request (ADR 0055) as the staff read it: the package, where
  * it stands, and the board's decision with its reasons; never a motion,
@@ -120,6 +140,12 @@ export class ApprovalView {
   withdrawal: ApprovalWithdrawalView | null;
   @ApiProperty({ type: ApprovalImplementationView, nullable: true })
   implementation: ApprovalImplementationView | null;
+  @ApiProperty({
+    type: [ApprovalProgressView],
+    description:
+      'How it is followed up once approved, oldest first; implemented or not implementable is the last.',
+  })
+  progress: ApprovalProgressView[];
 
   static from(r: ApprovalRecord): ApprovalView {
     const q = r.request;
@@ -164,6 +190,12 @@ export class ApprovalView {
             note: q.implementationNote,
           }
         : null,
+      progress: r.progress.map((p) => ({
+        status: p.status as ApprovalProgressStatus,
+        note: p.note,
+        at: p.recordedAt,
+        byDecision: p.recordedById === null,
+      })),
     };
   }
 }

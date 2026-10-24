@@ -22,6 +22,16 @@ import {
 } from './representatives/representatives.controller';
 import { RepresentativesService } from './representatives/representatives.service';
 import {
+  AgendaProposalsController,
+  BoardAgendaController,
+} from './agenda/agenda.controller';
+import { AgendaService } from './agenda/agenda.service';
+import {
+  BoardObjectionsController,
+  ObjectionsController,
+} from './objections/objections.controller';
+import { ObjectionsService } from './objections/objections.service';
+import {
   BoardApprovalsController,
   StaffApprovalsController,
 } from './approvals/approvals.controller';
@@ -96,6 +106,10 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     StaffRepresentativesController,
     ResidentRepresentativesController,
     RepresentationController,
+    AgendaProposalsController,
+    BoardAgendaController,
+    ObjectionsController,
+    BoardObjectionsController,
     BoardOverviewController,
   ],
   providers: [
@@ -119,6 +133,8 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     BoardAppealsService,
     ManagementComplaints,
     RepresentativesService,
+    AgendaService,
+    ObjectionsService,
     BoardOverviewService,
     MatterSweeps,
   ],

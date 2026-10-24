@@ -641,4 +641,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   governance_representative_matters_one_pending: null,
   governance_representative_matters_motion_key: null,
   board_motions_one_open_per_representative_matter: null,
+  // The owners' voice (ADR 0059): an objection once per unit, checked
+  // first under a lock of the unit's (OBJECTION_EXISTS); one final step
+  // per request, checked first under its row lock; one publication per
+  // request, written by its decision.
+  governance_agenda_proposals_tenant_id_id_key: null,
+  governance_objections_tenant_id_id_key: null,
+  governance_objections_once_per_unit: null,
+  governance_approval_progress_tenant_id_id_key: null,
+  governance_approval_progress_one_final: null,
+  board_publications_request_key: null,
 };

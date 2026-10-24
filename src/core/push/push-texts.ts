@@ -2222,6 +2222,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ردّ عليك ممثل مبناك. افتح التطبيق لقراءة الرد.',
     },
   },
+  'governance_agenda.proposed': {
+    en: {
+      title: 'An agenda proposal',
+      body: 'An owner proposed a matter for the board. Review the proposal.',
+    },
+    ar: {
+      title: 'مقترح لجدول الأعمال',
+      body: 'اقترح أحد الملاك موضوعًا على المجلس. راجع المقترح.',
+    },
+  },
+  'governance_agenda.decided': {
+    en: {
+      title: 'Your proposal was decided',
+      body: 'The board decided on your agenda proposal. Open the app to see it.',
+    },
+    ar: {
+      title: 'صدر قرار في مقترحك',
+      body: 'قرر المجلس في مقترحك لجدول الأعمال. افتح التطبيق للاطلاع.',
+    },
+  },
+  'governance_objection.lodged': {
+    en: {
+      title: 'An objection to a decision',
+      body: 'An owner objected to a decision the board published.',
+    },
+    ar: {
+      title: 'اعتراض على قرار',
+      body: 'اعترض أحد الملاك على قرار نشره المجلس.',
+    },
+  },
+  'governance_objection.answered': {
+    en: {
+      title: 'The board answered your objection',
+      body: 'The board answered the objections to its decision. Open the app to read it.',
+    },
+    ar: {
+      title: 'ردّ المجلس على اعتراضك',
+      body: 'ردّ المجلس على الاعتراضات على قراره. افتح التطبيق لقراءة الرد.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

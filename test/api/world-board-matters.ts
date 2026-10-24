@@ -7,6 +7,7 @@ import {
   boardMemberRow,
   boardTermRow,
   motionRow,
+  publicationRows,
   representativeMatterRow,
   representativeRow,
   representativeThreadRow,
@@ -38,6 +39,9 @@ export interface BoardMattersWorld {
   bRepresentativeThreadId: string;
   /** A pending matter of B's board to end that term. */
   bRepresentativeMatterId: string;
+  /** An owner's agenda proposal of B's, and a decision B's board published. */
+  bAgendaProposalId: string;
+  bPublicationId: string;
 }
 
 export async function boardMattersWorld(
@@ -110,6 +114,25 @@ export async function boardMattersWorld(
           tenantId: b.tenantId,
           unitId: b.homeUnitId,
           appellantId: b.ids.owner,
+        }),
+        bAgendaProposalId: await (async () => {
+          const id = newId();
+          await tx.governanceAgendaProposal.create({
+            data: {
+              id,
+              tenantId: b.tenantId,
+              authorId: b.ids.owner,
+              title: 'A proposal of B',
+              body: 'Its words.',
+              createdAt: new Date(),
+            },
+          });
+          return id;
+        })(),
+        bPublicationId: await publicationRows(tx, {
+          tenantId: b.tenantId,
+          termId: seat.termId,
+          accountId: b.ids.owner,
         }),
         bRepresentativeId,
         bRepresentativeMatterId: await representativeMatterRow(tx, {

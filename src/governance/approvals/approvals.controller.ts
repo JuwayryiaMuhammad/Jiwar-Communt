@@ -28,6 +28,7 @@ import { BoardMotionView } from '../motions/views/motions.views';
 import { ApprovalsService } from './approvals.service';
 import {
   ApprovalsQueryDto,
+  ApprovalProgressDto,
   ImplementedApprovalDto,
   RaiseApprovalDto,
 } from './dto/approvals.dto';
@@ -118,6 +119,23 @@ export class StaffApprovalsController {
     @Body() dto: ImplementedApprovalDto,
   ): Promise<ApprovalView> {
     return ApprovalView.from(await this.approvals.implemented(id, dto.note));
+  }
+
+  @Post(':id/progress')
+  @RequirePermissions('governance.manage')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Record how an approved request is followed up',
+    description:
+      'In progress as often as it moves; then once implemented (the mark, as `implemented`) or not implementable — final (APPROVAL_PROGRESS_FINAL). The owners reading the decision the board published see it.',
+  })
+  @ApiOkResponse({ type: ApprovalView })
+  async progress(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ApprovalProgressDto,
+  ): Promise<ApprovalView> {
+    return ApprovalView.from(await this.approvals.progress(id, dto));
   }
 }
 

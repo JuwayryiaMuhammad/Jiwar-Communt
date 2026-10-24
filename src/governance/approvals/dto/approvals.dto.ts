@@ -17,8 +17,10 @@ import { withParams } from '../../../core/common/validation/validation-errors';
 import {
   APPROVAL_FILTERS,
   APPROVAL_LIMITS,
+  APPROVAL_PROGRESS_STATUSES,
   APPROVAL_TYPES,
   type ApprovalFilter,
+  type ApprovalProgressStatus,
 } from '../approval-rules';
 import type { ApprovalType } from '../../../core/board-matters/board-matters';
 
@@ -165,4 +167,32 @@ export class ApprovalsQueryDto extends PageQueryDto {
   @IsOptional()
   @IsIn(BOOLEAN, withParams({ allowed: [...BOOLEAN] }))
   overdue?: 'true' | 'false';
+}
+
+export class ApprovalProgressDto {
+  @ApiProperty({
+    enum: APPROVAL_PROGRESS_STATUSES,
+    enumName: 'ApprovalProgressStatus',
+  })
+  @IsIn(
+    APPROVAL_PROGRESS_STATUSES,
+    withParams({ allowed: [...APPROVAL_PROGRESS_STATUSES] }),
+  )
+  status: ApprovalProgressStatus;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: 1,
+    maxLength: L.implementationNote,
+    description: 'What was done, or why it cannot be. Write no one’s name.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(
+    1,
+    L.implementationNote,
+    withParams({ min: 1, max: L.implementationNote }),
+  )
+  note?: string;
 }

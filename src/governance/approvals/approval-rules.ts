@@ -7,7 +7,15 @@ import {
 export { APPROVAL_TYPES, THRESHOLD_TYPES };
 
 /** The settings' rows: every approval type, and appeals to the board. */
-export const SETTING_TYPES = [...APPROVAL_TYPES, 'board_appeal'] as const;
+/**
+ * A deadline per approval type and for appeals to the board, and (ADR
+ * 0059) the days owners may object to a published decision.
+ */
+export const SETTING_TYPES = [
+  ...APPROVAL_TYPES,
+  'board_appeal',
+  'objection',
+] as const;
 export type SettingType = (typeof SETTING_TYPES)[number];
 
 /** A new compound's deadlines, in days (the migration's backfill too). */
@@ -20,6 +28,7 @@ export const DEFAULT_DEADLINE_DAYS: Record<SettingType, number> = {
   payment_plan_above_limit: 14,
   legal_escalation: 14,
   board_appeal: 30,
+  objection: 14,
 };
 
 export const DEADLINE_DAYS = { min: 1, max: 90 } as const;
@@ -62,3 +71,12 @@ export type ApprovalFilter = (typeof APPROVAL_FILTERS)[number];
 /** The number as shown, as polls' (GP-0001): AR-0001. */
 export const approvalReference = (n: number) =>
   `AR-${String(n).padStart(4, '0')}`;
+
+/** How an approved request is followed up (ADR 0059); a unit test pins the CHECK. */
+export const APPROVAL_PROGRESS_STATUSES = [
+  'in_progress',
+  'implemented',
+  'cannot_implement',
+] as const;
+export type ApprovalProgressStatus =
+  (typeof APPROVAL_PROGRESS_STATUSES)[number];

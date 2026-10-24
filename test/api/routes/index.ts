@@ -1,5 +1,6 @@
 import { DECISION_APPEAL_ROUTES } from './decision-appeals';
 import { REPRESENTATIVE_ROUTES } from './representatives';
+import { GOVERNANCE_VOICE_ROUTES } from './governance-voice';
 import { FORMAL_NOTICE_ROUTES } from './formal-notices';
 import { RESIDENT_ITEM_ROUTES } from './resident-items';
 import type { Row } from '../registry';
@@ -220,6 +221,7 @@ export const ROUTES: Row[] = [
   ...FORMAL_NOTICE_ROUTES,
   ...DECISION_APPEAL_ROUTES,
   ...REPRESENTATIVE_ROUTES,
+  ...GOVERNANCE_VOICE_ROUTES,
   ...VISIT_ROUTES,
   ...PREFERENCES_ROUTES,
   ...PUSH_TOKENS_ROUTES,

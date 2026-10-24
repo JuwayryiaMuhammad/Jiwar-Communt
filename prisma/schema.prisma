@@ -7533,6 +7533,8 @@ model BoardPublication {
   publishedById  String    @map("published_by_account_id") @db.Uuid
   archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// The approval request a decision published by itself decided (ADR 0059).
+  approvalRequestId String? @map("approval_request_id") @db.Uuid
 
   @@unique([tenantId, id])
   @@unique([tenantId, announcementId], map: "board_publications_announcement_key")
@@ -7799,6 +7801,76 @@ model RepresentativeMessage {
   @@unique([tenantId, id])
   @@index([tenantId, threadId, createdAt, id], map: "representative_messages_thread_idx")
   @@map("representative_messages")
+}
+
+/// An owner's proposal for the board's agenda (ADR 0059): decided once by
+/// a sitting member, binding nothing.
+model GovernanceAgendaProposal {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  authorId      String    @map("author_account_id") @db.Uuid
+  title         String?
+  body          String?
+  textClearedAt DateTime? @map("text_cleared_at") @db.Timestamptz(3)
+  status        String    @default("open")
+  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+  decidedAt     DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedById   String?   @map("decided_by_account_id") @db.Uuid
+  declineReason String?   @map("decline_reason")
+  decisionNote  String?   @map("decision_note")
+  withdrawnAt   DateTime? @map("withdrawn_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt, id], map: "governance_agenda_proposals_status_idx")
+  @@index([tenantId, authorId, status], map: "governance_agenda_proposals_author_idx")
+  @@map("governance_agenda_proposals")
+}
+
+/// An owner's objection to a decision the board published (ADR 0059),
+/// once per unit; the grounds cleared once, at their erasure.
+model GovernanceObjection {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  publicationId    String    @map("publication_id") @db.Uuid
+  unitId           String    @map("unit_id") @db.Uuid
+  authorId         String    @map("author_account_id") @db.Uuid
+  grounds          String?
+  groundsClearedAt DateTime? @map("grounds_cleared_at") @db.Timestamptz(3)
+  createdAt        DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, publicationId, unitId], map: "governance_objections_once_per_unit")
+  @@index([tenantId, authorId], map: "governance_objections_author_idx")
+  @@map("governance_objections")
+}
+
+/// The board's one answer to a decision's objections (ADR 0059).
+model GovernanceObjectionReply {
+  tenantId      String   @map("tenant_id") @db.Uuid
+  publicationId String   @map("publication_id") @db.Uuid
+  body          String
+  repliedById   String   @map("replied_by_account_id") @db.Uuid
+  createdAt     DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@id([tenantId, publicationId])
+  @@map("governance_objection_replies")
+}
+
+/// How an approved request is followed up (ADR 0059): append-only; the
+/// last of `implemented` and `cannot_implement` is final, once.
+model GovernanceApprovalProgress {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  requestId    String   @map("request_id") @db.Uuid
+  status       String
+  note         String?
+  recordedAt   DateTime @map("recorded_at") @db.Timestamptz(3)
+  /// Null when the decision itself implemented it.
+  recordedById String?  @map("recorded_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@index([tenantId, requestId, recordedAt, id], map: "governance_approval_progress_request_idx")
+  @@map("governance_approval_progress")
 }
 
 /// An appeal's attached file, in order (ADR 0055). Never changed.

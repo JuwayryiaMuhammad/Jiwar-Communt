@@ -15,6 +15,10 @@ const read = (path: string) =>
 const settings = read(
   'prisma/migrations/20261102090200_governance_approval_settings/migration.sql',
 );
+/** ADR 0059 widened the settings' types with `objection`, and backfilled it. */
+const voice = read(
+  'prisma/migrations/20261115090500_governance_voice/migration.sql',
+);
 const requests = read(
   'prisma/migrations/20261102090300_governance_approval_requests/migration.sql',
 );
@@ -25,13 +29,13 @@ const quoted = (list: readonly string[]) =>
 describe('board matters’ lists (ADR 0055)', () => {
   it('the approval types and the settings’ rows are the CHECKs’', () => {
     expect(requests).toContain(`"type" IN (${quoted(APPROVAL_TYPES)})`);
-    expect(settings).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
+    expect(voice).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
     expect(settings).toContain(`"type" IN (${quoted(THRESHOLD_TYPES)})`);
   });
 
   it('the backfill gives every compound the defaults a new one gets', () => {
     for (const type of SETTING_TYPES)
-      expect(settings).toContain(
+      expect(`${settings} ${voice}`).toContain(
         `(t."id", '${type}', ${DEFAULT_DEADLINE_DAYS[type]})`,
       );
   });
@@ -50,6 +54,15 @@ describe('board matters’ lists (ADR 0055)', () => {
         'prisma/migrations/20261115090300_board_management_kinds/migration.sql',
       ),
     ).toContain(`"category" IN (${quoted(MANAGEMENT_COMPLAINT_CATEGORIES)})`);
+  });
+
+  it('an agenda decline’s codes are its CHECK’s and the mirror’s (ADR 0059)', () => {
+    expect(voice).toContain(
+      `"decline_reason" IN (${quoted(REASON_CODES.agendaDecline)})`,
+    );
+    expect(mirror).toContain(
+      `agendaDecline: [${quoted(REASON_CODES.agendaDecline)}]`,
+    );
   });
 
   it('a withdrawal’s codes are its CHECK’s and the mirror’s', () => {

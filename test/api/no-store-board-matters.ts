@@ -106,6 +106,12 @@ export function boardMatterCalls(
         `/staff/governance/approvals/${await anApproved()}/implemented`,
         {},
       ),
+    'POST /staff/governance/approvals/{id}/progress': async () =>
+      manager(
+        'POST',
+        `/staff/governance/approvals/${await anApproved()}/progress`,
+        { status: 'in_progress', note: 'Contractor booked.' },
+      ),
     'GET /staff/governance/settings': () =>
       manager('GET', '/staff/governance/settings'),
     'PATCH /staff/governance/settings': () =>

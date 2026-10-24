@@ -731,4 +731,6 @@ export const REASON_CODES = {
     'partner_refund',
     'credit_note',
   ],
+  // Why a sitting member declines an owner's agenda proposal (ADR 0059).
+  agendaDecline: ['out_of_scope', 'duplicate', 'not_now', 'other'],
 } as const;

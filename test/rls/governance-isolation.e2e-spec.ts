@@ -27,6 +27,8 @@ interface Side {
   termId: string;
   representativeId: string;
   threadId: string;
+  publicationId: string;
+  requestId: string;
 }
 
 /**
@@ -419,6 +421,96 @@ const TABLES: Table[] = [
         accountId: own.accountId,
       }),
   },
+  // ADR 0059: the owners' voice.
+  {
+    table: 'governance_agenda_proposals',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.governanceAgendaProposal.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          authorId: link.accountId,
+          title: 'A row',
+          body: 'Its words.',
+          createdAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'governance_objections',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.governanceObjection.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          publicationId: link.publicationId,
+          // Once per unit: the row's own unit, made here, for its compound.
+          unitId:
+            own === link
+              ? (
+                  await tx.unit.create({
+                    data: {
+                      id: newId(),
+                      tenantId: own.tenantId,
+                      code: `OBJ-${number++}`,
+                    },
+                  })
+                ).id
+              : link.unitId,
+          authorId: link.accountId,
+          grounds: 'A row',
+          createdAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'governance_objection_replies',
+    key: 'publication_id',
+    insert: async (tx, own, link) => {
+      // One answer per publication: a publication of its own here.
+      const publicationId =
+        own === link
+          ? await publicationRows(tx, {
+              tenantId: own.tenantId,
+              termId: own.termId,
+              accountId: own.accountId,
+            })
+          : link.publicationId;
+      await tx.governanceObjectionReply.create({
+        data: {
+          tenantId: own.tenantId,
+          publicationId,
+          body: 'A row',
+          repliedById: link.accountId,
+          createdAt: new Date(),
+        },
+      });
+      return publicationId;
+    },
+  },
+  {
+    table: 'governance_approval_progress',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.governanceApprovalProgress.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          requestId: link.requestId,
+          status: 'in_progress',
+          recordedAt: new Date(),
+          recordedById: link.accountId,
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — governance tables', () => {
@@ -441,6 +533,8 @@ describe('RLS isolation — governance tables', () => {
       termId: '',
       representativeId: '',
       threadId: '',
+      publicationId: '',
+      requestId: '',
     };
     // A second account: a thread's writer besides the representative.
     const writer = (await createAccountRow(h, tenantId)).id;
@@ -460,6 +554,16 @@ describe('RLS isolation — governance tables', () => {
         representativeId: s.representativeId,
         writerId: writer,
         unitId: s.unitId,
+      });
+      s.publicationId = await publicationRows(tx, {
+        tenantId,
+        termId: s.termId,
+        accountId: s.accountId,
+      });
+      s.requestId = await approvalRequestRow(tx, {
+        tenantId,
+        raisedById: s.accountId,
+        number: number++,
       });
     });
     return s;

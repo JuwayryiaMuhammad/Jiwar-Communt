@@ -437,6 +437,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/board/agenda-proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The owners’ agenda proposals
+         * @description What awaits the board (`status=open`) and the rest.
+         */
+        get: operations["BoardAgendaController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/agenda-proposals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an agenda proposal */
+        get: operations["BoardAgendaController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/agenda-proposals/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept or decline an agenda proposal
+         * @description A sitting member (BOARD_SEAT_REQUIRED), once (AGENDA_PROPOSAL_NOT_OPEN); a decline with its code. The proposer is told.
+         */
+        post: operations["BoardAgendaController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/board/appeals": {
         parameters: {
             query?: never;
@@ -625,6 +682,46 @@ export interface paths {
         get: operations["BoardOverviewController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/publications/{id}/objections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A decision’s objections
+         * @description How many, and their grounds; never whose.
+         */
+        get: operations["BoardObjectionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/publications/{id}/objections/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer a decision’s objections
+         * @description A sitting member (BOARD_SEAT_REQUIRED), once (OBJECTIONS_ANSWERED), when there are some (OBJECTIONS_NONE): every objector is told. The decision then takes no more.
+         */
+        post: operations["BoardObjectionsController_answer"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3666,6 +3763,64 @@ export interface paths {
         patch: operations["GatesController_update"];
         trace?: never;
     };
+    "/api/v1/governance/agenda-proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller’s agenda proposals, newest first */
+        get: operations["AgendaProposalsController_list"];
+        put?: never;
+        /**
+         * Propose a matter for the board’s agenda
+         * @description An owner (GOVERNANCE_NOT_AVAILABLE otherwise), at most three open at once (AGENDA_PROPOSAL_LIMIT). The board accepts or declines it; accepting binds nothing.
+         */
+        post: operations["AgendaProposalsController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/agenda-proposals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one of the caller’s agenda proposals */
+        get: operations["AgendaProposalsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/agenda-proposals/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw an open agenda proposal
+         * @description Its proposer, while open (AGENDA_PROPOSAL_NOT_OPEN).
+         */
+        post: operations["AgendaProposalsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/governance/board": {
         parameters: {
             query?: never;
@@ -3915,6 +4070,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/governance/objections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller’s objections, with the board’s answers */
+        get: operations["ObjectionsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/governance/polls": {
         parameters: {
             query?: never;
@@ -4061,6 +4233,26 @@ export interface paths {
          * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Its announcement comes down for good.
          */
         post: operations["BoardPublicationsController_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/publications/{id}/objections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Object to a decision of the board
+         * @description An owner, once for a unit they own (OBJECTION_EXISTS), within the compound’s objection days of its publication (OBJECTION_WINDOW_PASSED); a decision only, not archived, not answered yet (OBJECTION_NOT_OPEN). It changes nothing by itself: the board answers.
+         */
+        post: operations["ObjectionsController_object"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10247,6 +10439,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/approvals/{id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record how an approved request is followed up
+         * @description In progress as often as it moves; then once implemented (the mark, as `implemented`) or not implementable — final (APPROVAL_PROGRESS_FINAL). The owners reading the decision the board published see it.
+         */
+        post: operations["StaffApprovalsController_progress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/governance/approvals/{id}/withdraw": {
         parameters: {
             query?: never;
@@ -15902,6 +16114,31 @@ export interface components {
              */
             photoFileId: string;
         };
+        /** @enum {string} */
+        AgendaProposalOutcome: "accepted" | "declined";
+        /** @enum {string} */
+        AgendaProposalStatus: "open" | "accepted" | "declined" | "withdrawn";
+        AgendaProposalView: {
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decisionNote: string | null;
+            /** @description REASON_CODES.agendaDecline, when declined. */
+            declineReason: string | null;
+            /** Format: uuid */
+            id: string;
+            status: components["schemas"]["AgendaProposalStatus"];
+            /** @description Null once cleared by the proposer’s erasure. */
+            title: string | null;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        AgendaProposalViewList: {
+            data: components["schemas"]["AgendaProposalView"][];
+            nextCursor: string | null;
+        };
         AgingRowView: {
             building: string | null;
             /** @description 1–30 days past the due date. */
@@ -16030,6 +16267,10 @@ export interface components {
             titleEn: string | null;
             works: components["schemas"]["WorksView"] | null;
         };
+        AnswerObjectionsDto: {
+            /** @description The board’s reasoned answer, to every objector. Write no one’s name. */
+            body: string;
+        };
         AppealFineDto: {
             /**
              * Format: uuid
@@ -16150,6 +16391,21 @@ export interface components {
         };
         /** @enum {string} */
         ApprovalMotionOutcome: "approve" | "reject";
+        ApprovalProgressDto: {
+            /** @description What was done, or why it cannot be. Write no one’s name. */
+            note?: string;
+            status: components["schemas"]["ApprovalProgressStatus"];
+        };
+        /** @enum {string} */
+        ApprovalProgressStatus: "in_progress" | "implemented" | "cannot_implement";
+        ApprovalProgressView: {
+            /** Format: date-time */
+            at: string;
+            /** @description Recorded by the decision itself (it implemented it). */
+            byDecision: boolean;
+            note: string | null;
+            status: components["schemas"]["ApprovalProgressStatus"];
+        };
         /** @enum {string} */
         ApprovalStatus: "pending" | "approved" | "rejected" | "withdrawn";
         /** @enum {string} */
@@ -16171,6 +16427,8 @@ export interface components {
             implementation: components["schemas"]["ApprovalImplementationView"] | null;
             /** @description Pending past its deadline. */
             overdue: boolean;
+            /** @description How it is followed up once approved, oldest first; implemented or not implementable is the last. */
+            progress: components["schemas"]["ApprovalProgressView"][];
             /** Format: date-time */
             raisedAt: string;
             /** @description The caller raised it. */
@@ -16620,6 +16878,8 @@ export interface components {
             motions: components["schemas"]["BoardMotionView"][];
             /** @description Pending past its deadline. */
             overdue: boolean;
+            /** @description How it is followed up once approved, oldest first; implemented or not implementable is the last. */
+            progress: components["schemas"]["ApprovalProgressView"][];
             /** Format: date-time */
             raisedAt: string;
             /** @description The caller raised it. */
@@ -16670,6 +16930,15 @@ export interface components {
         };
         BoardNowView: {
             board: components["schemas"]["BoardTermView"] | null;
+        };
+        BoardObjectionsView: {
+            answer: components["schemas"]["ObjectionReplyView"] | null;
+            count: number;
+            grounds: components["schemas"]["ObjectionGroundsView"][];
+            /** Format: uuid */
+            publicationId: string;
+            /** Format: date-time */
+            until: string;
         };
         BoardOverviewView: {
             /** @example 2027-02-12 */
@@ -16740,10 +17009,14 @@ export interface components {
             decidedOn: string;
             /** Format: date-time */
             editedAt: string | null;
+            /** @description A decision the board published by itself: how its request is followed up, the last step (ADR 0059). */
+            followUp: components["schemas"]["PublicationFollowUpView"] | null;
             hasAttachment: boolean;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["BoardPublicationKind"];
+            /** @description A decision not archived: until when owners may object, and whether the board answered (then no more). */
+            objections: components["schemas"]["PublicationObjectionsView"] | null;
             /** Format: date-time */
             publishedAt: string;
             /**
@@ -19487,6 +19760,13 @@ export interface components {
             data: components["schemas"]["DataExportView"][];
             nextCursor: string | null;
         };
+        DecideAgendaDto: {
+            /** @description The board’s words to the proposer. Write no one’s name. */
+            note?: string;
+            outcome: components["schemas"]["AgendaProposalOutcome"];
+            /** @description Required to decline: from the closed list `agendaDecline`. */
+            reasonCode?: string;
+        };
         DecideAppealDto: {
             /**
              * @description `upheld`: the fine is unpaid again. `cancelled`: it is cancelled.
@@ -21595,7 +21875,7 @@ export interface components {
             type: components["schemas"]["GovernanceSettingType"];
         };
         /** @enum {string} */
-        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "board_appeal";
+        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "board_appeal" | "objection";
         GovernanceSettingsResponse: {
             items: components["schemas"]["GovernanceSettingResponse"][];
         };
@@ -23577,6 +23857,18 @@ export interface components {
             data: components["schemas"]["MyNoticeView"][];
             nextCursor: string | null;
         };
+        MyObjectionView: {
+            answer: components["schemas"]["ObjectionReplyView"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Null once cleared by the objector’s erasure. */
+            grounds: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            publicationId: string;
+            unitCode: string;
+        };
         MyParkingReportView: {
             /** Format: date-time */
             createdAt: string;
@@ -23981,6 +24273,24 @@ export interface components {
         NotificationViewList: {
             data: components["schemas"]["NotificationView"][];
             nextCursor: string | null;
+        };
+        ObjectDto: {
+            grounds: string;
+            /**
+             * Format: uuid
+             * @description A unit the caller owns (OBJECTION_NOT_ALLOWED).
+             */
+            unitId: string;
+        };
+        ObjectionGroundsView: {
+            /** Format: date-time */
+            at: string;
+            grounds: string | null;
+        };
+        ObjectionReplyView: {
+            /** Format: date-time */
+            at: string;
+            body: string;
         };
         /** @enum {string} */
         OccupancyEndReason: "moved_out" | "contract_ended" | "data_correction" | "other" | "converted_to_owner" | "ownership_transferred" | "household_ended" | "account_erased";
@@ -25640,6 +25950,10 @@ export interface components {
             /** @description From the closed list `ticketPriority`. */
             reasonCode: string;
         };
+        ProposeAgendaDto: {
+            body: string;
+            title: string;
+        };
         ProposeAppealMotionDto: {
             outcome: components["schemas"]["AppealMotionOutcome"];
             /** @description The board’s reasoned decision, as the appellant and the management will read it. Write no one’s name. */
@@ -25698,6 +26012,16 @@ export interface components {
             titleAr: string | null;
             /** @description Written by the staff. */
             titleEn: string | null;
+        };
+        PublicationFollowUpView: {
+            /** Format: date-time */
+            at: string;
+            status: components["schemas"]["ApprovalProgressStatus"];
+        };
+        PublicationObjectionsView: {
+            answered: boolean;
+            /** Format: date-time */
+            until: string;
         };
         PublishAnnouncementDto: {
             /**
@@ -32720,6 +33044,76 @@ export interface operations {
             };
         };
     };
+    BoardAgendaController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["AgendaProposalStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgendaProposalViewList"];
+                };
+            };
+        };
+    };
+    BoardAgendaController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgendaProposalView"];
+                };
+            };
+        };
+    };
+    BoardAgendaController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideAgendaDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgendaProposalView"];
+                };
+            };
+        };
+    };
     BoardAppealsBoardController_list: {
         parameters: {
             query?: {
@@ -32960,6 +33354,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardOverviewView"];
+                };
+            };
+        };
+    };
+    BoardObjectionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardObjectionsView"];
+                };
+            };
+        };
+    };
+    BoardObjectionsController_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerObjectionsDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardObjectionsView"];
                 };
             };
         };
@@ -37207,6 +37647,94 @@ export interface operations {
             };
         };
     };
+    AgendaProposalsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgendaProposalViewList"];
+                };
+            };
+        };
+    };
+    AgendaProposalsController_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeAgendaDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgendaProposalView"];
+                };
+            };
+        };
+    };
+    AgendaProposalsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgendaProposalView"];
+                };
+            };
+        };
+    };
+    AgendaProposalsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgendaProposalView"];
+                };
+            };
+        };
+    };
     GovernanceBoardController_now: {
         parameters: {
             query?: never;
@@ -37564,6 +38092,25 @@ export interface operations {
             };
         };
     };
+    ObjectionsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyObjectionView"][];
+                };
+            };
+        };
+    };
     GovernancePollsController_list: {
         parameters: {
             query?: {
@@ -37804,6 +38351,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardPublicationView"];
+                };
+            };
+        };
+    };
+    ObjectionsController_object: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObjectDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyObjectionView"];
                 };
             };
         };
@@ -47331,6 +47903,31 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ImplementedApprovalDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalView"];
+                };
+            };
+        };
+    };
+    StaffApprovalsController_progress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovalProgressDto"];
             };
         };
         responses: {

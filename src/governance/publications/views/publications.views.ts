@@ -39,6 +39,20 @@ export class BoardPublicationView {
   editedAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   archivedAt: Date | null;
+  @ApiProperty({
+    type: () => PublicationFollowUpView,
+    nullable: true,
+    description:
+      'A decision the board published by itself: how its request is followed up, the last step (ADR 0059).',
+  })
+  followUp: PublicationFollowUpView | null;
+  @ApiProperty({
+    type: () => PublicationObjectionsView,
+    nullable: true,
+    description:
+      'A decision not archived: until when owners may object, and whether the board answered (then no more).',
+  })
+  objections: PublicationObjectionsView | null;
 
   static from(r: PublicationRecord): BoardPublicationView {
     const p = r.publication;
@@ -56,6 +70,30 @@ export class BoardPublicationView {
       publishedAt: p.createdAt,
       editedAt: r.text.editedAt,
       archivedAt: p.archivedAt,
+      followUp: r.followUp
+        ? {
+            status: r.followUp.status as PublicationFollowUpView['status'],
+            at: r.followUp.at,
+          }
+        : null,
+      objections: r.objections,
     };
   }
+}
+
+export class PublicationFollowUpView {
+  @ApiProperty({
+    enum: ['in_progress', 'implemented', 'cannot_implement'],
+    enumName: 'ApprovalProgressStatus',
+  })
+  status: 'in_progress' | 'implemented' | 'cannot_implement';
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+}
+
+export class PublicationObjectionsView {
+  @ApiProperty({ type: String, format: 'date-time' })
+  until: Date;
+  @ApiProperty({ type: Boolean })
+  answered: boolean;
 }

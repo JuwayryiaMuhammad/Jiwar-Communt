@@ -240,3 +240,16 @@ The full notes for the residents' app are in [`notes/partners.md`](notes/partner
 - The partner's desk (public, `/p#<token>` in `apps/public`): `POST /public/partner-desk/lookup` and `…/requests/{id}/accept|decline|propose|done|cancel`, the token in the body, rate-limited per IP and per token. Every link that opens no desk (unknown, revoked, expired, suspended) is the same `404 PARTNER_DESK_NOT_FOUND`. The desk sees a unit's code, a first name, the window, the note and the lines while the consent holds, and the gate pass from two hours before the window.
 - The management (`partners.manage`, new): `/staff/partners` (with services, hours, prices, suspend, reinstate), `/staff/partners/{id}/desk-link` (made or rotated, shown once; `…/revoke`), `/staff/partner-subcategories`, `/staff/partner-settings`, `/staff/partner-requests` (the relay), `/staff/partner-complaints` (decided once), `/staff/partner-ratings`.
 - An accepted request with `gatePass` gets the gate's own visitor pass for the requester (`passId`), cancelled with the request (`service_cancelled`). A new notification category `partners` with nine kinds (`partner_request.*`, `partner_complaint.decided`, `partner.suspended`), 13 consent codes, two permissions, and the export's `partners/requests.json` and `partners/favourites.json`.
+
+### Appeals and the owners' voice (ADR 0059)
+
+The full notes for the apps are in [`notes/appeals-and-voice.md`](notes/appeals-and-voice.md).
+
+- `POST /decision-appeals` (`permit_rejection`, `vehicle_rejection`, `worker_rejection`, `neighbour_notice`; 15 days, once), `GET`, `GET /{id}`, `POST /{id}/withdraw`. The deciders: `/staff/decision-appeals`, `…/{id}/decide` (never the one who decided; an overturn runs the normal approval, else `follow_up` with its reason), `…/{id}/followed-up`. `GET /me/appeals` gains `decision_appeal` and `appeal.deciderRole`.
+- Board appeals gain the kinds `management_appeal` and `management_complaint` (`POST /governance/management-complaints`, three open per owner); the staff's view has a nullable `unitCode`.
+- `GET /me/representatives`, `…/{id}/messages`; the representative's `/me/representation/threads`; the board's `/board/representatives` and its matters `/board/representatives/matters` (raised, then decided by motions; `…/buildings`, `…/candidates`); `GET /staff/governance/representatives`.
+- `/governance/agenda-proposals` and the board's `/board/agenda-proposals/{id}/decide`.
+- `POST /governance/publications/{id}/objections`, `GET /governance/objections`; the board's `/board/publications/{id}/objections`, `…/answer`. Publications gain `objections` and `followUp`; settings gain the `objection` row.
+- `POST /staff/governance/approvals/{id}/progress`; approvals gain `progress`.
+- A neighbour notice gains `withdrawnAt`. New permission `appeals.decide`.
+

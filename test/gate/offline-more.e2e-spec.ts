@@ -53,7 +53,6 @@ describe('Gate offline — permits, vehicles, materials and patrols (ADR 0057)',
     );
   const one = async (d: TestDevice, action: Record<string, unknown>) =>
     (await o.upload(s.guard, s.c, d, [action])).results[0];
-  const now = () => dbClock().toISOString();
 
   describe('a works permit’s contractors', () => {
     it('carried by reference, never a name; matched at sync by the last four', async () => {
@@ -242,7 +241,7 @@ describe('Gate offline — permits, vehicles, materials and patrols (ADR 0057)',
       const out = await one(d, {
         clientId: newId(),
         seq: d.seq++,
-        deviceTime: now(),
+        deviceTime: b.issuedAt,
         bundleId: b.bundleId,
         type: 'service_vehicle_out',
         plate: 'صهر701',
@@ -261,7 +260,7 @@ describe('Gate offline — permits, vehicles, materials and patrols (ADR 0057)',
       const again = await one(d, {
         clientId: newId(),
         seq: d.seq++,
-        deviceTime: now(),
+        deviceTime: b.issuedAt,
         bundleId: b.bundleId,
         type: 'service_vehicle_out',
         plate,
@@ -274,7 +273,7 @@ describe('Gate offline — permits, vehicles, materials and patrols (ADR 0057)',
       const online = await o.serviceIn(s.guard, plate);
       await o.block(s.manager, { subject: 'plate', plate });
       const { d, b } = await o.deviceWithBundle(s.guard, s.c);
-      const res = await one(d, vin(d, b, { plate, deviceTime: now() }));
+      const res = await one(d, vin(d, b, { plate }));
       expect(res.flags.sort()).toEqual([
         'blocklist_ban_entered',
         'duplicate_inside',
@@ -358,7 +357,8 @@ describe('Gate offline — permits, vehicles, materials and patrols (ADR 0057)',
       ]);
       const run = await pt.adhoc(s.guard, route.id);
       const { d, b } = await o.deviceWithBundle(s.guard, s.c);
-      const scanAt = now();
+      // At the bundle's issue: never past the receipt, which clamps it.
+      const scanAt = b.issuedAt;
       const syncer = await o.guard(s.c);
       const up = await o.upload(syncer, s.c, d, [
         {

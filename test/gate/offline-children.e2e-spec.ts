@@ -60,6 +60,12 @@ describe('Gate offline — children’s exits (ADR 0057)', () => {
     const { d, b } = await o.deviceWithBundle(s.guard, s.c);
     return { ...t, adult, escort, qr, d, b };
   }
+  /**
+   * A child's exit the device recorded, at its bundle's issue: inside the
+   * server's window [issue − 2 min, receipt] whatever the hour, and however
+   * the runner's estimate of the database's clock is off (a time a few ms
+   * past the receipt is clamped and flagged `clock_skew`).
+   */
   const exit = (
     d: TestDevice,
     b: BundleBody,
@@ -68,7 +74,7 @@ describe('Gate offline — children’s exits (ADR 0057)', () => {
   ) => ({
     clientId: newId(),
     seq: d.seq++,
-    deviceTime: dbClock().toISOString(),
+    deviceTime: b.issuedAt,
     bundleId: b.bundleId,
     type: 'child_exit',
     controlId,

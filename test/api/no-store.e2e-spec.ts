@@ -44,6 +44,7 @@ import { offlineCalls } from './no-store-offline';
 import { residentItemCalls } from './no-store-resident-items';
 import { partnerCalls } from './no-store-partners';
 import { decisionAppealCalls } from './no-store-decision-appeals';
+import { representativeCalls } from './no-store-representatives';
 import { buildWorld, type World } from './world';
 
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
@@ -3099,6 +3100,7 @@ describe('API v0 — no-store', () => {
     ...residentItemCalls(() => w),
     ...partnerCalls(() => w),
     ...decisionAppealCalls(() => w),
+    ...representativeCalls(() => w, aSittingBoard),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

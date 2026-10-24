@@ -2182,6 +2182,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم توافق الإدارة على عامل سجلته. يمكنك التظلم خلال 15 يومًا.',
     },
   },
+  'governance_representative.appointed': {
+    en: {
+      title: 'You represent your building',
+      body: 'The board named you the representative of building {building}.',
+    },
+    ar: {
+      title: 'أنت ممثل المبنى',
+      body: 'عيّنك المجلس ممثلًا للمبنى {building}.',
+    },
+  },
+  'governance_representative.ended': {
+    en: {
+      title: 'Your representation ended',
+      body: 'Your term as the representative of building {building} has ended.',
+    },
+    ar: {
+      title: 'انتهت فترة تمثيلك',
+      body: 'انتهت فترتك ممثلًا للمبنى {building}.',
+    },
+  },
+  'representative.message_received': {
+    en: {
+      title: 'A message from your building',
+      body: 'A resident of your building wrote to you. Open the app to read it.',
+    },
+    ar: {
+      title: 'رسالة من مبناك',
+      body: 'كتب إليك أحد سكان مبناك. افتح التطبيق لقراءتها.',
+    },
+  },
+  'representative.replied': {
+    en: {
+      title: 'Your representative answered',
+      body: 'Your building’s representative answered you. Open the app to read it.',
+    },
+    ar: {
+      title: 'ردّ ممثل المبنى',
+      body: 'ردّ عليك ممثل مبناك. افتح التطبيق لقراءة الرد.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

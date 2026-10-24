@@ -198,6 +198,154 @@ export class CommunityGovernancePort {
       .slice(0, limit);
   }
 
+  /**
+   * A unit in the building the account owns now (ADR 0059: who may be its
+   * representative), the oldest first; null when it owns none there or is
+   * not active.
+   */
+  async ownedUnitIn(
+    tx: TenantTxClient,
+    accountId: string,
+    building: string,
+  ): Promise<string | null> {
+    const account = await tx.account.findUnique({
+      where: { id: accountId },
+      select: { status: true },
+    });
+    if (account?.status !== 'active') return null;
+    const row = await tx.unitOccupancy.findFirst({
+      where: {
+        accountId,
+        status: 'active',
+        occupancyType: 'owner',
+        unit: { building },
+      },
+      orderBy: [{ startedAt: 'asc' }, { id: 'asc' }],
+      select: { unitId: true },
+    });
+    return row?.unitId ?? null;
+  }
+
+  /**
+   * As ownedUnitIn, at a board decision: the owner's occupancy row there
+   * is share-locked, so an occupancy ending meanwhile either committed
+   * first (and it owns none) or waits for the decision, whose new term its
+   * residence check then sees and ends (ADR 0059).
+   */
+  async lockOwnedUnitIn(
+    tx: TenantTxClient,
+    accountId: string,
+    building: string,
+  ): Promise<string | null> {
+    const account = await tx.account.findUnique({
+      where: { id: accountId },
+      select: { status: true },
+    });
+    if (account?.status !== 'active') return null;
+    const rows = await tx.$queryRaw<{ unit_id: string }[]>`
+      SELECT o.unit_id FROM unit_occupancies o
+        JOIN units u ON u.tenant_id = o.tenant_id AND u.id = o.unit_id
+       WHERE o.account_id = ${accountId}::uuid AND o.status = 'active'
+         AND o.occupancy_type = 'owner' AND u.building = ${building}
+       ORDER BY o.started_at, o.id
+       FOR SHARE OF o`;
+    return rows[0]?.unit_id ?? null;
+  }
+
+  /** The compound's buildings, as its units name them, sorted. */
+  async buildings(tx: TenantTxClient): Promise<string[]> {
+    const rows = await tx.unit.findMany({
+      where: { building: { not: null } },
+      select: { building: true },
+      distinct: ['building'],
+      orderBy: { building: 'asc' },
+    });
+    return rows.map((r) => r.building!);
+  }
+
+  /**
+   * The active owners of a unit in the building (who may be its
+   * representative): name and the codes of their units there, by name.
+   */
+  async buildingOwners(
+    tx: TenantTxClient,
+    building: string,
+  ): Promise<GovernanceOwner[]> {
+    const rows = await tx.unitOccupancy.findMany({
+      where: {
+        status: 'active',
+        occupancyType: 'owner',
+        account: { status: 'active' },
+        unit: { building },
+      },
+      select: {
+        accountId: true,
+        account: { select: { fullName: true } },
+        unit: { select: { code: true } },
+      },
+      orderBy: [{ accountId: 'asc' }],
+    });
+    const byAccount = new Map<string, GovernanceOwner>();
+    for (const r of rows) {
+      const o = byAccount.get(r.accountId) ?? {
+        accountId: r.accountId,
+        fullName: r.account.fullName,
+        unitCodes: [],
+      };
+      o.unitCodes.push(r.unit.code);
+      byAccount.set(r.accountId, o);
+    }
+    return [...byAccount.values()]
+      .map((o) => ({ ...o, unitCodes: o.unitCodes.sort() }))
+      .sort(
+        (a, b) =>
+          (a.fullName ?? '').localeCompare(b.fullName ?? '') ||
+          (a.accountId < b.accountId ? -1 : 1),
+      );
+  }
+
+  /** Whether any unit of the compound is in the building. */
+  async buildingExists(tx: TenantTxClient, building: string): Promise<boolean> {
+    return (await tx.unit.count({ where: { building } })) > 0;
+  }
+
+  /**
+   * The units, with a building, where the account has a place now: an
+   * active occupancy (an owner, a tenant, a landlord) or an active
+   * household membership. Who a building's representative is told to, and
+   * who may write to them (ADR 0059).
+   */
+  async buildingPlaces(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<{ unitId: string; code: string; building: string }[]> {
+    const account = await tx.account.findUnique({
+      where: { id: accountId },
+      select: { status: true },
+    });
+    if (account?.status !== 'active') return [];
+    const occupancies = await tx.unitOccupancy.findMany({
+      where: { accountId, status: 'active' },
+      select: { unitId: true },
+    });
+    const members = await tx.householdMember.findMany({
+      where: { accountId, status: 'active' },
+      select: { unitId: true },
+    });
+    const ids = [...new Set([...occupancies, ...members].map((r) => r.unitId))];
+    if (!ids.length) return [];
+    const units = await tx.unit.findMany({
+      where: { id: { in: ids }, building: { not: null } },
+      select: { id: true, code: true, building: true },
+      orderBy: [{ code: 'asc' }, { id: 'asc' }],
+    });
+    return units.map((u) => ({
+      unitId: u.id,
+      code: u.code,
+      building: u.building!,
+    }));
+  }
+
   /** Full names by account id; an erased account has none. */
   async names(
     tx: TenantTxClient,

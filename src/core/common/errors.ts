@@ -853,8 +853,8 @@ export const ErrorCode = {
   /** The matter was decided or withdrawn already (409, params.status). */
   BOARD_MATTER_DECIDED: 'BOARD_MATTER_DECIDED',
   /**
-   * The member lives in or owns the appeal's unit, or appealed (403): no
-   * motion, no vote, no close on it.
+   * The member lives in or owns the appeal's unit, or appealed, or is whom
+   * a representative matter names (403): no motion, no vote, no close on it.
    */
   BOARD_MEMBER_RECUSED: 'BOARD_MEMBER_RECUSED',
   /**
@@ -1253,6 +1253,28 @@ export const ErrorCode = {
    * may (409, params.max: 3).
    */
   MANAGEMENT_COMPLAINT_LIMIT: 'MANAGEMENT_COMPLAINT_LIMIT',
+  // Building representatives (ADR 0059)
+  /** Unknown, another compound's, or not of a building the caller lives in. */
+  REPRESENTATIVE_NOT_FOUND: 'REPRESENTATIVE_NOT_FOUND',
+  /** No unit of the compound is in the building (404). */
+  REPRESENTATIVE_BUILDING_NOT_FOUND: 'REPRESENTATIVE_BUILDING_NOT_FOUND',
+  /** The account owns no unit in the building now (409). */
+  REPRESENTATIVE_NOT_AN_OWNER: 'REPRESENTATIVE_NOT_AN_OWNER',
+  /** The representative's term has ended (409). */
+  REPRESENTATIVE_ENDED: 'REPRESENTATIVE_ENDED',
+  /** Unknown, or not a conversation written to the caller. */
+  REPRESENTATIVE_THREAD_NOT_FOUND: 'REPRESENTATIVE_THREAD_NOT_FOUND',
+  /** The owner named is the building's representative already (409). */
+  REPRESENTATIVE_ALREADY_SITTING: 'REPRESENTATIVE_ALREADY_SITTING',
+  /** Unknown, or another compound's (404). */
+  REPRESENTATIVE_MATTER_NOT_FOUND: 'REPRESENTATIVE_MATTER_NOT_FOUND',
+  /**
+   * A matter about the building's representative is pending already (409,
+   * params.matterId): the board decides it, or its raiser withdraws it.
+   */
+  REPRESENTATIVE_MATTER_PENDING: 'REPRESENTATIVE_MATTER_PENDING',
+  /** Only its raiser withdraws a matter (403). */
+  REPRESENTATIVE_MATTER_NOT_YOURS: 'REPRESENTATIVE_MATTER_NOT_YOURS',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

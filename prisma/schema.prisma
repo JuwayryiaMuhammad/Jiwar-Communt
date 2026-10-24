@@ -7620,27 +7620,30 @@ model GovernanceApprovalAttachment {
 /// reasons, fixed when proposed; closed once (carried, failed, withdrawn,
 /// lapsed), with the count for a carried or failed one.
 model BoardMotion {
-  id                 String    @id @db.Uuid
-  tenantId           String    @map("tenant_id") @db.Uuid
-  approvalRequestId  String?   @map("approval_request_id") @db.Uuid
-  boardAppealId      String?   @map("board_appeal_id") @db.Uuid
-  termId             String    @map("term_id") @db.Uuid
-  proposedByMemberId String    @map("proposed_by_member_id") @db.Uuid
-  proposedById       String    @map("proposed_by_account_id") @db.Uuid
-  outcome            String
-  rationale          String
-  alternativesNote   String?   @map("alternatives_note")
-  openedAt           DateTime  @map("opened_at") @db.Timestamptz(3)
-  closedAt           DateTime? @map("closed_at") @db.Timestamptz(3)
-  result             String?
-  closedById         String?   @map("closed_by_account_id") @db.Uuid
-  votesFor           Int?      @map("votes_for") @db.SmallInt
-  votesAgainst       Int?      @map("votes_against") @db.SmallInt
-  sitting            Int?      @db.SmallInt
+  id                     String    @id @db.Uuid
+  tenantId               String    @map("tenant_id") @db.Uuid
+  approvalRequestId      String?   @map("approval_request_id") @db.Uuid
+  boardAppealId          String?   @map("board_appeal_id") @db.Uuid
+  /// A representative matter's (ADR 0059).
+  representativeMatterId String?   @map("representative_matter_id") @db.Uuid
+  termId                 String    @map("term_id") @db.Uuid
+  proposedByMemberId     String    @map("proposed_by_member_id") @db.Uuid
+  proposedById           String    @map("proposed_by_account_id") @db.Uuid
+  outcome                String
+  rationale              String
+  alternativesNote       String?   @map("alternatives_note")
+  openedAt               DateTime  @map("opened_at") @db.Timestamptz(3)
+  closedAt               DateTime? @map("closed_at") @db.Timestamptz(3)
+  result                 String?
+  closedById             String?   @map("closed_by_account_id") @db.Uuid
+  votesFor               Int?      @map("votes_for") @db.SmallInt
+  votesAgainst           Int?      @map("votes_against") @db.SmallInt
+  sitting                Int?      @db.SmallInt
 
   @@unique([tenantId, id])
   @@index([tenantId, approvalRequestId, openedAt, id], map: "board_motions_request_idx")
   @@index([tenantId, boardAppealId, openedAt, id], map: "board_motions_appeal_idx")
+  @@index([tenantId, representativeMatterId, openedAt, id], map: "board_motions_representative_matter_idx")
   @@map("board_motions")
 }
 
@@ -7710,6 +7713,92 @@ model ManagementComplaint {
   @@unique([tenantId, id])
   @@index([tenantId, authorId, createdAt], map: "management_complaints_author_idx")
   @@map("management_complaints")
+}
+
+/// A building's representative (ADR 0059): an owner of a unit there, named
+/// by the board, one at a time per building; ended once.
+model GovernanceRepresentative {
+  id                  String    @id @db.Uuid
+  tenantId            String    @map("tenant_id") @db.Uuid
+  building            String
+  accountId           String    @map("account_id") @db.Uuid
+  unitId              String    @map("unit_id") @db.Uuid
+  appointedAt         DateTime  @map("appointed_at") @db.Timestamptz(3)
+  /// The board's matter that named them.
+  appointedByMatterId String    @map("appointed_by_matter_id") @db.Uuid
+  endedAt             DateTime? @map("ended_at") @db.Timestamptz(3)
+  /// The board's matter that ended or replaced them; null when the system ended it.
+  endedByMatterId     String?   @map("ended_by_matter_id") @db.Uuid
+  endReason           String?   @map("end_reason")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, accountId, appointedAt], map: "governance_representatives_account_idx")
+  @@map("governance_representatives")
+}
+
+/// A board matter about a building's representative (ADR 0059): name an
+/// owner (`appoint`) or end a term (`end`), decided by the board's motions
+/// (ADR 0055); an approval applied, or why not.
+model GovernanceRepresentativeMatter {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  /// `appoint` or `end`.
+  action           String
+  building         String
+  /// The owner named, or the term's holder.
+  accountId        String    @map("account_id") @db.Uuid
+  /// The term to end; null for an appointment.
+  representativeId String?   @map("representative_id") @db.Uuid
+  raisedById       String    @map("raised_by_account_id") @db.Uuid
+  raisedAt         DateTime  @map("raised_at") @db.Timestamptz(3)
+  deadlineAt       DateTime  @map("deadline_at") @db.Timestamptz(3)
+  status           String    @default("pending")
+  decidedAt        DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedMotionId  String?   @map("decided_motion_id") @db.Uuid
+  /// `applied` or `not_applied`, once approved.
+  effect           String?
+  effectReason     String?   @map("effect_reason")
+  withdrawnAt      DateTime? @map("withdrawn_at") @db.Timestamptz(3)
+  withdrawnById    String?   @map("withdrawn_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, raisedAt, id], map: "governance_representative_matters_status_idx")
+  @@map("governance_representative_matters")
+}
+
+/// A resident's private thread with a representative (ADR 0059): their
+/// unit then, and the last message's time.
+model RepresentativeThread {
+  id               String   @id @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  representativeId String   @map("representative_id") @db.Uuid
+  writerId         String   @map("writer_account_id") @db.Uuid
+  unitId           String   @map("unit_id") @db.Uuid
+  createdAt        DateTime @map("created_at") @db.Timestamptz(3)
+  lastMessageAt    DateTime @map("last_message_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, representativeId, writerId], map: "representative_threads_once")
+  @@index([tenantId, representativeId, lastMessageAt, id], map: "representative_threads_representative_idx")
+  @@map("representative_threads")
+}
+
+/// A message of a representative's thread (ADR 0059). Append-only; the
+/// words cleared once, at their author's erasure.
+model RepresentativeMessage {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  threadId      String    @map("thread_id") @db.Uuid
+  /// `resident` or `representative`.
+  side          String
+  authorId      String    @map("author_account_id") @db.Uuid
+  body          String?
+  bodyClearedAt DateTime? @map("body_cleared_at") @db.Timestamptz(3)
+  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, threadId, createdAt, id], map: "representative_messages_thread_idx")
+  @@map("representative_messages")
 }
 
 /// An appeal's attached file, in order (ADR 0055). Never changed.

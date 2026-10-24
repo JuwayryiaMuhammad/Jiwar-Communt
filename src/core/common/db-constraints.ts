@@ -626,4 +626,19 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // A complaint about the management (ADR 0059): its board appeal is the
   // one per subject; the id key backs the composite foreign keys.
   management_complaints_tenant_id_id_key: null,
+  // Representatives (ADR 0059): one sitting per building, replaced under
+  // the board lock (a violation is a race); one thread per writer, got or
+  // made with ON CONFLICT DO NOTHING.
+  governance_representatives_tenant_id_id_key: null,
+  governance_representatives_one_active: null,
+  representative_threads_tenant_id_id_key: null,
+  representative_threads_once: null,
+  representative_messages_tenant_id_id_key: null,
+  // A representative matter (ADR 0059): one pending per building, checked
+  // first under the board lock (REPRESENTATIVE_MATTER_PENDING); one open
+  // motion per matter, under its row lock (BOARD_MOTION_OPEN).
+  governance_representative_matters_tenant_id_id_key: null,
+  governance_representative_matters_one_pending: null,
+  governance_representative_matters_motion_key: null,
+  board_motions_one_open_per_representative_matter: null,
 };

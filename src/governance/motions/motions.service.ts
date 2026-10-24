@@ -63,18 +63,26 @@ const seatRequired = () =>
   );
 
 /** The motions of a matter. */
-const ofMatterWhere = (name: MatterKindName, matterId: string) =>
-  name === 'approval'
-    ? { approvalRequestId: matterId }
-    : { boardAppealId: matterId };
+const ofMatterWhere = (name: MatterKindName, matterId: string) => {
+  switch (name) {
+    case 'approval':
+      return { approvalRequestId: matterId };
+    case 'appeal':
+      return { boardAppealId: matterId };
+    case 'representative':
+      return { representativeMatterId: matterId };
+  }
+};
 
 /** The matter a motion names. */
 const matterOfMotion = (
   m: BoardMotion,
-): { name: MatterKindName; matterId: string } =>
-  m.approvalRequestId
-    ? { name: 'approval', matterId: m.approvalRequestId }
-    : { name: 'appeal', matterId: m.boardAppealId! };
+): { name: MatterKindName; matterId: string } => {
+  if (m.approvalRequestId)
+    return { name: 'approval', matterId: m.approvalRequestId };
+  if (m.boardAppealId) return { name: 'appeal', matterId: m.boardAppealId };
+  return { name: 'representative', matterId: m.representativeMatterId! };
+};
 
 /** The board's quorum: a majority of its seats now. */
 const boardQuorum = (seats: number) => Math.floor(seats / 2) + 1;
@@ -619,7 +627,7 @@ export class MotionsService implements OnModuleInit {
     );
   }
 
-  /** The accounts recused from a motion (none but on an appeal's). */
+  /** The accounts recused from a motion (none on a request's). */
   private async recusedOf(
     tx: TenantTxClient,
     motionId: string,
@@ -697,7 +705,7 @@ export class MotionsService implements OnModuleInit {
 const memberRecused = () =>
   appError.forbidden(
     ErrorCode.BOARD_MEMBER_RECUSED,
-    'The member is recused from this matter: they live in or own its unit, or appealed',
+    'The member is recused from this matter: they live in or own its unit, appealed, or are whom it names',
   );
 
 const quorumUnavailable = (eligible: number, quorum: number) =>

@@ -1,8 +1,8 @@
 import type { BoardMotion } from '@prisma/client';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 
-/** What the board decides by motions (ADR 0055). */
-export type MatterKindName = 'approval' | 'appeal';
+/** What the board decides by motions (ADR 0055; representatives, ADR 0059). */
+export type MatterKindName = 'approval' | 'appeal' | 'representative';
 
 export interface MatterRow {
   id: string;
@@ -13,7 +13,8 @@ export interface MatterRow {
 
 /**
  * One kind of matter, registered with MotionsService by its service:
- * approval requests, appeals to the board. Every call runs in the
+ * approval requests, appeals to the board, representative matters. Every
+ * call runs in the
  * motion's transaction, under the lock order of GovernanceAccess.
  */
 export interface MatterKind {
@@ -28,7 +29,8 @@ export interface MatterKind {
   lockSkip(tx: TenantTxClient, id: string): Promise<boolean>;
   /**
    * Who is recused from a motion opening now on it (an appeal: everyone
-   * living in or owning its unit, and the appellant); none for a request.
+   * living in or owning its unit, and the appellant; a representative
+   * matter: whom it names); none for a request.
    * Written with the motion, fixed: the snapshot judges its votes.
    */
   recusals(tx: TenantTxClient, matter: MatterRow): Promise<string[]>;

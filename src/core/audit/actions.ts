@@ -1565,6 +1565,39 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'neighbour_complaint',
   },
+  // Building representatives (ADR 0059); their threads' messages are not
+  // the trail's. A board matter's approval names one. metadata: building,
+  // unitId, replacedId (the one it replaced, or null), matterId.
+  'governance_representative.appointed': {
+    log: 'tenant',
+    target: 'governance_representative',
+  },
+  // metadata: building, reason (ended | replaced | no_longer_owner |
+  // account_closed), matterId (the board's matter, or null: the system).
+  'governance_representative.ended': {
+    log: 'tenant',
+    target: 'governance_representative',
+  },
+  // A sitting member raised a matter about a building's representative.
+  // metadata: action (appoint | end), building, accountId (whom it
+  // names), representativeId (the term to end, or null).
+  'governance_representative_matter.raised': {
+    log: 'tenant',
+    target: 'governance_representative_matter',
+  },
+  // Its raiser withdrew it. metadata: motionId (its open motion closed
+  // with it, or null).
+  'governance_representative_matter.withdrawn': {
+    log: 'tenant',
+    target: 'governance_representative_matter',
+  },
+  // A carried motion decided it. metadata: decision (approved |
+  // rejected), motionId, effect (applied | not_applied | null),
+  // effectReason.
+  'governance_representative_matter.decided': {
+    log: 'tenant',
+    target: 'governance_representative_matter',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

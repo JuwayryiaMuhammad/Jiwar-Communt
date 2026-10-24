@@ -163,6 +163,8 @@ describe('audit catalog', () => {
         'ticket_quote',
         // ADR 0059
         'decision_appeal',
+        'governance_representative',
+        'governance_representative_matter',
       ]).toContain(def.target);
     }
   });

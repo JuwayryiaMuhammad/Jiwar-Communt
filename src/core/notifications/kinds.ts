@@ -1538,7 +1538,7 @@ export const NOTIFICATION_KINDS = {
     target: 'governance_approval',
     params: { type: {} },
   },
-  /** A member proposed a motion: the other sitting members; `matter` approval | appeal. */
+  /** A member proposed a motion: the other sitting members; `matter` approval | appeal | representative. */
   'governance_motion.proposed': {
     priority: 'normal',
     category: 'governance',
@@ -2034,6 +2034,40 @@ export const NOTIFICATION_KINDS = {
     critical: false,
     target: 'worker_engagement',
     params: { reason: {} },
+  },
+  // Building representatives (ADR 0059): the building's label, never a
+  // message.
+  /** The board named the account its building's representative. */
+  'governance_representative.appointed': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_representative',
+    params: { building: {} },
+  },
+  /** The account's term ended: `reason` the code. */
+  'governance_representative.ended': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_representative',
+    params: { building: {}, reason: {} },
+  },
+  /** A resident wrote to the representative. */
+  'representative.message_received': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'representative_thread',
+    params: {},
+  },
+  /** The representative answered the resident. */
+  'representative.replied': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'representative_thread',
+    params: {},
   },
 } as const satisfies Record<string, KindSpec>;
 

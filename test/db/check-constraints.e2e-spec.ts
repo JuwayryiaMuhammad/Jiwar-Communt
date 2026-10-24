@@ -1328,7 +1328,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   board_motions_outcome: {
     guarded:
-      'approval_request_id IS NULL and board_appeal_id IS NULL are tested first; outcome is NOT NULL',
+      'approval_request_id, board_appeal_id and representative_matter_id are tested IS NULL first; outcome is NOT NULL',
   },
   board_motions_texts: {
     guarded:
@@ -1935,6 +1935,26 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   worker_engagements_decided: {},
   decision_appeals_board_appeal: {},
+  governance_representatives_building: {},
+  governance_representatives_end_shape: {
+    guarded:
+      'ended_at and end_reason are tested IS NULL first; the comparison and the lists run only on values; appointed_at is NOT NULL',
+  },
+  representative_threads_times: {},
+  governance_representative_matters_action: {},
+  governance_representative_matters_building: {},
+  governance_representative_matters_state_shape: {
+    guarded:
+      'decided_at and withdrawn_at are tested IS NULL first; every other nullable column only under IS [NOT] NULL; status, raised_at and deadline_at are NOT NULL',
+  },
+  governance_representative_matters_effect: {
+    guarded:
+      'CASE tests effect IS NULL first; effect_reason IS NOT NULL comes before its list and its comparison; action is NOT NULL',
+  },
+  representative_messages_side: {},
+  representative_messages_body: {
+    guarded: 'body IS NULL is tested first; its length runs only on a value',
+  },
   management_complaints_category: {},
   management_complaints_request_number: {
     guarded:

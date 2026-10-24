@@ -14,6 +14,14 @@ import {
 import { BoardAppealsService } from './appeals/appeals.service';
 import { ManagementComplaints } from './appeals/management-complaints';
 import {
+  BoardRepresentativeMattersController,
+  BoardRepresentativesController,
+  RepresentationController,
+  ResidentRepresentativesController,
+  StaffRepresentativesController,
+} from './representatives/representatives.controller';
+import { RepresentativesService } from './representatives/representatives.service';
+import {
   BoardApprovalsController,
   StaffApprovalsController,
 } from './approvals/approvals.controller';
@@ -83,6 +91,11 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     ManagementComplaintsController,
     StaffBoardAppealsController,
     BoardAppealsBoardController,
+    BoardRepresentativesController,
+    BoardRepresentativeMattersController,
+    StaffRepresentativesController,
+    ResidentRepresentativesController,
+    RepresentationController,
     BoardOverviewController,
   ],
   providers: [
@@ -105,6 +118,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     ApprovalsService,
     BoardAppealsService,
     ManagementComplaints,
+    RepresentativesService,
     BoardOverviewService,
     MatterSweeps,
   ],

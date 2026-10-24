@@ -654,6 +654,19 @@ export const PARTNERS_COVERAGE: readonly string[] = [
 ];
 
 /**
+ * The owners' voice in governance (ADR 0059): building representatives,
+ * agenda proposals, objections and the follow-up of decisions.
+ * test/governance/voice-audit-coverage.
+ */
+export const GOVERNANCE_VOICE_COVERAGE: readonly string[] = [
+  'governance_representative.appointed',
+  'governance_representative.ended',
+  'governance_representative_matter.raised',
+  'governance_representative_matter.withdrawn',
+  'governance_representative_matter.decided',
+];
+
+/**
  * Decision appeals to the management (ADR 0059): lodged, withdrawn,
  * decided, followed up, and the grounds cleared at the appellant's
  * erasure. test/decision-appeals/audit-coverage.

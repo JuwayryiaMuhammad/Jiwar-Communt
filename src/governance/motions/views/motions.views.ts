@@ -68,7 +68,7 @@ export class BoardMotionView {
   @ApiProperty({
     type: Number,
     description:
-      'Accounts recused from it (an appeal’s: its unit’s people and the appellant), fixed when it opened.',
+      'Accounts recused from it (an appeal’s: its unit’s people and the appellant; a representative matter’s: whom it names), fixed when it opened.',
   })
   recused: number;
   @ApiProperty({

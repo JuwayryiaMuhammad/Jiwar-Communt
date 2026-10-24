@@ -631,6 +631,141 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/board/representatives": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The buildings’ representatives, sitting first */
+        get: operations["BoardRepresentativesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/representatives/buildings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The compound’s buildings
+         * @description As its units name them.
+         */
+        get: operations["BoardRepresentativesController_buildings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/representatives/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who may represent a building
+         * @description The active owners of a unit in it, by name, with their units there.
+         */
+        get: operations["BoardRepresentativesController_candidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/representatives/matters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The board’s matters, newest first */
+        get: operations["BoardRepresentativeMattersController_list"];
+        put?: never;
+        /**
+         * Raise a matter about a building’s representative
+         * @description A sitting member (BOARD_SEAT_REQUIRED). `appoint` names an owner of a unit in the building (REPRESENTATIVE_NOT_AN_OWNER, REPRESENTATIVE_ALREADY_SITTING); `end` names a sitting term (REPRESENTATIVE_ENDED). One pending per building (REPRESENTATIVE_MATTER_PENDING). The board decides it by a carried motion; an approval applies it at once.
+         */
+        post: operations["BoardRepresentativeMattersController_raise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/representatives/matters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a matter with the board’s motions */
+        get: operations["BoardRepresentativeMattersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/representatives/matters/{id}/motions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Propose a motion on a matter
+         * @description Approve or reject, with the reasons. One open motion per matter (BOARD_MOTION_OPEN); whom it names is recused (BOARD_MEMBER_RECUSED); the other members are told.
+         */
+        post: operations["BoardRepresentativeMattersController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/representatives/matters/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw a pending matter
+         * @description Its raiser, still sitting (REPRESENTATIVE_MATTER_NOT_YOURS, BOARD_MATTER_DECIDED); its open motion closes with it.
+         */
+        post: operations["BoardRepresentativeMattersController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/bookings/{id}": {
         parameters: {
             query?: never;
@@ -6110,6 +6245,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/representation/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The conversations written to the caller as a representative
+         * @description Latest first: each writer’s unit and first name.
+         */
+        get: operations["RepresentationController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/representation/threads/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A conversation’s messages, oldest first */
+        get: operations["RepresentationController_messages"];
+        put?: never;
+        /**
+         * Answer a resident
+         * @description While the term lasts (REPRESENTATIVE_ENDED).
+         */
+        post: operations["RepresentationController_reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/representatives": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The representatives of the caller’s buildings
+         * @description Their first name and since when.
+         */
+        get: operations["ResidentRepresentativesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/representatives/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller’s conversation with a representative
+         * @description Oldest first; empty before the first message.
+         */
+        get: operations["ResidentRepresentativesController_messages"];
+        put?: never;
+        /**
+         * Write to the building’s representative
+         * @description A resident of the building (REPRESENTATIVE_NOT_FOUND otherwise), while the term lasts (REPRESENTATIVE_ENDED). The representative sees the caller’s unit and first name.
+         */
+        post: operations["ResidentRepresentativesController_write"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/requests": {
         parameters: {
             query?: never;
@@ -10373,6 +10593,26 @@ export interface paths {
          * @description Newest first, archived ones too.
          */
         get: operations["StaffBoardPublicationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/representatives": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The buildings’ representatives
+         * @description Who represents which building; never their threads.
+         */
+        get: operations["StaffRepresentativesController_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -16422,7 +16662,7 @@ export interface components {
             proposedByMemberId: string;
             proposedByName: string | null;
             rationale: string;
-            /** @description Accounts recused from it (an appeal’s: its unit’s people and the appellant), fixed when it opened. */
+            /** @description Accounts recused from it (an appeal’s: its unit’s people and the appellant; a representative matter’s: whom it names), fixed when it opened. */
             recused: number;
             status: components["schemas"]["BoardMotionStatus"];
             tally: components["schemas"]["BoardTallyView"];
@@ -16517,6 +16757,39 @@ export interface components {
         BoardPublicationViewList: {
             data: components["schemas"]["BoardPublicationView"][];
             nextCursor: string | null;
+        };
+        BoardRepresentativeMatterView: {
+            /**
+             * Format: uuid
+             * @description Whom it names: the owner to appoint, or the term’s holder.
+             */
+            accountId: string;
+            action: components["schemas"]["RepresentativeMatterAction"];
+            building: string;
+            /**
+             * Format: date-time
+             * @description Past it, a member may close a motion as its votes stand, with a quorum.
+             */
+            deadlineAt: string;
+            decision: components["schemas"]["RepresentativeMatterDecisionView"] | null;
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            motions: components["schemas"]["BoardMotionView"][];
+            /** Format: date-time */
+            raisedAt: string;
+            /** @description The caller raised it: only they withdraw it. */
+            raisedByMe: boolean;
+            /**
+             * Format: uuid
+             * @description The term to end.
+             */
+            representativeId: string | null;
+            status: components["schemas"]["RepresentativeMatterStatus"];
+            /** @description The term’s unit (an end), or the unit the owner has in the building now (an appointment; null when none). */
+            unitCode: string | null;
+            /** Format: date-time */
+            withdrawnAt: string | null;
         };
         /** @enum {string} */
         BoardRole: "chair" | "secretary" | "treasurer" | "member";
@@ -16901,6 +17174,15 @@ export interface components {
             startsOn: string;
             status: string;
             totals: components["schemas"]["BudgetVsActualTotalsView"];
+        };
+        BuildingRepresentativeView: {
+            building: string;
+            /** @description Their first name only. */
+            firstName: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            since: string;
         };
         BuildingsView: {
             /** @description The buildings the compound’s units name, in order. */
@@ -25390,6 +25672,11 @@ export interface components {
             /** @description What the residents read: the work and what it includes. */
             note?: string;
         };
+        ProposeRepresentativeMotionDto: {
+            outcome: components["schemas"]["ApprovalMotionOutcome"];
+            /** @description The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. */
+            rationale: string;
+        };
         PublicReceiptView: {
             amount: string;
             compoundName: string;
@@ -25504,6 +25791,22 @@ export interface components {
             /** @description As the visitor gives it: shown to the management deciding, kept 30 days, never in a notification. */
             visitorName?: string;
             worker?: components["schemas"]["ExceptionWorkerDto"];
+        };
+        RaiseRepresentativeMatterDto: {
+            /**
+             * Format: uuid
+             * @description To appoint: an owner of a unit in the building (REPRESENTATIVE_NOT_AN_OWNER), from `GET /board/representatives/candidates`.
+             */
+            accountId?: string;
+            /** @description `appoint` names `accountId` the representative of `building` (replacing the sitting one); `end` ends the term `representativeId`. */
+            action: components["schemas"]["RepresentativeMatterAction"];
+            /** @description To appoint: the building, as the compound names it on its units. */
+            building?: string;
+            /**
+             * Format: uuid
+             * @description To end: the sitting term.
+             */
+            representativeId?: string;
         };
         RaiseSosDto: {
             /** @description Raised from the post of your open shift, a gate or a zone (ADR 0053). */
@@ -25990,6 +26293,115 @@ export interface components {
             fullName?: string | null;
             /** Format: uuid */
             id: string;
+        };
+        /** @enum {string} */
+        RepresentativeEndReason: "ended" | "replaced" | "no_longer_owner" | "account_closed";
+        /**
+         * @description `appoint` names `accountId` the representative of `building` (replacing the sitting one); `end` ends the term `representativeId`.
+         * @enum {string}
+         */
+        RepresentativeMatterAction: "appoint" | "end";
+        RepresentativeMatterDecisionView: {
+            /** Format: date-time */
+            decidedAt: string;
+            /** @enum {string} */
+            decision: "approved" | "rejected";
+            /**
+             * @description An approval: applied at once, or not (`effectReason`); null when rejected.
+             * @enum {string|null}
+             */
+            effect: "applied" | "not_applied" | null;
+            effectReason: components["schemas"]["RepresentativeMatterEffectReason"] | null;
+            /** @description The carried motion’s reasons. */
+            rationale: string;
+        };
+        /** @enum {string} */
+        RepresentativeMatterEffectReason: "not_an_owner" | "already_sitting" | "already_ended";
+        /** @enum {string} */
+        RepresentativeMatterStatus: "pending" | "approved" | "rejected" | "withdrawn";
+        RepresentativeMatterView: {
+            /**
+             * Format: uuid
+             * @description Whom it names: the owner to appoint, or the term’s holder.
+             */
+            accountId: string;
+            action: components["schemas"]["RepresentativeMatterAction"];
+            building: string;
+            /**
+             * Format: date-time
+             * @description Past it, a member may close a motion as its votes stand, with a quorum.
+             */
+            deadlineAt: string;
+            decision: components["schemas"]["RepresentativeMatterDecisionView"] | null;
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            raisedAt: string;
+            /** @description The caller raised it: only they withdraw it. */
+            raisedByMe: boolean;
+            /**
+             * Format: uuid
+             * @description The term to end.
+             */
+            representativeId: string | null;
+            status: components["schemas"]["RepresentativeMatterStatus"];
+            /** @description The term’s unit (an end), or the unit the owner has in the building now (an appointment; null when none). */
+            unitCode: string | null;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        RepresentativeMatterViewList: {
+            data: components["schemas"]["RepresentativeMatterView"][];
+            nextCursor: string | null;
+        };
+        RepresentativeMessageDto: {
+            body: string;
+        };
+        RepresentativeMessageView: {
+            /** @description Null once its author’s erasure cleared it. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            side: "resident" | "representative";
+        };
+        RepresentativeMessageViewList: {
+            data: components["schemas"]["RepresentativeMessageView"][];
+            nextCursor: string | null;
+        };
+        RepresentativeThreadView: {
+            building: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastMessageAt: string;
+            /** Format: uuid */
+            representativeId: string;
+            /** @description The writer’s unit then. */
+            unitCode: string;
+            writerFirstName: string | null;
+        };
+        RepresentativeThreadViewList: {
+            data: components["schemas"]["RepresentativeThreadView"][];
+            nextCursor: string | null;
+        };
+        RepresentativeView: {
+            /** Format: uuid */
+            accountId: string;
+            /** Format: date-time */
+            appointedAt: string;
+            building: string;
+            endReason: components["schemas"]["RepresentativeEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The unit they own in the building, when named. */
+            unitCode: string;
         };
         RequestAboutDto: {
             /** Format: uuid */
@@ -32548,6 +32960,185 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardOverviewView"];
+                };
+            };
+        };
+    };
+    BoardRepresentativesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepresentativeView"][];
+                };
+            };
+        };
+    };
+    BoardRepresentativesController_buildings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
+    BoardRepresentativesController_candidates: {
+        parameters: {
+            query: {
+                building: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceOwnerView"][];
+                };
+            };
+        };
+    };
+    BoardRepresentativeMattersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["RepresentativeMatterStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepresentativeMatterViewList"];
+                };
+            };
+        };
+    };
+    BoardRepresentativeMattersController_raise: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaiseRepresentativeMatterDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardRepresentativeMatterView"];
+                };
+            };
+        };
+    };
+    BoardRepresentativeMattersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardRepresentativeMatterView"];
+                };
+            };
+        };
+    };
+    BoardRepresentativeMattersController_propose: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeRepresentativeMotionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardMotionView"];
+                };
+            };
+        };
+    };
+    BoardRepresentativeMattersController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardRepresentativeMatterView"];
                 };
             };
         };
@@ -40575,6 +41166,148 @@ export interface operations {
             };
         };
     };
+    RepresentationController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepresentativeThreadViewList"];
+                };
+            };
+        };
+    };
+    RepresentationController_messages: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepresentativeMessageViewList"];
+                };
+            };
+        };
+    };
+    RepresentationController_reply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepresentativeMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepresentativeMessageView"];
+                };
+            };
+        };
+    };
+    ResidentRepresentativesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildingRepresentativeView"][];
+                };
+            };
+        };
+    };
+    ResidentRepresentativesController_messages: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepresentativeMessageViewList"];
+                };
+            };
+        };
+    };
+    ResidentRepresentativesController_write: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepresentativeMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepresentativeMessageView"];
+                };
+            };
+        };
+    };
     ResidentItemsController_requests: {
         parameters: {
             query?: {
@@ -47031,6 +47764,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardPublicationViewList"];
+                };
+            };
+        };
+    };
+    StaffRepresentativesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepresentativeView"][];
                 };
             };
         };

@@ -7,7 +7,11 @@ import {
   boardMemberRow,
   boardTermRow,
   motionRow,
+  representativeMatterRow,
+  representativeRow,
+  representativeThreadRow,
 } from '../setup/governance-rows';
+import { newId } from '../../src/core/common/uuid';
 import type { HttpHarness } from '../setup/http-app';
 import { decisionAppealRow } from '../setup/management-rows';
 import type { Side } from './world';
@@ -29,6 +33,11 @@ export interface BoardMattersWorld {
   bBoardAppealId: string;
   /** A pending decision appeal of B's owner about B's home (ADR 0059). */
   bDecisionAppealId: string;
+  /** B's representative of a building, and a thread written to them (ADR 0059). */
+  bRepresentativeId: string;
+  bRepresentativeThreadId: string;
+  /** A pending matter of B's board to end that term. */
+  bRepresentativeMatterId: string;
 }
 
 export async function boardMattersWorld(
@@ -69,6 +78,23 @@ export async function boardMattersWorld(
         tenantId: b.tenantId,
         createdById: b.ids.manager,
       });
+      // A unit of its own in a building: the world's homes have none.
+      const repUnitId = newId();
+      await tx.unit.create({
+        data: {
+          id: repUnitId,
+          tenantId: b.tenantId,
+          code: `B-REP-${repUnitId.slice(-6)}`,
+          building: 'BW',
+        },
+      });
+      const bRepresentativeId = await representativeRow(tx, {
+        tenantId: b.tenantId,
+        building: 'BW',
+        unitId: repUnitId,
+        accountId: b.ids.owner,
+        appointedById: b.ids.owner,
+      });
       const lineId = await budgetLineRow(tx, {
         tenantId: b.tenantId,
         budgetId: bBudgetId,
@@ -84,6 +110,20 @@ export async function boardMattersWorld(
           tenantId: b.tenantId,
           unitId: b.homeUnitId,
           appellantId: b.ids.owner,
+        }),
+        bRepresentativeId,
+        bRepresentativeMatterId: await representativeMatterRow(tx, {
+          tenantId: b.tenantId,
+          building: 'BW',
+          accountId: b.ids.owner,
+          raisedById: b.ids.owner,
+          representativeId: bRepresentativeId,
+        }),
+        bRepresentativeThreadId: await representativeThreadRow(tx, {
+          tenantId: b.tenantId,
+          representativeId: bRepresentativeId,
+          writerId: b.ids.tenant,
+          unitId: repUnitId,
         }),
         bBudgetId,
         bExpenseId: await expenseRow(tx, {

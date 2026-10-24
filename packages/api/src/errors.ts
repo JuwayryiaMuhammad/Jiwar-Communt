@@ -349,7 +349,7 @@ const ERROR_TEXT: Record<string, string> = {
   BOARD_VOTE_NOT_DUE: 'The vote is not decided yet and the deadline has not passed.',
   BOARD_QUORUM_NOT_MET: 'Too few members have voted for a quorum.',
   BOARD_MATTER_DECIDED: 'This matter was decided or withdrawn already.',
-  BOARD_MEMBER_RECUSED: 'You live in or own this unit, or appealed: you take no part in this decision.',
+  BOARD_MEMBER_RECUSED: 'You live in or own this unit, appealed, or the matter names you: you take no part in this decision.',
   BOARD_QUORUM_UNAVAILABLE: 'Too few board members may act on this appeal for a quorum.',
   BOARD_APPEAL_NOT_FOUND: 'This appeal does not exist.',
   BOARD_APPEAL_SUBJECT_NOT_FOUND: 'This decision does not exist.',
@@ -410,6 +410,14 @@ const ERROR_TEXT: Record<string, string> = {
   APPEAL_DECIDER_CONFLICT: 'You took the decision appealed: another manager decides it.',
   DECISION_APPEAL_NO_FOLLOW_UP: 'No follow-up is due on this appeal.',
   MANAGEMENT_COMPLAINT_LIMIT: 'This owner has as many complaints open as they may.',
+  REPRESENTATIVE_NOT_FOUND: 'This representative does not exist.',
+  REPRESENTATIVE_BUILDING_NOT_FOUND: 'No unit of the compound is in this building.',
+  REPRESENTATIVE_NOT_AN_OWNER: 'A representative must own a unit in the building.',
+  REPRESENTATIVE_ENDED: 'This representative’s term has ended.',
+  REPRESENTATIVE_ALREADY_SITTING: 'This owner is the building’s representative already.',
+  REPRESENTATIVE_MATTER_NOT_FOUND: 'This matter does not exist.',
+  REPRESENTATIVE_MATTER_PENDING: 'A matter about this building’s representative is pending already.',
+  REPRESENTATIVE_MATTER_NOT_YOURS: 'Only the member who raised it withdraws it.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

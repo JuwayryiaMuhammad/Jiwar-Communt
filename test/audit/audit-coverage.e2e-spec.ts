@@ -28,6 +28,7 @@ import {
   COMMUNITY_COVERAGE,
   DECISION_APPEALS_COVERAGE,
   ENGAGEMENT_COVERAGE,
+  GOVERNANCE_VOICE_COVERAGE,
   FACILITIES_COVERAGE,
   FINANCE_COVERAGE,
   SAFETY_COVERAGE,
@@ -882,6 +883,7 @@ describe('Audit coverage', () => {
         ...OFFLINE_COVERAGE,
         ...PARTNERS_COVERAGE,
         ...DECISION_APPEALS_COVERAGE,
+        ...GOVERNANCE_VOICE_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

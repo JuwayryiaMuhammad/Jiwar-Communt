@@ -14,6 +14,9 @@ import {
   openContest,
   pollRow,
   publicationRows,
+  representativeMatterRow,
+  representativeRow,
+  representativeThreadRow,
 } from '../setup/governance-rows';
 
 /** What a seed needs from one compound. */
@@ -22,6 +25,8 @@ interface Side {
   unitId: string;
   accountId: string;
   termId: string;
+  representativeId: string;
+  threadId: string;
 }
 
 /**
@@ -289,6 +294,70 @@ const TABLES: Table[] = [
         number: number++,
       }),
   },
+  // ADR 0059: building representatives, the board's matters on them, and
+  // their threads.
+  {
+    table: 'governance_representatives',
+    insert: (tx, own, link) =>
+      representativeRow(tx, {
+        tenantId: own.tenantId,
+        building: `B-${number++}`,
+        unitId: link.unitId,
+        accountId: link.accountId,
+        appointedById: link.accountId,
+      }),
+  },
+  {
+    table: 'governance_representative_matters',
+    insert: (tx, own, link) =>
+      representativeMatterRow(tx, {
+        tenantId: own.tenantId,
+        building: `M-${number++}`,
+        accountId: link.accountId,
+        raisedById: link.accountId,
+      }),
+  },
+  {
+    table: 'representative_threads',
+    insert: async (tx, own, link) => {
+      // One thread per writer and representative: a representative of
+      // its own for the row in its compound; the other's for a link.
+      const representativeId =
+        own === link
+          ? await representativeRow(tx, {
+              tenantId: own.tenantId,
+              building: `T-${number++}`,
+              unitId: own.unitId,
+              accountId: own.accountId,
+              appointedById: own.accountId,
+            })
+          : link.representativeId;
+      return representativeThreadRow(tx, {
+        tenantId: own.tenantId,
+        representativeId,
+        writerId: link.accountId,
+        unitId: link.unitId,
+      });
+    },
+  },
+  {
+    table: 'representative_messages',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.representativeMessage.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          threadId: link.threadId,
+          side: 'resident',
+          authorId: link.accountId,
+          body: 'A row',
+          createdAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
   {
     // ADR 0059: a complaint about the management.
     table: 'management_complaints',
@@ -370,10 +439,29 @@ describe('RLS isolation — governance tables', () => {
       unitId: (await createUnit(h, tenantId)).id,
       accountId: (await createAccountRow(h, tenantId)).id,
       termId: '',
+      representativeId: '',
+      threadId: '',
     };
+    // A second account: a thread's writer besides the representative.
+    const writer = (await createAccountRow(h, tenantId)).id;
     s.termId = await inTenant(s, (tx) =>
       boardTermRow(tx, { tenantId, createdById: s.accountId }),
     );
+    await inTenant(s, async (tx) => {
+      s.representativeId = await representativeRow(tx, {
+        tenantId,
+        building: `SIDE-${label}`,
+        unitId: s.unitId,
+        accountId: s.accountId,
+        appointedById: s.accountId,
+      });
+      s.threadId = await representativeThreadRow(tx, {
+        tenantId,
+        representativeId: s.representativeId,
+        writerId: writer,
+        unitId: s.unitId,
+      });
+    });
     return s;
   };
 

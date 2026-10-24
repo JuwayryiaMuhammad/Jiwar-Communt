@@ -3017,7 +3017,7 @@
             "type": "string"
           },
           "recused": {
-            "description": "Accounts recused from it (an appeal’s: its unit’s people and the appellant), fixed when it opened.",
+            "description": "Accounts recused from it (an appeal’s: its unit’s people and the appellant; a representative matter’s: whom it names), fixed when it opened.",
             "type": "number"
           },
           "status": {
@@ -3349,6 +3349,101 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BoardRepresentativeMatterView": {
+        "properties": {
+          "accountId": {
+            "description": "Whom it names: the owner to appoint, or the term’s holder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeMatterAction"
+              }
+            ]
+          },
+          "building": {
+            "type": "string"
+          },
+          "deadlineAt": {
+            "description": "Past it, a member may close a motion as its votes stand, with a quorum.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeMatterDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "motions": {
+            "items": {
+              "$ref": "#/components/schemas/BoardMotionView"
+            },
+            "type": "array"
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "raisedByMe": {
+            "description": "The caller raised it: only they withdraw it.",
+            "type": "boolean"
+          },
+          "representativeId": {
+            "description": "The term to end.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeMatterStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "description": "The term’s unit (an end), or the unit the owner has in the building now (an appointment; null when none).",
+            "nullable": true,
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "building",
+          "accountId",
+          "fullName",
+          "unitCode",
+          "representativeId",
+          "status",
+          "raisedAt",
+          "raisedByMe",
+          "deadlineAt",
+          "decision",
+          "withdrawnAt",
+          "motions"
         ],
         "type": "object"
       },
@@ -4527,6 +4622,33 @@
           "currency",
           "rows",
           "totals"
+        ],
+        "type": "object"
+      },
+      "BuildingRepresentativeView": {
+        "properties": {
+          "building": {
+            "type": "string"
+          },
+          "firstName": {
+            "description": "Their first name only.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "since": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "building",
+          "firstName",
+          "since"
         ],
         "type": "object"
       },
@@ -31283,6 +31405,28 @@
         ],
         "type": "object"
       },
+      "ProposeRepresentativeMotionDto": {
+        "properties": {
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalMotionOutcome"
+              }
+            ]
+          },
+          "rationale": {
+            "description": "The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "rationale",
+          "outcome"
+        ],
+        "type": "object"
+      },
       "PublicReceiptView": {
         "properties": {
           "amount": {
@@ -31602,6 +31746,38 @@
         "required": [
           "kind",
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "RaiseRepresentativeMatterDto": {
+        "properties": {
+          "accountId": {
+            "description": "To appoint: an owner of a unit in the building (REPRESENTATIVE_NOT_AN_OWNER), from `GET /board/representatives/candidates`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeMatterAction"
+              }
+            ],
+            "description": "`appoint` names `accountId` the representative of `building` (replacing the sitting one); `end` ends the term `representativeId`."
+          },
+          "building": {
+            "description": "To appoint: the building, as the compound names it on its units.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "representativeId": {
+            "description": "To end: the sitting term.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
         ],
         "type": "object"
       },
@@ -33062,6 +33238,360 @@
         },
         "required": [
           "id"
+        ],
+        "type": "object"
+      },
+      "RepresentativeEndReason": {
+        "enum": [
+          "ended",
+          "replaced",
+          "no_longer_owner",
+          "account_closed"
+        ],
+        "type": "string"
+      },
+      "RepresentativeMatterAction": {
+        "description": "`appoint` names `accountId` the representative of `building` (replacing the sitting one); `end` ends the term `representativeId`.",
+        "enum": [
+          "appoint",
+          "end"
+        ],
+        "type": "string"
+      },
+      "RepresentativeMatterDecisionView": {
+        "properties": {
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "effect": {
+            "description": "An approval: applied at once, or not (`effectReason`); null when rejected.",
+            "enum": [
+              "applied",
+              "not_applied"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "effectReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeMatterEffectReason"
+              }
+            ],
+            "nullable": true
+          },
+          "rationale": {
+            "description": "The carried motion’s reasons.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "decidedAt",
+          "rationale",
+          "effect",
+          "effectReason"
+        ],
+        "type": "object"
+      },
+      "RepresentativeMatterEffectReason": {
+        "enum": [
+          "not_an_owner",
+          "already_sitting",
+          "already_ended"
+        ],
+        "type": "string"
+      },
+      "RepresentativeMatterStatus": {
+        "enum": [
+          "pending",
+          "approved",
+          "rejected",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "RepresentativeMatterView": {
+        "properties": {
+          "accountId": {
+            "description": "Whom it names: the owner to appoint, or the term’s holder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeMatterAction"
+              }
+            ]
+          },
+          "building": {
+            "type": "string"
+          },
+          "deadlineAt": {
+            "description": "Past it, a member may close a motion as its votes stand, with a quorum.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeMatterDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "raisedByMe": {
+            "description": "The caller raised it: only they withdraw it.",
+            "type": "boolean"
+          },
+          "representativeId": {
+            "description": "The term to end.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeMatterStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "description": "The term’s unit (an end), or the unit the owner has in the building now (an appointment; null when none).",
+            "nullable": true,
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "building",
+          "accountId",
+          "fullName",
+          "unitCode",
+          "representativeId",
+          "status",
+          "raisedAt",
+          "raisedByMe",
+          "deadlineAt",
+          "decision",
+          "withdrawnAt"
+        ],
+        "type": "object"
+      },
+      "RepresentativeMatterViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RepresentativeMatterView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RepresentativeMessageDto": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "RepresentativeMessageView": {
+        "properties": {
+          "body": {
+            "description": "Null once its author’s erasure cleared it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "side": {
+            "enum": [
+              "resident",
+              "representative"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "side",
+          "body",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RepresentativeMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RepresentativeMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RepresentativeThreadView": {
+        "properties": {
+          "building": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "representativeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The writer’s unit then.",
+            "type": "string"
+          },
+          "writerFirstName": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "representativeId",
+          "building",
+          "unitCode",
+          "writerFirstName",
+          "lastMessageAt"
+        ],
+        "type": "object"
+      },
+      "RepresentativeThreadViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RepresentativeThreadView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RepresentativeView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "appointedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "building": {
+            "type": "string"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RepresentativeEndReason"
+              }
+            ],
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The unit they own in the building, when named.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "building",
+          "accountId",
+          "fullName",
+          "unitCode",
+          "appointedAt",
+          "endedAt",
+          "endReason"
         ],
         "type": "object"
       },
@@ -53750,6 +54280,356 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/board/representatives": {
+      "get": {
+        "operationId": "BoardRepresentativesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RepresentativeView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The buildings’ representatives, sitting first",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/representatives/buildings": {
+      "get": {
+        "description": "As its units name them.",
+        "operationId": "BoardRepresentativesController_buildings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s buildings",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/representatives/candidates": {
+      "get": {
+        "description": "The active owners of a unit in it, by name, with their units there.",
+        "operationId": "BoardRepresentativesController_candidates",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "building",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GovernanceOwnerView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Who may represent a building",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/representatives/matters": {
+      "get": {
+        "operationId": "BoardRepresentativeMattersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RepresentativeMatterStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepresentativeMatterViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The board’s matters, newest first",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A sitting member (BOARD_SEAT_REQUIRED). `appoint` names an owner of a unit in the building (REPRESENTATIVE_NOT_AN_OWNER, REPRESENTATIVE_ALREADY_SITTING); `end` names a sitting term (REPRESENTATIVE_ENDED). One pending per building (REPRESENTATIVE_MATTER_PENDING). The board decides it by a carried motion; an approval applies it at once.",
+        "operationId": "BoardRepresentativeMattersController_raise",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaiseRepresentativeMatterDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardRepresentativeMatterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Raise a matter about a building’s representative",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/representatives/matters/{id}": {
+      "get": {
+        "operationId": "BoardRepresentativeMattersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardRepresentativeMatterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a matter with the board’s motions",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/representatives/matters/{id}/motions": {
+      "post": {
+        "description": "Approve or reject, with the reasons. One open motion per matter (BOARD_MOTION_OPEN); whom it names is recused (BOARD_MEMBER_RECUSED); the other members are told.",
+        "operationId": "BoardRepresentativeMattersController_propose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeRepresentativeMotionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardMotionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Propose a motion on a matter",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/representatives/matters/{id}/withdraw": {
+      "post": {
+        "description": "Its raiser, still sitting (REPRESENTATIVE_MATTER_NOT_YOURS, BOARD_MATTER_DECIDED); its open motion closes with it.",
+        "operationId": "BoardRepresentativeMattersController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardRepresentativeMatterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a pending matter",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/bookings/{id}": {
       "get": {
         "operationId": "BookingsController_get",
@@ -68823,6 +69703,301 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/representation/threads": {
+      "get": {
+        "description": "Latest first: each writer’s unit and first name.",
+        "operationId": "RepresentationController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepresentativeThreadViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The conversations written to the caller as a representative",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/representation/threads/{id}/messages": {
+      "get": {
+        "operationId": "RepresentationController_messages",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepresentativeMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A conversation’s messages, oldest first",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "While the term lasts (REPRESENTATIVE_ENDED).",
+        "operationId": "RepresentationController_reply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepresentativeMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepresentativeMessageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a resident",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/representatives": {
+      "get": {
+        "description": "Their first name and since when.",
+        "operationId": "ResidentRepresentativesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BuildingRepresentativeView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The representatives of the caller’s buildings",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/representatives/{id}/messages": {
+      "get": {
+        "description": "Oldest first; empty before the first message.",
+        "operationId": "ResidentRepresentativesController_messages",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepresentativeMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller’s conversation with a representative",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A resident of the building (REPRESENTATIVE_NOT_FOUND otherwise), while the term lasts (REPRESENTATIVE_ENDED). The representative sees the caller’s unit and first name.",
+        "operationId": "ResidentRepresentativesController_write",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepresentativeMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepresentativeMessageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write to the building’s representative",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/requests": {
       "get": {
         "operationId": "ResidentItemsController_requests",
@@ -81447,6 +82622,39 @@
           }
         ],
         "summary": "List the board’s decisions and minutes",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/representatives": {
+      "get": {
+        "description": "Who represents which building; never their threads.",
+        "operationId": "StaffRepresentativesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RepresentativeView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The buildings’ representatives",
         "tags": [
           "governance"
         ],

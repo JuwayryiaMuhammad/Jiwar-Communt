@@ -42,6 +42,13 @@ export class ProposeApprovalMotionDto extends MotionReasons {
   alternativesNote?: string;
 }
 
+/** A motion on a representative matter (ADR 0059): no alternatives. */
+export class ProposeRepresentativeMotionDto extends MotionReasons {
+  @ApiProperty({ enum: APPROVAL_OUTCOMES, enumName: 'ApprovalMotionOutcome' })
+  @IsIn(APPROVAL_OUTCOMES, withParams({ allowed: [...APPROVAL_OUTCOMES] }))
+  outcome: (typeof APPROVAL_OUTCOMES)[number];
+}
+
 export class BoardVoteDto {
   @ApiProperty({ enum: VOTE_CHOICES, enumName: 'BoardVoteChoice' })
   @IsIn(VOTE_CHOICES, withParams({ allowed: [...VOTE_CHOICES] }))

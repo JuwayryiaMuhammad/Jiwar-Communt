@@ -1538,6 +1538,11 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0059: a decision appeal of B's: not found for everyone of A.
       '/decision-appeals/{id}': w.bDecisionAppealId,
       '/staff/decision-appeals/{id}': w.bDecisionAppealId,
+      // B's representative and a thread written to them: not found for
+      // everyone of A.
+      '/me/representatives/{id}/messages': w.bRepresentativeId,
+      '/me/representation/threads/{id}/messages': w.bRepresentativeThreadId,
+      '/board/representatives/matters/{id}': w.bRepresentativeMatterId,
       // A route and a run of B's: not found for everyone of A.
       '/staff/security/patrols/routes/{id}': w.bRouteId,
       '/staff/security/patrols/runs/{id}': w.bRunId,

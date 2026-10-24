@@ -361,3 +361,118 @@ export async function appealRow(
   });
   return id;
 }
+
+/**
+ * A board matter about a building's representative (ADR 0059), written
+ * straight in: pending (one per building), or withdrawn by its raiser.
+ */
+export async function representativeMatterRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    building: string;
+    accountId: string;
+    raisedById: string;
+    representativeId?: string;
+    withdrawn?: boolean;
+  },
+): Promise<string> {
+  const id = newId();
+  const raisedAt = new Date();
+  await tx.governanceRepresentativeMatter.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      action: r.representativeId ? 'end' : 'appoint',
+      building: r.building,
+      accountId: r.accountId,
+      representativeId: r.representativeId ?? null,
+      raisedById: r.raisedById,
+      raisedAt,
+      // eslint-disable-next-line test-clock/day-multiple -- any instant for a raw row: the deadline as the server writes it, raisedAt + 14 × 24 h in ms
+      deadlineAt: new Date(raisedAt.getTime() + 14 * DAY),
+      ...(r.withdrawn
+        ? {
+            status: 'withdrawn',
+            withdrawnAt: raisedAt,
+            withdrawnById: r.raisedById,
+          }
+        : {}),
+    },
+  });
+  return id;
+}
+
+/**
+ * A sitting representative of `building` (ADR 0059), written straight in:
+ * the schema and isolation suites never ask who owns what. Its naming
+ * matter is a withdrawn row of its own: no motion is needed, and none
+ * stays pending.
+ */
+export async function representativeRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    building: string;
+    unitId: string;
+    accountId: string;
+    appointedById: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.governanceRepresentative.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      building: r.building,
+      unitId: r.unitId,
+      accountId: r.accountId,
+      appointedAt: new Date(),
+      appointedByMatterId: await representativeMatterRow(tx, {
+        tenantId: r.tenantId,
+        building: r.building,
+        accountId: r.accountId,
+        raisedById: r.appointedById,
+        withdrawn: true,
+      }),
+    },
+  });
+  return id;
+}
+
+/** A resident's thread with a representative, and its first message. */
+export async function representativeThreadRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    representativeId: string;
+    writerId: string;
+    unitId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  const at = new Date();
+  await tx.representativeThread.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      representativeId: r.representativeId,
+      writerId: r.writerId,
+      unitId: r.unitId,
+      createdAt: at,
+      lastMessageAt: at,
+    },
+  });
+  await tx.representativeMessage.create({
+    data: {
+      id: newId(),
+      tenantId: r.tenantId,
+      threadId: id,
+      side: 'resident',
+      authorId: r.writerId,
+      body: 'A row',
+      createdAt: at,
+    },
+  });
+  return id;
+}

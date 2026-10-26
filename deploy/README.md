@@ -21,6 +21,40 @@ none of them: its own containers, nothing listening outside 127.0.0.1.
    dashboards and the public web pages, waiting for their health checks. If one is not healthy,
    the previous release goes back up. Migrations are not undone.
 
+## CI
+
+`.github/workflows/ci.yml` (ADR 0026), four jobs on every pull request and push to `main`; `ci` passes only when the other three did, and is the check branch protection requires.
+
+- **`static`**: install, `pnpm migrations:check` (ADR 0061), migrate the dev database as `jiwar_migrator`, `access:sync`, prisma validate, lint, type-check, build, unit tests, the OpenAPI contract and the dashboards' client types current, the dashboards' type-check, tests and builds.
+- **`e2e`**: four shards by suite duration, each with its own Postgres, Redis, Mailpit and MinIO.
+- **`migrate-with-data`** (ADR 0061): the base commit's migrations (the merge base on a pull request, the replaced `main` on a push), its seed (two compounds with settings, a roster, devices, passes, instructions, an invoice and a payment), then the branch's migrations over it, as `jiwar_migrator` like staging. It fails on any error, a constraint left not validated, a migration unfinished or edited after it was applied, the database's FORCE RLS tables differing from the static check's, or fewer rows in a table.
+
+**A migration that writes to a tenant table** (a backfill) runs per compound, as in `20261108090000`:
+
+```sql
+DO $$
+DECLARE t record;
+BEGIN
+  FOR t IN SELECT "id" FROM "tenants" LOOP
+    PERFORM set_config('app.tenant_id', t."id"::text, true);
+    UPDATE "…" SET … WHERE "tenant_id" = t."id";
+  END LOOP;
+  PERFORM set_config('app.tenant_id', '', true);
+END $$;
+```
+
+**Exceptions**, always with a reason:
+
+- a statement in a new migration that is safe unscoped: `-- rls-dml-allow: <reason>` on the line above it;
+- an applied migration (never edited): `prisma/migrations-rls-allow.json` → `bareDml`, `"<migration>:<line>": "<reason>"`;
+- a new migration that removes rows on purpose (a dedupe, a purge): the same file → `rowsRemoved`, `"<migration>": { "tables": [...], "reason": "..." }`.
+
+**Locally**: `pnpm migrations:check`; and against an empty scratch database (`CREATE DATABASE <scratch> OWNER jiwar_migrator`, never the dev one), after `pnpm install`:
+
+```bash
+MIGRATOR_DATABASE_URL=postgresql://jiwar_migrator:…@127.0.0.1:5435/<scratch> SUPERUSER_DATABASE_URL=postgresql://postgres:…@127.0.0.1:5435/<scratch> test/migrate-with-data/run.sh origin/main
+```
+
 ## Dashboards
 
 `admin` and `manager` are services of the same stack (`deploy/compose.yml`),

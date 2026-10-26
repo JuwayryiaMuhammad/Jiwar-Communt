@@ -72,6 +72,11 @@ jobs:
       - name: Install (runs prisma generate)
         run: pnpm install --frozen-lockfile
 
+      # A migration's UPDATE/INSERT/DELETE on a FORCE RLS table runs as the
+      # migrator, who sees no compound unless it sets one (ADR 0061).
+      - name: Migrations scope FORCE RLS tables per compound
+        run: pnpm migrations:check
+
       # The deploy order from the README, against the dev database.
       - name: Migrate as the migrator
         run: pnpm db:migrate

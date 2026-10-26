@@ -1,0 +1,7 @@
+{
+  "bareDml": {
+    "20261021090100_visitor_pass_group_entries:15": "Historic: applied everywhere before any used one-time pass existed, so the unscoped UPDATE had no row to miss; never edited (checksum).",
+    "20261104091000_instruction_validity:25": "Historic: applied everywhere; its unscoped UPDATE set nothing, fixed forward by 20261113090000_guard_instruction_notified_backfill; never edited (checksum)."
+  },
+  "rowsRemoved": {}
+}

@@ -2,9 +2,11 @@
 # the same images as docker-compose.yml. Every value below is a test value
 # from .env.example; the workflow needs no secret.
 #
-# Three jobs at once: `static` (everything but e2e), `e2e` (four shards,
-# each with its own database, Redis, Mailpit and MinIO), and `ci`, which
-# passes only when all of them did: the one check for branch protection.
+# Four jobs at once: `static` (everything but e2e), `e2e` (four shards,
+# each with its own database, Redis, Mailpit and MinIO), `migrate-with-data`
+# (this branch's migrations over a seeded database, ADR 0061), and `ci`,
+# which passes only when all of them did: the one check for branch
+# protection.
 # The deploy workflow runs on this workflow's success, which also means
 # every job passed.
 name: CI
@@ -203,8 +205,84 @@ jobs:
       - name: E2E tests (shard ${{ matrix.shard }} of 4)
         run: pnpm test:e2e --shard=${{ matrix.shard }}/4
 
+  # The previous main's migrations, a seed, then this branch's migrations
+  # over it, as the non-superuser migrator staging uses (ADR 0061): the e2e
+  # suites migrate an empty database and cannot see a migration that only
+  # breaks on rows.
+  migrate-with-data:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_dev
+          POSTGRES_DB: postgres
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The base commit's migrations are read from history.
+          fetch-depth: 0
+
+      # The same roles as staging (deploy/compose.yml mounts this init.sql):
+      # jiwar_migrator owns the tables, NOSUPERUSER NOBYPASSRLS.
+      - name: Create database roles (docker/postgres/init.sql)
+        run: >-
+          docker exec -i
+          -e JIWAR_MIGRATOR_PASSWORD=jiwar_migrator_dev
+          -e JIWAR_APP_PASSWORD=jiwar_app_dev
+          ${{ job.services.postgres.id }}
+          psql -U postgres -v ON_ERROR_STOP=1 -f - < docker/postgres/init.sql
+
+      - name: Environment (test values only)
+        run: cp .env.example .env
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (runs prisma generate)
+        run: pnpm install --frozen-lockfile
+
+      # A pull request: where it left its base branch. A push to main: the
+      # main it replaced.
+      - name: Base commit
+        id: base
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -n "$BASE_REF" ]; then
+            base=$(git merge-base HEAD "origin/$BASE_REF")
+          else
+            base=$BEFORE
+          fi
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "no base commit ($base)" >&2
+            exit 1
+          fi
+          echo "sha=$base" >> "$GITHUB_OUTPUT"
+
+      - name: Migrate over data
+        env:
+          MIGRATOR_DATABASE_URL: postgresql://jiwar_migrator:jiwar_migrator_dev@127.0.0.1:5435/jiwar
+          SUPERUSER_DATABASE_URL: postgresql://postgres:postgres_dev@127.0.0.1:5435/jiwar
+        run: test/migrate-with-data/run.sh ${{ steps.base.outputs.sha }}
+
   ci:
-    needs: [static, e2e]
+    needs: [static, e2e, migrate-with-data]
     # Without always() a failure upstream would skip this job, and branch
     # protection counts a skipped check as passed.
     if: always()

@@ -57,20 +57,51 @@ describe('the roster’s rules (ADR 0050)', () => {
       ]);
     });
 
-    it('last their length in real time across a clock change', () => {
+    it('end when the clock reads their end: nine hours as it goes back, seven as it goes forward', () => {
       // Cairo leaves summer time on the last Thursday of October 2026 at
-      // midnight (UTC+3 → UTC+2): a night from 22:00 lasts eight hours.
-      const slots = occurrences(
-        nights,
-        { from: '2026-10-29', until: '2026-10-29' },
-        '2026-10-29',
-        '2026-10-29',
-        CAIRO,
-      );
-      expect(slots).toHaveLength(1);
-      expect(slots[0].endsAt.getTime() - slots[0].startsAt.getTime()).toBe(
-        8 * 3_600_000,
-      );
+      // midnight (UTC+3 → UTC+2), and enters it on the last Friday of April
+      // 2027 at midnight (UTC+2 → UTC+3). A 22:00–06:00 night ends at 06:00.
+      const night = (day: string) =>
+        occurrences(nights, { from: day, until: day }, day, day, CAIRO);
+      expect(night('2026-10-29')).toEqual([
+        {
+          startsAt: at('2026-10-29T19:00:00Z'),
+          endsAt: at('2026-10-30T04:00:00Z'),
+        },
+      ]);
+      expect(night('2027-04-29')).toEqual([
+        {
+          startsAt: at('2027-04-29T20:00:00Z'),
+          endsAt: at('2027-04-30T03:00:00Z'),
+        },
+      ]);
+    });
+
+    it('a repeated end is its first reading; a window the clock skips makes nothing; a day at most', () => {
+      const one = (days: number[], from: string, to: string, day: string) =>
+        occurrences(
+          { days, windows: [{ from, to }] },
+          { from: day, until: day },
+          day,
+          day,
+          CAIRO,
+        );
+      // 23:30 reads twice on 2026-10-29: the first, still UTC+3.
+      expect(one([4], '22:00', '23:30', '2026-10-29')).toEqual([
+        {
+          startsAt: at('2026-10-29T19:00:00Z'),
+          endsAt: at('2026-10-29T20:30:00Z'),
+        },
+      ]);
+      // 00:00–01:00 never reads on 2027-04-30.
+      expect(one([5], '00:15', '00:45', '2027-04-30')).toEqual([]);
+      // 06:00–05:30 would be 24 h 30 that night: it stops at 24 h (CHECK).
+      expect(one([4], '06:00', '05:30', '2026-10-29')).toEqual([
+        {
+          startsAt: at('2026-10-29T03:00:00Z'),
+          endsAt: at('2026-10-30T03:00:00Z'),
+        },
+      ]);
     });
   });
 

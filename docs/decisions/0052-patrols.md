@@ -77,7 +77,7 @@ A route is walked from a post and has names. What it asks is a **version**:
 
 **Changing any of it makes a new version.** A route's names change in place. One version is current (a unique index); a version never changes and is superseded once. A run keeps the version it was made with.
 
-**A scheduled run's window** runs from its start for its expected minutes, 30 at least. So being late (15 minutes) comes before being missed, but for a run made in its window's last 15 minutes: missed, never late. Two start times closer than that window, on a day, over midnight or from Saturday into Sunday, are refused (`schedule.times`, `PATROL_SCHEDULE_OVERLAP`, params.minutes). The starts come from the roster's occurrences in the compound's time zone: a start the clock skips moves forward.
+**A scheduled run's window** runs from its start for its expected minutes, 30 at least. So being late (15 minutes) comes before being missed, but for a run made in its window's last 15 minutes: missed, never late. Two start times closer than that window, on a day, over midnight or from Saturday into Sunday, are refused (`schedule.times`, `PATROL_SCHEDULE_OVERLAP`, params.minutes). The starts come from the roster's occurrences in the compound's time zone: a start the clock skips moves forward. The window is a length, not a clock reading as a roster slot's end is (ADR 0050): a clock change neither stretches nor shrinks it, so late still comes before missed.
 
 Retired once: its scheduled runs nobody started are cancelled (`route_retired`); a run under way finishes.
 

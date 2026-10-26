@@ -148,6 +148,27 @@ describe('patrol rules (ADR 0052)', () => {
       expect(first.startsAt.toISOString()).toBe('2026-11-01T06:00:00.000Z');
       expect(first.endsAt.toISOString()).toBe('2026-11-01T06:30:00.000Z');
     });
+
+    it('a window keeps its length across a clock change; a skipped start moves forward', () => {
+      // Cairo: 2026-10-29 24:00 → 23:00 (back), 2027-04-30 00:00 → 01:00.
+      const window = (time: string, day: string) =>
+        runOccurrences(
+          { days: EVERY_DAY, times: [time] },
+          10,
+          day,
+          day,
+          'Africa/Cairo',
+        ).map((r) => [r.startsAt.toISOString(), r.endsAt.toISOString()]);
+      expect(window('23:45', '2026-10-29')).toEqual([
+        ['2026-10-29T20:45:00.000Z', '2026-10-29T21:15:00.000Z'],
+      ]);
+      expect(window('23:45', '2027-04-29')).toEqual([
+        ['2027-04-29T21:45:00.000Z', '2027-04-29T22:15:00.000Z'],
+      ]);
+      expect(window('00:15', '2027-04-30')).toEqual([
+        ['2027-04-29T22:00:00.000Z', '2027-04-29T22:30:00.000Z'],
+      ]);
+    });
   });
 
   describe('a run', () => {

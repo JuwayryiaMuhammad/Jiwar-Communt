@@ -69,6 +69,7 @@ Kept by `guard_roster.manage`:
 
 How templates become slots:
 - A template is made into slots 28 days ahead as it is created, and kept so by an hourly sweep.
+- **A slot ends when the compound's clock reads its window's end**, not its length later: a 22:00–06:00 night lasts nine hours when the clock goes back (Cairo, 29 → 30 October 2026) and seven when it goes forward. A start or an end the clock skips moves to the first minute that exists, a time read twice is its first reading, and a window the gap swallows makes no slot; a slot lasts a day at most. Slots made before by length were repaired by `20261114090000_guard_roster_slot_wall_clock_ends` (those not yet started, except where another of the guard's slots covers the hour).
 - Every slot not yet ended is made. A template made during one of its windows (06:00–14:00, made at 10:00 on its first day) makes that window's slot, already under way: it keeps its own times and is **due from when it was made**. When the guard already has a slot then (a template ended and made again mid-shift), that window keeps it: the new template is not refused for it, and makes its slots from the next window on.
 - Each slot is made once: a unique index covers cancelled ones too, so the sweep never brings back what the management cancelled.
 - Ending a template cancels its slots to come that nobody opened and no swap gave away (`template_ended`).

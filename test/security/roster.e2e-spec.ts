@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { Client } from 'pg';
 import { addDays } from '../../src/core/common/slots/day-slots';
+import { newId } from '../../src/core/common/uuid';
 import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
 import {
   ROSTER_ATTENDANCE_SWEEP,
@@ -12,7 +16,22 @@ import {
   type TemplateBody,
   type Who,
 } from '../setup/security';
-import { at, clock, middayZone, today } from '../setup/compound-clock';
+import {
+  at,
+  clock,
+  day,
+  dbDate,
+  middayZone,
+  today,
+  ZONE,
+} from '../setup/compound-clock';
+import { required } from '../setup/test-env';
+
+const HOUR = 3_600_000;
+const WALL_CLOCK_MIGRATION = join(
+  __dirname,
+  '../../prisma/migrations/20261114090000_guard_roster_slot_wall_clock_ends/migration.sql',
+);
 
 const code = (res: { status: number; body: unknown }) => ({
   status: res.status,
@@ -517,6 +536,135 @@ describe('The roster', () => {
       { field: 'startsAt', code: 'INVALID_FORMAT' },
     ]);
     expect(await slotsOf(supervisor, { guardId: guard.id })).toEqual([]);
+  });
+
+  it('the wall-clock migration: a slot to come gets its template’s end; a past, single or overlapping one keeps its own', async () => {
+    // A compound on Cairo's clock, and its next and last nights the clock
+    // goes back (24:00 → 23:00): the day whose noon is 25 hours before the
+    // next one's.
+    const m = await x.setUp('Roster Clock Court');
+    await x.v.x.asManager(m.c, () =>
+      h.moduleRef.get(TenantSettingsService).update({ timezone: ZONE }),
+    );
+    const post = (await x.g.gate(m.c)).id;
+    const goesBack = (step: 1 | -1) => {
+      for (let n = step; Math.abs(n) <= 400; n += step) {
+        const d = day(n);
+        if (at(addDays(d, 1), 12).getTime() - at(d, 12).getTime() === 25 * HOUR)
+          return d;
+      }
+      throw new Error('no clock change within 400 days');
+    };
+    const next = goesBack(1);
+    const last = goesBack(-1);
+    const night = (d: string) => at(d, 22);
+    // The old rule: a 22:00–06:00 window lasted eight hours, whatever the clock.
+    const eight = (start: Date) => new Date(start.getTime() + 8 * HOUR);
+    const template = (guardId: string) =>
+      x.inTx(m.c, (tx) =>
+        tx.guardRosterTemplate.create({
+          data: {
+            id: newId(),
+            tenantId: m.c.tenantId,
+            guardAccountId: guardId,
+            gateId: post,
+            schedule: everyDay('22:00', '06:00'),
+            effectiveFrom: dbDate(last),
+            createdById: m.c.managerId,
+          },
+        }),
+      );
+    const slot = (
+      guardId: string,
+      startsAt: Date,
+      endsAt: Date,
+      templateId: string | null,
+    ) =>
+      x.inTx(m.c, (tx) =>
+        tx.guardRosterSlot.create({
+          data: {
+            id: newId(),
+            tenantId: m.c.tenantId,
+            guardAccountId: guardId,
+            gateId: post,
+            startsAt,
+            endsAt,
+            templateId,
+            createdById: templateId ? null : m.c.managerId,
+          },
+        }),
+      );
+
+    const a = await x.guard(m.c);
+    const ta = await template(a.id);
+    const tonight = await slot(a.id, night(next), eight(night(next)), ta.id);
+    const weekAfter = await slot(
+      a.id,
+      night(addDays(next, 7)),
+      at(addDays(next, 8), 6),
+      ta.id,
+    );
+    const lastYear = await slot(a.id, night(last), eight(night(last)), ta.id);
+    // B's missing hour is covered by a single slot: their night keeps 05:00.
+    const b = await x.guard(m.c);
+    const tb = await template(b.id);
+    const covered = await slot(b.id, night(next), eight(night(next)), tb.id);
+    const cover = await slot(
+      b.id,
+      at(addDays(next, 1), 5),
+      at(addDays(next, 1), 7),
+      null,
+    );
+    const c = await x.guard(m.c);
+    const single = await slot(c.id, night(next), eight(night(next)), null);
+
+    const migrator = new Client({
+      connectionString: required('TEST_MIGRATOR_DATABASE_URL'),
+    });
+    await migrator.connect();
+    try {
+      await migrator.query(readFileSync(WALL_CLOCK_MIGRATION, 'utf8'));
+      const left = await migrator.query<{ enabled: string; helpers: number }>(
+        `SELECT (SELECT tgenabled FROM pg_trigger
+                  WHERE tgname = 'guard_roster_slots_move_forward') AS enabled,
+                (SELECT count(*)::int FROM pg_proc
+                  WHERE proname LIKE 'roster_repair_%') AS helpers`,
+      );
+      // The trigger is back on, and the helpers are gone.
+      expect(left.rows).toEqual([{ enabled: 'O', helpers: 0 }]);
+    } finally {
+      await migrator.end();
+    }
+
+    const ends = new Map(
+      (
+        await x.inTx(m.c, (tx) =>
+          tx.guardRosterSlot.findMany({
+            where: {
+              id: {
+                in: [tonight, weekAfter, lastYear, covered, cover, single].map(
+                  (r) => r.id,
+                ),
+              },
+            },
+          }),
+        )
+      ).map((r) => [r.id, r.endsAt.getTime()]),
+    );
+    // Tonight ends at 06:00 on the compound's clock: nine hours.
+    expect(ends.get(tonight.id)).toBe(at(addDays(next, 1), 6).getTime());
+    expect(ends.get(tonight.id)! - tonight.startsAt.getTime()).toBe(9 * HOUR);
+    for (const kept of [weekAfter, lastYear, covered, cover, single])
+      expect(ends.get(kept.id)).toBe(kept.endsAt.getTime());
+    // And the trigger holds again: a slot keeps its times.
+    await expect(
+      x.inTx(m.c, (tx) =>
+        tx.guardRosterSlot.update({
+          where: { id: tonight.id },
+          data: { endsAt: eight(night(next)) },
+        }),
+      ),
+    ).rejects.toThrow(/keeps its post and times/);
   });
 
   it('a create replays under its Idempotency-Key', async () => {

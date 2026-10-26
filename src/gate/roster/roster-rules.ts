@@ -19,6 +19,7 @@ import {
 } from '../../core/common/slots/weekly-schedule';
 
 const MINUTE = 60_000;
+const DAY_MINUTES = 24 * 60;
 
 /** Opened more than this after the slot's start, a shift is late. */
 export const LATE_AFTER_MINUTES = 10;
@@ -41,9 +42,12 @@ export interface Interval {
 /**
  * The slots a weekly schedule makes on the compound's days `from` … `to`
  * (inclusive), within the template's own days. A window belongs to the day
- * it starts on, and lasts its length in real time across midnight and a
- * clock change. A start the clock skips (a DST gap) moves to the first
- * minute that exists.
+ * it starts on, and ends when the compound's clock reads its end
+ * (`windowEnd`): a 22:00–06:00 night lasts nine hours when the clock goes
+ * back, seven when it goes forward. A start the clock skips (a DST gap)
+ * moves to the first minute that exists; a window the gap swallows whole
+ * makes no slot. `ends: 'length'` keeps each its length in real time
+ * instead (a patrol's window, ADR 0052).
  */
 export function occurrences(
   schedule: WeeklySchedule,
@@ -51,6 +55,7 @@ export function occurrences(
   from: LocalDate,
   to: LocalDate,
   timeZone: string,
+  ends: 'clock' | 'length' = 'clock',
 ): Interval[] {
   const first = from > effective.from ? from : effective.from;
   const last =
@@ -61,13 +66,39 @@ export function occurrences(
     for (const w of schedule.windows) {
       const startsAt = firstInstant(day, minutesOf(w.from), timeZone);
       if (!startsAt) continue;
-      out.push({
-        startsAt,
-        endsAt: new Date(startsAt.getTime() + windowLength(w) * MINUTE),
-      });
+      const endsAt =
+        ends === 'clock'
+          ? windowEnd(day, w, startsAt, timeZone)
+          : new Date(startsAt.getTime() + windowLength(w) * MINUTE);
+      if (endsAt > startsAt) out.push({ startsAt, endsAt });
     }
   }
   return out.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+}
+
+/**
+ * When a window that started on `day` ends: the first instant the
+ * compound's clock reads its `to` (the next day for a night), so a clock
+ * change in between lengthens or shortens it. An end the clock skips moves
+ * to the first minute that exists, as a start does; a repeated one is its
+ * first reading. A slot lasts a day at most (the CHECK): a window of nearly
+ * a day stops there on the night the clock goes back.
+ */
+export function windowEnd(
+  day: LocalDate,
+  w: { from: string; to: string },
+  startsAt: Date,
+  timeZone: string,
+): Date {
+  const minute = minutesOf(w.from) + windowLength(w);
+  const end =
+    firstInstant(
+      minute >= DAY_MINUTES ? addDays(day, 1) : day,
+      minute % DAY_MINUTES,
+      timeZone,
+    ) ?? new Date(startsAt.getTime() + windowLength(w) * MINUTE);
+  const longest = startsAt.getTime() + MAX_SLOT_MINUTES * MINUTE;
+  return end.getTime() > longest ? new Date(longest) : end;
 }
 
 function firstInstant(
@@ -75,7 +106,7 @@ function firstInstant(
   minute: number,
   timeZone: string,
 ): Date | null {
-  for (let m = minute; m < minute + 120 && m < 24 * 60; m++) {
+  for (let m = minute; m < minute + 120 && m < DAY_MINUTES; m++) {
     const at = zonedInstant(day, m, timeZone);
     if (at) return at;
   }

@@ -127,7 +127,8 @@ export function scheduleOverlaps(
 /**
  * The scheduled runs a version makes on the compound's days `from` … `to`
  * (inclusive): each start, and the end of the window it may be started in
- * (DST handled as the roster's slots are).
+ * (a start the clock skips moves forward, as a roster slot's does; the
+ * window keeps its length in real time across a clock change).
  */
 export function runOccurrences(
   s: PatrolSchedule,
@@ -142,6 +143,9 @@ export function runOccurrences(
     from,
     to,
     timeZone,
+    // A window is a length, never a clock reading: a clock change neither
+    // stretches nor shrinks it, so late always comes before missed.
+    'length',
   );
 }
 

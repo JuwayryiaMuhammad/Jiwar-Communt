@@ -521,6 +521,7 @@ model Tenant {
   accountIdentityChanges       AccountIdentityChange[]
   householdInviteDocuments     HouseholdInviteDocument[]
   unitDocuments                UnitDocument[]
+  compoundDocumentVersions     CompoundDocumentVersion[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
   preventiveServices           PreventiveService[]
@@ -947,6 +948,7 @@ model Account {
   identityChanges                AccountIdentityChange[]             @relation("IdentityChangeAccount")
   identityChangesDecided         AccountIdentityChange[]             @relation("IdentityChangeDecider")
   unitDocumentsUploaded          UnitDocument[]                      @relation("UnitDocumentUploader")
+  compoundDocumentsPublished     CompoundDocumentVersion[]           @relation("CompoundDocumentPublisher")
   registrationsApproved          ResidentRegistration[]              @relation("RegistrationAccount")
   deletionRequests               AccountDeletionRequest[]            @relation("DeletionAccount")
   deletionsCompleted             AccountDeletionRequest[]            @relation("DeletionCompletedBy")
@@ -1696,6 +1698,37 @@ model UnitDocument {
 
   @@unique([tenantId, id])
   @@map("unit_documents")
+}
+
+/// A version of one of the compound's documents (ADR 0062): the bylaws,
+/// the occupants' rights, the code of conduct, the moving guide. Numbered
+/// per kind, never changed; an amendment is a new version. The bylaws cite
+/// the board's published decision.
+model CompoundDocumentVersion {
+  id                 String   @id @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  /// bylaws | occupant_rights | conduct_guide | moving_guide (CHECK).
+  kind               String
+  versionNo          Int      @map("version_no")
+  titleEn            String   @map("title_en")
+  titleAr            String   @map("title_ar")
+  bodyEn             String   @map("body_en")
+  bodyAr             String   @map("body_ar")
+  changesEn          String?  @map("changes_en")
+  changesAr          String?  @map("changes_ar")
+  effectiveOn        DateTime @map("effective_on") @db.Date
+  fileId             String?  @map("file_id") @db.Uuid
+  boardPublicationId String?  @map("board_publication_id") @db.Uuid
+  publishedBy        String   @map("published_by") @db.Uuid
+  publishedAt        DateTime @map("published_at") @db.Timestamptz(3)
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  file             StoredFile?       @relation("CompoundDocumentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  boardPublication BoardPublication? @relation(fields: [tenantId, boardPublicationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  publisher        Account           @relation("CompoundDocumentPublisher", fields: [tenantId, publishedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, kind, versionNo], map: "compound_document_versions_number_key")
+  @@map("compound_document_versions")
 }
 
 /// A self-registration request (ADR 0024). Personal data only while
@@ -2892,6 +2925,8 @@ enum FilePurpose {
   kinship_proof
   /// A document in a unit's vault (ADR 0062).
   unit_document
+  /// A compound document version's PDF (ADR 0062).
+  compound_document
 
   @@map("file_purpose")
 }
@@ -2937,6 +2972,7 @@ model StoredFile {
   registrationDocuments         RegistrationDocument[]         @relation("RegistrationDocumentFile")
   inviteDocuments               HouseholdInviteDocument[]      @relation("InviteDocumentFile")
   unitDocuments                 UnitDocument[]                 @relation("UnitDocumentFile")
+  compoundDocumentVersions      CompoundDocumentVersion[]      @relation("CompoundDocumentFile")
   owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   /// A recording's length, read from its container at finalize (ADR 0056).
   mediaDurationMs Int?        @map("media_duration_ms")
@@ -7695,6 +7731,7 @@ model BoardPublication {
   /// The approval request a decision published by itself decided (ADR 0059).
   approvalRequestId String? @map("approval_request_id") @db.Uuid
 
+  compoundDocumentVersions CompoundDocumentVersion[]
   @@unique([tenantId, id])
   @@unique([tenantId, announcementId], map: "board_publications_announcement_key")
   @@index([tenantId, createdAt, id], map: "board_publications_created_idx")

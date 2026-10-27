@@ -153,6 +153,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'يوجد طلب حذف حساب في قائمة الانتظار.',
     },
   },
+  'compound_document.published': {
+    en: {
+      title: 'The compound’s rules changed',
+      body: 'A new version of the bylaws or of your rights was published. Open the app to read it.',
+    },
+    ar: {
+      title: 'تحديث في لوائح الكمبوند',
+      body: 'نُشر إصدار جديد من اللائحة أو من حقوقك. افتح التطبيق لقراءته.',
+    },
+  },
   'unit_document.warranty_expiring': {
     en: {
       title: 'A warranty ends soon',

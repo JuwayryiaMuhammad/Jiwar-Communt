@@ -193,6 +193,45 @@ describe('Audit coverage — R11a', () => {
     });
   });
 
+  describe('the compound’s documents', () => {
+    it('a version published: kind, number, file and how many were told; never its text', async () => {
+      const manager = await h.tokenFor({
+        sub: c.managerId,
+        tid: c.tenantId,
+        typ: 'manager',
+      });
+      const bodyEn = 'Audited conduct guide text';
+      const res = await post('/staff/compound-documents/versions', manager, {
+        kind: 'conduct_guide',
+        titleEn: 'Conduct',
+        titleAr: 'السلوك',
+        bodyEn,
+        bodyAr: 'نص',
+        effectiveOn: '2026-01-01',
+      }).expect(201);
+      const version = await x.asManager(c, () =>
+        x.prisma.tenant.compoundDocumentVersion.findFirstOrThrow({
+          where: {
+            kind: 'conduct_guide',
+            versionNo: (res.body as { versionNo: number }).versionNo,
+          },
+        }),
+      );
+      expect(
+        await single('compound_document.published', version.id, [bodyEn]),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'compound_document',
+        metadata: {
+          kind: 'conduct_guide',
+          versionNo: 1,
+          hasFile: false,
+          told: 0,
+        },
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every R11a entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

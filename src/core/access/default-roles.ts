@@ -34,6 +34,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'residents.read',
       'residents.manage',
       'unit_documents.manage',
+      'content.manage',
       'residents.assist',
       'roles.read',
       'roles.manage',

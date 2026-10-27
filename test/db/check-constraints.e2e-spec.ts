@@ -2000,6 +2000,15 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
+  // Compound documents (ADR 0062).
+  compound_document_versions_kind: {},
+  compound_document_versions_number: {},
+  compound_document_versions_texts: {},
+  compound_document_versions_changes: {
+    guarded:
+      'changes_en and changes_ar are tested IS NULL first; their lengths run only on a value',
+  },
+  compound_document_versions_board: {},
   // A unit's vault (ADR 0062).
   unit_documents_kind: {},
   unit_documents_title: {},

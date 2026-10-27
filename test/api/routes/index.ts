@@ -146,7 +146,11 @@ import { PLATFORM_ROUTES } from './platform';
 import { PREFERENCES_ROUTES } from './preferences';
 import { PUSH_TOKENS_ROUTES } from './push-tokens';
 import { PUBLIC_ROUTES } from './public';
-import { REGISTRATION_ROUTES, UNIT_DOCUMENT_ROUTES } from './registration';
+import {
+  COMPOUND_DOCUMENT_ROUTES,
+  REGISTRATION_ROUTES,
+  UNIT_DOCUMENT_ROUTES,
+} from './registration';
 import { RESIDENTS_ROUTES } from './residents';
 import { SECURITY_ROUTES } from './security';
 import { UNIT_STATES_ROUTES } from './unit-states';
@@ -189,6 +193,7 @@ export const ROUTES: Row[] = [
   ...RESIDENTS_ROUTES,
   ...REGISTRATION_ROUTES,
   ...UNIT_DOCUMENT_ROUTES,
+  ...COMPOUND_DOCUMENT_ROUTES,
   ...ERASURE_ROUTES,
   ...ADMIN_ROUTES,
   ...HOUSEHOLD_ROUTES,

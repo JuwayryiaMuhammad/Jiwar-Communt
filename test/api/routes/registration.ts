@@ -48,16 +48,17 @@ export const REGISTRATION_ROUTES: Row[] = [
     foreign: 'none',
     invalid: {
       query: { cursor: '', status: 'approved' },
+      // The status is declared on the subclass: its error comes first.
       fields: [
-        {
-          field: 'cursor',
-          code: 'INVALID_LENGTH',
-          params: { min: 1, max: 512 },
-        },
         {
           field: 'status',
           code: 'INVALID_VALUE',
           params: { allowed: ['pending', 'needs_correction'] },
+        },
+        {
+          field: 'cursor',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 512 },
         },
       ],
     },
@@ -209,7 +210,7 @@ export const UNIT_DOCUMENT_ROUTES: Row[] = [
     const as = side ? 'manager' : 'owner';
     const denied = side ? 'owner' : 'guard';
     const unitNotFound = {
-      params: (w: World) => ({ unitId: w.b.homeUnitId }),
+      params: (w: World) => ({ unitId: w.b.homeUnitId, id: w.bRegistrationId }),
       code: 'UNIT_NOT_FOUND',
     };
     return [
@@ -276,4 +277,94 @@ export const UNIT_DOCUMENT_ROUTES: Row[] = [
       },
     ];
   }),
+];
+
+// The compound's documents (ADR 0062).
+export const COMPOUND_DOCUMENT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/compound-documents',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/compound-documents/versions',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { kind: 'rules' },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: [
+              'bylaws',
+              'occupant_rights',
+              'conduct_guide',
+              'moving_guide',
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/compound-documents/versions/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRegistrationId }),
+      code: 'COMPOUND_DOCUMENT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/compound-documents',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/compound-documents/versions',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: {
+        kind: 'conduct_guide',
+        titleEn: '',
+        titleAr: 'لائحة',
+        bodyEn: 'Body',
+        bodyAr: 'نص',
+        effectiveOn: 'soon',
+      },
+      fields: [
+        {
+          field: 'titleEn',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 200 },
+        },
+        {
+          field: 'effectiveOn',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
+        },
+      ],
+    },
+  },
 ];

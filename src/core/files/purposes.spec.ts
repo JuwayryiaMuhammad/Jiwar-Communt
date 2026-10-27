@@ -11,7 +11,11 @@ const sizeCheck = readFileSync(
 );
 /** The type CHECK as ADR 0062 recreated it (registration, kinship and unit documents). */
 const typeCheck = readFileSync(
-  join(__dirname, migrations, '20261118090700_unit_documents/migration.sql'),
+  join(
+    __dirname,
+    migrations,
+    '20261118090900_compound_documents/migration.sql',
+  ),
   'utf8',
 );
 
@@ -132,6 +136,9 @@ describe('file purposes', () => {
         FILE_PURPOSES.document.types,
       );
     }
+    // A compound document's version (ADR 0062): a PDF only, 10 MB.
+    expect(sizeCheck).not.toContain(`WHEN 'compound_document'`);
+    expect(FILE_PURPOSES.compound_document.types).toEqual(['application/pdf']);
     // files_content_type_for_purpose: images for every purpose, a PDF only
     // as a document, a request's attachment, a community attachment, a
     // complaint's evidence or a vehicle's licence.
@@ -219,7 +226,7 @@ describe('file purposes', () => {
     // A signature (ADR 0056): a PNG only.
     expect(FILE_PURPOSES.incident_signature.types).toEqual(['image/png']);
     expect(typeCheck).toContain(
-      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature'))`,
+      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature', 'compound_document'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'image/png' AND "purpose" = 'incident_signature')`,
@@ -231,7 +238,7 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,

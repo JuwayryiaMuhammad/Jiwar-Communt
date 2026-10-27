@@ -69,6 +69,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // attaches once.
   unit_documents_tenant_id_id_key: null,
   unit_documents_file_id_key: null,
+  // Compound documents (ADR 0062): numbered under an advisory lock per kind;
+  // a file the service attaches once.
+  compound_document_versions_number_key: null,
+  compound_document_versions_file_id_key: null,
   // Client-generated (UUIDv7): a violation is an id collision.
   registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,

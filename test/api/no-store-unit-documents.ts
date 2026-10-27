@@ -32,6 +32,24 @@ export function unitDocumentCalls(
     return (res.body as { id: string }).id;
   };
   return {
+    'GET /compound-documents/versions/{id}': async () => {
+      const w = world();
+      const res = await call(w, 'POST', '/staff/compound-documents/versions', {
+        token: w.a.tokens.manager,
+        body: {
+          kind: 'moving_guide',
+          titleEn: 'Moving guide',
+          titleAr: 'دليل الانتقال',
+          bodyEn: 'Book the lift.',
+          bodyAr: 'احجز المصعد.',
+          effectiveOn: '2026-01-01',
+        },
+      });
+      const { id } = res.body as { id: string };
+      return call(w, 'GET', `/compound-documents/versions/${id}`, {
+        token: w.a.tokens.owner,
+      });
+    },
     'GET /units/{unitId}/documents/{id}': async () =>
       call(
         world(),

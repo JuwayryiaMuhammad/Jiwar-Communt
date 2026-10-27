@@ -1492,6 +1492,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/compound-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s documents, latest versions */
+        get: operations["CompoundDocumentsController_current"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/compound-documents/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A compound document’s versions */
+        get: operations["CompoundDocumentsController_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/compound-documents/versions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One version of a compound document */
+        get: operations["CompoundDocumentsController_version"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/decision-appeals": {
         parameters: {
             query?: never;
@@ -9643,6 +9694,40 @@ export interface paths {
         get: operations["ClubMembershipsController_people"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compound-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s documents, latest versions (staff) */
+        get: operations["StaffCompoundDocumentsController_current"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compound-documents/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish a new version of a compound document */
+        post: operations["StaffCompoundDocumentsController_publish"];
         delete?: never;
         options?: never;
         head?: never;
@@ -18833,6 +18918,50 @@ export interface components {
             data: components["schemas"]["ComplianceCaseResponse"][];
             nextCursor: string | null;
         };
+        CompoundDocumentSummaryView: {
+            /** Format: date */
+            effectiveOn: string;
+            /** @description Whether it has a signed PDF. */
+            hasFile: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
+            /** Format: date-time */
+            publishedAt: string;
+            titleAr: string;
+            titleEn: string;
+            versionNo: number;
+        };
+        CompoundDocumentView: {
+            /**
+             * Format: uuid
+             * @description The bylaws: the board decision that adopted it.
+             */
+            boardPublicationId: string | null;
+            /** @description Markdown. */
+            bodyAr: string;
+            /** @description Markdown. */
+            bodyEn: string;
+            changesAr: string | null;
+            /** @description What it changes; null on the first version. */
+            changesEn: string | null;
+            /** Format: date */
+            effectiveOn: string;
+            /** @description A presigned GET of the signed PDF. */
+            fileUrl: string | null;
+            /** @description Whether it has a signed PDF. */
+            hasFile: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
+            /** Format: date-time */
+            publishedAt: string;
+            titleAr: string;
+            titleEn: string;
+            versionNo: number;
+        };
         ConfirmDto: {
             /** @description For the maintenance team. Never in the audit trail. */
             comment?: string;
@@ -21476,7 +21605,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -24537,6 +24666,31 @@ export interface components {
          * @enum {string}
          */
         NeighbourThread: "complainant" | "target" | "internal";
+        NewCompoundDocumentVersionDto: {
+            /**
+             * Format: uuid
+             * @description The bylaws only, and required there: the board’s published decision that adopted this version.
+             */
+            boardPublicationId?: string;
+            /** @description Markdown. */
+            bodyAr: string;
+            /** @description Markdown. */
+            bodyEn: string;
+            changesAr?: string;
+            /** @description What this version changes: required from the second version on, refused on the first. */
+            changesEn?: string;
+            /** Format: date */
+            effectiveOn: string;
+            /**
+             * Format: uuid
+             * @description A finalized `compound_document` PDF of the caller’s: the signed copy.
+             */
+            fileId?: string;
+            /** @enum {string} */
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
+            titleAr: string;
+            titleEn: string;
+        };
         NewEmailDto: {
             email: string;
         };
@@ -35176,6 +35330,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    CompoundDocumentsController_current: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundDocumentSummaryView"][];
+                };
+            };
+        };
+    };
+    CompoundDocumentsController_versions: {
+        parameters: {
+            query: {
+                kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundDocumentSummaryView"][];
+                };
+            };
+        };
+    };
+    CompoundDocumentsController_version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundDocumentView"];
+                };
             };
         };
     };
@@ -47296,6 +47511,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClubPersonViewList"];
+                };
+            };
+        };
+    };
+    StaffCompoundDocumentsController_current: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundDocumentSummaryView"][];
+                };
+            };
+        };
+    };
+    StaffCompoundDocumentsController_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewCompoundDocumentVersionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundDocumentView"];
                 };
             };
         };

@@ -8136,6 +8136,138 @@
         ],
         "type": "object"
       },
+      "CompoundDocumentSummaryView": {
+        "properties": {
+          "effectiveOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "hasFile": {
+            "description": "Whether it has a signed PDF.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "bylaws",
+              "occupant_rights",
+              "conduct_guide",
+              "moving_guide"
+            ],
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "titleAr": {
+            "type": "string"
+          },
+          "titleEn": {
+            "type": "string"
+          },
+          "versionNo": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "versionNo",
+          "titleEn",
+          "titleAr",
+          "effectiveOn",
+          "publishedAt",
+          "hasFile"
+        ],
+        "type": "object"
+      },
+      "CompoundDocumentView": {
+        "properties": {
+          "boardPublicationId": {
+            "description": "The bylaws: the board decision that adopted it.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyAr": {
+            "description": "Markdown.",
+            "type": "string"
+          },
+          "bodyEn": {
+            "description": "Markdown.",
+            "type": "string"
+          },
+          "changesAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "changesEn": {
+            "description": "What it changes; null on the first version.",
+            "nullable": true,
+            "type": "string"
+          },
+          "effectiveOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "fileUrl": {
+            "description": "A presigned GET of the signed PDF.",
+            "nullable": true,
+            "type": "string"
+          },
+          "hasFile": {
+            "description": "Whether it has a signed PDF.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "bylaws",
+              "occupant_rights",
+              "conduct_guide",
+              "moving_guide"
+            ],
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "titleAr": {
+            "type": "string"
+          },
+          "titleEn": {
+            "type": "string"
+          },
+          "versionNo": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "versionNo",
+          "titleEn",
+          "titleAr",
+          "effectiveOn",
+          "publishedAt",
+          "hasFile",
+          "bodyEn",
+          "bodyAr",
+          "changesEn",
+          "changesAr",
+          "boardPublicationId",
+          "fileUrl"
+        ],
+        "type": "object"
+      },
       "ConfirmDto": {
         "properties": {
           "comment": {
@@ -16054,7 +16186,8 @@
           "decision_appeal_attachment",
           "registration_document",
           "kinship_proof",
-          "unit_document"
+          "unit_document",
+          "compound_document"
         ],
         "type": "string"
       },
@@ -26059,6 +26192,71 @@
           "internal"
         ],
         "type": "string"
+      },
+      "NewCompoundDocumentVersionDto": {
+        "properties": {
+          "boardPublicationId": {
+            "description": "The bylaws only, and required there: the board’s published decision that adopted this version.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "bodyAr": {
+            "description": "Markdown.",
+            "maxLength": 50000,
+            "type": "string"
+          },
+          "bodyEn": {
+            "description": "Markdown.",
+            "maxLength": 50000,
+            "type": "string"
+          },
+          "changesAr": {
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "changesEn": {
+            "description": "What this version changes: required from the second version on, refused on the first.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "effectiveOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "A finalized `compound_document` PDF of the caller’s: the signed copy.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "bylaws",
+              "occupant_rights",
+              "conduct_guide",
+              "moving_guide"
+            ],
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "effectiveOn"
+        ],
+        "type": "object"
       },
       "NewEmailDto": {
         "properties": {
@@ -57926,6 +58124,121 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/compound-documents": {
+      "get": {
+        "operationId": "CompoundDocumentsController_current",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompoundDocumentSummaryView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s documents, latest versions",
+        "tags": [
+          "governance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/compound-documents/versions": {
+      "get": {
+        "operationId": "CompoundDocumentsController_versions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "bylaws",
+                "occupant_rights",
+                "conduct_guide",
+                "moving_guide"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompoundDocumentSummaryView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A compound document’s versions",
+        "tags": [
+          "governance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/compound-documents/versions/{id}": {
+      "get": {
+        "operationId": "CompoundDocumentsController_version",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompoundDocumentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One version of a compound document",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/decision-appeals": {
       "get": {
         "description": "Their own, and those of the units they are the primary of (without the grounds); newest first.",
@@ -80705,6 +81018,75 @@
           "club"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compound-documents": {
+      "get": {
+        "operationId": "StaffCompoundDocumentsController_current",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompoundDocumentSummaryView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s documents, latest versions (staff)",
+        "tags": [
+          "governance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compound-documents/versions": {
+      "post": {
+        "operationId": "StaffCompoundDocumentsController_publish",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewCompoundDocumentVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompoundDocumentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish a new version of a compound document",
+        "tags": [
+          "governance"
+        ],
         "x-stability": "draft"
       }
     },

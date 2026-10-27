@@ -101,6 +101,7 @@ const ERROR_TEXT: Record<string, string> = {
   UNIT_DOCUMENT_NOT_FOUND: 'Document not found.',
   UNIT_DOCUMENT_LIMIT: 'The unit holds as many documents as it may; delete one first.',
   UNIT_DOCUMENT_NOT_ALLOWED: 'You may not do this with this document.',
+  COMPOUND_DOCUMENT_NOT_FOUND: 'Document not found.',
   NO_ROLE_FOR_ACCOUNT_TYPE: 'No role exists for this account type.',
   ROLE_NOT_FOUND: 'Role not found.',
   UNKNOWN_PERMISSION: 'Unknown permission.',

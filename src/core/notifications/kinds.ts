@@ -181,6 +181,14 @@ export const NOTIFICATION_KINDS = {
     target: 'account_deletion_request',
     params: { blockers: {} },
   },
+  /** A new version of the bylaws or the occupants' rights (ADR 0062). */
+  'compound_document.published': {
+    priority: 'normal',
+    category: 'community',
+    critical: false,
+    target: 'compound_document',
+    params: { subject: {}, versionNo: {} },
+  },
   /** A warranty in the unit's vault ends within 30 days (ADR 0062). */
   'unit_document.warranty_expiring': {
     priority: 'normal',

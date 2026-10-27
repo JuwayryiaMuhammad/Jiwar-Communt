@@ -21,6 +21,29 @@ export interface GovernanceOwner {
 export class CommunityGovernancePort {
   constructor(private readonly capabilities: CapabilitiesService) {}
 
+  /**
+   * Every account with a place in the compound now (ADR 0062: a new
+   * version of the bylaws or the occupants' rights is told to all): the
+   * active occupancies, landlords included, and the households' active
+   * members with an account. Ids only, sorted.
+   */
+  async everyone(tx: TenantTxClient): Promise<string[]> {
+    const occupants = await tx.unitOccupancy.findMany({
+      where: { status: 'active' },
+      select: { accountId: true },
+    });
+    const members = await tx.householdMember.findMany({
+      where: { status: 'active', accountId: { not: null } },
+      select: { accountId: true },
+    });
+    return [
+      ...new Set([
+        ...occupants.map((o) => o.accountId),
+        ...members.map((m) => m.accountId!),
+      ]),
+    ].sort();
+  }
+
   /** The units whose vote the account may cast now: the units it owns. */
   voteUnits(tx: TenantTxClient, accountId: string): Promise<string[]> {
     return this.capabilities.unitsWhere(tx, accountId, 'governanceVote');

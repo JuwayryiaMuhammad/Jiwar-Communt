@@ -1,3 +1,8 @@
+import {
+  CompoundDocumentsController,
+  StaffCompoundDocumentsController,
+} from './documents/compound-documents.controller';
+import { CompoundDocumentsService } from './documents/compound-documents.service';
 import { ResidentAppealItems } from './appeals/resident-appeal-items';
 import { Module } from '@nestjs/common';
 import { CommunityGovernancePortModule } from '../community';
@@ -85,6 +90,8 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     FilesModule,
   ],
   controllers: [
+    CompoundDocumentsController,
+    StaffCompoundDocumentsController,
     GovernanceBoardController,
     StaffBoardController,
     GovernancePollsController,
@@ -113,6 +120,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     BoardOverviewController,
   ],
   providers: [
+    CompoundDocumentsService,
     ResidentAppealItems,
     GovernanceAccess,
     GovernanceNotices,

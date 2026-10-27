@@ -168,6 +168,7 @@ describe('audit catalog', () => {
         'governance_agenda_proposal',
         'governance_objection',
         'unit_document',
+        'compound_document',
       ]).toContain(def.target);
     }
   });

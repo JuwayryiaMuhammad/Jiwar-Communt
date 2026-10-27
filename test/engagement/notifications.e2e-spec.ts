@@ -39,11 +39,13 @@ describe('Community life — notifications', () => {
       }),
     );
 
-  it('three kinds, in the category `community`, none critical, no param that could carry text', () => {
+  it('four kinds, in the category `community`, none critical, no param that could carry text', () => {
     expect(community.map(([kind]) => kind).sort()).toEqual([
       'community_announcement.important',
       'community_event.cancelled',
       'community_suggestion.status_changed',
+      // ADR 0062: `subject` is the document's kind, a code.
+      'compound_document.published',
     ]);
     for (const [, spec] of community)
       expect({ critical: spec.critical, priority: spec.priority }).toEqual({
@@ -53,6 +55,7 @@ describe('Community life — notifications', () => {
     expect(
       community.map(([kind, spec]) => [kind, Object.keys(spec.params).sort()]),
     ).toEqual([
+      ['compound_document.published', ['subject', 'versionNo']],
       ['community_announcement.important', []],
       ['community_event.cancelled', []],
       ['community_suggestion.status_changed', ['status', 'topicKey']],

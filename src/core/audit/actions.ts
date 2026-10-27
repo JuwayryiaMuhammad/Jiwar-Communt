@@ -39,6 +39,11 @@ export const AUDIT_ACTIONS = {
   // (added), reasonCode (deleted); never the title.
   'unit_document.added': { log: 'tenant', target: 'unit_document' },
   'unit_document.deleted': { log: 'tenant', target: 'unit_document' },
+  // metadata: kind, versionNo, hasFile, boardPublicationId (bylaws), told.
+  'compound_document.published': {
+    log: 'tenant',
+    target: 'compound_document',
+  },
   'account.identity_change_requested': { log: 'tenant', target: 'account' },
   'account.identity_change_cancelled': { log: 'tenant', target: 'account' },
   'account.identity_change_approved': { log: 'tenant', target: 'account' },

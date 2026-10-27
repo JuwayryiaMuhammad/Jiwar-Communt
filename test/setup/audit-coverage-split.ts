@@ -704,4 +704,5 @@ export const R11A_COVERAGE: readonly string[] = [
   'account.name_changed',
   'unit_document.added',
   'unit_document.deleted',
+  'compound_document.published',
 ];

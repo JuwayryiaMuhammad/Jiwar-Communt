@@ -42,6 +42,8 @@ export const PERMISSIONS = {
   'residents.manage': { kinds: ['manager'] },
   // A unit's own documents in its vault (ADR 0062): add, read, delete.
   'unit_documents.manage': { kinds: ['manager'] },
+  // The compound's documents: the bylaws, the rights, the guides (ADR 0062).
+  'content.manage': { kinds: ['manager'] },
   // Acting for an account that does not use the app (ADR 0036): its
   // delivery preferences, consents, an export or a deletion request, each
   // with a reason code, marked assisted, the account told.

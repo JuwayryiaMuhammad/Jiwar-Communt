@@ -313,6 +313,12 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['units.read', 'unit_documents.manage'],
   },
+  // A compound document version's signed PDF (ADR 0062): the management's.
+  compound_document: {
+    types: ['application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['content.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

@@ -8465,7 +8465,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -14791,6 +14791,80 @@
           }
         },
         {
+          "name": "The compound’s documents, latest versions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "compound-documents"
+              ],
+              "raw": "{{baseUrl}}/api/v1/compound-documents"
+            }
+          }
+        },
+        {
+          "name": "A compound document’s versions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "compound-documents",
+                "versions"
+              ],
+              "query": [
+                {
+                  "description": "(required)",
+                  "key": "kind",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/compound-documents/versions?kind="
+            }
+          }
+        },
+        {
+          "name": "One version of a compound document",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "compound-documents",
+                "versions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/compound-documents/versions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "The caller’s agenda proposals, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -16147,6 +16221,62 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "The compound’s documents, latest versions (staff)",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compound-documents"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compound-documents"
+            }
+          }
+        },
+        {
+          "name": "Publish a new version of a compound document",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"bylaws\",\n  \"titleEn\": \"\",\n  \"titleAr\": \"\",\n  \"bodyEn\": \"\",\n  \"bodyAr\": \"\",\n  \"effectiveOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `boardPublicationId` | string (uuid) |  | The bylaws only, and required there: the board’s published decision that adopted this version. |\n| `bodyAr` | string | yes | Markdown. |\n| `bodyEn` | string | yes | Markdown. |\n| `changesAr` | string |  |  |\n| `changesEn` | string |  | What this version changes: required from the second version on, refused on the first. |\n| `effectiveOn` | string (date) | yes |  |\n| `fileId` | string (uuid) |  | A finalized `compound_document` PDF of the caller’s: the signed copy. |\n| `kind` | `bylaws` \\| `occupant_rights` \\| `conduct_guide` \\| `moving_guide` | yes |  |\n| `titleAr` | string | yes |  |\n| `titleEn` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compound-documents",
+                "versions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compound-documents/versions"
             }
           }
         },

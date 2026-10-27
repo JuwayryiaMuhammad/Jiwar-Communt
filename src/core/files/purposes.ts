@@ -7,12 +7,15 @@ export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 /** Recordings (ADR 0056): the MP4 family only, its duration read at finalize. */
 export const AUDIO_TYPES = ['audio/mp4'] as const;
 export const VIDEO_TYPES = ['video/mp4', 'video/quicktime'] as const;
+/** A sheet the management imports (ADR 0064): read whole, then parsed. */
+export const CSV_TYPES = ['text/csv'] as const;
 export const FILE_TYPES = [
   ...IMAGE_TYPES,
   'application/pdf',
   'application/zip',
   ...AUDIO_TYPES,
   ...VIDEO_TYPES,
+  ...CSV_TYPES,
 ] as const;
 export type FileContentType = (typeof FILE_TYPES)[number];
 
@@ -324,6 +327,28 @@ export const FILE_PURPOSES = {
     types: [...IMAGE_TYPES, 'application/pdf'],
     maxBytes: 10 * MB,
     uploaders: ['contracts.manage'],
+  },
+  // An asset's, an asset type's or a common area's document (ADR 0064): a
+  // floor plan, a manual, a warranty card; a photo or a PDF, uploaded by
+  // who keeps the register, read by the technicians in the field.
+  asset_document: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['assets.manage'],
+  },
+  // A checklist answer's photo (ADR 0064): what a technician saw doing a
+  // planned job or an inspection. Staff only.
+  checklist_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['tickets.work', 'inspections.perform'],
+  },
+  // A sheet to import (ADR 0064): the asset register now. UTF-8 CSV, 1 MB,
+  // read whole by the import and never served back.
+  data_import: {
+    types: CSV_TYPES,
+    maxBytes: 1 * MB,
+    uploaders: ['assets.manage'],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

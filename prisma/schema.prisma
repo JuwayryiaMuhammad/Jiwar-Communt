@@ -3124,6 +3124,12 @@ enum FilePurpose {
   compound_document
   /// A unit contract's scan (ADR 0062).
   contract
+  /// An asset's, asset type's or common area's document (ADR 0064): image or PDF, 10 MB.
+  asset_document
+  /// A checklist answer's photo (ADR 0064), the technician's.
+  checklist_photo
+  /// A sheet the management imports (ADR 0064): text/csv, 1 MB.
+  data_import
 
   @@map("file_purpose")
 }

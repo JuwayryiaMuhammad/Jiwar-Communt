@@ -22094,7 +22094,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -25326,7 +25326,7 @@ export interface components {
              * @description Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED).
              * @enum {string}
              */
-            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "application/zip" | "audio/mp4" | "video/mp4" | "video/quicktime";
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "application/zip" | "audio/mp4" | "video/mp4" | "video/quicktime" | "text/csv";
             purpose: components["schemas"]["FilePurpose"];
             /** @description Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). */
             size: number;

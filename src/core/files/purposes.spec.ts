@@ -4,16 +4,12 @@ import { FILE_PURPOSES, FILE_TYPES, mediaOf } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** The size CHECK as ADR 0059 recreated it, with every purpose. */
+/** Both CHECKs as they stand now (ADR 0064 recreated both, with every purpose). */
 const sizeCheck = readFileSync(
-  join(__dirname, migrations, '20261115090100_decision_appeals/migration.sql'),
+  join(__dirname, migrations, '20261201090100_m1_file_purposes/migration.sql'),
   'utf8',
 );
-/** The type CHECK as ADR 0062 recreated it (registration, kinship and unit documents). */
-const typeCheck = readFileSync(
-  join(__dirname, migrations, '20261118091100_contracts/migration.sql'),
-  'utf8',
-);
+const typeCheck = sizeCheck;
 
 describe('file purposes', () => {
   it('match the CHECKs in the database', () => {
@@ -223,7 +219,7 @@ describe('file purposes', () => {
     // A signature (ADR 0056): a PNG only.
     expect(FILE_PURPOSES.incident_signature.types).toEqual(['image/png']);
     expect(typeCheck).toContain(
-      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature', 'compound_document'))`,
+      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature', 'compound_document', 'data_import'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'image/png' AND "purpose" = 'incident_signature')`,
@@ -235,14 +231,36 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,
     );
+    // Assets (ADR 0064): a document is an image or a PDF like any other, a
+    // checklist photo an image; a sheet is CSV and nothing else.
+    expect(FILE_PURPOSES.asset_document.types).toEqual(
+      FILE_PURPOSES.document.types,
+    );
+    expect(sizeCheck).not.toContain(`WHEN 'asset_document'`);
+    expect(FILE_PURPOSES.asset_document.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
+    expect(FILE_PURPOSES.checklist_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'checklist_photo' THEN ${FILE_PURPOSES.checklist_photo.maxBytes}`,
+    );
+    expect(FILE_PURPOSES.data_import.types).toEqual(['text/csv']);
+    expect(sizeCheck).toContain(
+      `WHEN 'data_import' THEN ${FILE_PURPOSES.data_import.maxBytes}`,
+    );
+    expect(typeCheck).toContain(
+      `("content_type" = 'text/csv' AND "purpose" = 'data_import')`,
+    );
   });
 
-  it('only the eight types', () => {
+  it('only the nine types', () => {
     expect([...FILE_TYPES]).toEqual([
       'image/jpeg',
       'image/png',
@@ -252,6 +270,7 @@ describe('file purposes', () => {
       'audio/mp4',
       'video/mp4',
       'video/quicktime',
+      'text/csv',
     ]);
   });
 
@@ -321,6 +340,16 @@ describe('matchesSignature', () => {
     expect(matchesSignature('audio/mp4', ftyp('isom').subarray(0, 10))).toBe(
       false,
     );
+  });
+
+  it('a CSV: text bytes only, no NUL or control byte (ADR 0064)', () => {
+    expect(
+      matchesSignature('text/csv', Buffer.from('\uFEFFcode,name\r\n')),
+    ).toBe(true);
+    expect(matchesSignature('text/csv', Buffer.from('رمز,اسم\t\n'))).toBe(true);
+    for (const binary of [png, jpeg, zip, Buffer.from([0x61, 0x00, 0x62])])
+      expect(matchesSignature('text/csv', binary)).toBe(false);
+    expect(matchesSignature('text/csv', Buffer.alloc(0))).toBe(false);
   });
 
   it('refuses short or empty files and a RIFF that is not WebP', () => {

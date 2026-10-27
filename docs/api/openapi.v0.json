@@ -16572,7 +16572,10 @@
           "kinship_proof",
           "unit_document",
           "compound_document",
-          "contract"
+          "contract",
+          "asset_document",
+          "checklist_photo",
+          "data_import"
         ],
         "type": "string"
       },
@@ -27028,7 +27031,8 @@
               "application/zip",
               "audio/mp4",
               "video/mp4",
-              "video/quicktime"
+              "video/quicktime",
+              "text/csv"
             ],
             "type": "string"
           },

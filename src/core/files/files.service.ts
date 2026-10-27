@@ -466,6 +466,15 @@ export class FilesService implements OnModuleInit {
   }
 
   /**
+   * The bytes of a small file a record holds, for the server to read what
+   * it was given (ADR 0064: an imported sheet, 1 MB at most). Null when
+   * the object is gone.
+   */
+  contents(file: StoredFile): Promise<Buffer | null> {
+    return this.storage.range(objectKey(file), 0, file.sizeBytes);
+  }
+
+  /**
    * Marks a file deleted in the caller's transaction (audited); the object
    * and then the row go after commit through `purge`, or with the sweep.
    * Returns false when there was nothing left to delete.

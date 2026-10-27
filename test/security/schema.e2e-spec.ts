@@ -597,7 +597,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
     });
   });
 
-  it('the file CHECKs recreated last accept every purpose, G3’s, G4’s, G5’s, G6b’s, R9’s, R7b’s, G7’s, R11b-2’s and R11a-1’s included: each type it takes at its limit, nothing over it, no other type', async () => {
+  it('the file CHECKs recreated last accept every purpose, G3’s, G4’s, G5’s, G6b’s, R9’s, R7b’s, G7’s, R11b-2’s, R11a-1’s and M1-1’s included: each type it takes at its limit, nothing over it, no other type', async () => {
     const file = (purpose: string, type: string, size: number) =>
       asApp(
         `INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes, status, upload_expires_at)
@@ -643,6 +643,11 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'unit_document',
       'compound_document',
       'contract',
+      // M1-1 (ADR 0064) recreated both after R11a-1; an imported sheet is
+      // the first CSV.
+      'asset_document',
+      'checklist_photo',
+      'data_import',
     ])
       expect(purposes).toContain(purpose);
     for (const purpose of purposes) {

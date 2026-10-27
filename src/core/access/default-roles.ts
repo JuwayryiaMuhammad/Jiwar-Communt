@@ -52,6 +52,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate.read',
       'tickets.dispatch',
       'maintenance.manage',
+      'assets.read',
+      'assets.manage',
+      'inspections.manage',
       'parcels.manage',
       'requests.handle',
       'requests.manage',
@@ -184,19 +187,26 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     ],
   },
   {
-    // Maintenance technicians (ADR 0032): the tickets assigned to them.
+    // Maintenance technicians (ADR 0032): the tickets assigned to them;
+    // the asset register in the field and their inspections (ADR 0064).
     key: 'technician',
     kind: 'staff',
     kindDefault: false,
-    permissions: ['tickets.work'],
+    permissions: ['tickets.work', 'assets.read', 'inspections.perform'],
   },
   {
     // Maintenance dispatch (ADR 0032): the queue and assignment. The
-    // manager dispatches too, so a compound without one still works.
+    // manager dispatches too, so a compound without one still works. The
+    // asset register, the plans and the inspection rounds (ADR 0064).
     key: 'maintenance_supervisor',
     kind: 'staff',
     kindDefault: false,
-    permissions: ['tickets.dispatch'],
+    permissions: [
+      'tickets.dispatch',
+      'assets.read',
+      'assets.manage',
+      'inspections.manage',
+    ],
   },
   {
     // The accountant (ADR 0044, 0045, 0046, 0048, 0055): the club's

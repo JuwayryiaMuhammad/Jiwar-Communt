@@ -43,15 +43,17 @@ describe('CSV export (ADR 0048)', () => {
           ['-2', '1.00'],
           ['@SUM(A1)', '2.00'],
           ['\tTAB', '3.00'],
+          ['\rCR', '4.00'],
         ],
       ),
     );
-    expect(out.split('\r\n').slice(1, 6)).toEqual([
+    expect(out.split('\r\n').slice(1, 7)).toEqual([
       `"'=HYPERLINK(""x"")",-250.00`,
       `'+1,0.00`,
       `'-2,1.00`,
       `'@SUM(A1),2.00`,
       `'\tTAB,3.00`,
+      `"'\rCR",4.00`,
     ]);
   });
 

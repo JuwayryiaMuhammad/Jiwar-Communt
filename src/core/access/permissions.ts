@@ -93,6 +93,15 @@ export const PERMISSIONS = {
   'tickets.work': { kinds: ['staff'] },
   'tickets.dispatch': { kinds: ['staff', 'manager'] },
   'maintenance.manage': { kinds: ['manager'] },
+  // Assets and inspections (ADR 0064). Technicians read the asset register
+  // in the field (scan a tag, see its card, record readings) and perform
+  // the inspections given to them; a supervisor or the manager keeps the
+  // register, the common areas, the checklists, the maintenance plans and
+  // the inspection rounds.
+  'assets.read': { kinds: ['staff', 'manager'] },
+  'assets.manage': { kinds: ['staff', 'manager'] },
+  'inspections.perform': { kinds: ['staff'] },
+  'inspections.manage': { kinds: ['staff', 'manager'] },
   // Parcels (ADR 0035). Guards receive and hand over inside a shift; the
   // manager reads every parcel (no names) and sets the holding periods.
   // Residents act through the capability `parcels`, with no permission.

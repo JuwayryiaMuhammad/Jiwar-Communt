@@ -29,7 +29,14 @@ const SIGNATURES: Record<FileContentType, (b: Buffer) => boolean> = {
   'audio/mp4': (b) => ftyp(b, false),
   'video/mp4': (b) => ftyp(b, false),
   'video/quicktime': (b) => ftyp(b, true),
+  // Text has no magic number (ADR 0064): its first bytes hold no control
+  // byte but tab, LF and CR, and no NUL, so a binary renamed to .csv goes.
+  // The import reads the whole file as strict UTF-8 later.
+  'text/csv': (b) => b.length > 0 && b.every(isTextByte),
 };
+
+const isTextByte = (x: number) =>
+  x === 0x09 || x === 0x0a || x === 0x0d || (x >= 0x20 && x !== 0x7f);
 
 /**
  * Whether the first bytes of an object are the type it was declared as

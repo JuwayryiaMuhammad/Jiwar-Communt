@@ -4,13 +4,17 @@ import { RequirePermissions } from '../access/require-permissions.decorator';
 import { ApiArea } from '../common/http/decorators';
 import { UpdateSettingsDto } from './dto/settings.dto';
 import {
+  FAMILY_KINSHIP_PROOF,
   TenantSettingsService,
+  type FamilyKinshipProof,
   type TenantSettingsView,
 } from './tenant-settings.service';
 
 export class SettingsView {
   @ApiProperty({ type: Boolean })
   familyJoinRequiresApproval: boolean;
+  @ApiProperty({ enum: FAMILY_KINSHIP_PROOF })
+  familyKinshipProof: FamilyKinshipProof;
   @ApiProperty({ type: Number })
   maxHouseholdMembers: number;
   @ApiProperty({
@@ -61,6 +65,7 @@ export class SettingsView {
   static from(s: TenantSettingsView): SettingsView {
     return {
       familyJoinRequiresApproval: s.familyJoinRequiresApproval,
+      familyKinshipProof: s.familyKinshipProof,
       maxHouseholdMembers: s.maxHouseholdMembers,
       timezone: s.timezone,
       maxActiveVisitorPasses: s.maxActiveVisitorPasses,

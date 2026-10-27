@@ -9,13 +9,9 @@ const sizeCheck = readFileSync(
   join(__dirname, migrations, '20261115090100_decision_appeals/migration.sql'),
   'utf8',
 );
-/** The type CHECK as ADR 0062 recreated it (a registration document). */
+/** The type CHECK as ADR 0062 recreated it (registration and kinship documents). */
 const typeCheck = readFileSync(
-  join(
-    __dirname,
-    migrations,
-    '20261118090100_registration_documents/migration.sql',
-  ),
+  join(__dirname, migrations, '20261118090500_kinship_proof/migration.sql'),
   'utf8',
 );
 
@@ -125,6 +121,7 @@ describe('file purposes', () => {
       'expense_invoice',
       'decision_appeal_attachment',
       'registration_document',
+      'kinship_proof',
     ] as const) {
       expect(sizeCheck).not.toContain(`WHEN '${purpose}'`);
       expect(FILE_PURPOSES[purpose].maxBytes).toBe(
@@ -233,7 +230,7 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,

@@ -12109,7 +12109,8 @@
       "DelegationScope": {
         "enum": [
           "household",
-          "workers"
+          "workers",
+          "permits"
         ],
         "type": "string"
       },
@@ -16050,7 +16051,8 @@
           "incident_video",
           "incident_signature",
           "decision_appeal_attachment",
-          "registration_document"
+          "registration_document",
+          "kinship_proof"
         ],
         "type": "string"
       },
@@ -23052,6 +23054,92 @@
         ],
         "type": "object"
       },
+      "KinshipDocumentDto": {
+        "properties": {
+          "fileId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "birth_certificate",
+              "marriage_certificate",
+              "family_record",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "KinshipDocumentReadView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "birth_certificate",
+              "marriage_certificate",
+              "family_record",
+              "other"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET.",
+            "type": "string"
+          },
+          "urlExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "createdAt",
+          "url",
+          "urlExpiresAt"
+        ],
+        "type": "object"
+      },
+      "KinshipDocumentView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "birth_certificate",
+              "marriage_certificate",
+              "family_record",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "LaneReason": {
         "description": "lane only.",
         "enum": [
@@ -26030,6 +26118,14 @@
                 "$ref": "#/components/schemas/IdDocumentType"
               }
             ]
+          },
+          "kinshipDocuments": {
+            "description": "Proof of the relation (ADR 0062): finalized `kinship_proof` files of the caller. The compound may refuse them (`off`) or need one (`required`, KINSHIP_PROOF_REQUIRED).",
+            "items": {
+              "$ref": "#/components/schemas/KinshipDocumentDto"
+            },
+            "maxItems": 2,
+            "type": "array"
           },
           "nationality": {
             "description": "ISO 3166-1 alpha-2; required for a passport.",
@@ -29685,6 +29781,13 @@
             "nullable": true,
             "type": "string"
           },
+          "kinshipDocuments": {
+            "description": "Proof of the relation the inviter attached (ADR 0062); read each with its own route.",
+            "items": {
+              "$ref": "#/components/schemas/KinshipDocumentView"
+            },
+            "type": "array"
+          },
           "memberId": {
             "format": "uuid",
             "type": "string"
@@ -29714,7 +29817,8 @@
           "unitCode",
           "fullName",
           "relation",
-          "requestedAt"
+          "requestedAt",
+          "kinshipDocuments"
         ],
         "type": "object"
       },
@@ -39217,6 +39321,14 @@
           "familyJoinRequiresApproval": {
             "type": "boolean"
           },
+          "familyKinshipProof": {
+            "enum": [
+              "off",
+              "optional",
+              "required"
+            ],
+            "type": "string"
+          },
           "gateRequestTimeoutSeconds": {
             "description": "Seconds a household has to answer the gate before its instruction applies.",
             "type": "number"
@@ -39245,6 +39357,7 @@
         },
         "required": [
           "familyJoinRequiresApproval",
+          "familyKinshipProof",
           "maxHouseholdMembers",
           "timezone",
           "maxActiveVisitorPasses",
@@ -51016,6 +51129,15 @@
           },
           "familyJoinRequiresApproval": {
             "type": "boolean"
+          },
+          "familyKinshipProof": {
+            "description": "Proof of kinship on a household invite (ADR 0062); `required` holds only while joins need approval.",
+            "enum": [
+              "off",
+              "optional",
+              "required"
+            ],
+            "type": "string"
           },
           "gateRequestTimeoutSeconds": {
             "description": "Seconds a household has to answer the gate before its standing instruction applies.",
@@ -64922,6 +65044,52 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/household/invites/{id}/kinship-documents/{documentId}": {
+      "get": {
+        "operationId": "HouseholdController_inviterDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KinshipDocumentReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read an invite’s proof of kinship",
+        "tags": [
+          "household"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/household/invites/{id}/revoke": {
       "post": {
         "operationId": "HouseholdController_revokeInvite",
@@ -64986,6 +65154,52 @@
         "tags": [
           "household"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/kinship-documents/{documentId}": {
+      "get": {
+        "operationId": "HouseholdController_approverDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KinshipDocumentReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a pending member’s proof of kinship",
+        "tags": [
+          "household"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

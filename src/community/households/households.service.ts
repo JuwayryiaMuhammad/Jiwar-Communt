@@ -62,6 +62,7 @@ import {
   isPrimary,
   type Authority,
 } from './household-authority';
+import { KinshipDocuments } from './kinship-documents';
 import { HOUSEHOLD_EMAILS } from './household-email-templates';
 import type {
   CreatedInvite,
@@ -110,6 +111,7 @@ export class HouseholdsService {
     private readonly flags: ReviewFlags,
     private readonly lifecycle: AccountLifecycle,
     private readonly notifier: Notifier,
+    private readonly kinship: KinshipDocuments,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -153,6 +155,12 @@ export class HouseholdsService {
       await this.globalDb.in(tx).inviteToken.create({
         data: { tokenHash, tenantId, inviteId: id, expiresAt },
       });
+      const kinshipDocuments = await this.kinship.attach(
+        tx,
+        tenantId,
+        id,
+        input.kinshipDocuments ?? [],
+      );
       await this.audit.record(tx, {
         action: 'household.invite_created',
         targetId: id,
@@ -161,7 +169,10 @@ export class HouseholdsService {
           { unitId, relation: input.relation, status: 'pending', expiresAt },
           'household.invite_created',
         ),
-        metadata: onBehalfOf(by),
+        metadata: {
+          ...onBehalfOf(by),
+          ...(kinshipDocuments ? { kinshipDocuments } : {}),
+        },
       });
       return id;
     });
@@ -795,6 +806,12 @@ export class HouseholdsService {
       take: limit + 1,
     });
     const page = APPROVAL_PAGE.toPage(rows, limit);
+    const proof = await this.tenantTx.withTenantTx((tx) =>
+      this.kinship.ofMembers(
+        tx,
+        page.items.map((m) => m.id),
+      ),
+    );
     return {
       items: page.items.map((m) => ({
         memberId: m.id,
@@ -803,6 +820,7 @@ export class HouseholdsService {
         fullName: m.fullName ?? m.account?.fullName ?? null,
         relation: m.relation,
         requestedAt: m.createdAt,
+        kinshipDocuments: proof.get(m.id) ?? [],
       })),
       nextCursor: page.nextCursor,
     };

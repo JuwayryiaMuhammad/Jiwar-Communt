@@ -364,6 +364,8 @@ enum HouseholdInviteStatus {
 enum DelegationScope {
   household
   workers
+  /// Works, moves and material exits for the unit (ADR 0062).
+  permits
 
   @@map("delegation_scope")
 }
@@ -515,6 +517,7 @@ model Tenant {
   registrationStatusLinks      RegistrationStatusLink[]
   registrationDocuments        RegistrationDocument[]
   accountIdentityChanges       AccountIdentityChange[]
+  householdInviteDocuments     HouseholdInviteDocument[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
   preventiveServices           PreventiveService[]
@@ -1202,6 +1205,8 @@ model UnitOccupancy {
 model TenantSettings {
   tenantId                   String   @id @map("tenant_id") @db.Uuid
   familyJoinRequiresApproval Boolean  @default(false) @map("family_join_requires_approval")
+  /// off | optional | required (CHECK): proof of kinship on an invite (ADR 0062).
+  familyKinshipProof         String   @default("optional") @map("family_kinship_proof")
   maxHouseholdMembers        Int      @default(10) @map("max_household_members")
   /// IANA time zone for schedules (ADR 0017).
   timezone                   String   @default("Africa/Cairo")
@@ -1303,8 +1308,10 @@ model HouseholdInvite {
   invitedBy       Account          @relation("InviteInvitedBy", fields: [tenantId, invitedById], references: [tenantId, id], onUpdate: Restrict)
   acceptedAccount Account?         @relation("InviteAcceptedAccount", fields: [tenantId, acceptedAccountId], references: [tenantId, id], onUpdate: Restrict)
   member          HouseholdMember? @relation(fields: [tenantId, memberId], references: [tenantId, id], onUpdate: Restrict)
+  documents       HouseholdInviteDocument[]
 
   @@index([tenantId, unitId])
+  @@unique([tenantId, id])
   @@map("household_invites")
 }
 
@@ -1632,6 +1639,27 @@ model AccountFreeze {
 
   @@index([tenantId, accountId])
   @@map("account_freezes")
+}
+
+/// Proof of an invitee's relation (ADR 0062): read by the inviter and by
+/// whoever approves the join; `released_at` stamped once the invite is
+/// settled, the file deleted 30 days later and the row with it.
+model HouseholdInviteDocument {
+  id         String    @id @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  inviteId   String    @map("invite_id") @db.Uuid
+  fileId     String    @unique @map("file_id") @db.Uuid
+  /// birth_certificate | marriage_certificate | family_record | other (CHECK).
+  kind       String
+  createdAt  DateTime  @map("created_at") @db.Timestamptz(3)
+  releasedAt DateTime? @map("released_at") @db.Timestamptz(3)
+
+  tenant Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  invite HouseholdInvite @relation(fields: [tenantId, inviteId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file   StoredFile      @relation("InviteDocumentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Cascade, onUpdate: Restrict)
+
+  @@index([tenantId, inviteId], map: "household_invite_documents_invite_idx")
+  @@map("household_invite_documents")
 }
 
 /// A self-registration request (ADR 0024). Personal data only while
@@ -2824,6 +2852,8 @@ enum FilePurpose {
   decision_appeal_attachment
   /// A registrant's proof of capacity (ADR 0062), uploaded with no account.
   registration_document
+  /// Proof of an invitee's relation to the household (ADR 0062).
+  kinship_proof
 
   @@map("file_purpose")
 }
@@ -2867,6 +2897,7 @@ model StoredFile {
   neighbourComplaintAttachments NeighbourComplaintAttachment[] @relation("NeighbourComplaintAttachmentFile")
   neighbourPostPhotos           NeighbourPostPhoto[]           @relation("NeighbourPostPhotoFile")
   registrationDocuments         RegistrationDocument[]         @relation("RegistrationDocumentFile")
+  inviteDocuments               HouseholdInviteDocument[]      @relation("InviteDocumentFile")
   owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   /// A recording's length, read from its container at finalize (ADR 0056).
   mediaDurationMs Int?        @map("media_duration_ms")

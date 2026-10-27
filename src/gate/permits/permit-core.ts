@@ -85,16 +85,18 @@ export class PermitCore {
     const caps = await this.community.placeIn(tx, me, unitId);
     if (!caps?.unitView)
       throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+    // Works, a move, a material exit: the primary, or their `permits`
+    // delegate (ADR 0062), who then sees the permits they asked for.
     const allowed =
       kind === 'event'
         ? caps.visitorsInvite
-        : await this.community.isPrimary(tx, unitId, me);
+        : (await this.community.permitAuthority(tx, unitId)) !== null;
     if (!allowed)
       throw appError.forbidden(
         ErrorCode.PERMIT_NOT_ALLOWED,
         kind === 'event'
           ? 'Only someone the unit lets invite visitors holds an event'
-          : 'Only the unit’s primary resident asks for this permit',
+          : 'Only the unit’s primary resident, or their permits delegate, asks for this permit',
       );
   }
 

@@ -11,6 +11,7 @@ const SETTINGS = [
   'dutyPhone',
   'emergencyPhone',
   'familyJoinRequiresApproval',
+  'familyKinshipProof',
   'gateRequestTimeoutSeconds',
   'maxActiveVisitorPasses',
   'maxHouseholdMembers',

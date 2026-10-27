@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { FilesModule } from '../../core/files/files.module';
+import { KinshipDocuments } from './kinship-documents';
 import { AccountsModule } from '../../core/accounts/accounts.module';
 import { AuthModule } from '../../core/auth/auth.module';
 import { DelegationsController } from './delegations.controller';
@@ -23,7 +25,7 @@ import { MajorityNotices } from './majority-notices';
     MemberPermissionsController,
     DelegationsController,
   ],
-  imports: [AccountsModule, AuthModule, NoticesModule],
+  imports: [AccountsModule, AuthModule, FilesModule, NoticesModule],
   providers: [
     HouseholdAuthority,
     HouseholdsService,
@@ -33,6 +35,7 @@ import { MajorityNotices } from './majority-notices';
     ReviewFlags,
     MemberPermissionsService,
     MajorityNotices,
+    KinshipDocuments,
   ],
   exports: [
     ReviewFlags,

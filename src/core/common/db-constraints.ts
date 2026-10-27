@@ -61,6 +61,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // lock (IDENTITY_CHANGE_PENDING), so a violation is a race.
   account_identity_changes_tenant_id_id_key: null,
   account_identity_changes_one_pending: null,
+  // Proof of kinship (ADR 0062): a composite key's target, and a file the
+  // service attaches once.
+  household_invites_tenant_id_id_key: null,
+  household_invite_documents_file_id_key: null,
   // Client-generated (UUIDv7): a violation is an id collision.
   registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,

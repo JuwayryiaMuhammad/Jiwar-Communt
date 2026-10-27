@@ -44,6 +44,7 @@ import { offlineCalls } from './no-store-offline';
 import { residentItemCalls } from './no-store-resident-items';
 import { partnerCalls } from './no-store-partners';
 import { registrationCalls } from './no-store-registration';
+import { kinshipCalls } from './no-store-kinship';
 import { decisionAppealCalls } from './no-store-decision-appeals';
 import { representativeCalls } from './no-store-representatives';
 import { governanceVoiceCalls } from './no-store-governance-voice';
@@ -3102,6 +3103,7 @@ describe('API v0 — no-store', () => {
     ...residentItemCalls(() => w),
     ...partnerCalls(() => w),
     ...registrationCalls(() => w),
+    ...kinshipCalls(() => w),
     ...decisionAppealCalls(() => w),
     ...representativeCalls(() => w, aSittingBoard),
     ...governanceVoiceCalls(() => w, aSittingBoard, aPublication),

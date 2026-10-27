@@ -581,6 +581,7 @@ describe('Households', () => {
           fullName: first.input.fullName,
           relation: first.input.relation,
           requestedAt: expect.any(Date) as Date,
+          kinshipDocuments: [],
         },
       ]);
       const rest = await x.asManager(hm.c, () =>

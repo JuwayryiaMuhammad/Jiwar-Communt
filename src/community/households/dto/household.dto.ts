@@ -1,11 +1,42 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { HouseholdRelation } from '@prisma/client';
-import { IsEmail, IsEnum, IsString, Length } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+  ValidateNested,
+} from 'class-validator';
 import { IdentityDocumentDto } from '../../../core/common/http/identity-document.dto';
 import { IsPhone } from '../../../core/common/validation/is-phone';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import {
+  KINSHIP_DOCUMENT_KINDS,
+  KINSHIP_DOCUMENT_LIMIT,
+  type KinshipDocumentKind,
+} from '../kinship-documents';
 
 const RELATION = withParams({ allowed: Object.values(HouseholdRelation) });
+
+/** A proof of kinship: a finalized file of the caller's, and what it is. */
+export class KinshipDocumentDto {
+  @ApiProperty({ type: String, format: 'uuid' })
+  @IsUUID()
+  fileId: string;
+
+  @ApiProperty({ enum: KINSHIP_DOCUMENT_KINDS })
+  @IsIn(
+    [...KINSHIP_DOCUMENT_KINDS],
+    withParams({ allowed: [...KINSHIP_DOCUMENT_KINDS] }),
+  )
+  kind: KinshipDocumentKind;
+}
 
 /** An adult, invited; the acceptance code goes to this email and nowhere else. */
 export class NewInviteDto extends IdentityDocumentDto {
@@ -25,6 +56,23 @@ export class NewInviteDto extends IdentityDocumentDto {
   @ApiProperty({ enum: HouseholdRelation, enumName: 'HouseholdRelation' })
   @IsEnum(HouseholdRelation, RELATION)
   relation: HouseholdRelation;
+
+  @ApiProperty({
+    type: [KinshipDocumentDto],
+    required: false,
+    maxItems: KINSHIP_DOCUMENT_LIMIT,
+    description:
+      'Proof of the relation (ADR 0062): finalized `kinship_proof` files of the caller. The compound may refuse them (`off`) or need one (`required`, KINSHIP_PROOF_REQUIRED).',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(
+    KINSHIP_DOCUMENT_LIMIT,
+    withParams({ min: 0, max: KINSHIP_DOCUMENT_LIMIT }),
+  )
+  @ValidateNested({ each: true })
+  @Type(() => KinshipDocumentDto)
+  kinshipDocuments?: KinshipDocumentDto[];
 }
 
 /** A minor: added directly, with no account. */

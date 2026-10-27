@@ -132,6 +132,33 @@ export const HOUSEHOLD_ROUTES: Row[] = [
       fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
     },
   },
+  // Proof of kinship (ADR 0062): the approver's and the inviter's reads.
+  {
+    method: 'GET',
+    path: '/household/members/{id}/kinship-documents/{documentId}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bRegistrationId, documentId: w.bRegistrationId }),
+      code: 'KINSHIP_DOCUMENT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/household/invites/{id}/kinship-documents/{documentId}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRegistrationId, documentId: w.bRegistrationId }),
+      code: 'KINSHIP_DOCUMENT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
   {
     method: 'GET',
     path: '/household/pending',

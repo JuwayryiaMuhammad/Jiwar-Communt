@@ -4276,6 +4276,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/household/invites/{id}/kinship-documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an invite’s proof of kinship */
+        get: operations["HouseholdController_inviterDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/household/invites/{id}/revoke": {
         parameters: {
             query?: never;
@@ -4304,6 +4321,23 @@ export interface paths {
         put?: never;
         /** Approve a household membership */
         post: operations["HouseholdController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/household/members/{id}/kinship-documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a pending member’s proof of kinship */
+        get: operations["HouseholdController_approverDocument"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -20158,7 +20192,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        DelegationScope: "household" | "workers";
+        DelegationScope: "household" | "workers" | "permits";
         DeletionConfirmationDto: {
             /** @description The word the holder types: `حذف` or `DELETE`. */
             confirmation: string;
@@ -21338,7 +21372,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -23462,6 +23496,32 @@ export interface components {
             /** @description They stay, pointing at a deleted user. */
             auditEntries: number;
         };
+        KinshipDocumentDto: {
+            /** Format: uuid */
+            fileId: string;
+            /** @enum {string} */
+            kind: "birth_certificate" | "marriage_certificate" | "family_record" | "other";
+        };
+        KinshipDocumentReadView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "birth_certificate" | "marriage_certificate" | "family_record" | "other";
+            /** @description A presigned GET. */
+            url: string;
+            /** Format: date-time */
+            urlExpiresAt: string;
+        };
+        KinshipDocumentView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "birth_certificate" | "marriage_certificate" | "family_record" | "other";
+        };
         /**
          * @description lane only.
          * @enum {string}
@@ -24394,6 +24454,8 @@ export interface components {
             /** @description 14-digit national ID, or a passport number. */
             idDocumentNumber: string;
             idDocumentType: components["schemas"]["IdDocumentType"];
+            /** @description Proof of the relation (ADR 0062): finalized `kinship_proof` files of the caller. The compound may refuse them (`off`) or need one (`required`, KINSHIP_PROOF_REQUIRED). */
+            kinshipDocuments?: components["schemas"]["KinshipDocumentDto"][];
             /** @description ISO 3166-1 alpha-2; required for a passport. */
             nationality?: string;
             phone: string;
@@ -25562,6 +25624,8 @@ export interface components {
         };
         PendingMemberView: {
             fullName: string | null;
+            /** @description Proof of the relation the inviter attached (ADR 0062); read each with its own route. */
+            kinshipDocuments: components["schemas"]["KinshipDocumentView"][];
             /** Format: uuid */
             memberId: string;
             relation: components["schemas"]["HouseholdRelation"];
@@ -28545,6 +28609,8 @@ export interface components {
             /** @description E.164; on the visitor page and the worker card. */
             emergencyPhone: string | null;
             familyJoinRequiresApproval: boolean;
+            /** @enum {string} */
+            familyKinshipProof: "off" | "optional" | "required";
             /** @description Seconds a household has to answer the gate before its instruction applies. */
             gateRequestTimeoutSeconds: number;
             /** @description Active visitor passes per unit. */
@@ -31961,6 +32027,11 @@ export interface components {
              */
             emergencyPhone?: string | null;
             familyJoinRequiresApproval?: boolean;
+            /**
+             * @description Proof of kinship on a household invite (ADR 0062); `required` holds only while joins need approval.
+             * @enum {string}
+             */
+            familyKinshipProof?: "off" | "optional" | "required";
             /** @description Seconds a household has to answer the gate before its standing instruction applies. */
             gateRequestTimeoutSeconds?: number;
             /** @description Active visitor passes per unit. */
@@ -38776,6 +38847,28 @@ export interface operations {
             };
         };
     };
+    HouseholdController_inviterDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KinshipDocumentReadView"];
+                };
+            };
+        };
+    };
     HouseholdController_revokeInvite: {
         parameters: {
             query?: never;
@@ -38812,6 +38905,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HouseholdMemberResponse"];
+                };
+            };
+        };
+    };
+    HouseholdController_approverDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KinshipDocumentReadView"];
                 };
             };
         };

@@ -445,6 +445,20 @@ export class CommunityGatePort {
     return isPrimary(tx, unitId, accountId);
   }
 
+  /**
+   * Whether the caller may ask for the unit's works, moves and material
+   * exits (ADR 0049, 0062): its primary, or a live `permits` delegate of
+   * the primary's (`onBehalfOf` names the primary then). Null otherwise;
+   * an expired delegation is DELEGATION_EXPIRED.
+   */
+  async permitAuthority(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<{ onBehalfOf: string | null } | null> {
+    const by = await this.household.find(tx, unitId, 'permits');
+    return by ? { onBehalfOf: by.onBehalfOf } : null;
+  }
+
   /** The unit's primary resident now, or null (ADR 0045: who is told). */
   async primaryOf(tx: TenantTxClient, unitId: string): Promise<string | null> {
     const row = await tx.unitOccupancy.findFirst({

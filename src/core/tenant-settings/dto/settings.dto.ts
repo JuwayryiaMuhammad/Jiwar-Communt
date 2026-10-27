@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -15,6 +16,8 @@ import {
   MAX_ACTIVE_VISITOR_PASSES,
   MAX_HOUSEHOLD_MEMBERS,
   VISITOR_DIRECTIONS_LENGTH,
+  FAMILY_KINSHIP_PROOF,
+  type FamilyKinshipProof,
 } from '../tenant-settings.service';
 
 export class UpdateSettingsDto {
@@ -22,6 +25,19 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsBoolean()
   familyJoinRequiresApproval?: boolean;
+
+  @ApiProperty({
+    required: false,
+    enum: FAMILY_KINSHIP_PROOF,
+    description:
+      'Proof of kinship on a household invite (ADR 0062); `required` holds only while joins need approval.',
+  })
+  @IsOptional()
+  @IsIn(
+    [...FAMILY_KINSHIP_PROOF],
+    withParams({ allowed: [...FAMILY_KINSHIP_PROOF] }),
+  )
+  familyKinshipProof?: FamilyKinshipProof;
 
   @ApiProperty({
     type: Boolean,

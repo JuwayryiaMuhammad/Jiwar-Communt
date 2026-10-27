@@ -1,3 +1,4 @@
+import type { DelegationScope } from '@prisma/client';
 import type { Locale } from '../../core/common/i18n/locale';
 import { localDate } from '../../core/common/slots/day-slots';
 import { DEFAULT_TIME_ZONE } from '../../core/preferences/delivery-preferences';
@@ -108,7 +109,7 @@ export interface DelegationEmail {
   unitCode: string;
   delegatorName: string;
   delegateName: string;
-  scopes: ('household' | 'workers')[];
+  scopes: DelegationScope[];
   expiresAt: Date;
   /** The compound's zone, which dates the end. Cairo for older rows. */
   timeZone?: string;
@@ -118,12 +119,14 @@ const SCOPES = {
   en: {
     household: 'manage the household (invite, add children, remove members)',
     workers: 'manage domestic workers',
+    permits: 'ask for works, moves and material exit permits',
   },
   ar: {
     household: 'إدارة أفراد الأسرة (الدعوة، وإضافة الأطفال، والإزالة)',
     workers: 'إدارة العمالة المنزلية',
+    permits: 'طلب تصاريح الأعمال والنقل وإخراج المواد',
   },
-} as const;
+} as const satisfies Record<Locale, Record<DelegationScope, string>>;
 
 const ENDED = {
   en: {

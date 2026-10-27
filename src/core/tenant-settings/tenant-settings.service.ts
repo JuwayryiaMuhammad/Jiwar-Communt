@@ -8,8 +8,16 @@ import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
 import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 
+export const FAMILY_KINSHIP_PROOF = ['off', 'optional', 'required'] as const;
+export type FamilyKinshipProof = (typeof FAMILY_KINSHIP_PROOF)[number];
+
 export interface TenantSettingsView {
   familyJoinRequiresApproval: boolean;
+  /**
+   * Proof of kinship on a household invite (ADR 0062): `required` holds
+   * only while joins need a manager's approval, who reads it.
+   */
+  familyKinshipProof: FamilyKinshipProof;
   maxHouseholdMembers: number;
   /** IANA time zone; worker schedules are read in it (ADR 0017). */
   timezone: string;
@@ -138,6 +146,7 @@ export class TenantSettingsService {
         where: { tenantId },
         data: {
           familyJoinRequiresApproval: input.familyJoinRequiresApproval,
+          familyKinshipProof: input.familyKinshipProof,
           maxHouseholdMembers: input.maxHouseholdMembers,
           timezone: input.timezone,
           maxActiveVisitorPasses: input.maxActiveVisitorPasses,
@@ -169,6 +178,7 @@ export class TenantSettingsService {
 function view(row: TenantSettings): TenantSettingsView {
   return {
     familyJoinRequiresApproval: row.familyJoinRequiresApproval,
+    familyKinshipProof: row.familyKinshipProof as FamilyKinshipProof,
     maxHouseholdMembers: row.maxHouseholdMembers,
     timezone: row.timezone,
     maxActiveVisitorPasses: row.maxActiveVisitorPasses,

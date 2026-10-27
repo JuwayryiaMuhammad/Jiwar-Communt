@@ -244,6 +244,7 @@ describe('API v0 — household', () => {
       expect(keyPaths(pending.body)).toEqual(
         listKeys([
           'fullName',
+          'kinshipDocuments',
           'memberId',
           'relation',
           'requestedAt',

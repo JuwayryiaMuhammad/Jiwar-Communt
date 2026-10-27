@@ -36,6 +36,21 @@ export class HouseholdAuthority {
     unitId: string,
     scope: DelegationScope,
   ): Promise<Authority> {
+    const found = await this.find(tx, unitId, scope);
+    if (!found) throw notPrimary();
+    return found;
+  }
+
+  /**
+   * As `require`, with null for a caller who is neither the primary nor a
+   * delegate of that scope (ADR 0062: the gate asks, and answers with its
+   * own code). An expired delegation is still DELEGATION_EXPIRED.
+   */
+  async find(
+    tx: TenantTxClient,
+    unitId: string,
+    scope: DelegationScope,
+  ): Promise<Authority | null> {
     const accountId = this.ctx.accountId;
     await this.assertVisible(tx, unitId);
     if (await isPrimary(tx, unitId, accountId)) {
@@ -49,7 +64,7 @@ export class HouseholdAuthority {
         scopes: { has: scope },
       },
     });
-    if (!delegation) throw notPrimary();
+    if (!delegation) return null;
     if (delegation.expiresAt <= new Date()) {
       throw appError.forbidden(
         ErrorCode.DELEGATION_EXPIRED,
@@ -58,7 +73,7 @@ export class HouseholdAuthority {
     }
     // Automatic ends keep this true; checked anyway, it is cheap.
     if (!(await isPrimary(tx, unitId, delegation.delegatorAccountId))) {
-      throw notPrimary();
+      return null;
     }
     return { accountId, onBehalfOf: delegation.delegatorAccountId };
   }

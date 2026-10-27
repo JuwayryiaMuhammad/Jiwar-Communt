@@ -1,3 +1,7 @@
+import type {
+  KinshipDocumentInput,
+  KinshipDocumentRead,
+} from './kinship-documents';
 import type { IdentityDocumentInput } from '../../core/common/identity-document';
 import type {
   HouseholdMemberStatus,
@@ -13,6 +17,8 @@ export interface NewInvite extends IdentityDocumentInput {
   /** Required: the acceptance code goes to this address and nowhere else. */
   email: string;
   relation: HouseholdRelation;
+  /** Proof of the relation (ADR 0062): the inviter's finalized files. */
+  kinshipDocuments?: KinshipDocumentInput[];
 }
 
 export interface CreatedInvite {
@@ -84,4 +90,6 @@ export interface PendingMember {
   fullName: string | null;
   relation: HouseholdRelation;
   requestedAt: Date;
+  /** The invite's proof of kinship, to read before deciding (ADR 0062). */
+  kinshipDocuments: KinshipDocumentRead[];
 }

@@ -32,11 +32,13 @@ import {
   NewMinorDto,
 } from './dto/household.dto';
 import { HouseholdsService } from './households.service';
+import { KinshipDocuments } from './kinship-documents';
 import {
   CreatedInviteView,
   HouseholdMemberResponse,
   HouseholdResponse,
   PendingMemberView,
+  KinshipDocumentReadView,
 } from './views/household.views';
 
 /** A unit's household (ADR 0016): the primary or a delegate; managers approve. */
@@ -46,6 +48,7 @@ export class HouseholdController {
   constructor(
     private readonly households: HouseholdsService,
     private readonly permissions: PermissionsService,
+    private readonly kinship: KinshipDocuments,
   ) {}
 
   /**
@@ -157,6 +160,36 @@ export class HouseholdController {
   ): Promise<ListResponse<PendingMemberView>> {
     return toList(await this.households.pendingApprovals(q), (p) =>
       PendingMemberView.from(p),
+    );
+  }
+
+  /** A pending member's proof of kinship, for the approver (no-store, ADR 0062). */
+  @RequirePermissions('household.approve')
+  @Get('household/members/:id/kinship-documents/:documentId')
+  @ApiOperation({ summary: 'Read a pending member’s proof of kinship' })
+  @NoStore()
+  @ApiOkResponse({ type: KinshipDocumentReadView })
+  async approverDocument(
+    @Param('id', parseId()) id: string,
+    @Param('documentId', parseId('documentId')) documentId: string,
+  ): Promise<KinshipDocumentReadView> {
+    return KinshipDocumentReadView.fromRead(
+      await this.kinship.readForApprover(id, documentId),
+    );
+  }
+
+  /** An invite's proof of kinship, for the inviter (no-store, ADR 0062). */
+  @RequirePermissions('household.manage')
+  @Get('household/invites/:id/kinship-documents/:documentId')
+  @ApiOperation({ summary: 'Read an invite’s proof of kinship' })
+  @NoStore()
+  @ApiOkResponse({ type: KinshipDocumentReadView })
+  async inviterDocument(
+    @Param('id', parseId()) id: string,
+    @Param('documentId', parseId('documentId')) documentId: string,
+  ): Promise<KinshipDocumentReadView> {
+    return KinshipDocumentReadView.fromRead(
+      await this.kinship.readForInviter(id, documentId),
     );
   }
 

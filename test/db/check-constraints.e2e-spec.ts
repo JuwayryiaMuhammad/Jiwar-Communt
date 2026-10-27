@@ -2000,6 +2000,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
+  // Proof of kinship (ADR 0062).
+  tenant_settings_family_kinship_proof: {},
+  household_invite_documents_kind: {},
+  household_invite_documents_released_after: {
+    guarded: 'released_at IS NULL is tested first; created_at is NOT NULL',
+  },
   account_identity_changes_decided_after: {
     guarded: 'decided_at IS NULL is tested first; created_at is NOT NULL',
   },

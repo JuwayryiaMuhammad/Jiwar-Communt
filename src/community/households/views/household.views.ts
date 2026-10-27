@@ -1,4 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { PresignedRead } from '../../../core/files/object-storage';
+import {
+  KINSHIP_DOCUMENT_KINDS,
+  type KinshipDocumentKind,
+  type KinshipDocumentRead,
+} from '../kinship-documents';
 import { HouseholdMemberStatus, HouseholdRelation } from '@prisma/client';
 import type {
   CreatedInvite,
@@ -163,6 +169,20 @@ export class CreatedInviteView {
   }
 }
 
+/** A proof of kinship: its kind, never a file name (ADR 0062). */
+export class KinshipDocumentView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: KINSHIP_DOCUMENT_KINDS })
+  kind: KinshipDocumentKind;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(d: KinshipDocumentRead): KinshipDocumentView {
+    return { id: d.id, kind: d.kind, createdAt: d.createdAt };
+  }
+}
+
 export class PendingMemberView {
   @ApiProperty({ type: String, format: 'uuid' })
   memberId: string;
@@ -176,6 +196,12 @@ export class PendingMemberView {
   relation: HouseholdRelation;
   @ApiProperty({ type: String, format: 'date-time' })
   requestedAt: Date;
+  @ApiProperty({
+    type: [KinshipDocumentView],
+    description:
+      'Proof of the relation the inviter attached (ADR 0062); read each with its own route.',
+  })
+  kinshipDocuments: KinshipDocumentView[];
 
   static from(p: PendingMember): PendingMemberView {
     return {
@@ -185,6 +211,28 @@ export class PendingMemberView {
       fullName: p.fullName,
       relation: p.relation,
       requestedAt: p.requestedAt,
+      kinshipDocuments: p.kinshipDocuments.map((d) =>
+        KinshipDocumentView.from(d),
+      ),
+    };
+  }
+}
+
+/** A proof of kinship to look at (no-store): the presigned GET. */
+export class KinshipDocumentReadView extends KinshipDocumentView {
+  @ApiProperty({ type: String, description: 'A presigned GET.' })
+  url: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  urlExpiresAt: Date;
+
+  static fromRead(d: {
+    document: KinshipDocumentRead;
+    read: PresignedRead;
+  }): KinshipDocumentReadView {
+    return {
+      ...KinshipDocumentView.from(d.document),
+      url: d.read.url,
+      urlExpiresAt: d.read.expiresAt,
     };
   }
 }

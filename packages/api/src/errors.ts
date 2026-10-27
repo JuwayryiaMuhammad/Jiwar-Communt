@@ -96,6 +96,8 @@ const ERROR_TEXT: Record<string, string> = {
   IDENTITY_CHANGE_PENDING: 'A change already waits for the management.',
   IDENTITY_CHANGE_NOT_FOUND: 'Change request not found.',
   IDENTITY_CHANGE_DECIDED: 'This request was decided or withdrawn already.',
+  KINSHIP_PROOF_REQUIRED: 'Attach proof of the relation (a birth or marriage certificate, a family record).',
+  KINSHIP_DOCUMENT_NOT_FOUND: 'Document not found.',
   NO_ROLE_FOR_ACCOUNT_TYPE: 'No role exists for this account type.',
   ROLE_NOT_FOUND: 'Role not found.',
   UNKNOWN_PERMISSION: 'Unknown permission.',

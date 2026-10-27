@@ -1342,6 +1342,15 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/tickets/{id}/quotes': ticket.id,
       // ADR 0058: a formal notice (none here: not found).
       '/me/notices/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000058e2',
+      // ADR 0062: proof of kinship (none here: not found).
+      '/household/members/{id}/kinship-documents/{documentId}': {
+        id: '0192a5f0-1c2b-7d3e-8f40-0000000062a3',
+        documentId: '0192a5f0-1c2b-7d3e-8f40-0000000062a4',
+      },
+      '/household/invites/{id}/kinship-documents/{documentId}': {
+        id: '0192a5f0-1c2b-7d3e-8f40-0000000062a5',
+        documentId: '0192a5f0-1c2b-7d3e-8f40-0000000062a6',
+      },
       // ADR 0062: a registrant's document (none here: not found).
       '/registrations/{id}/documents/{documentId}': {
         id: '0192a5f0-1c2b-7d3e-8f40-0000000062a1',

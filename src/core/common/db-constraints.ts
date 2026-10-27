@@ -65,6 +65,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // service attaches once.
   household_invites_tenant_id_id_key: null,
   household_invite_documents_file_id_key: null,
+  // A unit's vault (ADR 0062): a composite key's target; a file the service
+  // attaches once.
+  unit_documents_tenant_id_id_key: null,
+  unit_documents_file_id_key: null,
   // Client-generated (UUIDv7): a violation is an id collision.
   registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,

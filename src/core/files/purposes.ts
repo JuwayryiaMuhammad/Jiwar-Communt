@@ -306,6 +306,13 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['household.manage'],
   },
+  // A document in a unit's vault (ADR 0062): a photo or a PDF, from a
+  // resident of the unit or the management.
+  unit_document: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['units.read', 'unit_documents.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

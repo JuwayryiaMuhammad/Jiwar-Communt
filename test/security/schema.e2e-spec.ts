@@ -640,6 +640,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       // R11a-1 (ADR 0062) recreated both after R11b-2, once per new purpose.
       'registration_document',
       'kinship_proof',
+      'unit_document',
     ])
       expect(purposes).toContain(purpose);
     for (const purpose of purposes) {

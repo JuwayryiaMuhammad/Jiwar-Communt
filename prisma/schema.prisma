@@ -366,6 +366,8 @@ enum DelegationScope {
   workers
   /// Works, moves and material exits for the unit (ADR 0062).
   permits
+  /// The unit's shared documents: read and add (ADR 0062). Never contracts.
+  documents
 
   @@map("delegation_scope")
 }
@@ -518,6 +520,7 @@ model Tenant {
   registrationDocuments        RegistrationDocument[]
   accountIdentityChanges       AccountIdentityChange[]
   householdInviteDocuments     HouseholdInviteDocument[]
+  unitDocuments                UnitDocument[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
   preventiveServices           PreventiveService[]
@@ -943,6 +946,7 @@ model Account {
   registrationsDecided           ResidentRegistration[]              @relation("RegistrationDecidedBy")
   identityChanges                AccountIdentityChange[]             @relation("IdentityChangeAccount")
   identityChangesDecided         AccountIdentityChange[]             @relation("IdentityChangeDecider")
+  unitDocumentsUploaded          UnitDocument[]                      @relation("UnitDocumentUploader")
   registrationsApproved          ResidentRegistration[]              @relation("RegistrationAccount")
   deletionRequests               AccountDeletionRequest[]            @relation("DeletionAccount")
   deletionsCompleted             AccountDeletionRequest[]            @relation("DeletionCompletedBy")
@@ -1152,6 +1156,7 @@ model Unit {
   overstayAlerts         VisitOverstayAlert[]
   serviceVehicles        ServiceVehicleVisit[]
 
+  documents UnitDocument[]
   @@unique([tenantId, code])
   @@unique([tenantId, id])
   @@map("units")
@@ -1195,6 +1200,7 @@ model UnitOccupancy {
   neighbourWelcome NeighbourWelcome?
   clubCoverage     ClubMembershipPerson[]
 
+  documents UnitDocument[]
   @@unique([tenantId, id])
   @@index([tenantId, accountId])
   @@index([tenantId, unitId])
@@ -1660,6 +1666,36 @@ model HouseholdInviteDocument {
 
   @@index([tenantId, inviteId], map: "household_invite_documents_invite_idx")
   @@map("household_invite_documents")
+}
+
+/// A document in a unit's vault (ADR 0062): an occupancy's (a resident's
+/// upload, a registrant's proof) or the unit's (the management's). Seen by
+/// its visibility; deleted once, its row going with its file.
+model UnitDocument {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  unitId           String    @map("unit_id") @db.Uuid
+  fileId           String    @unique @map("file_id") @db.Uuid
+  /// warranty | manual | handover_report | utility | insurance | capacity_proof | inspection_report | other (CHECK).
+  kind             String
+  title            String
+  ownerOccupancyId String?   @map("owner_occupancy_id") @db.Uuid
+  uploadedBy       String?   @map("uploaded_by") @db.Uuid
+  /// private | owners | occupants (CHECK).
+  visibility       String
+  expiresOn        DateTime? @map("expires_on") @db.Date
+  expiryNotifiedAt DateTime? @map("expiry_notified_at") @db.Timestamptz(3)
+  createdAt        DateTime  @map("created_at") @db.Timestamptz(3)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit           Unit           @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file           StoredFile     @relation("UnitDocumentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Cascade, onUpdate: Restrict)
+  ownerOccupancy UnitOccupancy? @relation(fields: [tenantId, ownerOccupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  uploader       Account?       @relation("UnitDocumentUploader", fields: [tenantId, uploadedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@map("unit_documents")
 }
 
 /// A self-registration request (ADR 0024). Personal data only while
@@ -2854,6 +2890,8 @@ enum FilePurpose {
   registration_document
   /// Proof of an invitee's relation to the household (ADR 0062).
   kinship_proof
+  /// A document in a unit's vault (ADR 0062).
+  unit_document
 
   @@map("file_purpose")
 }
@@ -2898,6 +2936,7 @@ model StoredFile {
   neighbourPostPhotos           NeighbourPostPhoto[]           @relation("NeighbourPostPhotoFile")
   registrationDocuments         RegistrationDocument[]         @relation("RegistrationDocumentFile")
   inviteDocuments               HouseholdInviteDocument[]      @relation("InviteDocumentFile")
+  unitDocuments                 UnitDocument[]                 @relation("UnitDocumentFile")
   owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   /// A recording's length, read from its container at finalize (ADR 0056).
   mediaDurationMs Int?        @map("media_duration_ms")

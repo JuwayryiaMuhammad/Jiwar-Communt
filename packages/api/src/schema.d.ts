@@ -13446,6 +13446,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/units/{unitId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a unit’s documents the management keeps */
+        get: operations["StaffUnitDocumentsController_list"];
+        put?: never;
+        /** File a unit document as the management */
+        post: operations["StaffUnitDocumentsController_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open a unit document the management keeps */
+        get: operations["StaffUnitDocumentsController_open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/documents/{id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete a unit document of the management’s */
+        post: operations["StaffUnitDocumentsController_remove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/payments": {
         parameters: {
             query?: never;
@@ -15294,6 +15346,58 @@ export interface paths {
         put?: never;
         /** Delegate the household or the workers to an adult member */
         post: operations["DelegationsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the unit’s documents */
+        get: operations["UnitDocumentsController_list"];
+        put?: never;
+        /** File a document in the unit’s vault */
+        post: operations["UnitDocumentsController_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open a unit document */
+        get: operations["UnitDocumentsController_open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/documents/{id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete a unit document of mine */
+        post: operations["UnitDocumentsController_remove"];
         delete?: never;
         options?: never;
         head?: never;
@@ -20192,7 +20296,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        DelegationScope: "household" | "workers" | "permits";
+        DelegationScope: "household" | "workers" | "permits" | "documents";
         DeletionConfirmationDto: {
             /** @description The word the holder types: `حذف` or `DELETE`. */
             confirmation: string;
@@ -21372,7 +21476,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -24491,6 +24595,23 @@ export interface components {
             /** @description ISO 3166-1 alpha-2; required for a passport. */
             nationality?: string;
             relation: components["schemas"]["HouseholdRelation"];
+        };
+        NewUnitDocumentDto: {
+            /**
+             * Format: date
+             * @description A warranty’s end date: required for a warranty, refused otherwise.
+             */
+            expiresOn?: string;
+            /** Format: uuid */
+            fileId: string;
+            /** @enum {string} */
+            kind: "warranty" | "manual" | "handover_report" | "utility" | "insurance" | "inspection_report" | "other";
+            title: string;
+            /**
+             * @description `private`: your occupancy only; `owners`: the unit’s owners; `occupants`: everyone living there. A delegate and the management never file a private one.
+             * @enum {string}
+             */
+            visibility: "private" | "owners" | "occupants";
         };
         NewUploadDto: {
             /**
@@ -31465,6 +31586,54 @@ export interface components {
             /** @description Managers only. */
             reviewReasons?: components["schemas"]["UnitReviewReason"][];
             unitType: components["schemas"]["UnitType"] | null;
+        };
+        UnitDocumentReadView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            expiresOn: string | null;
+            /**
+             * @description `unit`: the management’s; `occupancy`: a resident’s.
+             * @enum {string}
+             */
+            holder: "unit" | "occupancy";
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "warranty" | "manual" | "handover_report" | "utility" | "insurance" | "capacity_proof" | "inspection_report" | "other";
+            /** @description Whether the caller may delete it. */
+            mine: boolean;
+            title: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description A presigned GET. */
+            url: string;
+            /** Format: date-time */
+            urlExpiresAt: string;
+            /** @enum {string} */
+            visibility: "private" | "owners" | "occupants";
+        };
+        UnitDocumentView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            expiresOn: string | null;
+            /**
+             * @description `unit`: the management’s; `occupancy`: a resident’s.
+             * @enum {string}
+             */
+            holder: "unit" | "occupancy";
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "warranty" | "manual" | "handover_report" | "utility" | "insurance" | "capacity_proof" | "inspection_report" | "other";
+            /** @description Whether the caller may delete it. */
+            mine: boolean;
+            title: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @enum {string} */
+            visibility: "private" | "owners" | "occupants";
         };
         UnitEngagementView: {
             capacity: components["schemas"]["WorkerCapacity"];
@@ -52661,6 +52830,94 @@ export interface operations {
             };
         };
     };
+    StaffUnitDocumentsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitDocumentView"][];
+                };
+            };
+        };
+    };
+    StaffUnitDocumentsController_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewUnitDocumentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitDocumentView"];
+                };
+            };
+        };
+    };
+    StaffUnitDocumentsController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitDocumentReadView"];
+                };
+            };
+        };
+    };
+    StaffUnitDocumentsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     StaffPaymentsController_record: {
         parameters: {
             query?: never;
@@ -55515,6 +55772,94 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CreatedDelegationView"];
                 };
+            };
+        };
+    };
+    UnitDocumentsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitDocumentView"][];
+                };
+            };
+        };
+    };
+    UnitDocumentsController_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewUnitDocumentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitDocumentView"];
+                };
+            };
+        };
+    };
+    UnitDocumentsController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitDocumentReadView"];
+                };
+            };
+        };
+    };
+    UnitDocumentsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

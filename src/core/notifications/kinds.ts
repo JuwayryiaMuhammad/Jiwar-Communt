@@ -181,6 +181,14 @@ export const NOTIFICATION_KINDS = {
     target: 'account_deletion_request',
     params: { blockers: {} },
   },
+  /** A warranty in the unit's vault ends within 30 days (ADR 0062). */
+  'unit_document.warranty_expiring': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'unit_document',
+    params: { expiresOn: {} },
+  },
   /**
    * A manager decided the account's name or phone change (ADR 0062):
    * which field and how, never the value.

@@ -12110,7 +12110,8 @@
         "enum": [
           "household",
           "workers",
-          "permits"
+          "permits",
+          "documents"
         ],
         "type": "string"
       },
@@ -16052,7 +16053,8 @@
           "incident_signature",
           "decision_appeal_attachment",
           "registration_document",
-          "kinship_proof"
+          "kinship_proof",
+          "unit_document"
         ],
         "type": "string"
       },
@@ -26247,6 +26249,52 @@
           "idDocumentNumber",
           "fullName",
           "relation"
+        ],
+        "type": "object"
+      },
+      "NewUnitDocumentDto": {
+        "properties": {
+          "expiresOn": {
+            "description": "A warranty’s end date: required for a warranty, refused otherwise.",
+            "format": "date",
+            "type": "string"
+          },
+          "fileId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "warranty",
+              "manual",
+              "handover_report",
+              "utility",
+              "insurance",
+              "inspection_report",
+              "other"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "visibility": {
+            "description": "`private`: your occupancy only; `owners`: the unit’s owners; `occupants`: everyone living there. A delegate and the management never file a private one.",
+            "enum": [
+              "private",
+              "owners",
+              "occupants"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "kind",
+          "title",
+          "visibility"
         ],
         "type": "object"
       },
@@ -49378,6 +49426,154 @@
           "unitType",
           "areaSqm",
           "closed",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "UnitDocumentReadView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "holder": {
+            "description": "`unit`: the management’s; `occupancy`: a resident’s.",
+            "enum": [
+              "unit",
+              "occupancy"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "warranty",
+              "manual",
+              "handover_report",
+              "utility",
+              "insurance",
+              "capacity_proof",
+              "inspection_report",
+              "other"
+            ],
+            "type": "string"
+          },
+          "mine": {
+            "description": "Whether the caller may delete it.",
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET.",
+            "type": "string"
+          },
+          "urlExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "private",
+              "owners",
+              "occupants"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "kind",
+          "title",
+          "visibility",
+          "holder",
+          "mine",
+          "expiresOn",
+          "createdAt",
+          "url",
+          "urlExpiresAt"
+        ],
+        "type": "object"
+      },
+      "UnitDocumentView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "holder": {
+            "description": "`unit`: the management’s; `occupancy`: a resident’s.",
+            "enum": [
+              "unit",
+              "occupancy"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "warranty",
+              "manual",
+              "handover_report",
+              "utility",
+              "insurance",
+              "capacity_proof",
+              "inspection_report",
+              "other"
+            ],
+            "type": "string"
+          },
+          "mine": {
+            "description": "Whether the caller may delete it.",
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "private",
+              "owners",
+              "occupants"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "kind",
+          "title",
+          "visibility",
+          "holder",
+          "mine",
+          "expiresOn",
           "createdAt"
         ],
         "type": "object"
@@ -92091,6 +92287,175 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/units/{unitId}/documents": {
+      "get": {
+        "operationId": "StaffUnitDocumentsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UnitDocumentView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a unit’s documents the management keeps",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffUnitDocumentsController_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUnitDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitDocumentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "File a unit document as the management",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/documents/{id}": {
+      "get": {
+        "operationId": "StaffUnitDocumentsController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitDocumentReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a unit document the management keeps",
+        "tags": [
+          "units"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/documents/{id}/delete": {
+      "post": {
+        "operationId": "StaffUnitDocumentsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a unit document of the management’s",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/units/{unitId}/payments": {
       "post": {
         "description": "Cash, a bank transfer or a cheque; at most what is owed. It pays the invoices named first, then the oldest due.",
@@ -97691,6 +98056,175 @@
         "summary": "Delegate the household or the workers to an adult member",
         "tags": [
           "delegations"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/documents": {
+      "get": {
+        "operationId": "UnitDocumentsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UnitDocumentView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s documents",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "UnitDocumentsController_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUnitDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitDocumentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "File a document in the unit’s vault",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/documents/{id}": {
+      "get": {
+        "operationId": "UnitDocumentsController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitDocumentReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a unit document",
+        "tags": [
+          "units"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/documents/{id}/delete": {
+      "post": {
+        "operationId": "UnitDocumentsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a unit document of mine",
+        "tags": [
+          "units"
         ],
         "x-stability": "draft"
       }

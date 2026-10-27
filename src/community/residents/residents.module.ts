@@ -17,6 +17,11 @@ import { RegistrationPublicController } from './registration-public.controller';
 import { RegistrationStatusController } from './registration-status.controller';
 import { RegistrationStatusLinks } from './registration-status-links';
 import { RegistrationService } from './registration.service';
+import {
+  StaffUnitDocumentsController,
+  UnitDocumentsController,
+} from '../units/unit-documents.controller';
+import { UnitDocumentsService } from '../units/unit-documents.service';
 import { RegistrationsController } from './registrations.controller';
 import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsController } from './residents.controller';
@@ -33,6 +38,8 @@ import { ResidentsService } from './residents.service';
     UnitStatesController,
     ResidentsController,
     RegistrationsController,
+    UnitDocumentsController,
+    StaffUnitDocumentsController,
   ],
   imports: [
     AccountsModule,
@@ -50,6 +57,7 @@ import { ResidentsService } from './residents.service';
     RegistrationService,
     RegistrationStatusLinks,
     RegistrationDocumentsService,
+    UnitDocumentsService,
     CommunityExportSections,
   ],
   exports: [ResidentsService, RegistrationService],

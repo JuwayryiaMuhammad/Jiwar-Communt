@@ -153,6 +153,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'يوجد طلب حذف حساب في قائمة الانتظار.',
     },
   },
+  'unit_document.warranty_expiring': {
+    en: {
+      title: 'A warranty ends soon',
+      body: 'A warranty in your unit’s documents ends within 30 days.',
+    },
+    ar: {
+      title: 'ضمان يقترب من نهايته',
+      body: 'ينتهي أحد الضمانات في مستندات وحدتك خلال 30 يومًا.',
+    },
+  },
   'account.identity_change_decided': {
     en: {
       title: 'Your change request was decided',

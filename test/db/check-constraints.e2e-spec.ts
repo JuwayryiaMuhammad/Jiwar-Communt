@@ -2000,6 +2000,15 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
+  // A unit's vault (ADR 0062).
+  unit_documents_kind: {},
+  unit_documents_title: {},
+  unit_documents_visibility: {},
+  unit_documents_expiry_shape: {},
+  unit_documents_times: {
+    guarded:
+      'deleted_at and expiry_notified_at are tested IS NULL first; created_at is NOT NULL',
+  },
   // Proof of kinship (ADR 0062).
   tenant_settings_family_kinship_proof: {},
   household_invite_documents_kind: {},

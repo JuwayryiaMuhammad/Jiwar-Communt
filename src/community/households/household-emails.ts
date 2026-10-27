@@ -120,11 +120,13 @@ const SCOPES = {
     household: 'manage the household (invite, add children, remove members)',
     workers: 'manage domestic workers',
     permits: 'ask for works, moves and material exit permits',
+    documents: 'read and add the unit’s shared documents',
   },
   ar: {
     household: 'إدارة أفراد الأسرة (الدعوة، وإضافة الأطفال، والإزالة)',
     workers: 'إدارة العمالة المنزلية',
     permits: 'طلب تصاريح الأعمال والنقل وإخراج المواد',
+    documents: 'الاطلاع على مستندات الوحدة المشتركة وإضافتها',
   },
 } as const satisfies Record<Locale, Record<DelegationScope, string>>;
 

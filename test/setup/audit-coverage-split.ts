@@ -702,4 +702,6 @@ export const R11A_COVERAGE: readonly string[] = [
   'account.identity_change_approved',
   'account.identity_change_rejected',
   'account.name_changed',
+  'unit_document.added',
+  'unit_document.deleted',
 ];

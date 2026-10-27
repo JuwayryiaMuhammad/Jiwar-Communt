@@ -167,6 +167,7 @@ describe('audit catalog', () => {
         'governance_representative_matter',
         'governance_agenda_proposal',
         'governance_objection',
+        'unit_document',
       ]).toContain(def.target);
     }
   });

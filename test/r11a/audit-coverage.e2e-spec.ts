@@ -11,6 +11,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { fileHelpers } from '../setup/files';
 import { leakText } from '../setup/leak-text';
 import { loginViaOtp } from '../setup/login';
 
@@ -139,6 +140,55 @@ describe('Audit coverage — R11a', () => {
           field: 'phone',
           reasonCode: 'not_verified',
         },
+      });
+    });
+  });
+
+  describe('a unit vault', () => {
+    it('added and deleted: ids, kind, visibility and side; never the title', async () => {
+      const me = await someone();
+      const unitId = (
+        await x.asManager(c, () =>
+          x.prisma.tenant.unitOccupancy.findFirstOrThrow({
+            where: { accountId: me.id, status: 'active' },
+          }),
+        )
+      ).unitId;
+      const fileId = await fileHelpers(h).ready(
+        me.token,
+        'unit_document',
+        'application/pdf',
+      );
+      const title = 'Audited boiler manual';
+      const added = (
+        await post(`/units/${unitId}/documents`, me.token, {
+          fileId,
+          kind: 'manual',
+          title,
+          visibility: 'occupants',
+        }).expect(201)
+      ).body as { id: string };
+      expect(
+        await single('unit_document.added', added.id, [title]),
+      ).toMatchObject({
+        actorId: me.id,
+        targetType: 'unit_document',
+        metadata: {
+          unitId,
+          kind: 'manual',
+          visibility: 'occupants',
+          side: 'resident',
+        },
+      });
+      await post(
+        `/units/${unitId}/documents/${added.id}/delete`,
+        me.token,
+      ).expect(204);
+      expect(
+        await single('unit_document.deleted', added.id, [title]),
+      ).toMatchObject({
+        actorId: me.id,
+        metadata: { unitId, kind: 'manual', reasonCode: 'owner' },
       });
     });
   });

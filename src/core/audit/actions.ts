@@ -35,6 +35,10 @@ export const AUDIT_ACTIONS = {
   // An account's own contact and identity changes (ADR 0062). metadata:
   // field, requestId, reasonCode (rejected); the name as changed only.
   'account.contact_change_requested': { log: 'tenant', target: 'account' },
+  // A unit's vault (ADR 0062). metadata: unitId, kind, visibility, side
+  // (added), reasonCode (deleted); never the title.
+  'unit_document.added': { log: 'tenant', target: 'unit_document' },
+  'unit_document.deleted': { log: 'tenant', target: 'unit_document' },
   'account.identity_change_requested': { log: 'tenant', target: 'account' },
   'account.identity_change_cancelled': { log: 'tenant', target: 'account' },
   'account.identity_change_approved': { log: 'tenant', target: 'account' },

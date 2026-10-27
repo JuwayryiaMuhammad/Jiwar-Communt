@@ -385,6 +385,7 @@ describe('Registration documents and the status link', () => {
       const id = await register(c, request(linkToken, u.code));
       const token = await tokenOf(c, id);
       await readyDocument(token);
+      // Approved proofs join the vault (tested above); the others go.
       if (how === 'approve') await x.asManager(c, () => reg.approve(id));
       if (how === 'reject')
         await x.asManager(c, () =>
@@ -415,6 +416,30 @@ describe('Registration documents and the status link', () => {
       ['reject', 'rejected'],
       ['expire', 'expired'],
     ]);
+  });
+
+  it('approval moves the proofs into the new occupancy’s vault, kept (ADR 0062)', async () => {
+    const { c, linkToken } = await compound();
+    const u = await x.unit(c);
+    const id = await register(c, request(linkToken, u.code));
+    await readyDocument(await tokenOf(c, id));
+    const approved = await x.asManager(c, () => reg.approve(id));
+    const docs = await x.asManager(c, () =>
+      x.prisma.tenant.unitDocument.findMany({
+        where: { unitId: u.id },
+        include: { file: true },
+      }),
+    );
+    expect(docs).toEqual([
+      expect.objectContaining({
+        kind: 'capacity_proof',
+        visibility: 'private',
+        ownerOccupancyId: approved.occupancyId,
+        deletedAt: null,
+      }),
+    ]);
+    expect(docs[0].file.deletedAt).toBeNull();
+    expect(await liveFiles(c, id)).toBe(0);
   });
 
   it('the expiry counts from the latest correction or resubmission', async () => {

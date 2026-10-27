@@ -53,6 +53,7 @@ import { FilesService } from '../../core/files/files.service';
 import type { PresignedRead } from '../../core/files/object-storage';
 import { dbNow } from '../db-clock';
 import { COMMUNITY_NOTICES } from '../notices/community-notices';
+import { UnitDocumentsService } from '../units/unit-documents.service';
 import { lockUnits } from '../units/unit-lock';
 import { lockAccountShared } from './account-locks';
 import {
@@ -190,6 +191,7 @@ export class RegistrationService implements OnModuleInit {
     private readonly sweep: SweepRunner,
     private readonly statusLinks: RegistrationStatusLinks,
     private readonly files: FilesService,
+    private readonly unitDocuments: UnitDocumentsService,
   ) {
     this.pendingMs =
       config.get('REGISTRATION_PENDING_DAYS', { infer: true }) * 86_400_000;
@@ -485,6 +487,14 @@ export class RegistrationService implements OnModuleInit {
         resides: reg.resides,
       });
       const applied = await this.applyUnitDetails(tx, unit.id, reg);
+      // The registrant's proofs join the new occupancy's vault (ADR 0062);
+      // the decision below then has none of them left to delete.
+      const proofs = await this.unitDocuments.adoptRegistrationProofs(
+        tx,
+        reg.id,
+        unit.id,
+        occupancy.id,
+      );
       await this.tellRegistrant(
         tx,
         reg,
@@ -513,6 +523,7 @@ export class RegistrationService implements OnModuleInit {
           occupancyId: occupancy.id,
           linkedExisting: !!same,
           unitDetailsApplied: applied,
+          ...(proofs ? { proofs } : {}),
         },
       });
       return { accountId, occupancyId: occupancy.id };

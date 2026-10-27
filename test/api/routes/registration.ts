@@ -1,4 +1,5 @@
 import type { Row } from '../registry';
+import type { World } from '../world';
 
 const LIMIT = { min: 1, max: 100 };
 
@@ -172,4 +173,107 @@ export const REGISTRATION_ROUTES: Row[] = [
       fields: [{ field: 'reason', code: 'INVALID_TYPE' }],
     },
   },
+];
+
+// A unit's document vault (ADR 0062).
+const NEW_DOCUMENT_INVALID = {
+  body: { fileId: 'x', kind: 'deed', title: '', visibility: 'all' },
+  fields: [
+    { field: 'fileId', code: 'INVALID_UUID' },
+    {
+      field: 'kind',
+      code: 'INVALID_VALUE',
+      params: {
+        allowed: [
+          'warranty',
+          'manual',
+          'handover_report',
+          'utility',
+          'insurance',
+          'inspection_report',
+          'other',
+        ],
+      },
+    },
+    { field: 'title', code: 'INVALID_LENGTH', params: { min: 1, max: 120 } },
+    {
+      field: 'visibility',
+      code: 'INVALID_VALUE',
+      params: { allowed: ['private', 'owners', 'occupants'] },
+    },
+  ],
+};
+
+export const UNIT_DOCUMENT_ROUTES: Row[] = [
+  ...(['', '/staff'] as const).flatMap((side): Row[] => {
+    const as = side ? 'manager' : 'owner';
+    const denied = side ? 'owner' : 'guard';
+    const unitNotFound = {
+      params: (w: World) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    };
+    return [
+      {
+        method: 'GET',
+        path: `${side}/units/{unitId}/documents`,
+        auth: 'tenant',
+        as,
+        denied,
+        foreign: unitNotFound,
+        invalid: 'none',
+      },
+      {
+        method: 'GET',
+        path: `${side}/units/{unitId}/documents/{id}`,
+        auth: 'tenant',
+        as,
+        denied,
+        foreign: side
+          ? {
+              params: (w: World) => ({
+                unitId: w.a.homeUnitId,
+                id: w.bRegistrationId,
+              }),
+              code: 'UNIT_DOCUMENT_NOT_FOUND',
+            }
+          : unitNotFound,
+        invalid: 'none',
+        noStore: true,
+      },
+      {
+        method: 'POST',
+        path: `${side}/units/{unitId}/documents`,
+        auth: 'tenant',
+        as,
+        denied,
+        foreign: {
+          ...unitNotFound,
+          body: () => ({
+            fileId: '0192a5f0-1c2b-7d3e-8f40-0000000062a9',
+            kind: 'manual',
+            title: 'Manual',
+            visibility: 'occupants',
+          }),
+        },
+        invalid: NEW_DOCUMENT_INVALID,
+      },
+      {
+        method: 'POST',
+        path: `${side}/units/{unitId}/documents/{id}/delete`,
+        auth: 'tenant',
+        as,
+        denied,
+        foreign: side
+          ? {
+              params: (w: World) => ({
+                unitId: w.a.homeUnitId,
+                id: w.bRegistrationId,
+              }),
+              code: 'UNIT_DOCUMENT_NOT_FOUND',
+            }
+          : unitNotFound,
+        invalid: 'none',
+      },
+    ];
+  }),
 ];

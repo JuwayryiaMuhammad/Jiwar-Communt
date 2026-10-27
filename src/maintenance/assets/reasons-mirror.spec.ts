@@ -10,10 +10,13 @@ const quoted = (codes: readonly string[]) =>
   codes.map((c) => `'${c}'`).join(', ');
 
 describe('the asset register’s reason codes in the dashboards’ mirror (ADR 0064)', () => {
-  it.each(['assetOutOfService', 'assetRetire'] as const)(
-    '%s is the backend’s list',
-    (list) => {
-      expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
-    },
-  );
+  it.each([
+    'assetOutOfService',
+    'assetRetire',
+    'planDefer',
+    'planSkip',
+    'planDeactivate',
+  ] as const)('%s is the backend’s list', (list) => {
+    expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
+  });
 });

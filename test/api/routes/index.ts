@@ -2,6 +2,7 @@ import {
   ASSET_ROUTES,
   CHECKLIST_ROUTES,
   COMMON_AREA_ROUTES,
+  PLAN_ROUTES,
   WORK_ORDER_ROUTES,
 } from './assets';
 import { DECISION_APPEAL_ROUTES } from './decision-appeals';
@@ -344,4 +345,5 @@ export const ROUTES: Row[] = [
   ...ASSET_ROUTES,
   ...WORK_ORDER_ROUTES,
   ...CHECKLIST_ROUTES,
+  ...PLAN_ROUTES,
 ];

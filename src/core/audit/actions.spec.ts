@@ -180,6 +180,7 @@ describe('audit catalog', () => {
         'maintenance_document',
         'asset_import',
         'checklist',
+        'maintenance_plan',
       ]).toContain(def.target);
     }
   });

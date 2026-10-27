@@ -1,3 +1,4 @@
+import { PlansService } from '../../src/maintenance/plans/plans.service';
 import { ChecklistsService } from '../../src/maintenance/checklists/checklists.service';
 import { AssetsService } from '../../src/maintenance/assets/assets.service';
 import { DocumentsService } from '../../src/maintenance/assets/documents.service';
@@ -236,6 +237,9 @@ export interface World
   bAssetImportId: string;
   /** One of B's checklists (ADR 0064). */
   bChecklistId: string;
+  /** One of B's plans, and the occurrence it opened (ADR 0064). */
+  bPlanId: string;
+  bOccurrenceId: string;
   /** One of A's, for valid preventive requests. */
   aPreventiveServiceId: string;
   /** A device B's owner logged in from (ADR 0036). */
@@ -848,6 +852,29 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       items: [{ kind: 'check', labelAr: 'ت', labelEn: 'Leaks' }],
     }),
   );
+  const bPlan = await helpers.asManager(b, () =>
+    h.moduleRef.get(PlansService).create({
+      assetId: bAsset.asset.id,
+      title: 'World service',
+      trigger: 'calendar',
+      every: 1,
+      unit: 'month',
+      anchorOn: day(0),
+      leadDays: 0,
+    }),
+  );
+  const bOccurrenceTicket = await helpers.asManager(b, () =>
+    h.moduleRef
+      .get(TenantTx)
+      .withTenantTx((tx) =>
+        h.moduleRef.get(PlansService).generate(tx, b.tenantId, bPlan.plan.id),
+      ),
+  );
+  const bOccurrence = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.maintenancePlanOccurrence.findFirstOrThrow({
+      where: { ticketId: bOccurrenceTicket! },
+    }),
+  );
   const bAssetImport = await helpers.asManager(b, async () => {
     const files = fileHelpers(h);
     const sheet = Buffer.from(
@@ -1348,6 +1375,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bDocumentId: bDocument.document.id,
     bAssetImportId: bAssetImport.id,
     bChecklistId: bChecklist.template.id,
+    bPlanId: bPlan.plan.id,
+    bOccurrenceId: bOccurrence.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,
     bDeviceId: bDevice.id,

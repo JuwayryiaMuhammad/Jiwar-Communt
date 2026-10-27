@@ -22458,6 +22458,454 @@
           }
         },
         {
+          "name": "Move an open occurrence’s due date; `reasonCode` from `planDefer`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"toDate\": \"2026-01-01\",\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From `planDefer`. |\n| `toDate` | string (date) | yes | From today, within a year. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plan-occurrences",
+                ":id",
+                "defer"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plan-occurrences/:id/defer",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List plans, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "active",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans"
+            }
+          }
+        },
+        {
+          "name": "Plan an asset’s work",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"assetId\": \"\",\n  \"title\": \"\",\n  \"trigger\": \"calendar\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `anchorOn` | string (date) |  | The series’ first date, the compound’s day; a month’s step keeps its day (clamped). |\n| `assetId` | string (uuid) | yes | An active asset not in a unit. |\n| `basis` | `fixed` \\| `floating` |  | `fixed`: on the series’ own dates; `floating`: one interval after the last was done. |\n| `categoryId` | string (uuid) |  | An active category; the asset type’s by default. |\n| `checklistId` | string (uuid) |  | An active checklist for planned jobs. |\n| `every` | number |  |  |\n| `graceDays` | number |  | Days after it that still count as on time. |\n| `leadDays` | number |  | Days before the due date its work order opens. |\n| `metricKey` | string |  | A usage plan’s metric. |\n| `ownerId` | string (uuid) |  | Answers for its work orders (their reporter): an active dispatcher. The caller by default. |\n| `priority` | `normal` \\| `urgent` \\| `emergency` |  |  |\n| `title` | string | yes | What is done: its work orders’ words. |\n| `trigger` | `calendar` \\| `usage` | yes |  |\n| `unit` | `day` \\| `week` \\| `month` \\| `year` |  |  |\n| `usageInterval` | string |  | A usage plan’s interval (e.g. 500 run hours). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans"
+            }
+          }
+        },
+        {
+          "name": "Get a plan and its record",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a plan: a new series re-times its next due date",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"anchorOn\": \"2026-01-01\",\n  \"basis\": \"fixed\",\n  \"categoryId\": \"\",\n  \"checklistId\": \"\",\n  \"every\": 1,\n  \"graceDays\": 0,\n  \"leadDays\": 0,\n  \"ownerId\": \"\",\n  \"priority\": \"normal\",\n  \"title\": \"\",\n  \"unit\": \"day\",\n  \"usageInterval\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `anchorOn` | string (date) |  | The series’ first date, the compound’s day; a month’s step keeps its day (clamped). |\n| `basis` | `fixed` \\| `floating` |  | `fixed`: on the series’ own dates; `floating`: one interval after the last was done. |\n| `categoryId` | string (uuid) |  | An active category; the asset type’s by default. |\n| `checklistId` | string (uuid) |  | Null: no checklist. |\n| `every` | number |  |  |\n| `graceDays` | number |  | Days after it that still count as on time. |\n| `leadDays` | number |  | Days before the due date its work order opens. |\n| `ownerId` | string (uuid) |  | Answers for its work orders (their reporter): an active dispatcher. The caller by default. |\n| `priority` | `normal` \\| `urgent` \\| `emergency` |  |  |\n| `title` | string |  |  |\n| `unit` | `day` \\| `week` \\| `month` \\| `year` |  |  |\n| `usageInterval` | string |  | A usage plan’s interval (e.g. 500 run hours). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn a plan off; `reasonCode` from `planDeactivate`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans",
+                ":id",
+                "deactivate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans/:id/deactivate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Move the next due date; `reasonCode` from `planDefer`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"toDate\": \"2026-01-01\",\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From `planDefer`. |\n| `toDate` | string (date) | yes | From today, within a year. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans",
+                ":id",
+                "defer"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans/:id/defer",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "What happened to a plan, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans",
+                ":id",
+                "events"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans/:id/events",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A plan’s due dates, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans",
+                ":id",
+                "occurrences"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans/:id/occurrences",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn a plan on again, re-timed from today",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans",
+                ":id",
+                "reactivate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans/:id/reactivate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Skip the next due date; `reasonCode` from `planSkip`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plans",
+                ":id",
+                "skip"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plans/:id/skip",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List preventive services",
           "request": {
             "description": "**Responses:** 200",

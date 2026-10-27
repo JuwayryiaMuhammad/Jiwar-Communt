@@ -9782,3 +9782,82 @@ model AssetReading {
   @@index([tenantId, assetId, metricKey, occurredAt(sort: Desc), id(sort: Desc)], map: "asset_readings_metric_idx")
   @@map("asset_readings")
 }
+
+/// An asset's planned work (ADR 0064): on the compound's calendar or by
+/// usage. Its work orders go to its category, with its checklist.
+model MaintenancePlan {
+  id             String         @id @db.Uuid
+  tenantId       String         @map("tenant_id") @db.Uuid
+  assetId        String         @map("asset_id") @db.Uuid
+  checklistId    String?        @map("checklist_id") @db.Uuid
+  /// Staff's words: what is done (its work orders' description).
+  title          String
+  categoryId     String         @map("category_id") @db.Uuid
+  priority       TicketPriority @default(normal)
+  /// calendar, usage.
+  trigger        String
+  every          Int?           @db.SmallInt
+  /// day, week, month, year.
+  unit           String?
+  anchorOn       DateTime?      @map("anchor_on") @db.Date
+  /// fixed, floating.
+  basis          String?
+  /// A calendar plan's next due date; null while a floating one's is open.
+  nextDueOn      DateTime?      @map("next_due_on") @db.Date
+  metricKey      String?        @map("metric_key")
+  usageInterval  Decimal?       @map("usage_interval") @db.Decimal(14, 4)
+  /// The reading at the last service a usage plan counts from.
+  usageLastValue Decimal?       @map("usage_last_value") @db.Decimal(14, 4)
+  leadDays       Int            @default(7) @map("lead_days") @db.SmallInt
+  graceDays      Int            @default(3) @map("grace_days") @db.SmallInt
+  ownerId        String         @map("owner_account_id") @db.Uuid
+  active         Boolean        @default(true)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, assetId], map: "maintenance_plans_asset_idx")
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "maintenance_plans_list_idx")
+  @@map("maintenance_plans")
+}
+
+/// One due date of a plan (ADR 0064): its work order, and how it ended.
+model MaintenancePlanOccurrence {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  planId           String    @map("plan_id") @db.Uuid
+  originalDueOn    DateTime  @map("original_due_on") @db.Date
+  dueOn            DateTime  @map("due_on") @db.Date
+  /// open, done, skipped, cancelled.
+  status           String
+  ticketId         String?   @map("ticket_id") @db.Uuid
+  generatedAt      DateTime  @map("generated_at") @db.Timestamptz(3)
+  closedAt         DateTime? @map("closed_at") @db.Timestamptz(3)
+  doneOn           DateTime? @map("done_on") @db.Date
+  onTime           Boolean?  @map("on_time")
+  reasonCode       String?   @map("reason_code")
+  overdueAlertedAt DateTime? @map("overdue_alerted_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([planId, originalDueOn], map: "maintenance_plan_occurrences_once")
+  @@index([tenantId, planId, dueOn(sort: Desc)], map: "maintenance_plan_occurrences_plan_idx")
+  @@map("maintenance_plan_occurrences")
+}
+
+/// What happened to a plan (ADR 0064), append-only.
+model MaintenancePlanEvent {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  planId       String   @map("plan_id") @db.Uuid
+  occurrenceId String?  @map("occurrence_id") @db.Uuid
+  /// created, updated, deactivated, reactivated, deferred, skipped, generated, done, cancelled, overdue.
+  kind         String
+  fromValue    String?  @map("from_value")
+  toValue      String?  @map("to_value")
+  reasonCode   String?  @map("reason_code")
+  actorId      String?  @map("actor_account_id") @db.Uuid
+  occurredAt   DateTime @map("occurred_at") @db.Timestamptz(3)
+
+  @@index([tenantId, planId, occurredAt(sort: Desc), id(sort: Desc)], map: "maintenance_plan_events_plan_idx")
+  @@map("maintenance_plan_events")
+}

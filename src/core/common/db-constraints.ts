@@ -279,6 +279,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   checklist_answers_run_item_key: null,
   checklist_answer_photos_file_id_key: null,
   asset_readings_tenant_id_id_key: null,
+  // Plans (ADR 0064): an occurrence is opened under its plan's lock, after
+  // the date was read: a violation is a race, and names nothing.
+  maintenance_plans_tenant_id_id_key: null,
+  maintenance_plan_occurrences_tenant_id_id_key: null,
+  maintenance_plan_occurrences_once: null,
+  maintenance_plan_occurrences_ticket_key: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

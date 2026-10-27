@@ -677,7 +677,15 @@ export class AssetsService implements OnModuleInit {
         status: { in: [...UNFINISHED] },
       },
     });
-    return { openCorrective, overduePlanned: 0 };
+    const [{ overdue }] = await tx.$queryRaw<{ overdue: bigint }[]>`
+      SELECT count(*) AS overdue
+        FROM maintenance_plan_occurrences o
+        JOIN maintenance_plans p ON p.id = o.plan_id
+        JOIN tenant_settings s ON s.tenant_id = p.tenant_id
+       WHERE p.asset_id = ${assetId}::uuid AND o.status = 'open'
+         AND o.due_on + p.grace_days
+             < (clock_timestamp() AT TIME ZONE s.timezone)::date`;
+    return { openCorrective, overduePlanned: Number(overdue) };
   }
 
   private async requireBuildings(

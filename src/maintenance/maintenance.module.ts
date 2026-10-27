@@ -99,6 +99,12 @@ import {
 } from './checklists/checklists.controller';
 import { ChecklistsService } from './checklists/checklists.service';
 import { TicketChecklists } from './checklists/ticket-checklists.service';
+import {
+  PlanOccurrencesController,
+  PlansController,
+} from './plans/plans.controller';
+import { PlansService } from './plans/plans.service';
+import { PlanSweep } from './plans/plan-sweep';
 import { QuotesService } from './quotes/quotes.service';
 
 /**
@@ -141,6 +147,8 @@ import { QuotesService } from './quotes/quotes.service';
     ChecklistsController,
     TechnicianChecklistController,
     DispatchChecklistController,
+    PlansController,
+    PlanOccurrencesController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -191,6 +199,8 @@ import { QuotesService } from './quotes/quotes.service';
     ChecklistsService,
     ChecklistRuns,
     TicketChecklists,
+    PlansService,
+    PlanSweep,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

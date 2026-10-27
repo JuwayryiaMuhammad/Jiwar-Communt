@@ -607,3 +607,182 @@ export const CHECKLIST_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Maintenance plans (ADR 0064). */
+export const PLAN_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/maintenance/plans',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { active: 'yes' },
+      fields: [
+        {
+          field: 'active',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['true', 'false'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/plans',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      body: { every: 0, assetId: 'x', title: '', trigger: 'weekly' },
+      fields: [
+        { field: 'assetId', code: 'INVALID_UUID' },
+        {
+          field: 'title',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+        {
+          field: 'trigger',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['calendar', 'usage'] },
+        },
+        {
+          field: 'every',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 365 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/plans/{id}',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'family',
+    foreign: {
+      params: (w) => ({ id: w.bPlanId }),
+      code: 'MAINTENANCE_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/maintenance/plans/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bPlanId }),
+      body: () => ({ leadDays: 5 }),
+      code: 'MAINTENANCE_PLAN_NOT_FOUND',
+    },
+    invalid: {
+      body: { leadDays: 61 },
+      fields: [
+        {
+          field: 'leadDays',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 60 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/plans/{id}/deactivate',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bPlanId }),
+      body: () => ({ reasonCode: 'no_longer_needed' }),
+      code: 'MAINTENANCE_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/plans/{id}/reactivate',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bPlanId }),
+      code: 'MAINTENANCE_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/plans/{id}/defer',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bPlanId }),
+      body: () => ({ toDate: '2030-01-01', reasonCode: 'weather' }),
+      code: 'MAINTENANCE_PLAN_NOT_FOUND',
+    },
+    invalid: {
+      body: { toDate: 'soon' },
+      fields: [{ field: 'toDate', code: 'INVALID_FORMAT' }],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/plans/{id}/skip',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bPlanId }),
+      body: () => ({ reasonCode: 'not_needed' }),
+      code: 'MAINTENANCE_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/plans/{id}/occurrences',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPlanId }),
+      code: 'MAINTENANCE_PLAN_NOT_FOUND',
+    },
+    invalid: pageInvalid,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/plans/{id}/events',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPlanId }),
+      code: 'MAINTENANCE_PLAN_NOT_FOUND',
+    },
+    invalid: pageInvalid,
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/plan-occurrences/{id}/defer',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bOccurrenceId }),
+      body: () => ({ toDate: '2030-01-01', reasonCode: 'weather' }),
+      code: 'PLAN_OCCURRENCE_NOT_FOUND',
+    },
+    invalid: {
+      body: { toDate: 'soon' },
+      fields: [{ field: 'toDate', code: 'INVALID_FORMAT' }],
+    },
+  },
+];

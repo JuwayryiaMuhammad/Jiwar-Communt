@@ -12055,6 +12055,108 @@
         ],
         "type": "object"
       },
+      "CreatePlanDto": {
+        "properties": {
+          "anchorOn": {
+            "description": "The series’ first date, the compound’s day; a month’s step keeps its day (clamped).",
+            "format": "date",
+            "type": "string"
+          },
+          "assetId": {
+            "description": "An active asset not in a unit.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "basis": {
+            "description": "`fixed`: on the series’ own dates; `floating`: one interval after the last was done.",
+            "enum": [
+              "fixed",
+              "floating"
+            ],
+            "type": "string"
+          },
+          "categoryId": {
+            "description": "An active category; the asset type’s by default.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "checklistId": {
+            "description": "An active checklist for planned jobs.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "every": {
+            "maximum": 365,
+            "minimum": 1,
+            "type": "number"
+          },
+          "graceDays": {
+            "default": 3,
+            "description": "Days after it that still count as on time.",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "leadDays": {
+            "default": 7,
+            "description": "Days before the due date its work order opens.",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "metricKey": {
+            "description": "A usage plan’s metric.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "Answers for its work orders (their reporter): an active dispatcher. The caller by default.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "default": "normal"
+          },
+          "title": {
+            "description": "What is done: its work orders’ words.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "trigger": {
+            "enum": [
+              "calendar",
+              "usage"
+            ],
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "type": "string"
+          },
+          "usageInterval": {
+            "description": "A usage plan’s interval (e.g. 500 run hours).",
+            "pattern": "^(?!0+(\\.0{1,4})?$)\\d{1,10}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "title",
+          "trigger"
+        ],
+        "type": "object"
+      },
       "CreatePollDto": {
         "properties": {
           "audience": {
@@ -14083,6 +14185,24 @@
           }
         },
         "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "DeferPlanDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From `planDefer`.",
+            "type": "string"
+          },
+          "toDate": {
+            "description": "From today, within a year.",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "toDate",
           "reasonCode"
         ],
         "type": "object"
@@ -26089,6 +26209,192 @@
         ],
         "type": "object"
       },
+      "MaintenancePlanSummaryView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nextDueOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "trigger": {
+            "enum": [
+              "calendar",
+              "usage"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "title",
+          "trigger",
+          "nextDueOn",
+          "active"
+        ],
+        "type": "object"
+      },
+      "MaintenancePlanSummaryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MaintenancePlanSummaryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MaintenancePlanView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "anchorOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "basis": {
+            "enum": [
+              "fixed",
+              "floating"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "checklistId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "every": {
+            "nullable": true,
+            "type": "number"
+          },
+          "graceDays": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadDays": {
+            "type": "number"
+          },
+          "metricKey": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nextDueOn": {
+            "description": "The next due date not yet opened; null for a usage plan, or while a floating one’s is open.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "ownerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "stats": {
+            "$ref": "#/components/schemas/PlanStatsView"
+          },
+          "title": {
+            "type": "string"
+          },
+          "trigger": {
+            "enum": [
+              "calendar",
+              "usage"
+            ],
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "usageInterval": {
+            "nullable": true,
+            "type": "string"
+          },
+          "usageLastValue": {
+            "description": "The reading the next interval counts from.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "checklistId",
+          "title",
+          "categoryId",
+          "priority",
+          "trigger",
+          "every",
+          "unit",
+          "anchorOn",
+          "basis",
+          "nextDueOn",
+          "metricKey",
+          "usageInterval",
+          "usageLastValue",
+          "leadDays",
+          "graceDays",
+          "ownerId",
+          "active",
+          "stats",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "MaintenanceSettingsResponse": {
         "properties": {
           "autoCloseHours": {
@@ -33415,6 +33721,195 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PlanEventView": {
+        "properties": {
+          "actorId": {
+            "description": "Null: the system.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "fromValue": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "created",
+              "updated",
+              "deactivated",
+              "reactivated",
+              "deferred",
+              "skipped",
+              "generated",
+              "done",
+              "cancelled",
+              "overdue"
+            ],
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "occurrenceId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "toValue": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "occurrenceId",
+          "kind",
+          "fromValue",
+          "toValue",
+          "reasonCode",
+          "actorId",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "PlanEventViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PlanEventView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PlanOccurrenceView": {
+        "properties": {
+          "doneOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "Moved when deferred.",
+            "format": "date",
+            "type": "string"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "onTime": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "originalDueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "done",
+              "skipped",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "planId",
+          "originalDueOn",
+          "dueOn",
+          "status",
+          "ticketId",
+          "doneOn",
+          "onTime",
+          "reasonCode",
+          "generatedAt"
+        ],
+        "type": "object"
+      },
+      "PlanOccurrenceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PlanOccurrenceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PlanStatsView": {
+        "properties": {
+          "done": {
+            "type": "number"
+          },
+          "onTime": {
+            "description": "Done by the due date plus the grace.",
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "overdue": {
+            "description": "Open past the grace.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "done",
+          "onTime",
+          "overdue",
+          "open"
         ],
         "type": "object"
       },
@@ -54238,6 +54733,86 @@
         },
         "type": "object"
       },
+      "UpdatePlanDto": {
+        "properties": {
+          "anchorOn": {
+            "description": "The series’ first date, the compound’s day; a month’s step keeps its day (clamped).",
+            "format": "date",
+            "type": "string"
+          },
+          "basis": {
+            "description": "`fixed`: on the series’ own dates; `floating`: one interval after the last was done.",
+            "enum": [
+              "fixed",
+              "floating"
+            ],
+            "type": "string"
+          },
+          "categoryId": {
+            "description": "An active category; the asset type’s by default.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "checklistId": {
+            "description": "Null: no checklist.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "every": {
+            "maximum": 365,
+            "minimum": 1,
+            "type": "number"
+          },
+          "graceDays": {
+            "default": 3,
+            "description": "Days after it that still count as on time.",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "leadDays": {
+            "default": 7,
+            "description": "Days before the due date its work order opens.",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "ownerId": {
+            "description": "Answers for its work orders (their reporter): an active dispatcher. The caller by default.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "default": "normal"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "type": "string"
+          },
+          "usageInterval": {
+            "description": "A usage plan’s interval (e.g. 500 run hours).",
+            "pattern": "^(?!0+(\\.0{1,4})?$)\\d{1,10}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdatePollDto": {
         "properties": {
           "audience": {
@@ -71278,6 +71853,543 @@
           }
         ],
         "summary": "Remove a document (its file is deleted)",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plan-occurrences/{id}/defer": {
+      "post": {
+        "operationId": "PlanOccurrencesController_defer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeferPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanOccurrenceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move an open occurrence’s due date; `reasonCode` from `planDefer`",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plans": {
+      "get": {
+        "operationId": "PlansController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePlanSummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List plans, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "PlansController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Plan an asset’s work",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plans/{id}": {
+      "get": {
+        "operationId": "PlansController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a plan and its record",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "PlansController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a plan: a new series re-times its next due date",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plans/{id}/deactivate": {
+      "post": {
+        "operationId": "PlansController_deactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn a plan off; `reasonCode` from `planDeactivate`",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plans/{id}/defer": {
+      "post": {
+        "operationId": "PlansController_defer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeferPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move the next due date; `reasonCode` from `planDefer`",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plans/{id}/events": {
+      "get": {
+        "operationId": "PlansController_events",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanEventViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What happened to a plan, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plans/{id}/occurrences": {
+      "get": {
+        "operationId": "PlansController_occurrences",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanOccurrenceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A plan’s due dates, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plans/{id}/reactivate": {
+      "post": {
+        "operationId": "PlansController_reactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn a plan on again, re-timed from today",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plans/{id}/skip": {
+      "post": {
+        "operationId": "PlansController_skip",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Skip the next due date; `reasonCode` from `planSkip`",
         "tags": [
           "maintenance"
         ],

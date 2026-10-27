@@ -2322,6 +2322,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ينتهي ضمان الأصل {assetRef} يوم {endsOn}.',
     },
   },
+  'maintenance.plan_overdue': {
+    en: {
+      title: 'Planned work overdue',
+      body: 'The planned work on asset {assetRef}, due {dueOn}, is overdue.',
+    },
+    ar: {
+      title: 'صيانة مخططة متأخرة',
+      body: 'تأخرت الصيانة المخططة للأصل {assetRef} المستحقة يوم {dueOn}.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

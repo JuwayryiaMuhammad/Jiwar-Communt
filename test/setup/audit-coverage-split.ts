@@ -745,4 +745,11 @@ export const ASSETS_COVERAGE: readonly string[] = [
   'checklist.created',
   'checklist.updated',
   'checklist.items_replaced',
+  'maintenance_plan.created',
+  'maintenance_plan.updated',
+  'maintenance_plan.deactivated',
+  'maintenance_plan.reactivated',
+  'maintenance_plan.deferred',
+  'maintenance_plan.skipped',
+  'maintenance_plan.occurrence_deferred',
 ];

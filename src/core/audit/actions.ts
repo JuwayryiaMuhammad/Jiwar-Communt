@@ -1785,6 +1785,28 @@ export const AUDIT_ACTIONS = {
     sensitive: ['nameAr', 'nameEn'],
   },
   'checklist.items_replaced': { log: 'tenant', target: 'checklist' },
+  // Maintenance plans (ADR 0064): codes, days, dates and the owner; the
+  // title as { changed: true }. metadata: reasonCode, the date skipped,
+  // the occurrence deferred. Opening its work orders is the system's
+  // (ticket.work_order_opened), and its history the plan's own.
+  'maintenance_plan.created': {
+    log: 'tenant',
+    target: 'maintenance_plan',
+    sensitive: ['title'],
+  },
+  'maintenance_plan.updated': {
+    log: 'tenant',
+    target: 'maintenance_plan',
+    sensitive: ['title'],
+  },
+  'maintenance_plan.deactivated': { log: 'tenant', target: 'maintenance_plan' },
+  'maintenance_plan.reactivated': { log: 'tenant', target: 'maintenance_plan' },
+  'maintenance_plan.deferred': { log: 'tenant', target: 'maintenance_plan' },
+  'maintenance_plan.skipped': { log: 'tenant', target: 'maintenance_plan' },
+  'maintenance_plan.occurrence_deferred': {
+    log: 'tenant',
+    target: 'maintenance_plan',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

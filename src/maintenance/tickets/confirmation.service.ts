@@ -45,6 +45,9 @@ const SWEEP_BATCH = 500;
  * the reporter's message in the thread, where the technician reads it and
  * an erasure finds it.
  */
+/** Runs as a ticket is cancelled, under its lock (ADR 0064). */
+export type CancelHook = (tx: TenantTxClient, ticket: Ticket) => Promise<void>;
+
 @Injectable()
 export class ConfirmationService implements OnModuleInit {
   constructor(
@@ -62,6 +65,16 @@ export class ConfirmationService implements OnModuleInit {
 
   onModuleInit(): void {
     this.sweep.register(AUTO_CLOSE_SWEEP, (now) => this.autoClose(now));
+  }
+
+  private readonly cancelling: CancelHook[] = [];
+
+  /**
+   * What happens as a ticket is cancelled, in the same transaction under
+   * its lock (ADR 0064): a plan's occurrence ends.
+   */
+  onCancelling(hook: CancelHook): void {
+    this.cancelling.push(hook);
   }
 
   /** The reporter or creator, before the work starts. */
@@ -314,6 +327,7 @@ export class ConfirmationService implements OnModuleInit {
     by: 'reporter' | 'dispatcher',
   ): Promise<void> {
     const me = this.ctx.accountId;
+    for (const hook of this.cancelling) await hook(tx, ticket);
     await tx.ticket.update({
       where: { id: ticket.id },
       data: {

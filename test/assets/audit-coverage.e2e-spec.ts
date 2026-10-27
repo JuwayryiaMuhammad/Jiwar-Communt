@@ -1,7 +1,10 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { PLAN_SWEEP } from '../../src/maintenance/plans/plan-sweep';
 import { auditReaders } from '../setup/audit';
+import { day } from '../setup/compound-clock';
 import { fileHelpers } from '../setup/files';
 import { ASSETS_COVERAGE } from '../setup/audit-coverage-split';
 import { assetHelpers, type AssetSetUp } from '../setup/assets';
@@ -459,6 +462,138 @@ describe('Audit coverage — assets, plans and inspections', () => {
         metadata: { items: 2 },
       });
       for (const row of [created, updated, replaced])
+        expect(JSON.stringify(row)).not.toMatch(/AUDIT-/);
+    });
+  });
+
+  describe('plans', () => {
+    it('maintenance_plan.* — codes, dates, reasons; never the title', async () => {
+      const assetId = await a.asset(s);
+      const created = (
+        await a
+          .http('post', '/maintenance/plans', s.manager.token, {
+            assetId,
+            title: 'AUDIT-service the pump',
+            trigger: 'calendar',
+            every: 1,
+            unit: 'month',
+            anchorOn: day(40),
+          })
+          .expect(201)
+      ).body as { id: string; nextDueOn: string };
+      const one = await single(s.c, 'maintenance_plan.created', created.id);
+      expect(one.changes).toMatchObject({
+        assetId: { from: null, to: assetId },
+        trigger: { from: null, to: 'calendar' },
+        anchorOn: { from: null, to: day(40) },
+        title: { changed: true },
+      });
+      await a
+        .http('patch', `/maintenance/plans/${created.id}`, s.manager.token, {
+          title: 'AUDIT-renamed',
+          leadDays: 3,
+        })
+        .expect(200);
+      const updated = await single(s.c, 'maintenance_plan.updated', created.id);
+      expect(updated.changes).toEqual({
+        title: { changed: true },
+        leadDays: { from: 7, to: 3 },
+      });
+      await a
+        .http(
+          'post',
+          `/maintenance/plans/${created.id}/defer`,
+          s.manager.token,
+          {
+            toDate: day(45),
+            reasonCode: 'vendor_delay',
+          },
+        )
+        .expect(201);
+      const deferred = await single(
+        s.c,
+        'maintenance_plan.deferred',
+        created.id,
+      );
+      expect(deferred).toMatchObject({
+        changes: { nextDueOn: { from: day(40), to: day(45) } },
+        metadata: { reasonCode: 'vendor_delay' },
+      });
+      await a
+        .http(
+          'post',
+          `/maintenance/plans/${created.id}/skip`,
+          s.manager.token,
+          { reasonCode: 'covered_by_other_work' },
+        )
+        .expect(201);
+      const skipped = await single(s.c, 'maintenance_plan.skipped', created.id);
+      expect(skipped.metadata).toEqual({
+        reasonCode: 'covered_by_other_work',
+        dueOn: day(45),
+      });
+      await a
+        .http(
+          'post',
+          `/maintenance/plans/${created.id}/deactivate`,
+          s.manager.token,
+          { reasonCode: 'contract_ended' },
+        )
+        .expect(201);
+      const off = await single(s.c, 'maintenance_plan.deactivated', created.id);
+      expect(off.metadata).toEqual({ reasonCode: 'contract_ended' });
+      await a
+        .http(
+          'post',
+          `/maintenance/plans/${created.id}/reactivate`,
+          s.manager.token,
+        )
+        .expect(201);
+      const on = await single(s.c, 'maintenance_plan.reactivated', created.id);
+
+      const now = (
+        await a
+          .http('post', '/maintenance/plans', s.manager.token, {
+            assetId,
+            title: 'AUDIT-now',
+            trigger: 'calendar',
+            every: 1,
+            unit: 'week',
+            anchorOn: day(0),
+            leadDays: 0,
+          })
+          .expect(201)
+      ).body as { id: string };
+      await h.moduleRef.get(SweepRunner).run(PLAN_SWEEP, new Date());
+      const occurrence = await a.inTenant(s.c, (tx) =>
+        tx.maintenancePlanOccurrence.findFirstOrThrow({
+          where: { planId: now.id },
+        }),
+      );
+      await a
+        .http(
+          'post',
+          `/maintenance/plan-occurrences/${occurrence.id}/defer`,
+          s.manager.token,
+          {
+            toDate: day(3),
+            reasonCode: 'access_unavailable',
+          },
+        )
+        .expect(201);
+      const moved = await single(
+        s.c,
+        'maintenance_plan.occurrence_deferred',
+        now.id,
+      );
+      expect(moved).toMatchObject({
+        changes: { dueOn: { from: day(0), to: day(3) } },
+        metadata: {
+          occurrenceId: occurrence.id,
+          reasonCode: 'access_unavailable',
+        },
+      });
+      for (const row of [one, updated, deferred, skipped, off, on, moved])
         expect(JSON.stringify(row)).not.toMatch(/AUDIT-/);
     });
   });

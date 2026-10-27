@@ -1378,6 +1378,20 @@ export const ErrorCode = {
   CHECKLIST_PHOTO_LIMIT_REACHED: 'CHECKLIST_PHOTO_LIMIT_REACHED',
   /** The ticket's checklist is open: submit it before completing (409). */
   CHECKLIST_NOT_SUBMITTED: 'CHECKLIST_NOT_SUBMITTED',
+  MAINTENANCE_PLAN_NOT_FOUND: 'MAINTENANCE_PLAN_NOT_FOUND',
+  PLAN_OCCURRENCE_NOT_FOUND: 'PLAN_OCCURRENCE_NOT_FOUND',
+  /** An asset in a unit takes no plan: its household books check-ups (409). */
+  PLAN_FOR_UNIT_ASSET: 'PLAN_FOR_UNIT_ASSET',
+  /** The plan is off: nothing to defer, skip or change (409). */
+  MAINTENANCE_PLAN_INACTIVE: 'MAINTENANCE_PLAN_INACTIVE',
+  /** The plan is on already (409). */
+  MAINTENANCE_PLAN_ACTIVE: 'MAINTENANCE_PLAN_ACTIVE',
+  /** A usage plan has no due date to defer or skip (409). */
+  MAINTENANCE_PLAN_BY_USAGE: 'MAINTENANCE_PLAN_BY_USAGE',
+  /** A floating plan's occurrence is open: defer that one instead (409). */
+  PLAN_OCCURRENCE_OPEN: 'PLAN_OCCURRENCE_OPEN',
+  /** The occurrence has ended; params.status (409). */
+  PLAN_OCCURRENCE_CLOSED: 'PLAN_OCCURRENCE_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1613,6 +1627,8 @@ export const FieldErrorCode = {
   COMMON_AREA_NOT_AVAILABLE: 'COMMON_AREA_NOT_AVAILABLE',
   /** Not an active checklist of this compound, of the right purpose. */
   CHECKLIST_NOT_AVAILABLE: 'CHECKLIST_NOT_AVAILABLE',
+  /** Not an active account holding tickets.dispatch: it answers for the work orders. */
+  PLAN_OWNER_NOT_ELIGIBLE: 'PLAN_OWNER_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

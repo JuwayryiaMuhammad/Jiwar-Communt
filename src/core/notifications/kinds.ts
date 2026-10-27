@@ -2158,6 +2158,14 @@ export const NOTIFICATION_KINDS = {
     target: 'asset',
     params: { assetRef: {}, endsOn: {} },
   },
+  /** A plan's work is past its due date and grace (the owner and dispatch). */
+  'maintenance.plan_overdue': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'maintenance_plan',
+    params: { assetRef: {}, dueOn: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

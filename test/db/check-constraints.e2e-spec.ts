@@ -575,6 +575,21 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'unit IS NULL is tested first; its length runs only on a value',
   },
   asset_readings_source_shape: {},
+  // Maintenance plans (ADR 0064).
+  maintenance_plans_title_length: {},
+  maintenance_plans_days_range: {},
+  maintenance_plans_trigger_shape: {
+    guarded:
+      'each branch tests every nullable column IS NOT NULL before it compares it, and the others IS NULL',
+  },
+  maintenance_plan_occurrences_state_shape: {
+    guarded: 'reason_code IS NOT NULL is required before its list is tested',
+  },
+  maintenance_plan_events_kind_known: {},
+  maintenance_plan_events_values_length: {
+    guarded:
+      'each value IS NULL is tested first; its length runs only on a value',
+  },
   // The compound's work orders (ADR 0064).
   tickets_origin_known: {},
   tickets_origin_shape: {},

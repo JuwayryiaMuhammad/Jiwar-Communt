@@ -5280,6 +5280,161 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/plan-occurrences/{id}/defer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move an open occurrence’s due date; `reasonCode` from `planDefer` */
+        post: operations["PlanOccurrencesController_defer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List plans, newest first */
+        get: operations["PlansController_list"];
+        put?: never;
+        /** Plan an asset’s work */
+        post: operations["PlansController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a plan and its record */
+        get: operations["PlansController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a plan: a new series re-times its next due date */
+        patch: operations["PlansController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/plans/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a plan off; `reasonCode` from `planDeactivate` */
+        post: operations["PlansController_deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plans/{id}/defer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move the next due date; `reasonCode` from `planDefer` */
+        post: operations["PlansController_defer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plans/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What happened to a plan, newest first */
+        get: operations["PlansController_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plans/{id}/occurrences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A plan’s due dates, newest first */
+        get: operations["PlansController_occurrences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plans/{id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a plan on again, re-timed from today */
+        post: operations["PlansController_reactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plans/{id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Skip the next due date; `reasonCode` from `planSkip` */
+        post: operations["PlansController_skip"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/preventive-services": {
         parameters: {
             query?: never;
@@ -21082,6 +21237,61 @@ export interface components {
             /** @description Lower first; 0 by default. */
             position?: number;
         };
+        CreatePlanDto: {
+            /**
+             * Format: date
+             * @description The series’ first date, the compound’s day; a month’s step keeps its day (clamped).
+             */
+            anchorOn?: string;
+            /**
+             * Format: uuid
+             * @description An active asset not in a unit.
+             */
+            assetId: string;
+            /**
+             * @description `fixed`: on the series’ own dates; `floating`: one interval after the last was done.
+             * @enum {string}
+             */
+            basis?: "fixed" | "floating";
+            /**
+             * Format: uuid
+             * @description An active category; the asset type’s by default.
+             */
+            categoryId?: string;
+            /**
+             * Format: uuid
+             * @description An active checklist for planned jobs.
+             */
+            checklistId?: string;
+            every?: number;
+            /**
+             * @description Days after it that still count as on time.
+             * @default 3
+             */
+            graceDays: number;
+            /**
+             * @description Days before the due date its work order opens.
+             * @default 7
+             */
+            leadDays: number;
+            /** @description A usage plan’s metric. */
+            metricKey?: string;
+            /**
+             * Format: uuid
+             * @description Answers for its work orders (their reporter): an active dispatcher. The caller by default.
+             */
+            ownerId?: string;
+            /** @default normal */
+            priority: components["schemas"]["TicketPriority"];
+            /** @description What is done: its work orders’ words. */
+            title: string;
+            /** @enum {string} */
+            trigger: "calendar" | "usage";
+            /** @enum {string} */
+            unit?: "day" | "week" | "month" | "year";
+            /** @description A usage plan’s interval (e.g. 500 run hours). */
+            usageInterval?: string;
+        };
         CreatePollDto: {
             /** @description Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. */
             audience?: components["schemas"]["AudienceDto"];
@@ -21823,6 +22033,15 @@ export interface components {
         DeclinePartnerRequestDto: {
             /** @description From the closed list `partnerRequestDecline`. */
             reasonCode: string;
+        };
+        DeferPlanDto: {
+            /** @description From `planDefer`. */
+            reasonCode: string;
+            /**
+             * Format: date
+             * @description From today, within a year.
+             */
+            toDate: string;
         };
         DeferredActionResponse: {
             /** Format: date-time */
@@ -25477,6 +25696,60 @@ export interface components {
             data: components["schemas"]["MaintenanceDocumentView"][];
             nextCursor: string | null;
         };
+        MaintenancePlanSummaryView: {
+            active: boolean;
+            /** Format: uuid */
+            assetId: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            nextDueOn: string | null;
+            title: string;
+            /** @enum {string} */
+            trigger: "calendar" | "usage";
+        };
+        MaintenancePlanSummaryViewList: {
+            data: components["schemas"]["MaintenancePlanSummaryView"][];
+            nextCursor: string | null;
+        };
+        MaintenancePlanView: {
+            active: boolean;
+            /** Format: date */
+            anchorOn: string | null;
+            /** Format: uuid */
+            assetId: string;
+            /** @enum {string|null} */
+            basis: "fixed" | "floating" | null;
+            /** Format: uuid */
+            categoryId: string;
+            /** Format: uuid */
+            checklistId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            every: number | null;
+            graceDays: number;
+            /** Format: uuid */
+            id: string;
+            leadDays: number;
+            metricKey: string | null;
+            /**
+             * Format: date
+             * @description The next due date not yet opened; null for a usage plan, or while a floating one’s is open.
+             */
+            nextDueOn: string | null;
+            /** Format: uuid */
+            ownerId: string;
+            priority: components["schemas"]["TicketPriority"];
+            stats: components["schemas"]["PlanStatsView"];
+            title: string;
+            /** @enum {string} */
+            trigger: "calendar" | "usage";
+            /** @enum {string|null} */
+            unit: "day" | "week" | "month" | "year" | null;
+            usageInterval: string | null;
+            /** @description The reading the next interval counts from. */
+            usageLastValue: string | null;
+        };
         MaintenanceSettingsResponse: {
             /** @description Hours a completed ticket waits for the reporter. */
             autoCloseHours: number;
@@ -27825,6 +28098,63 @@ export interface components {
         PlaceViewList: {
             data: components["schemas"]["PlaceView"][];
             nextCursor: string | null;
+        };
+        PlanEventView: {
+            /**
+             * Format: uuid
+             * @description Null: the system.
+             */
+            actorId: string | null;
+            fromValue: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "created" | "updated" | "deactivated" | "reactivated" | "deferred" | "skipped" | "generated" | "done" | "cancelled" | "overdue";
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: uuid */
+            occurrenceId: string | null;
+            reasonCode: string | null;
+            toValue: string | null;
+        };
+        PlanEventViewList: {
+            data: components["schemas"]["PlanEventView"][];
+            nextCursor: string | null;
+        };
+        PlanOccurrenceView: {
+            /** Format: date */
+            doneOn: string | null;
+            /**
+             * Format: date
+             * @description Moved when deferred.
+             */
+            dueOn: string;
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            id: string;
+            onTime: boolean | null;
+            /** Format: date */
+            originalDueOn: string;
+            /** Format: uuid */
+            planId: string;
+            reasonCode: string | null;
+            /** @enum {string} */
+            status: "open" | "done" | "skipped" | "cancelled";
+            /** Format: uuid */
+            ticketId: string | null;
+        };
+        PlanOccurrenceViewList: {
+            data: components["schemas"]["PlanOccurrenceView"][];
+            nextCursor: string | null;
+        };
+        PlanStatsView: {
+            done: number;
+            /** @description Done by the due date plus the grace. */
+            onTime: number;
+            open: number;
+            /** @description Open past the grace. */
+            overdue: number;
         };
         PlateBlocklistView: {
             /** Format: uuid */
@@ -34045,6 +34375,51 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
             position?: number;
+        };
+        UpdatePlanDto: {
+            /**
+             * Format: date
+             * @description The series’ first date, the compound’s day; a month’s step keeps its day (clamped).
+             */
+            anchorOn?: string;
+            /**
+             * @description `fixed`: on the series’ own dates; `floating`: one interval after the last was done.
+             * @enum {string}
+             */
+            basis?: "fixed" | "floating";
+            /**
+             * Format: uuid
+             * @description An active category; the asset type’s by default.
+             */
+            categoryId?: string;
+            /**
+             * Format: uuid
+             * @description Null: no checklist.
+             */
+            checklistId?: string | null;
+            every?: number;
+            /**
+             * @description Days after it that still count as on time.
+             * @default 3
+             */
+            graceDays: number;
+            /**
+             * @description Days before the due date its work order opens.
+             * @default 7
+             */
+            leadDays: number;
+            /**
+             * Format: uuid
+             * @description Answers for its work orders (their reporter): an active dispatcher. The caller by default.
+             */
+            ownerId?: string;
+            /** @default normal */
+            priority: components["schemas"]["TicketPriority"];
+            title?: string;
+            /** @enum {string} */
+            unit?: "day" | "week" | "month" | "year";
+            /** @description A usage plan’s interval (e.g. 500 run hours). */
+            usageInterval?: string;
         };
         UpdatePollDto: {
             /** @description Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. */
@@ -42524,6 +42899,274 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    PlanOccurrencesController_defer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeferPlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOccurrenceView"];
+                };
+            };
+        };
+    };
+    PlansController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                assetId?: string;
+                active?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePlanSummaryViewList"];
+                };
+            };
+        };
+    };
+    PlansController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePlanView"];
+                };
+            };
+        };
+    };
+    PlansController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePlanView"];
+                };
+            };
+        };
+    };
+    PlansController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePlanDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePlanView"];
+                };
+            };
+        };
+    };
+    PlansController_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePlanView"];
+                };
+            };
+        };
+    };
+    PlansController_defer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeferPlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePlanView"];
+                };
+            };
+        };
+    };
+    PlansController_events: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanEventViewList"];
+                };
+            };
+        };
+    };
+    PlansController_occurrences: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOccurrenceViewList"];
+                };
+            };
+        };
+    };
+    PlansController_reactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePlanView"];
+                };
+            };
+        };
+    };
+    PlansController_skip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePlanView"];
+                };
             };
         };
     };

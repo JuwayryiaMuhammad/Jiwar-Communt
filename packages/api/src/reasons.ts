@@ -184,6 +184,9 @@ export const REASON_CODES = {
   // The asset register (ADR 0064).
   assetOutOfService: ['breakdown', 'awaiting_parts', 'safety', 'scheduled_works', 'other'],
   assetRetire: ['replaced', 'disposed', 'sold', 'transferred', 'created_in_error', 'other'],
+  planDefer: ['access_unavailable', 'parts_unavailable', 'weather', 'season', 'vendor_delay', 'other'],
+  planSkip: ['not_needed', 'asset_out_of_service', 'covered_by_other_work', 'other'],
+  planDeactivate: ['asset_replaced', 'no_longer_needed', 'contract_ended', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

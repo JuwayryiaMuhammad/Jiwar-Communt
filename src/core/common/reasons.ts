@@ -779,4 +779,28 @@ export const REASON_CODES = {
     'created_in_error',
     'other',
   ],
+  // Maintenance plans (ADR 0064): why a due date moves, why one is skipped;
+  // and the system's own reasons an occurrence ends (the migration's CHECK
+  // repeats the last two).
+  planDefer: [
+    'access_unavailable',
+    'parts_unavailable',
+    'weather',
+    'season',
+    'vendor_delay',
+    'other',
+  ],
+  planSkip: [
+    'not_needed',
+    'asset_out_of_service',
+    'covered_by_other_work',
+    'other',
+  ],
+  planOccurrenceSystem: ['ticket_cancelled', 'plan_ended'],
+  planDeactivate: [
+    'asset_replaced',
+    'no_longer_needed',
+    'contract_ended',
+    'other',
+  ],
 } as const;

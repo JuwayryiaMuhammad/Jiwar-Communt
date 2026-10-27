@@ -1637,6 +1637,9 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0064: a ticket's checklist (none on this one: not found).
       '/technician/tickets/{id}/checklist': ticket.id,
       '/maintenance/tickets/{id}/checklist': ticket.id,
+      '/maintenance/plans/{id}': w.bPlanId,
+      '/maintenance/plans/{id}/occurrences': w.bPlanId,
+      '/maintenance/plans/{id}/events': w.bPlanId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

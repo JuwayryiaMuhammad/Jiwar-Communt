@@ -72,6 +72,8 @@ export const REASON_CODES = {
   ticketCancel: ['duplicate', 'resolved_without_visit', 'reporter_request', 'invalid', 'other'],
   ticketQuoteDecline: ['too_expensive', 'not_needed', 'own_arrangement', 'other'],
   ticketCategory: ['misclassified', 'reassessed', 'other'],
+  // Sending a completed job back (ADR 0032; ADR 0064's work orders too).
+  ticketReject: ['not_fixed', 'poor_quality', 'damage_caused', 'incomplete', 'other'],
   availabilityChange: ['sick', 'leave', 'training', 'other'],
   visitChange: ['schedule_conflict', 'resident_request', 'technician_request', 'parts_unavailable', 'other'],
   // Requests to the management (ADR 0039): codes only, never text.

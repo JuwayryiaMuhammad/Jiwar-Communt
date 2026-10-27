@@ -295,6 +295,12 @@ const TEXT: Record<string, (p: P) => string> = {
   'booking.reminder': () => 'Your booking starts in about two hours',
   'booking_suspension.started': () => 'Your unit cannot make new bookings for a while',
   'club_membership.expiring': () => 'Your club membership ends within a week',
+  // The asset register, plans and inspections (ADR 0064).
+  'asset.warranty_expiring': (p) => `The warranty of asset ${p.assetRef} ends on ${p.endsOn}`,
+  'maintenance.plan_overdue': (p) => `Planned work on asset ${p.assetRef}, due ${p.dueOn}, is overdue`,
+  'inspection.assigned': (p) => `An inspection of ${p.targetRef} is yours, due ${p.dueOn}`,
+  'inspection.overdue': (p) => `The inspection of ${p.targetRef}, due ${p.dueOn}, is overdue`,
+  'asset.replacement_recommended': (p) => `A technician recommends replacing asset ${p.assetRef}`,
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -309,6 +315,11 @@ export function notificationText(n: NotificationLike): string {
  */
 export function notificationHref(n: NotificationLike, can: (permission: string) => boolean): string | null {
   if (n.targetType === 'ticket' && n.targetId) return can('tickets.dispatch') ? `/maintenance/${n.targetId}` : null;
+  // The asset register (ADR 0064).
+  if (n.targetType === 'asset' && n.targetId) return can('assets.read') ? `/assets/${n.targetId}` : null;
+  if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
+  if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
+  if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;
   if (n.targetType === 'parcel' && n.targetId) return can('parcels.manage') ? `/parcels?parcel=${n.targetId}` : null;
   if (n.targetType === 'management_request' && n.targetId)
     return can('requests.handle') ? `/management-requests/${n.targetId}` : null;

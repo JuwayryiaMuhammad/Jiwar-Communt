@@ -57,6 +57,13 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
     maxBytes: 10 * 1024 * 1024,
     what: 'An image or a PDF, up to 10 MB.',
   },
+  // The asset register (ADR 0064): a plan or a manual, and a sheet to import.
+  asset_document: {
+    types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    maxBytes: 10 * 1024 * 1024,
+    what: 'An image or a PDF, up to 10 MB.',
+  },
+  data_import: { types: ['text/csv'], maxBytes: 1024 * 1024, what: 'A CSV file (UTF-8), up to 1 MB.' },
 };
 
 /**

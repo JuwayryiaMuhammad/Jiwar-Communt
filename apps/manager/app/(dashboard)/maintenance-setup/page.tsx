@@ -2,7 +2,9 @@
 
 import { ForbiddenState, PageHeader, Segmented } from '@jiwar/ui';
 import { Suspense } from 'react';
+import { AssetTypes } from '@/components/maintenance-setup/asset-types';
 import { Categories } from '@/components/maintenance-setup/categories';
+import { Checklists } from '@/components/maintenance-setup/checklists';
 import { Dispatch } from '@/components/maintenance-setup/dispatch';
 import { PreventiveServices } from '@/components/maintenance-setup/preventive';
 import { Rules } from '@/components/maintenance-setup/rules';
@@ -11,7 +13,7 @@ import { Specialties } from '@/components/maintenance-setup/specialties';
 import { usePermissions } from '@/lib/permissions';
 import { useTab } from '@/lib/use-tab';
 
-const TABS = ['categories', 'specialties', 'preventive', 'rules', 'dispatch', 'sla'] as const;
+const TABS = ['categories', 'specialties', 'preventive', 'rules', 'dispatch', 'sla', 'asset-types', 'checklists'] as const;
 type Tab = (typeof TABS)[number];
 
 function SetupView() {
@@ -44,6 +46,8 @@ function SetupView() {
             { value: 'rules', label: 'Hours and limits' },
             { value: 'dispatch', label: 'Dispatch' },
             { value: 'sla', label: 'SLA' },
+            { value: 'asset-types', label: 'Asset types' },
+            { value: 'checklists', label: 'Checklists' },
           ]}
         />
       </div>
@@ -57,6 +61,10 @@ function SetupView() {
         <Rules />
       ) : tab === 'dispatch' ? (
         <Dispatch />
+      ) : tab === 'asset-types' ? (
+        <AssetTypes />
+      ) : tab === 'checklists' ? (
+        <Checklists />
       ) : (
         <Sla />
       )}

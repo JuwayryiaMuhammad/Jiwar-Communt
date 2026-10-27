@@ -300,3 +300,15 @@ test('the owners’ voice leads a sitting member to the board’s page, never sa
   assert.equal(notificationText(motion), 'A motion on a building’s representative awaits your vote');
   assert.equal(notificationHref(motion, board), '/board/representatives');
 });
+
+test('the asset register’s notices (ADR 0064): their words and where they lead', () => {
+  const warranty = { kind: 'asset.warranty_expiring', params: { assetRef: 'PUMP-03', endsOn: '2026-11-20' }, targetType: 'asset', targetId: 'a1' };
+  assert.equal(notificationText(warranty), 'The warranty of asset PUMP-03 ends on 2026-11-20');
+  assert.equal(notificationHref(warranty, (p) => p === 'assets.read'), '/assets/a1');
+  assert.equal(notificationHref(warranty, () => false), null);
+  const overdue = { kind: 'maintenance.plan_overdue', params: { assetRef: 'GEN-1', dueOn: '2026-10-20' }, targetType: 'maintenance_plan', targetId: 'p1' };
+  assert.equal(notificationHref(overdue, (p) => p === 'assets.read'), '/maintenance-plans/p1');
+  const inspection = { kind: 'inspection.overdue', params: { targetRef: 'ROOF', dueOn: '2026-10-20' }, targetType: 'inspection', targetId: 'i1' };
+  assert.equal(notificationText(inspection), 'The inspection of ROOF, due 2026-10-20, is overdue');
+  assert.equal(notificationHref(inspection, (p) => p === 'inspections.manage'), '/inspections/i1');
+});

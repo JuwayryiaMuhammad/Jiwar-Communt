@@ -22,6 +22,8 @@
 export const ENTRY_PERMISSIONS = [
   'tickets.dispatch',
   'maintenance.manage',
+  'assets.manage',
+  'inspections.manage',
   'requests.handle',
   'requests.manage',
   'community.publish',

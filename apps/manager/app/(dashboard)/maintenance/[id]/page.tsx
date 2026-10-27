@@ -13,6 +13,7 @@ import { TicketQuotes } from '@/components/maintenance/ticket-quotes';
 import { TicketThread } from '@/components/maintenance/ticket-thread';
 import { TicketTrail } from '@/components/maintenance/ticket-trail';
 import { TicketVisits } from '@/components/maintenance/ticket-visits';
+import { WorkOrder } from '@/components/maintenance/work-order';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type TicketDetail } from '@/lib/queries';
 
@@ -251,6 +252,7 @@ export default function TicketPage() {
           <div className="grid grid--main-aside">
             <div className="stack">
               <Details ticket={t} />
+              <WorkOrder ticket={t} />
               <TicketThread ticketId={t.id} status={t.status} />
               <TicketQuotes ticket={t} />
               <TicketVisits ticket={t} />

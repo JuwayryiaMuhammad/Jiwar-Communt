@@ -36,6 +36,32 @@ export type TicketMessage = Schema<'DispatchMessageView'>;
 export type Category = Schema<'CategoryView'>;
 export type SlaTargets = Schema<'SlaTargetsView'>;
 export type PreventiveService = Schema<'PreventiveServiceView'>;
+// The asset register, plans and inspections (ADR 0064).
+export type CommonArea = Schema<'CommonAreaView'>;
+export type AssetType = Schema<'AssetTypeView'>;
+export type AssetSummary = Schema<'AssetSummaryView'>;
+export type AssetCard = Schema<'AssetView'>;
+export type AssetEvent = Schema<'AssetEventView'>;
+export type AssetImpact = Schema<'AssetImpactView'>;
+export type AssetImport = Schema<'AssetImportView'>;
+export type MaintenanceDocument = Schema<'MaintenanceDocumentView'>;
+export type ChecklistSummary = Schema<'ChecklistSummaryView'>;
+export type Checklist = Schema<'ChecklistView'>;
+export type ChecklistRun = Schema<'ChecklistRunView'>;
+export type PlanSummary = Schema<'MaintenancePlanSummaryView'>;
+export type Plan = Schema<'MaintenancePlanView'>;
+export type PlanOccurrence = Schema<'PlanOccurrenceView'>;
+export type PlanEvent = Schema<'PlanEventView'>;
+export type InspectionRound = Schema<'InspectionRoundView'>;
+export type InspectionSummary = Schema<'InspectionSummaryView'>;
+export type Inspection = Schema<'InspectionView'>;
+export type InspectionReport = Schema<'InspectionReportView'>;
+export type Replacement = Schema<'ReplacementRecommendationView'>;
+export interface AssetFilters {
+  status?: AssetSummary['status'] | '';
+  commonAreaId?: string;
+  typeId?: string;
+}
 export type MaintenanceSettings = Schema<'MaintenanceSettingsResponse'>;
 export type DispatchSettings = Schema<'DispatchSettingsResponse'>;
 export type SlaSettings = Schema<'SlaSettingsResponse'>;
@@ -470,6 +496,27 @@ export const keys = {
   ticketCategories: ['ticket-categories'] as const,
   categories: ['maintenance-categories'] as const,
   preventiveServices: ['preventive-services'] as const,
+  areas: (filters: object) => ['assets', 'areas', filters] as const,
+  assetsAll: ['assets'] as const,
+  assetTypes: ['assets', 'types'] as const,
+  assets: (filters: object) => ['assets', 'list', filters] as const,
+  asset: (id: string) => ['assets', 'detail', id] as const,
+  assetPart: (id: string, part: string) => ['assets', 'detail', id, part] as const,
+  documents: (subject: object) => ['assets', 'documents', subject] as const,
+  assetImports: ['assets', 'imports'] as const,
+  checklists: ['assets', 'checklists'] as const,
+  checklist: (id: string) => ['assets', 'checklists', id] as const,
+  plansAll: ['plans'] as const,
+  plans: (filters: object) => ['plans', 'list', filters] as const,
+  plan: (id: string) => ['plans', 'detail', id] as const,
+  planPart: (id: string, part: string) => ['plans', 'detail', id, part] as const,
+  inspectionsAll: ['inspections'] as const,
+  inspections: (filters: object) => ['inspections', 'list', filters] as const,
+  inspection: (id: string) => ['inspections', 'detail', id] as const,
+  inspectionRounds: (filters: object) => ['inspections', 'rounds', filters] as const,
+  inspectionReport: (from: string, to: string) => ['inspections', 'report', from, to] as const,
+  replacements: (filters: object) => ['assets', 'replacements', filters] as const,
+  ticketChecklist: (id: string) => ['tickets', 'detail', id, 'checklist'] as const,
   maintenanceSettings: ['maintenance-settings'] as const,
   dispatchSettings: ['dispatch-settings'] as const,
   slaSettings: ['sla-settings'] as const,
@@ -762,6 +809,59 @@ export const fetchers = {
   ticketCategories: () => unwrap(api.GET('/api/v1/ticket-categories')),
   categories: () => unwrap(api.GET('/api/v1/maintenance/categories')),
   preventiveServices: () => unwrap(api.GET('/api/v1/maintenance/preventive-services')),
+  areas: (filters: { kind?: CommonArea['kind'] | ''; active?: 'true' | 'false' | '' }, cursor?: string, limit = 100) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/areas', {
+        params: { query: { ...(clean(filters) as { kind?: CommonArea['kind']; active?: 'true' | 'false' }), cursor, limit } },
+      }),
+    ),
+  assetTypes: () => unwrap(api.GET('/api/v1/maintenance/asset-types')),
+  assets: (filters: AssetFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/assets', {
+        params: { query: { ...(clean(filters) as { status?: AssetSummary['status'] }), cursor, limit } },
+      }),
+    ),
+  asset: (id: string) => unwrap(api.GET('/api/v1/maintenance/assets/{id}', { params: { path: { id } } })),
+  assetEvents: (id: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/assets/{id}/events', { params: { path: { id }, query: { cursor, limit } } })),
+  assetImpact: (id: string) => unwrap(api.GET('/api/v1/maintenance/assets/{id}/impact', { params: { path: { id } } })),
+  documents: (subject: { assetId?: string; assetTypeId?: string; commonAreaId?: string }) =>
+    unwrap(api.GET('/api/v1/maintenance/documents', { params: { query: subject } })),
+  assetImports: (cursor?: string, limit = 20) =>
+    unwrap(api.GET('/api/v1/maintenance/asset-imports', { params: { query: { cursor, limit } } })),
+  checklists: () => unwrap(api.GET('/api/v1/maintenance/checklists')),
+  checklist: (id: string) => unwrap(api.GET('/api/v1/maintenance/checklists/{id}', { params: { path: { id } } })),
+  plans: (filters: { assetId?: string; active?: 'true' | 'false' | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/plans', {
+        params: { query: { ...(clean(filters) as { assetId?: string; active?: 'true' | 'false' }), cursor, limit } },
+      }),
+    ),
+  plan: (id: string) => unwrap(api.GET('/api/v1/maintenance/plans/{id}', { params: { path: { id } } })),
+  planOccurrences: (id: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/plans/{id}/occurrences', { params: { path: { id }, query: { cursor, limit } } })),
+  planEvents: (id: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/plans/{id}/events', { params: { path: { id }, query: { cursor, limit } } })),
+  inspections: (filters: { status?: InspectionSummary['status'] | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/inspections', {
+        params: { query: { ...(clean(filters) as { status?: InspectionSummary['status'] }), cursor, limit } },
+      }),
+    ),
+  inspection: (id: string) => unwrap(api.GET('/api/v1/maintenance/inspections/{id}', { params: { path: { id } } })),
+  inspectionRounds: (filters: { active?: 'true' | 'false' | '' }) =>
+    unwrap(api.GET('/api/v1/maintenance/inspection-rounds', { params: { query: clean(filters) as { active?: 'true' | 'false' } } })),
+  inspectionReport: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/maintenance/inspection-report', { params: { query: { from, to } } })),
+  replacements: (filters: { status?: Replacement['status'] | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/replacement-recommendations', {
+        params: { query: { ...(clean(filters) as { status?: 'pending' | 'accepted' | 'declined' }), cursor, limit } },
+      }),
+    ),
+  ticketChecklist: (id: string) =>
+    unwrap(api.GET('/api/v1/maintenance/tickets/{id}/checklist', { params: { path: { id } } })),
   maintenanceSettings: () => unwrap(api.GET('/api/v1/maintenance/settings')),
   dispatchSettings: () => unwrap(api.GET('/api/v1/maintenance/dispatch-settings')),
   slaSettings: () => unwrap(api.GET('/api/v1/maintenance/sla-settings')),

@@ -5,6 +5,10 @@ import { Alert, AppShell, Button, EmptyState, SkeletonRows, type NavGroup, type 
 import { useQuery } from '@tanstack/react-query';
 import {
   Ban,
+  Boxes,
+  CalendarSync,
+  MapPinned,
+  RefreshCcw,
   Building,
   Car,
   CircleParking,
@@ -288,6 +292,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <HardHat aria-hidden />,
           count: workers,
           show: can('workers.review') || can('workers.compliance') || can('workers.incidents'),
+        },
+      ],
+    },
+    {
+      // The asset register, its plans and inspections (ADR 0064).
+      label: 'Assets',
+      items: [
+        { href: '/assets', label: 'Assets', icon: <Boxes aria-hidden />, show: can('assets.read') },
+        { href: '/areas', label: 'Common areas', icon: <MapPinned aria-hidden />, show: can('assets.read') },
+        {
+          href: '/maintenance-plans',
+          label: 'Planned maintenance',
+          icon: <CalendarSync aria-hidden />,
+          show: can('assets.read'),
+        },
+        { href: '/inspections', label: 'Inspections', icon: <ClipboardCheck aria-hidden />, show: can('inspections.manage') },
+        {
+          href: '/replacement-recommendations',
+          label: 'Replacements',
+          icon: <RefreshCcw aria-hidden />,
+          show: can('assets.manage'),
         },
       ],
     },

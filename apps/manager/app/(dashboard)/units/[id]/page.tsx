@@ -84,6 +84,11 @@ export default function UnitPage() {
             Units
           </ButtonLink>
         }
+        actions={
+          <ButtonLink href={`/units/${id}/papers`} size="sm">
+            Papers: contracts, documents, deposits
+          </ButtonLink>
+        }
         title={
           u ? (
             <span className="row" style={{ gap: 12 }}>

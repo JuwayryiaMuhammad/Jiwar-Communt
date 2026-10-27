@@ -279,6 +279,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         },
         { href: '/units', label: 'Units', icon: <Building aria-hidden />, show: isManager && can('units.read') },
         { href: '/residents', label: 'Residents', icon: <Users aria-hidden />, show: can('residents.read') },
+        { href: '/identity-changes', label: 'Name & phone changes', icon: <Users aria-hidden />, show: can('residents.manage') },
+        { href: '/contract-renewals', label: 'Lease renewals', icon: <FileText aria-hidden />, show: can('contracts.manage') },
+        { href: '/compound-documents', label: 'Compound documents', icon: <BookOpen aria-hidden />, show: can('content.manage') },
         {
           href: '/workers',
           label: 'Workers',

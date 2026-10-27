@@ -50,3 +50,17 @@ test('a desk token is 43 base64url characters (ADR 0060)', () => {
   assert.equal(parseFragment(`#${VISITOR}=`, 'desk'), null);
   assert.equal(parseFragment(`#${ACTION}`, 'desk'), null);
 });
+
+test('a registration status token is 64 hex characters', () => {
+  const token = 'a1'.repeat(32);
+  assert.equal(parseFragment(`#${token}`, 'registrationStatus'), token);
+  assert.equal(parseFragment(`#${token.toUpperCase()}`, 'registrationStatus'), null);
+  assert.equal(parseFragment(`#${token.slice(1)}`, 'registrationStatus'), null);
+  assert.equal(parseFragment(`#${VISITOR}`, 'registrationStatus'), null);
+});
+
+test('a clearance code is 22 base64url characters', () => {
+  const code = 'Ab0_-'.repeat(4) + 'xy';
+  assert.equal(parseFragment(`#${code}`, 'clearance'), code);
+  assert.equal(parseFragment(`#${code}z`, 'clearance'), null);
+});

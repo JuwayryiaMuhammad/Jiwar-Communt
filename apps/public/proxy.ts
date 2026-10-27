@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { connectSrc } from './lib/csp';
 
 /**
  * Page headers. The pages hold a link's secret in memory, so nothing may be
@@ -16,7 +17,7 @@ export function proxy(req: NextRequest) {
     `style-src 'self'${dev ? " 'unsafe-inline'" : ''}`,
     "img-src 'self' data:",
     "font-src 'self'",
-    `connect-src 'self'${dev ? ' ws:' : ''}`,
+    connectSrc(req.nextUrl.pathname, process.env.UPLOAD_ORIGIN, dev),
     "manifest-src 'self'",
     "form-action 'self'",
     "base-uri 'none'",

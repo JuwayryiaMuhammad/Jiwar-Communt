@@ -10,6 +10,9 @@ The pages the API's links open, served at `PUBLIC_APP_URL` (port 3003). Next.js 
 | `/a/export#<token>` | the API (assisted-export email, ADR 0036) | Sends a code to the same email, then opens the presigned download | `public/data-exports/code`, `public/data-exports/download` |
 | `/i#<token>` | whoever holds the invite token (the residents' app) | Accepts a household invite with the emailed code | `invites/accept/start`, `invites/accept/complete` |
 | `/r#<token>` | whoever holds the registration link token (the management) | Self-registration form, then the emailed code | `registrations/start`, `registrations/complete` |
+| `/rs#<token>` | the API (emailed to a registrant when they register, and again with a correction, ADR 0062) | The request's state, what the management asks to correct (codes only), and up to three proof documents: attach (PUT to storage, then finalize), remove, send again after a correction. Dead once the request is decided | `public/registrations/status`, `public/registrations/uploads`, `public/registrations/documents/{id}/finalize\|remove`, `public/registrations/resubmit` |
+| `/receipt#<code>` | the API (a receipt's verification link, ADR 0046) | Whether a receipt stands | `public/receipts/lookup` |
+| `/c#<code>`, or `/c` and the code typed | a clearance certificate (ADR 0062), which prints this address and the code | Whether a clearance stands: compound, number, unit code, dates | `public/clearances/lookup` |
 | `/` | | App name and "download the app" placeholders | none |
 | anything else, or a link without a well-formed token | | The invalid-or-expired page, without a request | none |
 
@@ -19,7 +22,7 @@ The contract is `docs/api/v0-notes.md`; the API is the source of truth.
 
 ```bash
 pnpm install                                          # at the repo root, once
-cp apps/public/.env.example apps/public/.env.local    # JIWAR_API_URL, e.g. http://localhost:3100
+cp apps/public/.env.example apps/public/.env.local    # JIWAR_API_URL, e.g. http://localhost:3100; UPLOAD_ORIGIN
 pnpm dev:public                                       # http://localhost:3003
 ```
 
@@ -30,14 +33,15 @@ Set the API's `PUBLIC_APP_URL=http://localhost:3003` so its links land here. Wit
 - **The token.** Read from `location.hash` once (`components/use-link-token.ts`), checked against the shape the API issues (`lib/fragment.ts`), then removed from the address bar with `history.replaceState` before any request. It lives in component memory only: never in a URL, a query string, storage or a log. A reload loses it, on `/v` too, and the page asks the person to open the link again.
 - **Same origin.** The browser calls only `/api/...` on this app (`app/api/[...path]/route.ts`), which forwards the fixed public POST routes and a partner desk's five actions on one request id (`lib/proxy-rules.ts`) to `JIWAR_API_URL`. The API needs no `CORS_ORIGINS` for it. The token travels in the JSON body. Bodies are never logged; the app has no `console` call.
 - **Headers upstream.** `content-type`, `accept-language`, and `X-Forwarded-For` reduced to its right-most entry, the one the reverse proxy wrote, so the API's per-IP limits count the real client and a client-sent chain is ignored. Nothing else: no cookie, no authorization, no user agent. `Idempotency-Key` and `X-Jiwar-Install-Id` are not forwarded because none of these routes reads them. See `deploy/README.md` for why this needs the app and the API on localhost only.
-- **Headers on pages** (`proxy.ts`, `next.config.ts`): a Content-Security-Policy with a per-request nonce and no third-party origin, `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex`, `frame-ancestors 'none'`. No analytics, no external font (system fonts), no inline style.
+- **Headers on pages** (`proxy.ts`, `next.config.ts`): a Content-Security-Policy with a per-request nonce and no third-party origin (except storage's `UPLOAD_ORIGIN` on `/rs` alone, a bare origin or nothing: `lib/csp.ts`), `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex`, `frame-ancestors 'none'`. No analytics, no external font (system fonts), no inline style.
 - **A confirming press before any change.** No request that changes or sends anything leaves on page load. The API has no way to check an email link without using it, so a dead link is only known after the press.
 - **Arabic first.** `<html lang="ar" dir="rtl">`; the switch changes language in place, with no navigation. Copy is in `messages/ar.ts` and `messages/en.ts` (same keys, tested). The API returns codes, not text: `lib/errors.ts` maps them. The language choice alone is kept in `localStorage`.
 - **Registration sends the form twice.** The emailed code is bound to the exact `start` body, so `complete` sends that same frozen object plus the code (`lib/registration.ts`).
 
 ## Known limits
 
-- **Registration has no ID document upload.** The API has no upload path for a registrant (`/files/*` needs a signed-in account; ADR 0024 defers documents). The form takes the ID type and number as text.
+- **Registration has no ID document upload.** The form takes the ID type and number as text. Proof of the registrant's place in the unit (a contract, an ownership document) is attached afterwards on `/rs`, from the emailed link (ADR 0062).
+- **`/rs` needs `UPLOAD_ORIGIN`** to upload: the browser PUTs to the URL the API signed, so storage must be reachable from the browser and its origin allowed on that page. Without it, the state and resubmit still work.
 - **The export download fails on staging** while storage is HTTP MinIO: the browser blocks an HTTP download from an HTTPS page, and the page cannot detect it, so it says the file service may be unavailable. It works once storage is HTTPS (`deploy/README.md`).
 - **The pass has no gate status** beyond `status`: the API returns none. "Not started yet" and "outside visiting hours" are worked out in the browser from the window and schedule, in the compound's time zone (`lib/pass-status.ts`).
 - **A dead invite or registration link is not told apart from a live one. This is correct by design, not a gap to fix here.** Both `start` routes answer the same, so the pages say "if the link is valid, a code was sent". A dead invite then refuses every code, and the page says "the code is wrong or has expired, or the link is no longer valid" (`OTP_INVALID` covers all three). A dead registration link still emails a code and answers "received" to it, writing nothing: the link is published (a QR at the gate), and the API deliberately says nothing about it (ADR 0024). The page repeats the API's answer; it must not try to find out more.

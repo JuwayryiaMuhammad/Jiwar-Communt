@@ -5,6 +5,7 @@ export const BLOCKER_TEXT: Record<string, string> = {
   legal_hold: 'On legal hold',
   open_worker_obligations:
     'Registered a domestic worker whose wage is not settled: end the registration, then close its wage obligation from the worker’s page',
+  deposit_held: 'The management still holds a deposit of theirs: settle it from the unit’s papers first',
 };
 
 /** What a consent code means, for the person and for the manager acting for them. */

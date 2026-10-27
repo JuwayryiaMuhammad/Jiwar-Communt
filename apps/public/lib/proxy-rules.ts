@@ -15,7 +15,16 @@ const ROUTES: ReadonlySet<string> = new Set([
   'registrations/complete',
   'public/receipts/lookup',
   'public/partner-desk/lookup',
+  // A registrant's status page and a clearance check (ADR 0062).
+  'public/registrations/status',
+  'public/registrations/uploads',
+  'public/registrations/resubmit',
+  'public/clearances/lookup',
 ]);
+
+/** A registrant's document, finalized or removed (ADR 0062). */
+const REGISTRATION_DOCUMENT =
+  /^public\/registrations\/documents\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(finalize|remove)$/;
 
 /**
  * A partner's desk actions (ADR 0060): the request's id is in the path, so
@@ -30,7 +39,9 @@ export const MAX_BODY_BYTES = 16 * 1024;
 /** The backend path for the segments after /api, or null when not allowed. */
 export function backendPath(segments: readonly string[]): string | null {
   const joined = segments.join('/');
-  return ROUTES.has(joined) || DESK_ACTION.test(joined) ? `/api/v1/${joined}` : null;
+  return ROUTES.has(joined) || DESK_ACTION.test(joined) || REGISTRATION_DOCUMENT.test(joined)
+    ? `/api/v1/${joined}`
+    : null;
 }
 
 export function isJson(contentType: string | null): boolean {

@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { formatDateTime, humanize, REASON_CODES, relativeTime, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import {
   Alert,
@@ -18,6 +18,7 @@ import {
   StatusBadge,
   useToast,
 } from '@jiwar/ui';
+import { useQuery } from '@tanstack/react-query';
 import { Copy, Link2, Plus } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { UnitPicker } from '@/components/unit-picker';
@@ -110,11 +111,44 @@ function ApproveRegistration({ registration, onClose }: { registration: Registra
   );
 }
 
+/** Opens a presigned document in a new tab (no-store routes). */
+const openUrl = (r: { url: string }) => window.open(r.url, '_blank', 'noopener');
+
+const CORRECTION_TEXT: Record<string, string> = {
+  document_unreadable: 'A document cannot be read',
+  document_missing: 'A proof of their place in the unit is missing',
+  document_mismatch: 'A document does not match the unit or their details',
+  details_mismatch: 'Their details do not match the documents',
+};
+
 function Registrations() {
   const toast = useToast();
   const list = useCursorList(keys.registrations, (c) => fetchers.registrations(c));
+  // Sent back for a correction (ADR 0062): waiting for the registrant.
+  const waiting = useQuery({
+    queryKey: [...keys.registrations, 'needs_correction'],
+    queryFn: () => unwrap(api.GET('/api/v1/registrations', { params: { query: { status: 'needs_correction', limit: 100 } } })),
+  });
   const [approving, setApproving] = useState<Registration | null>(null);
   const [rejecting, setRejecting] = useState<Registration | null>(null);
+  const [correcting, setCorrecting] = useState<Registration | null>(null);
+  const [codes, setCodes] = useState<string[]>([]);
+  const openDocument = useAction(
+    (v: { r: Registration; documentId: string }) =>
+      unwrap(api.GET('/api/v1/registrations/{id}/documents/{documentId}', { params: { path: { id: v.r.id, documentId: v.documentId } } })),
+    { onDone: openUrl },
+  );
+  const correct = useAction(
+    (r: Registration) => unwrap(api.POST('/api/v1/registrations/{id}/request-correction', { params: { path: { id: r.id } }, body: { codes: codes as Schema<'RegistrationCorrectionDto'>['codes'] } })),
+    {
+      invalidate: [keys.registrations],
+      onDone: (_, r) => {
+        toast.show(`${r.fullName} was emailed what to correct, with a new link.`);
+        setCorrecting(null);
+        setCodes([]);
+      },
+    },
+  );
   const reject = useAction(
     (v: { r: Registration; reasonCode: string; reason: string }) =>
       unwrap(
@@ -181,6 +215,22 @@ function Registrations() {
                   <Badge tone="green">No conflicts</Badge>
                 ),
             },
+            {
+              key: 'documents',
+              header: 'Proof',
+              cell: (r) =>
+                r.documents.length ? (
+                  <span className="chip-list">
+                    {r.documents.map((d) => (
+                      <Button key={d.id} size="sm" variant="text" disabled={!d.ready} onClick={() => openDocument.mutate({ r, documentId: d.id })}>
+                        {humanize(d.kind)}
+                      </Button>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="t-secondary">None yet</span>
+                ),
+            },
             { key: 'when', header: 'Requested', cell: (r) => <span title={formatDateTime(r.createdAt)}>{relativeTime(r.createdAt)}</span> },
             {
               key: 'actions',
@@ -190,6 +240,9 @@ function Registrations() {
                 <span className="row" style={{ justifyContent: 'flex-end' }}>
                   <Button size="sm" onClick={() => setRejecting(r)}>
                     Reject
+                  </Button>
+                  <Button size="sm" onClick={() => setCorrecting(r)}>
+                    Ask to correct
                   </Button>
                   <Button size="sm" variant="primary" onClick={() => setApproving(r)}>
                     Approve
@@ -201,6 +254,44 @@ function Registrations() {
         />
         <LoadMore query={list} />
       </QueryState>
+      <ErrorAlert error={openDocument.error} />
+      {waiting.data?.data.length ? (
+        <div style={{ padding: 16 }}>
+          <h3 className="t-h3">Waiting for the registrant</h3>
+          <ul>
+            {waiting.data.data.map((r) => (
+              <li key={r.id}>
+                {r.fullName}, unit {r.unitCode}: {r.correctionCodes.map((c) => CORRECTION_TEXT[c] ?? humanize(c)).join('; ')}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <Dialog
+        open={correcting !== null}
+        onClose={() => setCorrecting(null)}
+        title={`Ask ${correcting?.fullName ?? ''} to correct`}
+        description="They are emailed what to correct and a new link to fix it; the request waits for them, and expires 30 days after if they do not."
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (correcting) correct.mutate(correcting);
+        }}
+        footer={
+          <Button variant="primary" type="submit" loading={correct.isPending} disabled={!codes.length}>
+            Send
+          </Button>
+        }
+      >
+        <ErrorAlert error={correct.error} />
+        {REASON_CODES.registrationCorrection.map((c) => (
+          <Checkbox
+            key={c}
+            label={CORRECTION_TEXT[c] ?? humanize(c)}
+            checked={codes.includes(c)}
+            onChange={(e) => setCodes(e.target.checked ? [...codes, c] : codes.filter((x) => x !== c))}
+          />
+        ))}
+      </Dialog>
       <ApproveRegistration registration={approving} onClose={() => setApproving(null)} />
       <ReasonDialog
         open={rejecting !== null}
@@ -225,6 +316,11 @@ function Household() {
   const toast = useToast();
   const list = useCursorList(keys.household, (c) => fetchers.household(c));
   const [rejecting, setRejecting] = useState<PendingMember | null>(null);
+  const openKinship = useAction(
+    (v: { m: PendingMember; documentId: string }) =>
+      unwrap(api.GET('/api/v1/household/members/{id}/kinship-documents/{documentId}', { params: { path: { id: v.m.memberId, documentId: v.documentId } } })),
+    { onDone: openUrl },
+  );
   const approve = useAction(
     (m: PendingMember) =>
       unwrap(api.POST('/api/v1/household/members/{id}/approve', { params: { path: { id: m.memberId } } })),
@@ -269,6 +365,22 @@ function Household() {
               cell: (m) => <span className="table__primary">{m.fullName ?? 'Invited member'}</span>,
             },
             { key: 'relation', header: 'Relation', cell: (m) => humanize(m.relation) },
+            {
+              key: 'proof',
+              header: 'Proof of kinship',
+              cell: (m) =>
+                m.kinshipDocuments.length ? (
+                  <span className="chip-list">
+                    {m.kinshipDocuments.map((d) => (
+                      <Button key={d.id} size="sm" variant="text" onClick={() => openKinship.mutate({ m, documentId: d.id })}>
+                        {humanize(d.kind)}
+                      </Button>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="t-secondary">None</span>
+                ),
+            },
             { key: 'unit', header: 'Unit', cell: (m) => m.unitCode },
             { key: 'when', header: 'Requested', cell: (m) => <span title={formatDateTime(m.requestedAt)}>{relativeTime(m.requestedAt)}</span> },
             {

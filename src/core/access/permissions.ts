@@ -29,6 +29,10 @@ export interface PermissionDefinition {
 export const PERMISSIONS = {
   'units.read': { kinds: ['manager', 'resident', 'family'] },
   'units.create': { kinds: ['manager'] },
+  // The compound's units as a list (`GET /units`) for a staff role: their
+  // codes, buildings and floors, never their people. Not `units.read`: that
+  // one opens each unit's household and money to whoever the unit is theirs.
+  'units.directory': { kinds: ['staff'] },
   'accounts.read': { kinds: ['manager'] },
   'accounts.manage': { kinds: ['manager'] },
   // Account deletion (ADR 0023): the three-step erasure, and legal holds.

@@ -4,7 +4,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
   ListOf,
@@ -22,10 +25,17 @@ import { UnitView } from './views/unit.view';
 export class UnitsController {
   constructor(private readonly units: UnitsService) {}
 
-  /** The units the caller may see, newest first. */
-  @RequirePermissions('units.read')
+  /**
+   * The units the caller may see, newest first; every unit for a staff role
+   * holding `units.directory` (the security supervisor's).
+   */
+  @RequireAnyPermission('units.read', 'units.directory')
   @Get()
-  @ApiOperation({ summary: 'List the units I may see' })
+  @ApiOperation({
+    summary: 'List the units I may see',
+    description:
+      'Newest first. Every unit for the manager and for a staff role holding `units.directory` (the security supervisor); a resident or a family member lists their own.',
+  })
   @ApiOkResponse({ type: ListOf(UnitView) })
   async list(@Query() q: PageQueryDto): Promise<ListResponse<UnitView>> {
     return toList(await this.units.list(q), (u) => UnitView.from(u));

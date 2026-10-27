@@ -23,7 +23,7 @@ export class UnitsService {
   ) {}
 
   /**
-   * Only the units this account may see (ResourceAccess, ADR 0012), newest
+   * Only the units this account may list (ResourceAccess, ADR 0012), newest
    * first, a page at a time.
    */
   async list(q: { cursor?: string; limit?: number } = {}): Promise<Page<Unit>> {
@@ -31,7 +31,7 @@ export class UnitsService {
     const rows = await this.prisma.tenant.unit.findMany({
       where: {
         AND: [
-          this.access.unitScope(),
+          await this.access.listScope(),
           ...(UNIT_PAGE.after(q.cursor) as Prisma.UnitWhereInput[]),
         ],
       },

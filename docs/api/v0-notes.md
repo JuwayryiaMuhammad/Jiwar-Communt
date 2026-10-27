@@ -153,6 +153,7 @@ The full notes for the guard app are in [`notes/guard-shifts-tasks.md`](notes/gu
 - `GET /gate/my-work`: tasks, the gate services queue and mine, open parking reports (the guard role now closes them), pending instructions.
 - Tasks (`/gate/tasks/{id}`, `…/take`, `…/complete`; `/staff/security/tasks`), swaps (`/gate/swaps`, `/staff/security/swaps`), instructions (`/gate/guard-instructions`, `/staff/security/instructions`), found items (`/gate/found-items`, `/staff/security/found-items`).
 - `GET /staff/security/reports/daily` and `…/export` (CSV). `visitors` is passes and gate requests only; the permits' traffic (ADR 0049) has its own counts: `contractorWorkers`, `eventGuests`, `moveTrucks`, `materialEntries`, `materialExits`.
+- `GET /units` is open to the security supervisor (`units.directory`, new, staff only): every unit of the compound, the same view the manager gets. `GET /units/{id}` and the unit's other routes stay `403`.
 
 ### Governance (ADR 0051)
 

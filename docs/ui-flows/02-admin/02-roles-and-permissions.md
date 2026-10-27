@@ -105,6 +105,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | `units.read` | رؤية الوحدات (المدير كلها، والساكن والفرد وحداتهم فقط) | manager, resident, family | manager, resident, family_member | `GET /units`، `GET /units/{id}`، `GET /units/{unitId}/household` |
 | `units.create` | إنشاء وحدة | manager | manager | `POST /units` |
+| `units.directory` | قائمة كل وحدات الكمبوند لدور موظف: الكود والمبنى والدور فقط، بدون سكانها، ولا تفتح صفحة وحدة | staff | security_supervisor | `GET /units` |
 | `accounts.read` | قائمة كل حسابات الكمبوند وتفاصيلها | manager | manager | `GET /accounts`، `GET /accounts/{id}` |
 | `accounts.manage` | إنشاء الحسابات، وتغيير الحالة والتواصل، والتجميد وإعادة التفعيل، ورفع ملفات `document` | manager | manager | `POST /accounts`، `PATCH /accounts/{id}/status`، `/contact`، `/freeze`، `/reactivate` |
 | `accounts.erase` | تنفيذ المسح النهائي للحسابات أو إغلاق طلباته، واستقبال تنبيهات طلبات الحذف المحجوزة | manager | manager | `GET /erasures`، `/erasures/{id}/scope`، `/erase`، `/close` |

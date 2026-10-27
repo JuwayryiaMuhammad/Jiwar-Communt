@@ -1,7 +1,8 @@
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { uniqueSuffix } from '../setup/fixtures';
+import { gateHelpers } from '../setup/gate';
 import { keyPaths, listKeys } from './keys';
-import { call } from './request';
+import { call, err } from './request';
 import { buildWorld, type World } from './world';
 
 const UNIT = ['building', 'code', 'createdAt', 'floor', 'id'];
@@ -70,6 +71,70 @@ describe('API v0 — units & occupancies', () => {
     expect(
       (mine.body as { data: { id: string }[] }).data.map((u) => u.id),
     ).toEqual([w.a.homeUnitId]);
+  });
+
+  it('the security supervisor lists every unit (units.directory), opens none, and stops with the permission; a guard lists none', async () => {
+    const unit = await newUnit();
+    const supervisor = await w.tokenFor(
+      w.a,
+      (await gateHelpers(h).guard(w.a, 'security_supervisor')).id,
+      'staff',
+    );
+    const ids = async (token: string) => {
+      const res = await call(w, 'GET', '/units', {
+        token,
+        query: { limit: '100' },
+      }).expect(200);
+      expect(keyPaths(res.body)).toEqual(listKeys(UNIT));
+      return (res.body as { data: { id: string }[] }).data.map((u) => u.id);
+    };
+
+    // The compound's units as the manager lists them, B's never.
+    const listed = await ids(supervisor);
+    expect(listed).toEqual(await ids(manager()));
+    expect(listed).toEqual(
+      expect.arrayContaining([unit.id, w.a.homeUnitId, w.a.rentedUnitId]),
+    );
+    expect(listed).not.toContain(w.b.homeUnitId);
+
+    // The list only: a unit's own routes stay units.read's.
+    for (const path of [`/units/${unit.id}`, `/units/${unit.id}/household`]) {
+      const res = await call(w, 'GET', path, { token: supervisor });
+      expect({ status: res.status, code: err(res).code }).toEqual({
+        status: 403,
+        code: 'FORBIDDEN',
+      });
+    }
+    const guard = await call(w, 'GET', '/units', { token: w.a.tokens.guard });
+    expect({ status: guard.status, code: err(guard).code }).toEqual({
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+
+    // Taken from the role, the list stops on the next request.
+    const roles = await call(w, 'GET', '/roles', { token: manager() }).expect(
+      200,
+    );
+    const role = (
+      roles.body as {
+        data: { id: string; key: string; permissions: string[] }[];
+      }
+    ).data.find((r) => r.key === 'security_supervisor')!;
+    const held = role.permissions;
+    expect(held).toContain('units.directory');
+    await call(w, 'PUT', `/roles/${role.id}/permissions`, {
+      token: manager(),
+      body: { permissions: held.filter((p) => p !== 'units.directory') },
+    }).expect(200);
+    const after = await call(w, 'GET', '/units', { token: supervisor });
+    expect({ status: after.status, code: err(after).code }).toEqual({
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+    await call(w, 'PUT', `/roles/${role.id}/permissions`, {
+      token: manager(),
+      body: { permissions: held },
+    }).expect(200);
   });
 
   it('a unit in detail: occupants for managers only', async () => {

@@ -91690,6 +91690,7 @@
     },
     "/api/v1/units": {
       "get": {
+        "description": "Newest first. Every unit for the manager and for a staff role holding `units.directory` (the security supervisor); a resident or a family member lists their own.",
         "operationId": "UnitsController_list",
         "parameters": [
           {

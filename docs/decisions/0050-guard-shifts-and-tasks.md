@@ -229,6 +229,7 @@ Every gate is listed, zones only where something happened. It uses fixed aggrega
 
 - A new default staff role, `security_supervisor`, holds the first four. It is not a guard: a compound adds `gate.operate` to it for one who also works a gate.
 - `pnpm access:sync` brings the rest to existing compounds.
+- **Amended: the supervisor lists the units.** `units.directory` (staff only; the security supervisor) opens `GET /units` on every unit of the compound: code, building and floor, never its people. It is not `units.read`, which also opens each unit's household, money and other routes to its own people. A unit's own routes stay closed to it: only the list widens (`ResourceAccess.listScope`), never `unitScope` or `assertUnit`. `access:sync` grants it to existing compounds' supervisor roles, as a never-offered permission.
 
 ### Notifications
 

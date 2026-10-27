@@ -13903,7 +13903,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List the units I may see */
+        /**
+         * List the units I may see
+         * @description Newest first. Every unit for the manager and for a staff role holding `units.directory` (the security supervisor); a resident or a family member lists their own.
+         */
         get: operations["UnitsController_list"];
         put?: never;
         /** Create a unit */

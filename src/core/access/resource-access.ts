@@ -3,6 +3,7 @@ import type { Prisma, Unit } from '@prisma/client';
 import { RequestContext } from '../common/cls/request-context';
 import { appError, ErrorCode } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
+import { PermissionsService } from './permissions.service';
 
 /**
  * Resource layer of authorization (ADR 0001, 0012): which units the current
@@ -17,12 +18,16 @@ import { PrismaService } from '../database/prisma.service';
  *
  * Failing the check is "not found", never "forbidden", so unit ids are not
  * confirmed to people who cannot see them.
+ *
+ * The units' list alone (`listScope`) also gives a staff role holding
+ * `units.directory` every unit; nothing else widens with it.
  */
 @Injectable()
 export class ResourceAccess {
   constructor(
     private readonly ctx: RequestContext,
     private readonly prisma: PrismaService,
+    private readonly permissions: PermissionsService,
   ) {}
 
   /** A `where` filter to AND into every unit query. */
@@ -45,6 +50,20 @@ export class ResourceAccess {
       default:
         return { id: { in: [] } };
     }
+  }
+
+  /**
+   * The units' list (`GET /units`): `unitScope()`, or every unit for a staff
+   * role holding `units.directory`. Never for `assertUnit`: a unit's own
+   * routes stay its people's and the management's.
+   */
+  async listScope(): Promise<Prisma.UnitWhereInput> {
+    if (
+      this.ctx.accountType === 'staff' &&
+      (await this.permissions.has('units.directory'))
+    )
+      return {};
+    return this.unitScope();
   }
 
   async assertUnit(unitId: string): Promise<Unit> {

@@ -10,6 +10,7 @@ export const REVIEW_TEXT: Record<string, string> = {
 export const PERMISSION_TEXT: Record<string, string> = {
   'units.read': 'See units',
   'units.create': 'Add units',
+  'units.directory': 'List every unit by its code, building and floor, without its people',
   'accounts.read': 'See accounts',
   'accounts.manage': 'Create and change accounts',
   'accounts.erase': 'Erase deleted accounts',

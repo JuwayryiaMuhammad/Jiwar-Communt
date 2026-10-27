@@ -1370,8 +1370,8 @@ describe('Permission sync', () => {
         [...(await role(t, 'security_supervisor')).permissions].sort(),
       ).toEqual([
         // Created from today's catalog: G5's patrols (ADR 0052), G6b's
-        // security permissions (ADR 0053) and O1's devices (ADR 0057) too,
-        // sorted with the G4 four.
+        // security permissions (ADR 0053), O1's devices (ADR 0057) and the
+        // units' list too, sorted with the G4 four.
         'blocklist.manage',
         'gate_devices.manage',
         'guard_instructions.manage',
@@ -1380,6 +1380,7 @@ describe('Permission sync', () => {
         'guard_tasks.manage',
         'incidents.manage',
         'patrols.manage',
+        'units.directory',
         'violations.manage',
       ]);
       // parking_reports.handle was offered with G2: the sync never grants
@@ -1816,6 +1817,64 @@ describe('Permission sync', () => {
         expect(
           (await role(t, key)).permissions.filter((p) => o1.includes(p)),
         ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe("The units' list for staff (units.directory)", () => {
+    const directory = ['units.directory'];
+    /** The catalog before it: the permission nowhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(
+          ([p]) => !directory.includes(p),
+        ),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !directory.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: the security supervisor only', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync units directory ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect(report.added).toEqual(directory);
+      expect(report.rolesCreated).toEqual([]);
+      expect(report.rolesChanged).toBe(1);
+      expect((await role(t, 'security_supervisor')).permissions).toContain(
+        'units.directory',
+      );
+      // The manager lists every unit with units.read; a guard, a technician
+      // or the accountant has no use for the list until a manager grants it.
+      for (const key of [
+        'manager',
+        'resident',
+        'family_member',
+        'guard',
+        'technician',
+        'maintenance_supervisor',
+        'accountant',
+      ])
+        expect((await role(t, key)).permissions).not.toContain(
+          'units.directory',
+        );
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

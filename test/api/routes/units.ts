@@ -9,8 +9,9 @@ export const UNITS_ROUTES: Row[] = [
     path: '/units',
     auth: 'tenant',
     as: 'owner',
-    // Every tenant role reads units; staff has no role yet.
-    denied: 'none',
+    // Every tenant role reads units, and a staff role with units.directory
+    // (the security supervisor); the guard role holds neither.
+    denied: 'guard',
     foreign: 'none',
     invalid: {
       query: { limit: '101' },

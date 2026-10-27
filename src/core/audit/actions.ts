@@ -1699,6 +1699,20 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'governance_approval',
   },
+  // Common areas (ADR 0064): codes, the building and the facility; the
+  // names as { changed: true }, the position never. metadata.replaced:
+  // whether a tag was issued before (it no longer works).
+  'common_area.created': {
+    log: 'tenant',
+    target: 'common_area',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'common_area.updated': {
+    log: 'tenant',
+    target: 'common_area',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'common_area.tag_issued': { log: 'tenant', target: 'common_area' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

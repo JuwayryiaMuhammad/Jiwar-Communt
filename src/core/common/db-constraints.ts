@@ -251,6 +251,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // lock (TICKET_QUOTE_EXISTS); a violation is a bug.
   ticket_quotes_tenant_id_id_key: null,
   ticket_quotes_one_proposed: null,
+  // Common areas (ADR 0064): one row per building and per facility.
+  common_areas_tenant_id_id_key: null,
+  common_areas_tenant_id_code_key: ['code'],
+  common_areas_one_per_building: ['building'],
+  common_areas_one_per_facility: ['facilityId'],
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

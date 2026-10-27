@@ -21104,6 +21104,192 @@
     {
       "item": [
         {
+          "name": "List common areas, oldest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "areas"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "Only active ones (`true`) or only retired ones (`false`).",
+                  "disabled": true,
+                  "key": "active",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/areas"
+            }
+          }
+        },
+        {
+          "name": "Add a common area",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"building\",\n  \"code\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `building` | string |  | As the units have it: some unit must be in it. |\n| `code` | string | yes | The compound’s short code, unique. Never changes. |\n| `facilityId` | string (uuid) |  |  |\n| `kind` | `building` \\| `area` \\| `facility` | yes | `building`: a building as a whole (`building` required: the units’ building). `area`: any other place (`building` optional). `facility`: one of the facilities (`facilityId` required). |\n| `latitude` | number |  |  |\n| `longitude` | number |  |  |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "areas"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/areas"
+            }
+          }
+        },
+        {
+          "name": "Get a common area",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "areas",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/areas/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update or retire a common area",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"building\": \"\",\n  \"latitude\": -90,\n  \"longitude\": -180,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires it: no new asset, plan or inspection there. |\n| `building` | string |  | An area’s building; null clears it. A building’s own never changes. |\n| `latitude` | number |  | With `longitude`; both null clear the position. |\n| `longitude` | number |  |  |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "areas",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/areas/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Issue a new QR tag for the area; the previous one stops working",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "areas",
+                ":id",
+                "tag"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/areas/:id/tag",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List ticket categories",
           "request": {
             "description": "**Responses:** 200",

@@ -231,6 +231,11 @@ export class CommunityMaintenancePort {
   }
 
   /** The units the account is the primary resident of now. */
+  /** Whether some unit of the compound is in this building (ADR 0064). */
+  async hasBuilding(tx: TenantTxClient, building: string): Promise<boolean> {
+    return (await tx.unit.count({ where: { building } })) > 0;
+  }
+
   async primaryUnits(tx: TenantTxClient, accountId: string): Promise<string[]> {
     const rows = await tx.unitOccupancy.findMany({
       where: { accountId, status: 'active', isPrimary: true },

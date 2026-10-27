@@ -717,3 +717,14 @@ export const R11A_COVERAGE: readonly string[] = [
   'deposit.refund_withdrawn',
   'deposit.settled',
 ];
+
+/**
+ * Assets, plans and inspections (ADR 0064): the common areas, the asset
+ * register and its imports, the checklists, the maintenance plans and the
+ * inspections. test/assets/audit-coverage.
+ */
+export const ASSETS_COVERAGE: readonly string[] = [
+  'common_area.created',
+  'common_area.updated',
+  'common_area.tag_issued',
+];

@@ -4827,6 +4827,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List common areas, oldest first */
+        get: operations["CommonAreasController_list"];
+        put?: never;
+        /** Add a common area */
+        post: operations["CommonAreasController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/areas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a common area */
+        get: operations["CommonAreasController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update or retire a common area */
+        patch: operations["CommonAreasController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/areas/{id}/tag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a new QR tag for the area; the previous one stops working */
+        post: operations["CommonAreasController_issueTag"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/categories": {
         parameters: {
             query?: never;
@@ -19079,6 +19132,34 @@ export interface components {
             /** Format: date */
             to: string;
         };
+        CommonAreaView: {
+            active: boolean;
+            building: string | null;
+            code: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            facilityId: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "building" | "area" | "facility";
+            latitude: number | null;
+            longitude: number | null;
+            nameAr: string;
+            nameEn: string;
+            /**
+             * Format: date-time
+             * @description When its current tag was issued; null: none yet.
+             */
+            tagIssuedAt: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CommonAreaViewList: {
+            data: components["schemas"]["CommonAreaView"][];
+            nextCursor: string | null;
+        };
         CommunityAttachmentView: {
             /** @description image/jpeg, image/png, image/webp or application/pdf. */
             contentType: string;
@@ -19718,6 +19799,23 @@ export interface components {
             nameEn: string;
             /** @description EGP, e.g. `1500` or `1500.50`. */
             price: string;
+        };
+        CreateCommonAreaDto: {
+            /** @description As the units have it: some unit must be in it. */
+            building?: string;
+            /** @description The compound’s short code, unique. Never changes. */
+            code: string;
+            /** Format: uuid */
+            facilityId?: string;
+            /**
+             * @description `building`: a building as a whole (`building` required: the units’ building). `area`: any other place (`building` optional). `facility`: one of the facilities (`facilityId` required).
+             * @enum {string}
+             */
+            kind: "building" | "area" | "facility";
+            latitude?: number;
+            longitude?: number;
+            nameAr: string;
+            nameEn: string;
         };
         CreateComplaintCategoryDto: {
             /** @description Stable code, lowercase (e.g. `noise`). Never changes once created. */
@@ -24194,6 +24292,15 @@ export interface components {
             validFrom: string;
             /** Format: date-time */
             validUntil: string;
+        };
+        IssuedTagView: {
+            /**
+             * @description What the QR holds. The previous tag stopped working.
+             * @example JWL1.0190…
+             */
+            code: string;
+            /** Format: date-time */
+            issuedAt: string;
         };
         ItemAppealView: {
             /**
@@ -32648,6 +32755,17 @@ export interface components {
             nameEn?: string;
             price?: string;
         };
+        UpdateCommonAreaDto: {
+            /** @description False retires it: no new asset, plan or inspection there. */
+            active?: boolean;
+            /** @description An area’s building; null clears it. A building’s own never changes. */
+            building?: string | null;
+            /** @description With `longitude`; both null clear the position. */
+            latitude?: number | null;
+            longitude?: number | null;
+            nameAr?: string;
+            nameEn?: string;
+        };
         UpdateComplaintCategoryDto: {
             /** @description False retires the category: no new complaint may use it. */
             active?: boolean;
@@ -40537,6 +40655,125 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    CommonAreasController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: "building" | "area" | "facility";
+                /** @description Only active ones (`true`) or only retired ones (`false`). */
+                active?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommonAreaViewList"];
+                };
+            };
+        };
+    };
+    CommonAreasController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommonAreaDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommonAreaView"];
+                };
+            };
+        };
+    };
+    CommonAreasController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommonAreaView"];
+                };
+            };
+        };
+    };
+    CommonAreasController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCommonAreaDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommonAreaView"];
+                };
+            };
+        };
+    };
+    CommonAreasController_issueTag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedTagView"];
+                };
             };
         };
     };

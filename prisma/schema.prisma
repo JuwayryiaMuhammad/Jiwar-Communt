@@ -9482,3 +9482,38 @@ model PartnerComplaint {
   @@index([tenantId, partnerId, createdAt(sort: Desc)], map: "partner_complaints_partner_idx")
   @@map("partner_complaints")
 }
+
+// ============================================================================
+// Assets, plans and inspections (ADR 0064)
+// ============================================================================
+
+/// A place of the compound that is not a unit (ADR 0064): a building as a
+/// whole (`building` is the units' building text, one row each), any other
+/// area (a garden, a roof, a pump room), or one of the facilities (at most
+/// one row each). Never deleted: `active = false` retires one. Its QR tag
+/// is kept as the token's hash only.
+model CommonArea {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  /// building, area, facility.
+  kind        String
+  /// The compound's own short code, unique: `^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$`.
+  code        String
+  nameAr      String    @map("name_ar")
+  nameEn      String    @map("name_en")
+  /// A building's own name (kind building), or where an area is.
+  building    String?
+  facilityId  String?   @map("facility_id") @db.Uuid
+  latitude    Decimal?  @db.Decimal(9, 6)
+  longitude   Decimal?  @db.Decimal(9, 6)
+  active      Boolean   @default(true)
+  tagHash     String?   @map("tag_hash")
+  tagIssuedAt DateTime? @map("tag_issued_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, kind, code], map: "common_areas_list_idx")
+  @@map("common_areas")
+}

@@ -1,3 +1,4 @@
+import { CommonAreasService } from '../../src/maintenance/locations/common-areas.service';
 import type { AccountType } from '@prisma/client';
 import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
@@ -222,6 +223,8 @@ export interface World
   aCategoryId: string;
   /** One of B's preventive services (seeded, ADR 0038). */
   bPreventiveServiceId: string;
+  /** One of B's common areas (ADR 0064). */
+  bCommonAreaId: string;
   /** One of A's, for valid preventive requests. */
   aPreventiveServiceId: string;
   /** A device B's owner logged in from (ADR 0036). */
@@ -788,6 +791,15 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       }),
     );
   const bPreventiveService = await service(b);
+  // The asset register (ADR 0064).
+  const bCommonArea = await helpers.asManager(b, () =>
+    h.moduleRef.get(CommonAreasService).create({
+      kind: 'area',
+      code: 'WORLD-AREA',
+      nameAr: 'غرفة',
+      nameEn: 'World room',
+    }),
+  );
   const aPreventiveService = await service(a);
   // Facilities (ADR 0044).
   const facilityOf = (c: typeof a, roomy: boolean) =>
@@ -1268,6 +1280,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     aDeskToken: aDesk.token,
     bComplaintIdOfPartner: bPartnerComplaint.id,
     bPreventiveServiceId: bPreventiveService.id,
+    bCommonAreaId: bCommonArea.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,
     bDeviceId: bDevice.id,

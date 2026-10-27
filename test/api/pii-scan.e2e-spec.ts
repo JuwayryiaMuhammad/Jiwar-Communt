@@ -1627,6 +1627,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/gate/devices/{id}': w.bGateDeviceId,
       '/staff/gate/offline/flags/{id}': w.bOfflineFlagId,
       '/staff/gate/offline/batches/{id}': w.bOfflineBatchId,
+      // ADR 0064: the register's places, never a person's.
+      '/maintenance/areas/{id}': w.bCommonAreaId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

@@ -547,6 +547,25 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // The inbox (ADR 0058): nullable columns only under IS [NOT] NULL.
   notifications_archived_is_read: {},
   // Quotes (ADR 0058).
+  // Common areas (ADR 0064).
+  common_areas_kind_known: {},
+  common_areas_code_shape: {},
+  common_areas_names_length: {},
+  common_areas_building_length: {
+    guarded:
+      'building IS NULL is tested first; its length runs only on a value',
+  },
+  common_areas_kind_shape: {},
+  common_areas_position_pair: {},
+  common_areas_position_range: {
+    guarded:
+      'latitude IS NULL OR longitude IS NULL is tested first; the ranges run only on two values',
+  },
+  common_areas_tag_shape: {},
+  common_areas_tag_hash_shape: {
+    guarded:
+      'tag_hash IS NULL is tested first; the pattern runs only on a value',
+  },
   ticket_quotes_amount_range: {},
   ticket_quotes_note_length: {
     guarded: 'note IS NULL is tested first; its length runs only on a value',

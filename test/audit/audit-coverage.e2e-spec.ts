@@ -23,6 +23,7 @@ import { TenantsService } from '../../src/core/platform/tenants.service';
 import { ResidentsService } from '../../src/community/residents/residents.service';
 import { auditReaders } from '../setup/audit';
 import {
+  ASSETS_COVERAGE,
   BOARD_MATTERS_COVERAGE,
   BUDGET_COVERAGE,
   COMMUNITY_COVERAGE,
@@ -887,6 +888,7 @@ describe('Audit coverage', () => {
         ...PARTNERS_COVERAGE,
         ...DECISION_APPEALS_COVERAGE,
         ...GOVERNANCE_VOICE_COVERAGE,
+        ...ASSETS_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

@@ -78,6 +78,8 @@ import {
   DispatchQuotesController,
   ResidentQuotesController,
 } from './quotes/quotes.controller';
+import { CommonAreasController } from './locations/common-areas.controller';
+import { CommonAreasService } from './locations/common-areas.service';
 import { QuotesService } from './quotes/quotes.service';
 
 /**
@@ -112,6 +114,7 @@ import { QuotesService } from './quotes/quotes.service';
     UnitVisitsController,
     ResidentQuotesController,
     DispatchQuotesController,
+    CommonAreasController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -151,6 +154,7 @@ import { QuotesService } from './quotes/quotes.service';
     ResidentTicketSummary,
     QuotesService,
     ResidentTicketItems,
+    CommonAreasService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

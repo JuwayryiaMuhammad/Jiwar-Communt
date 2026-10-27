@@ -1342,6 +1342,11 @@ export const ErrorCode = {
   OBJECTIONS_NONE: 'OBJECTIONS_NONE',
   /** The request's follow-up is final: implemented or not implementable (409). */
   APPROVAL_PROGRESS_FINAL: 'APPROVAL_PROGRESS_FINAL',
+  // Assets, plans and inspections (ADR 0064)
+  /** Unknown, or another compound's (404). */
+  COMMON_AREA_NOT_FOUND: 'COMMON_AREA_NOT_FOUND',
+  /** The area is retired: nothing new goes there, it gets no tag (409). */
+  COMMON_AREA_RETIRED: 'COMMON_AREA_RETIRED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1562,6 +1567,9 @@ export const FieldErrorCode = {
   PARTNER_AMOUNT_NOT_ASKED: 'PARTNER_AMOUNT_NOT_ASKED',
   /** A complaint not upheld arranges no compensation. */
   PARTNER_COMPENSATION_NOT_UPHELD: 'PARTNER_COMPENSATION_NOT_UPHELD',
+  // Assets (ADR 0064)
+  /** No unit of the compound is in this building. */
+  BUILDING_NOT_FOUND: 'BUILDING_NOT_FOUND',
 } as const;
 
 export type FieldErrorCode =

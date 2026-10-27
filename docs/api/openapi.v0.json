@@ -7462,6 +7462,100 @@
         ],
         "type": "object"
       },
+      "CommonAreaView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "building",
+              "area",
+              "facility"
+            ],
+            "type": "string"
+          },
+          "latitude": {
+            "nullable": true,
+            "type": "number"
+          },
+          "longitude": {
+            "nullable": true,
+            "type": "number"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "tagIssuedAt": {
+            "description": "When its current tag was issued; null: none yet.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "code",
+          "nameAr",
+          "nameEn",
+          "building",
+          "facilityId",
+          "latitude",
+          "longitude",
+          "active",
+          "tagIssuedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "CommonAreaViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CommonAreaView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "CommunityAttachmentView": {
         "properties": {
           "contentType": {
@@ -9403,6 +9497,61 @@
           "nameAr",
           "durationKind",
           "price"
+        ],
+        "type": "object"
+      },
+      "CreateCommonAreaDto": {
+        "properties": {
+          "building": {
+            "description": "As the units have it: some unit must be in it.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "code": {
+            "description": "The compound’s short code, unique. Never changes.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "description": "`building`: a building as a whole (`building` required: the units’ building). `area`: any other place (`building` optional). `facility`: one of the facilities (`facilityId` required).",
+            "enum": [
+              "building",
+              "area",
+              "facility"
+            ],
+            "type": "string"
+          },
+          "latitude": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "code",
+          "nameAr",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -23499,6 +23648,24 @@
           "schedule",
           "status",
           "expectedMinutes"
+        ],
+        "type": "object"
+      },
+      "IssuedTagView": {
+        "properties": {
+          "code": {
+            "description": "What the QR holds. The previous tag stopped working.",
+            "example": "JWL1.0190…",
+            "type": "string"
+          },
+          "issuedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "issuedAt"
         ],
         "type": "object"
       },
@@ -51329,6 +51496,45 @@
         },
         "type": "object"
       },
+      "UpdateCommonAreaDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it: no new asset, plan or inspection there.",
+            "type": "boolean"
+          },
+          "building": {
+            "description": "An area’s building; null clears it. A building’s own never changes.",
+            "maxLength": 80,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "latitude": {
+            "description": "With `longitude`; both null clear the position.",
+            "maximum": 90,
+            "minimum": -90,
+            "nullable": true,
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180,
+            "minimum": -180,
+            "nullable": true,
+            "type": "number"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateComplaintCategoryDto": {
         "properties": {
           "active": {
@@ -67547,6 +67753,247 @@
         "tags": [
           "erasure"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/areas": {
+      "get": {
+        "operationId": "CommonAreasController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "enum": [
+                "building",
+                "area",
+                "facility"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only active ones (`true`) or only retired ones (`false`).",
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonAreaViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List common areas, oldest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "CommonAreasController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommonAreaDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonAreaView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a common area",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/areas/{id}": {
+      "get": {
+        "operationId": "CommonAreasController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonAreaView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a common area",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "CommonAreasController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommonAreaDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonAreaView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update or retire a common area",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/areas/{id}/tag": {
+      "post": {
+        "operationId": "CommonAreasController_issueTag",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedTagView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue a new QR tag for the area; the previous one stops working",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

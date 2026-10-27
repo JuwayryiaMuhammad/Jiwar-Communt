@@ -22119,6 +22119,181 @@
           }
         },
         {
+          "name": "List checklists",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "checklists"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/checklists"
+            }
+          }
+        },
+        {
+          "name": "Add a checklist",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"items\": [\n    {\n      \"kind\": \"check\",\n      \"labelAr\": \"\",\n      \"labelEn\": \"\"\n    }\n  ],\n  \"key\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"purpose\": \"pm\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes |  |\n| `key` | string | yes | Stable code; never changes. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `purpose` | `pm` \\| `inspection` \\| `any` | yes | `pm`: a plan’s; `inspection`: a round’s; `any`: both. |\n| `requireScan` | boolean |  | The tag must be scanned before it is submitted. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "checklists"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/checklists"
+            }
+          }
+        },
+        {
+          "name": "Get a checklist with its current items",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "checklists",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/checklists/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rename, require a scan, or retire a checklist",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"requireScan\": false\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires it. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `requireScan` | boolean |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "checklists",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/checklists/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace the items: a new version; open runs keep theirs",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"items\": [\n    {\n      \"kind\": \"check\",\n      \"labelAr\": \"\",\n      \"labelEn\": \"\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "checklists",
+                ":id",
+                "items"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/checklists/:id/items",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the dispatch settings",
           "request": {
             "description": "**Responses:** 200",
@@ -23084,6 +23259,35 @@
           }
         },
         {
+          "name": "Read a ticket’s checklist",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                ":id",
+                "checklist"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/checklist",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the dispatch engine's attempts on a ticket",
           "request": {
             "description": "**Responses:** 200",
@@ -23822,6 +24026,116 @@
                 {
                   "description": "",
                   "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read my ticket’s checklist",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "tickets",
+                ":id",
+                "checklist"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/checklist",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Answer an item (again, until submitted); photos are added",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"note\": \"\",\n  \"photoFileIds\": [],\n  \"result\": \"pass\",\n  \"value\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  |  |\n| `photoFileIds` | string[] |  | The caller’s finalized `checklist_photo` files, added to the answer’s (three at most). |\n| `result` | `pass` \\| `fail` \\| `na` |  | A check’s result. |\n| `value` | string |  | A reading’s value. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "tickets",
+                ":id",
+                "checklist",
+                "items",
+                ":itemId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/checklist/items/:itemId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit the checklist: every required item answered; never again",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "tickets",
+                ":id",
+                "checklist",
+                "submit"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/checklist/submit",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
                   "value": ""
                 }
               ]

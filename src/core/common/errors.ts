@@ -1365,6 +1365,19 @@ export const ErrorCode = {
   ASSET_IMPORT_NOT_VALID: 'ASSET_IMPORT_NOT_VALID',
   /** Only the compound's own work orders are accepted or sent back by dispatch (409). */
   TICKET_NOT_WORK_ORDER: 'TICKET_NOT_WORK_ORDER',
+  CHECKLIST_NOT_FOUND: 'CHECKLIST_NOT_FOUND',
+  /** The ticket or inspection has no checklist (404). */
+  CHECKLIST_RUN_NOT_FOUND: 'CHECKLIST_RUN_NOT_FOUND',
+  /** Not an item of the run's version (404). */
+  CHECKLIST_ITEM_NOT_FOUND: 'CHECKLIST_ITEM_NOT_FOUND',
+  /** Submitted once: never answered again (409). */
+  CHECKLIST_RUN_SUBMITTED: 'CHECKLIST_RUN_SUBMITTED',
+  /** Required items unanswered; params.positions (409). */
+  CHECKLIST_INCOMPLETE: 'CHECKLIST_INCOMPLETE',
+  /** An answer holds three photos at most; params.max (409). */
+  CHECKLIST_PHOTO_LIMIT_REACHED: 'CHECKLIST_PHOTO_LIMIT_REACHED',
+  /** The ticket's checklist is open: submit it before completing (409). */
+  CHECKLIST_NOT_SUBMITTED: 'CHECKLIST_NOT_SUBMITTED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1598,6 +1611,8 @@ export const FieldErrorCode = {
   UNIT_NOT_AVAILABLE: 'UNIT_NOT_AVAILABLE',
   /** An imported row's area code is none of the compound's active areas. */
   COMMON_AREA_NOT_AVAILABLE: 'COMMON_AREA_NOT_AVAILABLE',
+  /** Not an active checklist of this compound, of the right purpose. */
+  CHECKLIST_NOT_AVAILABLE: 'CHECKLIST_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

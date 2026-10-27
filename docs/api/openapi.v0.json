@@ -6592,6 +6592,519 @@
         ],
         "type": "object"
       },
+      "ChecklistAnswerDto": {
+        "properties": {
+          "note": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "The caller’s finalized `checklist_photo` files, added to the answer’s (three at most).",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "result": {
+            "description": "A check’s result.",
+            "enum": [
+              "pass",
+              "fail",
+              "na"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "description": "A reading’s value.",
+            "pattern": "^-?\\d{1,10}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ChecklistAnswerView": {
+        "properties": {
+          "answeredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "answeredById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistPhotoView"
+            },
+            "type": "array"
+          },
+          "result": {
+            "description": "A reading out of its range is `fail`.",
+            "enum": [
+              "pass",
+              "fail",
+              "na"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "value": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "result",
+          "value",
+          "note",
+          "answeredById",
+          "answeredAt",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "ChecklistItemDto": {
+        "properties": {
+          "failCreatesTicket": {
+            "description": "A check or a reading that fails opens a follow-up ticket (an inspection’s).",
+            "type": "boolean"
+          },
+          "followUpCategoryId": {
+            "description": "The follow-up’s category: an active one.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "followUpPriority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "kind": {
+            "enum": [
+              "check",
+              "reading",
+              "photo",
+              "text"
+            ],
+            "type": "string"
+          },
+          "labelAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "labelEn": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxValue": {
+            "description": "A reading above it fails.",
+            "pattern": "^-?\\d{1,10}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "metricKey": {
+            "description": "A reading’s metric (e.g. `pressure_bar`, `run_hours`): its readings are the asset’s.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "minValue": {
+            "description": "A reading below it fails.",
+            "pattern": "^-?\\d{1,10}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "required": {
+            "default": true,
+            "type": "boolean"
+          },
+          "unit": {
+            "maxLength": 16,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "labelAr",
+          "labelEn"
+        ],
+        "type": "object"
+      },
+      "ChecklistItemView": {
+        "properties": {
+          "failCreatesTicket": {
+            "type": "boolean"
+          },
+          "followUpCategoryId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "followUpPriority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "check",
+              "reading",
+              "photo",
+              "text"
+            ],
+            "type": "string"
+          },
+          "labelAr": {
+            "type": "string"
+          },
+          "labelEn": {
+            "type": "string"
+          },
+          "maxValue": {
+            "nullable": true,
+            "type": "string"
+          },
+          "metricKey": {
+            "nullable": true,
+            "type": "string"
+          },
+          "minValue": {
+            "nullable": true,
+            "type": "string"
+          },
+          "position": {
+            "description": "1 first.",
+            "type": "number"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "unit": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "kind",
+          "labelAr",
+          "labelEn",
+          "required",
+          "metricKey",
+          "unit",
+          "minValue",
+          "maxValue",
+          "failCreatesTicket",
+          "followUpCategoryId",
+          "followUpPriority"
+        ],
+        "type": "object"
+      },
+      "ChecklistPhotoView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "Presigned; null when gone.",
+            "nullable": true,
+            "type": "string"
+          },
+          "urlExpiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "urlExpiresAt"
+        ],
+        "type": "object"
+      },
+      "ChecklistRunItemView": {
+        "properties": {
+          "answer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChecklistAnswerView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "failCreatesTicket": {
+            "type": "boolean"
+          },
+          "followUpCategoryId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "followUpPriority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "check",
+              "reading",
+              "photo",
+              "text"
+            ],
+            "type": "string"
+          },
+          "labelAr": {
+            "type": "string"
+          },
+          "labelEn": {
+            "type": "string"
+          },
+          "maxValue": {
+            "nullable": true,
+            "type": "string"
+          },
+          "metricKey": {
+            "nullable": true,
+            "type": "string"
+          },
+          "minValue": {
+            "nullable": true,
+            "type": "string"
+          },
+          "position": {
+            "description": "1 first.",
+            "type": "number"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "unit": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "kind",
+          "labelAr",
+          "labelEn",
+          "required",
+          "metricKey",
+          "unit",
+          "minValue",
+          "maxValue",
+          "failCreatesTicket",
+          "followUpCategoryId",
+          "followUpPriority",
+          "answer"
+        ],
+        "type": "object"
+      },
+      "ChecklistRunView": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "attestationSha256": {
+            "description": "Hex SHA-256 of the submitted answers.",
+            "nullable": true,
+            "type": "string"
+          },
+          "checklistId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistRunItemView"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "submitted"
+            ],
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "submittedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "checklistId",
+          "version",
+          "assetId",
+          "status",
+          "submittedAt",
+          "submittedById",
+          "attestationSha256",
+          "items"
+        ],
+        "type": "object"
+      },
+      "ChecklistSummaryView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "pm",
+              "inspection",
+              "any"
+            ],
+            "type": "string"
+          },
+          "requireScan": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "purpose",
+          "requireScan",
+          "version",
+          "active"
+        ],
+        "type": "object"
+      },
+      "ChecklistSummaryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistSummaryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ChecklistView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistItemView"
+            },
+            "type": "array"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "pm",
+              "inspection",
+              "any"
+            ],
+            "type": "string"
+          },
+          "requireScan": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "purpose",
+          "requireScan",
+          "version",
+          "active",
+          "items"
+        ],
+        "type": "object"
+      },
       "CheckpointPositionDto": {
         "properties": {
           "lat": {
@@ -10298,6 +10811,54 @@
           "key",
           "nameAr",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateChecklistDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistItemDto"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "key": {
+            "description": "Stable code; never changes.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "purpose": {
+            "description": "`pm`: a plan’s; `inspection`: a round’s; `any`: both.",
+            "enum": [
+              "pm",
+              "inspection",
+              "any"
+            ],
+            "type": "string"
+          },
+          "requireScan": {
+            "description": "The tag must be scanned before it is submitted.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "key",
+          "nameAr",
+          "nameEn",
+          "purpose"
         ],
         "type": "object"
       },
@@ -35954,6 +36515,22 @@
         ],
         "type": "object"
       },
+      "ReplaceChecklistItemsDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistItemDto"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "ReplaceClubPeopleDto": {
         "properties": {
           "people": {
@@ -52699,6 +53276,28 @@
             "maxLength": 80,
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateChecklistDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "requireScan": {
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -70284,6 +70883,209 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/checklists": {
+      "get": {
+        "operationId": "ChecklistsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistSummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List checklists",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ChecklistsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChecklistDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a checklist",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/checklists/{id}": {
+      "get": {
+        "operationId": "ChecklistsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a checklist with its current items",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "ChecklistsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChecklistDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename, require a scan, or retire a checklist",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/checklists/{id}/items": {
+      "put": {
+        "operationId": "ChecklistsController_replaceItems",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceChecklistItemsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace the items: a new version; open runs keep theirs",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/dispatch-settings": {
       "get": {
         "operationId": "DispatchSettingsController_get",
@@ -71415,6 +72217,44 @@
         "tags": [
           "maintenance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/checklist": {
+      "get": {
+        "operationId": "DispatchChecklistController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistRunView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a ticket’s checklist",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -99042,6 +99882,138 @@
         "summary": "Get one ticket assigned to me",
         "tags": [
           "technician"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/checklist": {
+      "get": {
+        "operationId": "TechnicianChecklistController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistRunView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my ticket’s checklist",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/checklist/items/{itemId}": {
+      "put": {
+        "operationId": "TechnicianChecklistController_answer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChecklistAnswerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistRunView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer an item (again, until submitted); photos are added",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/checklist/submit": {
+      "post": {
+        "operationId": "TechnicianChecklistController_submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistRunView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit the checklist: every required item answered; never again",
+        "tags": [
+          "maintenance"
         ],
         "x-no-store": true,
         "x-stability": "draft"

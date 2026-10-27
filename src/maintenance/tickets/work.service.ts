@@ -21,6 +21,12 @@ import { assertCan, NOT_STARTED, type TicketAction } from './ticket-rules';
  * (back to the queue). Each action locks the ticket and checks the rules
  * after the lock.
  */
+/** Runs as a ticket is completed, under its lock (ADR 0064). */
+export type CompletionHook = (
+  tx: TenantTxClient,
+  ticket: Ticket,
+) => Promise<void>;
+
 @Injectable()
 export class WorkService {
   constructor(
@@ -31,6 +37,17 @@ export class WorkService {
     private readonly notices: TicketNotices,
     private readonly engine: DispatchEngine,
   ) {}
+
+  private readonly completing: CompletionHook[] = [];
+
+  /**
+   * What must hold, or happen, as a ticket is completed, in the same
+   * transaction under its lock (ADR 0064): its checklist submitted; a
+   * plan's occurrence done. A hook that throws refuses the completion.
+   */
+  onCompleting(hook: CompletionHook): void {
+    this.completing.push(hook);
+  }
 
   /**
    * On the way (ADR 0038): the reporter is told, and it counts as the
@@ -129,6 +146,8 @@ export class WorkService {
   ): Promise<void> {
     const me = this.ctx.accountId;
     const now = new Date();
+    if (to === 'completed')
+      for (const hook of this.completing) await hook(tx, ticket);
     // The work starts only on an approved quote, if it has one (ADR 0058).
     if (to === 'in_progress' && NOT_STARTED.includes(ticket.status))
       await assertQuoteAllowsStart(tx, ticket.id);

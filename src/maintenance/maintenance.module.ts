@@ -90,6 +90,15 @@ import { AssetImportsController } from './assets/asset-imports.controller';
 import { AssetImportsService } from './assets/asset-imports.service';
 import { WarrantySweep } from './assets/warranty-sweep';
 import { CompoundCalendar } from './schedules/compound-calendar';
+import { AssetReadings } from './checklists/asset-readings.service';
+import { ChecklistRuns } from './checklists/checklist-runs';
+import {
+  ChecklistsController,
+  DispatchChecklistController,
+  TechnicianChecklistController,
+} from './checklists/checklists.controller';
+import { ChecklistsService } from './checklists/checklists.service';
+import { TicketChecklists } from './checklists/ticket-checklists.service';
 import { QuotesService } from './quotes/quotes.service';
 
 /**
@@ -129,6 +138,9 @@ import { QuotesService } from './quotes/quotes.service';
     AssetsController,
     DocumentsController,
     AssetImportsController,
+    ChecklistsController,
+    TechnicianChecklistController,
+    DispatchChecklistController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -175,6 +187,10 @@ import { QuotesService } from './quotes/quotes.service';
     DocumentsService,
     AssetImportsService,
     WarrantySweep,
+    AssetReadings,
+    ChecklistsService,
+    ChecklistRuns,
+    TicketChecklists,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

@@ -452,3 +452,158 @@ export const WORK_ORDER_ROUTES: Row[] = [
     },
   },
 ];
+
+const KINDS_OF_ITEM = ['check', 'reading', 'photo', 'text'];
+
+/** Checklists and a ticket's run (ADR 0064). */
+export const CHECKLIST_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/maintenance/checklists',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/checklists',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      body: {
+        key: 'Bad key',
+        nameAr: 'فحص',
+        nameEn: 'Check',
+        purpose: 'audit',
+        items: [],
+      },
+      fields: [
+        { field: 'key', code: 'INVALID_FORMAT' },
+        {
+          field: 'purpose',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['pm', 'inspection', 'any'] },
+        },
+        {
+          field: 'items',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/checklists/{id}',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'family',
+    foreign: {
+      params: (w) => ({ id: w.bChecklistId }),
+      code: 'CHECKLIST_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/maintenance/checklists/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bChecklistId }),
+      body: () => ({ active: false }),
+      code: 'CHECKLIST_NOT_FOUND',
+    },
+    invalid: {
+      body: { requireScan: 'yes' },
+      fields: [{ field: 'requireScan', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'PUT',
+    path: '/maintenance/checklists/{id}/items',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bChecklistId }),
+      body: () => ({
+        items: [{ kind: 'check', labelAr: 'ت', labelEn: 'Check' }],
+      }),
+      code: 'CHECKLIST_NOT_FOUND',
+    },
+    invalid: {
+      body: { items: [{ kind: 'gauge', labelAr: '', labelEn: 'G' }] },
+      fields: [
+        {
+          field: 'items.0.kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: KINDS_OF_ITEM },
+        },
+        {
+          field: 'items.0.labelAr',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 200 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/technician/tickets/{id}/checklist',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: { params: (w) => ({ id: w.bTicketId }), code: 'TICKET_NOT_FOUND' },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'PUT',
+    path: '/technician/tickets/{id}/checklist/items/{itemId}',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId, itemId: w.bTicketId }),
+      body: () => ({ result: 'pass' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { result: 'ok' },
+      fields: [
+        {
+          field: 'result',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['pass', 'fail', 'na'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/technician/tickets/{id}/checklist/submit',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: { params: (w) => ({ id: w.bTicketId }), code: 'TICKET_NOT_FOUND' },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}/checklist',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: { params: (w) => ({ id: w.bTicketId }), code: 'TICKET_NOT_FOUND' },
+    invalid: 'none',
+    noStore: true,
+  },
+];

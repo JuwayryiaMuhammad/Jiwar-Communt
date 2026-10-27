@@ -414,6 +414,55 @@ describe('Audit coverage — assets, plans and inspections', () => {
     });
   });
 
+  describe('checklists', () => {
+    it('checklist.created, .updated, .items_replaced — keys, purpose, version and counts; never names or labels', async () => {
+      const cl = await a.checklist(
+        s,
+        [{ kind: 'check', labelAr: 'AUDIT-بند', labelEn: 'AUDIT-item' }],
+        { nameEn: 'AUDIT-checklist', purpose: 'inspection' },
+      );
+      const created = await single(s.c, 'checklist.created', cl.id);
+      expect(created).toMatchObject({
+        changes: {
+          purpose: { from: null, to: 'inspection' },
+          nameEn: { changed: true },
+        },
+        metadata: { items: 1 },
+      });
+      await a
+        .http('patch', `/maintenance/checklists/${cl.id}`, s.manager.token, {
+          nameEn: 'AUDIT-renamed',
+          requireScan: true,
+        })
+        .expect(200);
+      const updated = await single(s.c, 'checklist.updated', cl.id);
+      expect(updated.changes).toEqual({
+        nameEn: { changed: true },
+        requireScan: { from: false, to: true },
+      });
+      await a
+        .http(
+          'put',
+          `/maintenance/checklists/${cl.id}/items`,
+          s.manager.token,
+          {
+            items: [
+              { kind: 'check', labelAr: 'AUDIT-أ', labelEn: 'AUDIT-a' },
+              { kind: 'text', labelAr: 'AUDIT-ب', labelEn: 'AUDIT-b' },
+            ],
+          },
+        )
+        .expect(200);
+      const replaced = await single(s.c, 'checklist.items_replaced', cl.id);
+      expect(replaced).toMatchObject({
+        changes: { version: { from: 1, to: 2 } },
+        metadata: { items: 2 },
+      });
+      for (const row of [created, updated, replaced])
+        expect(JSON.stringify(row)).not.toMatch(/AUDIT-/);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every asset entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

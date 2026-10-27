@@ -5174,6 +5174,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/checklists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List checklists */
+        get: operations["ChecklistsController_list"];
+        put?: never;
+        /** Add a checklist */
+        post: operations["ChecklistsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/checklists/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a checklist with its current items */
+        get: operations["ChecklistsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, require a scan, or retire a checklist */
+        patch: operations["ChecklistsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/checklists/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace the items: a new version; open runs keep theirs */
+        put: operations["ChecklistsController_replaceItems"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/dispatch-settings": {
         parameters: {
             query?: never;
@@ -5515,6 +5568,23 @@ export interface paths {
         put?: never;
         /** Change a ticket's category */
         post: operations["DispatchTicketsController_category"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a ticket’s checklist */
+        get: operations["DispatchChecklistController_read"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -14867,6 +14937,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/tickets/{id}/checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read my ticket’s checklist */
+        get: operations["TechnicianChecklistController_read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/checklist/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Answer an item (again, until submitted); photos are added */
+        put: operations["TechnicianChecklistController_answer"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/checklist/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit the checklist: every required item answered; never again */
+        post: operations["TechnicianChecklistController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/tickets/{id}/complete": {
         parameters: {
             query?: never;
@@ -19124,6 +19245,149 @@ export interface components {
              */
             fileId: string;
         };
+        ChecklistAnswerDto: {
+            note?: string;
+            /** @description The caller’s finalized `checklist_photo` files, added to the answer’s (three at most). */
+            photoFileIds?: string[];
+            /**
+             * @description A check’s result.
+             * @enum {string}
+             */
+            result?: "pass" | "fail" | "na";
+            /** @description A reading’s value. */
+            value?: string;
+        };
+        ChecklistAnswerView: {
+            /** Format: date-time */
+            answeredAt: string;
+            /** Format: uuid */
+            answeredById: string | null;
+            note: string | null;
+            photos: components["schemas"]["ChecklistPhotoView"][];
+            /**
+             * @description A reading out of its range is `fail`.
+             * @enum {string|null}
+             */
+            result: "pass" | "fail" | "na" | null;
+            value: string | null;
+        };
+        ChecklistItemDto: {
+            /** @description A check or a reading that fails opens a follow-up ticket (an inspection’s). */
+            failCreatesTicket?: boolean;
+            /**
+             * Format: uuid
+             * @description The follow-up’s category: an active one.
+             */
+            followUpCategoryId?: string;
+            followUpPriority?: components["schemas"]["TicketPriority"];
+            /** @enum {string} */
+            kind: "check" | "reading" | "photo" | "text";
+            labelAr: string;
+            labelEn: string;
+            /** @description A reading above it fails. */
+            maxValue?: string;
+            /** @description A reading’s metric (e.g. `pressure_bar`, `run_hours`): its readings are the asset’s. */
+            metricKey?: string;
+            /** @description A reading below it fails. */
+            minValue?: string;
+            /** @default true */
+            required: boolean;
+            unit?: string;
+        };
+        ChecklistItemView: {
+            failCreatesTicket: boolean;
+            /** Format: uuid */
+            followUpCategoryId: string | null;
+            followUpPriority: components["schemas"]["TicketPriority"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "check" | "reading" | "photo" | "text";
+            labelAr: string;
+            labelEn: string;
+            maxValue: string | null;
+            metricKey: string | null;
+            minValue: string | null;
+            /** @description 1 first. */
+            position: number;
+            required: boolean;
+            unit: string | null;
+        };
+        ChecklistPhotoView: {
+            /** Format: uuid */
+            id: string;
+            /** @description Presigned; null when gone. */
+            url: string | null;
+            /** Format: date-time */
+            urlExpiresAt: string | null;
+        };
+        ChecklistRunItemView: {
+            answer: components["schemas"]["ChecklistAnswerView"] | null;
+            failCreatesTicket: boolean;
+            /** Format: uuid */
+            followUpCategoryId: string | null;
+            followUpPriority: components["schemas"]["TicketPriority"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "check" | "reading" | "photo" | "text";
+            labelAr: string;
+            labelEn: string;
+            maxValue: string | null;
+            metricKey: string | null;
+            minValue: string | null;
+            /** @description 1 first. */
+            position: number;
+            required: boolean;
+            unit: string | null;
+        };
+        ChecklistRunView: {
+            /** Format: uuid */
+            assetId: string | null;
+            /** @description Hex SHA-256 of the submitted answers. */
+            attestationSha256: string | null;
+            /** Format: uuid */
+            checklistId: string;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["ChecklistRunItemView"][];
+            /** @enum {string} */
+            status: "open" | "submitted";
+            /** Format: date-time */
+            submittedAt: string | null;
+            /** Format: uuid */
+            submittedById: string | null;
+            version: number;
+        };
+        ChecklistSummaryView: {
+            active: boolean;
+            /** Format: uuid */
+            id: string;
+            key: string;
+            nameAr: string;
+            nameEn: string;
+            /** @enum {string} */
+            purpose: "pm" | "inspection" | "any";
+            requireScan: boolean;
+            version: number;
+        };
+        ChecklistSummaryViewList: {
+            data: components["schemas"]["ChecklistSummaryView"][];
+            nextCursor: string | null;
+        };
+        ChecklistView: {
+            active: boolean;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["ChecklistItemView"][];
+            key: string;
+            nameAr: string;
+            nameEn: string;
+            /** @enum {string} */
+            purpose: "pm" | "inspection" | "any";
+            requireScan: boolean;
+            version: number;
+        };
         CheckpointPositionDto: {
             lat: number;
             lng: number;
@@ -20338,6 +20602,20 @@ export interface components {
             key: string;
             nameAr: string;
             nameEn: string;
+        };
+        CreateChecklistDto: {
+            items: components["schemas"]["ChecklistItemDto"][];
+            /** @description Stable code; never changes. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
+            /**
+             * @description `pm`: a plan’s; `inspection`: a round’s; `any`: both.
+             * @enum {string}
+             */
+            purpose: "pm" | "inspection" | "any";
+            /** @description The tag must be scanned before it is submitted. */
+            requireScan?: boolean;
         };
         CreateCheckpointDto: {
             /** Format: uuid */
@@ -28543,6 +28821,9 @@ export interface components {
             /** @enum {string} */
             status: "open" | "renewed" | "declined" | "withdrawn";
         };
+        ReplaceChecklistItemsDto: {
+            items: components["schemas"]["ChecklistItemDto"][];
+        };
         ReplaceClubPeopleDto: {
             /** @description Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT). */
             people: components["schemas"]["ClubPersonRefDto"][];
@@ -33448,6 +33729,13 @@ export interface components {
             defaultPriority?: components["schemas"]["TicketPriority"];
             nameAr?: string;
             nameEn?: string;
+        };
+        UpdateChecklistDto: {
+            /** @description False retires it. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+            requireScan?: boolean;
         };
         UpdateCheckpointDto: {
             nameAr?: string;
@@ -42013,6 +42301,122 @@ export interface operations {
             };
         };
     };
+    ChecklistsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistSummaryViewList"];
+                };
+            };
+        };
+    };
+    ChecklistsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateChecklistDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistView"];
+                };
+            };
+        };
+    };
+    ChecklistsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistView"];
+                };
+            };
+        };
+    };
+    ChecklistsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateChecklistDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistView"];
+                };
+            };
+        };
+    };
+    ChecklistsController_replaceItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceChecklistItemsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistView"];
+                };
+            };
+        };
+    };
     DispatchSettingsController_get: {
         parameters: {
             query?: never;
@@ -42622,6 +43026,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DispatchChecklistController_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistRunView"];
+                };
             };
         };
     };
@@ -56670,6 +57095,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TechnicianTicketDetailView"];
+                };
+            };
+        };
+    };
+    TechnicianChecklistController_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistRunView"];
+                };
+            };
+        };
+    };
+    TechnicianChecklistController_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistAnswerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistRunView"];
+                };
+            };
+        };
+    };
+    TechnicianChecklistController_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecklistRunView"];
                 };
             };
         };

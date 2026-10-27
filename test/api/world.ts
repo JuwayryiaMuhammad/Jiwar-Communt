@@ -1,3 +1,4 @@
+import { ChecklistsService } from '../../src/maintenance/checklists/checklists.service';
 import { AssetsService } from '../../src/maintenance/assets/assets.service';
 import { DocumentsService } from '../../src/maintenance/assets/documents.service';
 import { AssetImportsService } from '../../src/maintenance/assets/asset-imports.service';
@@ -233,6 +234,8 @@ export interface World
   bAssetId: string;
   bDocumentId: string;
   bAssetImportId: string;
+  /** One of B's checklists (ADR 0064). */
+  bChecklistId: string;
   /** One of A's, for valid preventive requests. */
   aPreventiveServiceId: string;
   /** A device B's owner logged in from (ADR 0036). */
@@ -836,6 +839,15 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     ),
   );
+  const bChecklist = await helpers.asManager(b, () =>
+    h.moduleRef.get(ChecklistsService).create({
+      key: 'world_check',
+      nameAr: 'فحص',
+      nameEn: 'World check',
+      purpose: 'any',
+      items: [{ kind: 'check', labelAr: 'ت', labelEn: 'Leaks' }],
+    }),
+  );
   const bAssetImport = await helpers.asManager(b, async () => {
     const files = fileHelpers(h);
     const sheet = Buffer.from(
@@ -1335,6 +1347,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bAssetId: bAsset.asset.id,
     bDocumentId: bDocument.document.id,
     bAssetImportId: bAssetImport.id,
+    bChecklistId: bChecklist.template.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,
     bDeviceId: bDevice.id,

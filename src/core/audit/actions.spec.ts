@@ -179,6 +179,7 @@ describe('audit catalog', () => {
         'asset',
         'maintenance_document',
         'asset_import',
+        'checklist',
       ]).toContain(def.target);
     }
   });

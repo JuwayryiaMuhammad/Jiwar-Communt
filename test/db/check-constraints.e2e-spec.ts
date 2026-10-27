@@ -547,6 +547,34 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // The inbox (ADR 0058): nullable columns only under IS [NOT] NULL.
   notifications_archived_is_read: {},
   // Quotes (ADR 0058).
+  // Checklists (ADR 0064).
+  checklist_templates_key_shape: {},
+  checklist_templates_names_length: {},
+  checklist_templates_purpose_known: {},
+  checklist_templates_version_range: {},
+  checklist_template_items_version_range: {},
+  checklist_template_items_kind_known: {},
+  checklist_template_items_labels_length: {},
+  checklist_template_items_reading_shape: {
+    guarded:
+      'a reading tests metric_key IS NOT NULL first; unit, min and max are each tested IS NULL before compared',
+  },
+  checklist_template_items_follow_up_shape: {},
+  checklist_runs_ticket_shape: {},
+  checklist_runs_status_shape: {
+    guarded:
+      'attestation_sha256 IS NOT NULL is required before its pattern is tested',
+  },
+  checklist_answers_result_known: {
+    guarded: 'result IS NULL is tested first; the list runs only on a value',
+  },
+  checklist_answers_note_length: {
+    guarded: 'note IS NULL is tested first; its length runs only on a value',
+  },
+  asset_readings_metric_shape: {
+    guarded: 'unit IS NULL is tested first; its length runs only on a value',
+  },
+  asset_readings_source_shape: {},
   // The compound's work orders (ADR 0064).
   tickets_origin_known: {},
   tickets_origin_shape: {},

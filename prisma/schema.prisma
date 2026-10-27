@@ -9660,3 +9660,125 @@ model AssetImport {
   @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "asset_imports_list_idx")
   @@map("asset_imports")
 }
+
+/// A checklist of the compound's (ADR 0064): a planned job's or an
+/// inspection's, by purpose. Each edit of its items is a new version.
+model ChecklistTemplate {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  key            String
+  nameAr         String   @map("name_ar")
+  nameEn         String   @map("name_en")
+  /// pm, inspection, any.
+  purpose        String
+  /// The tag of the asset or area must be scanned before it is submitted.
+  requireScan    Boolean  @default(false) @map("require_scan")
+  currentVersion Int      @default(1) @map("current_version")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, key])
+  @@map("checklist_templates")
+}
+
+/// One version's item (ADR 0064): a check, a reading, a photo or a note.
+/// Never changed.
+model ChecklistTemplateItem {
+  id                  String          @id @db.Uuid
+  tenantId            String          @map("tenant_id") @db.Uuid
+  templateId          String          @map("template_id") @db.Uuid
+  version             Int
+  position            Int             @db.SmallInt
+  /// check, reading, photo, text.
+  kind                String
+  labelAr             String          @map("label_ar")
+  labelEn             String          @map("label_en")
+  required            Boolean         @default(true)
+  metricKey           String?         @map("metric_key")
+  unit                String?
+  minValue            Decimal?        @map("min_value") @db.Decimal(14, 4)
+  maxValue            Decimal?        @map("max_value") @db.Decimal(14, 4)
+  failCreatesTicket   Boolean         @default(false) @map("fail_creates_ticket")
+  followUpCategoryId  String?         @map("follow_up_category_id") @db.Uuid
+  followUpPriority    TicketPriority? @map("follow_up_priority")
+
+  @@unique([tenantId, id])
+  @@unique([templateId, version, position], map: "checklist_template_items_position_key")
+  @@map("checklist_template_items")
+}
+
+/// A checklist being filled (ADR 0064): of a ticket's cycle or an
+/// inspection; submitted once, with the SHA-256 of its answers.
+model ChecklistRun {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  templateId        String    @map("template_id") @db.Uuid
+  version           Int
+  ticketId          String?   @map("ticket_id") @db.Uuid
+  cycle             Int?
+  /// The asset whose readings it records.
+  assetId           String?   @map("asset_id") @db.Uuid
+  /// open, submitted.
+  status            String    @default("open")
+  createdAt         DateTime  @map("created_at") @db.Timestamptz(3)
+  submittedAt       DateTime? @map("submitted_at") @db.Timestamptz(3)
+  submittedById     String?   @map("submitted_by_account_id") @db.Uuid
+  attestationSha256 String?   @map("attestation_sha256")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, assetId, submittedAt], map: "checklist_runs_asset_idx")
+  @@map("checklist_runs")
+}
+
+/// One item's answer in a run (ADR 0064); frozen once the run is submitted.
+model ChecklistAnswer {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  runId        String   @map("run_id") @db.Uuid
+  itemId       String   @map("item_id") @db.Uuid
+  /// pass, fail, na (a check; a reading out of its range fails).
+  result       String?
+  value        Decimal? @db.Decimal(14, 4)
+  note         String?
+  answeredById String?  @map("answered_by_account_id") @db.Uuid
+  answeredAt   DateTime @map("answered_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([runId, itemId], map: "checklist_answers_run_item_key")
+  @@map("checklist_answers")
+}
+
+/// A photo of an answer (ADR 0064), three at most. Never changed.
+model ChecklistAnswerPhoto {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  answerId  String   @map("answer_id") @db.Uuid
+  fileId    String   @unique @map("file_id") @db.Uuid
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@index([tenantId, answerId, createdAt], map: "checklist_answer_photos_answer_idx")
+  @@map("checklist_answer_photos")
+}
+
+/// What an asset measured (ADR 0064): from a run, or entered by hand.
+model AssetReading {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  assetId      String   @map("asset_id") @db.Uuid
+  metricKey    String   @map("metric_key")
+  value        Decimal  @db.Decimal(14, 4)
+  unit         String?
+  /// run, manual.
+  source       String
+  runId        String?  @map("run_id") @db.Uuid
+  recordedById String?  @map("recorded_by_account_id") @db.Uuid
+  /// When it was read, as the reader says (with its offset).
+  occurredAt   DateTime @map("occurred_at") @db.Timestamptz(3)
+  recordedAt   DateTime @map("recorded_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, assetId, metricKey, occurredAt(sort: Desc), id(sort: Desc)], map: "asset_readings_metric_idx")
+  @@map("asset_readings")
+}

@@ -1,4 +1,7 @@
 import type { Response } from 'supertest';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { ChecklistRuns } from '../../src/maintenance/checklists/checklist-runs';
+import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { fileHelpers } from '../setup/files';
 import { uniqueSuffix } from '../setup/fixtures';
 import { call } from './request';
@@ -51,7 +54,98 @@ export function assetCalls(
       kind: 'manual',
       title: 'Call manual',
     });
+  /**
+   * A work order of A's on a new asset, with a one-check checklist, given
+   * to A's technician and started: its id and the item's.
+   */
+  const job = async (): Promise<{ ticketId: string; itemId: string }> => {
+    const w = world();
+    const assetId = await asset();
+    const checklist = (
+      await manager('POST', '/maintenance/checklists', {
+        key: `ns_${uniqueSuffix()
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '')}`,
+        nameAr: 'فحص',
+        nameEn: 'Call check',
+        purpose: 'pm',
+        items: [{ kind: 'check', labelAr: 'ت', labelEn: 'Leaks' }],
+      })
+    ).body as { id: string; items: { id: string }[] };
+    const ticketId = await w.helpers.asManager(w.a, () =>
+      w.h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+        const category = await tx.ticketCategory.findFirstOrThrow({
+          where: { key: 'plumbing' },
+        });
+        const t = await w.h.moduleRef.get(TicketsService).createWorkOrder(tx, {
+          tenantId: w.a.tenantId,
+          origin: 'plan',
+          assetId,
+          categoryId: category.id,
+          priority: 'normal',
+          description: 'Call job',
+          responsibleId: w.a.ids.manager,
+          actorId: null,
+        });
+        await w.h.moduleRef.get(ChecklistRuns).open(tx, {
+          tenantId: w.a.tenantId,
+          templateId: checklist.id,
+          ticketId: t.id,
+          cycle: 1,
+          assetId,
+        });
+        return t.id;
+      }),
+    );
+    await manager('POST', `/maintenance/tickets/${ticketId}/assign`, {
+      technicianId: w.a.ids.technician,
+    });
+    await technician('POST', `/technician/tickets/${ticketId}/start`);
+    return { ticketId, itemId: checklist.items[0].id };
+  };
+  const technician = (
+    method: 'GET' | 'POST' | 'PUT',
+    path: string,
+    payload?: object,
+  ) =>
+    call(world(), method, path, {
+      token: world().a.tokens.technician,
+      body: payload,
+    });
+
   return {
+    'GET /technician/tickets/{id}/checklist': async () =>
+      technician(
+        'GET',
+        `/technician/tickets/${(await job()).ticketId}/checklist`,
+      ),
+    'PUT /technician/tickets/{id}/checklist/items/{itemId}': async () => {
+      const { ticketId, itemId } = await job();
+      return technician(
+        'PUT',
+        `/technician/tickets/${ticketId}/checklist/items/${itemId}`,
+        { result: 'pass' },
+      );
+    },
+    'POST /technician/tickets/{id}/checklist/submit': async () => {
+      const { ticketId, itemId } = await job();
+      await technician(
+        'PUT',
+        `/technician/tickets/${ticketId}/checklist/items/${itemId}`,
+        {
+          result: 'pass',
+        },
+      );
+      return technician(
+        'POST',
+        `/technician/tickets/${ticketId}/checklist/submit`,
+      );
+    },
+    'GET /maintenance/tickets/{id}/checklist': async () =>
+      manager(
+        'GET',
+        `/maintenance/tickets/${(await job()).ticketId}/checklist`,
+      ),
     'POST /maintenance/areas/{id}/tag': async () =>
       manager('POST', `/maintenance/areas/${await area()}/tag`),
     'POST /maintenance/assets/{id}/tag': async () =>

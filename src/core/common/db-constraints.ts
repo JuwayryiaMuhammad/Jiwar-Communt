@@ -266,6 +266,19 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   maintenance_documents_file_id_key: null,
   asset_imports_tenant_id_id_key: null,
   asset_imports_file_id_key: null,
+  // Checklists (ADR 0064). Items are written by position in one statement,
+  // a run per ticket cycle by the work order's own creation, an answer per
+  // item by an upsert, a photo after its file's claim: each a race at most.
+  checklist_templates_tenant_id_id_key: null,
+  checklist_templates_tenant_id_key_key: ['key'],
+  checklist_template_items_tenant_id_id_key: null,
+  checklist_template_items_position_key: null,
+  checklist_runs_tenant_id_id_key: null,
+  checklist_runs_ticket_cycle_key: null,
+  checklist_answers_tenant_id_id_key: null,
+  checklist_answers_run_item_key: null,
+  checklist_answer_photos_file_id_key: null,
+  asset_readings_tenant_id_id_key: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

@@ -742,4 +742,7 @@ export const ASSETS_COVERAGE: readonly string[] = [
   'ticket.work_order_opened',
   'ticket.work_accepted',
   'ticket.work_sent_back',
+  'checklist.created',
+  'checklist.updated',
+  'checklist.items_replaced',
 ];

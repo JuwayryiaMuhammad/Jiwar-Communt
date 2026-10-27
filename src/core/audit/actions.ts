@@ -1772,6 +1772,19 @@ export const AUDIT_ACTIONS = {
   'ticket.work_order_opened': { log: 'tenant', target: 'ticket' },
   'ticket.work_accepted': { log: 'tenant', target: 'ticket' },
   'ticket.work_sent_back': { log: 'tenant', target: 'ticket' },
+  // Checklists (ADR 0064): keys, the purpose, the version and how many
+  // items; the names as { changed: true }, the items' labels never.
+  'checklist.created': {
+    log: 'tenant',
+    target: 'checklist',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'checklist.updated': {
+    log: 'tenant',
+    target: 'checklist',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'checklist.items_replaced': { log: 'tenant', target: 'checklist' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

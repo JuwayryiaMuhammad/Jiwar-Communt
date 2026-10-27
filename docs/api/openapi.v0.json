@@ -6760,6 +6760,59 @@
         ],
         "type": "object"
       },
+      "ClearanceCodeDto": {
+        "properties": {
+          "code": {
+            "description": "The 22 characters on the certificate.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "ClearanceView": {
+        "properties": {
+          "asOf": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "description": "`CL-` and the number.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date",
+            "type": "string"
+          },
+          "verifyCode": {
+            "description": "Anyone checks it with this code on the public page.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "asOf",
+          "validUntil",
+          "verifyCode"
+        ],
+        "type": "object"
+      },
       "CloseGateServiceDto": {
         "properties": {
           "note": {
@@ -7306,6 +7359,23 @@
           "id",
           "code",
           "membershipId"
+        ],
+        "type": "object"
+      },
+      "CodedPartDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code (REASON_CODES.depositDeduction).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "amount"
         ],
         "type": "object"
       },
@@ -12510,6 +12580,112 @@
           "deny"
         ],
         "type": "string"
+      },
+      "DepositEventView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "refund_requested",
+              "refund_withdrawn",
+              "refunded",
+              "deducted",
+              "forfeited"
+            ],
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "amount",
+          "reasonCode",
+          "at"
+        ],
+        "type": "object"
+      },
+      "DepositView": {
+        "properties": {
+          "amount": {
+            "description": "EGP received.",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/DepositEventView"
+            },
+            "type": "array"
+          },
+          "held": {
+            "description": "EGP still held.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "finishing_works",
+              "move",
+              "maintenance_fund",
+              "other"
+            ],
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "cash",
+              "bank_transfer",
+              "cheque"
+            ],
+            "type": "string"
+          },
+          "number": {
+            "description": "`DP-` and the number.",
+            "type": "string"
+          },
+          "occupancyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "receivedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "refundRequested": {
+            "type": "boolean"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "occupancyId",
+          "kind",
+          "amount",
+          "held",
+          "receivedOn",
+          "method",
+          "refundRequested",
+          "events"
+        ],
+        "type": "object"
       },
       "DeskAcceptDto": {
         "properties": {
@@ -26555,6 +26731,53 @@
         ],
         "type": "object"
       },
+      "NewDepositDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "example": "5000.00",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "finishing_works",
+              "move",
+              "maintenance_fund",
+              "other"
+            ],
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "cash",
+              "bank_transfer",
+              "cheque"
+            ],
+            "type": "string"
+          },
+          "occupancyId": {
+            "description": "The depositor’s active occupancy.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "receivedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "reference": {
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "required": [
+          "occupancyId",
+          "kind",
+          "amount",
+          "receivedOn",
+          "method"
+        ],
+        "type": "object"
+      },
       "NewEmailDto": {
         "properties": {
           "email": {
@@ -29959,7 +30182,8 @@
           "bank_transfer",
           "cheque",
           "card",
-          "wallet"
+          "wallet",
+          "deposit_offset"
         ],
         "type": "string"
       },
@@ -32670,6 +32894,43 @@
         ],
         "type": "object"
       },
+      "PublicClearanceView": {
+        "properties": {
+          "asOf": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "compoundName": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "expired"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "compoundName",
+          "number",
+          "unitCode",
+          "asOf",
+          "validUntil",
+          "status"
+        ],
+        "type": "object"
+      },
       "PublicReceiptView": {
         "properties": {
           "amount": {
@@ -33596,6 +33857,26 @@
           "gateway_manual"
         ],
         "type": "string"
+      },
+      "RefundPartDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "channel": {
+            "enum": [
+              "cash",
+              "bank_transfer"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "channel"
+        ],
+        "type": "object"
       },
       "RefundReversalView": {
         "properties": {
@@ -40007,6 +40288,25 @@
           "dutyPhone",
           "allowAlwaysAllow"
         ],
+        "type": "object"
+      },
+      "SettleDepositDto": {
+        "properties": {
+          "deductions": {
+            "description": "`unpaid_dues` becomes an office payment of the unit (method `deposit_offset`).",
+            "items": {
+              "$ref": "#/components/schemas/CodedPartDto"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "forfeit": {
+            "$ref": "#/components/schemas/CodedPartDto"
+          },
+          "refund": {
+            "$ref": "#/components/schemas/RefundPartDto"
+          }
+        },
         "type": "object"
       },
       "SettleWageObligationDto": {
@@ -56908,6 +57208,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/clearances/{id}/certificate": {
+      "get": {
+        "operationId": "ClearancesController_certificate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A clearance certificate as a PDF",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/club/plans": {
       "get": {
         "operationId": "ResidentClubController_plans",
@@ -58983,6 +59322,80 @@
         "summary": "Revoke a delegation",
         "tags": [
           "delegations"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/deposits/{id}/refund-request": {
+      "post": {
+        "operationId": "DepositsController_askRefund",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for my deposit back",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/deposits/{id}/refund-request/withdraw": {
+      "post": {
+        "operationId": "DepositsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my refund request",
+        "tags": [
+          "finance"
         ],
         "x-stability": "draft"
       }
@@ -71310,6 +71723,37 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/deposits": {
+      "get": {
+        "operationId": "DepositsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DepositView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deposits the management holds for me",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/devices": {
       "get": {
         "operationId": "MeController_devices",
@@ -78896,6 +79340,40 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/public/clearances/lookup": {
+      "post": {
+        "operationId": "PublicClearancesController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearanceCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicClearanceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Check a clearance certificate by its code",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/public/data-exports/code": {
       "post": {
         "operationId": "PublicDataExportsController_code",
@@ -81061,6 +81539,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/clearances/{id}/certificate": {
+      "get": {
+        "operationId": "StaffClearancesController_certificate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A clearance certificate as a PDF",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/club-memberships": {
       "get": {
         "operationId": "ClubMembershipsController_list",
@@ -81930,6 +82447,91 @@
           "management"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/deposits": {
+      "post": {
+        "operationId": "StaffDepositsController_record",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewDepositDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a deposit received",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/deposits/{id}/settle": {
+      "post": {
+        "operationId": "StaffDepositsController_settle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettleDepositDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Settle a deposit: refund, deduct, forfeit",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },
@@ -93327,6 +93929,44 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/units/{unitId}/clearances": {
+      "post": {
+        "operationId": "StaffClearancesController_issue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClearanceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue a clearance certificate for a unit",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/units/{unitId}/contracts": {
       "get": {
         "operationId": "StaffContractsController_list",
@@ -93455,6 +94095,46 @@
           "units"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/deposits": {
+      "get": {
+        "operationId": "StaffDepositsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DepositView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A unit’s deposits",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },
@@ -99070,6 +99750,83 @@
         "tags": [
           "children"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/clearances": {
+      "get": {
+        "operationId": "ClearancesController_mine",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClearanceView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My clearance certificates for the unit",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ClearancesController_ask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClearanceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a clearance certificate",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

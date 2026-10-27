@@ -41,6 +41,13 @@ export const AUDIT_ACTIONS = {
   'unit_document.deleted': { log: 'tenant', target: 'unit_document' },
   // A unit's contracts (ADR 0062). metadata: unitId, kind, parties,
   // renewsId (recorded); reasonCode (voided, declined); contractId.
+  // Clearances and deposits (ADR 0062). metadata: unitId, number, side
+  // (issued); kind, amount (recorded); parts with codes (settled).
+  'clearance.issued': { log: 'tenant', target: 'clearance' },
+  'deposit.recorded': { log: 'tenant', target: 'deposit' },
+  'deposit.refund_requested': { log: 'tenant', target: 'deposit' },
+  'deposit.refund_withdrawn': { log: 'tenant', target: 'deposit' },
+  'deposit.settled': { log: 'tenant', target: 'deposit' },
   'contract.recorded': { log: 'tenant', target: 'contract' },
   'contract.voided': { log: 'tenant', target: 'contract' },
   'contract_renewal.requested': { log: 'tenant', target: 'contract_renewal' },

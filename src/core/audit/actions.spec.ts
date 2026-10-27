@@ -171,6 +171,8 @@ describe('audit catalog', () => {
         'compound_document',
         'contract',
         'contract_renewal',
+        'clearance',
+        'deposit',
       ]).toContain(def.target);
     }
   });

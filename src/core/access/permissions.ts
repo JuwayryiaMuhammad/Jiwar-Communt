@@ -46,6 +46,9 @@ export const PERMISSIONS = {
   'content.manage': { kinds: ['manager'] },
   // A unit's contracts: record, void, renewal requests (ADR 0062).
   'contracts.manage': { kinds: ['manager'] },
+  // Deposits the management holds: record them (ADR 0062). Settling one is
+  // `finance.refund`.
+  'deposits.manage': { kinds: ['manager'] },
   // Acting for an account that does not use the app (ADR 0036): its
   // delivery preferences, consents, an export or a deletion request, each
   // with a reason code, marked assisted, the account told.

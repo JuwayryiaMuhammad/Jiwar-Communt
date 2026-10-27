@@ -530,3 +530,162 @@ export const CONTRACT_ROUTES: Row[] = [
     },
   },
 ];
+
+// Clearances and deposits (ADR 0062).
+export const CLEARANCE_DEPOSIT_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/units/{unitId}/clearances',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/clearances',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/clearances/{id}/certificate',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: { params: () => ({ id: UNKNOWN }), code: 'CLEARANCE_NOT_FOUND' },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/units/{unitId}/clearances',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/clearances/{id}/certificate',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: { params: () => ({ id: UNKNOWN }), code: 'CLEARANCE_NOT_FOUND' },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/public/clearances/lookup',
+    auth: 'public',
+    denied: 'none',
+    foreign: 'none',
+    noStore: true,
+    invalid: {
+      body: { code: 5, unitId: 'x' },
+      fields: [
+        { field: 'unitId', code: 'FIELD_NOT_ALLOWED' },
+        { field: 'code', code: 'INVALID_TYPE' },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/me/deposits',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  ...(['refund-request', 'refund-request/withdraw'] as const).map(
+    (tail): Row => ({
+      method: 'POST',
+      path: `/deposits/{id}/${tail}`,
+      auth: 'tenant',
+      as: 'owner',
+      denied: 'guard',
+      foreign: { params: () => ({ id: UNKNOWN }), code: 'DEPOSIT_NOT_FOUND' },
+      invalid: 'none',
+    }),
+  ),
+  {
+    method: 'GET',
+    path: '/staff/units/{unitId}/deposits',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/deposits',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: {
+        occupancyId: 'x',
+        kind: 'rent',
+        amount: '10',
+        receivedOn: '2026-01-01',
+        method: 'cash',
+      },
+      fields: [
+        { field: 'occupancyId', code: 'INVALID_UUID' },
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: ['finishing_works', 'move', 'maintenance_fund', 'other'],
+          },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/staff/deposits/{id}/settle',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({ id: UNKNOWN }),
+      body: () => ({ refund: { amount: '10', channel: 'cash' } }),
+      code: 'DEPOSIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { refund: { amount: '10', channel: 'card' } },
+      fields: [
+        {
+          field: 'refund.channel',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['cash', 'bank_transfer'] },
+        },
+      ],
+    },
+  },
+];

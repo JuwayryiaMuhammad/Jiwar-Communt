@@ -81,6 +81,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   unit_contracts_file_id_key: null,
   contract_renewals_tenant_id_id_key: null,
   contract_renewals_one_open: null,
+  // Clearances and deposits (ADR 0062): numbers from the finance counters;
+  // a random code, unique by its 128 bits.
+  finance_clearances_tenant_id_id_key: null,
+  finance_clearances_number_key: null,
+  finance_clearances_verify_code_key: null,
+  finance_deposits_tenant_id_id_key: null,
+  finance_deposits_number_key: null,
   // Client-generated (UUIDv7): a violation is an id collision.
   registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,

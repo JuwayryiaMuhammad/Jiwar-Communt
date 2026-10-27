@@ -2000,6 +2000,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
+  // Clearances and deposits (ADR 0062).
+  finance_clearances_shape: {},
+  clearance_links_code_hash_hex: {},
+  finance_deposits_shape: {
+    guarded:
+      'reference IS NULL is tested first; its length runs only on a value',
+  },
+  finance_deposit_events_shape: {
+    guarded:
+      'amount, reason_code and channel are tested IS NULL first; the bounds and lists run only on a value',
+  },
   // Contracts (ADR 0062).
   tenant_settings_contract_fees: {
     guarded: 'each fee IS NULL is tested first; the bound runs only on a value',

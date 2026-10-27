@@ -37,6 +37,14 @@ export const REASON_CODES = {
     'terms_not_agreed',
     'other',
   ],
+  // What a deposit is deducted or forfeited for (ADR 0062): codes only.
+  depositDeduction: [
+    'unpaid_dues',
+    'damage',
+    'cleaning',
+    'works_unfinished',
+    'other',
+  ],
   // Unit states and households (ADR 0021).
   reviewFlag: ['deceased', 'separation', 'other'],
   reviewClear: ['resolved', 'data_correction', 'other'],

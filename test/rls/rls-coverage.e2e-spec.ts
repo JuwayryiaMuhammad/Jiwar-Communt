@@ -35,6 +35,9 @@ const GLOBAL_WITH_TENANT_ID = [
   // Resolves a receipt's code before the tenant is known (ADR 0046): the
   // code's hash and the payment's id; no PII.
   'receipt_links',
+  // Resolves a clearance's code before the tenant is known (ADR 0062): the
+  // code's hash and the clearance's id; no PII.
+  'clearance_links',
   // Resolves an email's action link before the tenant is known (ADR 0036);
   // ids only, no secret.
   'action_tokens',

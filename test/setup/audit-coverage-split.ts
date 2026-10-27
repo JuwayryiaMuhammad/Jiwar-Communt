@@ -711,4 +711,9 @@ export const R11A_COVERAGE: readonly string[] = [
   'contract_renewal.withdrawn',
   'contract_renewal.declined',
   'contract_renewal.renewed',
+  'clearance.issued',
+  'deposit.recorded',
+  'deposit.refund_requested',
+  'deposit.refund_withdrawn',
+  'deposit.settled',
 ];

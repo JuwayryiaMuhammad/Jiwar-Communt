@@ -73,6 +73,33 @@ export class CommunityFinancePort {
     });
   }
 
+  /**
+   * The account's active occupancy of the unit (ADR 0062: a clearance asked
+   * for, a deposit's depositor), or null. Never a delegate's or a member's.
+   */
+  async activeOccupancy(
+    tx: TenantTxClient,
+    unitId: string,
+    accountId: string,
+  ): Promise<string | null> {
+    const o = await tx.unitOccupancy.findFirst({
+      where: { unitId, accountId, status: 'active' },
+      select: { id: true },
+    });
+    return o?.id ?? null;
+  }
+
+  /** The occupancy's unit and account (a deposit's depositor), or null. */
+  occupancy(
+    tx: TenantTxClient,
+    occupancyId: string,
+  ): Promise<{ unitId: string; accountId: string; status: string } | null> {
+    return tx.unitOccupancy.findUnique({
+      where: { id: occupancyId },
+      select: { unitId: true, accountId: true, status: true },
+    });
+  }
+
   async units(
     tx: TenantTxClient,
     unitIds: readonly string[],

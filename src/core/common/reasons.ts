@@ -172,6 +172,14 @@ export const REASON_CODES = {
     'terms_not_agreed',
     'other',
   ],
+  /** What a deposit is deducted or forfeited for (ADR 0062): codes only. */
+  depositDeduction: [
+    'unpaid_dues',
+    'damage',
+    'cleaning',
+    'works_unfinished',
+    'other',
+  ],
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
   // A manager acting for an account (ADR 0036): how the person asked.

@@ -1345,6 +1345,12 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0062: the compound's documents (none published here).
       '/compound-documents/versions/{id}':
         '0192a5f0-1c2b-7d3e-8f40-0000000062b3',
+      // ADR 0062: clearances and deposits (none here: not found or empty).
+      '/units/{unitId}/clearances': a.homeUnitId,
+      '/clearances/{id}/certificate': '0192a5f0-1c2b-7d3e-8f40-0000000062d1',
+      '/staff/clearances/{id}/certificate':
+        '0192a5f0-1c2b-7d3e-8f40-0000000062d2',
+      '/staff/units/{unitId}/deposits': a.homeUnitId,
       // ADR 0062: contracts (none recorded here: not found).
       '/units/{unitId}/contracts/{id}': {
         unitId: a.homeUnitId,
@@ -2613,6 +2619,10 @@ describe('API v0 — PII leak scan', () => {
       (r) => r.auth === 'public' && r.path.endsWith('/lookup'),
     ).map((r) => r.path);
     expect(publicReads).toEqual([
+      // ADR 0062: a clearance check shows the compound, the number, the
+      // unit's code and the dates, never a person or an id
+      // (test/finance/clearances-deposits).
+      '/public/clearances/lookup',
       '/public/visitor-passes/lookup',
       '/public/receipts/lookup',
       // ADR 0054: an outside escort's page names nobody (test/children/escorts).

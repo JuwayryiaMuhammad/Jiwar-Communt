@@ -525,6 +525,10 @@ model Tenant {
   unitContracts                UnitContract[]
   unitContractParties          UnitContractParty[]
   contractRenewals             ContractRenewal[]
+  financeClearances            FinanceClearance[]
+  clearanceLinks               ClearanceLink[]
+  financeDeposits              FinanceDeposit[]
+  financeDepositEvents         FinanceDepositEvent[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
   preventiveServices           PreventiveService[]
@@ -955,6 +959,9 @@ model Account {
   contractsCreated               UnitContract[]                      @relation("ContractCreator")
   renewalsRequested              ContractRenewal[]                   @relation("RenewalRequester")
   renewalsClosed                 ContractRenewal[]                   @relation("RenewalCloser")
+  clearancesRequested            FinanceClearance[]                  @relation("ClearanceRequester")
+  depositsRecorded               FinanceDeposit[]                    @relation("DepositRecorder")
+  depositEvents                  FinanceDepositEvent[]               @relation("DepositEventBy")
   registrationsApproved          ResidentRegistration[]              @relation("RegistrationAccount")
   deletionRequests               AccountDeletionRequest[]            @relation("DeletionAccount")
   deletionsCompleted             AccountDeletionRequest[]            @relation("DeletionCompletedBy")
@@ -1166,6 +1173,8 @@ model Unit {
 
   documents UnitDocument[]
   contracts UnitContract[]
+  clearances FinanceClearance[]
+  deposits FinanceDeposit[]
   @@unique([tenantId, code])
   @@unique([tenantId, id])
   @@map("units")
@@ -1212,6 +1221,8 @@ model UnitOccupancy {
   documents UnitDocument[]
   contractParties UnitContractParty[]
   contractRenewals ContractRenewal[]
+  clearances FinanceClearance[]
+  deposits FinanceDeposit[]
   @@unique([tenantId, id])
   @@index([tenantId, accountId])
   @@index([tenantId, unitId])
@@ -1821,6 +1832,98 @@ model ContractRenewal {
 
   @@unique([tenantId, id])
   @@map("contract_renewals")
+}
+
+/// A clearance certificate (ADR 0062): the unit owed nothing as of
+/// `as_of`. Issued only at a zero balance; never changes; its PDF is drawn
+/// on demand by `template`.
+model FinanceClearance {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  number      Int
+  unitId      String   @map("unit_id") @db.Uuid
+  occupancyId String?  @map("occupancy_id") @db.Uuid
+  requestedBy String   @map("requested_by") @db.Uuid
+  asOf        DateTime @map("as_of") @db.Timestamptz(3)
+  validUntil  DateTime @map("valid_until") @db.Date
+  verifyCode  String   @unique @map("verify_code") @db.Char(22)
+  template    String
+
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit      Unit           @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  occupancy UnitOccupancy? @relation(fields: [tenantId, occupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  requester Account        @relation("ClearanceRequester", fields: [tenantId, requestedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  links     ClearanceLink[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "finance_clearances_number_key")
+  @@map("finance_clearances")
+}
+
+/// Global pointer from a clearance's code to its record (ADR 0062): the
+/// code's SHA-256. Read by the public page before the compound is known.
+model ClearanceLink {
+  codeHash    String   @id @map("code_hash") @db.Char(64)
+  tenantId    String   @map("tenant_id") @db.Uuid
+  clearanceId String   @map("clearance_id") @db.Uuid
+  createdAt   DateTime @map("created_at") @db.Timestamptz(3)
+
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  clearance FinanceClearance @relation(fields: [tenantId, clearanceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("clearance_links")
+}
+
+/// Money the management holds (ADR 0062): recorded once; what happens to
+/// it is its events. What is held is computed.
+model FinanceDeposit {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  number      Int
+  unitId      String   @map("unit_id") @db.Uuid
+  occupancyId String   @map("occupancy_id") @db.Uuid
+  /// finishing_works | move | maintenance_fund | other (CHECK).
+  kind        String
+  amount      Decimal  @db.Decimal(12, 2)
+  receivedOn  DateTime @map("received_on") @db.Date
+  /// cash | bank_transfer | cheque (CHECK).
+  method      String
+  reference   String?
+  recordedBy  String   @map("recorded_by") @db.Uuid
+  createdAt   DateTime @map("created_at") @db.Timestamptz(3)
+
+  tenant    Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit      Unit                  @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  occupancy UnitOccupancy         @relation(fields: [tenantId, occupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  recorder  Account               @relation("DepositRecorder", fields: [tenantId, recordedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  events    FinanceDepositEvent[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "finance_deposits_number_key")
+  @@map("finance_deposits")
+}
+
+/// What happened to a deposit (ADR 0062): append-only.
+model FinanceDepositEvent {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  depositId  String   @map("deposit_id") @db.Uuid
+  /// refund_requested | refund_withdrawn | refunded | deducted | forfeited (CHECK).
+  kind       String
+  amount     Decimal? @db.Decimal(12, 2)
+  reasonCode String?  @map("reason_code")
+  channel    String?
+  paymentId  String?  @map("payment_id") @db.Uuid
+  byAccount  String   @map("by_account") @db.Uuid
+  at         DateTime @db.Timestamptz(3)
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  deposit FinanceDeposit  @relation(fields: [tenantId, depositId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  payment FinancePayment? @relation(fields: [tenantId, paymentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  by      Account         @relation("DepositEventBy", fields: [tenantId, byAccount], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([tenantId, depositId, at], map: "finance_deposit_events_deposit_idx")
+  @@map("finance_deposit_events")
 }
 
 /// A self-registration request (ADR 0024). Personal data only while
@@ -6546,6 +6649,8 @@ enum PaymentMethod {
   cheque
   card
   wallet
+  /// A deposit's deduction for unpaid dues (ADR 0062); never chosen at the office.
+  deposit_offset
 
   @@map("payment_method")
 }
@@ -6589,6 +6694,7 @@ model FinancePayment {
   allocations   FinanceAllocation[]
   refundSources FinanceRefundSource[]
 
+  depositEvents FinanceDepositEvent[]
   @@unique([tenantId, id])
   @@unique([tenantId, reversesId], map: "finance_payments_one_reversal")
   @@index([tenantId, unitId, createdAt, id], map: "finance_payments_unit_idx")

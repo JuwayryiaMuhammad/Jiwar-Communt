@@ -6,7 +6,9 @@ export type CounterKind =
   | 'receipt'
   | 'instalment_plan'
   | 'refund'
-  | 'expense';
+  | 'expense'
+  | 'clearance'
+  | 'deposit';
 
 /**
  * The one order in which a transaction takes numbers (ADR 0048). A counter
@@ -22,6 +24,8 @@ export const COUNTER_ORDER: readonly CounterKind[] = [
   'refund',
   'receipt',
   'expense',
+  'clearance',
+  'deposit',
 ];
 
 const lastTaken = new WeakMap<object, number>();
@@ -65,6 +69,8 @@ const PREFIX: Record<CounterKind, string> = {
   instalment_plan: 'IP',
   refund: 'RF',
   expense: 'EX',
+  clearance: 'CL',
+  deposit: 'DP',
 };
 
 /** `INV-000123`: six digits at least, as the house numbers are. */

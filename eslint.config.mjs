@@ -124,6 +124,7 @@ export default tseslint.config(
       'src/finance/gateway/gateway-keys.ts',
       'src/finance/online/paymob-webhook.service.ts',
       'src/finance/receipts-public/receipt-page.service.ts',
+      'src/finance/clearances/clearance-page.service.ts',
       'prisma/seed.ts',
     ],
     rules: {

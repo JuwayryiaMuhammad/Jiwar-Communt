@@ -11,7 +11,9 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { fileHelpers } from '../setup/files';
+import { sessionOf } from '../api/world';
 import { leakText } from '../setup/leak-text';
 import { loginViaOtp } from '../setup/login';
 
@@ -324,6 +326,79 @@ describe('Audit coverage — R11a', () => {
       expect(await single('contract.voided', second, [])).toMatchObject({
         actorId: c.managerId,
         metadata: { unitId: unit.id, reasonCode: 'data_error' },
+      });
+    });
+  });
+
+  describe('clearances and deposits', () => {
+    it('issued, recorded, refund asked and withdrawn, settled: ids, codes, amounts', async () => {
+      const manager = await h.tokenFor({
+        sub: c.managerId,
+        tid: c.tenantId,
+        typ: 'manager',
+      });
+      const me = await someone();
+      const occupancy = await x.asManager(c, () =>
+        x.prisma.tenant.unitOccupancy.findFirstOrThrow({
+          where: { accountId: me.id, status: 'active' },
+        }),
+      );
+      const cleared = (
+        await post(`/units/${occupancy.unitId}/clearances`, me.token).expect(
+          201,
+        )
+      ).body as { id: string; number: string };
+      expect(await single('clearance.issued', cleared.id, [])).toMatchObject({
+        actorId: me.id,
+        targetType: 'clearance',
+        metadata: {
+          unitId: occupancy.unitId,
+          number: cleared.number,
+          side: 'resident',
+        },
+      });
+      const deposit = (
+        await post('/staff/deposits', manager, {
+          occupancyId: occupancy.id,
+          kind: 'move',
+          amount: '1000',
+          receivedOn: '2026-01-01',
+          method: 'cash',
+        }).expect(201)
+      ).body as { id: string };
+      expect(await single('deposit.recorded', deposit.id, [])).toMatchObject({
+        actorId: c.managerId,
+        metadata: { unitId: occupancy.unitId, kind: 'move', amount: '1000.00' },
+      });
+      await post(`/deposits/${deposit.id}/refund-request`, me.token).expect(
+        200,
+      );
+      expect(
+        await single('deposit.refund_requested', deposit.id, []),
+      ).toMatchObject({ actorId: me.id });
+      await post(
+        `/deposits/${deposit.id}/refund-request/withdraw`,
+        me.token,
+      ).expect(200);
+      expect(
+        await single('deposit.refund_withdrawn', deposit.id, []),
+      ).toMatchObject({ actorId: me.id });
+      await h.moduleRef.get(GlobalDbService).session.update({
+        where: { id: sessionOf(manager) },
+        data: { stepUpUntil: new Date(Date.now() + 600_000) },
+      });
+      await post(`/staff/deposits/${deposit.id}/settle`, manager, {
+        refund: { amount: '900', channel: 'cash' },
+        deductions: [{ reasonCode: 'cleaning', amount: '100' }],
+      }).expect(200);
+      expect(await single('deposit.settled', deposit.id, [])).toMatchObject({
+        actorId: c.managerId,
+        metadata: {
+          parts: [
+            { kind: 'refunded', amount: '900.00' },
+            { kind: 'deducted', amount: '100.00', reasonCode: 'cleaning' },
+          ],
+        },
       });
     });
   });

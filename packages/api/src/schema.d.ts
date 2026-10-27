@@ -934,6 +934,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/clearances/{id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A clearance certificate as a PDF */
+        get: operations["ClearancesController_certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/club/plans": {
         parameters: {
             query?: never;
@@ -1649,6 +1666,40 @@ export interface paths {
         put?: never;
         /** Revoke a delegation */
         post: operations["DelegationsController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deposits/{id}/refund-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask for my deposit back */
+        post: operations["DepositsController_askRefund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deposits/{id}/refund-request/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my refund request */
+        post: operations["DepositsController_withdraw"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6172,6 +6223,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/deposits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Deposits the management holds for me */
+        get: operations["DepositsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/devices": {
         parameters: {
             query?: never;
@@ -8733,6 +8801,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/clearances/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check a clearance certificate by its code */
+        post: operations["PublicClearancesController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/data-exports/code": {
         parameters: {
             query?: never;
@@ -9576,6 +9661,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/clearances/{id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A clearance certificate as a PDF */
+        get: operations["StaffClearancesController_certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/club-memberships": {
         parameters: {
             query?: never;
@@ -9890,6 +9992,40 @@ export interface paths {
          * @description An overturn its domain left to the management (a worker’s review, a check that refused), once (DECISION_APPEAL_NO_FOLLOW_UP).
          */
         post: operations["StaffDecisionAppealsController_followedUp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/deposits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a deposit received */
+        post: operations["StaffDepositsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/deposits/{id}/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Settle a deposit: refund, deduct, forfeit */
+        post: operations["StaffDepositsController_settle"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13616,6 +13752,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/units/{unitId}/clearances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a clearance certificate for a unit */
+        post: operations["StaffClearancesController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/contracts": {
         parameters: {
             query?: never;
@@ -13643,6 +13796,23 @@ export interface paths {
         };
         /** Open a unit’s contract */
         get: operations["StaffContractsController_open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/deposits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A unit’s deposits */
+        get: operations["StaffDepositsController_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -15497,6 +15667,24 @@ export interface paths {
         post?: never;
         /** Remove a child's photo */
         delete: operations["ChildControlsController_removePhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/clearances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My clearance certificates for the unit */
+        get: operations["ClearancesController_mine"];
+        put?: never;
+        /** Ask for a clearance certificate */
+        post: operations["ClearancesController_ask"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -18671,6 +18859,25 @@ export interface components {
             /** @description From the closed list `reviewClear`. */
             reasonCode: string;
         };
+        ClearanceCodeDto: {
+            /** @description The 22 characters on the certificate. */
+            code: string;
+        };
+        ClearanceView: {
+            /** Format: date-time */
+            asOf: string;
+            /** Format: uuid */
+            id: string;
+            /** @description `CL-` and the number. */
+            number: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** Format: date */
+            validUntil: string;
+            /** @description Anyone checks it with this code on the public page. */
+            verifyCode: string;
+        };
         CloseGateServiceDto: {
             /** @description Security’s own words, kept for the management. */
             note?: string;
@@ -18840,6 +19047,12 @@ export interface components {
             id: string;
             /** Format: uuid */
             membershipId: string | null;
+        };
+        CodedPartDto: {
+            /** @description EGP. */
+            amount: string;
+            /** @description A code (REASON_CODES.depositDeduction). */
+            reasonCode: string;
         };
         CollectionRowView: {
             /** @enum {string} */
@@ -20690,6 +20903,37 @@ export interface components {
         DeletionRequestStatus: "pending" | "cancelled" | "completed" | "queued" | "closed";
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DepositEventView: {
+            /** @description EGP. */
+            amount: string | null;
+            /** Format: date-time */
+            at: string;
+            /** @enum {string} */
+            kind: "refund_requested" | "refund_withdrawn" | "refunded" | "deducted" | "forfeited";
+            reasonCode: string | null;
+        };
+        DepositView: {
+            /** @description EGP received. */
+            amount: string;
+            events: components["schemas"]["DepositEventView"][];
+            /** @description EGP still held. */
+            held: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "finishing_works" | "move" | "maintenance_fund" | "other";
+            /** @enum {string} */
+            method: "cash" | "bank_transfer" | "cheque";
+            /** @description `DP-` and the number. */
+            number: string;
+            /** Format: uuid */
+            occupancyId: string;
+            /** Format: date */
+            receivedOn: string;
+            refundRequested: boolean;
+            /** Format: uuid */
+            unitId: string;
+        };
         DeskAcceptDto: {
             /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
             staffCount?: number;
@@ -24982,6 +25226,25 @@ export interface components {
             /** Format: date */
             startsOn: string;
         };
+        NewDepositDto: {
+            /**
+             * @description EGP.
+             * @example 5000.00
+             */
+            amount: string;
+            /** @enum {string} */
+            kind: "finishing_works" | "move" | "maintenance_fund" | "other";
+            /** @enum {string} */
+            method: "cash" | "bank_transfer" | "cheque";
+            /**
+             * Format: uuid
+             * @description The depositor’s active occupancy.
+             */
+            occupancyId: string;
+            /** Format: date */
+            receivedOn: string;
+            reference?: string;
+        };
         NewEmailDto: {
             email: string;
         };
@@ -26084,7 +26347,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        PaymentMethod: "cash" | "bank_transfer" | "cheque" | "card" | "wallet";
+        PaymentMethod: "cash" | "bank_transfer" | "cheque" | "card" | "wallet" | "deposit_offset";
         PaymentReversalView: {
             /** Format: date-time */
             createdAt: string;
@@ -26926,6 +27189,17 @@ export interface components {
             /** @description The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. */
             rationale: string;
         };
+        PublicClearanceView: {
+            /** Format: date-time */
+            asOf: string;
+            compoundName: string;
+            number: string;
+            /** @enum {string} */
+            status: "valid" | "expired";
+            unitCode: string;
+            /** Format: date */
+            validUntil: string;
+        };
         PublicReceiptView: {
             amount: string;
             compoundName: string;
@@ -27269,6 +27543,12 @@ export interface components {
          * @enum {string}
          */
         RefundChannel: "cash" | "bank_transfer" | "gateway_manual";
+        RefundPartDto: {
+            /** @description EGP. */
+            amount: string;
+            /** @enum {string} */
+            channel: "cash" | "bank_transfer";
+        };
         RefundReversalView: {
             /** Format: date-time */
             createdAt: string;
@@ -29216,6 +29496,12 @@ export interface components {
             timezone: string;
             /** @description Shown to visitors on the public pass page (ADR 0030). */
             visitorDirections: string | null;
+        };
+        SettleDepositDto: {
+            /** @description `unpaid_dues` becomes an office payment of the unit (method `deposit_offset`). */
+            deductions?: components["schemas"]["CodedPartDto"][];
+            forfeit?: components["schemas"]["CodedPartDto"];
+            refund?: components["schemas"]["RefundPartDto"];
         };
         SettleWageObligationDto: {
             kind?: components["schemas"]["WageObligationKind"];
@@ -34790,6 +35076,27 @@ export interface operations {
             };
         };
     };
+    ClearancesController_certificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
     ResidentClubController_plans: {
         parameters: {
             query?: never;
@@ -35892,6 +36199,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DepositsController_askRefund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositView"];
+                };
+            };
+        };
+    };
+    DepositsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositView"];
+                };
             };
         };
     };
@@ -42446,6 +42795,25 @@ export interface operations {
             };
         };
     };
+    DepositsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositView"][];
+                };
+            };
+        };
+    };
     MeController_devices: {
         parameters: {
             query?: never;
@@ -46404,6 +46772,29 @@ export interface operations {
             };
         };
     };
+    PublicClearancesController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClearanceCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicClearanceView"];
+                };
+            };
+        };
+    };
     PublicDataExportsController_code: {
         parameters: {
             query?: never;
@@ -47640,6 +48031,27 @@ export interface operations {
             };
         };
     };
+    StaffClearancesController_certificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
     ClubMembershipsController_list: {
         parameters: {
             query?: {
@@ -48100,6 +48512,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffDecisionAppealView"];
+                };
+            };
+        };
+    };
+    StaffDepositsController_record: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewDepositDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositView"];
+                };
+            };
+        };
+    };
+    StaffDepositsController_settle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettleDepositDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositView"];
                 };
             };
         };
@@ -53543,6 +54003,27 @@ export interface operations {
             };
         };
     };
+    StaffClearancesController_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClearanceView"];
+                };
+            };
+        };
+    };
     StaffContractsController_list: {
         parameters: {
             query?: never;
@@ -53607,6 +54088,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContractReadView"];
+                };
+            };
+        };
+    };
+    StaffDepositsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositView"][];
                 };
             };
         };
@@ -56465,6 +56967,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ClearancesController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClearanceView"][];
+                };
+            };
+        };
+    };
+    ClearancesController_ask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClearanceView"];
+                };
             };
         };
     };

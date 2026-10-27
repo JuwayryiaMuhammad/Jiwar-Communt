@@ -59,6 +59,9 @@ export const DELETION_BLOCKERS = [
   'active_staff_role',
   'legal_hold',
   'open_worker_obligations',
+  // Money the management holds for one of the account's occupancies (ADR
+  // 0062): settled before the account goes, or its owner loses it.
+  'deposit_held',
 ] as const;
 
 type RequestStatus =

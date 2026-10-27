@@ -33,6 +33,8 @@ describe('finance counters (ADR 0046, 0048, 0055)', () => {
       'receipt',
       // An expense takes no other counter (ADR 0055).
       'expense',
+      'clearance',
+      'deposit',
     ]);
     expect(formatNumber('expense', 12)).toBe('EX-000012');
   });

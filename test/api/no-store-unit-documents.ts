@@ -67,7 +67,67 @@ export function unitDocumentCalls(
     );
     return (res.body as { id: string }).id;
   };
+  /** A fresh unit of A with an owner living there: no money owed. */
+  const freshHome = async () => {
+    const w = world();
+    const x = communityHelpers(w.h);
+    const unit = await x.unit(w.a);
+    const owner = await x.resident(w.a, [unit.id]);
+    return {
+      unitId: unit.id,
+      token: await w.tokenFor(w.a, owner.id, 'resident'),
+    };
+  };
+  const cleared = async () => {
+    const home = await freshHome();
+    const res = await call(
+      world(),
+      'POST',
+      `/units/${home.unitId}/clearances`,
+      {
+        token: home.token,
+      },
+    );
+    const body = res.body as { id: string; verifyCode: string };
+    return { ...home, ...body };
+  };
   return {
+    'POST /units/{unitId}/clearances': async () => {
+      const home = await freshHome();
+      return call(world(), 'POST', `/units/${home.unitId}/clearances`, {
+        token: home.token,
+      });
+    },
+    'GET /units/{unitId}/clearances': async () => {
+      const c = await cleared();
+      return call(world(), 'GET', `/units/${c.unitId}/clearances`, {
+        token: c.token,
+      });
+    },
+    'GET /clearances/{id}/certificate': async () => {
+      const c = await cleared();
+      return call(world(), 'GET', `/clearances/${c.id}/certificate`, {
+        token: c.token,
+      });
+    },
+    'POST /staff/units/{unitId}/clearances': async () => {
+      const home = await freshHome();
+      return call(world(), 'POST', `/staff/units/${home.unitId}/clearances`, {
+        token: world().a.tokens.manager,
+      });
+    },
+    'GET /staff/clearances/{id}/certificate': async () => {
+      const c = await cleared();
+      return call(world(), 'GET', `/staff/clearances/${c.id}/certificate`, {
+        token: world().a.tokens.manager,
+      });
+    },
+    'POST /public/clearances/lookup': async () => {
+      const c = await cleared();
+      return call(world(), 'POST', '/public/clearances/lookup', {
+        body: { code: c.verifyCode },
+      });
+    },
     'GET /units/{unitId}/contracts/{id}': async () =>
       call(
         world(),

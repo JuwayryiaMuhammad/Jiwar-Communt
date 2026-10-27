@@ -8576,6 +8576,91 @@
     {
       "item": [
         {
+          "name": "A clearance certificate as a PDF",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clearances",
+                ":id",
+                "certificate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/clearances/:id/certificate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask for my deposit back",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deposits",
+                ":id",
+                "refund-request"
+              ],
+              "raw": "{{baseUrl}}/api/v1/deposits/:id/refund-request",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw my refund request",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deposits",
+                ":id",
+                "refund-request",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/deposits/:id/refund-request/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get an instalment plan of one of my units",
           "request": {
             "description": "**Responses:** 200",
@@ -8729,6 +8814,26 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Deposits the management holds for me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "deposits"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/deposits"
             }
           }
         },
@@ -9025,6 +9130,114 @@
                 {
                   "description": "",
                   "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A clearance certificate as a PDF",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "clearances",
+                ":id",
+                "certificate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/clearances/:id/certificate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a deposit received",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"occupancyId\": \"\",\n  \"kind\": \"finishing_works\",\n  \"amount\": \"5000.00\",\n  \"receivedOn\": \"2026-01-01\",\n  \"method\": \"cash\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP. |\n| `kind` | `finishing_works` \\| `move` \\| `maintenance_fund` \\| `other` | yes |  |\n| `method` | `cash` \\| `bank_transfer` \\| `cheque` | yes |  |\n| `occupancyId` | string (uuid) | yes | The depositor’s active occupancy. |\n| `receivedOn` | string (date) | yes |  |\n| `reference` | string |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "deposits"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/deposits"
+            }
+          }
+        },
+        {
+          "name": "Settle a deposit: refund, deduct, forfeit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"deductions\": [],\n  \"forfeit\": {\n    \"reasonCode\": \"\",\n    \"amount\": \"\"\n  },\n  \"refund\": {\n    \"amount\": \"\",\n    \"channel\": \"cash\"\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `deductions` | object[] |  | `unpaid_dues` becomes an office payment of the unit (method `deposit_offset`). |\n| `forfeit` | object |  |  |\n| `refund` | object |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "deposits",
+                ":id",
+                "settle"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/deposits/:id/settle",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
                   "value": ""
                 }
               ]
@@ -10928,6 +11141,64 @@
           }
         },
         {
+          "name": "Issue a clearance certificate for a unit",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "clearances"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/clearances",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A unit’s deposits",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "deposits"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/deposits",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Record a payment made at the office",
           "request": {
             "body": {
@@ -11044,6 +11315,62 @@
                 "statement"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/statement",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My clearance certificates for the unit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "clearances"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/clearances",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask for a clearance certificate",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "clearances"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/clearances",
               "variable": [
                 {
                   "description": "",
@@ -32272,6 +32599,45 @@
                 "lookup"
               ],
               "raw": "{{baseUrl}}/api/v1/public/child-pickups/lookup"
+            }
+          }
+        },
+        {
+          "name": "Check a clearance certificate by its code",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes | The 22 characters on the certificate. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "clearances",
+                "lookup"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/clearances/lookup"
             }
           }
         },

@@ -20,6 +20,7 @@ type GlobalTables = Pick<
   | 'partnerDeskLink'
   | 'childPickupLink'
   | 'receiptLink'
+  | 'clearanceLink'
   | 'actionToken'
   | 'pushDevice'
   | 'pushDelivery'
@@ -31,7 +32,7 @@ type GlobalTables = Pick<
  * tables, invite_tokens, registration_links, registration_status_links,
  * visitor_pass_links,
  * partner_desk_links, child_pickup_links,
- * receipt_links,
+ * receipt_links, clearance_links,
  * action_tokens, outbox_messages, push_devices and push_deliveries. Tenant
  * tables are deliberately not exposed here.
  */
@@ -102,6 +103,10 @@ export class GlobalDbService implements GlobalTables {
   /** The public receipt page's pointers (ADR 0046). */
   get receiptLink() {
     return this.base.client.receiptLink;
+  }
+
+  get clearanceLink() {
+    return this.base.client.clearanceLink;
   }
 
   get actionToken() {
@@ -308,6 +313,7 @@ export class GlobalDbService implements GlobalTables {
       partnerDeskLink: tx.partnerDeskLink,
       childPickupLink: tx.childPickupLink,
       receiptLink: tx.receiptLink,
+      clearanceLink: tx.clearanceLink,
       actionToken: tx.actionToken,
       pushDevice: tx.pushDevice,
       pushDelivery: tx.pushDelivery,

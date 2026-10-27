@@ -1,3 +1,15 @@
+import {
+  ClearancesController,
+  PublicClearancesController,
+  StaffClearancesController,
+} from './clearances/clearances.controller';
+import { ClearancePageService } from './clearances/clearance-page.service';
+import { ClearancesService } from './clearances/clearances.service';
+import {
+  DepositsController,
+  StaffDepositsController,
+} from './deposits/deposits.controller';
+import { DepositsService } from './deposits/deposits.service';
 import { LateNoticesController } from './late-notices/late-notices.controller';
 import { LateNoticesService } from './late-notices/late-notices.service';
 import { ResidentFinanceItems } from './invoices/resident-finance-items';
@@ -85,6 +97,11 @@ import { PaymentsService } from './payments/payments.service';
     CommunityFinancePortModule,
   ],
   controllers: [
+    ClearancesController,
+    StaffClearancesController,
+    PublicClearancesController,
+    DepositsController,
+    StaffDepositsController,
     LateNoticesController,
     GatewayController,
     PlatformGatewayController,
@@ -107,6 +124,9 @@ import { PaymentsService } from './payments/payments.service';
     BudgetReportController,
   ],
   providers: [
+    ClearancesService,
+    ClearancePageService,
+    DepositsService,
     FinanceProvisioning,
     FinanceAccess,
     BudgetsService,

@@ -4880,6 +4880,231 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/asset-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List asset imports, newest first */
+        get: operations["AssetImportsController_list"];
+        put?: never;
+        /** Check an asset sheet: valid, or its problems */
+        post: operations["AssetImportsController_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/asset-imports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an asset import */
+        get: operations["AssetImportsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/asset-imports/{id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply a valid import: every row, or none (then it is invalid) */
+        post: operations["AssetImportsController_apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/asset-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List asset types */
+        get: operations["AssetTypesController_list"];
+        put?: never;
+        /** Add an asset type */
+        post: operations["AssetTypesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/asset-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update or retire an asset type */
+        patch: operations["AssetTypesController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List assets, newest first */
+        get: operations["AssetsController_list"];
+        put?: never;
+        /** Add an asset */
+        post: operations["AssetsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an asset’s card */
+        get: operations["AssetsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update an asset’s card */
+        patch: operations["AssetsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/assets/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An asset’s history, newest first */
+        get: operations["AssetsController_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/assets/{id}/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who an asset’s failure reaches: buildings and unit counts */
+        get: operations["AssetsController_impact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/assets/{id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move a root asset, with its parts, to another place */
+        post: operations["AssetsController_move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/assets/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retire an asset for good */
+        post: operations["AssetsController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/assets/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put an asset in or out of service */
+        post: operations["AssetsController_status"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/assets/{id}/tag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a new QR tag; the previous one stops working */
+        post: operations["AssetsController_issueTag"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/categories": {
         parameters: {
             query?: never;
@@ -4965,6 +5190,41 @@ export interface paths {
         head?: never;
         /** Update the dispatch settings */
         patch: operations["DispatchSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the documents of an asset, an asset type or a common area */
+        get: operations["DocumentsController_list"];
+        put?: never;
+        /** Add a document */
+        post: operations["DocumentsController_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/documents/{id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove a document (its file is deleted) */
+        post: operations["DocumentsController_remove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/maintenance/preventive-services": {
@@ -16966,6 +17226,22 @@ export interface components {
             /** @description Its last day, inclusive; null or absent: open-ended. */
             validUntil?: string | null;
         };
+        AddDocumentDto: {
+            /** Format: uuid */
+            assetId?: string;
+            /** Format: uuid */
+            assetTypeId?: string;
+            /** Format: uuid */
+            commonAreaId?: string;
+            /**
+             * Format: uuid
+             * @description One of the caller’s finalized `asset_document` files.
+             */
+            fileId: string;
+            /** @enum {string} */
+            kind: "plan" | "manual" | "warranty" | "certificate" | "photo" | "other";
+            title: string;
+        };
         AddPermitGuestsDto: {
             /** @description Until the event starts (PERMIT_STARTED); never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`). */
             guests: components["schemas"]["PermitGuestDto"][];
@@ -17355,6 +17631,201 @@ export interface components {
             accountId: string;
             /** Format: uuid */
             occupancyId: string;
+        };
+        AssetAreaRefView: {
+            building: string | null;
+            code: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "building" | "area" | "facility";
+            nameAr: string;
+            nameEn: string;
+        };
+        AssetEventView: {
+            /** Format: uuid */
+            actorId: string | null;
+            /** @description A code: the old status or condition, `unit:<id>` or `area:<id>` before a move. */
+            fromValue: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "created" | "imported" | "updated" | "condition_changed" | "status_changed" | "moved" | "retired" | "tag_issued";
+            /** Format: date-time */
+            occurredAt: string;
+            reasonCode: string | null;
+            /** @description A code; for `updated`, the fields that changed, comma-separated. */
+            toValue: string | null;
+        };
+        AssetEventViewList: {
+            data: components["schemas"]["AssetEventView"][];
+            nextCursor: string | null;
+        };
+        AssetHealthView: {
+            /** @enum {string} */
+            band: "good" | "watch" | "poor";
+            score: number;
+        };
+        AssetImpactView: {
+            buildings: string[];
+            occupiedUnits: number;
+            units: number;
+        };
+        AssetImportProblemView: {
+            /** @description A field error code. */
+            code: string;
+            /** @description The column. */
+            field: string;
+            /** @description The sheet’s line; the header is 1. */
+            line: number;
+        };
+        AssetImportView: {
+            /** Format: date-time */
+            appliedAt: string | null;
+            /** @description Assets created, once applied. */
+            appliedCount: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            errorCount: number;
+            /** @description The first 100 problems, in sheet order. Never a cell’s text. */
+            errors: components["schemas"]["AssetImportProblemView"][];
+            /** Format: uuid */
+            id: string;
+            rowCount: number;
+            /** @enum {string} */
+            status: "valid" | "invalid" | "applied";
+        };
+        AssetImportViewList: {
+            data: components["schemas"]["AssetImportView"][];
+            nextCursor: string | null;
+        };
+        AssetStatusDto: {
+            /**
+             * @description Required out of service; not allowed back in service.
+             * @enum {string}
+             */
+            reasonCode?: "breakdown" | "awaiting_parts" | "safety" | "scheduled_works" | "other";
+            /** @enum {string} */
+            status: "in_service" | "out_of_service";
+        };
+        AssetSummaryView: {
+            code: string;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            /** @enum {string} */
+            condition: "good" | "fair" | "poor" | "critical";
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            criticality: "low" | "medium" | "high" | "critical";
+            /** @description 1 for a root. */
+            depth: number;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            /** Format: uuid */
+            parentId: string | null;
+            /** @enum {string} */
+            status: "in_service" | "out_of_service" | "retired";
+            /** Format: uuid */
+            typeId: string;
+            /** Format: uuid */
+            unitId: string | null;
+            /** Format: date */
+            warrantyEndsOn: string | null;
+        };
+        AssetSummaryViewList: {
+            data: components["schemas"]["AssetSummaryView"][];
+            nextCursor: string | null;
+        };
+        AssetTypeRefView: {
+            /** Format: uuid */
+            categoryId: string;
+            /** Format: uuid */
+            id: string;
+            key: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        AssetTypeView: {
+            active: boolean;
+            /**
+             * Format: uuid
+             * @description Whose technicians work on these assets.
+             */
+            categoryId: string;
+            expectedLifeYears: number | null;
+            /** Format: uuid */
+            id: string;
+            key: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        AssetTypeViewList: {
+            data: components["schemas"]["AssetTypeView"][];
+            nextCursor: string | null;
+        };
+        AssetView: {
+            ageYears: number | null;
+            /** @description Its parts not retired. */
+            childCount: number;
+            code: string;
+            /** Format: date */
+            commissionedOn: string | null;
+            commonArea: components["schemas"]["AssetAreaRefView"] | null;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            /** @enum {string} */
+            condition: "good" | "fair" | "poor" | "critical";
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            criticality: "low" | "medium" | "high" | "critical";
+            /** @description 1 for a root. */
+            depth: number;
+            /** @description EGP a day. */
+            downtimeCostPerDay: string | null;
+            health: components["schemas"]["AssetHealthView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Its own, or its type’s. */
+            lifeYears: number | null;
+            manufacturer: string | null;
+            model: string | null;
+            nameAr: string;
+            nameEn: string;
+            /** Format: uuid */
+            parentId: string | null;
+            /** @description EGP. */
+            purchaseValue: string | null;
+            /** @description EGP. */
+            replacementCost: string | null;
+            /** Format: date-time */
+            retiredAt: string | null;
+            serialNumber: string | null;
+            servesBuildings: string[];
+            /** @enum {string} */
+            status: "in_service" | "out_of_service" | "retired";
+            /** @description Why it is out of service or retired. */
+            statusReason: string | null;
+            /** Format: date-time */
+            tagIssuedAt: string | null;
+            type: components["schemas"]["AssetTypeRefView"];
+            /** Format: uuid */
+            typeId: string;
+            /** @description The warranty runs today (the compound’s). */
+            underWarranty: boolean;
+            /** @description The unit’s code, when it is in one. */
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+            vendorName: string | null;
+            vendorPhone: string | null;
+            /** Format: date */
+            warrantyEndsOn: string | null;
         };
         AssignDto: {
             /** Format: uuid */
@@ -18612,6 +19083,13 @@ export interface components {
             /** @description At least 12 characters (checked by the service). */
             newPassword: string;
         };
+        CheckAssetImportDto: {
+            /**
+             * Format: uuid
+             * @description One of the caller’s finalized `data_import` files: UTF-8 CSV, a header row (code, type, name_ar, name_en, and unit, area or parent, …).
+             */
+            fileId: string;
+        };
         CheckpointPositionDto: {
             lat: number;
             lng: number;
@@ -19680,6 +20158,78 @@ export interface components {
             titleEn?: string | null;
             /** @description Required for `works`, refused otherwise. */
             works?: components["schemas"]["WorksDto"];
+        };
+        CreateAssetDto: {
+            /** @description Unique; never changes. */
+            code: string;
+            /**
+             * Format: date
+             * @description The compound’s day it went into service, `YYYY-MM-DD`.
+             */
+            commissionedOn?: string | null;
+            /**
+             * Format: uuid
+             * @description A root in an active common area.
+             */
+            commonAreaId?: string;
+            /**
+             * @default good
+             * @enum {string}
+             */
+            condition: "good" | "fair" | "poor" | "critical";
+            /**
+             * @default medium
+             * @enum {string}
+             */
+            criticality: "low" | "medium" | "high" | "critical";
+            /** @description EGP a day it is down. */
+            downtimeCostPerDay?: string | null;
+            /** @description Overrides its type’s. */
+            expectedLifeYears?: number | null;
+            manufacturer?: string | null;
+            model?: string | null;
+            nameAr: string;
+            nameEn: string;
+            /**
+             * Format: uuid
+             * @description The asset it is part of: it goes where its parent is (no `unitId` or `commonAreaId`).
+             */
+            parentId?: string;
+            /** @description EGP. */
+            purchaseValue?: string | null;
+            /** @description EGP: what a new one would cost. */
+            replacementCost?: string | null;
+            serialNumber?: string | null;
+            /** @description The buildings it serves (a pump, a generator), as the units have them. */
+            servesBuildings?: string[];
+            /**
+             * Format: uuid
+             * @description An active asset type.
+             */
+            typeId: string;
+            /**
+             * Format: uuid
+             * @description A root in a unit.
+             */
+            unitId?: string;
+            /** @description A business, plain data. */
+            vendorName?: string | null;
+            /** @description The vendor’s business line. */
+            vendorPhone?: string | null;
+            /** Format: date */
+            warrantyEndsOn?: string | null;
+        };
+        CreateAssetTypeDto: {
+            /**
+             * Format: uuid
+             * @description An active category: its technicians work on these assets.
+             */
+            categoryId: string;
+            expectedLifeYears?: number;
+            /** @description Stable code, lowercase (e.g. `chiller`). Never changes. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
         };
         CreateBillingPlanDto: {
             /** @description Every unit, each period, unless overridden. */
@@ -24568,6 +25118,29 @@ export interface components {
             data: components["schemas"]["LoginView"][];
             nextCursor: string | null;
         };
+        MaintenanceDocumentView: {
+            /** Format: date-time */
+            addedAt: string;
+            /** Format: uuid */
+            assetId: string | null;
+            /** Format: uuid */
+            assetTypeId: string | null;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "plan" | "manual" | "warranty" | "certificate" | "photo" | "other";
+            title: string;
+            /** @description Presigned; null when the file is gone. */
+            url: string | null;
+            /** Format: date-time */
+            urlExpiresAt: string | null;
+        };
+        MaintenanceDocumentViewList: {
+            data: components["schemas"]["MaintenanceDocumentView"][];
+            nextCursor: string | null;
+        };
         MaintenanceSettingsResponse: {
             /** @description Hours a completed ticket waits for the reporter. */
             autoCloseHours: number;
@@ -24873,6 +25446,12 @@ export interface components {
         };
         MessageDto: {
             body: string;
+        };
+        MoveAssetDto: {
+            /** Format: uuid */
+            commonAreaId?: string;
+            /** Format: uuid */
+            unitId?: string;
         };
         MoveDetailsView: {
             /**
@@ -28924,6 +29503,10 @@ export interface components {
              */
             phone: string | null;
         };
+        RetireAssetDto: {
+            /** @enum {string} */
+            reasonCode: "replaced" | "disposed" | "sold" | "transferred" | "created_in_error" | "other";
+        };
         ReverseClubPaymentDto: {
             /** @description From the closed list `clubPaymentReverse`. */
             reasonCode: string;
@@ -32692,6 +33275,53 @@ export interface components {
             titleEn?: string | null;
             /** @description Replaces the dates and the area of works as a whole. */
             works?: components["schemas"]["WorksDto"];
+        };
+        UpdateAssetDto: {
+            /**
+             * Format: date
+             * @description The compound’s day it went into service, `YYYY-MM-DD`.
+             */
+            commissionedOn?: string | null;
+            /**
+             * @default good
+             * @enum {string}
+             */
+            condition: "good" | "fair" | "poor" | "critical";
+            /**
+             * @default medium
+             * @enum {string}
+             */
+            criticality: "low" | "medium" | "high" | "critical";
+            /** @description EGP a day it is down. */
+            downtimeCostPerDay?: string | null;
+            /** @description Overrides its type’s. */
+            expectedLifeYears?: number | null;
+            manufacturer?: string | null;
+            model?: string | null;
+            nameAr?: string;
+            nameEn?: string;
+            /** @description EGP. */
+            purchaseValue?: string | null;
+            /** @description EGP: what a new one would cost. */
+            replacementCost?: string | null;
+            serialNumber?: string | null;
+            /** @description The buildings it serves (a pump, a generator), as the units have them. */
+            servesBuildings?: string[];
+            /** @description A business, plain data. */
+            vendorName?: string | null;
+            /** @description The vendor’s business line. */
+            vendorPhone?: string | null;
+            /** Format: date */
+            warrantyEndsOn?: string | null;
+        };
+        UpdateAssetTypeDto: {
+            /** @description False retires it. */
+            active?: boolean;
+            /** Format: uuid */
+            categoryId?: string;
+            expectedLifeYears?: number | null;
+            nameAr?: string;
+            nameEn?: string;
         };
         UpdateBillingPlanDto: {
             /** @description False retires the plan. */
@@ -40777,6 +41407,408 @@ export interface operations {
             };
         };
     };
+    AssetImportsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetImportViewList"];
+                };
+            };
+        };
+    };
+    AssetImportsController_check: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckAssetImportDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetImportView"];
+                };
+            };
+        };
+    };
+    AssetImportsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetImportView"];
+                };
+            };
+        };
+    };
+    AssetImportsController_apply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetImportView"];
+                };
+            };
+        };
+    };
+    AssetTypesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetTypeViewList"];
+                };
+            };
+        };
+    };
+    AssetTypesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAssetTypeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetTypeView"];
+                };
+            };
+        };
+    };
+    AssetTypesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAssetTypeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetTypeView"];
+                };
+            };
+        };
+    };
+    AssetsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                typeId?: string;
+                status?: "in_service" | "out_of_service" | "retired";
+                unitId?: string;
+                commonAreaId?: string;
+                /** @description Its direct parts. */
+                parentId?: string;
+                criticality?: "low" | "medium" | "high" | "critical";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummaryViewList"];
+                };
+            };
+        };
+    };
+    AssetsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAssetDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetView"];
+                };
+            };
+        };
+    };
+    AssetsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetView"];
+                };
+            };
+        };
+    };
+    AssetsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAssetDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetView"];
+                };
+            };
+        };
+    };
+    AssetsController_events: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetEventViewList"];
+                };
+            };
+        };
+    };
+    AssetsController_impact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetImpactView"];
+                };
+            };
+        };
+    };
+    AssetsController_move: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveAssetDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetView"];
+                };
+            };
+        };
+    };
+    AssetsController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetireAssetDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetView"];
+                };
+            };
+        };
+    };
+    AssetsController_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetStatusDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetView"];
+                };
+            };
+        };
+    };
+    AssetsController_issueTag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedTagView"];
+                };
+            };
+        };
+    };
     CategoriesController_list: {
         parameters: {
             query?: never;
@@ -40929,6 +41961,74 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DispatchSettingsResponse"];
                 };
+            };
+        };
+    };
+    DocumentsController_list: {
+        parameters: {
+            query?: {
+                assetId?: string;
+                assetTypeId?: string;
+                commonAreaId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceDocumentViewList"];
+                };
+            };
+        };
+    };
+    DocumentsController_add: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddDocumentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceDocumentView"];
+                };
+            };
+        };
+    };
+    DocumentsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

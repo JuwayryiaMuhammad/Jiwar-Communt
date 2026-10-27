@@ -49,6 +49,7 @@ import { unitDocumentCalls } from './no-store-unit-documents';
 import { decisionAppealCalls } from './no-store-decision-appeals';
 import { representativeCalls } from './no-store-representatives';
 import { governanceVoiceCalls } from './no-store-governance-voice';
+import { assetCalls } from './no-store-assets';
 import { buildWorld, type World } from './world';
 
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
@@ -3109,6 +3110,7 @@ describe('API v0 — no-store', () => {
     ...decisionAppealCalls(() => w),
     ...representativeCalls(() => w, aSittingBoard),
     ...governanceVoiceCalls(() => w, aSittingBoard, aPublication),
+    ...assetCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

@@ -1,4 +1,4 @@
-import { COMMON_AREA_ROUTES } from './assets';
+import { ASSET_ROUTES, COMMON_AREA_ROUTES } from './assets';
 import { DECISION_APPEAL_ROUTES } from './decision-appeals';
 import { REPRESENTATIVE_ROUTES } from './representatives';
 import { GOVERNANCE_VOICE_ROUTES } from './governance-voice';
@@ -336,4 +336,5 @@ export const ROUTES: Row[] = [
   ...PARTNER_DESK_ROUTES,
   ...PARTNER_FEEDBACK_ROUTES,
   ...COMMON_AREA_ROUTES,
+  ...ASSET_ROUTES,
 ];

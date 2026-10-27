@@ -2312,6 +2312,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ردّ المجلس على الاعتراضات على قراره. افتح التطبيق لقراءة الرد.',
     },
   },
+  'asset.warranty_expiring': {
+    en: {
+      title: 'Warranty ending',
+      body: 'The warranty of asset {assetRef} ends on {endsOn}.',
+    },
+    ar: {
+      title: 'ضمان على وشك الانتهاء',
+      body: 'ينتهي ضمان الأصل {assetRef} يوم {endsOn}.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

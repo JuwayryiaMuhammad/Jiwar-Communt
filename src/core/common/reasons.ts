@@ -762,4 +762,21 @@ export const REASON_CODES = {
   ],
   // Why a sitting member declines an owner's agenda proposal (ADR 0059).
   agendaDecline: ['out_of_scope', 'duplicate', 'not_now', 'other'],
+  // The asset register (ADR 0064): why an asset is out of service, and why
+  // it was retired. Codes only; the migration's CHECK repeats both.
+  assetOutOfService: [
+    'breakdown',
+    'awaiting_parts',
+    'safety',
+    'scheduled_works',
+    'other',
+  ],
+  assetRetire: [
+    'replaced',
+    'disposed',
+    'sold',
+    'transferred',
+    'created_in_error',
+    'other',
+  ],
 } as const;

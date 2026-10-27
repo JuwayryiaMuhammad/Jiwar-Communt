@@ -547,6 +547,71 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // The inbox (ADR 0058): nullable columns only under IS [NOT] NULL.
   notifications_archived_is_read: {},
   // Quotes (ADR 0058).
+  // The asset register (ADR 0064).
+  asset_types_key_shape: {},
+  asset_types_names_length: {},
+  asset_types_life_range: {
+    guarded:
+      'expected_life_years IS NULL is tested first; the range runs only on a value',
+  },
+  assets_code_shape: {},
+  assets_names_length: {},
+  assets_texts_length: {
+    guarded:
+      'each text IS NULL is tested first; its length runs only on a value',
+  },
+  assets_vendor_phone_shape: {
+    guarded:
+      'vendor_phone IS NULL is tested first; the pattern runs only on a value',
+  },
+  assets_values_range: {
+    guarded:
+      'each amount IS NULL is tested first; its range runs only on a value',
+  },
+  assets_life_range: {
+    guarded:
+      'expected_life_years IS NULL is tested first; the range runs only on a value',
+  },
+  assets_location_one: {},
+  assets_depth_shape: {},
+  assets_not_own_parent: {
+    guarded:
+      'parent_id IS NULL is tested first; the comparison runs only on a value',
+  },
+  assets_criticality_known: {},
+  assets_condition_known: {},
+  assets_status_shape: {
+    guarded:
+      'status_reason IS NOT NULL is required before its list is tested, in each branch that names it',
+  },
+  assets_serves_buildings_size: {},
+  assets_warranty_alert_shape: {},
+  assets_tag_shape: {},
+  assets_tag_hash_shape: {
+    guarded:
+      'tag_hash IS NULL is tested first; the pattern runs only on a value',
+  },
+  asset_events_kind_known: {},
+  asset_events_values_length: {
+    guarded:
+      'each value IS NULL is tested first; its length runs only on a value',
+  },
+  asset_events_reason_length: {
+    guarded:
+      'reason_code IS NULL is tested first; its length runs only on a value',
+  },
+  maintenance_documents_subject_one: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  maintenance_documents_kind_known: {},
+  maintenance_documents_title_length: {},
+  maintenance_documents_removed_shape: {},
+  asset_imports_status_known: {},
+  asset_imports_counts_range: {},
+  asset_imports_state_shape: {
+    guarded:
+      'applied_count is only tested IS [NOT] NULL; the numbers compared are NOT NULL',
+  },
   // Common areas (ADR 0064).
   common_areas_kind_known: {},
   common_areas_code_shape: {},

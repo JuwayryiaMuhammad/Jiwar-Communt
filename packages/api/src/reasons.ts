@@ -181,6 +181,9 @@ export const REASON_CODES = {
   partnerComplaint: ['no_show', 'late', 'poor_quality', 'overcharged', 'damage', 'conduct', 'other'],
   partnerCompensationAsk: ['none', 'refund', 'redo', 'damages'],
   partnerCompensationDecision: ['none', 'redo', 'partner_refund', 'credit_note'],
+  // The asset register (ADR 0064).
+  assetOutOfService: ['breakdown', 'awaiting_parts', 'safety', 'scheduled_works', 'other'],
+  assetRetire: ['replaced', 'disposed', 'sold', 'transferred', 'created_in_error', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

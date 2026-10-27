@@ -1,3 +1,4 @@
+import { DEFAULT_ASSET_TYPES } from '../../src/maintenance/assets/default-asset-types';
 import { DEFAULT_CATEGORIES } from '../../src/maintenance/categories/default-categories';
 import {
   DEFAULT_CATEGORY_SPECIALTIES,
@@ -126,6 +127,39 @@ describe('Maintenance — a new compound', () => {
       }).toEqual(DEFAULT_SLA_TARGETS[t.priority]);
     expect(new Set(targets.map((t) => t.category.key)).size).toBe(
       DEFAULT_CATEGORIES.length,
+    );
+  });
+
+  it('gets the default asset types, each joined to its category by key (ADR 0064)', async () => {
+    const c = await x.compound();
+    const types = await x.asManager(c, () =>
+      x.prisma.tenant.assetType.findMany({ orderBy: { key: 'asc' } }),
+    );
+    const categories = new Map(
+      (
+        await x.asManager(c, () => x.prisma.tenant.ticketCategory.findMany())
+      ).map((k) => [k.id, k.key]),
+    );
+    expect(
+      types.map((t) => [
+        t.key,
+        t.nameAr,
+        t.nameEn,
+        categories.get(t.categoryId),
+        t.expectedLifeYears,
+        t.active,
+      ]),
+    ).toEqual(
+      [...DEFAULT_ASSET_TYPES]
+        .sort((p, q) => p.key.localeCompare(q.key))
+        .map((d) => [
+          d.key,
+          d.nameAr,
+          d.nameEn,
+          d.categoryKey,
+          d.lifeYears,
+          true,
+        ]),
     );
   });
 });

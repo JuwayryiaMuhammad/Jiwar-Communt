@@ -21290,6 +21290,649 @@
           }
         },
         {
+          "name": "List asset imports, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "asset-imports"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/asset-imports"
+            }
+          }
+        },
+        {
+          "name": "Check an asset sheet: valid, or its problems",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fileId` | string (uuid) | yes | One of the caller’s finalized `data_import` files: UTF-8 CSV, a header row (code, type, name_ar, name_en, and unit, area or parent, …). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "asset-imports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/asset-imports"
+            }
+          }
+        },
+        {
+          "name": "Get an asset import",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "asset-imports",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/asset-imports/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apply a valid import: every row, or none (then it is invalid)",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "asset-imports",
+                ":id",
+                "apply"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/asset-imports/:id/apply",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List asset types",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "asset-types"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/asset-types"
+            }
+          }
+        },
+        {
+          "name": "Add an asset type",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"key\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"categoryId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `categoryId` | string (uuid) | yes | An active category: its technicians work on these assets. |\n| `expectedLifeYears` | number |  |  |\n| `key` | string | yes | Stable code, lowercase (e.g. `chiller`). Never changes. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "asset-types"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/asset-types"
+            }
+          }
+        },
+        {
+          "name": "Update or retire an asset type",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"categoryId\": \"\",\n  \"expectedLifeYears\": 1,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires it. |\n| `categoryId` | string (uuid) |  |  |\n| `expectedLifeYears` | number |  |  |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "asset-types",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/asset-types/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List assets, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "typeId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "commonAreaId",
+                  "value": ""
+                },
+                {
+                  "description": "Its direct parts.",
+                  "disabled": true,
+                  "key": "parentId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "criticality",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets"
+            }
+          }
+        },
+        {
+          "name": "Add an asset",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"\",\n  \"typeId\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes | Unique; never changes. |\n| `commissionedOn` | string (date) |  | The compound’s day it went into service, `YYYY-MM-DD`. |\n| `commonAreaId` | string (uuid) |  | A root in an active common area. |\n| `condition` | `good` \\| `fair` \\| `poor` \\| `critical` |  |  |\n| `criticality` | `low` \\| `medium` \\| `high` \\| `critical` |  |  |\n| `downtimeCostPerDay` | string |  | EGP a day it is down. |\n| `expectedLifeYears` | number |  | Overrides its type’s. |\n| `manufacturer` | string |  |  |\n| `model` | string |  |  |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `parentId` | string (uuid) |  | The asset it is part of: it goes where its parent is (no `unitId` or `commonAreaId`). |\n| `purchaseValue` | string |  | EGP. |\n| `replacementCost` | string |  | EGP: what a new one would cost. |\n| `serialNumber` | string |  |  |\n| `servesBuildings` | string[] |  | The buildings it serves (a pump, a generator), as the units have them. |\n| `typeId` | string (uuid) | yes | An active asset type. |\n| `unitId` | string (uuid) |  | A root in a unit. |\n| `vendorName` | string |  | A business, plain data. |\n| `vendorPhone` | string |  | The vendor’s business line. |\n| `warrantyEndsOn` | string (date) |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets"
+            }
+          }
+        },
+        {
+          "name": "Get an asset’s card",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update an asset’s card",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"commissionedOn\": \"2026-01-01\",\n  \"condition\": \"good\",\n  \"criticality\": \"low\",\n  \"downtimeCostPerDay\": \"\",\n  \"expectedLifeYears\": 1,\n  \"manufacturer\": \"\",\n  \"model\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"purchaseValue\": \"\",\n  \"replacementCost\": \"\",\n  \"serialNumber\": \"\",\n  \"servesBuildings\": [],\n  \"vendorName\": \"\",\n  \"vendorPhone\": \"\",\n  \"warrantyEndsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `commissionedOn` | string (date) |  | The compound’s day it went into service, `YYYY-MM-DD`. |\n| `condition` | `good` \\| `fair` \\| `poor` \\| `critical` |  |  |\n| `criticality` | `low` \\| `medium` \\| `high` \\| `critical` |  |  |\n| `downtimeCostPerDay` | string |  | EGP a day it is down. |\n| `expectedLifeYears` | number |  | Overrides its type’s. |\n| `manufacturer` | string |  |  |\n| `model` | string |  |  |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `purchaseValue` | string |  | EGP. |\n| `replacementCost` | string |  | EGP: what a new one would cost. |\n| `serialNumber` | string |  |  |\n| `servesBuildings` | string[] |  | The buildings it serves (a pump, a generator), as the units have them. |\n| `vendorName` | string |  | A business, plain data. |\n| `vendorPhone` | string |  | The vendor’s business line. |\n| `warrantyEndsOn` | string (date) |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "An asset’s history, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id",
+                "events"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id/events",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Who an asset’s failure reaches: buildings and unit counts",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id",
+                "impact"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id/impact",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Move a root asset, with its parts, to another place",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"commonAreaId\": \"\",\n  \"unitId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `commonAreaId` | string (uuid) |  |  |\n| `unitId` | string (uuid) |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id",
+                "move"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id/move",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retire an asset for good",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"replaced\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `replaced` \\| `disposed` \\| `sold` \\| `transferred` \\| `created_in_error` \\| `other` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id",
+                "retire"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id/retire",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Put an asset in or out of service",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"status\": \"in_service\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `breakdown` \\| `awaiting_parts` \\| `safety` \\| `scheduled_works` \\| `other` |  | Required out of service; not allowed back in service. |\n| `status` | `in_service` \\| `out_of_service` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id",
+                "status"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id/status",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Issue a new QR tag; the previous one stops working",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id",
+                "tag"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id/tag",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List ticket categories",
           "request": {
             "description": "**Responses:** 200",
@@ -21527,6 +22170,115 @@
                 "dispatch-settings"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/dispatch-settings"
+            }
+          }
+        },
+        {
+          "name": "List the documents of an asset, an asset type or a common area",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "documents"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "assetTypeId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "commonAreaId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/documents"
+            }
+          }
+        },
+        {
+          "name": "Add a document",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\",\n  \"kind\": \"plan\",\n  \"title\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  |  |\n| `assetTypeId` | string (uuid) |  |  |\n| `commonAreaId` | string (uuid) |  |  |\n| `fileId` | string (uuid) | yes | One of the caller’s finalized `asset_document` files. |\n| `kind` | `plan` \\| `manual` \\| `warranty` \\| `certificate` \\| `photo` \\| `other` | yes |  |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "documents"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/documents"
+            }
+          }
+        },
+        {
+          "name": "Remove a document (its file is deleted)",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "documents",
+                ":id",
+                "remove"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/documents/:id/remove",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

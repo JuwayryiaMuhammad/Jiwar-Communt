@@ -175,6 +175,10 @@ describe('audit catalog', () => {
         'deposit',
         // ADR 0064
         'common_area',
+        'asset_type',
+        'asset',
+        'maintenance_document',
+        'asset_import',
       ]).toContain(def.target);
     }
   });

@@ -1713,6 +1713,60 @@ export const AUDIT_ACTIONS = {
     sensitive: ['nameAr', 'nameEn'],
   },
   'common_area.tag_issued': { log: 'tenant', target: 'common_area' },
+  // The asset register (ADR 0064): codes, keys, dates and amounts. The
+  // names, the vendor's name and phone and the serial number as
+  // { changed: true }. metadata: reasonCode; parts (moved with the root);
+  // replaced (a tag was issued before).
+  'asset_type.created': {
+    log: 'tenant',
+    target: 'asset_type',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'asset_type.updated': {
+    log: 'tenant',
+    target: 'asset_type',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'asset.created': {
+    log: 'tenant',
+    target: 'asset',
+    sensitive: [
+      'nameAr',
+      'nameEn',
+      'vendorName',
+      'vendorPhone',
+      'serialNumber',
+    ],
+  },
+  'asset.updated': {
+    log: 'tenant',
+    target: 'asset',
+    sensitive: [
+      'nameAr',
+      'nameEn',
+      'vendorName',
+      'vendorPhone',
+      'serialNumber',
+    ],
+  },
+  'asset.status_changed': { log: 'tenant', target: 'asset' },
+  'asset.retired': { log: 'tenant', target: 'asset' },
+  'asset.moved': { log: 'tenant', target: 'asset' },
+  'asset.tag_issued': { log: 'tenant', target: 'asset' },
+  // A document's title as { changed: true }; metadata: the subject's id,
+  // the kind and the file.
+  'maintenance_document.added': {
+    log: 'tenant',
+    target: 'maintenance_document',
+    sensitive: ['title'],
+  },
+  'maintenance_document.removed': {
+    log: 'tenant',
+    target: 'maintenance_document',
+  },
+  // An asset sheet: metadata rowCount, errorCount; created when applied.
+  'asset_import.checked': { log: 'tenant', target: 'asset_import' },
+  'asset_import.applied': { log: 'tenant', target: 'asset_import' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

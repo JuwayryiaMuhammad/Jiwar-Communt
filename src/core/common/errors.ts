@@ -1347,6 +1347,22 @@ export const ErrorCode = {
   COMMON_AREA_NOT_FOUND: 'COMMON_AREA_NOT_FOUND',
   /** The area is retired: nothing new goes there, it gets no tag (409). */
   COMMON_AREA_RETIRED: 'COMMON_AREA_RETIRED',
+  ASSET_TYPE_NOT_FOUND: 'ASSET_TYPE_NOT_FOUND',
+  ASSET_NOT_FOUND: 'ASSET_NOT_FOUND',
+  /** Retired for good: no change, no tag, no new work (409). */
+  ASSET_RETIRED: 'ASSET_RETIRED',
+  /** Its parts are not all retired (409). */
+  ASSET_HAS_ACTIVE_CHILDREN: 'ASSET_HAS_ACTIVE_CHILDREN',
+  /** A part moves only with its root (409). */
+  ASSET_NOT_ROOT: 'ASSET_NOT_ROOT',
+  MAINTENANCE_DOCUMENT_NOT_FOUND: 'MAINTENANCE_DOCUMENT_NOT_FOUND',
+  /** The subject holds as many documents as it may; params.max (409). */
+  MAINTENANCE_DOCUMENT_LIMIT_REACHED: 'MAINTENANCE_DOCUMENT_LIMIT_REACHED',
+  ASSET_IMPORT_NOT_FOUND: 'ASSET_IMPORT_NOT_FOUND',
+  /** The sheet is not CSV a spreadsheet wrote; params.problem, params.line (422). */
+  ASSET_IMPORT_UNREADABLE: 'ASSET_IMPORT_UNREADABLE',
+  /** Only a valid import is applied, once; params.status (409). */
+  ASSET_IMPORT_NOT_VALID: 'ASSET_IMPORT_NOT_VALID',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1570,6 +1586,16 @@ export const FieldErrorCode = {
   // Assets (ADR 0064)
   /** No unit of the compound is in this building. */
   BUILDING_NOT_FOUND: 'BUILDING_NOT_FOUND',
+  /** Not an active asset type of this compound. */
+  ASSET_TYPE_NOT_AVAILABLE: 'ASSET_TYPE_NOT_AVAILABLE',
+  /** Unknown, another compound's, or retired: no part goes under it. */
+  PARENT_NOT_AVAILABLE: 'PARENT_NOT_AVAILABLE',
+  /** The parent is already as deep as the register goes; params.max. */
+  ASSET_TOO_DEEP: 'ASSET_TOO_DEEP',
+  /** An imported row's unit code is none of the compound's. */
+  UNIT_NOT_AVAILABLE: 'UNIT_NOT_AVAILABLE',
+  /** An imported row's area code is none of the compound's active areas. */
+  COMMON_AREA_NOT_AVAILABLE: 'COMMON_AREA_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

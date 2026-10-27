@@ -103,11 +103,14 @@ export class CommonAreasService implements OnModuleInit {
   }
 
   get(id: string): Promise<CommonArea> {
-    return this.tenantTx.withTenantTx(async (tx) => {
-      const area = await tx.commonArea.findUnique({ where: { id } });
-      if (!area) throw commonAreaNotFound();
-      return area;
-    });
+    return this.tenantTx.withTenantTx((tx) => this.find(tx, id));
+  }
+
+  /** An area, or COMMON_AREA_NOT_FOUND, in the caller's transaction. */
+  async find(tx: TenantTxClient, id: string): Promise<CommonArea> {
+    const area = await tx.commonArea.findUnique({ where: { id } });
+    if (!area) throw commonAreaNotFound();
+    return area;
   }
 
   /**

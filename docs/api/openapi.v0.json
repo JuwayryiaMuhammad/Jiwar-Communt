@@ -386,6 +386,49 @@
         ],
         "type": "object"
       },
+      "AddDocumentDto": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "assetTypeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "One of the caller’s finalized `asset_document` files.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "plan",
+              "manual",
+              "warranty",
+              "certificate",
+              "photo",
+              "other"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "kind",
+          "title"
+        ],
+        "type": "object"
+      },
       "AddPermitGuestsDto": {
         "properties": {
           "guests": {
@@ -1643,6 +1686,702 @@
         "required": [
           "accountId",
           "occupancyId"
+        ],
+        "type": "object"
+      },
+      "AssetAreaRefView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "building",
+              "area",
+              "facility"
+            ],
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "code",
+          "nameAr",
+          "nameEn",
+          "building"
+        ],
+        "type": "object"
+      },
+      "AssetEventView": {
+        "properties": {
+          "actorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "fromValue": {
+            "description": "A code: the old status or condition, `unit:<id>` or `area:<id>` before a move.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "created",
+              "imported",
+              "updated",
+              "condition_changed",
+              "status_changed",
+              "moved",
+              "retired",
+              "tag_issued"
+            ],
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "toValue": {
+            "description": "A code; for `updated`, the fields that changed, comma-separated.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "fromValue",
+          "toValue",
+          "reasonCode",
+          "actorId",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "AssetEventViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AssetEventView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AssetHealthView": {
+        "properties": {
+          "band": {
+            "enum": [
+              "good",
+              "watch",
+              "poor"
+            ],
+            "type": "string"
+          },
+          "score": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "score",
+          "band"
+        ],
+        "type": "object"
+      },
+      "AssetImpactView": {
+        "properties": {
+          "buildings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "occupiedUnits": {
+            "type": "number"
+          },
+          "units": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "buildings",
+          "units",
+          "occupiedUnits"
+        ],
+        "type": "object"
+      },
+      "AssetImportProblemView": {
+        "properties": {
+          "code": {
+            "description": "A field error code.",
+            "type": "string"
+          },
+          "field": {
+            "description": "The column.",
+            "type": "string"
+          },
+          "line": {
+            "description": "The sheet’s line; the header is 1.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "line",
+          "field",
+          "code"
+        ],
+        "type": "object"
+      },
+      "AssetImportView": {
+        "properties": {
+          "appliedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "appliedCount": {
+            "description": "Assets created, once applied.",
+            "nullable": true,
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "errorCount": {
+            "type": "number"
+          },
+          "errors": {
+            "description": "The first 100 problems, in sheet order. Never a cell’s text.",
+            "items": {
+              "$ref": "#/components/schemas/AssetImportProblemView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rowCount": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "invalid",
+              "applied"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "rowCount",
+          "errorCount",
+          "errors",
+          "appliedCount",
+          "createdAt",
+          "appliedAt"
+        ],
+        "type": "object"
+      },
+      "AssetImportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AssetImportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AssetStatusDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "Required out of service; not allowed back in service.",
+            "enum": [
+              "breakdown",
+              "awaiting_parts",
+              "safety",
+              "scheduled_works",
+              "other"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "in_service",
+              "out_of_service"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "AssetSummaryView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "condition": {
+            "enum": [
+              "good",
+              "fair",
+              "poor",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "criticality": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "depth": {
+            "description": "1 for a root.",
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "parentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "in_service",
+              "out_of_service",
+              "retired"
+            ],
+            "type": "string"
+          },
+          "typeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "warrantyEndsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "typeId",
+          "parentId",
+          "depth",
+          "unitId",
+          "commonAreaId",
+          "nameAr",
+          "nameEn",
+          "status",
+          "condition",
+          "criticality",
+          "warrantyEndsOn",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AssetSummaryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AssetSummaryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AssetTypeRefView": {
+        "properties": {
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "categoryId"
+        ],
+        "type": "object"
+      },
+      "AssetTypeView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "categoryId": {
+            "description": "Whose technicians work on these assets.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "expectedLifeYears": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "categoryId",
+          "expectedLifeYears",
+          "active"
+        ],
+        "type": "object"
+      },
+      "AssetTypeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AssetTypeView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AssetView": {
+        "properties": {
+          "ageYears": {
+            "nullable": true,
+            "type": "number"
+          },
+          "childCount": {
+            "description": "Its parts not retired.",
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "commissionedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "commonArea": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetAreaRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "condition": {
+            "enum": [
+              "good",
+              "fair",
+              "poor",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "criticality": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "depth": {
+            "description": "1 for a root.",
+            "type": "number"
+          },
+          "downtimeCostPerDay": {
+            "description": "EGP a day.",
+            "nullable": true,
+            "type": "string"
+          },
+          "health": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetHealthView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lifeYears": {
+            "description": "Its own, or its type’s.",
+            "nullable": true,
+            "type": "number"
+          },
+          "manufacturer": {
+            "nullable": true,
+            "type": "string"
+          },
+          "model": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "parentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "purchaseValue": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "replacementCost": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "serialNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "servesBuildings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "in_service",
+              "out_of_service",
+              "retired"
+            ],
+            "type": "string"
+          },
+          "statusReason": {
+            "description": "Why it is out of service or retired.",
+            "nullable": true,
+            "type": "string"
+          },
+          "tagIssuedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AssetTypeRefView"
+          },
+          "typeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "underWarranty": {
+            "description": "The warranty runs today (the compound’s).",
+            "type": "boolean"
+          },
+          "unitCode": {
+            "description": "The unit’s code, when it is in one.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vendorName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorPhone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "warrantyEndsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "typeId",
+          "parentId",
+          "depth",
+          "unitId",
+          "commonAreaId",
+          "nameAr",
+          "nameEn",
+          "status",
+          "condition",
+          "criticality",
+          "warrantyEndsOn",
+          "createdAt",
+          "type",
+          "unitCode",
+          "commonArea",
+          "manufacturer",
+          "model",
+          "serialNumber",
+          "commissionedOn",
+          "purchaseValue",
+          "replacementCost",
+          "downtimeCostPerDay",
+          "lifeYears",
+          "ageYears",
+          "vendorName",
+          "vendorPhone",
+          "underWarranty",
+          "statusReason",
+          "servesBuildings",
+          "retiredAt",
+          "tagIssuedAt",
+          "childCount",
+          "health",
+          "updatedAt"
         ],
         "type": "object"
       },
@@ -5840,6 +6579,19 @@
         ],
         "type": "object"
       },
+      "CheckAssetImportDto": {
+        "properties": {
+          "fileId": {
+            "description": "One of the caller’s finalized `data_import` files: UTF-8 CSV, a header row (code, type, name_ar, name_en, and unit, area or parent, …).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
       "CheckpointPositionDto": {
         "properties": {
           "lat": {
@@ -9180,6 +9932,183 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreateAssetDto": {
+        "properties": {
+          "code": {
+            "description": "Unique; never changes.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+            "type": "string"
+          },
+          "commissionedOn": {
+            "description": "The compound’s day it went into service, `YYYY-MM-DD`.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "A root in an active common area.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "condition": {
+            "default": "good",
+            "enum": [
+              "good",
+              "fair",
+              "poor",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "criticality": {
+            "default": "medium",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "downtimeCostPerDay": {
+            "description": "EGP a day it is down.",
+            "nullable": true,
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "expectedLifeYears": {
+            "description": "Overrides its type’s.",
+            "maximum": 100,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "manufacturer": {
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "model": {
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "parentId": {
+            "description": "The asset it is part of: it goes where its parent is (no `unitId` or `commonAreaId`).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "purchaseValue": {
+            "description": "EGP.",
+            "nullable": true,
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "replacementCost": {
+            "description": "EGP: what a new one would cost.",
+            "nullable": true,
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "serialNumber": {
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "servesBuildings": {
+            "description": "The buildings it serves (a pump, a generator), as the units have them.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "typeId": {
+            "description": "An active asset type.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "description": "A root in a unit.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "vendorName": {
+            "description": "A business, plain data.",
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorPhone": {
+            "description": "The vendor’s business line.",
+            "nullable": true,
+            "pattern": "^[0-9+() -]{3,30}$",
+            "type": "string"
+          },
+          "warrantyEndsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "typeId",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateAssetTypeDto": {
+        "properties": {
+          "categoryId": {
+            "description": "An active category: its technicians work on these assets.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "expectedLifeYears": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          },
+          "key": {
+            "description": "Stable code, lowercase (e.g. `chiller`). Never changes.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "nameAr",
+          "nameEn",
+          "categoryId"
         ],
         "type": "object"
       },
@@ -24471,6 +25400,88 @@
         ],
         "type": "object"
       },
+      "MaintenanceDocumentView": {
+        "properties": {
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assetTypeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "plan",
+              "manual",
+              "warranty",
+              "certificate",
+              "photo",
+              "other"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "description": "Presigned; null when the file is gone.",
+            "nullable": true,
+            "type": "string"
+          },
+          "urlExpiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "assetTypeId",
+          "commonAreaId",
+          "kind",
+          "title",
+          "url",
+          "urlExpiresAt",
+          "addedAt"
+        ],
+        "type": "object"
+      },
+      "MaintenanceDocumentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MaintenanceDocumentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MaintenanceSettingsResponse": {
         "properties": {
           "autoCloseHours": {
@@ -25491,6 +26502,19 @@
         "required": [
           "body"
         ],
+        "type": "object"
+      },
+      "MoveAssetDto": {
+        "properties": {
+          "commonAreaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "MoveDetailsView": {
@@ -38244,6 +39268,25 @@
         "required": [
           "firstName",
           "phone"
+        ],
+        "type": "object"
+      },
+      "RetireAssetDto": {
+        "properties": {
+          "reasonCode": {
+            "enum": [
+              "replaced",
+              "disposed",
+              "sold",
+              "transferred",
+              "created_in_error",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -51300,6 +52343,145 @@
               }
             ],
             "description": "Replaces the dates and the area of works as a whole."
+          }
+        },
+        "type": "object"
+      },
+      "UpdateAssetDto": {
+        "properties": {
+          "commissionedOn": {
+            "description": "The compound’s day it went into service, `YYYY-MM-DD`.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "condition": {
+            "default": "good",
+            "enum": [
+              "good",
+              "fair",
+              "poor",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "criticality": {
+            "default": "medium",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "downtimeCostPerDay": {
+            "description": "EGP a day it is down.",
+            "nullable": true,
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "expectedLifeYears": {
+            "description": "Overrides its type’s.",
+            "maximum": 100,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "manufacturer": {
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "model": {
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "purchaseValue": {
+            "description": "EGP.",
+            "nullable": true,
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "replacementCost": {
+            "description": "EGP: what a new one would cost.",
+            "nullable": true,
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "serialNumber": {
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "servesBuildings": {
+            "description": "The buildings it serves (a pump, a generator), as the units have them.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "vendorName": {
+            "description": "A business, plain data.",
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorPhone": {
+            "description": "The vendor’s business line.",
+            "nullable": true,
+            "pattern": "^[0-9+() -]{3,30}$",
+            "type": "string"
+          },
+          "warrantyEndsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateAssetTypeDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it.",
+            "type": "boolean"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "expectedLifeYears": {
+            "maximum": 100,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
           }
         },
         "type": "object"
@@ -67997,6 +69179,800 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/asset-imports": {
+      "get": {
+        "operationId": "AssetImportsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetImportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List asset imports, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "AssetImportsController_check",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckAssetImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check an asset sheet: valid, or its problems",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/asset-imports/{id}": {
+      "get": {
+        "operationId": "AssetImportsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an asset import",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/asset-imports/{id}/apply": {
+      "post": {
+        "operationId": "AssetImportsController_apply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Apply a valid import: every row, or none (then it is invalid)",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/asset-types": {
+      "get": {
+        "operationId": "AssetTypesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetTypeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List asset types",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "AssetTypesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetTypeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetTypeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an asset type",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/asset-types/{id}": {
+      "patch": {
+        "operationId": "AssetTypesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetTypeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetTypeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update or retire an asset type",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/assets": {
+      "get": {
+        "operationId": "AssetsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "typeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "in_service",
+                "out_of_service",
+                "retired"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "commonAreaId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Its direct parts.",
+            "in": "query",
+            "name": "parentId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "criticality",
+            "required": false,
+            "schema": {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List assets, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "AssetsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an asset",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/assets/{id}": {
+      "get": {
+        "operationId": "AssetsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an asset’s card",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "AssetsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an asset’s card",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/assets/{id}/events": {
+      "get": {
+        "operationId": "AssetsController_events",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetEventViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An asset’s history, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/assets/{id}/impact": {
+      "get": {
+        "operationId": "AssetsController_impact",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetImpactView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Who an asset’s failure reaches: buildings and unit counts",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/assets/{id}/move": {
+      "post": {
+        "operationId": "AssetsController_move",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveAssetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move a root asset, with its parts, to another place",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/assets/{id}/retire": {
+      "post": {
+        "operationId": "AssetsController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetireAssetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retire an asset for good",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/assets/{id}/status": {
+      "post": {
+        "operationId": "AssetsController_status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetStatusDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put an asset in or out of service",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/assets/{id}/tag": {
+      "post": {
+        "operationId": "AssetsController_issueTag",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedTagView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue a new QR tag; the previous one stops working",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/categories": {
       "get": {
         "operationId": "CategoriesController_list",
@@ -68246,6 +70222,140 @@
           }
         ],
         "summary": "Update the dispatch settings",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/documents": {
+      "get": {
+        "operationId": "DocumentsController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assetTypeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "commonAreaId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceDocumentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the documents of an asset, an asset type or a common area",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "DocumentsController_add",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceDocumentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a document",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/documents/{id}/remove": {
+      "post": {
+        "operationId": "DocumentsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a document (its file is deleted)",
         "tags": [
           "maintenance"
         ],

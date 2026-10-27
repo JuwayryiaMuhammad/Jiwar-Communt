@@ -256,6 +256,16 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   common_areas_tenant_id_code_key: ['code'],
   common_areas_one_per_building: ['building'],
   common_areas_one_per_facility: ['facilityId'],
+  // The asset register (ADR 0064). A document's file and an import's are
+  // claimed under the file's lock first: a violation is a race.
+  asset_types_tenant_id_id_key: null,
+  asset_types_tenant_id_key_key: ['key'],
+  assets_tenant_id_id_key: null,
+  assets_tenant_id_code_key: ['code'],
+  maintenance_documents_tenant_id_id_key: null,
+  maintenance_documents_file_id_key: null,
+  asset_imports_tenant_id_id_key: null,
+  asset_imports_file_id_key: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { newId } from '../core/common/uuid';
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 import { TenantLifecycle } from '../core/tenant-settings/tenant-lifecycle';
+import { DEFAULT_ASSET_TYPES } from './assets/default-asset-types';
 import { DEFAULT_CATEGORIES } from './categories/default-categories';
 import { DEFAULT_PREVENTIVE_SERVICES } from './preventive/default-preventive-services';
 import { defaultTargetRows } from './sla/default-sla-targets';
@@ -17,8 +18,8 @@ import {
  * namesake) and the dispatch settings, with automatic dispatch off until
  * the manager has given technicians their specialties; the SLA settings,
  * off, and the default SLA targets of every category (ADR 0034); the
- * default preventive services (ADR 0038). Existing
- * compounds got the same from the migrations.
+ * default preventive services (ADR 0038); the default asset types (ADR
+ * 0064). Existing compounds got the same from the migrations.
  */
 @Injectable()
 export class MaintenanceProvisioning implements OnModuleInit {
@@ -79,6 +80,17 @@ export class MaintenanceProvisioning implements OnModuleInit {
         nameEn: s.nameEn,
         categoryId: categoryIds.get(s.categoryKey)!,
         position: s.position,
+      })),
+    });
+    await tx.assetType.createMany({
+      data: DEFAULT_ASSET_TYPES.map((t) => ({
+        id: newId(),
+        tenantId,
+        key: t.key,
+        nameAr: t.nameAr,
+        nameEn: t.nameEn,
+        categoryId: categoryIds.get(t.categoryKey)!,
+        expectedLifeYears: t.lifeYears,
       })),
     });
   }

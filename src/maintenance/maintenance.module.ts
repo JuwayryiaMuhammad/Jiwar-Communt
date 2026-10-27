@@ -80,6 +80,16 @@ import {
 } from './quotes/quotes.controller';
 import { CommonAreasController } from './locations/common-areas.controller';
 import { CommonAreasService } from './locations/common-areas.service';
+import { AssetTypesController } from './assets/asset-types.controller';
+import { AssetTypesService } from './assets/asset-types.service';
+import { AssetsController } from './assets/assets.controller';
+import { AssetsService } from './assets/assets.service';
+import { DocumentsController } from './assets/documents.controller';
+import { DocumentsService } from './assets/documents.service';
+import { AssetImportsController } from './assets/asset-imports.controller';
+import { AssetImportsService } from './assets/asset-imports.service';
+import { WarrantySweep } from './assets/warranty-sweep';
+import { CompoundCalendar } from './schedules/compound-calendar';
 import { QuotesService } from './quotes/quotes.service';
 
 /**
@@ -115,6 +125,10 @@ import { QuotesService } from './quotes/quotes.service';
     ResidentQuotesController,
     DispatchQuotesController,
     CommonAreasController,
+    AssetTypesController,
+    AssetsController,
+    DocumentsController,
+    AssetImportsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -155,6 +169,12 @@ import { QuotesService } from './quotes/quotes.service';
     QuotesService,
     ResidentTicketItems,
     CommonAreasService,
+    CompoundCalendar,
+    AssetTypesService,
+    AssetsService,
+    DocumentsService,
+    AssetImportsService,
+    WarrantySweep,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

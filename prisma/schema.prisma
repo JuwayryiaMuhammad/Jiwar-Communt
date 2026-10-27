@@ -9517,3 +9517,139 @@ model CommonArea {
   @@index([tenantId, kind, code], map: "common_areas_list_idx")
   @@map("common_areas")
 }
+
+/// A kind of asset of the compound (ADR 0064), seeded with defaults. Its
+/// category says whose technicians work on it. Never deleted.
+model AssetType {
+  id                String   @id @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  key               String
+  nameAr            String   @map("name_ar")
+  nameEn            String   @map("name_en")
+  categoryId        String   @map("category_id") @db.Uuid
+  /// What an asset of the type lasts, unless the asset says otherwise.
+  expectedLifeYears Int?     @map("expected_life_years") @db.SmallInt
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, key])
+  @@map("asset_types")
+}
+
+/// One asset of the compound (ADR 0064): in a unit or a common area, under
+/// a parent four levels deep at most (where its parent is). The vendor,
+/// the warranty and the values are plain data. Retired, never deleted.
+model Asset {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  code               String
+  typeId             String    @map("type_id") @db.Uuid
+  parentId           String?   @map("parent_id") @db.Uuid
+  /// 1 for a root, its parent's + 1 below.
+  depth              Int       @db.SmallInt
+  unitId             String?   @map("unit_id") @db.Uuid
+  commonAreaId       String?   @map("common_area_id") @db.Uuid
+  nameAr             String    @map("name_ar")
+  nameEn             String    @map("name_en")
+  manufacturer       String?
+  model              String?
+  serialNumber       String?   @map("serial_number")
+  commissionedOn     DateTime? @map("commissioned_on") @db.Date
+  purchaseValue      Decimal?  @map("purchase_value") @db.Decimal(12, 2)
+  replacementCost    Decimal?  @map("replacement_cost") @db.Decimal(12, 2)
+  downtimeCostPerDay Decimal?  @map("downtime_cost_per_day") @db.Decimal(12, 2)
+  expectedLifeYears  Int?      @map("expected_life_years") @db.SmallInt
+  vendorName         String?   @map("vendor_name")
+  vendorPhone        String?   @map("vendor_phone")
+  warrantyEndsOn     DateTime? @map("warranty_ends_on") @db.Date
+  /// The warranty end the managers were told of (once per date).
+  warrantyAlertedFor DateTime? @map("warranty_alerted_for") @db.Date
+  /// low, medium, high, critical.
+  criticality        String    @default("medium")
+  /// in_service, out_of_service, retired.
+  status             String    @default("in_service")
+  /// REASON_CODES.assetOutOfService or assetRetire; null in service.
+  statusReason       String?   @map("status_reason")
+  /// good, fair, poor, critical.
+  condition          String    @default("good")
+  servesBuildings    String[]  @default([]) @map("serves_buildings")
+  retiredAt          DateTime? @map("retired_at") @db.Timestamptz(3)
+  tagHash            String?   @map("tag_hash")
+  tagIssuedAt        DateTime? @map("tag_issued_at") @db.Timestamptz(3)
+  createdById        String?   @map("created_by_account_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "assets_list_idx")
+  @@index([tenantId, parentId], map: "assets_parent_idx")
+  @@index([tenantId, unitId], map: "assets_unit_idx")
+  @@index([tenantId, commonAreaId], map: "assets_common_area_idx")
+  @@map("assets")
+}
+
+/// An asset's own history (ADR 0064): codes only, append-only.
+model AssetEvent {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  assetId    String   @map("asset_id") @db.Uuid
+  /// created, imported, updated, condition_changed, status_changed, moved, retired, tag_issued.
+  kind       String
+  fromValue  String?  @map("from_value")
+  toValue    String?  @map("to_value")
+  reasonCode String?  @map("reason_code")
+  actorId    String?  @map("actor_account_id") @db.Uuid
+  occurredAt DateTime @map("occurred_at") @db.Timestamptz(3)
+
+  @@index([tenantId, assetId, occurredAt(sort: Desc), id(sort: Desc)], map: "asset_events_asset_idx")
+  @@map("asset_events")
+}
+
+/// A plan, a manual, a warranty card (ADR 0064): of one asset, asset type
+/// or common area. Removed once, never changed.
+model MaintenanceDocument {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  assetId      String?   @map("asset_id") @db.Uuid
+  assetTypeId  String?   @map("asset_type_id") @db.Uuid
+  commonAreaId String?   @map("common_area_id") @db.Uuid
+  fileId       String    @unique @map("file_id") @db.Uuid
+  /// plan, manual, warranty, certificate, photo, other.
+  kind         String
+  title        String
+  addedById    String?   @map("added_by_account_id") @db.Uuid
+  addedAt      DateTime  @map("added_at") @db.Timestamptz(3)
+  removedAt    DateTime? @map("removed_at") @db.Timestamptz(3)
+  removedById  String?   @map("removed_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@index([tenantId, assetId, addedAt], map: "maintenance_documents_asset_idx")
+  @@index([tenantId, assetTypeId, addedAt], map: "maintenance_documents_type_idx")
+  @@index([tenantId, commonAreaId, addedAt], map: "maintenance_documents_area_idx")
+  @@map("maintenance_documents")
+}
+
+/// A sheet of assets (ADR 0064): validated whole, then applied once.
+model AssetImport {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  fileId      String    @unique @map("file_id") @db.Uuid
+  /// valid, invalid, applied.
+  status      String
+  rowCount    Int       @map("row_count")
+  errorCount  Int       @map("error_count")
+  /// The first 100 problems: `{ line, field, code }`, never a cell's text.
+  errors      Json      @default("[]")
+  createdById String?   @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime  @map("created_at") @db.Timestamptz(3)
+  appliedAt   DateTime? @map("applied_at") @db.Timestamptz(3)
+  appliedById String?   @map("applied_by_account_id") @db.Uuid
+  appliedCount Int?     @map("applied_count")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "asset_imports_list_idx")
+  @@map("asset_imports")
+}

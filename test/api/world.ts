@@ -1,3 +1,6 @@
+import { AssetsService } from '../../src/maintenance/assets/assets.service';
+import { DocumentsService } from '../../src/maintenance/assets/documents.service';
+import { AssetImportsService } from '../../src/maintenance/assets/asset-imports.service';
 import { CommonAreasService } from '../../src/maintenance/locations/common-areas.service';
 import type { AccountType } from '@prisma/client';
 import { newId } from '../../src/core/common/uuid';
@@ -225,6 +228,11 @@ export interface World
   bPreventiveServiceId: string;
   /** One of B's common areas (ADR 0064). */
   bCommonAreaId: string;
+  /** B's asset types, assets, documents and imports (ADR 0064). */
+  bAssetTypeId: string;
+  bAssetId: string;
+  bDocumentId: string;
+  bAssetImportId: string;
   /** One of A's, for valid preventive requests. */
   aPreventiveServiceId: string;
   /** A device B's owner logged in from (ADR 0036). */
@@ -800,6 +808,48 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       nameEn: 'World room',
     }),
   );
+  const bAssetType = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.assetType.findFirstOrThrow({
+      where: { key: 'pump' },
+    }),
+  );
+  const bAsset = await helpers.asManager(b, () =>
+    h.moduleRef.get(AssetsService).create({
+      code: 'WORLD-PUMP',
+      typeId: bAssetType.id,
+      commonAreaId: bCommonArea.id,
+      nameAr: 'مضخة',
+      nameEn: 'World pump',
+    }),
+  );
+  const bDocument = await helpers.asManager(b, async () =>
+    h.moduleRef.get(DocumentsService).add(
+      { assetId: bAsset.asset.id },
+      {
+        fileId: await fileHelpers(h).ready(
+          b.tokens.manager,
+          'asset_document',
+          'application/pdf',
+        ),
+        kind: 'manual',
+        title: 'World manual',
+      },
+    ),
+  );
+  const bAssetImport = await helpers.asManager(b, async () => {
+    const files = fileHelpers(h);
+    const sheet = Buffer.from(
+      'code,type,name_ar,name_en,area\nWORLD-2,pump,مضخة,Pump,WORLD-AREA\n',
+    );
+    const fileId = await files.uploaded(
+      b.tokens.manager,
+      'data_import',
+      'text/csv',
+      sheet,
+    );
+    await files.finalize(b.tokens.manager, fileId).expect(200);
+    return h.moduleRef.get(AssetImportsService).check(fileId);
+  });
   const aPreventiveService = await service(a);
   // Facilities (ADR 0044).
   const facilityOf = (c: typeof a, roomy: boolean) =>
@@ -1281,6 +1331,10 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bComplaintIdOfPartner: bPartnerComplaint.id,
     bPreventiveServiceId: bPreventiveService.id,
     bCommonAreaId: bCommonArea.id,
+    bAssetTypeId: bAssetType.id,
+    bAssetId: bAsset.asset.id,
+    bDocumentId: bDocument.document.id,
+    bAssetImportId: bAssetImport.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,
     bDeviceId: bDevice.id,

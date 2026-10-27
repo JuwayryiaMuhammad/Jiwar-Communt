@@ -231,6 +231,62 @@ export class CommunityMaintenancePort {
   }
 
   /** The units the account is the primary resident of now. */
+  /**
+   * How many units the buildings hold, and how many of them someone lives
+   * in now (ADR 0064: who an asset's failure reaches). Counts only.
+   */
+  async buildingReach(
+    tx: TenantTxClient,
+    buildings: readonly string[],
+  ): Promise<{ units: number; occupiedUnits: number }> {
+    if (!buildings.length) return { units: 0, occupiedUnits: 0 };
+    const where = { building: { in: [...buildings] } };
+    const units = await tx.unit.count({ where });
+    const occupiedUnits = await tx.unit.count({
+      where: {
+        ...where,
+        occupancies: { some: { status: 'active', resides: true } },
+      },
+    });
+    return { units, occupiedUnits };
+  }
+
+  /** Units by code, for a sheet that names them (ADR 0064). */
+  async unitsByCode(
+    tx: TenantTxClient,
+    codes: readonly string[],
+  ): Promise<Map<string, string>> {
+    if (!codes.length) return new Map();
+    const units = await tx.unit.findMany({
+      where: { code: { in: [...codes] } },
+      select: { id: true, code: true },
+    });
+    return new Map(units.map((u) => [u.code, u.id]));
+  }
+
+  /** Which of these buildings some unit is in (ADR 0064). */
+  async existingBuildings(
+    tx: TenantTxClient,
+    buildings: readonly string[],
+  ): Promise<Set<string>> {
+    if (!buildings.length) return new Set();
+    const rows = await tx.unit.findMany({
+      where: { building: { in: [...buildings] } },
+      distinct: ['building'],
+      select: { building: true },
+    });
+    return new Set(rows.map((r) => r.building!));
+  }
+
+  /** Whether someone lives in the unit now (ADR 0064). */
+  async unitOccupied(tx: TenantTxClient, unitId: string): Promise<boolean> {
+    return (
+      (await tx.unitOccupancy.count({
+        where: { unitId, status: 'active', resides: true },
+      })) > 0
+    );
+  }
+
   /** Whether some unit of the compound is in this building (ADR 0064). */
   async hasBuilding(tx: TenantTxClient, building: string): Promise<boolean> {
     return (await tx.unit.count({ where: { building } })) > 0;

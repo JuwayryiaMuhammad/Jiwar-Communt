@@ -44,7 +44,9 @@ export type FileDeleteReason =
   /** Handed to an action that did not need it (the record had one). */
   | 'unused'
   /** Its record's retention ended (a worker's photo, ADR 0029). */
-  | 'retention';
+  | 'retention'
+  /** Its record took it back: a document removed from the register (ADR 0064). */
+  | 'withdrawn';
 
 export { objectKey };
 
@@ -470,7 +472,9 @@ export class FilesService implements OnModuleInit {
    * it was given (ADR 0064: an imported sheet, 1 MB at most). Null when
    * the object is gone.
    */
-  contents(file: StoredFile): Promise<Buffer | null> {
+  contents(
+    file: Pick<StoredFile, 'id' | 'tenantId' | 'sizeBytes'>,
+  ): Promise<Buffer | null> {
     return this.storage.range(objectKey(file), 0, file.sizeBytes);
   }
 

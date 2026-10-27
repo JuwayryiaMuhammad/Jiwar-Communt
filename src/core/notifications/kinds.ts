@@ -2147,6 +2147,17 @@ export const NOTIFICATION_KINDS = {
     target: 'board_publication',
     params: {},
   },
+  // The asset register (ADR 0064): to who keeps it. The asset's reference
+  // (its code in the register) and the day only, never its name or its
+  // vendor.
+  /** An asset's warranty ends within 30 days. */
+  'asset.warranty_expiring': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'asset',
+    params: { assetRef: {}, endsOn: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

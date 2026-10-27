@@ -153,6 +153,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'يوجد طلب حذف حساب في قائمة الانتظار.',
     },
   },
+  'contract.expiring': {
+    en: {
+      title: 'Your lease ends soon',
+      body: 'Decide now: renew the lease or plan the move out. Open the app for the dates.',
+    },
+    ar: {
+      title: 'عقد الإيجار يقترب من نهايته',
+      body: 'حان وقت القرار: جدّد العقد أو خطّط للإخلاء. افتح التطبيق لمعرفة المواعيد.',
+    },
+  },
+  'contract.renewal_decided': {
+    en: {
+      title: 'Your renewal request was answered',
+      body: 'The management answered your lease renewal request. Open the app to see how.',
+    },
+    ar: {
+      title: 'تم الرد على طلب التجديد',
+      body: 'ردّت الإدارة على طلب تجديد عقد الإيجار. افتح التطبيق لمعرفة الرد.',
+    },
+  },
   'compound_document.published': {
     en: {
       title: 'The compound’s rules changed',

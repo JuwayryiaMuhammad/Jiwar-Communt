@@ -15,6 +15,10 @@ export class SettingsView {
   familyJoinRequiresApproval: boolean;
   @ApiProperty({ enum: FAMILY_KINSHIP_PROOF })
   familyKinshipProof: FamilyKinshipProof;
+  @ApiProperty({ type: String, nullable: true, description: 'EGP.' })
+  renewalFee: string | null;
+  @ApiProperty({ type: String, nullable: true, description: 'EGP.' })
+  moveOutFee: string | null;
   @ApiProperty({ type: Number })
   maxHouseholdMembers: number;
   @ApiProperty({
@@ -66,6 +70,8 @@ export class SettingsView {
     return {
       familyJoinRequiresApproval: s.familyJoinRequiresApproval,
       familyKinshipProof: s.familyKinshipProof,
+      renewalFee: s.renewalFee,
+      moveOutFee: s.moveOutFee,
       maxHouseholdMembers: s.maxHouseholdMembers,
       timezone: s.timezone,
       maxActiveVisitorPasses: s.maxActiveVisitorPasses,

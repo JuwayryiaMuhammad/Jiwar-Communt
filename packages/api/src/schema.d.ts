@@ -1543,6 +1543,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contract-renewals/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my renewal request */
+        post: operations["ContractsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/decision-appeals": {
         parameters: {
             query?: never;
@@ -6034,6 +6051,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My contracts */
+        get: operations["ContractsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/daily-brief": {
         parameters: {
             query?: never;
@@ -9728,6 +9762,57 @@ export interface paths {
         put?: never;
         /** Publish a new version of a compound document */
         post: operations["StaffCompoundDocumentsController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/contract-renewals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open lease renewal requests */
+        get: operations["StaffContractsController_renewals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/contract-renewals/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a renewal request, with a code */
+        post: operations["StaffContractsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/contracts/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void a contract recorded by mistake */
+        post: operations["StaffContractsController_voidContract"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13531,6 +13616,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/units/{unitId}/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A unit’s contracts */
+        get: operations["StaffContractsController_list"];
+        put?: never;
+        /** Record a contract */
+        post: operations["StaffContractsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/contracts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open a unit’s contract */
+        get: operations["StaffContractsController_open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/documents": {
         parameters: {
             query?: never;
@@ -15396,6 +15516,57 @@ export interface paths {
         get: operations["ResidentClubController_mine"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/contracts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open a contract */
+        get: operations["ContractsController_open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/contracts/{id}/end-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A lease’s end: renew or move out */
+        get: operations["ContractsController_endOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/contracts/{id}/renewal-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask to renew a lease */
+        post: operations["ContractsController_askRenewal"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19003,6 +19174,75 @@ export interface components {
             email?: string;
             phone?: string;
         };
+        ContractReadView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            endsOn: string | null;
+            fileUrl: string | null;
+            /** @description Whether its scan is still kept. */
+            hasFile: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "lease" | "ownership";
+            /**
+             * Format: date
+             * @description The last day to renew or announce leaving.
+             */
+            noticeBy: string | null;
+            noticeDays: number | null;
+            partyOccupancyIds: string[];
+            /** @description `CT-` and the number. */
+            reference: string;
+            /** Format: uuid */
+            renewsId: string | null;
+            /** Format: date */
+            signedOn: string;
+            /** Format: date */
+            startsOn: string;
+            /**
+             * @description Whether it has ended is its `endsOn`.
+             * @enum {string}
+             */
+            status: "live" | "renewed" | "voided";
+            /** Format: uuid */
+            unitId: string;
+        };
+        ContractView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            endsOn: string | null;
+            /** @description Whether its scan is still kept. */
+            hasFile: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "lease" | "ownership";
+            /**
+             * Format: date
+             * @description The last day to renew or announce leaving.
+             */
+            noticeBy: string | null;
+            noticeDays: number | null;
+            partyOccupancyIds: string[];
+            /** @description `CT-` and the number. */
+            reference: string;
+            /** Format: uuid */
+            renewsId: string | null;
+            /** Format: date */
+            signedOn: string;
+            /** Format: date */
+            startsOn: string;
+            /**
+             * @description Whether it has ended is its `endsOn`.
+             * @enum {string}
+             */
+            status: "live" | "renewed" | "voided";
+            /** Format: uuid */
+            unitId: string;
+        };
         ConversationCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -21002,6 +21242,11 @@ export interface components {
             /** @description From the closed list `gateLockdownEnd`. */
             reasonCode: string;
         };
+        EndOptionsView: {
+            contract: components["schemas"]["ContractView"];
+            moveOut: components["schemas"]["MoveOutOption"];
+            renewal: components["schemas"]["RenewOption"];
+        };
         EndShiftDto: {
             /** @description The ids of the checklist items ticked: every active one (422 HANDOVER_CHECKLIST_INCOMPLETE, params.missing). A retired one is ignored. */
             checklist?: string[];
@@ -21605,7 +21850,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -24290,6 +24535,20 @@ export interface components {
             truckPlate: string | null;
             window: components["schemas"]["PermitHoursView"];
         };
+        MoveOutOption: {
+            /** @description EGP, invoiced by the management. */
+            fee: string | null;
+            /**
+             * Format: date
+             * @description Leave by this day (the lease’s end).
+             */
+            leaveBy: string;
+            /**
+             * Format: date
+             * @description Announce leaving by this day.
+             */
+            noticeBy: string;
+        };
         MoveSuggestionDto: {
             /** @description What the staff tell the author. Required to decline. Replaces an earlier answer. */
             response?: string;
@@ -24690,6 +24949,38 @@ export interface components {
             kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
             titleAr: string;
             titleEn: string;
+        };
+        NewContractDto: {
+            /**
+             * Format: date
+             * @description A lease’s last day; required for a lease.
+             */
+            endsOn?: string;
+            /**
+             * Format: uuid
+             * @description A finalized `contract` file of the caller’s.
+             */
+            fileId: string;
+            /** @enum {string} */
+            kind: "lease" | "ownership";
+            /** @description A lease’s notice: days before its end to renew or announce leaving. */
+            noticeDays?: number;
+            /** @description The occupancies it binds: a lease’s active tenants, an ownership contract’s active owners (CONTRACT_PARTY_INVALID). */
+            partyOccupancyIds: string[];
+            /**
+             * Format: uuid
+             * @description The open renewal request it answers (closed as renewed).
+             */
+            renewalRequestId?: string;
+            /**
+             * Format: uuid
+             * @description The live lease this one renews.
+             */
+            renewsId?: string;
+            /** Format: date */
+            signedOn: string;
+            /** Format: date */
+            startsOn: string;
         };
         NewEmailDto: {
             email: string;
@@ -27200,9 +27491,33 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
         };
+        RenewOption: {
+            /** Format: date */
+            askBy: string;
+            /** @description EGP, invoiced by the management. */
+            fee: string | null;
+            /** @description The latest request. */
+            request: components["schemas"]["RenewalView"] | null;
+        };
         RenewVehicleDto: {
             /** @description The new last local day: after today, not before the current one, at most 731 days ahead. */
             permitValidUntil: string;
+        };
+        RenewalView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            contractId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string|null} */
+            reasonCode: "owner_declined" | "dues_outstanding" | "terms_not_agreed" | "other" | null;
+            /** Format: uuid */
+            renewedContractId: string | null;
+            /** @enum {string} */
+            status: "open" | "renewed" | "declined" | "withdrawn";
         };
         ReplaceClubPeopleDto: {
             /** @description Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT). */
@@ -28891,8 +29206,12 @@ export interface components {
             /** @description Active visitor passes per unit. */
             maxActiveVisitorPasses: number;
             maxHouseholdMembers: number;
+            /** @description EGP. */
+            moveOutFee: string | null;
             /** @description E.164; the community office, in a unit’s emergency contacts. */
             officePhone: string | null;
+            /** @description EGP. */
+            renewalFee: string | null;
             /** @description IANA; worker schedules are read in it. */
             timezone: string;
             /** @description Shown to visitors on the public pass page (ADR 0030). */
@@ -30589,6 +30908,24 @@ export interface components {
         StaffRemoveWorkerDto: {
             /** @description From the closed list `permitWorkerRemove`. */
             reasonCode: string;
+        };
+        StaffRenewalView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            contractId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string|null} */
+            reasonCode: "owner_declined" | "dues_outstanding" | "terms_not_agreed" | "other" | null;
+            /** Format: uuid */
+            renewedContractId: string | null;
+            /** @enum {string} */
+            status: "open" | "renewed" | "declined" | "withdrawn";
+            /** Format: uuid */
+            unitId: string;
         };
         StaffReportView: {
             /** @description Who posted. */
@@ -32361,10 +32698,20 @@ export interface components {
             maxActiveVisitorPasses?: number;
             maxHouseholdMembers?: number;
             /**
+             * @description A move-out’s fee, EGP (ADR 0062); null: none published.
+             * @example 500.00
+             */
+            moveOutFee?: string | null;
+            /**
              * @description The community office (ADR 0047), stored in E.164: in every unit’s emergency contacts. `null` clears it.
              * @example +20225550101
              */
             officePhone?: string | null;
+            /**
+             * @description A lease renewal’s fee, EGP (ADR 0062); null: none published.
+             * @example 1500.00
+             */
+            renewalFee?: string | null;
             /**
              * @description IANA time zone.
              * @example Africa/Cairo
@@ -35390,6 +35737,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompoundDocumentView"];
+                };
+            };
+        };
+    };
+    ContractsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalView"];
                 };
             };
         };
@@ -41903,6 +42271,25 @@ export interface operations {
             };
         };
     };
+    ContractsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractView"][];
+                };
+            };
+        };
+    };
     DailyBriefController_get: {
         parameters: {
             query?: never;
@@ -47557,6 +47944,75 @@ export interface operations {
             };
         };
     };
+    StaffContractsController_renewals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRenewalView"][];
+                };
+            };
+        };
+    };
+    StaffContractsController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalView"];
+                };
+            };
+        };
+    };
+    StaffContractsController_voidContract: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractView"];
+                };
+            };
+        };
+    };
     StaffDecisionAppealsController_list: {
         parameters: {
             query?: {
@@ -53087,6 +53543,74 @@ export interface operations {
             };
         };
     };
+    StaffContractsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractView"][];
+                };
+            };
+        };
+    };
+    StaffContractsController_record: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewContractDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractView"];
+                };
+            };
+        };
+    };
+    StaffContractsController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractReadView"];
+                };
+            };
+        };
+    };
     StaffUnitDocumentsController_list: {
         parameters: {
             query?: never;
@@ -55961,6 +56485,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyClubView"];
+                };
+            };
+        };
+    };
+    ContractsController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractReadView"];
+                };
+            };
+        };
+    };
+    ContractsController_endOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EndOptionsView"];
+                };
+            };
+        };
+    };
+    ContractsController_askRenewal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalView"];
                 };
             };
         };

@@ -1345,6 +1345,20 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0062: the compound's documents (none published here).
       '/compound-documents/versions/{id}':
         '0192a5f0-1c2b-7d3e-8f40-0000000062b3',
+      // ADR 0062: contracts (none recorded here: not found).
+      '/units/{unitId}/contracts/{id}': {
+        unitId: a.homeUnitId,
+        id: '0192a5f0-1c2b-7d3e-8f40-0000000062c2',
+      },
+      '/units/{unitId}/contracts/{id}/end-options': {
+        unitId: a.homeUnitId,
+        id: '0192a5f0-1c2b-7d3e-8f40-0000000062c3',
+      },
+      '/staff/units/{unitId}/contracts': a.homeUnitId,
+      '/staff/units/{unitId}/contracts/{id}': {
+        unitId: a.homeUnitId,
+        id: '0192a5f0-1c2b-7d3e-8f40-0000000062c4',
+      },
       // ADR 0062: a unit's vault (the owner's home; a document not found).
       '/units/{unitId}/documents': a.homeUnitId,
       '/units/{unitId}/documents/{id}': {

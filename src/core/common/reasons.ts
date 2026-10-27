@@ -164,6 +164,14 @@ export const REASON_CODES = {
   ],
   /** Why a manager refuses a name or phone change (ADR 0062): a code only. */
   identityChangeReject: ['not_verified', 'does_not_match_documents', 'other'],
+  /** Why a contract is voided, a renewal declined (ADR 0062): codes only. */
+  contractVoid: ['data_error', 'wrong_file', 'other'],
+  contractRenewalDecline: [
+    'owner_declined',
+    'dues_outstanding',
+    'terms_not_agreed',
+    'other',
+  ],
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
   // A manager acting for an account (ADR 0036): how the person asked.

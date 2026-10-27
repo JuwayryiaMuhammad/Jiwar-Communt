@@ -2373,9 +2373,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"allowAlwaysAllow\": false,\n  \"dutyPhone\": \"+201000000002\",\n  \"emergencyPhone\": \"+201000000000\",\n  \"familyJoinRequiresApproval\": false,\n  \"familyKinshipProof\": \"off\",\n  \"gateRequestTimeoutSeconds\": 30,\n  \"maxActiveVisitorPasses\": 1,\n  \"maxHouseholdMembers\": 1,\n  \"officePhone\": \"+20225550101\",\n  \"timezone\": \"Africa/Cairo\",\n  \"visitorDirections\": \"\"\n}"
+              "raw": "{\n  \"allowAlwaysAllow\": false,\n  \"dutyPhone\": \"+201000000002\",\n  \"emergencyPhone\": \"+201000000000\",\n  \"familyJoinRequiresApproval\": false,\n  \"familyKinshipProof\": \"off\",\n  \"gateRequestTimeoutSeconds\": 30,\n  \"maxActiveVisitorPasses\": 1,\n  \"maxHouseholdMembers\": 1,\n  \"moveOutFee\": \"500.00\",\n  \"officePhone\": \"+20225550101\",\n  \"renewalFee\": \"1500.00\",\n  \"timezone\": \"Africa/Cairo\",\n  \"visitorDirections\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `allowAlwaysAllow` | boolean |  | Whether households may write `always_allow` standing instructions (ADR 0043). |\n| `dutyPhone` | string |  | The duty manager (ADR 0047), stored in E.164: in every unit’s emergency contacts, and the phone an emergency shows when someone who is not at a gate answers it. `null` clears it. |\n| `emergencyPhone` | string |  | Stored in E.164; on the visitor page and the worker card. `null` clears it. |\n| `familyJoinRequiresApproval` | boolean |  |  |\n| `familyKinshipProof` | `off` \\| `optional` \\| `required` |  | Proof of kinship on a household invite (ADR 0062); `required` holds only while joins need approval. |\n| `gateRequestTimeoutSeconds` | number |  | Seconds a household has to answer the gate before its standing instruction applies. |\n| `maxActiveVisitorPasses` | number |  | Active visitor passes per unit. |\n| `maxHouseholdMembers` | number |  |  |\n| `officePhone` | string |  | The community office (ADR 0047), stored in E.164: in every unit’s emergency contacts. `null` clears it. |\n| `timezone` | string |  | IANA time zone. |\n| `visitorDirections` | string |  | What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `allowAlwaysAllow` | boolean |  | Whether households may write `always_allow` standing instructions (ADR 0043). |\n| `dutyPhone` | string |  | The duty manager (ADR 0047), stored in E.164: in every unit’s emergency contacts, and the phone an emergency shows when someone who is not at a gate answers it. `null` clears it. |\n| `emergencyPhone` | string |  | Stored in E.164; on the visitor page and the worker card. `null` clears it. |\n| `familyJoinRequiresApproval` | boolean |  |  |\n| `familyKinshipProof` | `off` \\| `optional` \\| `required` |  | Proof of kinship on a household invite (ADR 0062); `required` holds only while joins need approval. |\n| `gateRequestTimeoutSeconds` | number |  | Seconds a household has to answer the gate before its standing instruction applies. |\n| `maxActiveVisitorPasses` | number |  | Active visitor passes per unit. |\n| `maxHouseholdMembers` | number |  |  |\n| `moveOutFee` | string |  | A move-out’s fee, EGP (ADR 0062); null: none published. |\n| `officePhone` | string |  | The community office (ADR 0047), stored in E.164: in every unit’s emergency contacts. `null` clears it. |\n| `renewalFee` | string |  | A lease renewal’s fee, EGP (ADR 0062); null: none published. |\n| `timezone` | string |  | IANA time zone. |\n| `visitorDirections` | string |  | What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -8465,7 +8465,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` \\| `contract` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -36040,6 +36040,54 @@
     {
       "item": [
         {
+          "name": "Withdraw my renewal request",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contract-renewals",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/contract-renewals/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My contracts",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "contracts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/contracts"
+            }
+          }
+        },
+        {
           "name": "Convert a tenant into an owner",
           "request": {
             "body": {
@@ -36187,6 +36235,222 @@
               ],
               "raw": "{{baseUrl}}/api/v1/occupancies/:id/residence",
               "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open lease renewal requests",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "contract-renewals"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/contract-renewals"
+            }
+          }
+        },
+        {
+          "name": "Decline a renewal request, with a code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "contract-renewals",
+                ":id",
+                "decline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/contract-renewals/:id/decline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Void a contract recorded by mistake",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "contracts",
+                ":id",
+                "void"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/contracts/:id/void",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A unit’s contracts",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "contracts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/contracts",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a contract",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"lease\",\n  \"partyOccupancyIds\": [\n    \"\"\n  ],\n  \"signedOn\": \"2026-01-01\",\n  \"startsOn\": \"2026-01-01\",\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsOn` | string (date) |  | A lease’s last day; required for a lease. |\n| `fileId` | string (uuid) | yes | A finalized `contract` file of the caller’s. |\n| `kind` | `lease` \\| `ownership` | yes |  |\n| `noticeDays` | number |  | A lease’s notice: days before its end to renew or announce leaving. |\n| `partyOccupancyIds` | string (uuid)[] | yes | The occupancies it binds: a lease’s active tenants, an ownership contract’s active owners (CONTRACT_PARTY_INVALID). |\n| `renewalRequestId` | string (uuid) |  | The open renewal request it answers (closed as renewed). |\n| `renewsId` | string (uuid) |  | The live lease this one renews. |\n| `signedOn` | string (date) | yes |  |\n| `startsOn` | string (date) | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "contracts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/contracts",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open a unit’s contract",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "contracts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/contracts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
                 {
                   "description": "",
                   "key": "id",
@@ -36616,6 +36880,110 @@
               ],
               "raw": "{{baseUrl}}/api/v1/units/:id/primary",
               "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open a contract",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "contracts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/contracts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A lease’s end: renew or move out",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "contracts",
+                ":id",
+                "end-options"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/contracts/:id/end-options",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask to renew a lease",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "contracts",
+                ":id",
+                "renewal-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/contracts/:id/renewal-requests",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
                 {
                   "description": "",
                   "key": "id",

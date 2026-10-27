@@ -319,6 +319,12 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['content.manage'],
   },
+  // A unit contract's scan (ADR 0062): a photo or a PDF, the management's.
+  contract: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['contracts.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

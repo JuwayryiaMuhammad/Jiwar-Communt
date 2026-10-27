@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
   Max,
   Min,
 } from 'class-validator';
@@ -38,6 +39,28 @@ export class UpdateSettingsDto {
     withParams({ allowed: [...FAMILY_KINSHIP_PROOF] }),
   )
   familyKinshipProof?: FamilyKinshipProof;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    example: '1500.00',
+    description: 'A lease renewal’s fee, EGP (ADR 0062); null: none published.',
+  })
+  @IsOptional()
+  @Matches(/^\d{1,10}(\.\d{1,2})?$/, withParams({ format: 'amount' }))
+  renewalFee?: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    example: '500.00',
+    description: 'A move-out’s fee, EGP (ADR 0062); null: none published.',
+  })
+  @IsOptional()
+  @Matches(/^\d{1,10}(\.\d{1,2})?$/, withParams({ format: 'amount' }))
+  moveOutFee?: string | null;
 
   @ApiProperty({
     type: Boolean,

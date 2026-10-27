@@ -148,6 +148,7 @@ import { PUSH_TOKENS_ROUTES } from './push-tokens';
 import { PUBLIC_ROUTES } from './public';
 import {
   COMPOUND_DOCUMENT_ROUTES,
+  CONTRACT_ROUTES,
   REGISTRATION_ROUTES,
   UNIT_DOCUMENT_ROUTES,
 } from './registration';
@@ -194,6 +195,7 @@ export const ROUTES: Row[] = [
   ...REGISTRATION_ROUTES,
   ...UNIT_DOCUMENT_ROUTES,
   ...COMPOUND_DOCUMENT_ROUTES,
+  ...CONTRACT_ROUTES,
   ...ERASURE_ROUTES,
   ...ADMIN_ROUTES,
   ...HOUSEHOLD_ROUTES,

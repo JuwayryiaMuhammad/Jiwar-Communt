@@ -522,6 +522,9 @@ model Tenant {
   householdInviteDocuments     HouseholdInviteDocument[]
   unitDocuments                UnitDocument[]
   compoundDocumentVersions     CompoundDocumentVersion[]
+  unitContracts                UnitContract[]
+  unitContractParties          UnitContractParty[]
+  contractRenewals             ContractRenewal[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
   preventiveServices           PreventiveService[]
@@ -949,6 +952,9 @@ model Account {
   identityChangesDecided         AccountIdentityChange[]             @relation("IdentityChangeDecider")
   unitDocumentsUploaded          UnitDocument[]                      @relation("UnitDocumentUploader")
   compoundDocumentsPublished     CompoundDocumentVersion[]           @relation("CompoundDocumentPublisher")
+  contractsCreated               UnitContract[]                      @relation("ContractCreator")
+  renewalsRequested              ContractRenewal[]                   @relation("RenewalRequester")
+  renewalsClosed                 ContractRenewal[]                   @relation("RenewalCloser")
   registrationsApproved          ResidentRegistration[]              @relation("RegistrationAccount")
   deletionRequests               AccountDeletionRequest[]            @relation("DeletionAccount")
   deletionsCompleted             AccountDeletionRequest[]            @relation("DeletionCompletedBy")
@@ -1159,6 +1165,7 @@ model Unit {
   serviceVehicles        ServiceVehicleVisit[]
 
   documents UnitDocument[]
+  contracts UnitContract[]
   @@unique([tenantId, code])
   @@unique([tenantId, id])
   @@map("units")
@@ -1203,6 +1210,8 @@ model UnitOccupancy {
   clubCoverage     ClubMembershipPerson[]
 
   documents UnitDocument[]
+  contractParties UnitContractParty[]
+  contractRenewals ContractRenewal[]
   @@unique([tenantId, id])
   @@index([tenantId, accountId])
   @@index([tenantId, unitId])
@@ -1215,6 +1224,9 @@ model TenantSettings {
   familyJoinRequiresApproval Boolean  @default(false) @map("family_join_requires_approval")
   /// off | optional | required (CHECK): proof of kinship on an invite (ADR 0062).
   familyKinshipProof         String   @default("optional") @map("family_kinship_proof")
+  /// What a lease's renewal and a move-out cost, EGP (ADR 0062); invoiced by the management.
+  renewalFee                 Decimal? @map("renewal_fee") @db.Decimal(12, 2)
+  moveOutFee                 Decimal? @map("move_out_fee") @db.Decimal(12, 2)
   maxHouseholdMembers        Int      @default(10) @map("max_household_members")
   /// IANA time zone for schedules (ADR 0017).
   timezone                   String   @default("Africa/Cairo")
@@ -1729,6 +1741,86 @@ model CompoundDocumentVersion {
 
   @@unique([tenantId, kind, versionNo], map: "compound_document_versions_number_key")
   @@map("compound_document_versions")
+}
+
+/// A contract the management holds a copy of (ADR 0062): a lease or an
+/// ownership contract, its key dates, its file and its parties. Never
+/// changes but for its set-once marks (trigger); a renewal is a new lease.
+model UnitContract {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  number           Int
+  unitId           String    @map("unit_id") @db.Uuid
+  /// lease | ownership (CHECK).
+  kind             String
+  signedOn         DateTime  @map("signed_on") @db.Date
+  startsOn         DateTime  @map("starts_on") @db.Date
+  endsOn           DateTime? @map("ends_on") @db.Date
+  noticeDays       Int?      @map("notice_days")
+  fileId           String?   @map("file_id") @db.Uuid
+  filePurgedAt     DateTime? @map("file_purged_at") @db.Timestamptz(3)
+  renewsId         String?   @map("renews_id") @db.Uuid
+  createdBy        String    @map("created_by") @db.Uuid
+  createdAt        DateTime  @map("created_at") @db.Timestamptz(3)
+  voidedAt         DateTime? @map("voided_at") @db.Timestamptz(3)
+  voidReason       String?   @map("void_reason")
+  expiryNotifiedAt DateTime? @map("expiry_notified_at") @db.Timestamptz(3)
+
+  tenant     Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit       Unit                  @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file       StoredFile?           @relation("ContractFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  renews     UnitContract?         @relation("ContractRenews", fields: [tenantId, renewsId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  renewedBy  UnitContract[]        @relation("ContractRenews")
+  creator    Account               @relation("ContractCreator", fields: [tenantId, createdBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  parties    UnitContractParty[]
+  renewals   ContractRenewal[]     @relation("RenewalContract")
+  renewedFor ContractRenewal[]     @relation("RenewalOutcome")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "unit_contracts_number_key")
+  @@map("unit_contracts")
+}
+
+/// The occupancies a contract binds (ADR 0062): written once.
+model UnitContractParty {
+  tenantId    String @map("tenant_id") @db.Uuid
+  contractId  String @map("contract_id") @db.Uuid
+  occupancyId String @map("occupancy_id") @db.Uuid
+
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  contract  UnitContract  @relation(fields: [tenantId, contractId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  occupancy UnitOccupancy @relation(fields: [tenantId, occupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([contractId, occupancyId])
+  @@index([tenantId, occupancyId], map: "unit_contract_parties_occupancy_idx")
+  @@map("unit_contract_parties")
+}
+
+/// A tenant asks to renew their lease (ADR 0062): one open per contract;
+/// closes once — renewed by the next lease, declined with a code, withdrawn.
+model ContractRenewal {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  contractId        String    @map("contract_id") @db.Uuid
+  occupancyId       String    @map("occupancy_id") @db.Uuid
+  requestedBy       String    @map("requested_by") @db.Uuid
+  /// open | renewed | declined | withdrawn (CHECK).
+  status            String    @default("open")
+  renewedContractId String?   @map("renewed_contract_id") @db.Uuid
+  reasonCode        String?   @map("reason_code")
+  createdAt         DateTime  @map("created_at") @db.Timestamptz(3)
+  closedAt          DateTime? @map("closed_at") @db.Timestamptz(3)
+  closedBy          String?   @map("closed_by") @db.Uuid
+
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  contract        UnitContract  @relation("RenewalContract", fields: [tenantId, contractId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  occupancy       UnitOccupancy @relation(fields: [tenantId, occupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  requester       Account       @relation("RenewalRequester", fields: [tenantId, requestedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  renewedContract UnitContract? @relation("RenewalOutcome", fields: [tenantId, renewedContractId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  closer          Account?      @relation("RenewalCloser", fields: [tenantId, closedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@map("contract_renewals")
 }
 
 /// A self-registration request (ADR 0024). Personal data only while
@@ -2927,6 +3019,8 @@ enum FilePurpose {
   unit_document
   /// A compound document version's PDF (ADR 0062).
   compound_document
+  /// A unit contract's scan (ADR 0062).
+  contract
 
   @@map("file_purpose")
 }
@@ -2973,6 +3067,7 @@ model StoredFile {
   inviteDocuments               HouseholdInviteDocument[]      @relation("InviteDocumentFile")
   unitDocuments                 UnitDocument[]                 @relation("UnitDocumentFile")
   compoundDocumentVersions      CompoundDocumentVersion[]      @relation("CompoundDocumentFile")
+  contracts                     UnitContract[]                 @relation("ContractFile")
   owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   /// A recording's length, read from its container at finalize (ADR 0056).
   mediaDurationMs Int?        @map("media_duration_ms")

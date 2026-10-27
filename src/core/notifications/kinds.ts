@@ -181,6 +181,25 @@ export const NOTIFICATION_KINDS = {
     target: 'account_deletion_request',
     params: { blockers: {} },
   },
+  /**
+   * A lease's notice date has come (ADR 0062): renew or leave. Its
+   * tenants and the unit's owners; the dates only.
+   */
+  'contract.expiring': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'contract',
+    params: { endsOn: {}, noticeBy: {} },
+  },
+  /** The management renewed the lease or declined the request (ADR 0062). */
+  'contract.renewal_decided': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'contract',
+    params: { outcome: {} },
+  },
   /** A new version of the bylaws or the occupants' rights (ADR 0062). */
   'compound_document.published': {
     priority: 'normal',

@@ -8404,6 +8404,195 @@
         },
         "type": "object"
       },
+      "ContractReadView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "fileUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "hasFile": {
+            "description": "Whether its scan is still kept.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "lease",
+              "ownership"
+            ],
+            "type": "string"
+          },
+          "noticeBy": {
+            "description": "The last day to renew or announce leaving.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "noticeDays": {
+            "nullable": true,
+            "type": "number"
+          },
+          "partyOccupancyIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reference": {
+            "description": "`CT-` and the number.",
+            "type": "string"
+          },
+          "renewsId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "signedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "status": {
+            "description": "Whether it has ended is its `endsOn`.",
+            "enum": [
+              "live",
+              "renewed",
+              "voided"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "kind",
+          "signedOn",
+          "startsOn",
+          "endsOn",
+          "noticeDays",
+          "noticeBy",
+          "status",
+          "renewsId",
+          "hasFile",
+          "partyOccupancyIds",
+          "createdAt",
+          "fileUrl"
+        ],
+        "type": "object"
+      },
+      "ContractView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "hasFile": {
+            "description": "Whether its scan is still kept.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "lease",
+              "ownership"
+            ],
+            "type": "string"
+          },
+          "noticeBy": {
+            "description": "The last day to renew or announce leaving.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "noticeDays": {
+            "nullable": true,
+            "type": "number"
+          },
+          "partyOccupancyIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reference": {
+            "description": "`CT-` and the number.",
+            "type": "string"
+          },
+          "renewsId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "signedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "status": {
+            "description": "Whether it has ended is its `endsOn`.",
+            "enum": [
+              "live",
+              "renewed",
+              "voided"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "kind",
+          "signedOn",
+          "startsOn",
+          "endsOn",
+          "noticeDays",
+          "noticeBy",
+          "status",
+          "renewsId",
+          "hasFile",
+          "partyOccupancyIds",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "ConversationCreatedView": {
         "properties": {
           "createdAt": {
@@ -14225,6 +14414,25 @@
         ],
         "type": "object"
       },
+      "EndOptionsView": {
+        "properties": {
+          "contract": {
+            "$ref": "#/components/schemas/ContractView"
+          },
+          "moveOut": {
+            "$ref": "#/components/schemas/MoveOutOption"
+          },
+          "renewal": {
+            "$ref": "#/components/schemas/RenewOption"
+          }
+        },
+        "required": [
+          "contract",
+          "renewal",
+          "moveOut"
+        ],
+        "type": "object"
+      },
       "EndShiftDto": {
         "properties": {
           "checklist": {
@@ -16187,7 +16395,8 @@
           "registration_document",
           "kinship_proof",
           "unit_document",
-          "compound_document"
+          "compound_document",
+          "contract"
         ],
         "type": "string"
       },
@@ -24967,6 +25176,31 @@
         ],
         "type": "object"
       },
+      "MoveOutOption": {
+        "properties": {
+          "fee": {
+            "description": "EGP, invoiced by the management.",
+            "nullable": true,
+            "type": "string"
+          },
+          "leaveBy": {
+            "description": "Leave by this day (the lease’s end).",
+            "format": "date",
+            "type": "string"
+          },
+          "noticeBy": {
+            "description": "Announce leaving by this day.",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "noticeBy",
+          "leaveBy",
+          "fee"
+        ],
+        "type": "object"
+      },
       "MoveSuggestionDto": {
         "properties": {
           "response": {
@@ -26255,6 +26489,69 @@
           "bodyEn",
           "bodyAr",
           "effectiveOn"
+        ],
+        "type": "object"
+      },
+      "NewContractDto": {
+        "properties": {
+          "endsOn": {
+            "description": "A lease’s last day; required for a lease.",
+            "format": "date",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "A finalized `contract` file of the caller’s.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "lease",
+              "ownership"
+            ],
+            "type": "string"
+          },
+          "noticeDays": {
+            "description": "A lease’s notice: days before its end to renew or announce leaving.",
+            "maximum": 365,
+            "minimum": 0,
+            "type": "number"
+          },
+          "partyOccupancyIds": {
+            "description": "The occupancies it binds: a lease’s active tenants, an ownership contract’s active owners (CONTRACT_PARTY_INVALID).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "renewalRequestId": {
+            "description": "The open renewal request it answers (closed as renewed).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "renewsId": {
+            "description": "The live lease this one renews.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "signedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "partyOccupancyIds",
+          "signedOn",
+          "startsOn",
+          "fileId"
         ],
         "type": "object"
       },
@@ -34038,6 +34335,35 @@
         },
         "type": "object"
       },
+      "RenewOption": {
+        "properties": {
+          "askBy": {
+            "format": "date",
+            "type": "string"
+          },
+          "fee": {
+            "description": "EGP, invoiced by the management.",
+            "nullable": true,
+            "type": "string"
+          },
+          "request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RenewalView"
+              }
+            ],
+            "description": "The latest request.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "askBy",
+          "fee",
+          "request"
+        ],
+        "type": "object"
+      },
       "RenewVehicleDto": {
         "properties": {
           "permitValidUntil": {
@@ -34048,6 +34374,61 @@
         },
         "required": [
           "permitValidUntil"
+        ],
+        "type": "object"
+      },
+      "RenewalView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "enum": [
+              "owner_declined",
+              "dues_outstanding",
+              "terms_not_agreed",
+              "other"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "renewedContractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "renewed",
+              "declined",
+              "withdrawn"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contractId",
+          "status",
+          "renewedContractId",
+          "reasonCode",
+          "createdAt",
+          "closedAt"
         ],
         "type": "object"
       },
@@ -39586,8 +39967,18 @@
           "maxHouseholdMembers": {
             "type": "number"
           },
+          "moveOutFee": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
           "officePhone": {
             "description": "E.164; the community office, in a unit’s emergency contacts.",
+            "nullable": true,
+            "type": "string"
+          },
+          "renewalFee": {
+            "description": "EGP.",
             "nullable": true,
             "type": "string"
           },
@@ -39604,6 +39995,8 @@
         "required": [
           "familyJoinRequiresApproval",
           "familyKinshipProof",
+          "renewalFee",
+          "moveOutFee",
           "maxHouseholdMembers",
           "timezone",
           "maxActiveVisitorPasses",
@@ -45657,6 +46050,66 @@
         ],
         "type": "object"
       },
+      "StaffRenewalView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "enum": [
+              "owner_declined",
+              "dues_outstanding",
+              "terms_not_agreed",
+              "other"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "renewedContractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "renewed",
+              "declined",
+              "withdrawn"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contractId",
+          "status",
+          "renewedContractId",
+          "reasonCode",
+          "createdAt",
+          "closedAt",
+          "unitId"
+        ],
+        "type": "object"
+      },
       "StaffReportView": {
         "properties": {
           "author": {
@@ -51550,9 +52003,21 @@
             "minimum": 1,
             "type": "number"
           },
+          "moveOutFee": {
+            "description": "A move-out’s fee, EGP (ADR 0062); null: none published.",
+            "example": "500.00",
+            "nullable": true,
+            "type": "string"
+          },
           "officePhone": {
             "description": "The community office (ADR 0047), stored in E.164: in every unit’s emergency contacts. `null` clears it.",
             "example": "+20225550101",
+            "nullable": true,
+            "type": "string"
+          },
+          "renewalFee": {
+            "description": "A lease renewal’s fee, EGP (ADR 0062); null: none published.",
+            "example": "1500.00",
             "nullable": true,
             "type": "string"
           },
@@ -58236,6 +58701,43 @@
           "governance"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contract-renewals/{id}/withdraw": {
+      "post": {
+        "operationId": "ContractsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenewalView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my renewal request",
+        "tags": [
+          "units"
+        ],
         "x-stability": "draft"
       }
     },
@@ -70543,6 +71045,37 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/contracts": {
+      "get": {
+        "operationId": "ContractsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContractView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My contracts",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/daily-brief": {
       "get": {
         "operationId": "DailyBriefController_get",
@@ -81086,6 +81619,131 @@
         "summary": "Publish a new version of a compound document",
         "tags": [
           "governance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/contract-renewals": {
+      "get": {
+        "operationId": "StaffContractsController_renewals",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StaffRenewalView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open lease renewal requests",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/contract-renewals/{id}/decline": {
+      "post": {
+        "operationId": "StaffContractsController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenewalView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a renewal request, with a code",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/contracts/{id}/void": {
+      "post": {
+        "operationId": "StaffContractsController_voidContract",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Void a contract recorded by mistake",
+        "tags": [
+          "units"
         ],
         "x-stability": "draft"
       }
@@ -92669,6 +93327,137 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/units/{unitId}/contracts": {
+      "get": {
+        "operationId": "StaffContractsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContractView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A unit’s contracts",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffContractsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewContractDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a contract",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/contracts/{id}": {
+      "get": {
+        "operationId": "StaffContractsController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a unit’s contract",
+        "tags": [
+          "units"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/units/{unitId}/documents": {
       "get": {
         "operationId": "StaffUnitDocumentsController_list",
@@ -98320,6 +99109,142 @@
           "club"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/contracts/{id}": {
+      "get": {
+        "operationId": "ContractsController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a contract",
+        "tags": [
+          "units"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/contracts/{id}/end-options": {
+      "get": {
+        "operationId": "ContractsController_endOptions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndOptionsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A lease’s end: renew or move out",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/contracts/{id}/renewal-requests": {
+      "post": {
+        "operationId": "ContractsController_askRenewal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenewalView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask to renew a lease",
+        "tags": [
+          "units"
+        ],
         "x-stability": "draft"
       }
     },

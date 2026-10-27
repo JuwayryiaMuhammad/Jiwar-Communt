@@ -15,7 +15,9 @@ const SETTINGS = [
   'gateRequestTimeoutSeconds',
   'maxActiveVisitorPasses',
   'maxHouseholdMembers',
+  'moveOutFee',
   'officePhone',
+  'renewalFee',
   'timezone',
   'visitorDirections',
 ];

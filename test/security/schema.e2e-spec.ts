@@ -642,6 +642,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'kinship_proof',
       'unit_document',
       'compound_document',
+      'contract',
     ])
       expect(purposes).toContain(purpose);
     for (const purpose of purposes) {

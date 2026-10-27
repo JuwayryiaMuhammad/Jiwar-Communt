@@ -2000,6 +2000,30 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
+  // Contracts (ADR 0062).
+  tenant_settings_contract_fees: {
+    guarded: 'each fee IS NULL is tested first; the bound runs only on a value',
+  },
+  unit_contracts_number_positive: {},
+  unit_contracts_kind_shape: {
+    guarded:
+      'ends_on and notice_days are tested IS NOT NULL in the same conjunct before notice_days is compared',
+  },
+  unit_contracts_dates: {
+    guarded: 'ends_on IS NULL is tested first; the others are NOT NULL',
+  },
+  unit_contracts_void_shape: {
+    guarded:
+      'void_reason IS NULL is tested first; the list runs only on a value',
+  },
+  unit_contracts_file_shape: {},
+  unit_contracts_marks_after: {
+    guarded: 'each mark is tested IS NULL first; created_at is NOT NULL',
+  },
+  contract_renewals_shape: {
+    guarded:
+      'reason_code and closed_at are tested IS NULL first; the list and the bound run only on a value',
+  },
   // Compound documents (ADR 0062).
   compound_document_versions_kind: {},
   compound_document_versions_number: {},

@@ -18,6 +18,9 @@ export interface TenantSettingsView {
    * only while joins need a manager's approval, who reads it.
    */
   familyKinshipProof: FamilyKinshipProof;
+  /** What a lease's renewal and a move-out cost, EGP (ADR 0062); null: not published. */
+  renewalFee: string | null;
+  moveOutFee: string | null;
   maxHouseholdMembers: number;
   /** IANA time zone; worker schedules are read in it (ADR 0017). */
   timezone: string;
@@ -147,6 +150,8 @@ export class TenantSettingsService {
         data: {
           familyJoinRequiresApproval: input.familyJoinRequiresApproval,
           familyKinshipProof: input.familyKinshipProof,
+          renewalFee: input.renewalFee,
+          moveOutFee: input.moveOutFee,
           maxHouseholdMembers: input.maxHouseholdMembers,
           timezone: input.timezone,
           maxActiveVisitorPasses: input.maxActiveVisitorPasses,
@@ -179,6 +184,8 @@ function view(row: TenantSettings): TenantSettingsView {
   return {
     familyJoinRequiresApproval: row.familyJoinRequiresApproval,
     familyKinshipProof: row.familyKinshipProof as FamilyKinshipProof,
+    renewalFee: row.renewalFee?.toFixed(2) ?? null,
+    moveOutFee: row.moveOutFee?.toFixed(2) ?? null,
     maxHouseholdMembers: row.maxHouseholdMembers,
     timezone: row.timezone,
     maxActiveVisitorPasses: row.maxActiveVisitorPasses,

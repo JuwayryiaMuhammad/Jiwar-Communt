@@ -22,6 +22,11 @@ import {
   UnitDocumentsController,
 } from '../units/unit-documents.controller';
 import { UnitDocumentsService } from '../units/unit-documents.service';
+import {
+  ContractsController,
+  StaffContractsController,
+} from '../contracts/contracts.controller';
+import { ContractsService } from '../contracts/contracts.service';
 import { RegistrationsController } from './registrations.controller';
 import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsController } from './residents.controller';
@@ -40,6 +45,8 @@ import { ResidentsService } from './residents.service';
     RegistrationsController,
     UnitDocumentsController,
     StaffUnitDocumentsController,
+    ContractsController,
+    StaffContractsController,
   ],
   imports: [
     AccountsModule,
@@ -58,6 +65,7 @@ import { ResidentsService } from './residents.service';
     RegistrationStatusLinks,
     RegistrationDocumentsService,
     UnitDocumentsService,
+    ContractsService,
     CommunityExportSections,
   ],
   exports: [ResidentsService, RegistrationService],

@@ -232,6 +232,102 @@ describe('Audit coverage — R11a', () => {
     });
   });
 
+  describe('contracts', () => {
+    it('recorded, renewed, declined, withdrawn, voided: ids and codes', async () => {
+      const manager = await h.tokenFor({
+        sub: c.managerId,
+        tid: c.tenantId,
+        typ: 'manager',
+      });
+      const unit = await x.unit(c);
+      await x.resident(c, [unit.id]);
+      const t = await x.resident(c, [unit.id], 'tenant');
+      const { accessToken: tenantToken } = await loginViaOtp(h, t.email, t.id);
+      const tenantOcc = (
+        await x.asManager(c, () =>
+          x.prisma.tenant.unitOccupancy.findFirstOrThrow({
+            where: { unitId: unit.id, accountId: t.id, status: 'active' },
+          }),
+        )
+      ).id;
+      const lease = async (body: object = {}) => {
+        const fileId = await fileHelpers(h).ready(
+          manager,
+          'contract',
+          'application/pdf',
+        );
+        return (
+          (
+            await post(`/staff/units/${unit.id}/contracts`, manager, {
+              kind: 'lease',
+              partyOccupancyIds: [tenantOcc],
+              signedOn: '2026-01-01',
+              startsOn: '2026-01-01',
+              endsOn: '2099-12-31',
+              noticeDays: 60,
+              fileId,
+              ...body,
+            }).expect(201)
+          ).body as { id: string }
+        ).id;
+      };
+      const first = await lease();
+      expect(await single('contract.recorded', first, [])).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'contract',
+        metadata: { unitId: unit.id, kind: 'lease', parties: 1 },
+      });
+      const ask = async (contractId: string) =>
+        (
+          (
+            await post(
+              `/units/${unit.id}/contracts/${contractId}/renewal-requests`,
+              tenantToken,
+            ).expect(201)
+          ).body as { id: string }
+        ).id;
+      const withdrawn = await ask(first);
+      await post(
+        `/contract-renewals/${withdrawn}/withdraw`,
+        tenantToken,
+      ).expect(200);
+      expect(
+        await single('contract_renewal.withdrawn', withdrawn, []),
+      ).toMatchObject({ actorId: t.id, metadata: { contractId: first } });
+      const declined = await ask(first);
+      expect(
+        await single('contract_renewal.requested', declined, []),
+      ).toMatchObject({ actorId: t.id, metadata: { contractId: first } });
+      await post(`/staff/contract-renewals/${declined}/decline`, manager, {
+        reasonCode: 'terms_not_agreed',
+      }).expect(200);
+      expect(
+        await single('contract_renewal.declined', declined, []),
+      ).toMatchObject({
+        metadata: { contractId: first, reasonCode: 'terms_not_agreed' },
+      });
+      const renewed = await ask(first);
+      const second = await lease({
+        renewsId: first,
+        renewalRequestId: renewed,
+        startsOn: '2100-01-01',
+        endsOn: '2100-12-31',
+      });
+      expect(
+        await single('contract_renewal.renewed', renewed, []),
+      ).toMatchObject({
+        metadata: { contractId: first, renewedContractId: second },
+      });
+      await post(`/staff/contracts/${second}/void`, manager, {
+        reasonCode: 'data_error',
+      }).expect(200);
+      expect(await single('contract.voided', second, [])).toMatchObject({
+        actorId: c.managerId,
+        metadata: { unitId: unit.id, reasonCode: 'data_error' },
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every R11a entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

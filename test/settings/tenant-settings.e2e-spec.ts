@@ -23,6 +23,8 @@ describe('Tenant settings', () => {
     expect(await x.asManager(c, () => settings.get())).toEqual({
       familyJoinRequiresApproval: false,
       familyKinshipProof: 'optional',
+      renewalFee: null,
+      moveOutFee: null,
       maxHouseholdMembers: 10,
       timezone: 'Africa/Cairo',
       maxActiveVisitorPasses: 50,
@@ -88,6 +90,8 @@ describe('Tenant settings', () => {
     expect(updated).toEqual({
       familyJoinRequiresApproval: true,
       familyKinshipProof: 'optional',
+      renewalFee: null,
+      moveOutFee: null,
       maxHouseholdMembers: 4,
       timezone: 'Africa/Cairo',
       maxActiveVisitorPasses: 50,
@@ -101,6 +105,8 @@ describe('Tenant settings', () => {
     expect(await x.asManager(other, () => settings.get())).toEqual({
       familyJoinRequiresApproval: false,
       familyKinshipProof: 'optional',
+      renewalFee: null,
+      moveOutFee: null,
       maxHouseholdMembers: 10,
       timezone: 'Africa/Cairo',
       maxActiveVisitorPasses: 50,

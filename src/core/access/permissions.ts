@@ -44,6 +44,8 @@ export const PERMISSIONS = {
   'unit_documents.manage': { kinds: ['manager'] },
   // The compound's documents: the bylaws, the rights, the guides (ADR 0062).
   'content.manage': { kinds: ['manager'] },
+  // A unit's contracts: record, void, renewal requests (ADR 0062).
+  'contracts.manage': { kinds: ['manager'] },
   // Acting for an account that does not use the app (ADR 0036): its
   // delivery preferences, consents, an export or a deletion request, each
   // with a reason code, marked assisted, the account told.

@@ -1,4 +1,5 @@
 import type { Response } from 'supertest';
+import { communityHelpers } from '../setup/community';
 import { fileHelpers } from '../setup/files';
 import { call } from './request';
 import type { World } from './world';
@@ -31,7 +32,56 @@ export function unitDocumentCalls(
     );
     return (res.body as { id: string }).id;
   };
+  /** An ownership contract binding A's owner in A's home: its id. */
+  const contract = async () => {
+    const w = world();
+    const x = communityHelpers(w.h);
+    const occupancy = await x.asManager(w.a, () =>
+      x.prisma.tenant.unitOccupancy.findFirstOrThrow({
+        where: {
+          unitId: w.a.homeUnitId,
+          accountId: w.a.ids.owner,
+          status: 'active',
+        },
+      }),
+    );
+    const fileId = await fileHelpers(w.h).ready(
+      w.a.tokens.manager,
+      'contract',
+      'application/pdf',
+    );
+    const res = await call(
+      w,
+      'POST',
+      `/staff/units/${w.a.homeUnitId}/contracts`,
+      {
+        token: w.a.tokens.manager,
+        body: {
+          kind: 'ownership',
+          partyOccupancyIds: [occupancy.id],
+          signedOn: '2026-01-01',
+          startsOn: '2026-01-01',
+          fileId,
+        },
+      },
+    );
+    return (res.body as { id: string }).id;
+  };
   return {
+    'GET /units/{unitId}/contracts/{id}': async () =>
+      call(
+        world(),
+        'GET',
+        `/units/${world().a.homeUnitId}/contracts/${await contract()}`,
+        { token: world().a.tokens.owner },
+      ),
+    'GET /staff/units/{unitId}/contracts/{id}': async () =>
+      call(
+        world(),
+        'GET',
+        `/staff/units/${world().a.homeUnitId}/contracts/${await contract()}`,
+        { token: world().a.tokens.manager },
+      ),
     'GET /compound-documents/versions/{id}': async () => {
       const w = world();
       const res = await call(w, 'POST', '/staff/compound-documents/versions', {

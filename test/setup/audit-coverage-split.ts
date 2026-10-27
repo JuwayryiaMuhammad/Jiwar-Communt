@@ -705,4 +705,10 @@ export const R11A_COVERAGE: readonly string[] = [
   'unit_document.added',
   'unit_document.deleted',
   'compound_document.published',
+  'contract.recorded',
+  'contract.voided',
+  'contract_renewal.requested',
+  'contract_renewal.withdrawn',
+  'contract_renewal.declined',
+  'contract_renewal.renewed',
 ];

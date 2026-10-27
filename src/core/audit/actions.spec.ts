@@ -169,6 +169,8 @@ describe('audit catalog', () => {
         'governance_objection',
         'unit_document',
         'compound_document',
+        'contract',
+        'contract_renewal',
       ]).toContain(def.target);
     }
   });

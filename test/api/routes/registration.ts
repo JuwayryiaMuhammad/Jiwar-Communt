@@ -368,3 +368,165 @@ export const COMPOUND_DOCUMENT_ROUTES: Row[] = [
     },
   },
 ];
+
+// A unit's contracts and lease renewals (ADR 0062).
+const UNKNOWN = '0192a5f0-1c2b-7d3e-8f40-0000000062c1';
+export const CONTRACT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/me/contracts',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  ...(['', '/end-options'] as const).map((tail): Row => ({
+    method: 'GET',
+    path: `/units/{unitId}/contracts/{id}${tail}`,
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId, id: UNKNOWN }),
+      code: 'CONTRACT_NOT_FOUND',
+    },
+    invalid: 'none',
+    ...(tail ? {} : { noStore: true }),
+  })),
+  {
+    method: 'POST',
+    path: '/units/{unitId}/contracts/{id}/renewal-requests',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    // The unit's lock comes first: another compound's unit is not found.
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId, id: UNKNOWN }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/contract-renewals/{id}/withdraw',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({ id: UNKNOWN }),
+      code: 'CONTRACT_RENEWAL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/units/{unitId}/contracts',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/units/{unitId}/contracts/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId, id: UNKNOWN }),
+      code: 'CONTRACT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/units/{unitId}/contracts',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      body: () => ({
+        kind: 'ownership',
+        partyOccupancyIds: [UNKNOWN],
+        signedOn: '2026-01-01',
+        startsOn: '2026-01-01',
+        fileId: UNKNOWN,
+      }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: {
+        kind: 'rent',
+        partyOccupancyIds: [],
+        signedOn: 'x',
+        startsOn: '2026-01-01',
+        fileId: UNKNOWN,
+      },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['lease', 'ownership'] },
+        },
+        {
+          field: 'partyOccupancyIds',
+          code: 'INVALID_LENGTH',
+          params: { min: 1 },
+        },
+        {
+          field: 'signedOn',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/staff/contracts/{id}/void',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({ id: UNKNOWN }),
+      body: () => ({ reasonCode: 'data_error' }),
+      code: 'CONTRACT_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/contract-renewals',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/contract-renewals/{id}/decline',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({ id: UNKNOWN }),
+      body: () => ({ reasonCode: 'other' }),
+      code: 'CONTRACT_RENEWAL_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+];

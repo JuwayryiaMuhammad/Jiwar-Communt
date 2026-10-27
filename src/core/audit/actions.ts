@@ -39,6 +39,14 @@ export const AUDIT_ACTIONS = {
   // (added), reasonCode (deleted); never the title.
   'unit_document.added': { log: 'tenant', target: 'unit_document' },
   'unit_document.deleted': { log: 'tenant', target: 'unit_document' },
+  // A unit's contracts (ADR 0062). metadata: unitId, kind, parties,
+  // renewsId (recorded); reasonCode (voided, declined); contractId.
+  'contract.recorded': { log: 'tenant', target: 'contract' },
+  'contract.voided': { log: 'tenant', target: 'contract' },
+  'contract_renewal.requested': { log: 'tenant', target: 'contract_renewal' },
+  'contract_renewal.withdrawn': { log: 'tenant', target: 'contract_renewal' },
+  'contract_renewal.declined': { log: 'tenant', target: 'contract_renewal' },
+  'contract_renewal.renewed': { log: 'tenant', target: 'contract_renewal' },
   // metadata: kind, versionNo, hasFile, boardPublicationId (bylaws), told.
   'compound_document.published': {
     log: 'tenant',

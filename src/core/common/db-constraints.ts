@@ -51,6 +51,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   legal_holds_one_active: null,
   // Upserted by the registration flow (ON CONFLICT); never a response.
   resident_registrations_one_pending_per_email: null,
+  // Registration documents and the status link (ADR 0062): the target of
+  // composite keys; a document's file is the service's own (one per
+  // upload); one link per request, replaced under the request's lock.
+  resident_registrations_tenant_id_id_key: null,
+  registration_documents_file_id_key: null,
+  registration_status_links_one_per_registration: null,
   // Client-generated (UUIDv7): a violation is an id collision.
   registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,

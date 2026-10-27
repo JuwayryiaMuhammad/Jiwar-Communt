@@ -147,6 +147,9 @@ export const envSchema = z
     // The public visitor page (ADR 0030): requests per minute per IP and per link.
     VISITOR_PAGE_RATE_LIMIT_PER_IP: positiveInt.default(60),
     VISITOR_PAGE_RATE_LIMIT_PER_TOKEN: positiveInt.default(20),
+    // A registrant's status link (ADR 0062): requests per minute per IP and per link.
+    REGISTRATION_STATUS_RATE_LIMIT_PER_IP: positiveInt.default(30),
+    REGISTRATION_STATUS_RATE_LIMIT_PER_TOKEN: positiveInt.default(20),
     // Read notifications are deleted after this (ADR 0027).
     NOTIFICATIONS_RETENTION_DAYS: positiveInt.default(90),
     // A worker's photo is deleted once no engagement of theirs has been

@@ -16049,7 +16049,8 @@
           "incident_audio",
           "incident_video",
           "incident_signature",
-          "decision_appeal_attachment"
+          "decision_appeal_attachment",
+          "registration_document"
         ],
         "type": "string"
       },
@@ -29570,9 +29571,29 @@
             },
             "type": "array"
           },
+          "correctionCodes": {
+            "description": "What was asked; empty unless `needs_correction`.",
+            "items": {
+              "enum": [
+                "document_unreadable",
+                "document_missing",
+                "document_mismatch",
+                "details_mismatch"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "documents": {
+            "description": "Proof of capacity the registrant uploaded; read one with its own route.",
+            "items": {
+              "$ref": "#/components/schemas/RegistrationDocumentView"
+            },
+            "type": "array"
           },
           "email": {
             "type": "string"
@@ -29597,6 +29618,14 @@
           "resides": {
             "type": "boolean"
           },
+          "status": {
+            "description": "`needs_correction`: sent back to the registrant, waiting for them (ADR 0062).",
+            "enum": [
+              "pending",
+              "needs_correction"
+            ],
+            "type": "string"
+          },
           "unitCode": {
             "description": "As the registrant typed it.",
             "type": "string"
@@ -29610,6 +29639,9 @@
         },
         "required": [
           "id",
+          "status",
+          "correctionCodes",
+          "documents",
           "fullName",
           "phone",
           "email",
@@ -32980,6 +33012,120 @@
         ],
         "type": "object"
       },
+      "RegistrationCorrectionDto": {
+        "properties": {
+          "codes": {
+            "items": {
+              "enum": [
+                "document_unreadable",
+                "document_missing",
+                "document_mismatch",
+                "details_mismatch"
+              ],
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "codes"
+        ],
+        "type": "object"
+      },
+      "RegistrationDocumentReadView": {
+        "properties": {
+          "contentType": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ownership_proof",
+              "lease_proof",
+              "other_proof"
+            ],
+            "type": "string"
+          },
+          "ready": {
+            "description": "Finalized: the upload arrived and was checked.",
+            "type": "boolean"
+          },
+          "url": {
+            "description": "A presigned GET.",
+            "type": "string"
+          },
+          "urlExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "contentType",
+          "ready",
+          "createdAt",
+          "url",
+          "urlExpiresAt"
+        ],
+        "type": "object"
+      },
+      "RegistrationDocumentView": {
+        "properties": {
+          "contentType": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ownership_proof",
+              "lease_proof",
+              "other_proof"
+            ],
+            "type": "string"
+          },
+          "ready": {
+            "description": "Finalized: the upload arrived and was checked.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "contentType",
+          "ready",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "RegistrationLinkResponse": {
         "properties": {
           "createdAt": {
@@ -33127,6 +33273,135 @@
           "idDocumentType",
           "idDocumentNumber",
           "occupancyType"
+        ],
+        "type": "object"
+      },
+      "RegistrationStatusTokenDto": {
+        "properties": {
+          "token": {
+            "description": "The fragment of the status link (`/rs#<token>`). Anything that is not a live link answers 404 REGISTRATION_STATUS_NOT_FOUND.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "RegistrationStatusView": {
+        "properties": {
+          "compoundName": {
+            "type": "string"
+          },
+          "correctionCodes": {
+            "description": "What to correct; empty unless `needs_correction`.",
+            "items": {
+              "enum": [
+                "document_unreadable",
+                "document_missing",
+                "document_mismatch",
+                "details_mismatch"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/RegistrationDocumentView"
+            },
+            "type": "array"
+          },
+          "maxDocuments": {
+            "description": "Documents a request holds at most, uploads included.",
+            "type": "number"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "status": {
+            "description": "A decided or expired request is not found: the decision email says how it ended.",
+            "enum": [
+              "pending",
+              "needs_correction"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "compoundName",
+          "status",
+          "unitCode",
+          "occupancyType",
+          "correctionCodes",
+          "documents",
+          "maxDocuments",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RegistrationUploadDto": {
+        "properties": {
+          "contentType": {
+            "description": "Signed into the upload (FILE_TYPE_NOT_ALLOWED otherwise).",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ownership_proof",
+              "lease_proof",
+              "other_proof"
+            ],
+            "type": "string"
+          },
+          "size": {
+            "description": "Bytes, signed into the upload; 10 MB at most (FILE_TOO_LARGE).",
+            "maximum": 10485760,
+            "minimum": 1,
+            "type": "number"
+          },
+          "token": {
+            "description": "The fragment of the status link (`/rs#<token>`). Anything that is not a live link answers 404 REGISTRATION_STATUS_NOT_FOUND.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "kind",
+          "contentType",
+          "size"
+        ],
+        "type": "object"
+      },
+      "RegistrationUploadView": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/RegistrationDocumentView"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/UploadTargetView"
+          }
+        },
+        "required": [
+          "document",
+          "upload"
         ],
         "type": "object"
       },
@@ -77236,6 +77511,187 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/public/registrations/documents/{id}/finalize": {
+      "post": {
+        "operationId": "RegistrationStatusController_finalize",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationStatusTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationDocumentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Finalize an uploaded registration document",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/registrations/documents/{id}/remove": {
+      "post": {
+        "operationId": "RegistrationStatusController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationStatusTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Remove a registration document",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/registrations/resubmit": {
+      "post": {
+        "operationId": "RegistrationStatusController_resubmit",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationStatusTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStatusView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Send a corrected registration request again",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/registrations/status": {
+      "post": {
+        "operationId": "RegistrationStatusController_status",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationStatusTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStatusView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Open a registration request from its status link",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/registrations/uploads": {
+      "post": {
+        "operationId": "RegistrationStatusController_upload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationUploadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationUploadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Start uploading a proof-of-capacity document",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/public/visitor-passes/lookup": {
       "post": {
         "operationId": "VisitorPageController_lookup",
@@ -77426,6 +77882,19 @@
               "minimum": 1,
               "type": "number"
             }
+          },
+          {
+            "description": "`pending` (the default): waiting for the management; `needs_correction`: sent back, waiting for the registrant.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "needs_correction"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -77445,7 +77914,7 @@
             "bearer": []
           }
         ],
-        "summary": "List pending registration requests",
+        "summary": "List undecided registration requests",
         "tags": [
           "registration"
         ],
@@ -77565,6 +78034,52 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/registrations/{id}/documents/{documentId}": {
+      "get": {
+        "operationId": "RegistrationsController_document",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationDocumentReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a registration document",
+        "tags": [
+          "registration"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/registrations/{id}/reject": {
       "post": {
         "operationId": "RegistrationsController_reject",
@@ -77599,6 +78114,46 @@
           }
         ],
         "summary": "Reject a registration request",
+        "tags": [
+          "registration"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/registrations/{id}/request-correction": {
+      "post": {
+        "operationId": "RegistrationsController_requestCorrection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationCorrectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask the registrant for a correction",
         "tags": [
           "registration"
         ],

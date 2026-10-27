@@ -86,6 +86,24 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'resident_registration',
   },
+  // Registration documents and corrections (ADR 0062). metadata: codes
+  // (asked), documentId and kind (added, removed), counts (resubmitted).
+  'resident.registration_correction_requested': {
+    log: 'tenant',
+    target: 'resident_registration',
+  },
+  'resident.registration_resubmitted': {
+    log: 'tenant',
+    target: 'resident_registration',
+  },
+  'resident.registration_document_added': {
+    log: 'tenant',
+    target: 'resident_registration',
+  },
+  'resident.registration_document_removed': {
+    log: 'tenant',
+    target: 'resident_registration',
+  },
   'unit.created': { log: 'tenant', target: 'unit' },
   'unit.household_review_flagged': { log: 'tenant', target: 'unit' },
   'unit.household_review_cleared': { log: 'tenant', target: 'unit' },

@@ -67,6 +67,27 @@ export class IdentifierHasher {
   }
 
   /**
+   * A registrant's status link token (ADR 0062), derived from the request
+   * and the link's number: the email that carries it is rendered at send
+   * time from ids alone, so no outbox row, log or audit entry holds it. A
+   * newer number makes a new token; only the newest has a pointer.
+   */
+  registrationStatusToken(
+    tenantId: string,
+    registrationId: string,
+    seq: number,
+  ): string {
+    return this.hmac(
+      `registration-status:v1:${tenantId}:${registrationId}:${seq}`,
+    );
+  }
+
+  /** What the status link's pointer keeps of its token (ADR 0062). */
+  hashRegistrationStatusLink(token: string): string {
+    return this.hmac(`registration-status-link:${token}`);
+  }
+
+  /**
    * The key of a registration code (ADR 0024): bound to the link, the email
    * the code goes to and the exact request, so the code confirms only what
    * was sent — the payload cannot be swapped at completion.

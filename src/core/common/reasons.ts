@@ -151,6 +151,17 @@ export const REASON_CODES = {
     'documents_missing',
     'other',
   ],
+  /**
+   * What the management asks a registrant to correct (ADR 0062): codes
+   * only, never words (the registrant has no account to answer in), as
+   * the request's CHECK repeats.
+   */
+  registrationCorrection: [
+    'document_unreadable',
+    'document_missing',
+    'document_mismatch',
+    'details_mismatch',
+  ],
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
   // A manager acting for an account (ADR 0036): how the person asked.

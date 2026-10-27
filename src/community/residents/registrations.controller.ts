@@ -24,12 +24,17 @@ import {
 } from '../../core/common/http/list';
 import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
-import { ApproveRegistrationDto } from './dto/registration.dto';
+import {
+  ApproveRegistrationDto,
+  PendingRegistrationsQueryDto,
+  RegistrationCorrectionDto,
+} from './dto/registration.dto';
 import { RegistrationService } from './registration.service';
 import {
   ApprovedRegistrationView,
   CreatedLinkView,
   PendingRegistrationView,
+  RegistrationDocumentReadView,
   RegistrationLinkResponse,
 } from './views/registration.views';
 
@@ -68,16 +73,50 @@ export class RegistrationsController {
     await this.registrations.revokeLink(id);
   }
 
-  /** Pending requests, oldest first, each with its conflicts as of now. */
+  /**
+   * Undecided requests, oldest first, each with its conflicts as of now and
+   * its documents: waiting for the management (`pending`, the default) or
+   * sent back to the registrant (`needs_correction`).
+   */
   @Get('registrations')
-  @ApiOperation({ summary: 'List pending registration requests' })
+  @ApiOperation({ summary: 'List undecided registration requests' })
   @ApiOkResponse({ type: ListOf(PendingRegistrationView) })
   async pending(
-    @Query() q: PageQueryDto,
+    @Query() q: PendingRegistrationsQueryDto,
   ): Promise<ListResponse<PendingRegistrationView>> {
     return toList(await this.registrations.pending(q), (p) =>
       PendingRegistrationView.from(p),
     );
+  }
+
+  /** A document a registrant uploaded, to look at (no-store). */
+  @Get('registrations/:id/documents/:documentId')
+  @ApiOperation({ summary: 'Read a registration document' })
+  @NoStore()
+  @ApiOkResponse({ type: RegistrationDocumentReadView })
+  async document(
+    @Param('id', parseId()) id: string,
+    @Param('documentId', parseId('documentId')) documentId: string,
+  ): Promise<RegistrationDocumentReadView> {
+    return RegistrationDocumentReadView.fromRead(
+      await this.registrations.documentUrl(id, documentId),
+    );
+  }
+
+  /**
+   * Sends a pending request back with what to correct (codes only); the
+   * registrant gets a new status link. Already sent back:
+   * REGISTRATION_CORRECTION_PENDING.
+   */
+  @Post('registrations/:id/request-correction')
+  @ApiOperation({ summary: 'Ask the registrant for a correction' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async requestCorrection(
+    @Param('id', parseId()) id: string,
+    @Body() dto: RegistrationCorrectionDto,
+  ): Promise<void> {
+    await this.registrations.requestCorrection(id, dto);
   }
 
   /** The account and the occupancy are created now; a clash is REGISTRATION_CONFLICT. */

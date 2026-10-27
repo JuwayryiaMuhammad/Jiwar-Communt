@@ -1980,6 +1980,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   neighbour_complaint_notices_withdrawn: {
     guarded: 'withdrawn_at IS NULL is tested first; created_at is NOT NULL',
   },
+  // Registration documents and corrections (ADR 0062).
+  // correction_requested_at only under IS NOT NULL; the codes are NOT NULL.
+  resident_registrations_correction_shape: {},
+  resident_registrations_status_link_seq_nonnegative: {},
+  registration_documents_kind: {},
+  registration_status_links_token_hash_hex: {},
+  registration_status_links_seq_positive: {},
 };
 
 interface Check {

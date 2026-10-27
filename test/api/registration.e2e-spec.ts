@@ -12,13 +12,17 @@ import { buildWorld, type World } from './world';
 
 const PENDING = [
   'conflicts',
+  // ADR 0062: what the management asked to correct, and the proofs.
+  'correctionCodes',
   'createdAt',
+  'documents',
   'email',
   'fullName',
   'id',
   'occupancyType',
   'phone',
   'resides',
+  'status',
   'unitCode',
   'unitId',
 ];

@@ -25,6 +25,9 @@ import {
   type RegistrationRequest,
 } from '../../src/community/residents/registration.service';
 import { waitForOtp } from '../setup/mailpit';
+import { RegistrationDocumentsService } from '../../src/community/residents/registration-documents.service';
+import { IdentifierHasher } from '../../src/core/auth/identifier';
+import { SAMPLE } from '../setup/files';
 import {
   createHttpHarness,
   uniqueEmail,
@@ -576,6 +579,74 @@ describe('Audit coverage — Phase 2.2', () => {
       }
       expect(await events()).toBeGreaterThan(0);
       covered.add('registration.link_invalid');
+    });
+
+    it('documents and a correction (ADR 0062) — ids and codes, the registrant as system', async () => {
+      const c = await x.compound();
+      const reg = h.moduleRef.get(RegistrationService);
+      const docs = h.moduleRef.get(RegistrationDocumentsService);
+      const hasher = h.moduleRef.get(IdentifierHasher);
+      const { token: linkToken } = await x.asManager(c, () => reg.createLink());
+      await registered(reg, request(linkToken, 'R-5'));
+      const [p] = (await x.asManager(c, () => reg.pending())).items;
+      const tokenOf = (seq: number) =>
+        hasher.registrationStatusToken(c.tenantId, p.id, seq);
+      const pdf = SAMPLE['application/pdf'];
+      const declared = {
+        kind: 'lease_proof' as const,
+        contentType: 'application/pdf',
+        size: pdf.length,
+      };
+
+      const wrong = await docs.startUpload(tokenOf(1), '10.7.7.8', declared);
+      const added = await single(
+        c,
+        'resident.registration_document_added',
+        p.id,
+      );
+      expect(added).toMatchObject({
+        actorType: 'system',
+        actorId: null,
+        targetType: 'resident_registration',
+        metadata: { documentId: wrong.document.id, kind: 'lease_proof' },
+      });
+      await docs.remove(tokenOf(1), '10.7.7.8', wrong.document.id);
+      expect(
+        await single(c, 'resident.registration_document_removed', p.id),
+      ).toMatchObject({
+        actorType: 'system',
+        metadata: { documentId: wrong.document.id, kind: 'lease_proof' },
+      });
+
+      await x.asManager(c, () =>
+        reg.requestCorrection(p.id, { codes: ['document_missing'] }),
+      );
+      expect(
+        await single(c, 'resident.registration_correction_requested', p.id),
+      ).toMatchObject({
+        actorId: c.managerId,
+        changes: { status: { from: 'pending', to: 'needs_correction' } },
+        metadata: { codes: ['document_missing'] },
+      });
+
+      const right = await docs.startUpload(tokenOf(2), '10.7.7.8', declared);
+      await fetch(right.upload.url, {
+        method: 'PUT',
+        body: new Uint8Array(pdf),
+        headers: right.upload.headers,
+      });
+      await docs.finalize(tokenOf(2), '10.7.7.8', right.document.id);
+      await docs.resubmit(tokenOf(2), '10.7.7.8');
+      const resubmitted = await single(
+        c,
+        'resident.registration_resubmitted',
+        p.id,
+      );
+      expect(resubmitted).toMatchObject({
+        actorType: 'system',
+        metadata: { documentCount: 1 },
+      });
+      expect(JSON.stringify([added, resubmitted])).not.toContain('Audited');
     });
   });
 

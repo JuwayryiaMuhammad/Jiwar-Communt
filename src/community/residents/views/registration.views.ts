@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { OccupancyType } from '@prisma/client';
+import type { PresignedRead } from '../../../core/files/object-storage';
+import type { RegistrationDocumentRead } from '../registration-documents.service';
+import { RegistrationDocumentView } from './registration-public.views';
 import type {
   CreatedRegistrationLink,
   PendingRegistration,
@@ -54,6 +57,29 @@ export class CreatedLinkView {
 export class PendingRegistrationView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
+  @ApiProperty({
+    enum: ['pending', 'needs_correction'],
+    description:
+      '`needs_correction`: sent back to the registrant, waiting for them (ADR 0062).',
+  })
+  status: 'pending' | 'needs_correction';
+  @ApiProperty({
+    enum: [
+      'document_unreadable',
+      'document_missing',
+      'document_mismatch',
+      'details_mismatch',
+    ],
+    isArray: true,
+    description: 'What was asked; empty unless `needs_correction`.',
+  })
+  correctionCodes: string[];
+  @ApiProperty({
+    type: [RegistrationDocumentView],
+    description:
+      'Proof of capacity the registrant uploaded; read one with its own route.',
+  })
+  documents: RegistrationDocumentView[];
   @ApiProperty({ type: String })
   fullName: string;
   @ApiProperty({ type: String })
@@ -81,6 +107,9 @@ export class PendingRegistrationView {
   static from(p: PendingRegistration): PendingRegistrationView {
     return {
       id: p.id,
+      status: p.status,
+      correctionCodes: [...p.correctionCodes],
+      documents: p.documents.map((d) => RegistrationDocumentView.from(d)),
       fullName: p.fullName,
       phone: p.phone,
       email: p.email,
@@ -105,5 +134,24 @@ export class ApprovedRegistrationView {
     occupancyId: string;
   }): ApprovedRegistrationView {
     return { accountId: a.accountId, occupancyId: a.occupancyId };
+  }
+}
+
+/** A registration document to look at (no-store): the presigned GET. */
+export class RegistrationDocumentReadView extends RegistrationDocumentView {
+  @ApiProperty({ type: String, description: 'A presigned GET.' })
+  url: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  urlExpiresAt: Date;
+
+  static fromRead(d: {
+    document: RegistrationDocumentRead;
+    read: PresignedRead;
+  }): RegistrationDocumentReadView {
+    return {
+      ...RegistrationDocumentView.from(d.document),
+      url: d.read.url,
+      urlExpiresAt: d.read.expiresAt,
+    };
   }
 }

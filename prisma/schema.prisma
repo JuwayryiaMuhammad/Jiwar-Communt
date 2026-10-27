@@ -246,6 +246,8 @@ enum UnitType {
 
 enum RegistrationStatus {
   pending
+  /// Sent back to the registrant for a correction (ADR 0062); still undecided.
+  needs_correction
   approved
   rejected
   expired
@@ -508,6 +510,8 @@ model Tenant {
   visitorPassLinks             VisitorPassLink[]
   partnerDeskLinks             PartnerDeskLink[]
   childPickupLinks             ChildPickupLink[]
+  registrationStatusLinks      RegistrationStatusLink[]
+  registrationDocuments        RegistrationDocument[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
   preventiveServices           PreventiveService[]
@@ -684,6 +688,24 @@ model InviteToken {
 
 /// Global pointer from a registration link to its compound (ADR 0024), read
 /// before anyone is logged in — like `invite_tokens`. No PII.
+/// Global pointer from a registrant's status link to their request (ADR
+/// 0062): the HMAC of the link's token (derived when an email is sent,
+/// never stored). One per request; a newer link replaces it, the decision
+/// deletes it.
+model RegistrationStatusLink {
+  tokenHash      String   @id @map("token_hash") @db.Char(64)
+  tenantId       String   @map("tenant_id") @db.Uuid
+  registrationId String   @map("registration_id") @db.Uuid
+  seq            Int
+  createdAt      DateTime @map("created_at") @db.Timestamptz(3)
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  registration ResidentRegistration @relation(fields: [tenantId, registrationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, registrationId], map: "registration_status_links_one_per_registration")
+  @@map("registration_status_links")
+}
+
 model RegistrationLink {
   tokenHash String    @id @map("token_hash") @db.Char(64)
   /// Listed and revoked by this id; the token itself is shown once (ADR 0025).
@@ -1634,13 +1656,42 @@ model ResidentRegistration {
   decisionReasonCode  String?            @map("decision_reason_code")
   approvedAccountId   String?            @map("approved_account_id") @db.Uuid
   approvedOccupancyId String?            @map("approved_occupancy_id") @db.Uuid
+  /// What the management asked to correct (ADR 0062), exactly while `needs_correction`.
+  correctionCodes       String[]  @default([]) @map("correction_codes")
+  correctionRequestedAt DateTime? @map("correction_requested_at") @db.Timestamptz(3)
+  resubmittedAt         DateTime? @map("resubmitted_at") @db.Timestamptz(3)
+  /// The status links emailed so far; only the newest works (ADR 0062).
+  statusLinkSeq         Int       @default(0) @map("status_link_seq")
 
-  decidedBy         Account?       @relation("RegistrationDecidedBy", fields: [tenantId, decidedById], references: [tenantId, id], onUpdate: Restrict)
-  approvedAccount   Account?       @relation("RegistrationAccount", fields: [tenantId, approvedAccountId], references: [tenantId, id], onUpdate: Restrict)
-  approvedOccupancy UnitOccupancy? @relation(fields: [tenantId, approvedOccupancyId], references: [tenantId, id], onUpdate: Restrict)
+  decidedBy         Account?                 @relation("RegistrationDecidedBy", fields: [tenantId, decidedById], references: [tenantId, id], onUpdate: Restrict)
+  approvedAccount   Account?                 @relation("RegistrationAccount", fields: [tenantId, approvedAccountId], references: [tenantId, id], onUpdate: Restrict)
+  approvedOccupancy UnitOccupancy?           @relation(fields: [tenantId, approvedOccupancyId], references: [tenantId, id], onUpdate: Restrict)
+  documents         RegistrationDocument[]
+  statusLinks       RegistrationStatusLink[]
 
+  @@unique([tenantId, id])
   @@index([tenantId, status, createdAt])
   @@map("resident_registrations")
+}
+
+/// A registrant's proof of capacity (ADR 0062): a file attached when its
+/// upload starts, so the limit of three counts live uploads. Goes with its
+/// file (an upload never finalized is swept); never changes.
+model RegistrationDocument {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  registrationId String   @map("registration_id") @db.Uuid
+  fileId         String   @unique @map("file_id") @db.Uuid
+  /// ownership_proof | lease_proof | other_proof (CHECK).
+  kind           String
+  createdAt      DateTime @map("created_at") @db.Timestamptz(3)
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  registration ResidentRegistration @relation(fields: [tenantId, registrationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file         StoredFile           @relation("RegistrationDocumentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Cascade, onUpdate: Restrict)
+
+  @@index([tenantId, registrationId, createdAt], map: "registration_documents_registration_idx")
+  @@map("registration_documents")
 }
 
 /// "Delete my account" (ADR 0023, 0036): undo until `effective_at`; then
@@ -2739,6 +2790,8 @@ enum FilePurpose {
   incident_signature
   /// A decision appeal's attachment (ADR 0059): an image or a PDF, 10 MB.
   decision_appeal_attachment
+  /// A registrant's proof of capacity (ADR 0062), uploaded with no account.
+  registration_document
 
   @@map("file_purpose")
 }
@@ -2781,9 +2834,13 @@ model StoredFile {
   suggestionAttachments         SuggestionAttachment[]         @relation("SuggestionAttachmentFile")
   neighbourComplaintAttachments NeighbourComplaintAttachment[] @relation("NeighbourComplaintAttachmentFile")
   neighbourPostPhotos           NeighbourPostPhoto[]           @relation("NeighbourPostPhotoFile")
+  registrationDocuments         RegistrationDocument[]         @relation("RegistrationDocumentFile")
   owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   /// A recording's length, read from its container at finalize (ADR 0056).
   mediaDurationMs Int?        @map("media_duration_ms")
+  /// A record's upload with no account behind it (ADR 0062): no owner from
+  /// the start, attached to its record at finalize.
+  recordUpload    Boolean     @default(false) @map("record_upload")
 
   @@unique([tenantId, id])
   @@map("files")

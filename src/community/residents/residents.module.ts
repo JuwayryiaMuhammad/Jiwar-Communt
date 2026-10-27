@@ -11,17 +11,22 @@ import { MeUnitsController } from './me-units.controller';
 import { OccupanciesController } from './occupancies.controller';
 import { UnitActionsController } from './unit-actions.controller';
 import { UnitStatesController } from './unit-states.controller';
+import { FilesModule } from '../../core/files/files.module';
+import { RegistrationDocumentsService } from './registration-documents.service';
 import { RegistrationPublicController } from './registration-public.controller';
+import { RegistrationStatusController } from './registration-status.controller';
+import { RegistrationStatusLinks } from './registration-status-links';
 import { RegistrationService } from './registration.service';
 import { RegistrationsController } from './registrations.controller';
 import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsController } from './residents.controller';
 import { ResidentsService } from './residents.service';
 
-/** Residents, occupancies, unit states and self-registration (API v0). */
+/** Residents, occupancies, unit states and self-registration (API v0, ADR 0062). */
 @Module({
   controllers: [
     RegistrationPublicController,
+    RegistrationStatusController,
     MeUnitsController,
     UnitActionsController,
     OccupanciesController,
@@ -33,6 +38,7 @@ import { ResidentsService } from './residents.service';
     AccountsModule,
     AuthModule,
     CapabilitiesModule,
+    FilesModule,
     HouseholdsModule,
     NoticesModule,
     WorkersModule,
@@ -42,6 +48,8 @@ import { ResidentsService } from './residents.service';
     FreezeHooks,
     ErasureHooks,
     RegistrationService,
+    RegistrationStatusLinks,
+    RegistrationDocumentsService,
     CommunityExportSections,
   ],
   exports: [ResidentsService, RegistrationService],

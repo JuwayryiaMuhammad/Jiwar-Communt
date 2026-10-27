@@ -20,6 +20,13 @@ export const REASON_CODES = {
     'documents_missing',
     'other',
   ],
+  // What the management asks a registrant to correct (ADR 0062): codes only.
+  registrationCorrection: [
+    'document_unreadable',
+    'document_missing',
+    'document_mismatch',
+    'details_mismatch',
+  ],
   // Unit states and households (ADR 0021).
   reviewFlag: ['deceased', 'separation', 'other'],
   reviewClear: ['resolved', 'data_correction', 'other'],

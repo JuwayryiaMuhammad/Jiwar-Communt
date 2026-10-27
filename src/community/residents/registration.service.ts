@@ -49,9 +49,21 @@ import {
 import { Outbox } from '../../core/mail/outbox';
 import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
+import { FilesService } from '../../core/files/files.service';
+import type { PresignedRead } from '../../core/files/object-storage';
+import { dbNow } from '../db-clock';
 import { COMMUNITY_NOTICES } from '../notices/community-notices';
 import { lockUnits } from '../units/unit-lock';
 import { lockAccountShared } from './account-locks';
+import {
+  OPEN_REGISTRATION,
+  registrationDocuments,
+  type RegistrationDocumentRead,
+} from './registration-documents.service';
+import {
+  REGISTRATION_STATUS_EMAILS,
+  RegistrationStatusLinks,
+} from './registration-status-links';
 import { ResidentsService } from './residents.service';
 
 export const REGISTRATION_EXPIRY_SWEEP = 'residents.registration_expiry';
@@ -111,6 +123,10 @@ export type RegistrationConflict =
 /** What the manager reviews; conflicts are computed at read time. */
 export interface PendingRegistration {
   id: string;
+  /** `needs_correction`: sent back, waiting for the registrant (ADR 0062). */
+  status: 'pending' | 'needs_correction';
+  correctionCodes: string[];
+  documents: RegistrationDocumentRead[];
   fullName: string;
   phone: string;
   email: string;
@@ -172,6 +188,8 @@ export class RegistrationService implements OnModuleInit {
     private readonly outbox: Outbox,
     private readonly residents: ResidentsService,
     private readonly sweep: SweepRunner,
+    private readonly statusLinks: RegistrationStatusLinks,
+    private readonly files: FilesService,
   ) {
     this.pendingMs =
       config.get('REGISTRATION_PENDING_DAYS', { infer: true }) * 86_400_000;
@@ -339,6 +357,8 @@ export class RegistrationService implements OnModuleInit {
         this.upsert(tx, link.tenantId, valid),
       );
     });
+    // The status link went to the proven email, never into this response:
+    // it stays the same for every input (ADR 0062).
     return REGISTRATION_RECEIVED;
   }
 
@@ -348,14 +368,18 @@ export class RegistrationService implements OnModuleInit {
 
   /** Pending requests, oldest first, a page at a time, each with its conflicts as of now. */
   async pending(
-    q: { cursor?: string; limit?: number } = {},
+    q: {
+      cursor?: string;
+      limit?: number;
+      status?: 'pending' | 'needs_correction';
+    } = {},
   ): Promise<Page<PendingRegistration>> {
     const limit = clampLimit(q.limit);
     return this.tenantTx.withTenantTx(async (tx) => {
       const rows = await tx.residentRegistration.findMany({
         where: {
           AND: [
-            { status: 'pending' },
+            { status: q.status ?? 'pending' },
             ...(PENDING_PAGE.after(
               q.cursor,
             ) as Prisma.ResidentRegistrationWhereInput[]),
@@ -370,6 +394,9 @@ export class RegistrationService implements OnModuleInit {
         const { unitId, conflicts } = await this.conflicts(tx, r);
         out.push({
           id: r.id,
+          status: r.status as 'pending' | 'needs_correction',
+          correctionCodes: r.correctionCodes,
+          documents: await registrationDocuments(tx, r.id),
           fullName: r.fullName!,
           phone: r.phone!,
           email: r.email!,
@@ -396,7 +423,8 @@ export class RegistrationService implements OnModuleInit {
     id: string,
     options: { unitId?: string; linkToExistingAccount?: boolean } = {},
   ): Promise<{ accountId: string; occupancyId: string }> {
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const gone: string[] = [];
+    const out = await this.tenantTx.withTenantTx(async (tx) => {
       const reg = await this.lockedPending(tx, id);
       const unit = options.unitId
         ? await tx.unit.findUnique({ where: { id: options.unitId } })
@@ -465,10 +493,12 @@ export class RegistrationService implements OnModuleInit {
           recipientAccountId: accountId,
         },
       );
-      await this.decide(tx, reg, 'approved', {
-        approvedAccountId: accountId,
-        approvedOccupancyId: occupancy.id,
-      });
+      gone.push(
+        ...(await this.decide(tx, reg, 'approved', {
+          approvedAccountId: accountId,
+          approvedOccupancyId: occupancy.id,
+        })),
+      );
       await this.audit.record(tx, {
         action: 'resident.registration_approved',
         targetId: reg.id,
@@ -487,6 +517,8 @@ export class RegistrationService implements OnModuleInit {
       });
       return { accountId, occupancyId: occupancy.id };
     });
+    await this.purge(gone);
+    return out;
   }
 
   /**
@@ -498,7 +530,7 @@ export class RegistrationService implements OnModuleInit {
       reasonInput,
       REASON_CODES.registrationReject,
     );
-    await this.tenantTx.withTenantTx(async (tx) => {
+    const gone = await this.tenantTx.withTenantTx(async (tx) => {
       const reg = await this.lockedPending(tx, id);
       await this.tellRegistrant(
         tx,
@@ -508,7 +540,7 @@ export class RegistrationService implements OnModuleInit {
           reason: reason.text,
         },
       );
-      await this.decide(tx, reg, 'rejected', {
+      const files = await this.decide(tx, reg, 'rejected', {
         decisionReasonCode: reason.code,
       });
       await this.audit.record(tx, {
@@ -521,6 +553,101 @@ export class RegistrationService implements OnModuleInit {
         ),
         metadata: { reasonCode: reason.code },
       });
+      return files;
+    });
+    await this.purge(gone);
+  }
+
+  /**
+   * Sends a pending request back to the registrant (ADR 0062): what to
+   * correct, as codes, with a new status link (the older one stops). The
+   * registrant re-uploads and resubmits, or registers again with corrected
+   * details; either returns it to `pending`.
+   */
+  async requestCorrection(id: string, input: { codes: string[] }) {
+    const allowed: readonly string[] = REASON_CODES.registrationCorrection;
+    const codes = [...new Set(input.codes ?? [])];
+    if (!codes.length || codes.some((c) => !allowed.includes(c)))
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'Invalid correction codes',
+        {
+          fields: [
+            {
+              field: 'codes',
+              code: FieldErrorCode.INVALID_VALUE,
+              params: { allowed: [...allowed] },
+            },
+          ],
+        },
+      );
+    await this.tenantTx.withTenantTx(async (tx) => {
+      const reg = await this.lockedPending(tx, id);
+      if (reg.status === 'needs_correction')
+        throw appError.conflict(
+          ErrorCode.REGISTRATION_CORRECTION_PENDING,
+          'The registrant has not answered the last correction yet',
+        );
+      const now = await dbNow(tx);
+      const after = await tx.residentRegistration.update({
+        where: { id: reg.id },
+        data: {
+          status: 'needs_correction',
+          correctionCodes: codes,
+          correctionRequestedAt: now,
+        },
+      });
+      await this.statusLinks.issue(
+        tx,
+        after,
+        REGISTRATION_STATUS_EMAILS.correction,
+        { compoundName: await this.compoundName(tx, reg.tenantId), codes },
+      );
+      await this.audit.record(tx, {
+        action: 'resident.registration_correction_requested',
+        targetId: reg.id,
+        changes: diffChanges(
+          { status: 'pending' },
+          { status: 'needs_correction' },
+          'resident.registration_correction_requested',
+        ),
+        metadata: { codes },
+      });
+    });
+  }
+
+  /** A read URL for one of an undecided request's documents (no-store). */
+  async documentUrl(
+    id: string,
+    documentId: string,
+  ): Promise<{ document: RegistrationDocumentRead; read: PresignedRead }> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const doc = await tx.registrationDocument.findFirst({
+        where: {
+          id: documentId,
+          registrationId: id,
+          registration: { status: { in: OPEN_REGISTRATION } },
+          file: { deletedAt: null, status: 'ready' },
+        },
+        include: { file: { select: { contentType: true } } },
+      });
+      const read = doc ? await this.files.readUrl(tx, doc.fileId) : null;
+      if (!doc || !read)
+        throw appError.notFound(
+          ErrorCode.REGISTRATION_DOCUMENT_NOT_FOUND,
+          'Document not found',
+        );
+      return {
+        document: {
+          id: doc.id,
+          kind: doc.kind as RegistrationDocumentRead['kind'],
+          contentType: doc.file
+            .contentType as RegistrationDocumentRead['contentType'],
+          ready: true,
+          createdAt: doc.createdAt,
+        },
+        read,
+      };
     });
   }
 
@@ -531,6 +658,7 @@ export class RegistrationService implements OnModuleInit {
    */
   async expireAbandoned(now: Date = new Date()): Promise<number> {
     const before = new Date(now.getTime() - this.pendingMs);
+    const gone = new Map<string, string[]>();
     const tenants = await this.globalDb.tenant.findMany({
       select: { id: true },
       orderBy: { id: 'asc' },
@@ -540,9 +668,12 @@ export class RegistrationService implements OnModuleInit {
       expired += await this.cls.run({ ifNested: 'inherit' }, () => {
         this.cls.set('auditActor', { type: 'system', id: null });
         return this.tenantTx.runInTenantUnsafe(t.id, async (tx) => {
+          // Undecided, and untouched since the latest of its creation, a
+          // correction asked for and a resubmission (ADR 0062).
           const due = await tx.$queryRaw<{ id: string }[]>`
             SELECT id FROM resident_registrations
-             WHERE status = 'pending' AND created_at < ${before}
+             WHERE status IN ('pending', 'needs_correction')
+               AND GREATEST(created_at, correction_requested_at, resubmitted_at) < ${before}
              ORDER BY created_at FOR UPDATE SKIP LOCKED`;
           for (const { id } of due) {
             const reg = await tx.residentRegistration.findUniqueOrThrow({
@@ -554,12 +685,15 @@ export class RegistrationService implements OnModuleInit {
               COMMUNITY_NOTICES.registrationExpired,
               {},
             );
-            await this.decide(tx, reg, 'expired', {}, false);
+            gone.set(t.id, [
+              ...(gone.get(t.id) ?? []),
+              ...(await this.decide(tx, reg, 'expired', {}, false)),
+            ]);
             await this.audit.record(tx, {
               action: 'resident.registration_expired',
               targetId: id,
               changes: diffChanges(
-                { status: 'pending' },
+                { status: reg.status },
                 { status: 'expired' },
                 'resident.registration_expired',
               ),
@@ -569,6 +703,11 @@ export class RegistrationService implements OnModuleInit {
         });
       });
     }
+    for (const [tenantId, ids] of gone)
+      await this.cls.run({ ifNested: 'inherit' }, () => {
+        this.cls.set('tenantId', tenantId);
+        return this.purge(ids);
+      });
     return expired;
   }
 
@@ -588,7 +727,7 @@ export class RegistrationService implements OnModuleInit {
               ${v.preferredLocale}::locale, ${v.unitCode},
               ${v.occupancyType}::occupancy_type, ${v.resides},
               ${v.unitType}::unit_type, ${v.areaSqm}::numeric, ${v.building})
-      ON CONFLICT (tenant_id, email) WHERE status = 'pending' DO UPDATE SET
+      ON CONFLICT (tenant_id, email) WHERE status IN ('pending', 'needs_correction') DO UPDATE SET
         full_name = EXCLUDED.full_name, phone = EXCLUDED.phone,
         id_document_type = EXCLUDED.id_document_type,
         id_document_number = EXCLUDED.id_document_number,
@@ -597,6 +736,8 @@ export class RegistrationService implements OnModuleInit {
         unit_code = EXCLUDED.unit_code, occupancy_type = EXCLUDED.occupancy_type,
         resides = EXCLUDED.resides, unit_type = EXCLUDED.unit_type,
         area_sqm = EXCLUDED.area_sqm, building = EXCLUDED.building,
+        status = 'pending', correction_codes = ARRAY[]::text[],
+        resubmitted_at = clock_timestamp(),
         updated_at = CURRENT_TIMESTAMP
       RETURNING id, (xmax = 0) AS created`;
     await this.audit.record(tx, {
@@ -604,6 +745,32 @@ export class RegistrationService implements OnModuleInit {
       targetId: rows[0].id,
       metadata: { replaced: !rows[0].created, occupancyType: v.occupancyType },
     });
+    // The row is locked by the statement above; a new status link goes to
+    // the proven email (ADR 0062), and any older one stops working.
+    const reg = await tx.residentRegistration.findUniqueOrThrow({
+      where: { id: rows[0].id },
+    });
+    await this.statusLinks.issue(tx, reg, REGISTRATION_STATUS_EMAILS.received, {
+      compoundName: await this.compoundName(tx, tenantId),
+    });
+  }
+
+  private async compoundName(tx: TenantTxClient, tenantId: string) {
+    const tenant = await this.globalDb.in(tx).tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+      select: { name: true },
+    });
+    return tenant.name;
+  }
+
+  /** Deletes decided requests' document objects after commit (the sweep finishes a failure). */
+  private async purge(fileIds: readonly string[]): Promise<void> {
+    for (const id of fileIds)
+      await this.files.purge(id).catch((error: unknown) => {
+        this.logger.warn(
+          `registration document purge deferred to the sweep (${error instanceof Error ? error.name : 'Error'})`,
+        );
+      });
   }
 
   private async conflicts(
@@ -668,7 +835,8 @@ export class RegistrationService implements OnModuleInit {
   private async lockedPending(tx: TenantTxClient, id: string) {
     const rows = await tx.$queryRaw<{ id: string }[]>`
       SELECT id FROM resident_registrations
-       WHERE id = ${id}::uuid AND status = 'pending' FOR UPDATE`;
+       WHERE id = ${id}::uuid AND status IN ('pending', 'needs_correction')
+       FOR UPDATE`;
     if (!rows.length) {
       throw appError.notFound(
         ErrorCode.REGISTRATION_NOT_FOUND,
@@ -678,7 +846,11 @@ export class RegistrationService implements OnModuleInit {
     return tx.residentRegistration.findUniqueOrThrow({ where: { id } });
   }
 
-  /** The decision, and the request's personal data gone with it (CHECK). */
+  /**
+   * The decision, and the request's personal data gone with it (CHECK):
+   * its status link dies and its documents' files are deleted (ADR 0062).
+   * Returns those files, whose objects go after commit.
+   */
   private async decide(
     tx: TenantTxClient,
     reg: ResidentRegistration,
@@ -690,13 +862,29 @@ export class RegistrationService implements OnModuleInit {
       >
     >,
     byAccount = true,
-  ) {
+  ): Promise<string[]> {
+    await this.statusLinks.revoke(tx, reg);
+    const documents = await tx.registrationDocument.findMany({
+      where: { registrationId: reg.id },
+      select: { fileId: true },
+    });
+    const gone: string[] = [];
+    for (const d of documents)
+      if (
+        await this.files.markDeleted(
+          tx,
+          { id: d.fileId, purpose: 'registration_document' },
+          'retention',
+        )
+      )
+        gone.push(d.fileId);
     await tx.residentRegistration.update({
       where: { id: reg.id },
       data: {
         status,
-        decidedAt: new Date(),
+        decidedAt: await dbNow(tx),
         decidedById: byAccount ? this.ctx.accountId : null,
+        correctionCodes: [],
         ...extra,
         fullName: null,
         phone: null,
@@ -707,6 +895,7 @@ export class RegistrationService implements OnModuleInit {
         birthDate: null,
       },
     });
+    return gone;
   }
 
   /** Queued before the request's email is nulled (same transaction). */

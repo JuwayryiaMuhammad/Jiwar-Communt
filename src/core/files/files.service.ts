@@ -71,6 +71,38 @@ const invalid = (
     fields: [{ field, code, params }],
   });
 
+/** What a client declares before it uploads. */
+export interface DeclaredUpload {
+  purpose: FilePurpose;
+  contentType: string;
+  size: number;
+}
+
+/** Who may see a file: the caller's own, or the caller's record's (FILE_NOT_FOUND otherwise). */
+type Held = (tx: TenantTxClient) => Promise<StoredFile>;
+
+/** A declared type and size against the purpose's (ADR 0029). */
+function checkDeclared(input: DeclaredUpload): void {
+  const purpose = FILE_PURPOSES[input.purpose];
+  const types: readonly string[] = purpose.types;
+  if (!types.includes(input.contentType)) {
+    throw invalid(
+      'contentType',
+      FieldErrorCode.FILE_TYPE_NOT_ALLOWED,
+      'This purpose does not take this type',
+      { allowed: [...purpose.types] },
+    );
+  }
+  if (input.size > purpose.maxBytes) {
+    throw invalid(
+      'size',
+      FieldErrorCode.FILE_TOO_LARGE,
+      'The file is larger than this purpose allows',
+      { maxBytes: purpose.maxBytes },
+    );
+  }
+}
+
 /**
  * Files in the private bucket (ADR 0029). The client declares a purpose,
  * a type and a size, uploads with the presigned PUT (the store refuses any
@@ -137,35 +169,14 @@ export class FilesService implements OnModuleInit {
     });
   }
 
-  async createUpload(input: {
-    purpose: FilePurpose;
-    contentType: string;
-    size: number;
-  }): Promise<NewUpload> {
-    const purpose = FILE_PURPOSES[input.purpose];
+  async createUpload(input: DeclaredUpload): Promise<NewUpload> {
     if (!(await this.mayUpload(input.purpose))) {
       throw appError.forbidden(
         ErrorCode.FORBIDDEN,
         'This account cannot upload files for this purpose',
       );
     }
-    const types: readonly string[] = purpose.types;
-    if (!types.includes(input.contentType)) {
-      throw invalid(
-        'contentType',
-        FieldErrorCode.FILE_TYPE_NOT_ALLOWED,
-        'This purpose does not take this type',
-        { allowed: [...purpose.types] },
-      );
-    }
-    if (input.size > purpose.maxBytes) {
-      throw invalid(
-        'size',
-        FieldErrorCode.FILE_TOO_LARGE,
-        'The file is larger than this purpose allows',
-        { maxBytes: purpose.maxBytes },
-      );
-    }
+    checkDeclared(input);
 
     const id = newId();
     const tenantId = this.ctx.tenantId;
@@ -226,39 +237,128 @@ export class FilesService implements OnModuleInit {
    * is not what was declared is deleted with its row (FILE_CONTENT_MISMATCH).
    */
   async finalize(id: string): Promise<StoredFile> {
-    const file = await this.tenantTx.withTenantTx((tx) => this.own(tx, id));
+    return this.finalizeHeld(id, (tx) => this.own(tx, id));
+  }
+
+  /**
+   * As `finalize`, for a file a record holds with no account behind it (a
+   * registrant's document, ADR 0062): `holds` says, under the file's row
+   * lock, whether the caller's record is the one that holds it. Anything
+   * else is FILE_NOT_FOUND, as for another account's file.
+   */
+  async finalizeForRecord(
+    id: string,
+    holds: (tx: TenantTxClient, file: StoredFile) => Promise<boolean>,
+  ): Promise<StoredFile> {
+    return this.finalizeHeld(id, async (tx) => {
+      const file = await tx.storedFile.findFirst({
+        where: { id, recordUpload: true, deletedAt: null },
+      });
+      if (!file || !(await holds(tx, file))) throw notFound();
+      return file;
+    });
+  }
+
+  /**
+   * An upload a record holds from the start, with no account behind it (a
+   * registrant's document, ADR 0062). The caller has authorized it and
+   * keeps its own limit under its own lock. Signed here, outside any
+   * transaction (a store that is down fails before any row exists); the
+   * row is inserted by `createForRecord` in the record's transaction.
+   */
+  async presignForRecord(
+    input: DeclaredUpload,
+  ): Promise<{ id: string; upload: PresignedUpload }> {
+    checkDeclared(input);
+    const id = newId();
+    const upload = await this.storage.presignPut(
+      objectKey({ tenantId: this.ctx.tenantId, id }),
+      input.contentType,
+      input.size,
+    );
+    return { id, upload };
+  }
+
+  /**
+   * The row of a `presignForRecord` upload: owned by no account from the
+   * start, attached to its record when it is finalized (an attached file is
+   * always ready).
+   */
+  async createForRecord(
+    tx: TenantTxClient,
+    input: DeclaredUpload & {
+      id: string;
+      upload: PresignedUpload;
+      /** The record's clock (dbNow). */
+      at: Date;
+    },
+  ): Promise<StoredFile> {
+    const created = await tx.storedFile.create({
+      data: {
+        id: input.id,
+        tenantId: this.ctx.txTenantId,
+        ownerAccountId: null,
+        recordUpload: true,
+        purpose: input.purpose,
+        contentType: input.contentType,
+        sizeBytes: input.size,
+        uploadExpiresAt: input.upload.expiresAt,
+        createdAt: input.at,
+      },
+    });
+    await this.audit.record(tx, {
+      action: 'file.created',
+      targetId: input.id,
+      metadata: {
+        purpose: input.purpose,
+        contentType: input.contentType,
+        size: input.size,
+      },
+    });
+    return created;
+  }
+
+  private async finalizeHeld(id: string, held: Held): Promise<StoredFile> {
+    const file = await this.tenantTx.withTenantTx(held);
     if (file.status === 'ready') return file;
     this.refuseExpired(file);
 
     const key = objectKey(file);
     const head = await this.storage.head(key);
-    if (!head) return this.uploadMissing(id);
+    if (!head) return this.uploadMissing(id, held);
     let matches =
       head.size === file.sizeBytes && head.contentType === file.contentType;
     if (matches) {
       const bytes = await this.storage.firstBytes(key, SIGNATURE_BYTES);
-      if (!bytes) return this.uploadMissing(id);
+      if (!bytes) return this.uploadMissing(id, held);
       matches = matchesSignature(file.contentType as FileContentType, bytes);
     }
     if (!matches) {
-      await this.removeOwn(id, 'content_mismatch');
+      await this.removeHeld(id, held, 'content_mismatch');
       throw appError.unprocessable(
         ErrorCode.FILE_CONTENT_MISMATCH,
         'The uploaded bytes are not the declared file',
       );
     }
     const mediaDurationMs = mediaOf(file.purpose)
-      ? await this.durationOf(id, key, file.sizeBytes)
+      ? await this.durationOf(id, held, key, file.sizeBytes)
       : null;
 
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.lock(tx, id);
-      const current = await this.own(tx, id);
+      const current = await held(tx);
       if (current.status === 'ready') return current;
       this.refuseExpired(current);
+      const finalizedAt = new Date();
       return tx.storedFile.update({
         where: { id },
-        data: { status: 'ready', finalizedAt: new Date(), mediaDurationMs },
+        data: {
+          status: 'ready',
+          finalizedAt,
+          mediaDurationMs,
+          // A record's upload joins its record now (ADR 0062).
+          ...(current.recordUpload ? { attachedAt: finalizedAt } : {}),
+        },
       });
     });
   }
@@ -270,6 +370,7 @@ export class FilesService implements OnModuleInit {
    */
   private async durationOf(
     id: string,
+    held: Held,
     key: string,
     size: number,
   ): Promise<number> {
@@ -285,9 +386,9 @@ export class FilesService implements OnModuleInit {
         return bytes;
       });
     } catch (error: unknown) {
-      if (gone.seen) return this.uploadMissing(id);
+      if (gone.seen) return this.uploadMissing(id, held);
       if (!(error instanceof Mp4Refused)) throw error;
-      await this.removeOwn(id, 'content_mismatch');
+      await this.removeHeld(id, held, 'content_mismatch');
       if (error.problem === 'no_movie_header')
         throw appError.unprocessable(
           ErrorCode.FILE_MEDIA_NO_DURATION,
@@ -314,7 +415,7 @@ export class FilesService implements OnModuleInit {
   }
 
   async remove(id: string): Promise<void> {
-    await this.removeOwn(id, 'owner');
+    await this.removeHeld(id, (tx) => this.own(tx, id), 'owner');
   }
 
   /**
@@ -462,10 +563,14 @@ export class FilesService implements OnModuleInit {
     return done;
   }
 
-  private async removeOwn(id: string, reason: FileDeleteReason): Promise<void> {
+  private async removeHeld(
+    id: string,
+    held: Held,
+    reason: FileDeleteReason,
+  ): Promise<void> {
     await this.tenantTx.withTenantTx(async (tx) => {
       await this.lock(tx, id);
-      const file = await this.own(tx, id);
+      const file = await held(tx);
       await this.markDeleted(tx, file, reason);
     });
     try {
@@ -483,10 +588,10 @@ export class FilesService implements OnModuleInit {
    * if the file was deleted while finalize read the store, the row under
    * its lock says so: FILE_NOT_FOUND. Otherwise nothing is uploaded yet.
    */
-  private async uploadMissing(id: string): Promise<never> {
+  private async uploadMissing(id: string, held: Held): Promise<never> {
     await this.tenantTx.withTenantTx(async (tx) => {
       await this.lock(tx, id);
-      await this.own(tx, id);
+      await held(tx);
     });
     throw appError.conflict(
       ErrorCode.FILE_UPLOAD_MISSING,

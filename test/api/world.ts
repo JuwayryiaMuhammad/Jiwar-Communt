@@ -17,6 +17,7 @@ import { HouseholdsService } from '../../src/community/households/households.ser
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
+import { IdentifierHasher } from '../../src/core/auth/identifier';
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
@@ -162,6 +163,8 @@ export interface World
   /** B's registration link and a pending registration request. */
   bLinkId: string;
   bRegistrationId: string;
+  /** The live status link token of B's registration request (ADR 0062). */
+  bRegistrationStatusToken: string;
   /** A pending deletion request in B, and a legal hold on its account. */
   bDeletionRequestId: string;
   bLegalHoldId: string;
@@ -1311,6 +1314,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bLegalHoldId: holdId,
     bLinkId: link.id,
     bRegistrationId: pending.id,
+    bRegistrationStatusToken: h.moduleRef
+      .get(IdentifierHasher)
+      .registrationStatusToken(b.tenantId, pending.id, 1),
     h,
     helpers,
     a,

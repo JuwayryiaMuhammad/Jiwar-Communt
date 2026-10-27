@@ -8664,6 +8664,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/registrations/documents/{id}/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finalize an uploaded registration document */
+        post: operations["RegistrationStatusController_finalize"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/registrations/documents/{id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove a registration document */
+        post: operations["RegistrationStatusController_remove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/registrations/resubmit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a corrected registration request again */
+        post: operations["RegistrationStatusController_resubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/registrations/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a registration request from its status link */
+        post: operations["RegistrationStatusController_status"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/registrations/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start uploading a proof-of-capacity document */
+        post: operations["RegistrationStatusController_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/visitor-passes/lookup": {
         parameters: {
             query?: never;
@@ -8740,7 +8825,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List pending registration requests */
+        /** List undecided registration requests */
         get: operations["RegistrationsController_pending"];
         put?: never;
         post?: never;
@@ -8801,6 +8886,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/registrations/{id}/documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a registration document */
+        get: operations["RegistrationsController_document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/registrations/{id}/reject": {
         parameters: {
             query?: never;
@@ -8812,6 +8914,23 @@ export interface paths {
         put?: never;
         /** Reject a registration request */
         post: operations["RegistrationsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/registrations/{id}/request-correction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask the registrant for a correction */
+        post: operations["RegistrationsController_requestCorrection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -21099,7 +21218,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -25281,8 +25400,12 @@ export interface components {
         };
         PendingRegistrationView: {
             conflicts: ("unit_not_found" | "unit_has_primary" | "unit_has_residing_occupants" | "phone_in_use" | "email_in_use" | "same_person_existing_account" | "duplicate_pending_for_unit")[];
+            /** @description What was asked; empty unless `needs_correction`. */
+            correctionCodes: ("document_unreadable" | "document_missing" | "document_mismatch" | "details_mismatch")[];
             /** Format: date-time */
             createdAt: string;
+            /** @description Proof of capacity the registrant uploaded; read one with its own route. */
+            documents: components["schemas"]["RegistrationDocumentView"][];
             email: string;
             fullName: string;
             /** Format: uuid */
@@ -25290,6 +25413,11 @@ export interface components {
             occupancyType: components["schemas"]["OccupancyType"];
             phone: string;
             resides: boolean;
+            /**
+             * @description `needs_correction`: sent back to the registrant, waiting for them (ADR 0062).
+             * @enum {string}
+             */
+            status: "pending" | "needs_correction";
             /** @description As the registrant typed it. */
             unitCode: string;
             /**
@@ -26411,6 +26539,37 @@ export interface components {
             /** @enum {string} */
             code: "REGISTRATION_CODE_SENT";
         };
+        RegistrationCorrectionDto: {
+            codes: ("document_unreadable" | "document_missing" | "document_mismatch" | "details_mismatch")[];
+        };
+        RegistrationDocumentReadView: {
+            /** @enum {string} */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "ownership_proof" | "lease_proof" | "other_proof";
+            /** @description Finalized: the upload arrived and was checked. */
+            ready: boolean;
+            /** @description A presigned GET. */
+            url: string;
+            /** Format: date-time */
+            urlExpiresAt: string;
+        };
+        RegistrationDocumentView: {
+            /** @enum {string} */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "ownership_proof" | "lease_proof" | "other_proof";
+            /** @description Finalized: the upload arrived and was checked. */
+            ready: boolean;
+        };
         RegistrationLinkResponse: {
             /** Format: date-time */
             createdAt: string;
@@ -26455,6 +26614,44 @@ export interface components {
             /** @description As the registrant knows it. */
             unitCode: string;
             unitType?: components["schemas"]["UnitType"];
+        };
+        RegistrationStatusTokenDto: {
+            /** @description The fragment of the status link (`/rs#<token>`). Anything that is not a live link answers 404 REGISTRATION_STATUS_NOT_FOUND. */
+            token: string;
+        };
+        RegistrationStatusView: {
+            compoundName: string;
+            /** @description What to correct; empty unless `needs_correction`. */
+            correctionCodes: ("document_unreadable" | "document_missing" | "document_mismatch" | "details_mismatch")[];
+            /** Format: date-time */
+            createdAt: string;
+            documents: components["schemas"]["RegistrationDocumentView"][];
+            /** @description Documents a request holds at most, uploads included. */
+            maxDocuments: number;
+            occupancyType: components["schemas"]["OccupancyType"];
+            /**
+             * @description A decided or expired request is not found: the decision email says how it ended.
+             * @enum {string}
+             */
+            status: "pending" | "needs_correction";
+            unitCode: string;
+        };
+        RegistrationUploadDto: {
+            /**
+             * @description Signed into the upload (FILE_TYPE_NOT_ALLOWED otherwise).
+             * @enum {string}
+             */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+            /** @enum {string} */
+            kind: "ownership_proof" | "lease_proof" | "other_proof";
+            /** @description Bytes, signed into the upload; 10 MB at most (FILE_TOO_LARGE). */
+            size: number;
+            /** @description The fragment of the status link (`/rs#<token>`). Anything that is not a live link answers 404 REGISTRATION_STATUS_NOT_FOUND. */
+            token: string;
+        };
+        RegistrationUploadView: {
+            document: components["schemas"]["RegistrationDocumentView"];
+            upload: components["schemas"]["UploadTargetView"];
         };
         ReissueCodeDto: {
             /** @description From the closed list `cardReissue`. */
@@ -45201,6 +45398,123 @@ export interface operations {
             };
         };
     };
+    RegistrationStatusController_finalize: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationStatusTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationDocumentView"];
+                };
+            };
+        };
+    };
+    RegistrationStatusController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationStatusTokenDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RegistrationStatusController_resubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationStatusTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationStatusView"];
+                };
+            };
+        };
+    };
+    RegistrationStatusController_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationStatusTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationStatusView"];
+                };
+            };
+        };
+    };
+    RegistrationStatusController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationUploadDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationUploadView"];
+                };
+            };
+        };
+    };
     VisitorPageController_lookup: {
         parameters: {
             query?: never;
@@ -45312,6 +45626,8 @@ export interface operations {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
+                /** @description `pending` (the default): waiting for the management; `needs_correction`: sent back, waiting for the registrant. */
+                status?: "pending" | "needs_correction";
             };
             header?: never;
             path?: never;
@@ -45400,6 +45716,28 @@ export interface operations {
             };
         };
     };
+    RegistrationsController_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationDocumentReadView"];
+                };
+            };
+        };
+    };
     RegistrationsController_reject: {
         parameters: {
             query?: never;
@@ -45412,6 +45750,29 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RegistrationsController_requestCorrection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationCorrectionDto"];
             };
         };
         responses: {

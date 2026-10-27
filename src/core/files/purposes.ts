@@ -291,6 +291,14 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['units.read'],
   },
+  // A registrant's proof of capacity (ADR 0062): a photo or a PDF. No
+  // account uploads one: the registrant's status link starts the upload,
+  // the file is attached to the request from the start.
+  registration_document: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: [],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

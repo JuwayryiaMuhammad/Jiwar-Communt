@@ -326,6 +326,8 @@ enum OtpPurpose {
   /// A fresh code for a sensitive action (ADR 0036): bound to a session, or
   /// to an email action token.
   step_up
+  /// Proves an account's new email (ADR 0062), sent to that address.
+  contact_change
 
   @@map("otp_purpose")
 }
@@ -512,6 +514,7 @@ model Tenant {
   childPickupLinks             ChildPickupLink[]
   registrationStatusLinks      RegistrationStatusLink[]
   registrationDocuments        RegistrationDocument[]
+  accountIdentityChanges       AccountIdentityChange[]
   actionTokens                 ActionToken[]
   ticketCategories             TicketCategory[]
   preventiveServices           PreventiveService[]
@@ -935,6 +938,8 @@ model Account {
   freezesMade                    AccountFreeze[]                     @relation("FreezeFrozenBy")
   freezesLifted                  AccountFreeze[]                     @relation("FreezeReactivatedBy")
   registrationsDecided           ResidentRegistration[]              @relation("RegistrationDecidedBy")
+  identityChanges                AccountIdentityChange[]             @relation("IdentityChangeAccount")
+  identityChangesDecided         AccountIdentityChange[]             @relation("IdentityChangeDecider")
   registrationsApproved          ResidentRegistration[]              @relation("RegistrationAccount")
   deletionRequests               AccountDeletionRequest[]            @relation("DeletionAccount")
   deletionsCompleted             AccountDeletionRequest[]            @relation("DeletionCompletedBy")
@@ -1692,6 +1697,33 @@ model RegistrationDocument {
 
   @@index([tenantId, registrationId, createdAt], map: "registration_documents_registration_idx")
   @@map("registration_documents")
+}
+
+/// A name or phone change an account asked for (ADR 0062): a manager
+/// decides. One pending per account; the value only while pending; moves
+/// once, forward (trigger).
+model AccountIdentityChange {
+  id         String    @id @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  accountId  String    @map("account_id") @db.Uuid
+  /// name | phone (CHECK).
+  field      String
+  newValue   String?   @map("new_value")
+  /// pending | approved | rejected | cancelled (CHECK).
+  status     String    @default("pending")
+  createdAt  DateTime  @map("created_at") @db.Timestamptz(3)
+  decidedAt  DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedBy  String?   @map("decided_by") @db.Uuid
+  reasonCode String?   @map("reason_code")
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  account   Account  @relation("IdentityChangeAccount", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  decider   Account? @relation("IdentityChangeDecider", fields: [tenantId, decidedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt], map: "account_identity_changes_queue_idx")
+  @@index([tenantId, accountId, createdAt(sort: Desc)], map: "account_identity_changes_account_idx")
+  @@map("account_identity_changes")
 }
 
 /// "Delete my account" (ADR 0023, 0036): undo until `effective_at`; then

@@ -32,6 +32,18 @@ export const AUDIT_ACTIONS = {
     sensitive: ['phone', 'email'],
   },
   'account.frozen': { log: 'tenant', target: 'account', sensitive: ['phone'] },
+  // An account's own contact and identity changes (ADR 0062). metadata:
+  // field, requestId, reasonCode (rejected); the name as changed only.
+  'account.contact_change_requested': { log: 'tenant', target: 'account' },
+  'account.identity_change_requested': { log: 'tenant', target: 'account' },
+  'account.identity_change_cancelled': { log: 'tenant', target: 'account' },
+  'account.identity_change_approved': { log: 'tenant', target: 'account' },
+  'account.identity_change_rejected': { log: 'tenant', target: 'account' },
+  'account.name_changed': {
+    log: 'tenant',
+    target: 'account',
+    sensitive: ['fullName'],
+  },
   'account.reactivated': { log: 'tenant', target: 'account' },
   // deletion (ADR 0023)
   'account.deletion_requested': { log: 'tenant', target: 'account' },

@@ -4480,6 +4480,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/identity-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pending name and phone change requests */
+        get: operations["IdentityChangesController_queue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/identity-changes/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a name or phone change */
+        post: operations["IdentityChangesController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/identity-changes/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a name or phone change, with a code */
+        post: operations["IdentityChangesController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/instalment-plans/{id}": {
         parameters: {
             query?: never;
@@ -5864,6 +5915,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/contact/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start changing the account’s email */
+        post: operations["SelfContactController_requestEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/contact/email/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm the new email with its code */
+        post: operations["SelfContactController_verifyEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/daily-brief": {
         parameters: {
             query?: never;
@@ -6105,6 +6190,41 @@ export interface paths {
         get: operations["GateServicesController_mine"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/identity-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My name and phone change requests */
+        get: operations["SelfContactController_mine"];
+        put?: never;
+        /** Ask the management to change my name or phone */
+        post: operations["SelfContactController_ask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/identity-changes/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my pending change request */
+        post: operations["SelfContactController_cancel"];
         delete?: never;
         options?: never;
         head?: never;
@@ -22660,6 +22780,54 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        IdentityChangeReviewView: {
+            /** Format: uuid */
+            accountId: string;
+            /** @description `resident` or `family`. */
+            accountType: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The value the change replaces. */
+            currentValue: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @enum {string} */
+            field: "name" | "phone";
+            /** Format: uuid */
+            id: string;
+            /** @description The value asked for; null once decided or withdrawn. */
+            newValue: string | null;
+            /**
+             * @description Why it was rejected.
+             * @enum {string|null}
+             */
+            reasonCode: "not_verified" | "does_not_match_documents" | "other" | null;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected" | "cancelled";
+        };
+        IdentityChangeReviewViewList: {
+            data: components["schemas"]["IdentityChangeReviewView"][];
+            nextCursor: string | null;
+        };
+        IdentityChangeView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @enum {string} */
+            field: "name" | "phone";
+            /** Format: uuid */
+            id: string;
+            /** @description The value asked for; null once decided or withdrawn. */
+            newValue: string | null;
+            /**
+             * @description Why it was rejected.
+             * @enum {string|null}
+             */
+            reasonCode: "not_verified" | "does_not_match_documents" | "other" | null;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected" | "cancelled";
+        };
         ImplementedApprovalDto: {
             note?: string;
         };
@@ -24205,6 +24373,15 @@ export interface components {
          * @enum {string}
          */
         NeighbourThread: "complainant" | "target" | "internal";
+        NewEmailDto: {
+            email: string;
+        };
+        NewIdentityChangeDto: {
+            /** @enum {string} */
+            field: "name" | "phone";
+            /** @description The full name (2 to 200 characters) or the phone number. */
+            value: string;
+        };
         NewInviteDto: {
             /**
              * Format: date
@@ -31992,6 +32169,11 @@ export interface components {
              */
             qr?: string;
         };
+        VerifyNewEmailDto: {
+            /** @description The 6 digits sent to the new email. */
+            code: string;
+            email: string;
+        };
         VerifyOtpDto: {
             code: string;
             identifier: string;
@@ -38866,6 +39048,75 @@ export interface operations {
             };
         };
     };
+    IdentityChangesController_queue: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityChangeReviewViewList"];
+                };
+            };
+        };
+    };
+    IdentityChangesController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityChangeView"];
+                };
+            };
+        };
+    };
+    IdentityChangesController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityChangeView"];
+                };
+            };
+        };
+    };
     UnitInstalmentsController_detail: {
         parameters: {
             query?: never;
@@ -41111,6 +41362,48 @@ export interface operations {
             };
         };
     };
+    SelfContactController_requestEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewEmailDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SelfContactController_verifyEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyNewEmailDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     DailyBriefController_get: {
         parameters: {
             query?: never;
@@ -41455,6 +41748,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateServiceViewList"];
+                };
+            };
+        };
+    };
+    SelfContactController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityChangeView"][];
+                };
+            };
+        };
+    };
+    SelfContactController_ask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewIdentityChangeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityChangeView"];
+                };
+            };
+        };
+    };
+    SelfContactController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityChangeView"];
                 };
             };
         };

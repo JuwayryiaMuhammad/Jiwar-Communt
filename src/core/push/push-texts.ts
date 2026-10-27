@@ -153,6 +153,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'يوجد طلب حذف حساب في قائمة الانتظار.',
     },
   },
+  'account.identity_change_decided': {
+    en: {
+      title: 'Your change request was decided',
+      body: 'The management decided your name or phone change. Open the app to see how.',
+    },
+    ar: {
+      title: 'تم البت في طلب التعديل',
+      body: 'بتّت الإدارة في طلب تعديل الاسم أو الهاتف. افتح التطبيق لتعرف النتيجة.',
+    },
+  },
   'account.deletion_closed': {
     en: {
       title: 'Deletion request closed',

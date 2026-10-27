@@ -265,6 +265,54 @@ export class OtpService implements OnModuleInit {
     });
   }
 
+  /**
+   * The code that proves an account's new email (ADR 0062), keyed by the
+   * account and the exact address, sent to that address. Older live codes
+   * for the same key are invalidated. It can never log anyone in.
+   */
+  async issueForContactChange(
+    key: string,
+    accountId: string,
+    email: string,
+    locale: Locale,
+  ): Promise<void> {
+    const id = newId();
+    const code =
+      this.fixedCode ?? randomInt(0, 1_000_000).toString().padStart(6, '0');
+    await this.globalDb.otpChallenge.create({
+      data: {
+        id,
+        purpose: 'contact_change',
+        identifierHash: key,
+        accountIds: [accountId],
+        codeHash: this.hasher.hashOtp(id, code),
+        expiresAt: new Date(Date.now() + this.ttlSeconds * 1000),
+      },
+    });
+    await this.globalDb.otpChallenge.updateMany({
+      where: {
+        purpose: 'contact_change',
+        identifierHash: key,
+        id: { lt: id },
+        consumedAt: null,
+        invalidatedAt: null,
+      },
+      data: { invalidatedAt: new Date() },
+    });
+    await this.channel.send({
+      to: email,
+      code,
+      ttlSeconds: this.ttlSeconds,
+      locale,
+      purpose: 'contact_change',
+    });
+  }
+
+  /** True when the code matches a live contact-change challenge, which it consumes. */
+  async verifyContactChange(key: string, code: string): Promise<boolean> {
+    return (await this.consume('contact_change', key, code)) !== null;
+  }
+
   /** True when the code matches a live step-up challenge, which it consumes. */
   async verifyStepUp(key: string, code: string): Promise<boolean> {
     return (await this.consume('step_up', key, code)) !== null;

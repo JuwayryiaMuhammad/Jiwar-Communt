@@ -27,6 +27,8 @@ export const REASON_CODES = {
     'document_mismatch',
     'details_mismatch',
   ],
+  // Why a manager refuses a name or phone change (ADR 0062): a code only.
+  identityChangeReject: ['not_verified', 'does_not_match_documents', 'other'],
   // Unit states and households (ADR 0021).
   reviewFlag: ['deceased', 'separation', 'other'],
   reviewClear: ['resolved', 'data_correction', 'other'],

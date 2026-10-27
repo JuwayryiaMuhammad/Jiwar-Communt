@@ -690,3 +690,16 @@ export const DECISION_APPEALS_COVERAGE: readonly string[] = [
   'decision_appeal.followed_up',
   'decision_appeal.grounds_cleared',
 ];
+
+/**
+ * R11a (ADR 0062): the resident's unit — account self-service, documents,
+ * contracts, money. Covered by test/r11a/audit-coverage.e2e-spec.ts.
+ */
+export const R11A_COVERAGE: readonly string[] = [
+  'account.contact_change_requested',
+  'account.identity_change_requested',
+  'account.identity_change_cancelled',
+  'account.identity_change_approved',
+  'account.identity_change_rejected',
+  'account.name_changed',
+];

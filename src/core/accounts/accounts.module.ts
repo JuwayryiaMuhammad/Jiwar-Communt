@@ -15,6 +15,10 @@ import { AccountLifecycle } from './account-lifecycle';
 import { AccountSelfService } from './account-self.service';
 import { AccountWriter } from './account-writer';
 import { AccountsService } from './accounts.service';
+import { ContactChangeService } from './contact-change.service';
+import { IdentityChangesController } from './identity-changes.controller';
+import { IdentityChangesService } from './identity-changes.service';
+import { SelfContactController } from './self-contact.controller';
 
 @Module({
   imports: [AuthModule, ObjectStorageModule],
@@ -24,6 +28,8 @@ import { AccountsService } from './accounts.service';
     ErasureController,
     MeDevicesController,
     PublicNotMeController,
+    SelfContactController,
+    IdentityChangesController,
   ],
   providers: [
     AccountsService,
@@ -33,6 +39,8 @@ import { AccountsService } from './accounts.service';
     AccountEmailTemplates,
     AccountDeletionService,
     NotMeService,
+    ContactChangeService,
+    IdentityChangesService,
   ],
   exports: [
     AccountWriter,

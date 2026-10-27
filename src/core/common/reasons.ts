@@ -162,6 +162,8 @@ export const REASON_CODES = {
     'document_mismatch',
     'details_mismatch',
   ],
+  /** Why a manager refuses a name or phone change (ADR 0062): a code only. */
+  identityChangeReject: ['not_verified', 'does_not_match_documents', 'other'],
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
   // A manager acting for an account (ADR 0036): how the person asked.

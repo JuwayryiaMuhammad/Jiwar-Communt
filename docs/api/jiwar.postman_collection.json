@@ -1146,6 +1146,79 @@
           }
         },
         {
+          "name": "Start changing the account’s email",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"email\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `email` | string | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "contact",
+                "email"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/contact/email"
+            }
+          }
+        },
+        {
+          "name": "Confirm the new email with its code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"email\": \"\",\n  \"code\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes | The 6 digits sent to the new email. |\n| `email` | string | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "contact",
+                "email",
+                "verify"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/contact/email/verify"
+            }
+          }
+        },
+        {
           "name": "List the delegations I hold or gave",
           "request": {
             "description": "**Responses:** 200",
@@ -1280,6 +1353,90 @@
                 "revoke"
               ],
               "raw": "{{baseUrl}}/api/v1/me/devices/:id/revoke",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My name and phone change requests",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "identity-changes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/identity-changes"
+            }
+          }
+        },
+        {
+          "name": "Ask the management to change my name or phone",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"field\": \"name\",\n  \"value\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `field` | `name` \\| `phone` | yes |  |\n| `value` | string | yes | The full name (2 to 200 characters) or the phone number. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "identity-changes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/identity-changes"
+            }
+          }
+        },
+        {
+          "name": "Withdraw my pending change request",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "identity-changes",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/identity-changes/:id/cancel",
               "variable": [
                 {
                   "description": "",
@@ -32679,6 +32836,110 @@
     },
     {
       "item": [
+        {
+          "name": "Pending name and phone change requests",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identity-changes"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/identity-changes"
+            }
+          }
+        },
+        {
+          "name": "Approve a name or phone change",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identity-changes",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/identity-changes/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject a name or phone change, with a code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identity-changes",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/identity-changes/:id/reject",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
         {
           "name": "List registration links",
           "request": {

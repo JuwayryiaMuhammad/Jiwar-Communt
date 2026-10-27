@@ -44,6 +44,11 @@ const EN = {
     ignore:
       'If you did not ask for it, ignore this email and tell the compound management.',
   },
+  contact_change: {
+    subject: 'Confirm your new email on Jiwar',
+    intro: 'Your code to make this address your Jiwar email is',
+    ignore: 'If you did not ask for this, ignore this email.',
+  },
 } satisfies Record<OtpPurpose, Record<string, string>>;
 
 const AR = {
@@ -66,6 +71,11 @@ const AR = {
     subject: 'رمز التأكيد من جوار',
     intro: 'رمز تأكيد طلبك على جوار هو',
     ignore: 'إذا لم تطلبه، تجاهل هذه الرسالة وأبلغ إدارة المجمع.',
+  },
+  contact_change: {
+    subject: 'أكّد بريدك الجديد على جوار',
+    intro: 'رمز اعتماد هذا العنوان بريدًا لحسابك على جوار هو',
+    ignore: 'إذا لم تطلب ذلك، تجاهل هذه الرسالة.',
   },
 } satisfies Record<OtpPurpose, Record<string, string>>;
 

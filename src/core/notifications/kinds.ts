@@ -181,6 +181,17 @@ export const NOTIFICATION_KINDS = {
     target: 'account_deletion_request',
     params: { blockers: {} },
   },
+  /**
+   * A manager decided the account's name or phone change (ADR 0062):
+   * which field and how, never the value.
+   */
+  'account.identity_change_decided': {
+    priority: 'normal',
+    category: 'account_security',
+    critical: false,
+    target: 'account_identity_change',
+    params: { field: {}, outcome: {} },
+  },
   /** A manager closed the queued request without erasing. */
   'account.deletion_closed': {
     priority: 'normal',

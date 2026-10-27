@@ -21030,6 +21030,157 @@
         ],
         "type": "object"
       },
+      "IdentityChangeReviewView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "accountType": {
+            "description": "`resident` or `family`.",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currentValue": {
+            "description": "The value the change replaces.",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "name",
+              "phone"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "newValue": {
+            "description": "The value asked for; null once decided or withdrawn.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "Why it was rejected.",
+            "enum": [
+              "not_verified",
+              "does_not_match_documents",
+              "other"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "field",
+          "status",
+          "newValue",
+          "createdAt",
+          "decidedAt",
+          "reasonCode",
+          "accountId",
+          "accountType",
+          "currentValue"
+        ],
+        "type": "object"
+      },
+      "IdentityChangeReviewViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/IdentityChangeReviewView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "IdentityChangeView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "name",
+              "phone"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "newValue": {
+            "description": "The value asked for; null once decided or withdrawn.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "Why it was rejected.",
+            "enum": [
+              "not_verified",
+              "does_not_match_documents",
+              "other"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "field",
+          "status",
+          "newValue",
+          "createdAt",
+          "decidedAt",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "ImplementedApprovalDto": {
         "properties": {
           "note": {
@@ -25818,6 +25969,38 @@
           "internal"
         ],
         "type": "string"
+      },
+      "NewEmailDto": {
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "NewIdentityChangeDto": {
+        "properties": {
+          "field": {
+            "enum": [
+              "name",
+              "phone"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "description": "The full name (2 to 200 characters) or the phone number.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "value"
+        ],
+        "type": "object"
       },
       "NewInviteDto": {
         "properties": {
@@ -51465,6 +51648,23 @@
         },
         "type": "object"
       },
+      "VerifyNewEmailDto": {
+        "properties": {
+          "code": {
+            "description": "The 6 digits sent to the new email.",
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 254,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ],
+        "type": "object"
+      },
       "VerifyOtpDto": {
         "properties": {
           "code": {
@@ -65210,6 +65410,139 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/identity-changes": {
+      "get": {
+        "operationId": "IdentityChangesController_queue",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityChangeReviewViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Pending name and phone change requests",
+        "tags": [
+          "registration"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/identity-changes/{id}/approve": {
+      "post": {
+        "operationId": "IdentityChangesController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityChangeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a name or phone change",
+        "tags": [
+          "registration"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/identity-changes/{id}/reject": {
+      "post": {
+        "operationId": "IdentityChangesController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityChangeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a name or phone change, with a code",
+        "tags": [
+          "registration"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/instalment-plans/{id}": {
       "get": {
         "operationId": "UnitInstalmentsController_detail",
@@ -69425,6 +69758,68 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/contact/email": {
+      "post": {
+        "operationId": "SelfContactController_requestEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewEmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start changing the account’s email",
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/contact/email/verify": {
+      "post": {
+        "operationId": "SelfContactController_verifyEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyNewEmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm the new email with its code",
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/daily-brief": {
       "get": {
         "operationId": "DailyBriefController_get",
@@ -70016,6 +70411,110 @@
           "gate-services"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/identity-changes": {
+      "get": {
+        "operationId": "SelfContactController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IdentityChangeView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My name and phone change requests",
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "SelfContactController_ask",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewIdentityChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityChangeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask the management to change my name or phone",
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/identity-changes/{id}/cancel": {
+      "post": {
+        "operationId": "SelfContactController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityChangeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my pending change request",
+        "tags": [
+          "me"
+        ],
         "x-stability": "draft"
       }
     },

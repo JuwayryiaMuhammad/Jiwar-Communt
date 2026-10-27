@@ -82,6 +82,14 @@ export class IdentifierHasher {
     );
   }
 
+  /**
+   * The key of a code proving an account's new email (ADR 0062): bound to
+   * the account and the exact address, so it confirms only that change.
+   */
+  contactChangeKey(accountId: string, email: string): string {
+    return this.hmac(`contact-change:v1:${accountId}:email:${email}`);
+  }
+
   /** What the status link's pointer keeps of its token (ADR 0062). */
   hashRegistrationStatusLink(token: string): string {
     return this.hmac(`registration-status-link:${token}`);

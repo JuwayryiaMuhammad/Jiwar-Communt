@@ -213,4 +213,81 @@ export const ME_ROUTES: Row[] = [
     foreign: 'none',
     invalid: 'none',
   },
+  // An account's own email and identity changes (ADR 0062).
+  {
+    method: 'POST',
+    path: '/me/contact/email',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { email: 'x' },
+      fields: [
+        {
+          field: 'email',
+          code: 'INVALID_LENGTH',
+          params: { min: 3, max: 254 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/me/contact/email/verify',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { email: 'new@example.test', code: '12ab' },
+      fields: [
+        { field: 'code', code: 'INVALID_FORMAT', params: { length: 6 } },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/me/identity-changes',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/me/identity-changes',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { field: 'email', value: 'x' },
+      fields: [
+        {
+          field: 'field',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['name', 'phone'] },
+        },
+        {
+          field: 'value',
+          code: 'INVALID_LENGTH',
+          params: { min: 2, max: 200 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/me/identity-changes/{id}/cancel',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRegistrationId }),
+      code: 'IDENTITY_CHANGE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
 ];

@@ -74,6 +74,8 @@ export const PERMISSIONS = {
   'visitors.invite': { kinds: ['resident', 'family'] },
   // One's own photo, shown to the guard at the gate (ADR 0031).
   'profile.photo': { kinds: ['resident', 'family'] },
+  // Their own email, and asking for a name or phone change (ADR 0062).
+  'profile.contact': { kinds: ['resident', 'family'] },
   // Maintenance (ADR 0032). Residents and family open tickets
   // (capabilities.tickets decides per unit); technicians work the ones
   // assigned to them; dispatchers (a supervisor, or the manager) assign

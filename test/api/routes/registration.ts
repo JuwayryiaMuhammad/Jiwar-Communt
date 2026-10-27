@@ -109,6 +109,53 @@ export const REGISTRATION_ROUTES: Row[] = [
       fields: [{ field: 'codes', code: 'INVALID_LENGTH', params: { min: 1 } }],
     },
   },
+  // Name and phone changes residents asked for (ADR 0062).
+  {
+    method: 'GET',
+    path: '/identity-changes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { cursor: '' },
+      fields: [
+        {
+          field: 'cursor',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 512 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/identity-changes/{id}/approve',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bRegistrationId }),
+      code: 'IDENTITY_CHANGE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/identity-changes/{id}/reject',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bRegistrationId }),
+      body: () => ({ reasonCode: 'other' }),
+      code: 'IDENTITY_CHANGE_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
   {
     method: 'POST',
     path: '/registrations/{id}/reject',

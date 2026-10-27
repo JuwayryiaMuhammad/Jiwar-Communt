@@ -1987,6 +1987,22 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   registration_documents_kind: {},
   registration_status_links_token_hash_hex: {},
   registration_status_links_seq_positive: {},
+  // Name and phone change requests (ADR 0062).
+  account_identity_changes_field: {},
+  account_identity_changes_status: {},
+  account_identity_changes_value_while_pending: {},
+  account_identity_changes_value_shape: {
+    guarded:
+      'new_value IS NULL is tested first; its shape runs only on a value',
+  },
+  account_identity_changes_decided_shape: {},
+  account_identity_changes_reason_code: {
+    guarded:
+      'reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  account_identity_changes_decided_after: {
+    guarded: 'decided_at IS NULL is tested first; created_at is NOT NULL',
+  },
 };
 
 interface Check {

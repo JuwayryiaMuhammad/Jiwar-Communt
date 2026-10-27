@@ -57,6 +57,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   resident_registrations_tenant_id_id_key: null,
   registration_documents_file_id_key: null,
   registration_status_links_one_per_registration: null,
+  // Name and phone changes (ADR 0062): checked first under the account's
+  // lock (IDENTITY_CHANGE_PENDING), so a violation is a race.
+  account_identity_changes_tenant_id_id_key: null,
+  account_identity_changes_one_pending: null,
   // Client-generated (UUIDv7): a violation is an id collision.
   registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,

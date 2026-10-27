@@ -145,7 +145,7 @@ rolls back and is pruned with the API.
 
 | Service | Container | Listens on | Image | Environment |
 |---|---|---|---|---|
-| `public` | `jiwar-community-public-1` | `127.0.0.1:3003` | `<sha>-public` | `PORT=3003`, `JIWAR_API_URL=http://app:3100` |
+| `public` | `jiwar-community-public-1` | `127.0.0.1:3003` | `<sha>-public` | `PORT=3003`, `JIWAR_API_URL=http://app:3100`, `UPLOAD_ORIGIN=<the origin of S3_ENDPOINT>` (ADR 0062: `/rs` uploads to it; unset, that page cannot upload) |
 
 No env file, no secret, no cookie. Health check: `/` answers. 256 MB.
 
@@ -213,8 +213,9 @@ returns. Staging's storage is MinIO over plain HTTP
 (`S3_ENDPOINT=http://191.218.163.45`), and a browser on an HTTPS page blocks
 that download as mixed content. The page cannot see the block; it tells the
 person that the file service may be unavailable and to try later. This
-clears when storage moves to HTTPS (R2, below). Registration has no file
-upload: the API has no upload path for a registrant yet (ADR 0024).
+clears when storage moves to HTTPS (R2, below). The same block stops a
+registrant's upload on `/rs` (ADR 0062): the page says the file service is
+unavailable, and the request's state and resubmit still work.
 
 ## Online payment (Paymob, ADR 0046)
 
@@ -400,7 +401,8 @@ Provisioning, outside the app:
 - **A token per bucket.** The production token never reaches another
   bucket, and the dev bucket has its own token.
 - **CORS**, because apps upload straight to R2 with the presigned PUT:
-  allow origins = the web app's origin(s); methods `PUT`, `GET`; headers
+  allow origins = the web app's origin(s), and `PUBLIC_APP_URL`'s origin for
+  a registrant's documents on `/rs` (ADR 0062); methods `PUT`, `GET`; headers
   `Content-Type`, `If-None-Match`; no credentials.
 - No object lifecycle rule deletes files: the app's sweep owns deletion.
 

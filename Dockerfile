@@ -29,6 +29,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json prisma.config.ts ./
 COPY prisma ./prisma
 COPY deploy ./deploy
+# The faces the server-side PDFs are set in (ADR 0062), read next to dist.
+COPY assets ./assets
 COPY --from=build /app/dist ./dist
 USER node
 EXPOSE 3100

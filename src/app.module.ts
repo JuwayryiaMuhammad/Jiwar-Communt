@@ -33,6 +33,7 @@ import { BoardMattersModule } from './core/board-matters/board-matters.module';
 import { DecisionAppealsModule } from './core/decision-appeals/decision-appeals.module';
 import { ResidentItemsModule } from './core/resident-items/resident-items.module';
 import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
+import { PdfModule } from './core/pdf/pdf.module';
 import { ConsentsModule } from './core/consents/consents.module';
 import { RequestContextModule } from './core/common/cls/request-context.module';
 import { AllExceptionsFilter } from './core/common/filters/all-exceptions.filter';
@@ -121,6 +122,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     DecisionAppealsModule,
     ResidentItemsModule,
     FormalNoticesModule,
+    PdfModule,
     AssistModule,
     HealthModule,
     AuthModule,

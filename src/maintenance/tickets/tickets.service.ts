@@ -1,3 +1,4 @@
+import type { StaffOrigin, TicketOrigin } from './ticket-visibility';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   Prisma,
@@ -67,6 +68,34 @@ interface TicketPlace {
   unitId: string | null;
   commonArea: string | null;
   unitLocation: TicketUnitLocation | null;
+}
+
+/** A work order the compound opens itself (ADR 0064). */
+export interface NewWorkOrder {
+  /** The compound's: a sweep has no request to read it from. */
+  tenantId: string;
+  origin: StaffOrigin;
+  /** The asset it is for; its place is the ticket's. */
+  assetId?: string;
+  /** An inspection's finding without an asset: its area. */
+  commonAreaId?: string;
+  categoryId: string;
+  priority: TicketPriority;
+  /** Staff's words: what is to be done. */
+  description: string;
+  /** The staff member who answers for it: its reporter and creator. */
+  responsibleId: string;
+  /** Who opens it; null for the system (a plan's sweep). */
+  actorId: string | null;
+}
+
+/** What `insert` writes of a work order. */
+interface WorkOrderOf {
+  tenantId: string;
+  actorId: string | null;
+  origin: StaffOrigin;
+  assetId: string | null;
+  commonAreaId: string | null;
 }
 
 /** A resident books a check-up (ADR 0038). */
@@ -189,6 +218,10 @@ export interface DispatchQuery extends ResidentQuery {
   overdue?: boolean;
   /** Only tickets escalated in their current SLA cycle. */
   escalated?: boolean;
+  /** Only tickets of this origin (ADR 0064). */
+  origin?: TicketOrigin;
+  /** Only the work orders of this asset (ADR 0064). */
+  assetId?: string;
 }
 
 const PAGE = keysetCursor('createdAt');
@@ -499,6 +532,8 @@ export class TicketsService implements OnModuleInit {
                 q.technicianId ? { technicianId: q.technicianId } : {},
                 q.unitId ? { unitId: q.unitId } : {},
                 q.categoryId ? { categoryId: q.categoryId } : {},
+                q.origin ? { origin: q.origin } : {},
+                q.assetId ? { assetId: q.assetId } : {},
               ],
             });
       const slas = await this.sla.summaries(tx, page.items, now);
@@ -546,6 +581,8 @@ export class TicketsService implements OnModuleInit {
       ...(q.categoryId
         ? [Prisma.sql`t.category_id = ${q.categoryId}::uuid`]
         : []),
+      ...(q.origin ? [Prisma.sql`t.origin = ${q.origin}`] : []),
+      ...(q.assetId ? [Prisma.sql`t.asset_id = ${q.assetId}::uuid`] : []),
       ...(after
         ? [
             Prisma.sql`(t.created_at, t.id) < (${after.at}::timestamptz, ${after.id}::uuid)`,
@@ -936,6 +973,7 @@ export class TicketsService implements OnModuleInit {
     category: CategoryRef & { defaultPriority: TicketPriority },
     reporterId: string,
     preventive: PreventiveRequest | null = null,
+    workOrder: WorkOrderOf | null = null,
   ): Promise<Ticket> {
     // Only a preventive request may come without words (its note).
     const description = input.description?.trim() || null;
@@ -947,7 +985,9 @@ export class TicketsService implements OnModuleInit {
           params: { ...DESCRIPTION_LENGTH },
         },
       ]);
-    const tenantId = this.ctx.tenantId;
+    const tenantId = workOrder?.tenantId ?? this.ctx.tenantId;
+    // The system opens a plan's work orders (a sweep): no one acts then.
+    const actorId = workOrder ? workOrder.actorId : this.ctx.accountId;
     const [{ number }] = await tx.$queryRaw<{ number: number }[]>`
       INSERT INTO ticket_counters (tenant_id, last_number)
       VALUES (${tenantId}::uuid, 1)
@@ -963,8 +1003,15 @@ export class TicketsService implements OnModuleInit {
         commonArea: where.commonArea,
         unitLocation: where.unitLocation,
         categoryId: category.id,
-        createdById: this.ctx.accountId,
+        createdById: workOrder ? reporterId : this.ctx.accountId,
         reporterId,
+        ...(workOrder
+          ? {
+              origin: workOrder.origin,
+              assetId: workOrder.assetId,
+              commonAreaId: workOrder.commonAreaId,
+            }
+          : {}),
         priority: input.priority ?? category.defaultPriority,
         description,
         ...(preventive
@@ -980,7 +1027,7 @@ export class TicketsService implements OnModuleInit {
     await this.log.status(tx, ticket, {
       from: null,
       to: 'new',
-      actorId: this.ctx.accountId,
+      actorId,
       cycle: 1,
     });
     if (ticket.priority === 'emergency')
@@ -990,9 +1037,91 @@ export class TicketsService implements OnModuleInit {
         'ticket.emergency',
         ticket,
         { categoryKey: category.key },
-        this.ctx.accountId,
+        actorId,
       );
     return ticket;
+  }
+
+  /**
+   * A work order the compound opens itself (ADR 0064), in the caller's
+   * transaction: a plan's (the system's sweep, `actorId` null), an
+   * inspection's finding, a fault a technician found. It names its asset
+   * (shared-locked: not retired) or, for a finding without one, its common
+   * area; it is where the asset is. Its reporter and creator are the staff
+   * member who answers for it, so it reads as any ticket does, and the
+   * resident side sees it only by the one rule (a field ticket in a unit).
+   * The category says whose technicians do it; any of the compound's. The
+   * caller hands the id to `dispatchAfterCommit` once its transaction has
+   * committed.
+   */
+  async createWorkOrder(
+    tx: TenantTxClient,
+    input: NewWorkOrder,
+  ): Promise<Ticket> {
+    const id = newId();
+    let unitId: string | null = null;
+    let commonAreaId: string | null = input.commonAreaId ?? null;
+    if (input.assetId !== undefined) {
+      await tx.$queryRaw`SELECT id FROM assets WHERE id = ${input.assetId}::uuid FOR SHARE`;
+      const asset = await tx.asset.findUnique({ where: { id: input.assetId } });
+      if (!asset)
+        throw appError.notFound(ErrorCode.ASSET_NOT_FOUND, 'Asset not found');
+      if (asset.status === 'retired')
+        throw appError.conflict(
+          ErrorCode.ASSET_RETIRED,
+          'This asset is retired',
+        );
+      unitId = asset.unitId;
+      commonAreaId = asset.commonAreaId;
+    }
+    const area =
+      commonAreaId === null
+        ? null
+        : await tx.commonArea.findUniqueOrThrow({
+            where: { id: commonAreaId },
+            select: { nameEn: true },
+          });
+    const category = await tx.ticketCategory.findUnique({
+      where: { id: input.categoryId },
+    });
+    if (!category) throw categoryNotFound();
+    const ticket = await this.insert(
+      tx,
+      id,
+      { priority: input.priority, description: input.description },
+      {
+        unitId,
+        commonArea: area ? area.nameEn.slice(0, COMMON_AREA_LENGTH.max) : null,
+        unitLocation: null,
+      },
+      category,
+      input.responsibleId,
+      null,
+      {
+        tenantId: input.tenantId,
+        actorId: input.actorId,
+        origin: input.origin,
+        assetId: input.assetId ?? null,
+        commonAreaId: unitId === null ? commonAreaId : null,
+      },
+    );
+    await this.audit.record(tx, {
+      action: 'ticket.work_order_opened',
+      targetId: ticket.id,
+      metadata: {
+        origin: input.origin,
+        assetId: input.assetId ?? null,
+        commonAreaId: ticket.commonAreaId,
+        categoryKey: category.key,
+        priority: ticket.priority,
+      },
+    });
+    return ticket;
+  }
+
+  /** After the opening transaction committed: the dispatch engine tries them. */
+  async dispatchAfterCommit(ticketIds: readonly string[]): Promise<void> {
+    if (ticketIds.length) await this.engine.dispatch(ticketIds, 'created');
   }
 
   /**

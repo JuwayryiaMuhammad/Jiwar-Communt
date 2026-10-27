@@ -65,6 +65,8 @@ const RESIDENT = [
   'category',
   ...CATEGORY_REF,
   'commonArea',
+  // ADR 0064: who opened it.
+  'origin',
   // ADR 0038.
   'unitLocation',
   'kind',
@@ -107,6 +109,10 @@ const DISPATCH = [
   'category',
   ...CATEGORY_REF,
   'commonArea',
+  // ADR 0064: who opened it, and a work order's asset or area.
+  'origin',
+  'assetId',
+  'commonAreaId',
   // ADR 0038.
   'unitLocation',
   'kind',
@@ -136,6 +142,10 @@ const TECHNICIAN = [
   'category',
   ...CATEGORY_REF,
   'commonArea',
+  // ADR 0064: who opened it, and a work order's asset or area.
+  'origin',
+  'assetId',
+  'commonAreaId',
   // ADR 0038.
   'unitLocation',
   'kind',

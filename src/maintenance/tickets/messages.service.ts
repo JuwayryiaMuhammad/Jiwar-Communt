@@ -1,3 +1,4 @@
+import { residentParties, residentVisible } from './ticket-visibility';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { AccountType, Ticket, TicketMessage } from '@prisma/client';
 import { CommunityMaintenancePort } from '../../community';
@@ -207,11 +208,15 @@ export class MessagesService implements OnModuleInit {
       ...(await this.notices.dispatchers(tx)),
     ];
     if (internal) return staff;
+    // The resident side, by the one rule (ADR 0064): a work order's staff
+    // reporter is told as staff or not at all; the unit's primary of a
+    // field ticket in its unit reads it.
     return [
       ...staff,
-      ticket.reporterId,
-      ticket.createdById,
-      ticket.unitId ? await this.community.primaryOf(tx, ticket.unitId) : null,
+      ...residentParties(ticket),
+      ticket.unitId && residentVisible(ticket)
+        ? await this.community.primaryOf(tx, ticket.unitId)
+        : null,
     ];
   }
 }

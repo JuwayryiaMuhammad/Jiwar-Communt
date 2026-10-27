@@ -1,3 +1,4 @@
+import { residentReporter } from './ticket-visibility';
 import { Injectable } from '@nestjs/common';
 import type { Ticket, TicketHoldReason, TicketStatus } from '@prisma/client';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -151,14 +152,14 @@ export class WorkService {
     if (to === 'completed')
       await this.notices.send(
         tx,
-        [ticket.reporterId],
+        [residentReporter(ticket)],
         'ticket.completed',
         ticket,
       );
     else
       await this.notices.send(
         tx,
-        [ticket.reporterId],
+        [residentReporter(ticket)],
         'ticket.status_changed',
         ticket,
         holdReason ? { status: to, holdReason } : { status: to },

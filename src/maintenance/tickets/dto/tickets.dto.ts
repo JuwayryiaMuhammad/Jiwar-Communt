@@ -1,3 +1,4 @@
+import { TICKET_ORIGINS, type TicketOrigin } from '../ticket-visibility';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   TicketAttachmentKind,
@@ -198,6 +199,27 @@ export class DispatchTicketsQueryDto extends PageQueryDto {
   @IsOptional()
   @IsUUID()
   categoryId?: string;
+
+  @ApiProperty({
+    required: false,
+    enum: TICKET_ORIGINS,
+    enumName: 'TicketOrigin',
+    description:
+      'Only tickets of this origin (ADR 0064): `resident`, or a work order of the compound’s.',
+  })
+  @IsOptional()
+  @IsIn(TICKET_ORIGINS, withParams({ allowed: [...TICKET_ORIGINS] }))
+  origin?: TicketOrigin;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'Only the work orders of this asset.',
+  })
+  @IsOptional()
+  @IsUUID()
+  assetId?: string;
 
   @ApiProperty({
     required: false,

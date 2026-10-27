@@ -74,10 +74,16 @@ export class QuotesService implements OnModuleInit {
       const ticket = await this.access.load(tx, ticketId, 'dispatch', {
         lock: true,
       });
-      if (ticket.unitId === null || !QUOTABLE.includes(ticket.status))
+      // The compound's own work orders are its cost, never a household's
+      // to approve (ADR 0064).
+      if (
+        ticket.origin !== 'resident' ||
+        ticket.unitId === null ||
+        !QUOTABLE.includes(ticket.status)
+      )
         throw appError.conflict(
           ErrorCode.TICKET_QUOTE_NOT_ALLOWED,
-          'A quote is for a unit’s ticket before its work starts',
+          'A quote is for a resident’s unit ticket before its work starts',
           { params: { status: ticket.status } },
         );
       if (

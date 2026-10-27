@@ -4,6 +4,7 @@ import { CommunityMaintenancePort } from '../../community';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import { residentVisible } from './ticket-visibility';
 
 /**
  * Who reads a ticket, and so which view and which rules apply (ADR 0032).
@@ -21,7 +22,8 @@ export const ticketNotFound = () =>
  * see.
  *
  * - a resident sees the tickets they created or reported, and every ticket
- *   of a unit they are the primary of now;
+ *   of a unit they are the primary of now, among those the resident side
+ *   may ever see (`residentVisible`, ADR 0064);
  * - a technician sees only the tickets assigned to them now: a reassigned
  *   or declining technician loses them at once;
  * - dispatch sees every ticket of the compound.
@@ -55,7 +57,7 @@ export class TicketAccess {
     tx: TenantTxClient,
     ticket: Pick<
       Ticket,
-      'createdById' | 'reporterId' | 'unitId' | 'technicianId'
+      'createdById' | 'reporterId' | 'unitId' | 'technicianId' | 'origin'
     >,
     audience: Audience,
   ): Promise<boolean> {
@@ -66,6 +68,8 @@ export class TicketAccess {
       case 'technician':
         return ticket.technicianId === me;
       case 'resident':
+        // The compound's work orders: only what the one rule lets through.
+        if (!residentVisible(ticket)) return false;
         if (ticket.createdById === me || ticket.reporterId === me) return true;
         return (
           ticket.unitId !== null &&

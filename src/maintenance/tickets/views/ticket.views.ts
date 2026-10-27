@@ -1,3 +1,4 @@
+import { TICKET_ORIGINS, type TicketOrigin } from '../ticket-visibility';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   SlaClockState,
@@ -222,6 +223,13 @@ export class ResidentTicketView {
   @ApiProperty({ type: String, nullable: true })
   commonArea: string | null;
   @ApiProperty({
+    enum: TICKET_ORIGINS,
+    enumName: 'TicketOrigin',
+    description:
+      'Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`).',
+  })
+  origin: TicketOrigin;
+  @ApiProperty({
     enum: TicketUnitLocation,
     enumName: 'TicketUnitLocation',
     nullable: true,
@@ -303,6 +311,7 @@ export class ResidentTicketView {
       unitId: t.unitId,
       unitCode: r.unitCode,
       commonArea: t.commonArea,
+      origin: t.origin as TicketOrigin,
       unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
       kind: t.kind,
@@ -400,6 +409,27 @@ export class TechnicianTicketView {
   @ApiProperty({ type: String, nullable: true })
   commonArea: string | null;
   @ApiProperty({
+    enum: TICKET_ORIGINS,
+    enumName: 'TicketOrigin',
+    description:
+      'Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`).',
+  })
+  origin: TicketOrigin;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'A work order’s asset.',
+  })
+  assetId: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'A work order’s common area, when it names one.',
+  })
+  commonAreaId: string | null;
+  @ApiProperty({
     enum: TicketUnitLocation,
     enumName: 'TicketUnitLocation',
     nullable: true,
@@ -452,6 +482,9 @@ export class TechnicianTicketView {
       number: ticketNumber(t.number),
       unitCode: r.unitCode,
       commonArea: t.commonArea,
+      origin: t.origin as TicketOrigin,
+      assetId: t.assetId,
+      commonAreaId: t.commonAreaId,
       unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
       kind: t.kind,
@@ -541,6 +574,27 @@ export class DispatchTicketView {
   @ApiProperty({ type: String, nullable: true })
   commonArea: string | null;
   @ApiProperty({
+    enum: TICKET_ORIGINS,
+    enumName: 'TicketOrigin',
+    description:
+      'Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`).',
+  })
+  origin: TicketOrigin;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'A work order’s asset.',
+  })
+  assetId: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'A work order’s common area, when it names one.',
+  })
+  commonAreaId: string | null;
+  @ApiProperty({
     enum: TicketUnitLocation,
     enumName: 'TicketUnitLocation',
     nullable: true,
@@ -620,6 +674,9 @@ export class DispatchTicketView {
       number: ticketNumber(t.number),
       unit: t.unitId ? { id: t.unitId, code: r.unitCode ?? '' } : null,
       commonArea: t.commonArea,
+      origin: t.origin as TicketOrigin,
+      assetId: t.assetId,
+      commonAreaId: t.commonAreaId,
       unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
       kind: t.kind,

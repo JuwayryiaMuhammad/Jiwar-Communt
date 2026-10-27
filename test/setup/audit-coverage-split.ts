@@ -739,4 +739,7 @@ export const ASSETS_COVERAGE: readonly string[] = [
   'maintenance_document.removed',
   'asset_import.checked',
   'asset_import.applied',
+  'ticket.work_order_opened',
+  'ticket.work_accepted',
+  'ticket.work_sent_back',
 ];

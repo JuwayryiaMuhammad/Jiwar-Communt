@@ -14506,6 +14506,12 @@
       },
       "DispatchTicketDetailView": {
         "properties": {
+          "assetId": {
+            "description": "A work order’s asset.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "cancelledAt": {
             "format": "date-time",
             "nullable": true,
@@ -14520,6 +14526,12 @@
             "type": "string"
           },
           "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "A work order’s common area, when it names one.",
+            "format": "uuid",
             "nullable": true,
             "type": "string"
           },
@@ -14592,6 +14604,14 @@
           "number": {
             "example": "MT-000123",
             "type": "string"
+          },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketOrigin"
+              }
+            ],
+            "description": "Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`)."
           },
           "photos": {
             "items": {
@@ -14687,6 +14707,9 @@
           "number",
           "unit",
           "commonArea",
+          "origin",
+          "assetId",
+          "commonAreaId",
           "unitLocation",
           "category",
           "kind",
@@ -14767,10 +14790,22 @@
       },
       "DispatchTicketView": {
         "properties": {
+          "assetId": {
+            "description": "A work order’s asset.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "category": {
             "$ref": "#/components/schemas/TicketCategoryRefView"
           },
           "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "A work order’s common area, when it names one.",
+            "format": "uuid",
             "nullable": true,
             "type": "string"
           },
@@ -14818,6 +14853,14 @@
           "number": {
             "example": "MT-000123",
             "type": "string"
+          },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketOrigin"
+              }
+            ],
+            "description": "Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`)."
           },
           "preventiveService": {
             "allOf": [
@@ -14904,6 +14947,9 @@
           "number",
           "unit",
           "commonArea",
+          "origin",
+          "assetId",
+          "commonAreaId",
           "unitLocation",
           "category",
           "kind",
@@ -38607,6 +38653,14 @@
             "description": "Opened by management for the reporter; never who.",
             "type": "boolean"
           },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketOrigin"
+              }
+            ],
+            "description": "Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`)."
+          },
           "photos": {
             "items": {
               "$ref": "#/components/schemas/PhotoView"
@@ -38708,6 +38762,7 @@
           "unitId",
           "unitCode",
           "commonArea",
+          "origin",
           "unitLocation",
           "category",
           "kind",
@@ -38792,6 +38847,14 @@
             "example": "MT-000123",
             "type": "string"
           },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketOrigin"
+              }
+            ],
+            "description": "Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`)."
+          },
           "preventiveService": {
             "allOf": [
               {
@@ -38869,6 +38932,7 @@
           "unitId",
           "unitCode",
           "commonArea",
+          "origin",
           "unitLocation",
           "category",
           "kind",
@@ -50064,6 +50128,12 @@
       },
       "TechnicianTicketDetailView": {
         "properties": {
+          "assetId": {
+            "description": "A work order’s asset.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "assignedAt": {
             "format": "date-time",
             "nullable": true,
@@ -50073,6 +50143,12 @@
             "$ref": "#/components/schemas/TicketCategoryRefView"
           },
           "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "A work order’s common area, when it names one.",
+            "format": "uuid",
             "nullable": true,
             "type": "string"
           },
@@ -50118,6 +50194,14 @@
           "number": {
             "example": "MT-000123",
             "type": "string"
+          },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketOrigin"
+              }
+            ],
+            "description": "Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`)."
           },
           "photos": {
             "items": {
@@ -50193,6 +50277,9 @@
           "number",
           "unitCode",
           "commonArea",
+          "origin",
+          "assetId",
+          "commonAreaId",
           "unitLocation",
           "category",
           "kind",
@@ -50216,6 +50303,12 @@
       },
       "TechnicianTicketView": {
         "properties": {
+          "assetId": {
+            "description": "A work order’s asset.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "assignedAt": {
             "format": "date-time",
             "nullable": true,
@@ -50225,6 +50318,12 @@
             "$ref": "#/components/schemas/TicketCategoryRefView"
           },
           "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "A work order’s common area, when it names one.",
+            "format": "uuid",
             "nullable": true,
             "type": "string"
           },
@@ -50255,6 +50354,14 @@
           "number": {
             "example": "MT-000123",
             "type": "string"
+          },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketOrigin"
+              }
+            ],
+            "description": "Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`)."
           },
           "preventiveService": {
             "allOf": [
@@ -50310,6 +50417,9 @@
           "number",
           "unitCode",
           "commonArea",
+          "origin",
+          "assetId",
+          "commonAreaId",
           "unitLocation",
           "category",
           "kind",
@@ -50670,6 +50780,16 @@
         "enum": [
           "repair",
           "preventive"
+        ],
+        "type": "string"
+      },
+      "TicketOrigin": {
+        "description": "Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`).",
+        "enum": [
+          "resident",
+          "plan",
+          "inspection",
+          "field"
         ],
         "type": "string"
       },
@@ -70908,6 +71028,25 @@
             }
           },
           {
+            "description": "Only tickets of this origin (ADR 0064): `resident`, or a work order of the compound’s.",
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TicketOrigin"
+            }
+          },
+          {
+            "description": "Only the work orders of this asset.",
+            "in": "query",
+            "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "description": "`true`: only tickets that are not finished: every status but `closed` and `cancelled`. Combines with `status` (both must hold).",
             "in": "query",
             "name": "open",
@@ -71052,6 +71191,36 @@
           "maintenance"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/accept-work": {
+      "post": {
+        "operationId": "DispatchTicketsController_acceptWork",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a completed work order of the compound’s",
+        "tags": [
+          "maintenance"
+        ],
         "x-stability": "draft"
       }
     },
@@ -71637,6 +71806,46 @@
           }
         ],
         "summary": "Reassign a ticket to another technician",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/send-back": {
+      "post": {
+        "operationId": "DispatchTicketsController_sendBack",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send a completed work order back",
         "tags": [
           "maintenance"
         ],

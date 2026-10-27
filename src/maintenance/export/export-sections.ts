@@ -1,3 +1,4 @@
+import { residentPartyOf } from '../tickets/ticket-visibility';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import {
@@ -42,9 +43,8 @@ export class MaintenanceExportSections implements OnModuleInit {
   private async *authored(s: ExportSubject): AsyncIterable<ExportEntry> {
     const ids = await this.tenantTx.withTenantTx((tx) =>
       tx.ticket.findMany({
-        where: {
-          OR: [{ createdById: s.accountId }, { reporterId: s.accountId }],
-        },
+        // A resident's own tickets only (ADR 0064): never a work order.
+        where: residentPartyOf(s.accountId),
         orderBy: { createdAt: 'asc' },
         select: { id: true, number: true },
       }),

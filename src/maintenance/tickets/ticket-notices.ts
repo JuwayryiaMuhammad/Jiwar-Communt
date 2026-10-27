@@ -111,9 +111,11 @@ export class TicketNotices {
   ): Promise<string | null> {
     const t = await tx.ticket.findUnique({
       where: { id: ticketId },
-      select: { reporterId: true, unitId: true },
+      select: { reporterId: true, unitId: true, origin: true },
     });
-    if (!t?.unitId) return null;
+    // A work order's reporter is staff (ADR 0064): never "a reporter who
+    // left the unit".
+    if (!t?.unitId || t.origin !== 'resident') return null;
     const place = await this.community.placeIn(tx, t.reporterId, t.unitId);
     return place?.tickets ? null : t.reporterId;
   }

@@ -1,3 +1,4 @@
+import { residentVisible } from '../tickets/ticket-visibility';
 import { Injectable } from '@nestjs/common';
 import type { Ticket, TicketVisit, VisitSide } from '@prisma/client';
 import { CommunityMaintenancePort } from '../../community';
@@ -118,7 +119,9 @@ export class VisitAccess {
   ): Promise<Ticket> {
     const me = this.ctx.accountId;
     const ticket = await tx.ticket.findUnique({ where: { id: ticketId } });
-    if (!ticket) throw ticketNotFound();
+    // The compound's work orders, by the one rule (ADR 0064), before any
+    // way in: a household reaches a field ticket's visits, nothing else.
+    if (!ticket || !residentVisible(ticket)) throw ticketNotFound();
     if (
       ticket.unitId !== null &&
       (await this.community.mayConsent(tx, me, ticket.unitId))

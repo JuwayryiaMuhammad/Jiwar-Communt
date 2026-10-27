@@ -1,4 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { auditReaders } from '../setup/audit';
 import { fileHelpers } from '../setup/files';
 import { ASSETS_COVERAGE } from '../setup/audit-coverage-split';
@@ -287,6 +289,127 @@ describe('Audit coverage — assets, plans and inspections', () => {
       const two = await single(s.c, 'asset_import.applied', checked.id);
       expect(two.metadata).toEqual({ created: 1 });
       for (const row of [one, two])
+        expect(JSON.stringify(row)).not.toMatch(/AUDIT-/);
+    });
+  });
+
+  describe('work orders', () => {
+    it('ticket.work_order_opened, .work_accepted, .work_sent_back — origin, asset, codes; never the words', async () => {
+      await a.specialize(s, s.techs[0], ['plumbing']);
+      await a.setAvailability(s.c, s.techs[0].id, 'available');
+      const pump = (
+        (
+          await a
+            .http('get', '/maintenance/asset-types', s.manager.token)
+            .expect(200)
+        ).body as {
+          data: { id: string; key: string }[];
+        }
+      ).data.find((t) => t.key === 'pump')!.id;
+      const area = await a.area(s);
+      const assetId = (
+        (
+          await a
+            .http('post', '/maintenance/assets', s.manager.token, {
+              code: `AW-${Date.now()}`,
+              typeId: pump,
+              commonAreaId: area.id,
+              nameAr: 'مضخة',
+              nameEn: 'Pump',
+            })
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      const categoryId = await a.categoryId(s.c, 'plumbing');
+      const ticket = await a.x.asManager(s.c, () =>
+        h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+          h.moduleRef.get(TicketsService).createWorkOrder(tx, {
+            tenantId: s.c.tenantId,
+            origin: 'inspection',
+            assetId,
+            categoryId,
+            priority: 'urgent',
+            description: 'AUDIT-words of the finding',
+            responsibleId: s.supervisor.id,
+            actorId: s.supervisor.id,
+          }),
+        ),
+      );
+      const opened = await single(s.c, 'ticket.work_order_opened', ticket.id);
+      expect(opened.metadata).toEqual({
+        origin: 'inspection',
+        assetId,
+        commonAreaId: area.id,
+        categoryKey: 'plumbing',
+        priority: 'urgent',
+      });
+      const work = async () => {
+        await a
+          .http(
+            'post',
+            `/maintenance/tickets/${ticket.id}/assign`,
+            s.supervisor.token,
+            {
+              technicianId: s.techs[0].id,
+            },
+          )
+          .expect((r) => expect([200, 201, 204, 409]).toContain(r.status));
+        await a
+          .http(
+            'post',
+            `/technician/tickets/${ticket.id}/start`,
+            s.techs[0].token,
+          )
+          .expect(204);
+        await a
+          .http(
+            'post',
+            `/technician/tickets/${ticket.id}/complete`,
+            s.techs[0].token,
+          )
+          .expect(204);
+      };
+      await work();
+      await a
+        .http(
+          'post',
+          `/maintenance/tickets/${ticket.id}/send-back`,
+          s.supervisor.token,
+          {
+            reasonCode: 'incomplete',
+            reason: 'AUDIT-half done',
+          },
+        )
+        .expect(204);
+      const back = await single(s.c, 'ticket.work_sent_back', ticket.id);
+      expect(back).toMatchObject({
+        actorId: s.supervisor.id,
+        metadata: { origin: 'inspection', reasonCode: 'incomplete', cycle: 1 },
+      });
+      await a
+        .http(
+          'post',
+          `/technician/tickets/${ticket.id}/start`,
+          s.techs[0].token,
+        )
+        .expect(204);
+      await a
+        .http(
+          'post',
+          `/technician/tickets/${ticket.id}/complete`,
+          s.techs[0].token,
+        )
+        .expect(204);
+      await a
+        .http(
+          'post',
+          `/maintenance/tickets/${ticket.id}/accept-work`,
+          s.supervisor.token,
+        )
+        .expect(204);
+      const accepted = await single(s.c, 'ticket.work_accepted', ticket.id);
+      expect(accepted.metadata).toEqual({ origin: 'inspection', cycle: 2 });
+      for (const row of [opened, back, accepted])
         expect(JSON.stringify(row)).not.toMatch(/AUDIT-/);
     });
   });

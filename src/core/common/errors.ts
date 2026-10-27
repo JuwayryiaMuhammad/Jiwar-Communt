@@ -1363,6 +1363,8 @@ export const ErrorCode = {
   ASSET_IMPORT_UNREADABLE: 'ASSET_IMPORT_UNREADABLE',
   /** Only a valid import is applied, once; params.status (409). */
   ASSET_IMPORT_NOT_VALID: 'ASSET_IMPORT_NOT_VALID',
+  /** Only the compound's own work orders are accepted or sent back by dispatch (409). */
+  TICKET_NOT_WORK_ORDER: 'TICKET_NOT_WORK_ORDER',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -28,6 +28,7 @@ import {
   type LocalDate,
 } from '../schedules/local-dates';
 import { TicketAccess } from '../tickets/ticket-access';
+import { UNFINISHED } from '../tickets/ticket-rules';
 import {
   ageYears,
   health,
@@ -639,33 +640,44 @@ export class AssetsService implements OnModuleInit {
     return asset;
   }
 
-  /** Appends to the asset's history, timed by the database. */
+  /**
+   * Appends to the asset's history, timed by the database. The actor is
+   * the signed-in account, or nobody for the system's own work (a sweep:
+   * then the compound is the asset's, passed in).
+   */
   async event(
     tx: TenantTxClient,
     assetId: string,
     kind: AssetEvent['kind'],
     v: { from?: string | null; to?: string | null; reason?: string | null },
+    tenantId: string = this.ctx.tenantId,
   ): Promise<void> {
     await tx.$executeRaw`
       INSERT INTO asset_events
         (id, tenant_id, asset_id, kind, from_value, to_value, reason_code,
          actor_account_id, occurred_at)
-      VALUES (${newId()}::uuid, ${this.ctx.tenantId}::uuid, ${assetId}::uuid,
+      VALUES (${newId()}::uuid, ${tenantId}::uuid, ${assetId}::uuid,
               ${kind}, ${v.from ?? null}, ${v.to ?? null}, ${v.reason ?? null},
-              ${this.ctx.accountId ?? null}::uuid,
+              ${this.ctx.accountIdOrNull()}::uuid,
               date_trunc('milliseconds', clock_timestamp()))`;
   }
 
   /**
    * What lowers an asset's health besides its own card (ADR 0064): its
-   * open corrective tickets and its overdue planned work. The register
-   * alone has neither; later commits of the phase count them.
+   * open corrective tickets (any but a plan's) and its overdue planned work.
    */
-  protected signals(
-    _tx: TenantTxClient,
-    _assetId: string,
+  protected async signals(
+    tx: TenantTxClient,
+    assetId: string,
   ): Promise<{ openCorrective: number; overduePlanned: number }> {
-    return Promise.resolve({ openCorrective: 0, overduePlanned: 0 });
+    const openCorrective = await tx.ticket.count({
+      where: {
+        assetId,
+        origin: { not: 'plan' },
+        status: { in: [...UNFINISHED] },
+      },
+    });
+    return { openCorrective, overduePlanned: 0 };
   }
 
   private async requireBuildings(

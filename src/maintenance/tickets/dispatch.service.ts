@@ -1,3 +1,4 @@
+import { residentReporter } from './ticket-visibility';
 import { Injectable } from '@nestjs/common';
 import type { TicketPriority } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
@@ -160,7 +161,7 @@ export class DispatchService {
       await this.notices.assigned(tx, updated, technicianId);
       await this.notices.send(
         tx,
-        [ticket.reporterId],
+        [residentReporter(ticket)],
         'ticket.status_changed',
         ticket,
         { status: 'assigned' },
@@ -245,7 +246,7 @@ export class DispatchService {
       if (ticket.status !== 'assigned')
         await this.notices.send(
           tx,
-          [ticket.reporterId],
+          [residentReporter(ticket)],
           'ticket.status_changed',
           ticket,
           { status: 'assigned' },

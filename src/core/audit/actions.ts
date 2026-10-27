@@ -1767,6 +1767,11 @@ export const AUDIT_ACTIONS = {
   // An asset sheet: metadata rowCount, errorCount; created when applied.
   'asset_import.checked': { log: 'tenant', target: 'asset_import' },
   'asset_import.applied': { log: 'tenant', target: 'asset_import' },
+  // The compound's own work orders (ADR 0064). metadata: origin, the asset
+  // or area, the category's key and the priority; never the words.
+  'ticket.work_order_opened': { log: 'tenant', target: 'ticket' },
+  'ticket.work_accepted': { log: 'tenant', target: 'ticket' },
+  'ticket.work_sent_back': { log: 'tenant', target: 'ticket' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

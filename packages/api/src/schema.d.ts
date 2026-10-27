@@ -5419,6 +5419,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/accept-work": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a completed work order of the compound’s */
+        post: operations["DispatchTicketsController_acceptWork"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/assign": {
         parameters: {
             query?: never;
@@ -5619,6 +5636,23 @@ export interface paths {
         put?: never;
         /** Reassign a ticket to another technician */
         post: operations["DispatchTicketsController_reassign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/send-back": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a completed work order back */
+        post: operations["DispatchTicketsController_sendBack"];
         delete?: never;
         options?: never;
         head?: never;
@@ -21804,12 +21838,22 @@ export interface components {
             weightOnHold: number;
         };
         DispatchTicketDetailView: {
+            /**
+             * Format: uuid
+             * @description A work order’s asset.
+             */
+            assetId: string | null;
             /** Format: date-time */
             cancelledAt: string | null;
             category: components["schemas"]["TicketCategoryRefView"];
             /** Format: date-time */
             closedAt: string | null;
             commonArea: string | null;
+            /**
+             * Format: uuid
+             * @description A work order’s common area, when it names one.
+             */
+            commonAreaId: string | null;
             /** Format: date-time */
             completedAt: string | null;
             confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
@@ -21834,6 +21878,8 @@ export interface components {
             kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
+            /** @description Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`). */
+            origin: components["schemas"]["TicketOrigin"];
             photos: components["schemas"]["PhotoView"][];
             /** @description A preventive ticket’s service; null for a repair. */
             preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
@@ -21876,8 +21922,18 @@ export interface components {
             responseState: components["schemas"]["SlaClockState"] | null;
         };
         DispatchTicketView: {
+            /**
+             * Format: uuid
+             * @description A work order’s asset.
+             */
+            assetId: string | null;
             category: components["schemas"]["TicketCategoryRefView"];
             commonArea: string | null;
+            /**
+             * Format: uuid
+             * @description A work order’s common area, when it names one.
+             */
+            commonAreaId: string | null;
             confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
             /** Format: date-time */
             createdAt: string;
@@ -21894,6 +21950,8 @@ export interface components {
             kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
+            /** @description Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`). */
+            origin: components["schemas"]["TicketOrigin"];
             /** @description A preventive ticket’s service; null for a repair. */
             preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
@@ -29318,6 +29376,8 @@ export interface components {
             number: string;
             /** @description Opened by management for the reporter; never who. */
             onBehalf: boolean;
+            /** @description Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`). */
+            origin: components["schemas"]["TicketOrigin"];
             photos: components["schemas"]["PhotoView"][];
             /** @description A preventive ticket’s service; null for a repair. */
             preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
@@ -29368,6 +29428,8 @@ export interface components {
             kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
+            /** @description Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`). */
+            origin: components["schemas"]["TicketOrigin"];
             /** @description A preventive ticket’s service; null for a repair. */
             preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
@@ -32623,10 +32685,20 @@ export interface components {
             kind: components["schemas"]["VisitReceiverKind"];
         };
         TechnicianTicketDetailView: {
+            /**
+             * Format: uuid
+             * @description A work order’s asset.
+             */
+            assetId: string | null;
             /** Format: date-time */
             assignedAt: string | null;
             category: components["schemas"]["TicketCategoryRefView"];
             commonArea: string | null;
+            /**
+             * Format: uuid
+             * @description A work order’s common area, when it names one.
+             */
+            commonAreaId: string | null;
             confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
             /** Format: date-time */
             createdAt: string;
@@ -32640,6 +32712,8 @@ export interface components {
             kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
+            /** @description Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`). */
+            origin: components["schemas"]["TicketOrigin"];
             photos: components["schemas"]["PhotoView"][];
             /** @description A preventive ticket’s service; null for a repair. */
             preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
@@ -32663,10 +32737,20 @@ export interface components {
             unitLocation: components["schemas"]["TicketUnitLocation"] | null;
         };
         TechnicianTicketView: {
+            /**
+             * Format: uuid
+             * @description A work order’s asset.
+             */
+            assetId: string | null;
             /** Format: date-time */
             assignedAt: string | null;
             category: components["schemas"]["TicketCategoryRefView"];
             commonArea: string | null;
+            /**
+             * Format: uuid
+             * @description A work order’s common area, when it names one.
+             */
+            commonAreaId: string | null;
             /** Format: date-time */
             createdAt: string;
             holdReason: components["schemas"]["TicketHoldReason"] | null;
@@ -32676,6 +32760,8 @@ export interface components {
             kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
+            /** @description Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`). */
+            origin: components["schemas"]["TicketOrigin"];
             /** @description A preventive ticket’s service; null for a repair. */
             preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
@@ -32783,6 +32869,11 @@ export interface components {
          * @enum {string}
          */
         TicketKind: "repair" | "preventive";
+        /**
+         * @description Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`).
+         * @enum {string}
+         */
+        TicketOrigin: "resident" | "plan" | "inspection" | "field";
         TicketPhotoDto: {
             /**
              * Format: uuid
@@ -42330,6 +42421,10 @@ export interface operations {
                 technicianId?: string;
                 unitId?: string;
                 categoryId?: string;
+                /** @description Only tickets of this origin (ADR 0064): `resident`, or a work order of the compound’s. */
+                origin?: components["schemas"]["TicketOrigin"];
+                /** @description Only the work orders of this asset. */
+                assetId?: string;
                 /** @description `true`: only tickets that are not finished: every status but `closed` and `cancelled`. Combines with `status` (both must hold). */
                 open?: "true" | "false";
                 /** @description `true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off. */
@@ -42397,6 +42492,25 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DispatchTicketDetailView"];
                 };
+            };
+        };
+    };
+    DispatchTicketsController_acceptWork: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -42710,6 +42824,29 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ReassignDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DispatchTicketsController_sendBack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonDto"];
             };
         };
         responses: {

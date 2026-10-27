@@ -25,7 +25,10 @@ export interface EscalationState {
   canEscalate: boolean;
 }
 
-type EscalationTicket = Pick<Ticket, 'id' | 'status' | 'holdReason' | 'unitId'>;
+type EscalationTicket = Pick<
+  Ticket,
+  'id' | 'status' | 'holdReason' | 'unitId' | 'origin'
+>;
 
 /**
  * Resident escalation (ADR 0038): a resident asks for attention on a
@@ -181,7 +184,9 @@ export class EscalationService implements OnModuleInit {
         overdue: sla?.overdueClocks ?? [],
         escalated: mine !== undefined,
         escalatedAt: mine?.createdAt ?? null,
-        mayAct: mayAct.get(t.unitId)!,
+        // A resident escalates their own tickets, never a work order of
+        // the compound's they see (ADR 0064).
+        mayAct: t.origin === 'resident' && mayAct.get(t.unitId)!,
       };
     });
   }

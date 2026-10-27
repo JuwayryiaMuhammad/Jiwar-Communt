@@ -49,6 +49,7 @@ type SlaTicket = Pick<
   | 'tenantId'
   | 'number'
   | 'kind'
+  | 'origin'
   | 'status'
   | 'holdReason'
   | 'priority'
@@ -58,10 +59,11 @@ type SlaTicket = Pick<
 /**
  * The SLA measures repairs (ADR 0038): a check-up booked for next week is
  * not late after a day. A preventive ticket never has a clock, so it is
- * never breached, never overdue and never escalated.
+ * never breached, never overdue and never escalated; nor has a planned
+ * job, which has its own due date and grace (ADR 0064).
  */
-export const measures = (ticket: Pick<Ticket, 'kind'>): boolean =>
-  ticket.kind !== 'preventive';
+export const measures = (ticket: Pick<Ticket, 'kind' | 'origin'>): boolean =>
+  ticket.kind !== 'preventive' && ticket.origin !== 'plan';
 
 /**
  * Writes the SLA (ADR 0034): append-only events and, in the same

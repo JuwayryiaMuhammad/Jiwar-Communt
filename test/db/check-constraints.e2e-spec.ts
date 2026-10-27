@@ -547,6 +547,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // The inbox (ADR 0058): nullable columns only under IS [NOT] NULL.
   notifications_archived_is_read: {},
   // Quotes (ADR 0058).
+  // The compound's work orders (ADR 0064).
+  tickets_origin_known: {},
+  tickets_origin_shape: {},
+  tickets_common_area_id_has_label: {},
   // The asset register (ADR 0064).
   asset_types_key_shape: {},
   asset_types_names_length: {},

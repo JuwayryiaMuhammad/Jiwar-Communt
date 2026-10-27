@@ -3492,6 +3492,12 @@ model Ticket {
   /// status or cycle change, a non-internal message, a photo). Kept by
   /// triggers; nothing in the app writes it.
   lastActivityAt      DateTime                  @default(now()) @map("last_activity_at") @db.Timestamptz(3)
+  /// resident, plan, inspection, field (ADR 0064): who opened it. Never changes.
+  origin              String                    @default("resident")
+  /// The asset a compound's work order is for (ADR 0064).
+  assetId             String?                   @map("asset_id") @db.Uuid
+  /// The area of an inspection's finding without an asset; its name is `commonArea`.
+  commonAreaId        String?                   @map("common_area_id") @db.Uuid
 
   unit              Unit?              @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   category          TicketCategory     @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
@@ -3514,6 +3520,7 @@ model Ticket {
   @@index([tenantId, createdById], map: "tickets_tenant_id_created_by_idx")
   @@index([tenantId, unitId])
   @@index([tenantId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "tickets_tenant_id_last_activity_idx")
+  @@index([tenantId, origin, createdAt(sort: Desc), id(sort: Desc)], map: "tickets_origin_idx")
   @@map("tickets")
 }
 

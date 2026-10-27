@@ -1,3 +1,4 @@
+import { residentReporter } from '../tickets/ticket-visibility';
 import { Injectable, Logger } from '@nestjs/common';
 import type { DispatchTrigger, Ticket } from '@prisma/client';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -322,7 +323,7 @@ export class DispatchEngine {
     await this.notices.assigned(tx, updated, technicianId);
     await this.notices.send(
       tx,
-      [ticket.reporterId],
+      [residentReporter(ticket)],
       'ticket.status_changed',
       ticket,
       { status: 'assigned' },

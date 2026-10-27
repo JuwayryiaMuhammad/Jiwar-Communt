@@ -1,3 +1,8 @@
+import {
+  RESIDENT_VISIBLE,
+  residentReporter,
+  residentVisible,
+} from '../tickets/ticket-visibility';
 import { Injectable } from '@nestjs/common';
 import type {
   Ticket,
@@ -520,7 +525,10 @@ export class VisitsService {
           'Only an adult who lives here sees its visits',
         );
       const visits = await tx.ticketVisit.findMany({
-        where: { status: { in: [...ACTIVE] }, ticket: { unitId } },
+        where: {
+          status: { in: [...ACTIVE] },
+          ticket: { unitId, ...RESIDENT_VISIBLE },
+        },
         include: {
           ticket: {
             select: {
@@ -633,19 +641,22 @@ export class VisitsService {
    * Everyone on the residents' side: those who live there, and the reporter
    * while they still have `tickets` on the unit. A notice carries the
    * window, so a reporter who left is never told (ADR 0034); checked here,
-   * in the transaction that writes it.
+   * in the transaction that writes it. A work order's side is the one rule's
+   * (ADR 0064): a field ticket in a unit, its household; none other.
    */
   async residents(
     tx: TenantTxClient,
-    ticket: Pick<Ticket, 'unitId' | 'reporterId'>,
+    ticket: Pick<Ticket, 'unitId' | 'reporterId' | 'origin'>,
   ): Promise<string[]> {
-    if (!ticket.unitId) return [ticket.reporterId];
+    if (!residentVisible(ticket)) return [];
+    const reporter = residentReporter(ticket);
+    if (!ticket.unitId) return reporter ? [reporter] : [];
     const out = await this.community.consenters(tx, ticket.unitId);
     if (
-      (await this.community.placeIn(tx, ticket.reporterId, ticket.unitId))
-        ?.tickets
+      reporter &&
+      (await this.community.placeIn(tx, reporter, ticket.unitId))?.tickets
     )
-      out.push(ticket.reporterId);
+      out.push(reporter);
     return out;
   }
 

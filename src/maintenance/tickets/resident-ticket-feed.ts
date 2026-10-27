@@ -4,6 +4,7 @@ import { CommunityMaintenancePort } from '../../community';
 import { RequestContext } from '../../core/common/cls/request-context';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { ticketNumber } from './ticket-rules';
+import { RESIDENT_VISIBLE } from './ticket-visibility';
 
 /** A ticket as "all my requests" lists it (ADR 0039): codes and times only. */
 export interface FeedTicket {
@@ -26,17 +27,24 @@ export interface FeedCursor {
 /**
  * Who sees a ticket on the resident side (ADR 0032): the tickets they
  * created or reported, and every ticket of a unit they are the primary of
- * now. One definition, for the resident's ticket list and for the feed.
+ * now; of the compound's own work orders, only what RESIDENT_VISIBLE lets
+ * through (ADR 0064). One definition, for the resident's ticket list, the
+ * feed, "my requests" and its search, and the daily brief.
  */
 export function residentTickets(
   me: string,
   primaryOf: readonly string[],
 ): Prisma.TicketWhereInput {
   return {
-    OR: [
-      { createdById: me },
-      { reporterId: me },
-      ...(primaryOf.length ? [{ unitId: { in: [...primaryOf] } }] : []),
+    AND: [
+      RESIDENT_VISIBLE,
+      {
+        OR: [
+          { createdById: me },
+          { reporterId: me },
+          ...(primaryOf.length ? [{ unitId: { in: [...primaryOf] } }] : []),
+        ],
+      },
     ],
   };
 }

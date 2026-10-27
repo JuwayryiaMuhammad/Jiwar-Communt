@@ -1,3 +1,4 @@
+import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
 import {
   Body,
   Controller,
@@ -242,6 +243,30 @@ export class DispatchTicketsController {
     @Body() dto: ReasonCodeDto,
   ): Promise<void> {
     return this.confirmation.cancelByDispatcher(id, dto.reasonCode);
+  }
+
+  /** A completed work order of the compound's, done well (ADR 0064). */
+  @Post(':id/accept-work')
+  @ApiOperation({ summary: 'Close a completed work order of the compound’s' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  acceptWork(@Param('id', parseId()) id: string): Promise<void> {
+    return this.confirmation.acceptWork(id);
+  }
+
+  /**
+   * A completed work order not done right (ADR 0064): `reasonCode` from
+   * `ticketReject`; `reason` goes to the thread for the technician.
+   */
+  @Post(':id/send-back')
+  @ApiOperation({ summary: 'Send a completed work order back' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  sendBack(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonDto,
+  ): Promise<void> {
+    return this.confirmation.sendBack(id, reasonOf(dto));
   }
 
   /** The thread, oldest first, internal messages included. */

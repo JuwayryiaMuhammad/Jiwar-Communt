@@ -22762,6 +22762,18 @@
                   "value": ""
                 },
                 {
+                  "description": "Only tickets of this origin (ADR 0064): `resident`, or a work order of the compound’s.",
+                  "disabled": true,
+                  "key": "origin",
+                  "value": ""
+                },
+                {
+                  "description": "Only the work orders of this asset.",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                },
+                {
                   "description": "`true`: only tickets that are not finished: every status but `closed` and `cancelled`. Combines with `status` (both must hold).",
                   "disabled": true,
                   "key": "open",
@@ -22842,6 +22854,35 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close a completed work order of the compound’s",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                ":id",
+                "accept-work"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/accept-work",
               "variable": [
                 {
                   "description": "",
@@ -23384,6 +23425,50 @@
                 "reassign"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/reassign",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send a completed work order back",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\",\n  \"reason\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                ":id",
+                "send-back"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/send-back",
               "variable": [
                 {
                   "description": "",

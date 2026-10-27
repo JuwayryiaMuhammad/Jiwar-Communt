@@ -423,3 +423,32 @@ export const ASSET_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+/** The compound's own work orders (ADR 0064): dispatch closes or sends back. */
+export const WORK_ORDER_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/accept-work',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: { params: (w) => ({ id: w.bTicketId }), code: 'TICKET_NOT_FOUND' },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/send-back',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({ reasonCode: 'not_fixed', reason: 'Still leaking' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: ['x'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+];

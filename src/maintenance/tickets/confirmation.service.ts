@@ -1,3 +1,5 @@
+import { dbNow } from '../db-clock';
+import { residentReporter } from './ticket-visibility';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Ticket } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
@@ -167,6 +169,85 @@ export class ConfirmationService implements OnModuleInit {
   }
 
   /**
+   * A work order of the compound's, done well (ADR 0064): dispatch closes
+   * it, as a resident confirms theirs (without a rating: that is the
+   * residents' word on their service). A resident's ticket is theirs to
+   * confirm: 409 TICKET_NOT_WORK_ORDER.
+   */
+  acceptWork(id: string): Promise<void> {
+    const me = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const ticket = await this.workOrder(tx, id);
+      assertCan(ticket, 'confirm');
+      await tx.ticket.update({
+        where: { id },
+        data: {
+          status: 'closed',
+          confirmationStatus: 'confirmed',
+          closedAt: await dbNow(tx),
+        },
+      });
+      await this.log.status(tx, ticket, {
+        from: ticket.status,
+        to: 'closed',
+        actorId: me,
+        cycle: ticket.cycle,
+      });
+      await this.audit.record(tx, {
+        action: 'ticket.work_accepted',
+        targetId: id,
+        metadata: { origin: ticket.origin, cycle: ticket.cycle },
+      });
+      await this.notices.send(
+        tx,
+        [ticket.technicianId],
+        'ticket.status_changed',
+        ticket,
+        { status: 'closed' },
+        me,
+      );
+    });
+  }
+
+  /**
+   * A work order not done right (ADR 0064): back, as a resident's
+   * rejection sends theirs back (a reason code, and a note in the thread
+   * for the technician).
+   */
+  async sendBack(id: string, reason: ReasonInput): Promise<void> {
+    const r = requireReasonCode(reason, REASON_CODES.ticketReject);
+    const requeued = await this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const ticket = await this.workOrder(tx, id);
+      assertCan(ticket, 'reject');
+      const back = await this.goBack(tx, ticket, 'rejected', r);
+      await this.audit.record(tx, {
+        action: 'ticket.work_sent_back',
+        targetId: id,
+        metadata: {
+          origin: ticket.origin,
+          reasonCode: r.code,
+          cycle: ticket.cycle,
+        },
+      });
+      return back;
+    });
+    if (requeued) await this.engine.afterRelease([id]);
+  }
+
+  /** A compound's work order, locked, for dispatch. */
+  private async workOrder(tx: TenantTxClient, id: string): Promise<Ticket> {
+    const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
+    if (ticket.origin === 'resident')
+      throw appError.conflict(
+        ErrorCode.TICKET_NOT_WORK_ORDER,
+        'A resident confirms their own ticket',
+      );
+    return ticket;
+  }
+
+  /**
    * Closes completed tickets nobody confirmed within the compound's
    * `autoCloseHours`. Rows are claimed with SKIP LOCKED: a confirmation or
    * a rejection holding the row wins, and the sweep leaves it.
@@ -202,7 +283,7 @@ export class ConfirmationService implements OnModuleInit {
         });
         await this.notices.send(
           tx,
-          [ticket.reporterId],
+          [residentReporter(ticket)],
           'ticket.auto_closed',
           ticket,
         );
@@ -260,7 +341,7 @@ export class ConfirmationService implements OnModuleInit {
     });
     await this.notices.send(
       tx,
-      [ticket.technicianId, ticket.reporterId],
+      [ticket.technicianId, residentReporter(ticket)],
       'ticket.status_changed',
       ticket,
       { status: 'cancelled' },

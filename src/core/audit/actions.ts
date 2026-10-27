@@ -1807,6 +1807,24 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'maintenance_plan',
   },
+  // Inspections (ADR 0064): codes, ids, days; a round's title as
+  // { changed: true }. metadata: reasonCode; an inspection's findings and
+  // its attestation's hash.
+  'inspection_round.created': {
+    log: 'tenant',
+    target: 'inspection_round',
+    sensitive: ['title'],
+  },
+  'inspection_round.updated': {
+    log: 'tenant',
+    target: 'inspection_round',
+    sensitive: ['title'],
+  },
+  'inspection_round.deactivated': { log: 'tenant', target: 'inspection_round' },
+  'inspection_round.reactivated': { log: 'tenant', target: 'inspection_round' },
+  'inspection.created': { log: 'tenant', target: 'inspection' },
+  'inspection.cancelled': { log: 'tenant', target: 'inspection' },
+  'inspection.submitted': { log: 'tenant', target: 'inspection' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

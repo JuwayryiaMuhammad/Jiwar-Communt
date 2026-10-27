@@ -11698,6 +11698,40 @@
         ],
         "type": "object"
       },
+      "CreateInspectionDto": {
+        "properties": {
+          "assetId": {
+            "description": "An active asset not in a unit.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "assigneeId": {
+            "description": "Holds inspections.perform.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "checklistId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "An active common area.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "Today or later, the compound’s day.",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "checklistId",
+          "assigneeId",
+          "dueOn"
+        ],
+        "type": "object"
+      },
       "CreateLaneRequestDto": {
         "properties": {
           "gateId": {
@@ -12602,6 +12636,68 @@
           "guardId",
           "schedule",
           "effectiveFrom"
+        ],
+        "type": "object"
+      },
+      "CreateRoundDto": {
+        "properties": {
+          "anchorOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "assetId": {
+            "description": "An active asset not in a unit.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "assigneeId": {
+            "description": "Holds inspections.perform.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "checklistId": {
+            "description": "An active checklist for inspections.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "An active common area.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "every": {
+            "maximum": 365,
+            "minimum": 1,
+            "type": "number"
+          },
+          "leadDays": {
+            "default": 2,
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "checklistId",
+          "assigneeId",
+          "every",
+          "unit",
+          "anchorOn"
         ],
         "type": "object"
       },
@@ -24104,6 +24200,453 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "InspectionFindingView": {
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ticketStatus": {
+            "description": "The follow-up’s status now.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "ticketId",
+          "ticketStatus"
+        ],
+        "type": "object"
+      },
+      "InspectionReportRowView": {
+        "properties": {
+          "assigneeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "checklistKey": {
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "failedItems": {
+            "type": "number"
+          },
+          "findings": {
+            "type": "number"
+          },
+          "findingsClosed": {
+            "type": "number"
+          },
+          "inspectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "onTime": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "in_progress",
+              "submitted",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "submittedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "targetCode": {
+            "type": "string"
+          },
+          "targetKind": {
+            "enum": [
+              "asset",
+              "area"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "inspectionId",
+          "dueOn",
+          "status",
+          "targetKind",
+          "targetCode",
+          "checklistKey",
+          "assigneeId",
+          "submittedOn",
+          "onTime",
+          "failedItems",
+          "findings",
+          "findingsClosed"
+        ],
+        "type": "object"
+      },
+      "InspectionReportTotalsView": {
+        "properties": {
+          "cancelled": {
+            "type": "number"
+          },
+          "closureRate": {
+            "description": "Closed findings of all, 0–1; null with none.",
+            "nullable": true,
+            "type": "number"
+          },
+          "failedItems": {
+            "type": "number"
+          },
+          "findings": {
+            "type": "number"
+          },
+          "findingsClosed": {
+            "type": "number"
+          },
+          "inspections": {
+            "type": "number"
+          },
+          "onTime": {
+            "description": "Submitted by their day.",
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "overdue": {
+            "description": "Open past their day.",
+            "type": "number"
+          },
+          "submitted": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "inspections",
+          "submitted",
+          "cancelled",
+          "open",
+          "overdue",
+          "onTime",
+          "failedItems",
+          "findings",
+          "findingsClosed",
+          "closureRate"
+        ],
+        "type": "object"
+      },
+      "InspectionReportView": {
+        "properties": {
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionReportRowView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/InspectionReportTotalsView"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "totals",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "InspectionRoundView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "anchorOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assigneeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "checklistId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "every": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadDays": {
+            "type": "number"
+          },
+          "nextDueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "checklistId",
+          "assetId",
+          "commonAreaId",
+          "assigneeId",
+          "every",
+          "unit",
+          "anchorOn",
+          "nextDueOn",
+          "leadDays",
+          "active"
+        ],
+        "type": "object"
+      },
+      "InspectionRoundViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionRoundView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "InspectionSummaryView": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assigneeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "checklistId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "roundId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "scannedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "in_progress",
+              "submitted",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "roundId",
+          "checklistId",
+          "assetId",
+          "commonAreaId",
+          "assigneeId",
+          "dueOn",
+          "status",
+          "startedAt",
+          "scannedAt",
+          "submittedAt",
+          "cancelReason"
+        ],
+        "type": "object"
+      },
+      "InspectionSummaryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionSummaryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "InspectionView": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assigneeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "checklist": {
+            "$ref": "#/components/schemas/ChecklistRunView"
+          },
+          "checklistId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionFindingView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "roundId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "scannedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "in_progress",
+              "submitted",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "roundId",
+          "checklistId",
+          "assetId",
+          "commonAreaId",
+          "assigneeId",
+          "dueOn",
+          "status",
+          "startedAt",
+          "scannedAt",
+          "submittedAt",
+          "cancelReason",
+          "checklist",
+          "findings"
         ],
         "type": "object"
       },
@@ -50540,6 +51083,16 @@
         ],
         "type": "object"
       },
+      "StartInspectionDto": {
+        "properties": {
+          "code": {
+            "description": "The scanned tag of the target (`JWA1.…` or `JWL1.…`); required by a checklist that asks.",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "StartLockdownDto": {
         "properties": {
           "confirmation": {
@@ -54938,6 +55491,47 @@
             "maximum": 90,
             "minimum": 1,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateRoundDto": {
+        "properties": {
+          "anchorOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "assigneeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "checklistId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "every": {
+            "maximum": 365,
+            "minimum": 1,
+            "type": "number"
+          },
+          "leadDays": {
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "type": "string"
           }
         },
         "type": "object"
@@ -71856,6 +72450,581 @@
         "tags": [
           "maintenance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspection-report": {
+      "get": {
+        "operationId": "InspectionReportController_report",
+        "parameters": [
+          {
+            "description": "Due on or after, the compound’s day.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Due on or before; at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The inspections of a period: done, on time, failed, followed up",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspection-report/export": {
+      "get": {
+        "description": "One row per inspection due in the period: due_on, status, target_kind, target_code, checklist_key, inspector_id, submitted_on, on_time, failed_items, findings, findings_closed.",
+        "operationId": "InspectionReportController_export",
+        "parameters": [
+          {
+            "description": "Due on or after, the compound’s day.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Due on or before; at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the inspections of a period as CSV",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspection-rounds": {
+      "get": {
+        "operationId": "InspectionRoundsController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRoundViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List inspection rounds by next due date",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "InspectionRoundsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRoundView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an inspection round",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspection-rounds/{id}": {
+      "get": {
+        "operationId": "InspectionRoundsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRoundView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an inspection round",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "InspectionRoundsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRoundView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a round: a new series re-times its next date",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspection-rounds/{id}/deactivate": {
+      "post": {
+        "operationId": "InspectionRoundsController_deactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRoundView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn a round off",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspection-rounds/{id}/reactivate": {
+      "post": {
+        "operationId": "InspectionRoundsController_reactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRoundView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn a round on again, re-timed from today",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspections": {
+      "get": {
+        "operationId": "InspectionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "scheduled",
+                "in_progress",
+                "submitted",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assigneeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "roundId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "commonAreaId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionSummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List inspections, latest due first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "InspectionsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInspectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule an inspection on its own",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspections/{id}": {
+      "get": {
+        "operationId": "InspectionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an inspection with its checklist and findings",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/inspections/{id}/cancel": {
+      "post": {
+        "operationId": "InspectionsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call an inspection off; `reasonCode` from `inspectionCancel`",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -100901,6 +102070,249 @@
         "tags": [
           "technician"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/inspections": {
+      "get": {
+        "operationId": "MyInspectionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "scheduled",
+                "in_progress",
+                "submitted",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionSummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my inspections, latest due first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/inspections/{id}": {
+      "get": {
+        "operationId": "MyInspectionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my inspection with its checklist",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/inspections/{id}/items/{itemId}": {
+      "put": {
+        "operationId": "MyInspectionsController_answer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChecklistAnswerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer an item of my inspection (again, until submitted)",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/inspections/{id}/start": {
+      "post": {
+        "operationId": "MyInspectionsController_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartInspectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start (or scan the tag of) my inspection",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/inspections/{id}/submit": {
+      "post": {
+        "operationId": "MyInspectionsController_submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit my inspection: its findings open follow-up work orders",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

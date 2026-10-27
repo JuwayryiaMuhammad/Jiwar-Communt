@@ -5280,6 +5280,165 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/inspection-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The inspections of a period: done, on time, failed, followed up */
+        get: operations["InspectionReportController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/inspection-report/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the inspections of a period as CSV
+         * @description One row per inspection due in the period: due_on, status, target_kind, target_code, checklist_key, inspector_id, submitted_on, on_time, failed_items, findings, findings_closed.
+         */
+        get: operations["InspectionReportController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/inspection-rounds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List inspection rounds by next due date */
+        get: operations["InspectionRoundsController_list"];
+        put?: never;
+        /** Add an inspection round */
+        post: operations["InspectionRoundsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/inspection-rounds/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an inspection round */
+        get: operations["InspectionRoundsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a round: a new series re-times its next date */
+        patch: operations["InspectionRoundsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/inspection-rounds/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a round off */
+        post: operations["InspectionRoundsController_deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/inspection-rounds/{id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a round on again, re-timed from today */
+        post: operations["InspectionRoundsController_reactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/inspections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List inspections, latest due first */
+        get: operations["InspectionsController_list"];
+        put?: never;
+        /** Schedule an inspection on its own */
+        post: operations["InspectionsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/inspections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an inspection with its checklist and findings */
+        get: operations["InspectionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/inspections/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call an inspection off; `reasonCode` from `inspectionCancel` */
+        post: operations["InspectionsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/plan-occurrences/{id}/defer": {
         parameters: {
             query?: never;
@@ -15058,6 +15217,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/inspections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my inspections, latest due first */
+        get: operations["MyInspectionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/inspections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my inspection with its checklist */
+        get: operations["MyInspectionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/inspections/{id}/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Answer an item of my inspection (again, until submitted) */
+        put: operations["MyInspectionsController_answer"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/inspections/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start (or scan the tag of) my inspection */
+        post: operations["MyInspectionsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/inspections/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit my inspection: its findings open follow-up work orders */
+        post: operations["MyInspectionsController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/tickets": {
         parameters: {
             query?: never;
@@ -21096,6 +21340,30 @@ export interface components {
             /** @default 0 */
             position: number;
         };
+        CreateInspectionDto: {
+            /**
+             * Format: uuid
+             * @description An active asset not in a unit.
+             */
+            assetId?: string;
+            /**
+             * Format: uuid
+             * @description Holds inspections.perform.
+             */
+            assigneeId: string;
+            /** Format: uuid */
+            checklistId: string;
+            /**
+             * Format: uuid
+             * @description An active common area.
+             */
+            commonAreaId?: string;
+            /**
+             * Format: date
+             * @description Today or later, the compound’s day.
+             */
+            dueOn: string;
+        };
         CreateLaneRequestDto: {
             /**
              * Format: uuid
@@ -21482,6 +21750,36 @@ export interface components {
              * @description A place in service, for a post that is not a gate.
              */
             zoneId?: string;
+        };
+        CreateRoundDto: {
+            /** Format: date */
+            anchorOn: string;
+            /**
+             * Format: uuid
+             * @description An active asset not in a unit.
+             */
+            assetId?: string;
+            /**
+             * Format: uuid
+             * @description Holds inspections.perform.
+             */
+            assigneeId: string;
+            /**
+             * Format: uuid
+             * @description An active checklist for inspections.
+             */
+            checklistId: string;
+            /**
+             * Format: uuid
+             * @description An active common area.
+             */
+            commonAreaId?: string;
+            every: number;
+            /** @default 2 */
+            leadDays: number;
+            title: string;
+            /** @enum {string} */
+            unit: "day" | "week" | "month" | "year";
         };
         CreateRouteDto: {
             /** Format: uuid */
@@ -24969,6 +25267,139 @@ export interface components {
         InsideViewList: {
             data: components["schemas"]["InsideView"][];
             nextCursor: string | null;
+        };
+        InspectionFindingView: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            ticketId: string;
+            /** @description The follow-up’s status now. */
+            ticketStatus: string;
+        };
+        InspectionReportRowView: {
+            /** Format: uuid */
+            assigneeId: string;
+            checklistKey: string;
+            /** Format: date */
+            dueOn: string;
+            failedItems: number;
+            findings: number;
+            findingsClosed: number;
+            /** Format: uuid */
+            inspectionId: string;
+            onTime: boolean | null;
+            /** @enum {string} */
+            status: "scheduled" | "in_progress" | "submitted" | "cancelled";
+            /** Format: date */
+            submittedOn: string | null;
+            targetCode: string;
+            /** @enum {string} */
+            targetKind: "asset" | "area";
+        };
+        InspectionReportTotalsView: {
+            cancelled: number;
+            /** @description Closed findings of all, 0–1; null with none. */
+            closureRate: number | null;
+            failedItems: number;
+            findings: number;
+            findingsClosed: number;
+            inspections: number;
+            /** @description Submitted by their day. */
+            onTime: number;
+            open: number;
+            /** @description Open past their day. */
+            overdue: number;
+            submitted: number;
+        };
+        InspectionReportView: {
+            /** Format: date */
+            from: string;
+            rows: components["schemas"]["InspectionReportRowView"][];
+            /** Format: date */
+            to: string;
+            totals: components["schemas"]["InspectionReportTotalsView"];
+        };
+        InspectionRoundView: {
+            active: boolean;
+            /** Format: date */
+            anchorOn: string;
+            /** Format: uuid */
+            assetId: string | null;
+            /** Format: uuid */
+            assigneeId: string;
+            /** Format: uuid */
+            checklistId: string;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            every: number;
+            /** Format: uuid */
+            id: string;
+            leadDays: number;
+            /** Format: date */
+            nextDueOn: string;
+            title: string;
+            /** @enum {string} */
+            unit: "day" | "week" | "month" | "year";
+        };
+        InspectionRoundViewList: {
+            data: components["schemas"]["InspectionRoundView"][];
+            nextCursor: string | null;
+        };
+        InspectionSummaryView: {
+            /** Format: uuid */
+            assetId: string | null;
+            /** Format: uuid */
+            assigneeId: string;
+            cancelReason: string | null;
+            /** Format: uuid */
+            checklistId: string;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            roundId: string | null;
+            /** Format: date-time */
+            scannedAt: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            /** @enum {string} */
+            status: "scheduled" | "in_progress" | "submitted" | "cancelled";
+            /** Format: date-time */
+            submittedAt: string | null;
+        };
+        InspectionSummaryViewList: {
+            data: components["schemas"]["InspectionSummaryView"][];
+            nextCursor: string | null;
+        };
+        InspectionView: {
+            /** Format: uuid */
+            assetId: string | null;
+            /** Format: uuid */
+            assigneeId: string;
+            cancelReason: string | null;
+            checklist: components["schemas"]["ChecklistRunView"];
+            /** Format: uuid */
+            checklistId: string;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            /** Format: date */
+            dueOn: string;
+            findings: components["schemas"]["InspectionFindingView"][];
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            roundId: string | null;
+            /** Format: date-time */
+            scannedAt: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            /** @enum {string} */
+            status: "scheduled" | "in_progress" | "submitted" | "cancelled";
+            /** Format: date-time */
+            submittedAt: string | null;
         };
         InstalmentDto: {
             /** @description EGP, at least 1.00. */
@@ -33085,6 +33516,10 @@ export interface components {
             data: components["schemas"]["StandingInstructionView"][];
             nextCursor: string | null;
         };
+        StartInspectionDto: {
+            /** @description The scanned tag of the target (`JWA1.…` or `JWL1.…`); required by a checklist that asks. */
+            code?: string;
+        };
         StartLockdownDto: {
             /**
              * @description The confirmation the guard types: exactly `LOCKDOWN`. Nothing starts without it.
@@ -34460,6 +34895,19 @@ export interface components {
             appointmentSlotMinutes?: number;
             /** @description Days an answered request waits for its author before it closes itself. */
             autoCloseDays?: number;
+        };
+        UpdateRoundDto: {
+            /** Format: date */
+            anchorOn?: string;
+            /** Format: uuid */
+            assigneeId?: string;
+            /** Format: uuid */
+            checklistId?: string;
+            every?: number;
+            leadDays?: number;
+            title?: string;
+            /** @enum {string} */
+            unit?: "day" | "week" | "month" | "year";
         };
         UpdateSettingsDto: {
             /** @description Whether households may write `always_allow` standing instructions (ADR 0043). */
@@ -42899,6 +43347,289 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    InspectionReportController_report: {
+        parameters: {
+            query: {
+                /** @description Due on or after, the compound’s day. */
+                from: string;
+                /** @description Due on or before; at most 366 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionReportView"];
+                };
+            };
+        };
+    };
+    InspectionReportController_export: {
+        parameters: {
+            query: {
+                /** @description Due on or after, the compound’s day. */
+                from: string;
+                /** @description Due on or before; at most 366 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    InspectionRoundsController_list: {
+        parameters: {
+            query?: {
+                active?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRoundViewList"];
+                };
+            };
+        };
+    };
+    InspectionRoundsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoundDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRoundView"];
+                };
+            };
+        };
+    };
+    InspectionRoundsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRoundView"];
+                };
+            };
+        };
+    };
+    InspectionRoundsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRoundDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRoundView"];
+                };
+            };
+        };
+    };
+    InspectionRoundsController_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRoundView"];
+                };
+            };
+        };
+    };
+    InspectionRoundsController_reactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRoundView"];
+                };
+            };
+        };
+    };
+    InspectionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "scheduled" | "in_progress" | "submitted" | "cancelled";
+                assigneeId?: string;
+                roundId?: string;
+                assetId?: string;
+                commonAreaId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionSummaryViewList"];
+                };
+            };
+        };
+    };
+    InspectionsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInspectionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionView"];
+                };
+            };
+        };
+    };
+    InspectionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionView"];
+                };
+            };
+        };
+    };
+    InspectionsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionView"];
+                };
             };
         };
     };
@@ -57693,6 +58424,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AvailabilityView"];
+                };
+            };
+        };
+    };
+    MyInspectionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "scheduled" | "in_progress" | "submitted" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionSummaryViewList"];
+                };
+            };
+        };
+    };
+    MyInspectionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionView"];
+                };
+            };
+        };
+    };
+    MyInspectionsController_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistAnswerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionView"];
+                };
+            };
+        };
+    };
+    MyInspectionsController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartInspectionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionView"];
+                };
+            };
+        };
+    };
+    MyInspectionsController_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionView"];
                 };
             };
         };

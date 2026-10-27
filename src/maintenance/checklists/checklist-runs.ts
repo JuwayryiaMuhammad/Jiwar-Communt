@@ -65,6 +65,7 @@ export class ChecklistRuns {
       templateId: string;
       ticketId?: string;
       cycle?: number;
+      inspectionId?: string;
       assetId: string | null;
     },
   ): Promise<ChecklistRun> {
@@ -79,6 +80,7 @@ export class ChecklistRuns {
         version: template.currentVersion,
         ticketId: input.ticketId ?? null,
         cycle: input.cycle ?? null,
+        inspectionId: input.inspectionId ?? null,
         assetId: input.assetId,
         createdAt: await dbNow(tx),
       },
@@ -98,6 +100,17 @@ export class ChecklistRuns {
     return row
       ? tx.checklistRun.findUniqueOrThrow({ where: { id: row.id } })
       : null;
+  }
+
+  /** An inspection's run, locked for update. */
+  async lockOfInspection(
+    tx: TenantTxClient,
+    inspectionId: string,
+  ): Promise<ChecklistRun> {
+    const [row] = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM checklist_runs WHERE inspection_id = ${inspectionId}::uuid FOR UPDATE`;
+    if (!row) throw runNotFound();
+    return tx.checklistRun.findUniqueOrThrow({ where: { id: row.id } });
   }
 
   /** A ticket's run of a cycle, or null (no lock: a read). */

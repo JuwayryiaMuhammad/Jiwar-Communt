@@ -3,6 +3,7 @@ import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { ChecklistRuns } from '../../src/maintenance/checklists/checklist-runs';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { fileHelpers } from '../setup/files';
+import { day } from '../setup/compound-clock';
 import { uniqueSuffix } from '../setup/fixtures';
 import { call } from './request';
 import type { World } from './world';
@@ -113,7 +114,100 @@ export function assetCalls(
       body: payload,
     });
 
+  /** An inspection of A's, given to A's technician, on a new area. */
+  const inspection = async (): Promise<{ id: string; itemId: string }> => {
+    const checklist = (
+      await manager('POST', '/maintenance/checklists', {
+        key: `ni_${uniqueSuffix()
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '')}`,
+        nameAr: 'تفتيش',
+        nameEn: 'Call inspection',
+        purpose: 'inspection',
+        items: [{ kind: 'check', labelAr: 'ت', labelEn: 'Fence' }],
+      })
+    ).body as { id: string; items: { id: string }[] };
+    const created = await manager('POST', '/maintenance/inspections', {
+      checklistId: checklist.id,
+      commonAreaId: await area(),
+      assigneeId: world().a.ids.technician,
+      dueOn: day(1),
+    });
+    return {
+      id: (created.body as { id: string }).id,
+      itemId: checklist.items[0].id,
+    };
+  };
+  const started = async () => {
+    const i = await inspection();
+    await technician('POST', `/technician/inspections/${i.id}/start`, {});
+    return i;
+  };
+
   return {
+    'POST /maintenance/inspections': async () => {
+      const checklist = (
+        await manager('POST', '/maintenance/checklists', {
+          key: `nj_${uniqueSuffix()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '')}`,
+          nameAr: 'تفتيش',
+          nameEn: 'Call inspection',
+          purpose: 'inspection',
+          items: [{ kind: 'check', labelAr: 'ت', labelEn: 'Fence' }],
+        })
+      ).body as { id: string };
+      return manager('POST', '/maintenance/inspections', {
+        checklistId: checklist.id,
+        commonAreaId: await area(),
+        assigneeId: world().a.ids.technician,
+        dueOn: day(1),
+      });
+    },
+    'GET /maintenance/inspections/{id}': async () =>
+      manager('GET', `/maintenance/inspections/${(await inspection()).id}`),
+    'POST /maintenance/inspections/{id}/cancel': async () =>
+      manager(
+        'POST',
+        `/maintenance/inspections/${(await inspection()).id}/cancel`,
+        {
+          reasonCode: 'not_needed',
+        },
+      ),
+    'GET /maintenance/inspection-report/export': () =>
+      manager(
+        'GET',
+        `/maintenance/inspection-report/export?from=${day(-30)}&to=${day(30)}`,
+      ),
+    'GET /technician/inspections/{id}': async () =>
+      technician('GET', `/technician/inspections/${(await inspection()).id}`),
+    'POST /technician/inspections/{id}/start': async () =>
+      technician(
+        'POST',
+        `/technician/inspections/${(await inspection()).id}/start`,
+        {},
+      ),
+    'PUT /technician/inspections/{id}/items/{itemId}': async () => {
+      const i = await started();
+      return technician(
+        'PUT',
+        `/technician/inspections/${i.id}/items/${i.itemId}`,
+        {
+          result: 'pass',
+        },
+      );
+    },
+    'POST /technician/inspections/{id}/submit': async () => {
+      const i = await started();
+      await technician(
+        'PUT',
+        `/technician/inspections/${i.id}/items/${i.itemId}`,
+        {
+          result: 'pass',
+        },
+      );
+      return technician('POST', `/technician/inspections/${i.id}/submit`);
+    },
     'GET /technician/tickets/{id}/checklist': async () =>
       technician(
         'GET',

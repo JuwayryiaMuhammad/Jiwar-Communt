@@ -1640,6 +1640,9 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/plans/{id}': w.bPlanId,
       '/maintenance/plans/{id}/occurrences': w.bPlanId,
       '/maintenance/plans/{id}/events': w.bPlanId,
+      '/maintenance/inspection-rounds/{id}': w.bRoundId,
+      '/maintenance/inspections/{id}': w.bInspectionId,
+      '/technician/inspections/{id}': w.bInspectionId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

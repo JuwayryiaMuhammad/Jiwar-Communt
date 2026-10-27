@@ -187,6 +187,7 @@ export const REASON_CODES = {
   planDefer: ['access_unavailable', 'parts_unavailable', 'weather', 'season', 'vendor_delay', 'other'],
   planSkip: ['not_needed', 'asset_out_of_service', 'covered_by_other_work', 'other'],
   planDeactivate: ['asset_replaced', 'no_longer_needed', 'contract_ended', 'other'],
+  inspectionCancel: ['not_needed', 'duplicate', 'target_unavailable', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

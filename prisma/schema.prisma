@@ -9718,6 +9718,7 @@ model ChecklistRun {
   version           Int
   ticketId          String?   @map("ticket_id") @db.Uuid
   cycle             Int?
+  inspectionId      String?   @map("inspection_id") @db.Uuid
   /// The asset whose readings it records.
   assetId           String?   @map("asset_id") @db.Uuid
   /// open, submitted.
@@ -9860,4 +9861,71 @@ model MaintenancePlanEvent {
 
   @@index([tenantId, planId, occurredAt(sort: Desc), id(sort: Desc)], map: "maintenance_plan_events_plan_idx")
   @@map("maintenance_plan_events")
+}
+
+/// A recurring inspection (ADR 0064): a checklist, a target (an asset not
+/// in a unit, or a common area), an inspector, a fixed series.
+model InspectionRound {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  title        String
+  checklistId  String   @map("checklist_id") @db.Uuid
+  assetId      String?  @map("asset_id") @db.Uuid
+  commonAreaId String?  @map("common_area_id") @db.Uuid
+  assigneeId   String   @map("assignee_account_id") @db.Uuid
+  every        Int      @db.SmallInt
+  /// day, week, month, year.
+  unit         String
+  anchorOn     DateTime @map("anchor_on") @db.Date
+  nextDueOn    DateTime @map("next_due_on") @db.Date
+  leadDays     Int      @default(2) @map("lead_days") @db.SmallInt
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "inspection_rounds_list_idx")
+  @@map("inspection_rounds")
+}
+
+/// One inspection (ADR 0064): scheduled, in progress, submitted, cancelled.
+model Inspection {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  roundId          String?   @map("round_id") @db.Uuid
+  checklistId      String    @map("checklist_id") @db.Uuid
+  assetId          String?   @map("asset_id") @db.Uuid
+  commonAreaId     String?   @map("common_area_id") @db.Uuid
+  assigneeId       String    @map("assignee_account_id") @db.Uuid
+  originalDueOn    DateTime  @map("original_due_on") @db.Date
+  dueOn            DateTime  @map("due_on") @db.Date
+  /// scheduled, in_progress, submitted, cancelled.
+  status           String    @default("scheduled")
+  createdAt        DateTime  @map("created_at") @db.Timestamptz(3)
+  startedAt        DateTime? @map("started_at") @db.Timestamptz(3)
+  scannedAt        DateTime? @map("scanned_at") @db.Timestamptz(3)
+  submittedAt      DateTime? @map("submitted_at") @db.Timestamptz(3)
+  cancelledAt      DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  /// REASON_CODES.inspectionCancel.
+  cancelReason     String?   @map("cancel_reason")
+  overdueAlertedAt DateTime? @map("overdue_alerted_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, dueOn(sort: Desc), id(sort: Desc)], map: "inspections_list_idx")
+  @@index([tenantId, assigneeId, status, dueOn], map: "inspections_assignee_idx")
+  @@map("inspections")
+}
+
+/// A failed item's follow-up work order (ADR 0064), once per item.
+model InspectionFinding {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  inspectionId String   @map("inspection_id") @db.Uuid
+  itemId       String   @map("item_id") @db.Uuid
+  ticketId     String   @unique(map: "inspection_findings_ticket_key") @map("ticket_id") @db.Uuid
+  createdAt    DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([inspectionId, itemId], map: "inspection_findings_once")
+  @@map("inspection_findings")
 }

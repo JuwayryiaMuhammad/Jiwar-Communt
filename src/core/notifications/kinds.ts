@@ -2166,6 +2166,23 @@ export const NOTIFICATION_KINDS = {
     target: 'maintenance_plan',
     params: { assetRef: {}, dueOn: {} },
   },
+  // Inspections (ADR 0064): the target's code and the day only.
+  /** An inspection is mine to do, due on a day. */
+  'inspection.assigned': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'inspection',
+    params: { targetRef: {}, dueOn: {} },
+  },
+  /** An inspection is past its day (the inspector, who manages them). */
+  'inspection.overdue': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'inspection',
+    params: { targetRef: {}, dueOn: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

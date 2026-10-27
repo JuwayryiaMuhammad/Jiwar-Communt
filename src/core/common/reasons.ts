@@ -803,4 +803,7 @@ export const REASON_CODES = {
     'contract_ended',
     'other',
   ],
+  // Inspections (ADR 0064): why one is called off; the migration's CHECK
+  // repeats the list.
+  inspectionCancel: ['not_needed', 'duplicate', 'target_unavailable', 'other'],
 } as const;

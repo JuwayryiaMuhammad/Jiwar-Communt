@@ -2332,6 +2332,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تأخرت الصيانة المخططة للأصل {assetRef} المستحقة يوم {dueOn}.',
     },
   },
+  'inspection.assigned': {
+    en: {
+      title: 'Inspection to do',
+      body: 'An inspection of {targetRef} is yours, due {dueOn}.',
+    },
+    ar: {
+      title: 'تفتيش مطلوب',
+      body: 'لديك تفتيش على {targetRef} مستحق يوم {dueOn}.',
+    },
+  },
+  'inspection.overdue': {
+    en: {
+      title: 'Inspection overdue',
+      body: 'The inspection of {targetRef}, due {dueOn}, is overdue.',
+    },
+    ar: {
+      title: 'تفتيش متأخر',
+      body: 'تأخر التفتيش على {targetRef} المستحق يوم {dueOn}.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

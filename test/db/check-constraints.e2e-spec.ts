@@ -575,6 +575,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'unit IS NULL is tested first; its length runs only on a value',
   },
   asset_readings_source_shape: {},
+  // Inspections (ADR 0064).
+  inspection_rounds_target_one: {},
+  inspection_rounds_title_length: {},
+  inspection_rounds_series_shape: {},
+  inspections_target_one: {},
+  inspections_state_shape: {
+    guarded: 'cancel_reason IS NOT NULL is required before its list is tested',
+  },
+  inspections_scan_after_start: {},
+  checklist_runs_subject_one: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
   // Maintenance plans (ADR 0064).
   maintenance_plans_title_length: {},
   maintenance_plans_days_range: {},

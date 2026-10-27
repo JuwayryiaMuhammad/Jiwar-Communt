@@ -752,4 +752,11 @@ export const ASSETS_COVERAGE: readonly string[] = [
   'maintenance_plan.deferred',
   'maintenance_plan.skipped',
   'maintenance_plan.occurrence_deferred',
+  'inspection_round.created',
+  'inspection_round.updated',
+  'inspection_round.deactivated',
+  'inspection_round.reactivated',
+  'inspection.created',
+  'inspection.cancelled',
+  'inspection.submitted',
 ];

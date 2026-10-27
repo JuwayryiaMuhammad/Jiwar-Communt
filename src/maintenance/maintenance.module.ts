@@ -105,6 +105,15 @@ import {
 } from './plans/plans.controller';
 import { PlansService } from './plans/plans.service';
 import { PlanSweep } from './plans/plan-sweep';
+import {
+  InspectionReportController,
+  InspectionRoundsController,
+  InspectionsController,
+  MyInspectionsController,
+} from './inspections/inspections.controller';
+import { InspectionsService } from './inspections/inspections.service';
+import { InspectionReports } from './inspections/inspection-reports';
+import { InspectionSweep } from './inspections/inspection-sweep';
 import { QuotesService } from './quotes/quotes.service';
 
 /**
@@ -149,6 +158,10 @@ import { QuotesService } from './quotes/quotes.service';
     DispatchChecklistController,
     PlansController,
     PlanOccurrencesController,
+    InspectionRoundsController,
+    InspectionsController,
+    InspectionReportController,
+    MyInspectionsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -201,6 +214,9 @@ import { QuotesService } from './quotes/quotes.service';
     TicketChecklists,
     PlansService,
     PlanSweep,
+    InspectionsService,
+    InspectionReports,
+    InspectionSweep,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

@@ -181,6 +181,8 @@ describe('audit catalog', () => {
         'asset_import',
         'checklist',
         'maintenance_plan',
+        'inspection_round',
+        'inspection',
       ]).toContain(def.target);
     }
   });

@@ -22458,6 +22458,444 @@
           }
         },
         {
+          "name": "The inspections of a period: done, on time, failed, followed up",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspection-report"
+              ],
+              "query": [
+                {
+                  "description": "(required) Due on or after, the compound’s day.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Due on or before; at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspection-report?from=&to="
+            }
+          }
+        },
+        {
+          "name": "Export the inspections of a period as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspection-report",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "(required) Due on or after, the compound’s day.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Due on or before; at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspection-report/export?from=&to="
+            }
+          }
+        },
+        {
+          "name": "List inspection rounds by next due date",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspection-rounds"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "active",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspection-rounds"
+            }
+          }
+        },
+        {
+          "name": "Add an inspection round",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"title\": \"\",\n  \"checklistId\": \"\",\n  \"assigneeId\": \"\",\n  \"every\": 1,\n  \"unit\": \"day\",\n  \"anchorOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `anchorOn` | string (date) | yes |  |\n| `assetId` | string (uuid) |  | An active asset not in a unit. |\n| `assigneeId` | string (uuid) | yes | Holds inspections.perform. |\n| `checklistId` | string (uuid) | yes | An active checklist for inspections. |\n| `commonAreaId` | string (uuid) |  | An active common area. |\n| `every` | number | yes |  |\n| `leadDays` | number |  |  |\n| `title` | string | yes |  |\n| `unit` | `day` \\| `week` \\| `month` \\| `year` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspection-rounds"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspection-rounds"
+            }
+          }
+        },
+        {
+          "name": "Get an inspection round",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspection-rounds",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspection-rounds/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a round: a new series re-times its next date",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"anchorOn\": \"2026-01-01\",\n  \"assigneeId\": \"\",\n  \"checklistId\": \"\",\n  \"every\": 1,\n  \"leadDays\": 0,\n  \"title\": \"\",\n  \"unit\": \"day\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `anchorOn` | string (date) |  |  |\n| `assigneeId` | string (uuid) |  |  |\n| `checklistId` | string (uuid) |  |  |\n| `every` | number |  |  |\n| `leadDays` | number |  |  |\n| `title` | string |  |  |\n| `unit` | `day` \\| `week` \\| `month` \\| `year` |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspection-rounds",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspection-rounds/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn a round off",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspection-rounds",
+                ":id",
+                "deactivate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspection-rounds/:id/deactivate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn a round on again, re-timed from today",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspection-rounds",
+                ":id",
+                "reactivate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspection-rounds/:id/reactivate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List inspections, latest due first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspections"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "assigneeId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "roundId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "commonAreaId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspections"
+            }
+          }
+        },
+        {
+          "name": "Schedule an inspection on its own",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"checklistId\": \"\",\n  \"assigneeId\": \"\",\n  \"dueOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  | An active asset not in a unit. |\n| `assigneeId` | string (uuid) | yes | Holds inspections.perform. |\n| `checklistId` | string (uuid) | yes |  |\n| `commonAreaId` | string (uuid) |  | An active common area. |\n| `dueOn` | string (date) | yes | Today or later, the compound’s day. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspections"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspections"
+            }
+          }
+        },
+        {
+          "name": "Get an inspection with its checklist and findings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspections",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspections/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call an inspection off; `reasonCode` from `inspectionCancel`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "inspections",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/inspections/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Move an open occurrence’s due date; `reasonCode` from `planDefer`",
           "request": {
             "body": {
@@ -24474,6 +24912,197 @@
                 {
                   "description": "",
                   "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List my inspections, latest due first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "inspections"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/inspections"
+            }
+          }
+        },
+        {
+          "name": "Get my inspection with its checklist",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "inspections",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/inspections/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Answer an item of my inspection (again, until submitted)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"note\": \"\",\n  \"photoFileIds\": [],\n  \"result\": \"pass\",\n  \"value\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  |  |\n| `photoFileIds` | string[] |  | The caller’s finalized `checklist_photo` files, added to the answer’s (three at most). |\n| `result` | `pass` \\| `fail` \\| `na` |  | A check’s result. |\n| `value` | string |  | A reading’s value. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "inspections",
+                ":id",
+                "items",
+                ":itemId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/inspections/:id/items/:itemId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start (or scan the tag of) my inspection",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string |  | The scanned tag of the target (`JWA1.…` or `JWL1.…`); required by a checklist that asks. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "inspections",
+                ":id",
+                "start"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/inspections/:id/start",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit my inspection: its findings open follow-up work orders",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "inspections",
+                ":id",
+                "submit"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/inspections/:id/submit",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
                   "value": ""
                 }
               ]

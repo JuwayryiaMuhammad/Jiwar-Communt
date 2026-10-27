@@ -1,3 +1,4 @@
+import { err } from '../api/request';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { PLAN_SWEEP } from '../../src/maintenance/plans/plan-sweep';
 import { assetHelpers, type AssetSetUp } from '../setup/assets';
@@ -67,15 +68,32 @@ describe('Assets — maintenance plans', () => {
   /** Assigned, started, its checklist (if any) submitted, completed. */
   const finish = async (ticketId: string) => {
     await a
-      .http('post', `/maintenance/tickets/${ticketId}/assign`, s.supervisor.token, {
-        technicianId: s.techs[0].id,
-      })
+      .http(
+        'post',
+        `/maintenance/tickets/${ticketId}/assign`,
+        s.supervisor.token,
+        {
+          technicianId: s.techs[0].id,
+        },
+      )
       .expect((r) => expect([204, 409]).toContain(r.status));
-    await a.http('post', `/technician/tickets/${ticketId}/start`, s.techs[0].token).expect(204);
     await a
-      .http('post', `/technician/tickets/${ticketId}/checklist/submit`, s.techs[0].token)
+      .http('post', `/technician/tickets/${ticketId}/start`, s.techs[0].token)
+      .expect(204);
+    await a
+      .http(
+        'post',
+        `/technician/tickets/${ticketId}/checklist/submit`,
+        s.techs[0].token,
+      )
       .expect((r) => expect([201, 404]).toContain(r.status));
-    await a.http('post', `/technician/tickets/${ticketId}/complete`, s.techs[0].token).expect(204);
+    await a
+      .http(
+        'post',
+        `/technician/tickets/${ticketId}/complete`,
+        s.techs[0].token,
+      )
+      .expect(204);
   };
 
   it('opens one work order per due date within its lead, however many sweeps; the series goes on', async () => {
@@ -155,7 +173,7 @@ describe('Assets — maintenance plans', () => {
       [s.manager.id, s.supervisor.id].sort(),
     );
     expect(told[0].params).toEqual({
-      assetRef: expect.any(String),
+      assetRef: expect.any(String) as string,
       dueOn: day(-3),
     });
     expect((await get(p.id)).stats.overdue).toBe(1);
@@ -183,7 +201,7 @@ describe('Assets — maintenance plans', () => {
         toDate: day(30),
       })
       .expect(400)
-      .expect((r) => expect(r.body.code).toBe('REASON_REQUIRED'));
+      .expect((r) => expect(err(r).code).toBe('REASON_REQUIRED'));
     await a
       .http('post', `/maintenance/plans/${p.id}/defer`, s.manager.token, {
         toDate: day(-1),
@@ -191,7 +209,7 @@ describe('Assets — maintenance plans', () => {
       })
       .expect(400)
       .expect((r) =>
-        expect(r.body.fields).toEqual([
+        expect(err(r).fields).toEqual([
           { field: 'toDate', code: 'INVALID_VALUE' },
         ]),
       );
@@ -225,7 +243,7 @@ describe('Assets — maintenance plans', () => {
         reasonCode: 'not_needed',
       })
       .expect(409)
-      .expect((r) => expect(r.body.code).toBe('MAINTENANCE_PLAN_INACTIVE'));
+      .expect((r) => expect(err(r).code).toBe('MAINTENANCE_PLAN_INACTIVE'));
     expect(
       (
         await a
@@ -355,7 +373,7 @@ describe('Assets — maintenance plans', () => {
         anchorOn: day(1),
       })
       .expect(409)
-      .expect((r) => expect(r.body.code).toBe('PLAN_FOR_UNIT_ASSET'));
+      .expect((r) => expect(err(r).code).toBe('PLAN_FOR_UNIT_ASSET'));
     await a
       .http('post', '/maintenance/plans', s.manager.token, {
         assetId: await a.asset(s),
@@ -368,7 +386,7 @@ describe('Assets — maintenance plans', () => {
       })
       .expect(400)
       .expect((r) =>
-        expect(r.body.fields).toEqual([
+        expect(err(r).fields).toEqual([
           { field: 'ownerId', code: 'PLAN_OWNER_NOT_ELIGIBLE' },
         ]),
       );
@@ -381,7 +399,7 @@ describe('Assets — maintenance plans', () => {
       })
       .expect(400)
       .expect((r) =>
-        expect(r.body.fields).toEqual([
+        expect(err(r).fields).toEqual([
           { field: 'metricKey', code: 'FIELD_REQUIRED' },
           { field: 'usageInterval', code: 'FIELD_REQUIRED' },
           { field: 'every', code: 'FIELD_NOT_ALLOWED' },
@@ -398,7 +416,7 @@ describe('Assets — maintenance plans', () => {
     await a
       .http('post', `/maintenance/plans/${p.id}/reactivate`, s.manager.token)
       .expect(409)
-      .expect((r) => expect(r.body.code).toBe('ASSET_RETIRED'));
+      .expect((r) => expect(err(r).code).toBe('ASSET_RETIRED'));
     // A technician reads plans, never keeps them.
     await a
       .http('get', `/maintenance/plans/${p.id}`, s.techs[0].token)

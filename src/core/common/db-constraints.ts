@@ -285,6 +285,15 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   maintenance_plan_occurrences_tenant_id_id_key: null,
   maintenance_plan_occurrences_once: null,
   maintenance_plan_occurrences_ticket_key: null,
+  // Inspections (ADR 0064): one per round and date, a run each, a finding
+  // per failing item, each written under the row that decides it.
+  inspection_rounds_tenant_id_id_key: null,
+  inspections_tenant_id_id_key: null,
+  inspections_round_once: null,
+  checklist_runs_inspection_key: null,
+  inspection_findings_tenant_id_id_key: null,
+  inspection_findings_once: null,
+  inspection_findings_ticket_key: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

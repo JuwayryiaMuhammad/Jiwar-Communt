@@ -786,3 +786,301 @@ export const PLAN_ROUTES: Row[] = [
     },
   },
 ];
+
+const INSPECTION_STATUS_LIST = [
+  'scheduled',
+  'in_progress',
+  'submitted',
+  'cancelled',
+];
+const periodInvalid = {
+  query: { from: 'x', to: 'y' },
+  fields: [
+    { field: 'from', code: 'INVALID_FORMAT' },
+    { field: 'to', code: 'INVALID_FORMAT' },
+  ],
+};
+
+/** Inspections (ADR 0064): rounds, inspections, the report, the inspector's. */
+export const INSPECTION_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/maintenance/inspection-rounds',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { active: 'yes' },
+      fields: [
+        {
+          field: 'active',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['true', 'false'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/inspection-rounds',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      body: {
+        title: '',
+        checklistId: 'x',
+        assigneeId: 'x',
+        every: 0,
+        unit: 'hour',
+        anchorOn: 'soon',
+      },
+      fields: [
+        {
+          field: 'title',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+        { field: 'checklistId', code: 'INVALID_UUID' },
+        { field: 'assigneeId', code: 'INVALID_UUID' },
+        {
+          field: 'every',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 365 },
+        },
+        {
+          field: 'unit',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['day', 'week', 'month', 'year'] },
+        },
+        { field: 'anchorOn', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/inspection-rounds/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bRoundId }),
+      code: 'INSPECTION_ROUND_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/maintenance/inspection-rounds/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bRoundId }),
+      body: () => ({ leadDays: 3 }),
+      code: 'INSPECTION_ROUND_NOT_FOUND',
+    },
+    invalid: {
+      body: { leadDays: 61 },
+      fields: [
+        {
+          field: 'leadDays',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 60 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/inspection-rounds/{id}/deactivate',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bRoundId }),
+      code: 'INSPECTION_ROUND_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/inspection-rounds/{id}/reactivate',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bRoundId }),
+      code: 'INSPECTION_ROUND_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/inspections',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'late' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: INSPECTION_STATUS_LIST },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/inspections',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      body: { checklistId: 'x', assigneeId: 'x', dueOn: 'soon' },
+      fields: [
+        { field: 'checklistId', code: 'INVALID_UUID' },
+        { field: 'assigneeId', code: 'INVALID_UUID' },
+        { field: 'dueOn', code: 'INVALID_FORMAT' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/inspections/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bInspectionId }),
+      code: 'INSPECTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/inspections/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bInspectionId }),
+      body: () => ({ reasonCode: 'not_needed' }),
+      code: 'INSPECTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/inspection-report',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: periodInvalid,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/inspection-report/export',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: periodInvalid,
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/technician/inspections',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'late' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: INSPECTION_STATUS_LIST },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/technician/inspections/{id}',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bInspectionId }),
+      code: 'INSPECTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/technician/inspections/{id}/start',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bInspectionId }),
+      code: 'INSPECTION_NOT_FOUND',
+    },
+    invalid: {
+      body: { code: '' },
+      fields: [
+        { field: 'code', code: 'INVALID_LENGTH', params: { min: 1, max: 200 } },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'PUT',
+    path: '/technician/inspections/{id}/items/{itemId}',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bInspectionId, itemId: w.bInspectionId }),
+      body: () => ({ result: 'pass' }),
+      code: 'INSPECTION_NOT_FOUND',
+    },
+    invalid: {
+      body: { result: 'ok' },
+      fields: [
+        {
+          field: 'result',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['pass', 'fail', 'na'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/technician/inspections/{id}/submit',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bInspectionId }),
+      code: 'INSPECTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

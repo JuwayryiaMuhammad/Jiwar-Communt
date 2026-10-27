@@ -598,6 +598,139 @@ describe('Audit coverage — assets, plans and inspections', () => {
     });
   });
 
+  describe('inspections', () => {
+    it('inspection_round.* and inspection.* — codes, days, reasons, the attestation; never the title', async () => {
+      const area = await a.area(s);
+      const cl = await a.checklist(s, undefined, { purpose: 'inspection' });
+      const round = (
+        await a
+          .http('post', '/maintenance/inspection-rounds', s.manager.token, {
+            title: 'AUDIT-round',
+            checklistId: cl.id,
+            commonAreaId: area.id,
+            assigneeId: s.techs[0].id,
+            every: 2,
+            unit: 'week',
+            anchorOn: day(20),
+          })
+          .expect(201)
+      ).body as { id: string };
+      const created = await single(s.c, 'inspection_round.created', round.id);
+      expect(created.changes).toMatchObject({
+        title: { changed: true },
+        commonAreaId: { from: null, to: area.id },
+        assigneeId: { from: null, to: s.techs[0].id },
+        every: { from: null, to: 2 },
+      });
+      await a
+        .http(
+          'patch',
+          `/maintenance/inspection-rounds/${round.id}`,
+          s.manager.token,
+          { title: 'AUDIT-renamed', leadDays: 4 },
+        )
+        .expect(200);
+      const updated = await single(s.c, 'inspection_round.updated', round.id);
+      expect(updated.changes).toEqual({
+        title: { changed: true },
+        leadDays: { from: 2, to: 4 },
+      });
+      await a
+        .http(
+          'post',
+          `/maintenance/inspection-rounds/${round.id}/deactivate`,
+          s.manager.token,
+        )
+        .expect(201);
+      const off = await single(s.c, 'inspection_round.deactivated', round.id);
+      await a
+        .http(
+          'post',
+          `/maintenance/inspection-rounds/${round.id}/reactivate`,
+          s.manager.token,
+        )
+        .expect(201);
+      const on = await single(s.c, 'inspection_round.reactivated', round.id);
+
+      const one = (
+        await a
+          .http('post', '/maintenance/inspections', s.manager.token, {
+            checklistId: cl.id,
+            commonAreaId: area.id,
+            assigneeId: s.techs[0].id,
+            dueOn: day(2),
+          })
+          .expect(201)
+      ).body as { id: string; checklist: { items: { id: string }[] } };
+      const scheduled = await single(s.c, 'inspection.created', one.id);
+      expect(scheduled.metadata).toEqual({
+        checklistId: cl.id,
+        assetId: null,
+        commonAreaId: area.id,
+        assigneeId: s.techs[0].id,
+        dueOn: day(2),
+      });
+      await a
+        .http(
+          'post',
+          `/technician/inspections/${one.id}/start`,
+          s.techs[0].token,
+          {},
+        )
+        .expect(201);
+      await a
+        .http(
+          'put',
+          `/technician/inspections/${one.id}/items/${one.checklist.items[0].id}`,
+          s.techs[0].token,
+          {
+            result: 'pass',
+            note: 'AUDIT-note',
+          },
+        )
+        .expect(200);
+      const submitted = (
+        await a
+          .http(
+            'post',
+            `/technician/inspections/${one.id}/submit`,
+            s.techs[0].token,
+          )
+          .expect(201)
+      ).body as { checklist: { attestationSha256: string } };
+      const done = await single(s.c, 'inspection.submitted', one.id);
+      expect(done.metadata).toEqual({
+        findings: 0,
+        attestationSha256: submitted.checklist.attestationSha256,
+      });
+      const two = (
+        await a
+          .http('post', '/maintenance/inspections', s.manager.token, {
+            checklistId: cl.id,
+            commonAreaId: area.id,
+            assigneeId: s.techs[0].id,
+            dueOn: day(3),
+          })
+          .expect(201)
+      ).body as { id: string };
+      await a
+        .http(
+          'post',
+          `/maintenance/inspections/${two.id}/cancel`,
+          s.manager.token,
+          { reasonCode: 'duplicate' },
+        )
+        .expect(201);
+      const cancelled = await single(s.c, 'inspection.cancelled', two.id);
+      expect(cancelled.metadata).toEqual({
+        reasonCode: 'duplicate',
+        fromStatus: 'scheduled',
+      });
+      for (const row of [created, updated, off, on, scheduled, done, cancelled])
+        expect(JSON.stringify(row)).not.toMatch(/AUDIT-/);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every asset entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

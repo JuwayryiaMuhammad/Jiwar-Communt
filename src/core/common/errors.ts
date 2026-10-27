@@ -1392,6 +1392,21 @@ export const ErrorCode = {
   PLAN_OCCURRENCE_OPEN: 'PLAN_OCCURRENCE_OPEN',
   /** The occurrence has ended; params.status (409). */
   PLAN_OCCURRENCE_CLOSED: 'PLAN_OCCURRENCE_CLOSED',
+  /** Unknown, another compound's, or (an inspector's) not theirs (404). */
+  INSPECTION_NOT_FOUND: 'INSPECTION_NOT_FOUND',
+  INSPECTION_ROUND_NOT_FOUND: 'INSPECTION_ROUND_NOT_FOUND',
+  INSPECTION_ROUND_ACTIVE: 'INSPECTION_ROUND_ACTIVE',
+  INSPECTION_ROUND_INACTIVE: 'INSPECTION_ROUND_INACTIVE',
+  /** Submitted or cancelled; params.status (409). */
+  INSPECTION_ENDED: 'INSPECTION_ENDED',
+  /** Answered and submitted only once started; params.status (409). */
+  INSPECTION_NOT_STARTED: 'INSPECTION_NOT_STARTED',
+  /** Its checklist asks for the target's tag scanned first (409). */
+  INSPECTION_SCAN_REQUIRED: 'INSPECTION_SCAN_REQUIRED',
+  /** The scanned code is not the target's current tag (409). */
+  INSPECTION_TAG_MISMATCH: 'INSPECTION_TAG_MISMATCH',
+  /** An asset in a unit is not inspected by the compound (409). */
+  INSPECTION_FOR_UNIT_ASSET: 'INSPECTION_FOR_UNIT_ASSET',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1629,6 +1644,8 @@ export const FieldErrorCode = {
   CHECKLIST_NOT_AVAILABLE: 'CHECKLIST_NOT_AVAILABLE',
   /** Not an active account holding tickets.dispatch: it answers for the work orders. */
   PLAN_OWNER_NOT_ELIGIBLE: 'PLAN_OWNER_NOT_ELIGIBLE',
+  /** Not an active account holding inspections.perform. */
+  INSPECTOR_NOT_ELIGIBLE: 'INSPECTOR_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

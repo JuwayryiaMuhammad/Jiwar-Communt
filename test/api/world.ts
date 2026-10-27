@@ -1,3 +1,4 @@
+import { InspectionsService } from '../../src/maintenance/inspections/inspections.service';
 import { PlansService } from '../../src/maintenance/plans/plans.service';
 import { ChecklistsService } from '../../src/maintenance/checklists/checklists.service';
 import { AssetsService } from '../../src/maintenance/assets/assets.service';
@@ -240,6 +241,9 @@ export interface World
   /** One of B's plans, and the occurrence it opened (ADR 0064). */
   bPlanId: string;
   bOccurrenceId: string;
+  /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
+  bRoundId: string;
+  bInspectionId: string;
   /** One of A's, for valid preventive requests. */
   aPreventiveServiceId: string;
   /** A device B's owner logged in from (ADR 0036). */
@@ -875,6 +879,34 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { ticketId: bOccurrenceTicket! },
     }),
   );
+  const bInspectionChecklist = await helpers.asManager(b, () =>
+    h.moduleRef.get(ChecklistsService).create({
+      key: 'world_inspection',
+      nameAr: 'تفتيش',
+      nameEn: 'World inspection',
+      purpose: 'inspection',
+      items: [{ kind: 'check', labelAr: 'ت', labelEn: 'Fence' }],
+    }),
+  );
+  const bRound = await helpers.asManager(b, () =>
+    h.moduleRef.get(InspectionsService).createRound({
+      title: 'World round',
+      checklistId: bInspectionChecklist.template.id,
+      commonAreaId: bCommonArea.id,
+      assigneeId: b.ids.technician,
+      every: 1,
+      unit: 'week',
+      anchorOn: day(30),
+    }),
+  );
+  const bInspection = await helpers.asManager(b, () =>
+    h.moduleRef.get(InspectionsService).create({
+      checklistId: bInspectionChecklist.template.id,
+      commonAreaId: bCommonArea.id,
+      assigneeId: b.ids.technician,
+      dueOn: day(1),
+    }),
+  );
   const bAssetImport = await helpers.asManager(b, async () => {
     const files = fileHelpers(h);
     const sheet = Buffer.from(
@@ -1377,6 +1409,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bChecklistId: bChecklist.template.id,
     bPlanId: bPlan.plan.id,
     bOccurrenceId: bOccurrence.id,
+    bRoundId: bRound.id,
+    bInspectionId: bInspection.inspection.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,
     bDeviceId: bDevice.id,

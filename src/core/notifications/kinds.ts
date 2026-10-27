@@ -2183,6 +2183,14 @@ export const NOTIFICATION_KINDS = {
     target: 'inspection',
     params: { targetRef: {}, dueOn: {} },
   },
+  /** A technician recommends replacing an asset (who keeps the register). */
+  'asset.replacement_recommended': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'asset_replacement_recommendation',
+    params: { assetRef: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

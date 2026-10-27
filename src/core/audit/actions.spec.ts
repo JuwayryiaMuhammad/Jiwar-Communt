@@ -183,6 +183,7 @@ describe('audit catalog', () => {
         'maintenance_plan',
         'inspection_round',
         'inspection',
+        'asset_replacement_recommendation',
       ]).toContain(def.target);
     }
   });

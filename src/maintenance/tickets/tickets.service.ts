@@ -72,6 +72,8 @@ interface TicketPlace {
 
 /** A work order the compound opens itself (ADR 0064). */
 export interface NewWorkOrder {
+  /** Its id, when the caller claimed an idempotency key for it first. */
+  id?: string;
   /** The compound's: a sweep has no request to read it from. */
   tenantId: string;
   origin: StaffOrigin;
@@ -500,13 +502,70 @@ export class TicketsService implements OnModuleInit {
   }
 
   /** The technician's own tickets: those assigned to them now. */
-  listForTechnician(q: ResidentQuery): Promise<Page<TicketRead>> {
+  listForTechnician(
+    q: ResidentQuery & { sort?: 'newest' | 'priority' },
+  ): Promise<Page<TicketRead>> {
+    if (q.sort === 'priority')
+      return this.tenantTx.withTenantTx(async (tx) => {
+        const page = await this.byPriority(tx, q);
+        return {
+          items: await this.reads(tx, page.items),
+          nextCursor: page.nextCursor,
+        };
+      });
     return this.tenantTx.withTenantTx((tx) =>
       this.page(tx, q, {
         technicianId: this.ctx.accountId,
         ...(q.status ? { status: q.status } : {}),
       }),
     );
+  }
+
+  /**
+   * The technician's tickets most urgent first (ADR 0064): emergencies,
+   * then urgent, then normal, newest first within each. A keyset of its
+   * own, on (rank, created_at, id), chosen by the database, so a page is
+   * full and its cursor true.
+   */
+  private async byPriority(
+    tx: TenantTxClient,
+    q: ResidentQuery,
+  ): Promise<Page<Ticket>> {
+    const limit = clampLimit(q.limit);
+    const after = q.cursor ? priorityCursor(q.cursor) : null;
+    const rank = Prisma.sql`CASE t.priority WHEN 'emergency' THEN 3 WHEN 'urgent' THEN 2 ELSE 1 END`;
+    const ids = await tx.$queryRaw<
+      { id: string; rank: number; created_at: Date }[]
+    >`
+      SELECT t.id, ${rank} AS rank, t.created_at FROM tickets t
+       WHERE t.technician_account_id = ${this.ctx.accountId}::uuid
+         ${q.status ? Prisma.sql`AND t.status = ${q.status}::ticket_status` : Prisma.empty}
+         ${
+           after
+             ? Prisma.sql`AND (${rank}, t.created_at, t.id) < (${after.rank}, ${after.at}::timestamptz, ${after.id}::uuid)`
+             : Prisma.empty
+         }
+       ORDER BY rank DESC, t.created_at DESC, t.id DESC
+       LIMIT ${limit + 1}`;
+    const rows = await tx.ticket.findMany({
+      where: { id: { in: ids.map((r) => r.id) } },
+    });
+    const ordered = ids.map((r) => rows.find((t) => t.id === r.id)!);
+    const items = ordered.slice(0, limit);
+    const last = ids[Math.min(limit, ids.length) - 1];
+    return {
+      items,
+      nextCursor:
+        ids.length > limit
+          ? Buffer.from(
+              JSON.stringify([
+                last.rank,
+                last.created_at.toISOString(),
+                last.id,
+              ]),
+            ).toString('base64url')
+          : null,
+    };
   }
 
   /**
@@ -1058,7 +1117,7 @@ export class TicketsService implements OnModuleInit {
     tx: TenantTxClient,
     input: NewWorkOrder,
   ): Promise<Ticket> {
-    const id = newId();
+    const id = input.id ?? newId();
     let unitId: string | null = null;
     let commonAreaId: string | null = input.commonAreaId ?? null;
     if (input.assetId !== undefined) {
@@ -1162,3 +1221,28 @@ export const photoLimit = (max: number) =>
   );
 
 export { ticketNotFound, ticketNumber };
+
+/** A `sort=priority` cursor: [rank, created_at, id]; INVALID_FORMAT otherwise. */
+function priorityCursor(cursor: string): {
+  rank: number;
+  at: Date;
+  id: string;
+} {
+  try {
+    const [rank, iso, id] = JSON.parse(
+      Buffer.from(cursor, 'base64url').toString('utf8'),
+    ) as [unknown, unknown, unknown];
+    const at = typeof iso === 'string' ? new Date(iso) : new Date(NaN);
+    if (
+      typeof rank === 'number' &&
+      [1, 2, 3].includes(rank) &&
+      !Number.isNaN(at.getTime()) &&
+      typeof id === 'string' &&
+      /^[0-9a-f-]{36}$/.test(id)
+    )
+      return { rank, at, id };
+  } catch {
+    // fall through
+  }
+  throw invalid([{ field: 'cursor', code: FieldErrorCode.INVALID_FORMAT }]);
+}

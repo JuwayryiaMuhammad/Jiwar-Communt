@@ -23442,6 +23442,125 @@
           }
         },
         {
+          "name": "List recommendations to replace, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "replacement-recommendations"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/replacement-recommendations"
+            }
+          }
+        },
+        {
+          "name": "Accept a recommendation to replace",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "replacement-recommendations",
+                ":id",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/replacement-recommendations/:id/accept",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decline a recommendation; `reasonCode` from `replacementDecline`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "replacement-recommendations",
+                ":id",
+                "decline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/replacement-recommendations/:id/decline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the maintenance settings",
           "request": {
             "description": "**Responses:** 200",
@@ -24919,6 +25038,181 @@
           }
         },
         {
+          "name": "An asset’s card on site: history and readings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "assets",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/assets/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Report a fault found on an asset: a work order",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"description\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string | yes |  |\n| `photoFileIds` | string[] |  | The caller’s finalized `ticket_photo` files, as many as the compound allows. |\n| `priority` | `normal` \\| `urgent` \\| `emergency` |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "assets",
+                ":id",
+                "faults"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/assets/:id/faults",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record readings of an asset",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"readings\": [\n    {\n      \"metricKey\": \"\",\n      \"value\": \"\",\n      \"occurredAt\": \"2026-01-01T09:00:00.000Z\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `readings` | object[] | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "assets",
+                ":id",
+                "readings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/assets/:id/readings",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recommend replacing an asset; `reasonCode` from `replacementReason`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"end_of_life\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  |  |\n| `reasonCode` | `end_of_life` \\| `repeated_failures` \\| `repair_uneconomic` \\| `safety` \\| `obsolete` \\| `other` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "assets",
+                ":id",
+                "replacement-recommendations"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/assets/:id/replacement-recommendations",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List my inspections, latest due first",
           "request": {
             "description": "**Responses:** 200",
@@ -25106,6 +25400,62 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Planned work coming in my trade, within 30 days, and mine already",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "plans",
+                "upcoming"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/plans/upcoming"
+            }
+          }
+        },
+        {
+          "name": "Scan an asset’s or an area’s tag: its card; sixty a minute",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes | What the QR holds: `JWA1.…` (an asset) or `JWL1.…` (an area). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "scan"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/scan"
             }
           }
         },
@@ -36608,6 +36958,12 @@
                   "description": "",
                   "disabled": true,
                   "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "`priority` (ADR 0064): emergencies first, then urgent, then normal; newest first within each. Its cursor is its own.",
+                  "disabled": true,
+                  "key": "sort",
                   "value": ""
                 }
               ],

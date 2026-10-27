@@ -1084,3 +1084,159 @@ export const INSPECTION_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The technician in the field, and the recommendations (ADR 0064). */
+export const FIELD_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/technician/scan',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { code: '' },
+      fields: [
+        { field: 'code', code: 'INVALID_LENGTH', params: { min: 1, max: 200 } },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/technician/assets/{id}',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: { params: (w) => ({ id: w.bAssetId }), code: 'ASSET_NOT_FOUND' },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/technician/assets/{id}/readings',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bAssetId }),
+      body: () => ({
+        readings: [
+          {
+            metricKey: 'run_hours',
+            value: '10',
+            occurredAt: new Date().toISOString(),
+          },
+        ],
+      }),
+      code: 'ASSET_NOT_FOUND',
+    },
+    invalid: {
+      body: { readings: [] },
+      fields: [
+        {
+          field: 'readings',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 20 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/technician/assets/{id}/faults',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bAssetId }),
+      body: () => ({ description: 'A leak at the seal' }),
+      code: 'ASSET_NOT_FOUND',
+    },
+    invalid: {
+      body: { description: '' },
+      fields: [
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 2000 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/technician/assets/{id}/replacement-recommendations',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bAssetId }),
+      body: () => ({ reasonCode: 'end_of_life' }),
+      code: 'ASSET_NOT_FOUND',
+    },
+    invalid: {
+      body: { note: '' },
+      fields: [
+        {
+          field: 'note',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1000 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/technician/plans/upcoming',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/replacement-recommendations',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'open' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['pending', 'accepted', 'declined'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/replacement-recommendations/{id}/accept',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bRecommendationId }),
+      code: 'REPLACEMENT_RECOMMENDATION_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/replacement-recommendations/{id}/decline',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bRecommendationId }),
+      body: () => ({ reasonCode: 'budget' }),
+      code: 'REPLACEMENT_RECOMMENDATION_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: ['x'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+];

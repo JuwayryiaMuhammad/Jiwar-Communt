@@ -188,6 +188,8 @@ export const REASON_CODES = {
   planSkip: ['not_needed', 'asset_out_of_service', 'covered_by_other_work', 'other'],
   planDeactivate: ['asset_replaced', 'no_longer_needed', 'contract_ended', 'other'],
   inspectionCancel: ['not_needed', 'duplicate', 'target_unavailable', 'other'],
+  replacementReason: ['end_of_life', 'repeated_failures', 'repair_uneconomic', 'safety', 'obsolete', 'other'],
+  replacementDecline: ['repair_first', 'budget', 'not_needed', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

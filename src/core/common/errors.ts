@@ -1407,6 +1407,13 @@ export const ErrorCode = {
   INSPECTION_TAG_MISMATCH: 'INSPECTION_TAG_MISMATCH',
   /** An asset in a unit is not inspected by the compound (409). */
   INSPECTION_FOR_UNIT_ASSET: 'INSPECTION_FOR_UNIT_ASSET',
+  /** Not a current tag of the compound: unknown, another's, an old print (404). */
+  TAG_NOT_RECOGNIZED: 'TAG_NOT_RECOGNIZED',
+  REPLACEMENT_RECOMMENDATION_NOT_FOUND: 'REPLACEMENT_RECOMMENDATION_NOT_FOUND',
+  /** One recommendation waits per asset (409). */
+  REPLACEMENT_RECOMMENDATION_EXISTS: 'REPLACEMENT_RECOMMENDATION_EXISTS',
+  /** Decided once; params.status (409). */
+  REPLACEMENT_RECOMMENDATION_DECIDED: 'REPLACEMENT_RECOMMENDATION_DECIDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

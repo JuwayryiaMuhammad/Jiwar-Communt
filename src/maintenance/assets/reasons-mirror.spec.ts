@@ -17,6 +17,8 @@ describe('the asset register’s reason codes in the dashboards’ mirror (ADR 0
     'planSkip',
     'planDeactivate',
     'inspectionCancel',
+    'replacementReason',
+    'replacementDecline',
   ] as const)('%s is the backend’s list', (list) => {
     expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
   });

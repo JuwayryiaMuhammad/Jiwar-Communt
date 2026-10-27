@@ -575,6 +575,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'unit IS NULL is tested first; its length runs only on a value',
   },
   asset_readings_source_shape: {},
+  // The technician in the field (ADR 0064).
+  field_scans_target_one: {},
+  asset_replacement_recommendations_reason_known: {},
+  asset_replacement_recommendations_note_length: {
+    guarded: 'note IS NULL is tested first; its length runs only on a value',
+  },
+  asset_replacement_recommendations_state_shape: {
+    guarded:
+      'decision_reason IS NOT NULL is required before its list is tested',
+  },
   // Inspections (ADR 0064).
   inspection_rounds_target_one: {},
   inspection_rounds_title_length: {},

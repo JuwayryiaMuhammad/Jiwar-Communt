@@ -2352,6 +2352,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تأخر التفتيش على {targetRef} المستحق يوم {dueOn}.',
     },
   },
+  'asset.replacement_recommended': {
+    en: {
+      title: 'Replacement recommended',
+      body: 'A technician recommends replacing asset {assetRef}.',
+    },
+    ar: {
+      title: 'توصية باستبدال أصل',
+      body: 'يوصي فني باستبدال الأصل {assetRef}.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

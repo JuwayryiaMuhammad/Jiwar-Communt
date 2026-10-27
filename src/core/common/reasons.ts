@@ -806,4 +806,16 @@ export const REASON_CODES = {
   // Inspections (ADR 0064): why one is called off; the migration's CHECK
   // repeats the list.
   inspectionCancel: ['not_needed', 'duplicate', 'target_unavailable', 'other'],
+  // A technician's recommendation to replace an asset, and why who keeps
+  // the register declines one (ADR 0064); the migration's CHECKs repeat
+  // both.
+  replacementReason: [
+    'end_of_life',
+    'repeated_failures',
+    'repair_uneconomic',
+    'safety',
+    'obsolete',
+    'other',
+  ],
+  replacementDecline: ['repair_first', 'budget', 'not_needed', 'other'],
 } as const;

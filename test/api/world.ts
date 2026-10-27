@@ -1,3 +1,4 @@
+import { FieldWorkService } from '../../src/maintenance/field/field-work.service';
 import { InspectionsService } from '../../src/maintenance/inspections/inspections.service';
 import { PlansService } from '../../src/maintenance/plans/plans.service';
 import { ChecklistsService } from '../../src/maintenance/checklists/checklists.service';
@@ -244,6 +245,8 @@ export interface World
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
+  /** A recommendation of B's technician to replace B's asset (ADR 0064). */
+  bRecommendationId: string;
   /** One of A's, for valid preventive requests. */
   aPreventiveServiceId: string;
   /** A device B's owner logged in from (ADR 0036). */
@@ -907,6 +910,14 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       dueOn: day(1),
     }),
   );
+  const bRecommendation = await helpers.as(
+    b,
+    { id: b.ids.technician, type: 'staff' },
+    () =>
+      h.moduleRef
+        .get(FieldWorkService)
+        .recommend(bAsset.asset.id, { reasonCode: 'end_of_life' }),
+  );
   const bAssetImport = await helpers.asManager(b, async () => {
     const files = fileHelpers(h);
     const sheet = Buffer.from(
@@ -1411,6 +1422,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bOccurrenceId: bOccurrence.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
+    bRecommendationId: bRecommendation.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,
     bDeviceId: bDevice.id,

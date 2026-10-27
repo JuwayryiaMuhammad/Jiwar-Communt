@@ -731,6 +731,78 @@ describe('Audit coverage — assets, plans and inspections', () => {
     });
   });
 
+  describe('recommendations to replace', () => {
+    it('asset_replacement.recommended, .accepted, .declined — the asset and the codes; never the note', async () => {
+      const first = await a.asset(s);
+      const rec = (
+        await a
+          .http(
+            'post',
+            `/technician/assets/${first}/replacement-recommendations`,
+            s.techs[0].token,
+            {
+              reasonCode: 'repair_uneconomic',
+              note: 'AUDIT-costs too much',
+            },
+          )
+          .expect(201)
+      ).body as { id: string };
+      const recommended = await single(
+        s.c,
+        'asset_replacement.recommended',
+        rec.id,
+      );
+      expect(recommended).toMatchObject({
+        actorId: s.techs[0].id,
+        changes: { note: { changed: true } },
+        metadata: { assetId: first, reasonCode: 'repair_uneconomic' },
+      });
+      await a
+        .http(
+          'post',
+          `/maintenance/replacement-recommendations/${rec.id}/accept`,
+          s.manager.token,
+        )
+        .expect(201);
+      const accepted = await single(s.c, 'asset_replacement.accepted', rec.id);
+      expect(accepted.metadata).toEqual({ assetId: first, reasonCode: null });
+      const second = await a.asset(s);
+      const other = (
+        await a
+          .http(
+            'post',
+            `/technician/assets/${second}/replacement-recommendations`,
+            s.techs[0].token,
+            {
+              reasonCode: 'obsolete',
+            },
+          )
+          .expect(201)
+      ).body as { id: string };
+      await a
+        .http(
+          'post',
+          `/maintenance/replacement-recommendations/${other.id}/decline`,
+          s.manager.token,
+          {
+            reasonCode: 'budget',
+          },
+        )
+        .expect(201);
+      const declined = await single(
+        s.c,
+        'asset_replacement.declined',
+        other.id,
+      );
+      expect(declined.metadata).toEqual({
+        assetId: second,
+        reasonCode: 'budget',
+      });
+      for (const row of [recommended, accepted, declined])
+        expect(JSON.stringify(row)).not.toMatch(/AUDIT-/);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every asset entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

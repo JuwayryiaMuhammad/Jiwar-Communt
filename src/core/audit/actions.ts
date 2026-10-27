@@ -1825,6 +1825,21 @@ export const AUDIT_ACTIONS = {
   'inspection.created': { log: 'tenant', target: 'inspection' },
   'inspection.cancelled': { log: 'tenant', target: 'inspection' },
   'inspection.submitted': { log: 'tenant', target: 'inspection' },
+  // A technician's recommendation to replace (ADR 0064): the asset and the
+  // reason codes; the note as { changed: true }.
+  'asset_replacement.recommended': {
+    log: 'tenant',
+    target: 'asset_replacement_recommendation',
+    sensitive: ['note'],
+  },
+  'asset_replacement.accepted': {
+    log: 'tenant',
+    target: 'asset_replacement_recommendation',
+  },
+  'asset_replacement.declined': {
+    log: 'tenant',
+    target: 'asset_replacement_recommendation',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

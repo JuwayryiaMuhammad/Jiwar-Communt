@@ -146,6 +146,8 @@ export class ResidentTicketsQueryDto extends PageQueryDto {
   unitId?: string;
 }
 
+const TECHNICIAN_SORTS = ['newest', 'priority'] as const;
+
 export class TechnicianTicketsQueryDto extends PageQueryDto {
   @ApiProperty({
     enum: TicketStatus,
@@ -155,6 +157,17 @@ export class TechnicianTicketsQueryDto extends PageQueryDto {
   @IsOptional()
   @IsEnum(TicketStatus, STATUSES)
   status?: TicketStatus;
+
+  @ApiProperty({
+    enum: TECHNICIAN_SORTS,
+    required: false,
+    default: 'newest',
+    description:
+      '`priority` (ADR 0064): emergencies first, then urgent, then normal; newest first within each. Its cursor is its own.',
+  })
+  @IsOptional()
+  @IsIn(TECHNICIAN_SORTS, withParams({ allowed: [...TECHNICIAN_SORTS] }))
+  sort?: (typeof TECHNICIAN_SORTS)[number];
 }
 
 export class DispatchTicketsQueryDto extends PageQueryDto {

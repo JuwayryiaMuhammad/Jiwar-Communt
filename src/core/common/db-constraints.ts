@@ -294,6 +294,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   inspection_findings_tenant_id_id_key: null,
   inspection_findings_once: null,
   inspection_findings_ticket_key: null,
+  // Checked under the asset's lock first: REPLACEMENT_RECOMMENDATION_EXISTS.
+  asset_replacement_recommendations_tenant_id_id_key: null,
+  asset_replacement_recommendations_one_pending: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

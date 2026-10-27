@@ -759,4 +759,7 @@ export const ASSETS_COVERAGE: readonly string[] = [
   'inspection.created',
   'inspection.cancelled',
   'inspection.submitted',
+  'asset_replacement.recommended',
+  'asset_replacement.accepted',
+  'asset_replacement.declined',
 ];

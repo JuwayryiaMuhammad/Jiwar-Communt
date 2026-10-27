@@ -9929,3 +9929,39 @@ model InspectionFinding {
   @@unique([inspectionId, itemId], map: "inspection_findings_once")
   @@map("inspection_findings")
 }
+
+/// A tag scanned on site (ADR 0064): an asset's or an area's. Append-only.
+model FieldScan {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  assetId      String?  @map("asset_id") @db.Uuid
+  commonAreaId String?  @map("common_area_id") @db.Uuid
+  accountId    String   @map("account_id") @db.Uuid
+  scannedAt    DateTime @map("scanned_at") @db.Timestamptz(3)
+
+  @@map("field_scans")
+}
+
+/// A technician's word that an asset should be replaced (ADR 0064),
+/// decided once by who keeps the register.
+model AssetReplacementRecommendation {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  assetId         String    @map("asset_id") @db.Uuid
+  /// REASON_CODES.replacementReason.
+  reasonCode      String    @map("reason_code")
+  /// The technician's words, erasable.
+  note            String?
+  recommendedById String?   @map("recommended_by_account_id") @db.Uuid
+  recommendedAt   DateTime  @map("recommended_at") @db.Timestamptz(3)
+  /// pending, accepted, declined.
+  status          String    @default("pending")
+  decidedById     String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt       DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.replacementDecline.
+  decisionReason  String?   @map("decision_reason")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, recommendedAt(sort: Desc), id(sort: Desc)], map: "asset_replacement_recommendations_queue_idx")
+  @@map("asset_replacement_recommendations")
+}

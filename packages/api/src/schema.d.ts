@@ -5629,6 +5629,57 @@ export interface paths {
         patch: operations["PreventiveServicesController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/replacement-recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List recommendations to replace, newest first */
+        get: operations["ReplacementsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/replacement-recommendations/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a recommendation to replace */
+        post: operations["ReplacementsController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/replacement-recommendations/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a recommendation; `reasonCode` from `replacementDecline` */
+        post: operations["ReplacementsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/settings": {
         parameters: {
             query?: never;
@@ -15199,6 +15250,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An asset’s card on site: history and readings */
+        get: operations["FieldController_card"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/assets/{id}/faults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report a fault found on an asset: a work order */
+        post: operations["FieldController_fault"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/assets/{id}/readings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record readings of an asset */
+        post: operations["FieldController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/assets/{id}/replacement-recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recommend replacing an asset; `reasonCode` from `replacementReason` */
+        post: operations["FieldController_recommend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/availability": {
         parameters: {
             query?: never;
@@ -15296,6 +15415,40 @@ export interface paths {
         put?: never;
         /** Submit my inspection: its findings open follow-up work orders */
         post: operations["MyInspectionsController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/plans/upcoming": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Planned work coming in my trade, within 30 days, and mine already */
+        get: operations["FieldController_upcoming"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scan an asset’s or an area’s tag: its card; sixty a minute */
+        post: operations["FieldController_scan"];
         delete?: never;
         options?: never;
         head?: never;
@@ -18252,6 +18405,14 @@ export interface components {
         AssetImportViewList: {
             data: components["schemas"]["AssetImportView"][];
             nextCursor: string | null;
+        };
+        AssetReadingView: {
+            /** Format: date-time */
+            occurredAt: string;
+            /** @enum {string} */
+            source: "run" | "manual";
+            unit: string | null;
+            value: string;
         };
         AssetStatusDto: {
             /**
@@ -23565,6 +23726,13 @@ export interface components {
             /** @description An occupant (owner or tenant) or a household member. */
             role: components["schemas"]["EmergencyFamilyRole"];
         };
+        FaultCreatedView: {
+            /**
+             * Format: uuid
+             * @description The work order opened.
+             */
+            id: string;
+        };
         FeedbackView: {
             author: components["schemas"]["AccountRefView"];
             /** @description The confirmation's comment; null once its author is erased. */
@@ -23580,6 +23748,12 @@ export interface components {
             reasonCode: string | null;
             /** @description 1–5, the technician who did the work (ADR 0038); optional. */
             technicianRating: number | null;
+        };
+        FieldAssetView: {
+            asset: components["schemas"]["AssetView"];
+            /** @description Its last 20 events, newest first. */
+            events: components["schemas"]["AssetEventView"][];
+            readings: components["schemas"]["MetricReadingsView"][];
         };
         FileManagementComplaintDto: {
             /** @description The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE). */
@@ -26487,6 +26661,12 @@ export interface components {
         MessageDto: {
             body: string;
         };
+        MetricReadingsView: {
+            last: components["schemas"]["AssetReadingView"];
+            metricKey: string;
+            /** @description The one before, to compare. */
+            previous: components["schemas"]["AssetReadingView"] | null;
+        };
         MoveAssetDto: {
             /** Format: uuid */
             commonAreaId?: string;
@@ -29160,6 +29340,16 @@ export interface components {
         ReadAllView: {
             read: number;
         };
+        ReadingDto: {
+            metricKey: string;
+            /**
+             * Format: date-time
+             * @description When it was read, with its offset: within the last 30 days, never ahead.
+             */
+            occurredAt: string;
+            unit?: string;
+            value: string;
+        };
         ReasonCodeDto: {
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
             reasonCode: string;
@@ -29196,6 +29386,11 @@ export interface components {
             pieces: number;
             /** @description The unit the parcel is for. */
             unitCode: string;
+        };
+        RecommendReplacementDto: {
+            note?: string;
+            /** @enum {string} */
+            reasonCode: "end_of_life" | "repeated_failures" | "repair_uneconomic" | "safety" | "obsolete" | "other";
         };
         RecordClubPaymentDto: {
             /** @description What was paid, EGP. */
@@ -29294,6 +29489,9 @@ export interface components {
             paidOn: string;
             /** @description For a transfer or a cheque, and only for them. */
             reference?: string;
+        };
+        RecordReadingsDto: {
+            readings: components["schemas"]["ReadingDto"][];
         };
         RecordRefundDto: {
             /** @description At most the unit’s credit now. */
@@ -29613,6 +29811,28 @@ export interface components {
             /** @description The whole set; keys from GET /permissions. The manager role keeps roles.manage and residents.manage. */
             permissions: string[];
         };
+        ReplacementRecommendationView: {
+            /** Format: uuid */
+            assetId: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decisionReason: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The technician’s words. */
+            note: string | null;
+            reasonCode: string;
+            /** Format: date-time */
+            recommendedAt: string;
+            /** Format: uuid */
+            recommendedById: string | null;
+            /** @enum {string} */
+            status: "pending" | "accepted" | "declined";
+        };
+        ReplacementRecommendationViewList: {
+            data: components["schemas"]["ReplacementRecommendationView"][];
+            nextCursor: string | null;
+        };
         ReportConversationDto: {
             /** @description For the staff alone. */
             note?: string;
@@ -29632,6 +29852,13 @@ export interface components {
              * @description A unit that gives the caller the emergency button.
              */
             unitId: string;
+        };
+        ReportFaultDto: {
+            description: string;
+            /** @description The caller’s finalized `ticket_photo` files, as many as the compound allows. */
+            photoFileIds?: string[];
+            /** @default normal */
+            priority: components["schemas"]["TicketPriority"];
         };
         ReportIncidentDto: {
             /** @description What happened, in the author’s words. Never a resident’s to read. */
@@ -31038,6 +31265,12 @@ export interface components {
              * @description The device’s time of the scan: inside the run’s lifetime, two minutes either side (422 PATROL_SCAN_OUT_OF_WINDOW).
              */
             scannedAt: string;
+        };
+        ScanResultView: {
+            area: components["schemas"]["CommonAreaView"] | null;
+            asset: components["schemas"]["FieldAssetView"] | null;
+            /** @enum {string} */
+            kind: "asset" | "area";
         };
         ScanRunView: {
             checkpointsTotal: number;
@@ -33680,6 +33913,10 @@ export interface components {
             /** Format: date-time */
             startsAt: string;
         };
+        TagScanDto: {
+            /** @description What the QR holds: `JWA1.…` (an asset) or `JWL1.…` (an area). */
+            code: string;
+        };
         TaskUnitView: {
             building: string | null;
             unitCode: string;
@@ -34383,6 +34620,25 @@ export interface components {
             /** @description Unread and critical. */
             critical: number;
             unread: number;
+        };
+        UpcomingWorkView: {
+            assetCode: string;
+            /** Format: uuid */
+            assetId: string;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            planId: string;
+            /**
+             * Format: uuid
+             * @description Its work order, when it is mine already.
+             */
+            ticketId: string | null;
+            title: string;
+        };
+        UpcomingWorkViewList: {
+            data: components["schemas"]["UpcomingWorkView"][];
+            nextCursor: string | null;
         };
         UpdateAccountStatusDto: {
             /** @enum {string} */
@@ -43964,6 +44220,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PreventiveServiceView"];
+                };
+            };
+        };
+    };
+    ReplacementsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "pending" | "accepted" | "declined";
+                assetId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplacementRecommendationViewList"];
+                };
+            };
+        };
+    };
+    ReplacementsController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplacementRecommendationView"];
+                };
+            };
+        };
+    };
+    ReplacementsController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplacementRecommendationView"];
                 };
             };
         };
@@ -58386,6 +58713,109 @@ export interface operations {
             };
         };
     };
+    FieldController_card: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldAssetView"];
+                };
+            };
+        };
+    };
+    FieldController_fault: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportFaultDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaultCreatedView"];
+                };
+            };
+        };
+    };
+    FieldController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordReadingsDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    FieldController_recommend: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecommendReplacementDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplacementRecommendationView"];
+                };
+            };
+        };
+    };
     TechnicianAvailabilityController_get: {
         parameters: {
             query?: never;
@@ -58545,6 +58975,48 @@ export interface operations {
             };
         };
     };
+    FieldController_upcoming: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpcomingWorkViewList"];
+                };
+            };
+        };
+    };
+    FieldController_scan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TagScanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanResultView"];
+                };
+            };
+        };
+    };
     TechnicianTicketsController_list: {
         parameters: {
             query?: {
@@ -58552,6 +59024,8 @@ export interface operations {
                 cursor?: string;
                 limit?: number;
                 status?: components["schemas"]["TicketStatus"];
+                /** @description `priority` (ADR 0064): emergencies first, then urgent, then normal; newest first within each. Its cursor is its own. */
+                sort?: "newest" | "priority";
             };
             header?: never;
             path?: never;

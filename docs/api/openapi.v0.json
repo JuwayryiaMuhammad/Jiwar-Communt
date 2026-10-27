@@ -1939,6 +1939,35 @@
         ],
         "type": "object"
       },
+      "AssetReadingView": {
+        "properties": {
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "run",
+              "manual"
+            ],
+            "type": "string"
+          },
+          "unit": {
+            "nullable": true,
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "unit",
+          "source",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
       "AssetStatusDto": {
         "properties": {
           "reasonCode": {
@@ -18328,6 +18357,19 @@
         ],
         "type": "object"
       },
+      "FaultCreatedView": {
+        "properties": {
+          "id": {
+            "description": "The work order opened.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
       "FeedbackView": {
         "properties": {
           "author": {
@@ -18387,6 +18429,32 @@
           "comment",
           "author",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "FieldAssetView": {
+        "properties": {
+          "asset": {
+            "$ref": "#/components/schemas/AssetView"
+          },
+          "events": {
+            "description": "Its last 20 events, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/AssetEventView"
+            },
+            "type": "array"
+          },
+          "readings": {
+            "items": {
+              "$ref": "#/components/schemas/MetricReadingsView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "asset",
+          "events",
+          "readings"
         ],
         "type": "object"
       },
@@ -27960,6 +28028,32 @@
         ],
         "type": "object"
       },
+      "MetricReadingsView": {
+        "properties": {
+          "last": {
+            "$ref": "#/components/schemas/AssetReadingView"
+          },
+          "metricKey": {
+            "type": "string"
+          },
+          "previous": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetReadingView"
+              }
+            ],
+            "description": "The one before, to compare.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "metricKey",
+          "last",
+          "previous"
+        ],
+        "type": "object"
+      },
       "MoveAssetDto": {
         "properties": {
           "commonAreaId": {
@@ -36289,6 +36383,34 @@
         ],
         "type": "object"
       },
+      "ReadingDto": {
+        "properties": {
+          "metricKey": {
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "occurredAt": {
+            "description": "When it was read, with its offset: within the last 30 days, never ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "unit": {
+            "maxLength": 16,
+            "minLength": 1,
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^-?\\d{1,10}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metricKey",
+          "value",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
       "ReasonCodeDto": {
         "properties": {
           "reasonCode": {
@@ -36393,6 +36515,30 @@
           "carrier",
           "pieces",
           "photoFileId"
+        ],
+        "type": "object"
+      },
+      "RecommendReplacementDto": {
+        "properties": {
+          "note": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "enum": [
+              "end_of_life",
+              "repeated_failures",
+              "repair_uneconomic",
+              "safety",
+              "obsolete",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -36608,6 +36754,22 @@
           "amount",
           "method",
           "paidOn"
+        ],
+        "type": "object"
+      },
+      "RecordReadingsDto": {
+        "properties": {
+          "readings": {
+            "items": {
+              "$ref": "#/components/schemas/ReadingDto"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "readings"
         ],
         "type": "object"
       },
@@ -37681,6 +37843,83 @@
         ],
         "type": "object"
       },
+      "ReplacementRecommendationView": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decisionReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "The technician’s words.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "recommendedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recommendedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "accepted",
+              "declined"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "reasonCode",
+          "note",
+          "recommendedById",
+          "recommendedAt",
+          "status",
+          "decidedAt",
+          "decisionReason"
+        ],
+        "type": "object"
+      },
+      "ReplacementRecommendationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReplacementRecommendationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ReportConversationDto": {
         "properties": {
           "note": {
@@ -37734,6 +37973,34 @@
         "required": [
           "type",
           "unitId"
+        ],
+        "type": "object"
+      },
+      "ReportFaultDto": {
+        "properties": {
+          "description": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "The caller’s finalized `ticket_photo` files, as many as the compound allows.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "default": "normal"
+          }
+        },
+        "required": [
+          "description"
         ],
         "type": "object"
       },
@@ -42350,6 +42617,41 @@
           "id",
           "method",
           "scannedAt"
+        ],
+        "type": "object"
+      },
+      "ScanResultView": {
+        "properties": {
+          "area": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommonAreaView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "asset": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FieldAssetView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "asset",
+              "area"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "asset",
+          "area"
         ],
         "type": "object"
       },
@@ -51576,6 +51878,19 @@
         ],
         "type": "object"
       },
+      "TagScanDto": {
+        "properties": {
+          "code": {
+            "description": "What the QR holds: `JWA1.…` (an asset) or `JWL1.…` (an area).",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
       "TaskUnitView": {
         "properties": {
           "building": {
@@ -53999,6 +54314,62 @@
         "required": [
           "unread",
           "critical"
+        ],
+        "type": "object"
+      },
+      "UpcomingWorkView": {
+        "properties": {
+          "assetCode": {
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ticketId": {
+            "description": "Its work order, when it is mine already.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "planId",
+          "title",
+          "assetId",
+          "assetCode",
+          "dueOn",
+          "ticketId"
+        ],
+        "type": "object"
+      },
+      "UpcomingWorkViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UpcomingWorkView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -73670,6 +74041,161 @@
           }
         ],
         "summary": "Update a preventive service",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/replacement-recommendations": {
+      "get": {
+        "operationId": "ReplacementsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "accepted",
+                "declined"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacementRecommendationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List recommendations to replace, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/replacement-recommendations/{id}/accept": {
+      "post": {
+        "operationId": "ReplacementsController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacementRecommendationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept a recommendation to replace",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/replacement-recommendations/{id}/decline": {
+      "post": {
+        "operationId": "ReplacementsController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacementRecommendationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a recommendation; `reasonCode` from `replacementDecline`",
         "tags": [
           "maintenance"
         ],
@@ -102009,6 +102535,204 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/technician/assets/{id}": {
+      "get": {
+        "operationId": "FieldController_card",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldAssetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An asset’s card on site: history and readings",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/assets/{id}/faults": {
+      "post": {
+        "operationId": "FieldController_fault",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportFaultDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaultCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report a fault found on an asset: a work order",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/assets/{id}/readings": {
+      "post": {
+        "operationId": "FieldController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordReadingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record readings of an asset",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/assets/{id}/replacement-recommendations": {
+      "post": {
+        "operationId": "FieldController_recommend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendReplacementDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacementRecommendationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Recommend replacing an asset; `reasonCode` from `replacementReason`",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/technician/availability": {
       "get": {
         "operationId": "TechnicianAvailabilityController_get",
@@ -102316,6 +103040,72 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/technician/plans/upcoming": {
+      "get": {
+        "operationId": "FieldController_upcoming",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpcomingWorkViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Planned work coming in my trade, within 30 days, and mine already",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/scan": {
+      "post": {
+        "operationId": "FieldController_scan",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagScanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResultView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Scan an asset’s or an area’s tag: its card; sixty a minute",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/technician/tickets": {
       "get": {
         "operationId": "TechnicianTicketsController_list",
@@ -102346,6 +103136,20 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/TicketStatus"
+            }
+          },
+          {
+            "description": "`priority` (ADR 0064): emergencies first, then urgent, then normal; newest first within each. Its cursor is its own.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "newest",
+              "enum": [
+                "newest",
+                "priority"
+              ],
+              "type": "string"
             }
           }
         ],

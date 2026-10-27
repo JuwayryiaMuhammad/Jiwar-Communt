@@ -114,6 +114,12 @@ import {
 import { InspectionsService } from './inspections/inspections.service';
 import { InspectionReports } from './inspections/inspection-reports';
 import { InspectionSweep } from './inspections/inspection-sweep';
+import {
+  FieldController,
+  ReplacementsController,
+} from './field/field.controller';
+import { FieldWorkService } from './field/field-work.service';
+import { ReplacementsService } from './field/replacements.service';
 import { QuotesService } from './quotes/quotes.service';
 
 /**
@@ -162,6 +168,8 @@ import { QuotesService } from './quotes/quotes.service';
     InspectionsController,
     InspectionReportController,
     MyInspectionsController,
+    FieldController,
+    ReplacementsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -217,6 +225,8 @@ import { QuotesService } from './quotes/quotes.service';
     InspectionsService,
     InspectionReports,
     InspectionSweep,
+    FieldWorkService,
+    ReplacementsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

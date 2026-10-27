@@ -292,3 +292,15 @@ SLA، تقييمات، تعليقات، تاريخ الحالات، الإسنا
 - **الإتاحة `unavailable` مابترجعش البلاغات المفتوحة**، والرفض الأول للساكن بيرجع البلاغ للفني حتى لو هو `unavailable` (القاعدة بتشوف إنه ستاف نشط عنده `tickets.work` بس).
 - الفني مابيتبلغش لما المشرف يغيّر إتاحته، ولا بالإغلاق التلقائي.
 - مافيش جدول ساعات عمل للفني ولا أيام إجازة (المواعيد المقترحة على السكان بتتجاهلها).
+
+## في الموقع: الأصول، القوائم، والمهام المخططة (ADR 0064)
+> بصلاحية `assets.read` (موجودة عند الفني).
+
+- **مسح تاج:** `POST /technician/scan { code }` → `{ kind: asset, asset: { asset, events, readings } }` أو `{ kind: area, area }`. أي حاجة مش تاج حالي = `404 TAG_NOT_RECOGNIZED`. ٦٠ مسح في الدقيقة.
+- **كارت الأصل:** `GET /technician/assets/:id`: الكارت، آخر ٢٠ حدث، وكل قراءة بجنب اللي قبلها (للمقارنة).
+- **قراءات بإيدك:** `POST /technician/assets/:id/readings { readings: [{ metricKey, value, unit?, occurredAt }] }` (+ `Idempotency-Key`)؛ `occurredAt` بالـoffset، في آخر ٣٠ يوم ومش في المستقبل. ممكن تفتح صيانة بالاستخدام.
+- **عطل لقيته:** `POST /technician/assets/:id/faults { description, priority?, photoFileIds? }` → أمر عمل `origin: field`. لو الأصل جوه وحدة: أهل الوحدة بيشوفوه وبيشوفوا زياراته (عشان تدخل).
+- **توصية استبدال:** `POST /technician/assets/:id/replacement-recommendations { reasonCode, note? }` (`replacementReason`): واحدة بس مستنية لكل أصل (`409 REPLACEMENT_RECOMMENDATION_EXISTS`).
+- **قائمة الفحص بتاعة أمر العمل:** `GET /technician/tickets/:id/checklist` · `PUT …/checklist/items/:itemId` (وانت شغال أو موقف مؤقت) · `POST …/checklist/submit`. ما ينفعش "تم" والقائمة مفتوحة (`409 CHECKLIST_NOT_SUBMITTED`).
+- **الجاي في تخصصي:** `GET /technician/plans/upcoming`: الخطط اللي ميعادها خلال ٣٠ يوم في فئات تخصصاتي، وأوامر العمل المخططة اللي معايا.
+- **ترتيب بالأولوية:** `GET /technician/tickets?sort=priority`: الطوارئ ثم العاجل ثم العادي (الأحدث جوه كل واحدة)؛ الـcursor بتاعه خاص بيه.

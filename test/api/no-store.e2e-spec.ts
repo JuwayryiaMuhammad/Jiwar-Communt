@@ -738,6 +738,37 @@ describe('API v0 — no-store', () => {
       ),
     ).id;
   };
+  /**
+   * A works permit of A's home, approved, its completion inspection passed
+   * (ADR 0063): the permit's and the inspection's ids.
+   */
+  const aPassed = async () => {
+    const permitId = await aPermit();
+    await as('manager', 'POST', `/staff/unit-permits/${permitId}/approve`, {});
+    const asked = body<{ id: string }>(
+      await as('owner', 'POST', `/permits/${permitId}/completion-inspection`),
+    );
+    const photo = await fileHelpers(h).ready(
+      w.a.tokens.manager,
+      'works_inspection_photo',
+    );
+    const passed = body<{ verifyCode: string }>(
+      await as(
+        'manager',
+        'POST',
+        `/staff/permit-inspections/${asked.id}/decide`,
+        {
+          outcome: 'passed',
+          photoFileIds: [photo],
+        },
+      ),
+    );
+    return {
+      permitId,
+      inspectionId: asked.id,
+      verifyCode: passed.verifyCode,
+    };
+  };
   const aWorker = async (permitId: string) =>
     as('owner', 'POST', `/permits/${permitId}/workers`, {
       fullName: 'No-store Worker',
@@ -1166,6 +1197,24 @@ describe('API v0 — no-store', () => {
     'POST /permits/{id}/cancel': async () =>
       as('owner', 'POST', `/permits/${await aPermit()}/cancel`, {}),
     'POST /permits/{id}/workers': async () => aWorker(await aPermit()),
+    // The certificate's PDF (ADR 0063), the requester's and the staff's.
+    'GET /permits/{id}/completion-certificate': async () =>
+      as(
+        'owner',
+        'GET',
+        `/permits/${(await aPassed()).permitId}/completion-certificate`,
+      ),
+    'GET /staff/permit-inspections/{id}/certificate': async () =>
+      as(
+        'manager',
+        'GET',
+        `/staff/permit-inspections/${(await aPassed()).inspectionId}/certificate`,
+      ),
+    // Its public check (ADR 0063), as a clearance's.
+    'POST /public/works-certificates/lookup': async () =>
+      call(w, 'POST', '/public/works-certificates/lookup', {
+        body: { code: (await aPassed()).verifyCode },
+      }),
     'POST /units/{unitId}/permits/moves': async () => {
       await clearPermits('move');
       // A's first work day three days on, under its rules: never a fixed

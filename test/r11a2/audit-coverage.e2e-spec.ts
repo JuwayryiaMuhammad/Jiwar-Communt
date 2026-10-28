@@ -13,6 +13,7 @@ import {
   type HttpHarness,
 } from '../setup/http-app';
 import { waitForOtp } from '../setup/mailpit';
+import { fileHelpers } from '../setup/files';
 import { leakText } from '../setup/leak-text';
 import { permitHelpers, type Who } from '../setup/permits';
 
@@ -269,6 +270,71 @@ describe('Audit coverage — R11a-2', () => {
         expect.objectContaining({
           actorId: s.alice.id,
           metadata: { unitId: s.home.id, reasonCode: 'unit_reopened' },
+        }),
+      ]);
+    });
+  });
+
+  describe('works completion (ADR 0063)', () => {
+    it('asked by the requester, failed with findings, asked again and passed', async () => {
+      const s = await p.setUp('R11a-2 Works Audit');
+      const permit = await p.works(s.alice, s.home.id);
+      await p.approve(s.manager, permit.id);
+      const ask = async () =>
+        (
+          (
+            await http(
+              'post',
+              `/permits/${permit.id}/completion-inspection`,
+              s.alice,
+            ).expect(201)
+          ).body as { id: string }
+        ).id;
+      const decide = async (id: string, body: object) =>
+        http('post', `/staff/permit-inspections/${id}/decide`, s.manager, {
+          photoFileIds: [
+            await fileHelpers(h).ready(
+              s.manager.token,
+              'works_inspection_photo',
+            ),
+          ],
+          ...body,
+        }).expect(200);
+
+      const first = await ask();
+      expect(
+        await entries(s.c.tenantId, 'permit_inspection.requested', first),
+      ).toEqual([
+        expect.objectContaining({
+          actorId: s.alice.id,
+          metadata: { permitId: permit.id, unitId: s.home.id, cycle: 1 },
+        }),
+      ]);
+      await decide(first, { outcome: 'failed', findings: ['debris_left'] });
+      expect(
+        await entries(s.c.tenantId, 'permit_inspection.failed', first),
+      ).toEqual([
+        expect.objectContaining({
+          actorId: s.manager.id,
+          metadata: {
+            permitId: permit.id,
+            cycle: 1,
+            photos: 1,
+            findings: ['debris_left'],
+          },
+        }),
+      ]);
+      const second = await ask();
+      await decide(second, { outcome: 'passed' });
+      expect(
+        await entries(s.c.tenantId, 'permit_inspection.passed', second),
+      ).toEqual([
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            permitId: permit.id,
+            cycle: 2,
+            certificateNumber: expect.stringMatching(/^WC-\d{6}$/) as string,
+          }) as unknown,
         }),
       ]);
     });

@@ -730,6 +730,9 @@ export const R11A2_COVERAGE: readonly string[] = [
   'unit_proxy.ended',
   'unit_inspection.requested',
   'unit_inspection.cancelled',
+  'permit_inspection.requested',
+  'permit_inspection.passed',
+  'permit_inspection.failed',
 ];
 
 /**

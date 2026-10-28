@@ -1375,6 +1375,13 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0063: a closed unit's inspections (A's home: none, empty lists).
       '/units/{unitId}/inspection-requests': a.homeUnitId,
       '/units/{unitId}/inspections': a.homeUnitId,
+      // ADR 0063: works completion (none asked here: not found).
+      '/permits/{id}/completion-inspections':
+        '0192a5f0-1c2b-7d3e-8f40-0000000063d2',
+      '/permits/{id}/completion-certificate':
+        '0192a5f0-1c2b-7d3e-8f40-0000000063d3',
+      '/staff/permit-inspections/{id}/certificate':
+        '0192a5f0-1c2b-7d3e-8f40-0000000063d4',
       '/staff/units/{unitId}/contracts/{id}': {
         unitId: a.homeUnitId,
         id: '0192a5f0-1c2b-7d3e-8f40-0000000062c4',
@@ -2650,6 +2657,10 @@ describe('API v0 — PII leak scan', () => {
       (r) => r.auth === 'public' && r.path.endsWith('/lookup'),
     ).map((r) => r.path);
     expect(publicReads).toEqual([
+      // ADR 0063: a works certificate's check shows the compound, the
+      // number, the unit's code and the day, never a person
+      // (test/permits/works-completion).
+      '/public/works-certificates/lookup',
       // ADR 0062: a clearance check shows the compound, the number, the
       // unit's code and the dates, never a person or an id
       // (test/finance/clearances-deposits).

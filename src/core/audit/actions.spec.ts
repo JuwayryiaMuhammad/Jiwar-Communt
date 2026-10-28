@@ -177,6 +177,7 @@ describe('audit catalog', () => {
         'unit_move',
         'unit_proxy',
         'unit_inspection_request',
+        'permit_inspection',
         // ADR 0064
         'common_area',
         'asset_type',

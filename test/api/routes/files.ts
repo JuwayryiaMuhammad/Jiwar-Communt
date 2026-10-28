@@ -69,6 +69,7 @@ export const FILES_ROUTES: Row[] = [
               'asset_document',
               'checklist_photo',
               'data_import',
+              'works_inspection_photo',
             ],
           },
         },

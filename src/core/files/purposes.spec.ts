@@ -132,6 +132,16 @@ describe('file purposes', () => {
     // A compound document's version (ADR 0062): a PDF only, 10 MB.
     expect(sizeCheck).not.toContain(`WHEN 'compound_document'`);
     expect(FILE_PURPOSES.compound_document.types).toEqual(['application/pdf']);
+    // A works completion photo (ADR 0063): an image, the 10 MB default, so
+    // neither CHECK names it.
+    expect(sizeCheck).not.toContain(`WHEN 'works_inspection_photo'`);
+    expect(typeCheck).not.toContain(`'works_inspection_photo'`);
+    expect(FILE_PURPOSES.works_inspection_photo.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
+    expect(FILE_PURPOSES.works_inspection_photo.types).not.toContain(
+      'application/pdf',
+    );
     // files_content_type_for_purpose: images for every purpose, a PDF only
     // as a document, a request's attachment, a community attachment, a
     // complaint's evidence or a vehicle's licence.

@@ -9136,6 +9136,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/permits/{id}/completion-certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The works completion certificate as a PDF */
+        get: operations["PermitInspectionsController_certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/completion-inspection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask for the finished works to be inspected */
+        post: operations["PermitInspectionsController_ask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/completion-inspections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The permit’s completion inspections */
+        get: operations["PermitInspectionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permits/{id}/guests": {
         parameters: {
             query?: never;
@@ -9934,6 +9985,23 @@ export interface paths {
         put?: never;
         /** "This isn't me": cancel the visitor pass */
         post: operations["VisitorPageController_notMe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/works-certificates/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check a works completion certificate by its code */
+        post: operations["PublicWorksCertificatesController_lookup"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13121,6 +13189,57 @@ export interface paths {
         put?: never;
         /** Reverse an office payment, once, with a reason code */
         post: operations["StaffPaymentsController_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/permit-inspections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Completion inspections, asked by default */
+        get: operations["StaffPermitInspectionsController_queue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/permit-inspections/{id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A works completion certificate as a PDF */
+        get: operations["StaffPermitInspectionsController_certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/permit-inspections/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pass or fail a completion inspection, with photos */
+        post: operations["StaffPermitInspectionsController_decide"];
         delete?: never;
         options?: never;
         head?: never;
@@ -22833,6 +22952,14 @@ export interface components {
              */
             reasonCode?: "not_expected" | "identity_unclear" | "outside_policy" | "other";
         };
+        DecidePermitInspectionDto: {
+            /** @description A failure’s findings, REASON_CODES.worksFinding (one to five); none on a pass. */
+            findings?: string[];
+            /** @enum {string} */
+            outcome: "passed" | "failed";
+            /** @description Finalized `works_inspection_photo` files. */
+            photoFileIds: string[];
+        };
         DecideViolationAppealDto: {
             /**
              * @description `upheld`: open again. `cancelled`: it is cancelled.
@@ -24207,7 +24334,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -29018,6 +29145,26 @@ export interface components {
             /** @example 17:00 */
             to: string;
         };
+        PermitInspectionView: {
+            /** @description A pass’s certificate: `WC-` and the number. */
+            certificateNumber: string | null;
+            /** @description The first, then each re-ask. */
+            cycle: number;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @description A failure’s findings (REASON_CODES.worksFinding). */
+            findings: string[];
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            permitId: string;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @enum {string} */
+            status: "asked" | "passed" | "failed";
+            /** @description The certificate’s code: anyone checks it at `<PUBLIC_APP_URL>/w#<code>`. */
+            verifyCode: string | null;
+        };
         PermitLimitsView: {
             /** @example 100 */
             daysOff: number;
@@ -29790,6 +29937,14 @@ export interface components {
             titleAr: string | null;
             /** @description Written by the staff. */
             titleEn: string | null;
+        };
+        PublicWorksCertificateView: {
+            compoundName: string;
+            /** @example WC-000012 */
+            number: string;
+            /** Format: date-time */
+            passedAt: string;
+            unitCode: string;
         };
         PublicationFollowUpView: {
             /** Format: date-time */
@@ -33685,6 +33840,30 @@ export interface components {
             data: components["schemas"]["StaffPartnerView"][];
             nextCursor: string | null;
         };
+        StaffPermitInspectionView: {
+            /** @description A pass’s certificate: `WC-` and the number. */
+            certificateNumber: string | null;
+            /** @description The first, then each re-ask. */
+            cycle: number;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @description A failure’s findings (REASON_CODES.worksFinding). */
+            findings: string[];
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            permitId: string;
+            permitReference: string;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @enum {string} */
+            status: "asked" | "passed" | "failed";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description The certificate’s code: anyone checks it at `<PUBLIC_APP_URL>/w#<code>`. */
+            verifyCode: string | null;
+        };
         StaffPermitView: {
             building: string | null;
             cancelReason: components["schemas"]["UnitPermitCancelReason"] | null;
@@ -36529,6 +36708,10 @@ export interface components {
         };
         /** @enum {string} */
         WorksAreaKind: "road" | "facility" | "gate";
+        WorksCertificateCodeDto: {
+            /** @description The code printed on the certificate (22 characters). */
+            code: string;
+        };
         WorksDetailsView: {
             /** @description Null once the requester was erased. */
             contractorCompany: string | null;
@@ -50322,6 +50505,68 @@ export interface operations {
             };
         };
     };
+    PermitInspectionsController_certificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The PDF. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PermitInspectionsController_ask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitInspectionView"];
+                };
+            };
+        };
+    };
+    PermitInspectionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitInspectionView"][];
+                };
+            };
+        };
+    };
     PermitsController_addGuests: {
         parameters: {
             query?: never;
@@ -51500,6 +51745,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    PublicWorksCertificatesController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorksCertificateCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicWorksCertificateView"];
+                };
             };
         };
     };
@@ -56243,6 +56511,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentDetailView"];
+                };
+            };
+        };
+    };
+    StaffPermitInspectionsController_queue: {
+        parameters: {
+            query?: {
+                /** @description Default: asked. */
+                status?: "asked" | "passed" | "failed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitInspectionView"][];
+                };
+            };
+        };
+    };
+    StaffPermitInspectionsController_certificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The PDF. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffPermitInspectionsController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecidePermitInspectionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitInspectionView"];
                 };
             };
         };

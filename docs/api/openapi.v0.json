@@ -14164,6 +14164,39 @@
         ],
         "type": "object"
       },
+      "DecidePermitInspectionDto": {
+        "properties": {
+          "findings": {
+            "description": "A failure’s findings, REASON_CODES.worksFinding (one to five); none on a pass.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "outcome": {
+            "enum": [
+              "passed",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Finalized `works_inspection_photo` files.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "photoFileIds"
+        ],
+        "type": "object"
+      },
       "DecideViolationAppealDto": {
         "properties": {
           "decision": {
@@ -18717,7 +18750,8 @@
           "contract",
           "asset_document",
           "checklist_photo",
-          "data_import"
+          "data_import",
+          "works_inspection_photo"
         ],
         "type": "string"
       },
@@ -34135,6 +34169,68 @@
         ],
         "type": "object"
       },
+      "PermitInspectionView": {
+        "properties": {
+          "certificateNumber": {
+            "description": "A pass’s certificate: `WC-` and the number.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cycle": {
+            "description": "The first, then each re-ask.",
+            "type": "number"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "findings": {
+            "description": "A failure’s findings (REASON_CODES.worksFinding).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "permitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "asked",
+              "passed",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "verifyCode": {
+            "description": "The certificate’s code: anyone checks it at `<PUBLIC_APP_URL>/w#<code>`.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "permitId",
+          "cycle",
+          "status",
+          "requestedAt",
+          "decidedAt",
+          "findings",
+          "certificateNumber",
+          "verifyCode"
+        ],
+        "type": "object"
+      },
       "PermitLimitsView": {
         "properties": {
           "daysOff": {
@@ -36604,6 +36700,31 @@
           "textEn",
           "titleAr",
           "textAr"
+        ],
+        "type": "object"
+      },
+      "PublicWorksCertificateView": {
+        "properties": {
+          "compoundName": {
+            "type": "string"
+          },
+          "number": {
+            "example": "WC-000012",
+            "type": "string"
+          },
+          "passedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "compoundName",
+          "number",
+          "unitCode",
+          "passedAt"
         ],
         "type": "object"
       },
@@ -49717,6 +49838,81 @@
         ],
         "type": "object"
       },
+      "StaffPermitInspectionView": {
+        "properties": {
+          "certificateNumber": {
+            "description": "A pass’s certificate: `WC-` and the number.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cycle": {
+            "description": "The first, then each re-ask.",
+            "type": "number"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "findings": {
+            "description": "A failure’s findings (REASON_CODES.worksFinding).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "permitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "permitReference": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "asked",
+              "passed",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "verifyCode": {
+            "description": "The certificate’s code: anyone checks it at `<PUBLIC_APP_URL>/w#<code>`.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "permitId",
+          "cycle",
+          "status",
+          "requestedAt",
+          "decidedAt",
+          "findings",
+          "certificateNumber",
+          "verifyCode",
+          "permitReference",
+          "unitId",
+          "unitCode"
+        ],
+        "type": "object"
+      },
       "StaffPermitView": {
         "properties": {
           "building": {
@@ -58895,6 +59091,18 @@
           "gate"
         ],
         "type": "string"
+      },
+      "WorksCertificateCodeDto": {
+        "properties": {
+          "code": {
+            "description": "The code printed on the certificate (22 characters).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
       },
       "WorksDetailsView": {
         "properties": {
@@ -85176,6 +85384,114 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/permits/{id}/completion-certificate": {
+      "get": {
+        "operationId": "PermitInspectionsController_certificate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PDF."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The works completion certificate as a PDF",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/completion-inspection": {
+      "post": {
+        "operationId": "PermitInspectionsController_ask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitInspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for the finished works to be inspected",
+        "tags": [
+          "permits"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/completion-inspections": {
+      "get": {
+        "operationId": "PermitInspectionsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PermitInspectionView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The permit’s completion inspections",
+        "tags": [
+          "permits"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/permits/{id}/guests": {
       "post": {
         "description": "The host or the unit’s primary, until the event starts (PERMIT_STARTED), never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`): a bigger event is a new request.",
@@ -87290,6 +87606,40 @@
           }
         },
         "summary": "\"This isn't me\": cancel the visitor pass",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/works-certificates/lookup": {
+      "post": {
+        "operationId": "PublicWorksCertificatesController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorksCertificateCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicWorksCertificateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Check a works completion certificate by its code",
         "tags": [
           "public"
         ],
@@ -96820,6 +97170,130 @@
         "summary": "Reverse an office payment, once, with a reason code",
         "tags": [
           "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/permit-inspections": {
+      "get": {
+        "operationId": "StaffPermitInspectionsController_queue",
+        "parameters": [
+          {
+            "description": "Default: asked.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asked",
+                "passed",
+                "failed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StaffPermitInspectionView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Completion inspections, asked by default",
+        "tags": [
+          "permits"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/permit-inspections/{id}/certificate": {
+      "get": {
+        "operationId": "StaffPermitInspectionsController_certificate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PDF."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A works completion certificate as a PDF",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/permit-inspections/{id}/decide": {
+      "post": {
+        "operationId": "StaffPermitInspectionsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecidePermitInspectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitInspectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Pass or fail a completion inspection, with photos",
+        "tags": [
+          "permits"
         ],
         "x-stability": "draft"
       }

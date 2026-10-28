@@ -49,6 +49,14 @@ export const REASON_CODES = {
   moveCancel: ['plans_changed', 'data_error', 'other'],
   handoverWithoutClearance: ['dues_settle_later', 'dues_disputed', 'other'],
   inspectionRequestCancel: ['not_needed', 'unit_reopened', 'other'],
+  // What a failed works completion inspection found (ADR 0063).
+  worksFinding: [
+    'works_unfinished',
+    'common_areas_damaged',
+    'debris_left',
+    'safety_issue',
+    'other',
+  ],
   // Unit states and households (ADR 0021).
   reviewFlag: ['deceased', 'separation', 'other'],
   reviewClear: ['resolved', 'data_correction', 'other'],

@@ -534,6 +534,9 @@ model Tenant {
   unitProxies                  UnitProxy[]
   proxyInviteTokens            ProxyInviteToken[]
   unitInspectionRequests       UnitInspectionRequest[]
+  permitInspections            PermitInspection[]
+  permitInspectionPhotos       PermitInspectionPhoto[]
+  worksCertificateLinks        WorksCertificateLink[]
   financeClearances            FinanceClearance[]
   clearanceLinks               ClearanceLink[]
   financeDeposits              FinanceDeposit[]
@@ -977,6 +980,8 @@ model Account {
   proxiesEnded                   UnitProxy[]                         @relation("ProxyEnder")
   inspectionRequests             UnitInspectionRequest[]             @relation("InspectionRequester")
   inspectionRequestsCancelled    UnitInspectionRequest[]             @relation("InspectionCanceller")
+  permitInspectionsAsked         PermitInspection[]                  @relation("PermitInspectionRequester")
+  permitInspectionsDecided       PermitInspection[]                  @relation("PermitInspectionDecider")
   clearancesRequested            FinanceClearance[]                  @relation("ClearanceRequester")
   depositsRecorded               FinanceDeposit[]                    @relation("DepositRecorder")
   depositEvents                  FinanceDepositEvent[]               @relation("DepositEventBy")
@@ -1920,6 +1925,67 @@ model UnitInspectionRequest {
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "unit_inspection_requests_number_key")
   @@map("unit_inspection_requests")
+}
+
+/// A works permit's completion inspection (ADR 0063): asked by its
+/// requester, decided once by the management; a pass issues the
+/// completion certificate (the number and the verify code on the row).
+model PermitInspection {
+  id                String         @id @db.Uuid
+  tenantId          String         @map("tenant_id") @db.Uuid
+  permitId          String         @map("permit_id") @db.Uuid
+  /// Always works (CHECK), for the composite key on the permit's kind.
+  permitKind        UnitPermitKind @default(works) @map("permit_kind")
+  cycle             Int
+  requestedBy       String         @map("requested_by") @db.Uuid
+  requestedAt       DateTime       @map("requested_at") @db.Timestamptz(3)
+  /// asked | passed | failed (CHECK).
+  status            String         @default("asked")
+  decidedAt         DateTime?      @map("decided_at") @db.Timestamptz(3)
+  decidedBy         String?        @map("decided_by") @db.Uuid
+  /// REASON_CODES.worksFinding, on a failure only.
+  findings          String[]       @default([])
+  certificateNumber Int?           @map("certificate_number")
+  verifyCode        String?        @map("verify_code") @db.Char(22)
+  template          String?
+
+  tenant    Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  requester Account                 @relation("PermitInspectionRequester", fields: [tenantId, requestedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  decider   Account?                @relation("PermitInspectionDecider", fields: [tenantId, decidedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  photos    PermitInspectionPhoto[]
+  links     WorksCertificateLink[]
+
+  @@unique([tenantId, id])
+  @@unique([permitId, cycle], map: "permit_inspections_cycle_key")
+  @@map("permit_inspections")
+}
+
+/// A completion inspection's photo, attached at its decision.
+model PermitInspectionPhoto {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  inspectionId String   @map("inspection_id") @db.Uuid
+  fileId       String   @unique @map("file_id") @db.Uuid
+  createdAt    DateTime @map("created_at") @db.Timestamptz(3)
+
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  inspection PermitInspection @relation(fields: [tenantId, inspectionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file       StoredFile       @relation(fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("permit_inspection_photos")
+}
+
+/// The works completion certificate's public pointer (ADR 0063): global.
+model WorksCertificateLink {
+  codeHash     String   @id @map("code_hash") @db.Char(64)
+  tenantId     String   @map("tenant_id") @db.Uuid
+  inspectionId String   @map("inspection_id") @db.Uuid
+  createdAt    DateTime @map("created_at") @db.Timestamptz(3)
+
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  inspection PermitInspection @relation(fields: [tenantId, inspectionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("works_certificate_links")
 }
 
 /// A proxy invite link's pointer (ADR 0063): global, the HMAC of its token.
@@ -3294,7 +3360,8 @@ enum FilePurpose {
   checklist_photo
   /// A sheet the management imports (ADR 0064): text/csv, 1 MB.
   data_import
-
+  /// A works completion inspection's photo (ADR 0063).
+  works_inspection_photo
   @@map("file_purpose")
 }
 
@@ -3341,6 +3408,7 @@ model StoredFile {
   unitDocuments                 UnitDocument[]                 @relation("UnitDocumentFile")
   compoundDocumentVersions      CompoundDocumentVersion[]      @relation("CompoundDocumentFile")
   contracts                     UnitContract[]                 @relation("ContractFile")
+  permitInspectionPhotos        PermitInspectionPhoto[]
   owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   /// A recording's length, read from its container at finalize (ADR 0056).
   mediaDurationMs Int?        @map("media_duration_ms")

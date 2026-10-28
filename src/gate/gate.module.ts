@@ -306,6 +306,13 @@ import {
   StaffInspectionRequestsController,
 } from './tasks/inspection-requests.controller';
 import { InspectionRequestsService } from './tasks/inspection-requests.service';
+import {
+  PermitInspectionsController,
+  PublicWorksCertificatesController,
+  StaffPermitInspectionsController,
+} from './permits/permit-inspections.controller';
+import { PermitInspectionsService } from './permits/permit-inspections.service';
+import { WorksCertificatePageService } from './permits/works-certificate-page.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -401,6 +408,9 @@ import { InspectionRequestsService } from './tasks/inspection-requests.service';
     GuardTasksController,
     InspectionRequestsController,
     StaffInspectionRequestsController,
+    PermitInspectionsController,
+    StaffPermitInspectionsController,
+    PublicWorksCertificatesController,
     MyWorkController,
     GuardSwapsController,
     StaffSwapsController,
@@ -545,6 +555,8 @@ import { InspectionRequestsService } from './tasks/inspection-requests.service';
     HandoverService,
     TasksService,
     InspectionRequestsService,
+    PermitInspectionsService,
+    WorksCertificatePageService,
     MyWorkService,
     SwapsService,
     GuardInstructionsService,

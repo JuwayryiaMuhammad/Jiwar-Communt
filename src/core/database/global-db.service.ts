@@ -22,6 +22,7 @@ type GlobalTables = Pick<
   | 'receiptLink'
   | 'clearanceLink'
   | 'proxyInviteToken'
+  | 'worksCertificateLink'
   | 'actionToken'
   | 'pushDevice'
   | 'pushDelivery'
@@ -34,6 +35,7 @@ type GlobalTables = Pick<
  * visitor_pass_links,
  * partner_desk_links, child_pickup_links,
  * receipt_links, clearance_links, proxy_invite_tokens,
+ * works_certificate_links,
  * action_tokens, outbox_messages, push_devices and push_deliveries. Tenant
  * tables are deliberately not exposed here.
  */
@@ -113,6 +115,11 @@ export class GlobalDbService implements GlobalTables {
   /** A unit proxy invite's pointer (ADR 0063). */
   get proxyInviteToken() {
     return this.base.client.proxyInviteToken;
+  }
+
+  /** The public works certificate check's pointers (ADR 0063). */
+  get worksCertificateLink() {
+    return this.base.client.worksCertificateLink;
   }
 
   get actionToken() {
@@ -321,6 +328,7 @@ export class GlobalDbService implements GlobalTables {
       receiptLink: tx.receiptLink,
       clearanceLink: tx.clearanceLink,
       proxyInviteToken: tx.proxyInviteToken,
+      worksCertificateLink: tx.worksCertificateLink,
       actionToken: tx.actionToken,
       pushDevice: tx.pushDevice,
       pushDelivery: tx.pushDelivery,

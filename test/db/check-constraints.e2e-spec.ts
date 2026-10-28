@@ -2212,6 +2212,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   guard_tasks_request_kind: {
     guarded: 'request_id IS NULL is tested first',
   },
+  // Works completion (ADR 0063).
+  permit_inspections_shape: {
+    guarded:
+      'each optional column is tested IS NULL first; the lists and the bounds run only on a value',
+  },
+  works_certificate_links_code_hash_hex: {},
   unit_permits_move_direction: {
     guarded:
       'move_direction IS NULL is tested first; the list runs only on a value',

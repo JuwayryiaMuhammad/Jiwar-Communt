@@ -99,6 +99,16 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   unit_inspection_requests_one_live: null,
   unit_inspection_requests_number_key: null,
   guard_tasks_request_id_key: null,
+  // Works completion (ADR 0063): numbered under an advisory lock; one asked
+  // and one passed per permit, checked first under the unit's lock; a
+  // photo attached once (the file's claim); the code random.
+  permit_inspections_tenant_id_id_key: null,
+  permit_inspections_cycle_key: null,
+  permit_inspections_one_asked: null,
+  permit_inspections_one_passed: null,
+  permit_inspections_certificate_number_key: null,
+  permit_inspections_verify_code_key: null,
+  permit_inspection_photos_file_id_key: null,
   // Clearances and deposits (ADR 0062): numbers from the finance counters;
   // a random code, unique by its 128 bits.
   finance_clearances_tenant_id_id_key: null,

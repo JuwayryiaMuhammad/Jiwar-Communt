@@ -1251,6 +1251,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أحد المستجيبين في الطريق، خلال {etaMinutes} دقائق تقريبًا.',
     },
   },
+  'permit_inspection.requested': {
+    en: {
+      title: 'Finished works to inspect',
+      body: 'A unit asks for its finished works to be inspected (round {cycle}).',
+    },
+    ar: {
+      title: 'أعمال منتهية للمعاينة',
+      body: 'تطلب إحدى الوحدات معاينة أعمالها المنتهية (المرة {cycle}).',
+    },
+  },
+  'permit_inspection.decided': {
+    en: {
+      title: 'Your works were inspected',
+      body: 'The management inspected your finished works. The result is in the app.',
+    },
+    ar: {
+      title: 'تمت معاينة أعمالك',
+      body: 'عاينت الإدارة أعمالك المنتهية. النتيجة في التطبيق.',
+    },
+  },
   'unit_permit.requested': {
     en: {
       title: 'New permit to decide',

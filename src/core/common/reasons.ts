@@ -186,6 +186,14 @@ export const REASON_CODES = {
   handoverWithoutClearance: ['dues_settle_later', 'dues_disputed', 'other'],
   /** Why an open inspection request is cancelled (ADR 0063). */
   inspectionRequestCancel: ['not_needed', 'unit_reopened', 'other'],
+  /** What a failed works completion inspection found (ADR 0063). */
+  worksFinding: [
+    'works_unfinished',
+    'common_areas_damaged',
+    'debris_left',
+    'safety_issue',
+    'other',
+  ],
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
   // A manager acting for an account (ADR 0036): how the person asked.

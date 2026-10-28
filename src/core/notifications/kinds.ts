@@ -1218,6 +1218,25 @@ export const NOTIFICATION_KINDS = {
     target: 'unit_permit',
     params: { permitKind: {} },
   },
+  /**
+   * A works permit's requester asks for the finished works to be inspected
+   * (ADR 0063): to the holders of `permits.manage`; the cycle only.
+   */
+  'permit_inspection.requested': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'permit_inspection',
+    params: { cycle: {} },
+  },
+  /** The completion inspection passed or failed (ADR 0063): to the requester. */
+  'permit_inspection.decided': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'permit_inspection',
+    params: { outcome: {} },
+  },
   /** The management approved it: the requester. */
   'unit_permit.approved': {
     priority: 'normal',

@@ -15,6 +15,7 @@ import { RESIDENT_ITEM_ROUTES } from './resident-items';
 import { MOVE_ROUTES } from './moves';
 import { PROXY_ROUTES } from './proxies';
 import { INSPECTION_REQUEST_ROUTES } from './inspection-requests';
+import { PERMIT_INSPECTION_ROUTES } from './permit-inspections';
 import type { Row } from '../registry';
 import { APPROVALS_ROUTES } from './approvals';
 import { ASSIST_ROUTES } from './assist';
@@ -212,6 +213,7 @@ export const ROUTES: Row[] = [
   ...MOVE_ROUTES,
   ...PROXY_ROUTES,
   ...INSPECTION_REQUEST_ROUTES,
+  ...PERMIT_INSPECTION_ROUTES,
   ...CLEARANCE_DEPOSIT_ROUTES,
   ...ERASURE_ROUTES,
   ...ADMIN_ROUTES,

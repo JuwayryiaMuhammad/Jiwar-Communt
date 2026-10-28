@@ -31,6 +31,8 @@ const GLOBAL_WITH_TENANT_ID = [
   'registration_status_links',
   // A unit proxy invite's link (ADR 0063).
   'proxy_invite_tokens',
+  // A works certificate's public check (ADR 0063): the code's hash and the record's id.
+  'works_certificate_links',
   // Resolves an outside escort's pickup link before the tenant is known
   // (ADR 0054); no PII.
   'child_pickup_links',

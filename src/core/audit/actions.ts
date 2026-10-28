@@ -74,6 +74,15 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'unit_inspection_request',
   },
+  // metadata: permitId, unitId, cycle.
+  'permit_inspection.requested': {
+    log: 'tenant',
+    target: 'permit_inspection',
+  },
+  // metadata: permitId, cycle, photos, certificateNumber.
+  'permit_inspection.passed': { log: 'tenant', target: 'permit_inspection' },
+  // metadata: permitId, cycle, photos, findings (codes).
+  'permit_inspection.failed': { log: 'tenant', target: 'permit_inspection' },
   'contract.recorded': { log: 'tenant', target: 'contract' },
   'contract.voided': { log: 'tenant', target: 'contract' },
   'contract_renewal.requested': { log: 'tenant', target: 'contract_renewal' },

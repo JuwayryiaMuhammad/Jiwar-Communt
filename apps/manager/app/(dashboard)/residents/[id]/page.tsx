@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDate, humanize, unwrap, type Schema } from '@jiwar/api';
+import { ApiError, errorText, formatDate, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, fieldError, QueryState, useAction } from '@jiwar/api/react';
 import {
   Badge,
@@ -14,6 +14,7 @@ import {
   Field,
   Input,
   PageHeader,
+  ReasonCodeDialog,
   StatusBadge,
   useToast,
 } from '@jiwar/ui';
@@ -140,7 +141,13 @@ export default function ResidentPage() {
   const active = r?.status === 'active';
   const [handingOver, setHandingOver] = useState<Occupancy | null>(null);
   const handover = useAction(
-    (o: Occupancy) => unwrap(api.POST('/api/v1/occupancies/{id}/handover', { params: { path: { id: o.id } } })),
+    (v: { o: Occupancy; reasonCode?: string }) =>
+      unwrap(
+        api.POST('/api/v1/occupancies/{id}/handover', {
+          params: { path: { id: v.o.id } },
+          body: v.reasonCode ? { reasonCode: v.reasonCode } : {},
+        }),
+      ),
     {
       invalidate: [keys.resident(id)],
       onDone: (o) => {
@@ -149,6 +156,11 @@ export default function ResidentPage() {
       },
     },
   );
+  // With no clearance on its planned move-out, the handover takes a code (ADR 0063).
+  const needsReason =
+    handover.error instanceof ApiError && handover.error.code === 'MOVE_HANDOVER_REASON_REQUIRED'
+      ? (handover.variables?.o ?? null)
+      : null;
 
   const setStatus = useAction(
     () =>
@@ -255,7 +267,7 @@ export default function ResidentPage() {
                           {formatDate(o.handedOverAt)}
                         </span>
                       ) : can('residents.manage') ? (
-                        <Button size="sm" loading={handover.isPending && handover.variables?.id === o.id} onClick={() => setHandingOver(o)}>
+                        <Button size="sm" loading={handover.isPending && handover.variables?.o.id === o.id} onClick={() => setHandingOver(o)}>
                           Record handover
                         </Button>
                       ) : (
@@ -291,7 +303,7 @@ export default function ResidentPage() {
         ) : null}
       </QueryState>
       <ConfirmDialog
-        open={handingOver !== null}
+        open={handingOver !== null && needsReason === null}
         onClose={() => {
           setHandingOver(null);
           handover.reset();
@@ -301,7 +313,21 @@ export default function ResidentPage() {
         confirmLabel="Record handover"
         pending={handover.isPending}
         error={<ErrorAlert error={handover.error} />}
-        onConfirm={() => handingOver && handover.mutate(handingOver)}
+        onConfirm={() => handingOver && handover.mutate({ o: handingOver })}
+      />
+      <ReasonCodeDialog
+        open={needsReason !== null}
+        onClose={() => {
+          setHandingOver(null);
+          handover.reset();
+        }}
+        title="No clearance on record"
+        description="The unit has no clearance since the notice to move out. The handover still happens: say why."
+        codes={REASON_CODES.handoverWithoutClearance}
+        confirmLabel="Record handover"
+        pending={handover.isPending}
+        error={handover.variables?.reasonCode && handover.error ? errorText(handover.error) : undefined}
+        onConfirm={(reasonCode) => needsReason && handover.mutate({ o: needsReason, reasonCode })}
       />
       {r && !r.erased ? (
         <>

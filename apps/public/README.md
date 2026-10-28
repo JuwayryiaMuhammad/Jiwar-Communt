@@ -13,6 +13,8 @@ The pages the API's links open, served at `PUBLIC_APP_URL` (port 3003). Next.js 
 | `/rs#<token>` | the API (emailed to a registrant when they register, and again with a correction, ADR 0062) | The request's state, what the management asks to correct (codes only), and up to three proof documents: attach (PUT to storage, then finalize), remove, send again after a correction. Dead once the request is decided | `public/registrations/status`, `public/registrations/uploads`, `public/registrations/documents/{id}/finalize\|remove`, `public/registrations/resubmit` |
 | `/receipt#<code>` | the API (a receipt's verification link, ADR 0046) | Whether a receipt stands | `public/receipts/lookup` |
 | `/c#<code>`, or `/c` and the code typed | a clearance certificate (ADR 0062), which prints this address and the code | Whether a clearance stands: compound, number, unit code, dates | `public/clearances/lookup` |
+| `/x#<token>` | whoever holds a unit proxy's link (an owner appoints the proxy from the app, ADR 0063) | Accepts looking after a closed or vacant unit with the emailed code; the proxy then signs in from the app | `proxy-invites/accept/start`, `proxy-invites/accept/complete` |
+| `/w#<code>`, or `/w` and the code typed | a works completion certificate (ADR 0063), which prints this address and the code | Whether the certificate is genuine: compound, number, unit code, inspection day | `public/works-certificates/lookup` |
 | `/` | | App name and "download the app" placeholders | none |
 | anything else, or a link without a well-formed token | | The invalid-or-expired page, without a request | none |
 

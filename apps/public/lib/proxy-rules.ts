@@ -20,6 +20,10 @@ const ROUTES: ReadonlySet<string> = new Set([
   'public/registrations/uploads',
   'public/registrations/resubmit',
   'public/clearances/lookup',
+  // A unit proxy's invite and a works certificate's check (ADR 0063).
+  'proxy-invites/accept/start',
+  'proxy-invites/accept/complete',
+  'public/works-certificates/lookup',
 ]);
 
 /** A registrant's document, finalized or removed (ADR 0062). */

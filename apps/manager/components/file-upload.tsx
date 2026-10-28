@@ -20,6 +20,8 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
   // A unit's papers (ADR 0062): a document in its vault, a contract's scan.
   unit_document: { types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'], maxBytes: 10 * 1024 * 1024, what: 'An image or a PDF, up to 10 MB.' },
   contract: { types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'], maxBytes: 10 * 1024 * 1024, what: 'An image or a PDF, up to 10 MB.' },
+  // A works completion inspection's photo (ADR 0063).
+  works_inspection_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'A photo, up to 10 MB.' },
   // A compound document version's signed copy (ADR 0062): a PDF only.
   compound_document: { types: ['application/pdf'], maxBytes: 10 * 1024 * 1024, what: 'A PDF, up to 10 MB.' },
   // A message's attachment on a request to the management (ADR 0039).

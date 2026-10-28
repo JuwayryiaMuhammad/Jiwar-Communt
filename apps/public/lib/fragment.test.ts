@@ -64,3 +64,15 @@ test('a clearance code is 22 base64url characters', () => {
   assert.equal(parseFragment(`#${code}`, 'clearance'), code);
   assert.equal(parseFragment(`#${code}z`, 'clearance'), null);
 });
+
+test('a works certificate code is 22 base64url characters', () => {
+  const code = 'Ab0_-'.repeat(4) + 'xy';
+  assert.equal(parseFragment(`#${code}`, 'works'), code);
+  assert.equal(parseFragment(`#${code}z`, 'works'), null);
+});
+
+test('a proxy invite token is base64url, as an invite token', () => {
+  const token = 'A'.repeat(43);
+  assert.equal(parseFragment(`#${token}`, 'proxyInvite'), token);
+  assert.equal(parseFragment('#short', 'proxyInvite'), null);
+});

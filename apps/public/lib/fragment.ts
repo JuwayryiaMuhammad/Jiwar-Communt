@@ -11,6 +11,8 @@ export type LinkKind =
   | 'registrationStatus'
   | 'receipt'
   | 'clearance'
+  | 'proxyInvite'
+  | 'works'
   | 'desk';
 
 const SHAPES: Record<LinkKind, RegExp> = {
@@ -27,6 +29,10 @@ const SHAPES: Record<LinkKind, RegExp> = {
   receipt: /^[A-Za-z0-9_-]{22}$/,
   // A clearance certificate's code (ADR 0062): as a receipt's.
   clearance: /^[A-Za-z0-9_-]{22}$/,
+  // A unit proxy's invite (ADR 0063): 32 random bytes, base64url, as an invite's.
+  proxyInvite: /^[A-Za-z0-9_-]{16,200}$/,
+  // A works completion certificate's code (ADR 0063): as a clearance's.
+  works: /^[A-Za-z0-9_-]{22}$/,
   // A partner's desk link (ADR 0060): 32 random bytes, base64url.
   desk: /^[A-Za-z0-9_-]{43}$/,
 };

@@ -70,5 +70,7 @@ export const RULES = {
   // OTP_INVALID covers a wrong code and a dead invite alike; the API does
   // not tell them apart, so neither does the page.
   invite: { dead: [] },
+  // A unit proxy's invite (ADR 0063): as a household invite.
+  proxyInvite: { dead: [] },
   registration: { dead: [], form: true },
 } satisfies Record<string, FlowRules>;

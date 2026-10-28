@@ -74,7 +74,51 @@ export default function UnitPapersPage() {
         <Deposits unitId={unitId} occupants={occupants} nameOf={nameOf} />
       ) : null}
       {can('finance.invoice') ? <Clearance unitId={unitId} /> : null}
+      {can('residents.manage') ? <Proxies unitId={unitId} /> : null}
     </>
+  );
+}
+
+/**
+ * The unit's proxies (ADR 0063), read only: its owners appoint and revoke
+ * them from the app; a proxy acts while the unit is closed or has no primary.
+ */
+function Proxies({ unitId }: { unitId: string }) {
+  const list = useQuery({
+    queryKey: ['unit-proxies', unitId],
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/v1/staff/units/{unitId}/proxies', {
+          params: { path: { unitId } },
+        }),
+      ),
+  });
+  return (
+    <Card flush>
+      <CardHeader title="Proxies" />
+      <QueryState query={list}>
+        <DataTable<Schema<'ProxyView'>>
+          rows={list.data}
+          rowKey={(p) => p.id}
+          empty="No proxy"
+          emptyHint="An owner appoints one from the app, for a closed or vacant unit."
+          columns={[
+            { key: 'name', header: 'Who', cell: (p) => p.name ?? '—' },
+            { key: 'status', header: 'Status', cell: (p) => p.status },
+            {
+              key: 'scopes',
+              header: 'May',
+              cell: (p) => p.scopes.map((s) => s.replace('_', ' ')).join(', '),
+            },
+            {
+              key: 'until',
+              header: 'Until',
+              cell: (p) => formatDate(p.expiresAt),
+            },
+          ]}
+        />
+      </QueryState>
+    </Card>
   );
 }
 

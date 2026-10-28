@@ -31,6 +31,8 @@ const ERRORS = [
   'FILE_CONTENT_MISMATCH',
   'FILE_UPLOAD_MISSING',
   'FILE_UPLOAD_EXPIRED',
+  // A works certificate's check (ADR 0063).
+  'WORKS_CERTIFICATE_NOT_FOUND',
 ] as const;
 
 const FIELDS = [

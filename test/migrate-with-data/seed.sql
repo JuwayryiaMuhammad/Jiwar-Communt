@@ -11,7 +11,9 @@
 -- units; its settings; a gate with a night roster and slots from it; app
 -- and browser devices; visitor passes (active, used, cancelled);
 -- guard instructions (sent before validity existed, scheduled, already
--- told) with recipients; an invoice with its line, and an office payment.
+-- told) with recipients; an invoice with its line, and an office payment;
+-- a pending registration (its personal data) and a rejected one (none);
+-- files owned and pending, owned and ready, and attached to a record.
 -- ============================================================================
 
 DO $$
@@ -25,6 +27,7 @@ DECLARE
   gate uuid; tpl uuid; night timestamptz;
   batch uuid; inv uuid;
   h text;
+  lp text;
 BEGIN
   FOR c IN 1..2 LOOP
     s := substr(md5(random()::text || clock_timestamp()::text), 1, 10);
@@ -121,5 +124,29 @@ BEGIN
                                   paid_on, receipt_number, receipt_code, recorded_by_account_id) VALUES
       (gen_random_uuid(), t, 'payment', u1, 'office', 'cash', 500.00, 'EGP',
        current_date - 2, 1, substr(h, 1, 22), mgr);
+
+    -- Registrations: one waiting, with what the registrant typed; one
+    -- decided, which keeps none of it.
+    lp := lpad(c::text, 2, '0');
+    INSERT INTO resident_registrations (id, tenant_id, status, full_name, phone, email,
+                                        id_document_type, id_document_number, nationality,
+                                        birth_date, unit_code, occupancy_type) VALUES
+      (gen_random_uuid(), t, 'pending', 'Seed Registrant', '+2010' || lp || '0000005',
+       'reg-' || s || '@seed.test', 'national_id', '2900101' || lp || '00051', 'EG',
+       DATE '1990-01-01', 'A-102', 'tenant');
+    INSERT INTO resident_registrations (id, tenant_id, status, unit_code, occupancy_type,
+                                        decided_at, decided_by, decision_reason_code) VALUES
+      (gen_random_uuid(), t, 'rejected', 'A-101', 'owner', now() - interval '3 days', mgr, 'other');
+
+    -- Files: an upload not finalized, one finalized and not yet used, and
+    -- one attached to a record (no owner once attached).
+    INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes,
+                       status, upload_expires_at, finalized_at, attached_at) VALUES
+      (gen_random_uuid(), t, res1, 'document', 'application/pdf', 2048,
+       'pending', now() + interval '10 minutes', NULL, NULL),
+      (gen_random_uuid(), t, res1, 'document', 'image/png', 4096,
+       'ready', now() - interval '1 hour', now() - interval '1 hour', NULL),
+      (gen_random_uuid(), t, NULL, 'document', 'application/pdf', 8192,
+       'ready', now() - interval '2 hours', now() - interval '2 hours', now() - interval '2 hours');
   END LOOP;
 END $$;

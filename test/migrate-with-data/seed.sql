@@ -13,7 +13,9 @@
 -- guard instructions (sent before validity existed, scheduled, already
 -- told) with recipients; an invoice with its line, and an office payment;
 -- a pending registration (its personal data) and a rejected one (none);
--- files owned and pending, owned and ready, and attached to a record.
+-- files owned and pending, owned and ready, and attached to a record;
+-- maintenance categories (the second compound has no `general`) and two
+-- open tickets, one in a unit and one in a common area.
 -- ============================================================================
 
 DO $$
@@ -28,6 +30,7 @@ DECLARE
   batch uuid; inv uuid;
   h text;
   lp text;
+  cat uuid;
 BEGIN
   FOR c IN 1..2 LOOP
     s := substr(md5(random()::text || clock_timestamp()::text), 1, 10);
@@ -148,5 +151,22 @@ BEGIN
        'ready', now() - interval '1 hour', now() - interval '1 hour', NULL),
       (gen_random_uuid(), t, NULL, 'document', 'application/pdf', 8192,
        'ready', now() - interval '2 hours', now() - interval '2 hours', now() - interval '2 hours');
+
+    -- Maintenance: the categories the default asset types join by key
+    -- (the second compound has no `general`), and a resident's tickets as
+    -- every ticket was before a ticket had an origin.
+    cat := gen_random_uuid();
+    INSERT INTO ticket_categories (id, tenant_id, key, name_ar, name_en, updated_at) VALUES
+      (cat, t, 'plumbing', 'سباكة', 'Plumbing', now()),
+      (gen_random_uuid(), t, 'ac', 'تكييف', 'Air conditioning', now()),
+      (gen_random_uuid(), t, 'electrical', 'كهرباء', 'Electrical', now());
+    IF c = 1 THEN
+      INSERT INTO ticket_categories (id, tenant_id, key, name_ar, name_en, updated_at) VALUES
+        (gen_random_uuid(), t, 'general', 'عام', 'General', now());
+    END IF;
+    INSERT INTO tickets (id, tenant_id, number, unit_id, common_area, unit_location, category_id,
+                         created_by_account_id, reporter_account_id, priority, description, updated_at) VALUES
+      (gen_random_uuid(), t, 1, u1, NULL, 'kitchen', cat, res1, res1, 'normal', 'The kitchen tap drips', now()),
+      (gen_random_uuid(), t, 2, NULL, 'Pool', NULL, cat, mgr, res2, 'urgent', 'The pool pump is loud', now());
   END LOOP;
 END $$;

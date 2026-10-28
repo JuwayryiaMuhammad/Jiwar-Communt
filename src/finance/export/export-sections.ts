@@ -10,6 +10,7 @@ import { InvoicesService } from '../invoices/invoices.service';
 import type { InvoiceView } from '../invoices/views/invoice.views';
 import { formatNumber } from '../counters';
 import { show } from '../money';
+import { heldOf } from '../deposits/deposits.service';
 import { PaymentsService } from '../payments/payments.service';
 import type { PaymentView } from '../payments/views/payment.views';
 
@@ -41,6 +42,8 @@ export class FinanceExportSections implements OnModuleInit {
 
   onModuleInit(): void {
     this.sections.register('finance', (s) => this.own(s));
+    this.sections.register('clearances', (s) => this.clearances(s));
+    this.sections.register('deposits', (s) => this.deposits(s));
   }
 
   private async *own(s: ExportSubject): AsyncIterable<ExportEntry> {
@@ -128,5 +131,65 @@ export class FinanceExportSections implements OnModuleInit {
         createdAt: d.createdAt,
       })),
     };
+  }
+
+  /**
+   * `clearances.json` (ADR 0062): the clearance certificates the account
+   * asked for — number, unit, the instant, the last valid day and the code
+   * that checks it. The certificate itself is drawn on demand, not kept.
+   */
+  private async *clearances(s: ExportSubject): AsyncIterable<ExportEntry> {
+    const rows = await this.tenantTx.withTenantTx(async (tx) => {
+      const found = await tx.financeClearance.findMany({
+        where: { requestedBy: s.accountId },
+        orderBy: { number: 'asc' },
+      });
+      const units = await this.community.units(
+        tx,
+        found.map((c) => c.unitId),
+      );
+      return found.map((c) => ({
+        number: formatNumber('clearance', c.number),
+        unitCode: units.get(c.unitId)?.code ?? null,
+        asOf: c.asOf,
+        validUntil: c.validUntil.toISOString().slice(0, 10),
+        verifyCode: c.verifyCode,
+      }));
+    });
+    yield { path: 'clearances.json', json: rows };
+  }
+
+  /**
+   * `deposits.json` (ADR 0062): the deposits the management holds for the
+   * account's occupancies — number, unit, kind, amount, what is held, and
+   * every event (refund asked, refunded, deducted with its code).
+   */
+  private async *deposits(s: ExportSubject): AsyncIterable<ExportEntry> {
+    const rows = await this.tenantTx.withTenantTx(async (tx) => {
+      const found = await tx.financeDeposit.findMany({
+        where: { occupancy: { accountId: s.accountId } },
+        orderBy: { number: 'asc' },
+        include: { events: { orderBy: { at: 'asc' } } },
+      });
+      const units = await this.community.units(
+        tx,
+        found.map((d) => d.unitId),
+      );
+      return found.map((d) => ({
+        number: formatNumber('deposit', d.number),
+        unitCode: units.get(d.unitId)?.code ?? null,
+        kind: d.kind,
+        amount: show(d.amount),
+        held: show(heldOf(d)),
+        receivedOn: d.receivedOn.toISOString().slice(0, 10),
+        events: d.events.map((e) => ({
+          kind: e.kind,
+          amount: e.amount ? show(e.amount) : null,
+          reasonCode: e.reasonCode,
+          at: e.at,
+        })),
+      }));
+    });
+    yield { path: 'deposits.json', json: rows };
   }
 }

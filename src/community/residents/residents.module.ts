@@ -40,6 +40,7 @@ import {
 } from '../proxies/proxies.controller';
 import { ProxiesService } from '../proxies/proxies.service';
 import { ProxyAcceptanceService } from '../proxies/proxy-acceptance.service';
+import { PapersExportSections } from './papers-export-sections';
 import { RegistrationsController } from './registrations.controller';
 import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsController } from './residents.controller';
@@ -89,6 +90,7 @@ import { ResidentsService } from './residents.service';
     ProxiesService,
     ProxyAcceptanceService,
     CommunityExportSections,
+    PapersExportSections,
   ],
   exports: [ResidentsService, RegistrationService, MovesService],
 })

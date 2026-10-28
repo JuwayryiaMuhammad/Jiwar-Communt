@@ -14,6 +14,9 @@ export const RESIDENT_ITEM_TYPES = [
   'unit_permit',
   'neighbour_complaint',
   'partner_request',
+  // A closed unit's inspection request, a works completion inspection (ADR 0063).
+  'inspection_request',
+  'works_inspection',
   // Appeals (`GET /me/appeals`).
   'vehicle_fine',
   'unit_violation',

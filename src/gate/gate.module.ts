@@ -314,6 +314,7 @@ import {
 import { PermitInspectionsService } from './permits/permit-inspections.service';
 import { WorksCertificatePageService } from './permits/works-certificate-page.service';
 import { InspectionExportSections } from './tasks/inspection-export-sections';
+import { ResidentInspectionItems } from './resident-inspection-items';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -557,6 +558,7 @@ import { InspectionExportSections } from './tasks/inspection-export-sections';
     TasksService,
     InspectionRequestsService,
     InspectionExportSections,
+    ResidentInspectionItems,
     PermitInspectionsService,
     WorksCertificatePageService,
     MyWorkService,

@@ -547,6 +547,30 @@ export class CommunityGatePort {
     return null;
   }
 
+  /**
+   * The units whose inspections the account reads (ADR 0063): those it is
+   * an active owner of, and those it looks after as a proxy with
+   * `inspections` while the proxy may act.
+   */
+  async inspectionUnits(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<string[]> {
+    const owned = await tx.unitOccupancy.findMany({
+      where: { accountId, status: 'active', occupancyType: 'owner' },
+      select: { unitId: true },
+    });
+    const proxied = await tx.unitProxy.findMany({
+      where: { accountId, status: 'active', scopes: { has: 'inspections' } },
+      select: { unitId: true },
+    });
+    const out = owned.map((o) => o.unitId);
+    for (const p of proxied)
+      if ((await this.capabilities.placeOf(tx, accountId, p.unitId))?.unitView)
+        out.push(p.unitId);
+    return [...new Set(out)];
+  }
+
   /** The unit's primary resident now, or null (ADR 0045: who is told). */
   async primaryOf(tx: TenantTxClient, unitId: string): Promise<string | null> {
     const row = await tx.unitOccupancy.findFirst({

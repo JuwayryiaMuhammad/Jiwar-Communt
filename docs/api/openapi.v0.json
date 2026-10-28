@@ -40203,6 +40203,8 @@
           "unit_permit",
           "neighbour_complaint",
           "partner_request",
+          "inspection_request",
+          "works_inspection",
           "vehicle_fine",
           "unit_violation",
           "board_appeal",

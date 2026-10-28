@@ -31070,7 +31070,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "vehicle_fine" | "unit_violation" | "board_appeal" | "decision_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
+        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "inspection_request" | "works_inspection" | "vehicle_fine" | "unit_violation" | "board_appeal" | "decision_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
         ResidentItemView: {
             /** @description Where its appeal stands (the appeals list); null elsewhere. */
             appeal: components["schemas"]["ItemAppealView"] | null;

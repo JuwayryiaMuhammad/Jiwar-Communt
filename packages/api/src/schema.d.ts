@@ -23136,6 +23136,14 @@ export interface components {
             refundRequested: boolean;
             /** Format: uuid */
             unitId: string;
+            /** @description A finishing-works deposit: the works found complete since it was received (the certificate’s number), or null until then; null for the other kinds. */
+            worksCompletion: components["schemas"]["DepositWorksCompletionView"] | null;
+        };
+        DepositWorksCompletionView: {
+            /** Format: date-time */
+            at: string;
+            /** @example WC-000012 */
+            reference: string;
         };
         DeskAcceptDto: {
             /** @description How many of its staff come (the gate pass lets in as many). Default 1. */

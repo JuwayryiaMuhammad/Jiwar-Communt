@@ -1,3 +1,4 @@
+import { today } from '../setup/compound-clock';
 import { fileHelpers } from '../setup/files';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { permitHelpers, type Who } from '../setup/permits';
@@ -131,6 +132,33 @@ describe('Works completion', () => {
     await http('post', '/public/works-certificates/lookup', null, {
       code: 'A'.repeat(22),
     }).expect(404);
+  });
+
+  it('a finishing-works deposit reads the works found complete since it was received', async () => {
+    const s = await p.setUp('Works Deposit Court');
+    const occupancy = await p.v.inTx(s.c, (tx) =>
+      tx.unitOccupancy.findFirstOrThrow({
+        where: { unitId: s.home.id, accountId: s.alice.id, status: 'active' },
+      }),
+    );
+    const deposit = (
+      await http('post', '/staff/deposits', s.manager, {
+        occupancyId: occupancy.id,
+        kind: 'finishing_works',
+        amount: '5000',
+        receivedOn: today(),
+        method: 'cash',
+      }).expect(201)
+    ).body as { id: string; worksCompletion: unknown };
+    expect(deposit.worksCompletion).toBeNull();
+    const permitId = await approved(s);
+    const asked = (await ask(s, permitId).expect(201)).body as InspectionBody;
+    const passed = (await decide(s, asked.id, 'passed')).body as InspectionBody;
+    const [mine] = (await http('get', '/me/deposits', s.alice).expect(200))
+      .body as { worksCompletion: { reference: string } | null }[];
+    expect(mine.worksCompletion).toMatchObject({
+      reference: passed.certificateNumber,
+    });
   });
 
   it('only an approved works permit, by its requester', async () => {

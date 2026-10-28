@@ -14760,6 +14760,16 @@
           "unitId": {
             "format": "uuid",
             "type": "string"
+          },
+          "worksCompletion": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositWorksCompletionView"
+              }
+            ],
+            "description": "A finishing-works deposit: the works found complete since it was received (the certificate’s number), or null until then; null for the other kinds.",
+            "nullable": true,
+            "type": "object"
           }
         },
         "required": [
@@ -14773,7 +14783,25 @@
           "receivedOn",
           "method",
           "refundRequested",
-          "events"
+          "events",
+          "worksCompletion"
+        ],
+        "type": "object"
+      },
+      "DepositWorksCompletionView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reference": {
+            "example": "WC-000012",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "reference"
         ],
         "type": "object"
       },

@@ -57,6 +57,13 @@ class DepositEventView {
 }
 
 /** A deposit the management holds (ADR 0062). */
+export class DepositWorksCompletionView {
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+  @ApiProperty({ type: String, example: 'WC-000012' })
+  reference: string;
+}
+
 export class DepositView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -81,8 +88,20 @@ export class DepositView {
   @ApiProperty({ type: [DepositEventView] })
   events: DepositEventView[];
 
+  @ApiProperty({
+    type: DepositWorksCompletionView,
+    nullable: true,
+    description:
+      'A finishing-works deposit: the works found complete since it was received (the certificate’s number), or null until then; null for the other kinds.',
+  })
+  worksCompletion: DepositWorksCompletionView | null;
+
   static from(d: DepositRead): DepositView {
-    return { ...d, events: d.events.map((e) => ({ ...e })) };
+    return {
+      ...d,
+      events: d.events.map((e) => ({ ...e })),
+      worksCompletion: d.worksCompletion ? { ...d.worksCompletion } : null,
+    };
   }
 }
 

@@ -27,6 +27,7 @@ import { formatNumber, takeNumbers } from '../counters';
 import { asDate, dbNow, fromDate, localToday } from '../db-clock';
 import { money, MONEY, show, ZERO } from '../money';
 import { PaymentsService } from '../payments/payments.service';
+import { WorksCompletions } from '../../core/works/works-completions';
 
 export const DEPOSIT_KINDS = [
   'finishing_works',
@@ -55,6 +56,12 @@ export interface DepositRead {
     reasonCode: string | null;
     at: Date;
   }[];
+  /**
+   * A finishing-works deposit (ADR 0063): the works found complete since it
+   * was received — when, and the certificate's number — or null until then;
+   * null for the other kinds. The refund stays the manager's decision.
+   */
+  worksCompletion: { at: Date; reference: string } | null;
 }
 
 export interface NewDeposit {
@@ -103,6 +110,7 @@ export class DepositsService implements OnModuleInit {
     private readonly payments: PaymentsService,
     private readonly settings: TenantSettingsService,
     private readonly lifecycle: AccountLifecycle,
+    private readonly works: WorksCompletions,
   ) {}
 
   onModuleInit(): void {
@@ -121,15 +129,17 @@ export class DepositsService implements OnModuleInit {
   // --------------------------------------------------------------------------
 
   mine(): Promise<DepositRead[]> {
-    return this.tenantTx.withTenantTx(async (tx) =>
-      (
-        await tx.financeDeposit.findMany({
-          where: { occupancy: { accountId: this.ctx.accountId } },
-          include: { events: { orderBy: { at: 'asc' } } },
-          orderBy: { createdAt: 'desc' },
-        })
-      ).map(read),
-    );
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const rows = await tx.financeDeposit.findMany({
+        where: { occupancy: { accountId: this.ctx.accountId } },
+        include: { events: { orderBy: { at: 'asc' } } },
+        orderBy: { createdAt: 'desc' },
+      });
+      // One query at a time on the transaction's connection.
+      const out: DepositRead[] = [];
+      for (const d of rows) out.push(await this.full(tx, d));
+      return out;
+    });
   }
 
   /** The depositor asks for its refund; one open ask, something held. */
@@ -178,13 +188,15 @@ export class DepositsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       if (!(await this.community.units(tx, [unitId])).has(unitId))
         throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
-      return (
-        await tx.financeDeposit.findMany({
-          where: { unitId },
-          include: { events: { orderBy: { at: 'asc' } } },
-          orderBy: { createdAt: 'desc' },
-        })
-      ).map(read);
+      const rows = await tx.financeDeposit.findMany({
+        where: { unitId },
+        include: { events: { orderBy: { at: 'asc' } } },
+        orderBy: { createdAt: 'desc' },
+      });
+      // One query at a time on the transaction's connection.
+      const out: DepositRead[] = [];
+      for (const d of rows) out.push(await this.full(tx, d));
+      return out;
     });
   }
 
@@ -238,7 +250,7 @@ export class DepositsService implements OnModuleInit {
           number: formatNumber('deposit', number),
         },
       });
-      return read(d);
+      return this.full(tx, d);
     });
   }
 
@@ -321,7 +333,7 @@ export class DepositsService implements OnModuleInit {
           include: { events: { orderBy: { at: 'asc' } } },
         });
       await fn(tx, await load());
-      return read(await load());
+      return this.full(tx, await load());
     });
   }
 
@@ -351,6 +363,20 @@ export class DepositsService implements OnModuleInit {
       },
     });
   }
+
+  /** The view, with a finishing-works deposit's completion (ADR 0063). */
+  private async full(
+    tx: TenantTxClient,
+    d: FinanceDeposit & { events: FinanceDepositEvent[] },
+  ): Promise<DepositRead> {
+    return {
+      ...read(d),
+      worksCompletion:
+        d.kind === 'finishing_works'
+          ? await this.works.read(tx, { unitId: d.unitId, since: d.receivedOn })
+          : null,
+    };
+  }
 }
 
 export function heldOf(d: FinanceDeposit & { events: FinanceDepositEvent[] }) {
@@ -369,7 +395,7 @@ function refundAsked(d: { events: FinanceDepositEvent[] }): boolean {
 
 function read(
   d: FinanceDeposit & { events: FinanceDepositEvent[] },
-): DepositRead {
+): Omit<DepositRead, 'worksCompletion'> {
   return {
     id: d.id,
     number: formatNumber('deposit', d.number),

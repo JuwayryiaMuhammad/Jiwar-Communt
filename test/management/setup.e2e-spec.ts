@@ -44,6 +44,7 @@ describe('Management requests — topics, settings and office hours', () => {
         ['release_request', 48, true],
         ['security_gate', 24, true],
         // ADR 0063: about a resident's unit.
+        ['unit_preparation', 72, true],
         ['utilities', 72, true],
       ]);
       const offered = await topics('/management-request-topics', s.owner.token);

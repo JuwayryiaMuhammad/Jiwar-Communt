@@ -533,6 +533,7 @@ model Tenant {
   unitMoveSteps                UnitMoveStep[]
   unitProxies                  UnitProxy[]
   proxyInviteTokens            ProxyInviteToken[]
+  unitInspectionRequests       UnitInspectionRequest[]
   financeClearances            FinanceClearance[]
   clearanceLinks               ClearanceLink[]
   financeDeposits              FinanceDeposit[]
@@ -974,6 +975,8 @@ model Account {
   proxiesCreated                 UnitProxy[]                         @relation("ProxyCreator")
   proxyPlaces                    UnitProxy[]                         @relation("ProxyAccount")
   proxiesEnded                   UnitProxy[]                         @relation("ProxyEnder")
+  inspectionRequests             UnitInspectionRequest[]             @relation("InspectionRequester")
+  inspectionRequestsCancelled    UnitInspectionRequest[]             @relation("InspectionCanceller")
   clearancesRequested            FinanceClearance[]                  @relation("ClearanceRequester")
   depositsRecorded               FinanceDeposit[]                    @relation("DepositRecorder")
   depositEvents                  FinanceDepositEvent[]               @relation("DepositEventBy")
@@ -1190,6 +1193,7 @@ model Unit {
   contracts UnitContract[]
   moves     UnitMove[]
   proxies   UnitProxy[]
+  inspectionRequests UnitInspectionRequest[]
   clearances FinanceClearance[]
   deposits FinanceDeposit[]
   @@unique([tenantId, code])
@@ -1888,6 +1892,34 @@ model UnitProxy {
 
   @@unique([tenantId, id])
   @@map("unit_proxies")
+}
+
+/// A closed unit's owner, or its proxy, asks for a guard's visit (ADR
+/// 0063): scheduled as a closed-unit inspection task, done with it.
+model UnitInspectionRequest {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  number      Int
+  unitId      String    @map("unit_id") @db.Uuid
+  requestedBy String    @map("requested_by") @db.Uuid
+  preferredOn DateTime  @map("preferred_on") @db.Date
+  /// open | scheduled | done | cancelled (CHECK).
+  status      String    @default("open")
+  createdAt   DateTime  @map("created_at") @db.Timestamptz(3)
+  scheduledAt DateTime? @map("scheduled_at") @db.Timestamptz(3)
+  doneAt      DateTime? @map("done_at") @db.Timestamptz(3)
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelledBy String?   @map("cancelled_by") @db.Uuid
+  cancelReason String?  @map("cancel_reason")
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit      Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  requester Account  @relation("InspectionRequester", fields: [tenantId, requestedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  canceller Account? @relation("InspectionCanceller", fields: [tenantId, cancelledBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "unit_inspection_requests_number_key")
+  @@map("unit_inspection_requests")
 }
 
 /// A proxy invite link's pointer (ADR 0063): global, the HMAC of its token.
@@ -7597,6 +7629,8 @@ model GuardTask {
   cancelReason       String?         @map("cancel_reason")
   /// The shift whose end last moved it to its post.
   carriedFromShiftId String?         @map("carried_from_shift_id") @db.Uuid
+  /// The inspection request it answers (ADR 0063), set at creation.
+  requestId          String?   @map("request_id") @db.Uuid
   createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 

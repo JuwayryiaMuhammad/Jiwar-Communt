@@ -93,6 +93,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   unit_proxies_tenant_id_id_key: null,
   unit_proxies_one_active_per_account: null,
   proxy_invite_tokens_one_per_proxy: null,
+  // Inspection requests (ADR 0063): one live per unit and one task per
+  // request, both checked first under the unit's advisory lock.
+  unit_inspection_requests_tenant_id_id_key: null,
+  unit_inspection_requests_one_live: null,
+  unit_inspection_requests_number_key: null,
+  guard_tasks_request_id_key: null,
   // Clearances and deposits (ADR 0062): numbers from the finance counters;
   // a random code, unique by its 128 bits.
   finance_clearances_tenant_id_id_key: null,

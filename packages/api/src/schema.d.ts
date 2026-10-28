@@ -13700,6 +13700,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/inspection-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inspection requests, open by default */
+        get: operations["StaffInspectionRequestsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/inspection-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an open inspection request */
+        post: operations["StaffInspectionRequestsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/instructions": {
         parameters: {
             query?: never;
@@ -17136,6 +17170,58 @@ export interface paths {
         };
         /** List minors who turned 18 */
         get: operations["HouseholdController_minorsReady"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/inspection-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The unit’s inspection requests */
+        get: operations["InspectionRequestsController_list"];
+        put?: never;
+        /** Ask for an inspection of the closed unit */
+        post: operations["InspectionRequestsController_ask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/inspection-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an open inspection request */
+        post: operations["InspectionRequestsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/inspections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The closed unit’s inspections, done */
+        get: operations["InspectionRequestsController_reports"];
         put?: never;
         post?: never;
         delete?: never;
@@ -21820,6 +21906,11 @@ export interface components {
              */
             guardId?: string;
             kind: components["schemas"]["GuardTaskKind"];
+            /**
+             * Format: uuid
+             * @description The inspection request it answers (ADR 0063): an open one of the same unit (INSPECTION_REQUEST_NOT_FOUND otherwise); an inspection only.
+             */
+            requestId?: string;
             /** @description Required for a custom task; not for an inspection. */
             title?: string;
             /**
@@ -25801,6 +25892,12 @@ export interface components {
             /** @description The follow-up’s status now. */
             ticketStatus: string;
         };
+        InspectionPhotoView: {
+            /** Format: date-time */
+            expiresAt: string;
+            /** @description Presigned; short-lived. */
+            url: string;
+        };
         InspectionReportRowView: {
             /** Format: uuid */
             assigneeId: string;
@@ -25843,6 +25940,28 @@ export interface components {
             /** Format: date */
             to: string;
             totals: components["schemas"]["InspectionReportTotalsView"];
+        };
+        InspectionRequestView: {
+            /** @description not_needed | unit_reopened | other | task_cancelled */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            doneAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            preferredOn: string;
+            /** @description `IR-` and the number. */
+            reference: string;
+            /** Format: date-time */
+            scheduledAt: string | null;
+            /** @enum {string} */
+            status: "open" | "scheduled" | "done" | "cancelled";
+            /** Format: uuid */
+            unitId: string;
         };
         InspectionRoundView: {
             active: boolean;
@@ -27562,6 +27681,13 @@ export interface components {
             field: "name" | "phone";
             /** @description The full name (2 to 200 characters) or the phone number. */
             value: string;
+        };
+        NewInspectionRequestDto: {
+            /**
+             * Format: date
+             * @description The compound’s day, from today to 90 days ahead.
+             */
+            preferredOn: string;
         };
         NewInviteDto: {
             /**
@@ -33309,6 +33435,29 @@ export interface components {
             data: components["schemas"]["StaffIncidentView"][];
             nextCursor: string | null;
         };
+        StaffInspectionRequestView: {
+            /** @description not_needed | unit_reopened | other | task_cancelled */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            doneAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            preferredOn: string;
+            /** @description `IR-` and the number. */
+            reference: string;
+            /** Format: date-time */
+            scheduledAt: string | null;
+            /** @enum {string} */
+            status: "open" | "scheduled" | "done" | "cancelled";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
         StaffLateNoticeView: {
             /** @description EGP still owed at issue. */
             amount: string;
@@ -34976,6 +35125,19 @@ export interface components {
             /** Format: date-time */
             validUntil: string | null;
             workerName: string;
+        };
+        UnitInspectionReportView: {
+            /** Format: date-time */
+            doneAt: string;
+            /** @description The guard’s note, until it is cleared. */
+            note: string | null;
+            /** @enum {string} */
+            outcome: "all_clear" | "issue_found";
+            photos: components["schemas"]["InspectionPhotoView"][];
+            /** Format: uuid */
+            requestId: string | null;
+            /** Format: uuid */
+            taskId: string;
         };
         UnitNeedingReviewView: {
             activeOccupants: number;
@@ -56959,6 +57121,53 @@ export interface operations {
             };
         };
     };
+    StaffInspectionRequestsController_list: {
+        parameters: {
+            query?: {
+                /** @description Default: open. */
+                status?: "open" | "scheduled" | "done" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffInspectionRequestView"][];
+                };
+            };
+        };
+    };
+    StaffInspectionRequestsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRequestView"];
+                };
+            };
+        };
+    };
     StaffGuardInstructionsController_list: {
         parameters: {
             query?: {
@@ -62051,6 +62260,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HouseholdMemberResponseList"];
+                };
+            };
+        };
+    };
+    InspectionRequestsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRequestView"][];
+                };
+            };
+        };
+    };
+    InspectionRequestsController_ask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewInspectionRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRequestView"];
+                };
+            };
+        };
+    };
+    InspectionRequestsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InspectionRequestView"];
+                };
+            };
+        };
+    };
+    InspectionRequestsController_reports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitInspectionReportView"][];
                 };
             };
         };

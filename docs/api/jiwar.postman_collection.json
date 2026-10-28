@@ -18722,6 +18722,80 @@
           }
         },
         {
+          "name": "Inspection requests, open by default",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "inspection-requests"
+              ],
+              "query": [
+                {
+                  "description": "Default: open.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/inspection-requests"
+            }
+          }
+        },
+        {
+          "name": "Cancel an open inspection request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "inspection-requests",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/inspection-requests/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the instructions",
           "request": {
             "description": "**Responses:** 200",
@@ -19435,7 +19509,7 @@
               },
               "raw": "{\n  \"kind\": \"closed_unit_inspection\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `details` | string |  |  |\n| `dueAt` | string (date-time) |  |  |\n| `gateId` | string (uuid) |  |  |\n| `guardId` | string (uuid) |  | For one guard: exactly one of `guardId`, `gateId`, `zoneId`. |\n| `kind` | `closed_unit_inspection` \\| `custom` | yes |  |\n| `title` | string |  | Required for a custom task; not for an inspection. |\n| `unitId` | string (uuid) |  | An inspection’s unit, in closed mode (UNIT_NOT_CLOSED). |\n| `zoneId` | string (uuid) |  | A place in service. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `details` | string |  |  |\n| `dueAt` | string (date-time) |  |  |\n| `gateId` | string (uuid) |  |  |\n| `guardId` | string (uuid) |  | For one guard: exactly one of `guardId`, `gateId`, `zoneId`. |\n| `kind` | `closed_unit_inspection` \\| `custom` | yes |  |\n| `requestId` | string (uuid) |  | The inspection request it answers (ADR 0063): an open one of the same unit (INSPECTION_REQUEST_NOT_FOUND otherwise); an inspection only. |\n| `title` | string |  | Required for a custom task; not for an inspection. |\n| `unitId` | string (uuid) |  | An inspection’s unit, in closed mode (UNIT_NOT_CLOSED). |\n| `zoneId` | string (uuid) |  | A place in service. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -40628,6 +40702,155 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The unit’s inspection requests",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "inspection-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/inspection-requests",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask for an inspection of the closed unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"preferredOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `preferredOn` | string (date) | yes | The compound’s day, from today to 90 days ahead. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "inspection-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/inspection-requests",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel an open inspection request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "inspection-requests",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/inspection-requests/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The closed unit’s inspections, done",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "inspections"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/inspections",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
                   "value": ""
                 }
               ]

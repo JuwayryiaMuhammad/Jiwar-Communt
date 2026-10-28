@@ -11830,6 +11830,11 @@
               }
             ]
           },
+          "requestId": {
+            "description": "The inspection request it answers (ADR 0063): an open one of the same unit (INSPECTION_REQUEST_NOT_FOUND otherwise); an inspection only.",
+            "format": "uuid",
+            "type": "string"
+          },
           "title": {
             "description": "Required for a custom task; not for an inspection.",
             "maxLength": 120,
@@ -24470,6 +24475,23 @@
         ],
         "type": "object"
       },
+      "InspectionPhotoView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "description": "Presigned; short-lived.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "InspectionReportRowView": {
         "properties": {
           "assigneeId": {
@@ -24617,6 +24639,72 @@
           "to",
           "totals",
           "rows"
+        ],
+        "type": "object"
+      },
+      "InspectionRequestView": {
+        "properties": {
+          "cancelReason": {
+            "description": "not_needed | unit_reopened | other | task_cancelled",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "preferredOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "reference": {
+            "description": "`IR-` and the number.",
+            "type": "string"
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "scheduled",
+              "done",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "preferredOn",
+          "status",
+          "createdAt",
+          "scheduledAt",
+          "doneAt",
+          "cancelledAt",
+          "cancelReason"
         ],
         "type": "object"
       },
@@ -29870,6 +29958,19 @@
         "required": [
           "field",
           "value"
+        ],
+        "type": "object"
+      },
+      "NewInspectionRequestDto": {
+        "properties": {
+          "preferredOn": {
+            "description": "The compound’s day, from today to 90 days ahead.",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preferredOn"
         ],
         "type": "object"
       },
@@ -48741,6 +48842,76 @@
         ],
         "type": "object"
       },
+      "StaffInspectionRequestView": {
+        "properties": {
+          "cancelReason": {
+            "description": "not_needed | unit_reopened | other | task_cancelled",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "preferredOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "reference": {
+            "description": "`IR-` and the number.",
+            "type": "string"
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "scheduled",
+              "done",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "preferredOn",
+          "status",
+          "createdAt",
+          "scheduledAt",
+          "doneAt",
+          "cancelledAt",
+          "cancelReason",
+          "unitCode"
+        ],
+        "type": "object"
+      },
       "StaffLateNoticeView": {
         "properties": {
           "amount": {
@@ -54430,6 +54601,50 @@
           "status",
           "validUntil",
           "suspendedByManagement"
+        ],
+        "type": "object"
+      },
+      "UnitInspectionReportView": {
+        "properties": {
+          "doneAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "note": {
+            "description": "The guard’s note, until it is cleared.",
+            "nullable": true,
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "all_clear",
+              "issue_found"
+            ],
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionPhotoView"
+            },
+            "type": "array"
+          },
+          "requestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "taskId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "taskId",
+          "requestId",
+          "doneAt",
+          "outcome",
+          "note",
+          "photos"
         ],
         "type": "object"
       },
@@ -98412,6 +98627,100 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/security/inspection-requests": {
+      "get": {
+        "operationId": "StaffInspectionRequestsController_list",
+        "parameters": [
+          {
+            "description": "Default: open.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "scheduled",
+                "done",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StaffInspectionRequestView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Inspection requests, open by default",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/inspection-requests/{id}/cancel": {
+      "post": {
+        "operationId": "StaffInspectionRequestsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an open inspection request",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/security/instructions": {
       "get": {
         "description": "Newest first, with how many acknowledged.",
@@ -108639,6 +108948,187 @@
         "tags": [
           "household"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/inspection-requests": {
+      "get": {
+        "operationId": "InspectionRequestsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InspectionRequestView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The unit’s inspection requests",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "InspectionRequestsController_ask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewInspectionRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for an inspection of the closed unit",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/inspection-requests/{id}/cancel": {
+      "post": {
+        "operationId": "InspectionRequestsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an open inspection request",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/inspections": {
+      "get": {
+        "operationId": "InspectionRequestsController_reports",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UnitInspectionReportView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The closed unit’s inspections, done",
+        "tags": [
+          "units"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

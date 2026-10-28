@@ -75,15 +75,22 @@ export const SYSTEM_TOPICS: readonly DefaultTopic[] = [
  * Topics about a resident's unit that residents pick (ADR 0063), seeded
  * with every compound beside the defaults: `utilities`, to have the
  * electricity, water and gas switched on when moving in (a move-in's
- * checklist reads a request on it). The migration
- * 20261120090000_unit_moves backfills existing compounds; a unit test
- * keeps the two in step.
+ * checklist reads a request on it), and `unit_preparation`, to have a
+ * closed unit prepared before the owner returns. The migrations
+ * 20261120090000_unit_moves and 20261120090300_inspection_requests
+ * backfill existing compounds; a unit test keeps them in step.
  */
 export const UNIT_TOPICS: readonly DefaultTopic[] = [
   {
     key: 'utilities',
     nameAr: 'المرافق: كهرباء ومياه وغاز',
     nameEn: 'Utilities: electricity, water and gas',
+    targetResponseHours: 72,
+  },
+  {
+    key: 'unit_preparation',
+    nameAr: 'تجهيز الوحدة قبل العودة',
+    nameEn: 'Preparing the unit before I return',
     targetResponseHours: 72,
   },
 ];

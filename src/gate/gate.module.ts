@@ -301,6 +301,11 @@ import { ChildRecordsService } from './children/child-records.service';
 import { ChildExportSections } from './children/child-export-sections';
 import { PickupPageService } from './children/pickup-page.service';
 import { PermitMoveSteps } from './permits/permit-move-steps';
+import {
+  InspectionRequestsController,
+  StaffInspectionRequestsController,
+} from './tasks/inspection-requests.controller';
+import { InspectionRequestsService } from './tasks/inspection-requests.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -394,6 +399,8 @@ import { PermitMoveSteps } from './permits/permit-move-steps';
     StaffHandoverController,
     StaffTasksController,
     GuardTasksController,
+    InspectionRequestsController,
+    StaffInspectionRequestsController,
     MyWorkController,
     GuardSwapsController,
     StaffSwapsController,
@@ -537,6 +544,7 @@ import { PermitMoveSteps } from './permits/permit-move-steps';
     RosterAttendance,
     HandoverService,
     TasksService,
+    InspectionRequestsService,
     MyWorkService,
     SwapsService,
     GuardInstructionsService,

@@ -75,6 +75,16 @@ export class CreateGuardTaskDto {
   @ToInstant()
   @IsDate()
   dueAt?: Date;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'The inspection request it answers (ADR 0063): an open one of the same unit (INSPECTION_REQUEST_NOT_FOUND otherwise); an inspection only.',
+  })
+  @IsOptional()
+  @IsUUID()
+  requestId?: string;
 }
 
 export class CancelGuardTaskDto {

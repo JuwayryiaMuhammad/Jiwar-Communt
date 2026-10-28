@@ -28,6 +28,7 @@ import {
   StaffGuardTaskView,
   type TaskContext,
 } from './views/task.views';
+import { InspectionRequestsService } from './inspection-requests.service';
 
 export const TASK_RESOURCE = 'guard_task';
 /** The most photos one task's completion carries. */
@@ -47,6 +48,8 @@ export interface NewTask {
   gateId?: string;
   zoneId?: string;
   dueAt?: Date;
+  /** The inspection request it answers (ADR 0063). */
+  requestId?: string;
 }
 
 type Outcome = (typeof REASON_CODES.guardTaskOutcome)[number];
@@ -77,6 +80,7 @@ export class TasksService implements OnModuleInit {
     private readonly shifts: ShiftsService,
     private readonly roster: RosterCore,
     private readonly names: DutyNamesReader,
+    private readonly inspections: InspectionRequestsService,
   ) {}
 
   onModuleInit(): void {
@@ -114,6 +118,11 @@ export class TasksService implements OnModuleInit {
       if (input.unitId === undefined)
         fields.push({ field: 'unitId', code: FieldErrorCode.FIELD_REQUIRED });
     }
+    if (input.kind === 'custom' && input.requestId !== undefined)
+      fields.push({
+        field: 'requestId',
+        code: FieldErrorCode.FIELD_NOT_ALLOWED,
+      });
     if (title && title.length > TEXT.title)
       fields.push({
         field: 'title',
@@ -156,6 +165,9 @@ export class TasksService implements OnModuleInit {
       const now = await dbNow(tx);
       if (input.dueAt && input.dueAt <= now)
         throw invalid([{ field: 'dueAt', code: FieldErrorCode.INVALID_VALUE }]);
+      // It answers a closed unit's inspection request (ADR 0063).
+      if (input.requestId)
+        await this.inspections.scheduled(tx, input.requestId, input.unitId);
       await this.idempotency.claim(tx, { type: TASK_RESOURCE, id });
       const task = await tx.guardTask.create({
         data: {
@@ -169,6 +181,7 @@ export class TasksService implements OnModuleInit {
           ...post,
           dueAt: input.dueAt ?? null,
           createdById: this.ctx.accountId,
+          requestId: input.requestId ?? null,
         },
       });
       const told = await this.tell(tx, task);
@@ -178,6 +191,7 @@ export class TasksService implements OnModuleInit {
         metadata: {
           kind: task.kind,
           ...(task.unitId ? { unitId: task.unitId } : {}),
+          ...(task.requestId ? { requestId: task.requestId } : {}),
           ...(task.assigneeId
             ? { guardId: task.assigneeId }
             : task.gateId
@@ -270,6 +284,8 @@ export class TasksService implements OnModuleInit {
         targetId: id,
         metadata: { reasonCode: reason },
       });
+      if (cancelled.requestId)
+        await this.inspections.taskCancelled(tx, cancelled.requestId);
       return this.staffView(tx, cancelled);
     });
   }
@@ -406,9 +422,13 @@ export class TasksService implements OnModuleInit {
       });
       if (done.unitId) {
         const primary = await this.community.primaryOf(tx, done.unitId);
+        // The request's asker too (ADR 0063): a vacant unit has no primary.
+        const asker = done.requestId
+          ? await this.inspections.taskDone(tx, done.requestId)
+          : null;
         await this.safety.notify(
           tx,
-          [primary],
+          [primary, asker],
           'guard_task.unit_inspected',
           done.unitId,
           { outcome: input.outcome },

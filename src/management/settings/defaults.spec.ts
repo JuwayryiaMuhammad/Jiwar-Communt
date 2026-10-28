@@ -107,7 +107,10 @@ describe('default management topics and office hours', () => {
   });
 
   it('the unit topics match their backfills (ADR 0063), row for row', () => {
-    const sql = ['20261120090000_unit_moves']
+    const sql = [
+      '20261120090000_unit_moves',
+      '20261120090300_inspection_requests',
+    ]
       .map((m) =>
         readFileSync(
           join(__dirname, `../../../prisma/migrations/${m}/migration.sql`),

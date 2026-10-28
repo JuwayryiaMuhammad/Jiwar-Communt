@@ -1501,6 +1501,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تفقد الأمن وحدتك المغلقة. النتيجة في التطبيق.',
     },
   },
+  'unit_inspection.requested': {
+    en: {
+      title: 'An inspection is asked for',
+      body: 'The owner of a closed unit asks for a visit around {preferredOn}. Schedule it from the requests.',
+    },
+    ar: {
+      title: 'طلب تفقد وحدة',
+      body: 'يطلب مالك وحدة مغلقة زيارة تفقد في حدود {preferredOn}. جدولها من الطلبات.',
+    },
+  },
   'guard_swap.requested': {
     en: {
       title: 'Swap request',

@@ -1386,8 +1386,9 @@ export const NOTIFICATION_KINDS = {
     params: { taskKind: {} },
   },
   /**
-   * Security inspected the closed unit. To its primary: the outcome's code
-   * only, never a photo, a note or who.
+   * Security inspected the closed unit. To its primary, and to whoever
+   * asked for the visit (ADR 0063): the outcome's code only, never a photo,
+   * a note or who (the report is read in the app).
    */
   'guard_task.unit_inspected': {
     priority: 'normal',
@@ -1395,6 +1396,17 @@ export const NOTIFICATION_KINDS = {
     critical: false,
     target: 'unit',
     params: { outcome: {} },
+  },
+  /**
+   * A closed unit's owner, or its proxy, asked for an inspection (ADR
+   * 0063): to the holders of `guard_tasks.manage`; the preferred day only.
+   */
+  'unit_inspection.requested': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'unit_inspection_request',
+    params: { preferredOn: {} },
   },
   /** A colleague asks the guard to take one of their slots. */
   'guard_swap.requested': {

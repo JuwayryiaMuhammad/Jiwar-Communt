@@ -14,6 +14,7 @@ import { FORMAL_NOTICE_ROUTES } from './formal-notices';
 import { RESIDENT_ITEM_ROUTES } from './resident-items';
 import { MOVE_ROUTES } from './moves';
 import { PROXY_ROUTES } from './proxies';
+import { INSPECTION_REQUEST_ROUTES } from './inspection-requests';
 import type { Row } from '../registry';
 import { APPROVALS_ROUTES } from './approvals';
 import { ASSIST_ROUTES } from './assist';
@@ -210,6 +211,7 @@ export const ROUTES: Row[] = [
   ...CONTRACT_ROUTES,
   ...MOVE_ROUTES,
   ...PROXY_ROUTES,
+  ...INSPECTION_REQUEST_ROUTES,
   ...CLEARANCE_DEPOSIT_ROUTES,
   ...ERASURE_ROUTES,
   ...ADMIN_ROUTES,

@@ -64,6 +64,16 @@ export const AUDIT_ACTIONS = {
   'unit_proxy.revoked': { log: 'tenant', target: 'unit_proxy' },
   // metadata: unitId, wasActive, reasonCode (expired, invite_expired, household_ended, ...).
   'unit_proxy.ended': { log: 'tenant', target: 'unit_proxy' },
+  // metadata: unitId, side (owner | proxy).
+  'unit_inspection.requested': {
+    log: 'tenant',
+    target: 'unit_inspection_request',
+  },
+  // metadata: unitId, reasonCode (task_cancelled when its task was).
+  'unit_inspection.cancelled': {
+    log: 'tenant',
+    target: 'unit_inspection_request',
+  },
   'contract.recorded': { log: 'tenant', target: 'contract' },
   'contract.voided': { log: 'tenant', target: 'contract' },
   'contract_renewal.requested': { log: 'tenant', target: 'contract_renewal' },

@@ -2204,6 +2204,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'end_reason IS NULL is tested first; the list runs only on a value',
   },
   proxy_invite_tokens_token_hash_hex: {},
+  // Inspection requests (ADR 0063).
+  unit_inspection_requests_shape: {
+    guarded:
+      'each optional column is tested IS NULL first; the list and the bounds run only on a value',
+  },
+  guard_tasks_request_kind: {
+    guarded: 'request_id IS NULL is tested first',
+  },
   unit_permits_move_direction: {
     guarded:
       'move_direction IS NULL is tested first; the list runs only on a value',

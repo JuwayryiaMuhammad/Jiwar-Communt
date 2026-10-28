@@ -238,6 +238,42 @@ describe('Audit coverage — R11a-2', () => {
     });
   });
 
+  describe('inspection requests (ADR 0063)', () => {
+    it('requested by the owner of a closed unit, cancelled with a code', async () => {
+      const s = await p.setUp('R11a-2 Inspections Audit');
+      await http('post', `/units/${s.home.id}/closed-mode`, s.alice, {
+        closed: true,
+      }).expect(204);
+      const asked = (
+        await http('post', `/units/${s.home.id}/inspection-requests`, s.alice, {
+          preferredOn: day(3),
+        }).expect(201)
+      ).body as { id: string };
+      expect(
+        await entries(s.c.tenantId, 'unit_inspection.requested', asked.id),
+      ).toEqual([
+        expect.objectContaining({
+          actorId: s.alice.id,
+          metadata: { unitId: s.home.id, side: 'owner' },
+        }),
+      ]);
+      await http(
+        'post',
+        `/units/${s.home.id}/inspection-requests/${asked.id}/cancel`,
+        s.alice,
+        { reasonCode: 'unit_reopened' },
+      ).expect(200);
+      expect(
+        await entries(s.c.tenantId, 'unit_inspection.cancelled', asked.id),
+      ).toEqual([
+        expect.objectContaining({
+          actorId: s.alice.id,
+          metadata: { unitId: s.home.id, reasonCode: 'unit_reopened' },
+        }),
+      ]);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every R11a-2 entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { RequestContext } from '../core/common/cls/request-context';
 import type { WorkerCapacity, WorkerEngagementStatus } from '@prisma/client';
 import { IdentifierHasher } from '../core/auth/identifier';
 import type { FieldError } from '../core/common/errors';
@@ -25,6 +24,7 @@ import {
   isWithinSchedule,
   type WorkerSchedule,
 } from './workers/schedule';
+import { RequestContext } from '../core/common/cls/request-context';
 
 /** A weekly schedule: days 0–6 and windows in the compound's time zone. */
 export type GateSchedule = WorkerSchedule;
@@ -513,6 +513,38 @@ export class CommunityGatePort {
       select: { id: true },
     });
     return row?.id ?? null;
+  }
+
+  /**
+   * Who may ask for, and read, a closed unit's inspections (ADR 0063): an
+   * active owner of the unit, or its proxy with `inspections` while the
+   * proxy may act; null for anyone else (the unit unseen: not found).
+   */
+  async inspectionAuthority(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<'owner' | 'proxy' | null> {
+    const me = this.ctx.accountId;
+    const owner = await tx.unitOccupancy.findFirst({
+      where: {
+        unitId,
+        accountId: me,
+        status: 'active',
+        occupancyType: 'owner',
+      },
+      select: { id: true },
+    });
+    if (owner) return 'owner';
+    const proxy = await tx.unitProxy.findFirst({
+      where: { unitId, accountId: me, status: 'active' },
+      select: { scopes: true },
+    });
+    if (
+      proxy?.scopes.includes('inspections') &&
+      (await this.capabilities.placeOf(tx, me, unitId))?.unitView
+    )
+      return 'proxy';
+    return null;
   }
 
   /** The unit's primary resident now, or null (ADR 0045: who is told). */

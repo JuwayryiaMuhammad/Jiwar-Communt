@@ -184,6 +184,8 @@ export const REASON_CODES = {
   moveCancel: ['plans_changed', 'data_error', 'other'],
   /** Why a unit is handed over with no clearance (ADR 0063). */
   handoverWithoutClearance: ['dues_settle_later', 'dues_disputed', 'other'],
+  /** Why an open inspection request is cancelled (ADR 0063). */
+  inspectionRequestCancel: ['not_needed', 'unit_reopened', 'other'],
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
   // A manager acting for an account (ADR 0036): how the person asked.

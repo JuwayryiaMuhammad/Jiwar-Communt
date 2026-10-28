@@ -2194,6 +2194,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'each optional column is tested IS NULL first; the lists and the bounds run only on a value',
   },
   unit_move_steps_shape: {},
+  // Unit proxies (ADR 0063).
+  unit_proxies_scopes: {},
+  unit_proxies_dates: {
+    guarded: 'accepted_at and ended_at are tested IS NULL first',
+  },
+  unit_proxies_state_shape: {
+    guarded:
+      'end_reason IS NULL is tested first; the list runs only on a value',
+  },
+  proxy_invite_tokens_token_hash_hex: {},
   unit_permits_move_direction: {
     guarded:
       'move_direction IS NULL is tested first; the list runs only on a value',
@@ -2297,6 +2307,8 @@ describe('CHECK constraints and NULL', () => {
       { table: 'household_members', nullable: 'NO' },
       // Present exactly while pending (resident_registrations_pii_only_pending).
       { table: 'resident_registrations', nullable: 'YES' },
+      // An invitee's, kept only while invited (ADR 0063).
+      { table: 'unit_proxies', nullable: 'YES' },
     ]);
   });
 });

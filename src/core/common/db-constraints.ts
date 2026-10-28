@@ -88,6 +88,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   unit_moves_number_key: null,
   unit_moves_one_planned: null,
   unit_move_steps_once: null,
+  // Unit proxies (ADR 0063): created under the unit's lock; one active
+  // place per account and unit, checked first at acceptance.
+  unit_proxies_tenant_id_id_key: null,
+  unit_proxies_one_active_per_account: null,
+  proxy_invite_tokens_one_per_proxy: null,
   // Clearances and deposits (ADR 0062): numbers from the finance counters;
   // a random code, unique by its 128 bits.
   finance_clearances_tenant_id_id_key: null,

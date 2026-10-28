@@ -110,6 +110,7 @@ export default tseslint.config(
       'src/core/auth/**/*.ts',
       'src/core/platform/**/*.ts',
       'src/community/households/invite-acceptance.service.ts',
+      'src/community/proxies/proxy-acceptance.service.ts',
       'src/community/households/majority-notices.ts',
       'src/community/residents/registration.service.ts',
       'src/community/residents/registration-documents.service.ts',

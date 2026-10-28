@@ -17,4 +17,5 @@ export const ACCOUNT_TYPES: readonly AccountType[] = [
   'staff',
   'manager',
   'family',
+  'proxy',
 ];

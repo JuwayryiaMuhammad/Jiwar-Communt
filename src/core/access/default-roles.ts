@@ -230,6 +230,23 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.budget',
     ],
   },
+  {
+    // A unit proxy (ADR 0063): an outside person an owner trusts with a
+    // closed or vacant unit. The role is the most a proxy holds; what each
+    // may do on its unit is its scopes, and nothing while the unit is open
+    // with a primary (the capabilities decide).
+    key: 'unit_proxy',
+    kindDefault: true,
+    kind: 'proxy',
+    permissions: [
+      'units.read',
+      'community.read',
+      'visitors.invite',
+      'tickets.create',
+      'requests.create',
+      'permits.request',
+    ],
+  },
 ];
 
 /**

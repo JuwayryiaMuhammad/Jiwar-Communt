@@ -26,6 +26,8 @@ export type MemberPermission =
 export interface UnitState {
   /** Closed-unit mode (the owner is away). */
   closed: boolean;
+  /** No primary lives there now (ADR 0063); unknown counts as not vacant. */
+  vacant?: boolean;
   /** Open review flags on the unit. */
   reviewReasons: readonly ReviewReason[];
 }
@@ -50,7 +52,27 @@ export type Subject =
         capPerOperation: string | null;
       }[];
     }
-  | { kind: 'registration'; status: 'pending' | 'approved' | 'rejected' };
+  | { kind: 'registration'; status: 'pending' | 'approved' | 'rejected' }
+  | {
+      kind: 'proxy';
+      scopes: readonly ProxyScope[];
+      /** Accepted, not ended, not expired. */
+      live: boolean;
+    };
+
+/**
+ * What an owner trusts a unit proxy with (ADR 0063). Never money,
+ * contracts, documents, governance, the household, closed mode, moves or
+ * events: those have no scope.
+ */
+export const PROXY_SCOPES = [
+  'inspections',
+  'tickets',
+  'visitors_invite',
+  'works',
+  'requests',
+] as const;
+export type ProxyScope = (typeof PROXY_SCOPES)[number];
 
 export interface Capabilities {
   /** Never taken away while the person is in the unit (or its archive, until handover). */
@@ -203,7 +225,28 @@ function base(subject: Subject, unit: UnitState): Capabilities {
       return occupancy(subject, unit);
     case 'member':
       return member(subject);
+    case 'proxy':
+      return proxy(subject, unit);
   }
+}
+
+/**
+ * A unit proxy (ADR 0063): only while the unit is closed or has no
+ * primary, the unit's view and what its scopes give; never the emergency
+ * button, the household or anything else.
+ */
+function proxy(
+  p: Extract<Subject, { kind: 'proxy' }>,
+  unit: UnitState,
+): Capabilities {
+  if (!p.live || !(unit.closed || unit.vacant === true)) return { ...NONE };
+  return {
+    ...NONE,
+    conductGuide: true,
+    unitView: true,
+    tickets: p.scopes.includes('tickets'),
+    visitorsInvite: p.scopes.includes('visitors_invite'),
+  };
 }
 
 function occupancy(

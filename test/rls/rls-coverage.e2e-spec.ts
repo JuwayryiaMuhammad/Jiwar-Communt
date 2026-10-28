@@ -29,6 +29,8 @@ const GLOBAL_WITH_TENANT_ID = [
   // Resolves a registrant's status link before the tenant is known (ADR
   // 0062); ids and an HMAC only.
   'registration_status_links',
+  // A unit proxy invite's link (ADR 0063).
+  'proxy_invite_tokens',
   // Resolves an outside escort's pickup link before the tenant is known
   // (ADR 0054); no PII.
   'child_pickup_links',

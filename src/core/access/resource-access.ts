@@ -47,6 +47,14 @@ export class ResourceAccess {
             some: { accountId: this.ctx.accountId, status: 'active' },
           },
         };
+      // A proxy sees the units it is active on (ADR 0063); what it may do
+      // there is its scopes, while the unit is closed or has no primary.
+      case 'proxy':
+        return {
+          proxies: {
+            some: { accountId: this.ctx.accountId, status: 'active' },
+          },
+        };
       default:
         return { id: { in: [] } };
     }

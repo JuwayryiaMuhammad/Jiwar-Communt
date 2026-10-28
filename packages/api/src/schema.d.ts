@@ -7508,6 +7508,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/proxy-units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The units I look after as a proxy */
+        get: operations["MyProxyUnitsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/push-tokens": {
         parameters: {
             query?: never;
@@ -9560,6 +9577,40 @@ export interface paths {
         get: operations["PreventiveRequestsController_slots"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/proxy-invites/accept/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a proxy invite with the code */
+        post: operations["ProxyAcceptanceController_complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/proxy-invites/accept/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start accepting a proxy invite (emails a code) */
+        post: operations["ProxyAcceptanceController_start"];
         delete?: never;
         options?: never;
         head?: never;
@@ -14777,6 +14828,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/units/{unitId}/proxies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A unit’s proxies */
+        get: operations["StaffProxiesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/refunds": {
         parameters: {
             query?: never;
@@ -17335,6 +17403,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/proxies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The unit’s proxies */
+        get: operations["ProxiesController_list"];
+        put?: never;
+        /** Appoint a proxy for the unit */
+        post: operations["ProxiesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/proxies/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End a proxy of the unit */
+        post: operations["ProxiesController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/standing-instructions": {
         parameters: {
             query?: never;
@@ -18083,7 +18186,7 @@ export interface components {
         /** @enum {string} */
         AccountStatus: "active" | "inactive" | "frozen" | "erased";
         /** @enum {string} */
-        AccountType: "resident" | "staff" | "manager" | "family";
+        AccountType: "resident" | "staff" | "manager" | "family" | "proxy";
         AcknowledgeIncidentDto: {
             /**
              * @description `author`: the one who reported it; `reviewer`: a keeper who did not (INCIDENT_OWN otherwise).
@@ -20897,6 +21000,11 @@ export interface components {
             /** @description The token from the invitation link. */
             token: string;
         };
+        CompleteProxyDto: {
+            code: string;
+            /** @description The token from the proxy invitation link. */
+            token: string;
+        };
         CompleteRegistrationDto: {
             /**
              * @description Square metres, up to 2 decimals (checked by the service).
@@ -21216,7 +21324,8 @@ export interface components {
             phone: string;
             /** @description A role of the account's kind in this compound, by key. Staff default to `guard`; others to their kind's default role. */
             roleKey?: string;
-            type: components["schemas"]["AccountType"];
+            /** @enum {string} */
+            type: "resident" | "staff" | "manager" | "family";
         };
         CreateAnnouncementDto: {
             /** @description The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
@@ -22420,6 +22529,11 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @description Shown once; only its hash is stored. */
+            token: string;
+        };
+        CreatedProxyView: {
+            proxy: components["schemas"]["ProxyView"];
+            /** @description Shown once. The link is `<PUBLIC_APP_URL>/x#<token>`; share it with the person. */
             token: string;
         };
         CreditNoteDto: {
@@ -27507,6 +27621,29 @@ export interface components {
             /** Format: date */
             plannedOn: string;
         };
+        NewProxyDto: {
+            /**
+             * Format: date
+             * @description Required for a passport, ignored for a national ID.
+             */
+            birthDate?: string;
+            /** Format: email */
+            email: string;
+            /**
+             * Format: date
+             * @description Its last day (the compound’s calendar), a year ahead at most.
+             */
+            endsOn: string;
+            fullName: string;
+            /** @description 14-digit national ID, or a passport number. */
+            idDocumentNumber: string;
+            idDocumentType: components["schemas"]["IdDocumentType"];
+            /** @description ISO 3166-1 alpha-2; required for a passport. */
+            nationality?: string;
+            phone: string;
+            /** @description What the proxy may do while the unit is closed or has no primary. */
+            scopes: ("inspections" | "tickets" | "visitors_invite" | "works" | "requests")[];
+        };
         NewUnitDocumentDto: {
             /**
              * Format: date
@@ -29448,6 +29585,52 @@ export interface components {
             outcome: components["schemas"]["ApprovalMotionOutcome"];
             /** @description The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. */
             rationale: string;
+        };
+        ProxyAcceptedView: {
+            /** @example true */
+            accepted: boolean;
+        };
+        ProxyCodeRequestedView: {
+            message: string;
+        };
+        ProxyPlaceView: {
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            proxyId: string;
+            scopes: ("inspections" | "tickets" | "visitors_invite" | "works" | "requests")[];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description The unit is closed or has no primary: you may act. */
+            usable: boolean;
+        };
+        ProxyTokenDto: {
+            /** @description The token from the proxy invitation link. */
+            token: string;
+        };
+        ProxyView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description revoked | expired | invite_expired | ownership_transferred | household_ended | appointer_left | erased */
+            endReason: string | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            inviteExpiresAt: string;
+            /** @description The invite’s name, then the account’s; null once ended. */
+            name: string | null;
+            scopes: ("inspections" | "tickets" | "visitors_invite" | "works" | "requests")[];
+            /** @enum {string} */
+            status: "invited" | "active" | "ended";
+            /** Format: uuid */
+            unitId: string;
         };
         PublicClearanceView: {
             /** Format: date-time */
@@ -47398,6 +47581,25 @@ export interface operations {
             };
         };
     };
+    MyProxyUnitsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyPlaceView"][];
+                };
+            };
+        };
+    };
     PushTokensController_register: {
         parameters: {
             query?: never;
@@ -50646,6 +50848,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisitSlotViewList"];
+                };
+            };
+        };
+    };
+    ProxyAcceptanceController_complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteProxyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyAcceptedView"];
+                };
+            };
+        };
+    };
+    ProxyAcceptanceController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyTokenDto"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyCodeRequestedView"];
                 };
             };
         };
@@ -58270,6 +58518,27 @@ export interface operations {
             };
         };
     };
+    StaffProxiesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyView"][];
+                };
+            };
+        };
+    };
     RefundsController_record: {
         parameters: {
             query?: never;
@@ -62142,6 +62411,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
+    ProxiesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyView"][];
+                };
+            };
+        };
+    };
+    ProxiesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewProxyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedProxyView"];
+                };
+            };
+        };
+    };
+    ProxiesController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyView"];
                 };
             };
         };

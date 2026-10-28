@@ -152,6 +152,7 @@ const DEFAULT_ROLE_KEY: Record<AccountType, string> = {
   resident: 'resident',
   family: 'family_member',
   staff: 'guard',
+  proxy: 'unit_proxy',
 };
 
 export function createAccountRow(

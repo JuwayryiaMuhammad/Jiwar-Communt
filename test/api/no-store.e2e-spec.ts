@@ -46,6 +46,7 @@ import { partnerCalls } from './no-store-partners';
 import { registrationCalls } from './no-store-registration';
 import { kinshipCalls } from './no-store-kinship';
 import { unitDocumentCalls } from './no-store-unit-documents';
+import { proxyCalls } from './no-store-proxies';
 import { decisionAppealCalls } from './no-store-decision-appeals';
 import { representativeCalls } from './no-store-representatives';
 import { governanceVoiceCalls } from './no-store-governance-voice';
@@ -3108,6 +3109,7 @@ describe('API v0 — no-store', () => {
     ...registrationCalls(() => w),
     ...kinshipCalls(() => w),
     ...unitDocumentCalls(() => w),
+    ...proxyCalls(() => w),
     ...decisionAppealCalls(() => w),
     ...representativeCalls(() => w, aSittingBoard),
     ...governanceVoiceCalls(() => w, aSittingBoard, aPublication),

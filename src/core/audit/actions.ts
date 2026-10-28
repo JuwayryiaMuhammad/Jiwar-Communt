@@ -56,6 +56,14 @@ export const AUDIT_ACTIONS = {
   'unit_move.done': { log: 'tenant', target: 'unit_move' },
   // metadata: unitId, direction, reasonCode, side.
   'unit_move.cancelled': { log: 'tenant', target: 'unit_move' },
+  // metadata: unitId, scopes, expiresAt; never the invitee's details.
+  'unit_proxy.invited': { log: 'tenant', target: 'unit_proxy' },
+  // metadata: unitId, accountId. Actor: the system (the code proved the email).
+  'unit_proxy.accepted': { log: 'tenant', target: 'unit_proxy' },
+  // metadata: unitId, wasActive.
+  'unit_proxy.revoked': { log: 'tenant', target: 'unit_proxy' },
+  // metadata: unitId, wasActive, reasonCode (expired, invite_expired, household_ended, ...).
+  'unit_proxy.ended': { log: 'tenant', target: 'unit_proxy' },
   'contract.recorded': { log: 'tenant', target: 'contract' },
   'contract.voided': { log: 'tenant', target: 'contract' },
   'contract_renewal.requested': { log: 'tenant', target: 'contract_renewal' },

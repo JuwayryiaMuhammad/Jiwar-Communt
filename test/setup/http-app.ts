@@ -4,11 +4,11 @@ import type { Server } from 'node:http';
 import type { INestApplication, Type } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, type TestingModule } from '@nestjs/testing';
-import type { AccountType } from '@prisma/client';
 import { ClsService } from 'nestjs-cls';
 import request from 'supertest';
 import type TestAgent from 'supertest/lib/agent';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
+import type { CREATABLE_ACCOUNT_TYPES } from '../../src/core/accounts/dto/create-account.dto';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
 import type { AppClsStore } from '../../src/core/common/cls/app-cls';
@@ -34,7 +34,8 @@ export interface HttpHarness {
   createAccount(
     tenantId: string,
     input: {
-      type: AccountType;
+      /** What a manager creates; a proxy comes only from its invite. */
+      type: (typeof CREATABLE_ACCOUNT_TYPES)[number];
       email: string;
       phone: string;
       fullName?: string;

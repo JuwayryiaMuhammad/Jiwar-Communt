@@ -142,6 +142,7 @@ export class OtpService implements OnModuleInit {
     key: string,
     email: string,
     locale: Locale,
+    purpose: 'invite_accept' | 'proxy_accept' = 'invite_accept',
   ): Promise<void> {
     const id = newId();
     const code =
@@ -149,7 +150,7 @@ export class OtpService implements OnModuleInit {
     await this.globalDb.otpChallenge.create({
       data: {
         id,
-        purpose: 'invite_accept',
+        purpose,
         identifierHash: key,
         accountIds: [],
         codeHash: this.hasher.hashOtp(id, code),
@@ -158,7 +159,7 @@ export class OtpService implements OnModuleInit {
     });
     await this.globalDb.otpChallenge.updateMany({
       where: {
-        purpose: 'invite_accept',
+        purpose,
         identifierHash: key,
         id: { lt: id },
         consumedAt: null,
@@ -171,7 +172,7 @@ export class OtpService implements OnModuleInit {
       code,
       ttlSeconds: this.ttlSeconds,
       locale,
-      purpose: 'invite_accept',
+      purpose,
     });
   }
 
@@ -324,8 +325,12 @@ export class OtpService implements OnModuleInit {
   }
 
   /** True when the code matches a live invite challenge, which it consumes. */
-  async verifyInvite(key: string, code: string): Promise<boolean> {
-    return (await this.consume('invite_accept', key, code)) !== null;
+  async verifyInvite(
+    key: string,
+    code: string,
+    purpose: 'invite_accept' | 'proxy_accept' = 'invite_accept',
+  ): Promise<boolean> {
+    return (await this.consume(purpose, key, code)) !== null;
   }
 
   /**

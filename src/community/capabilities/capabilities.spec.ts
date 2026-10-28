@@ -481,4 +481,64 @@ describe('capabilitiesFor', () => {
       expect(vote(occ({ isPrimary: true }), state)).toEqual([true, true]);
     }
   });
+
+  describe('a unit proxy (ADR 0063)', () => {
+    const proxy = (
+      scopes: Extract<Subject, { kind: 'proxy' }>['scopes'],
+      live = true,
+    ): Subject => ({ kind: 'proxy', scopes, live });
+    const CLOSED: UnitState = { closed: true, reviewReasons: [] };
+    const VACANT: UnitState = {
+      closed: false,
+      vacant: true,
+      reviewReasons: [],
+    };
+
+    it('while the unit is closed or vacant: the unit and what its scopes give, nothing else', () => {
+      expect(on(capabilitiesFor(proxy(['tickets']), CLOSED))).toEqual([
+        'conductGuide',
+        'tickets',
+        'unitView',
+      ]);
+      expect(
+        on(capabilitiesFor(proxy(['visitors_invite', 'works']), VACANT)),
+      ).toEqual(['conductGuide', 'unitView', 'visitorsInvite']);
+    });
+
+    it('nothing while the unit is open with a primary, or once the proxy ended or expired', () => {
+      expect(capabilitiesFor(proxy(['tickets']), OPEN)).toEqual(NONE);
+      expect(
+        capabilitiesFor(proxy(['tickets']), { ...OPEN, vacant: false }),
+      ).toEqual(NONE);
+      expect(capabilitiesFor(proxy(['tickets'], false), CLOSED)).toEqual(NONE);
+    });
+
+    it('never money, the household, governance, the emergency button or the cards', () => {
+      const all = capabilitiesFor(
+        proxy([
+          'inspections',
+          'tickets',
+          'visitors_invite',
+          'works',
+          'requests',
+        ]),
+        { closed: true, vacant: true, reviewReasons: [] },
+      );
+      for (const flag of [
+        'emergency',
+        'householdView',
+        'householdManage',
+        'financeView',
+        'financePay',
+        'governanceVote',
+        'pollsVote',
+        'ownershipCard',
+        'closedUnitCard',
+        'endLease',
+        'documentsUpload',
+        'gateEntry',
+      ] as const)
+        expect(all[flag]).toBe(false);
+    });
+  });
 });

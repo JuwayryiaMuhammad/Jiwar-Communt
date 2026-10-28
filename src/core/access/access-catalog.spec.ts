@@ -29,6 +29,7 @@ describe('access catalog', () => {
     ]);
     expect(defaultRoleKey(CODE_ACCESS_CATALOG, 'staff')).toBe('guard');
     expect(defaultRoleKey(CODE_ACCESS_CATALOG, 'family')).toBe('family_member');
+    expect(defaultRoleKey(CODE_ACCESS_CATALOG, 'proxy')).toBe('unit_proxy');
     const two = (a: boolean, b: boolean): AccessCatalog => ({
       ...CODE_ACCESS_CATALOG,
       defaultRoles: [

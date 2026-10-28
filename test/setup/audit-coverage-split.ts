@@ -724,6 +724,10 @@ export const R11A2_COVERAGE: readonly string[] = [
   'unit_move.step_done',
   'unit_move.done',
   'unit_move.cancelled',
+  'unit_proxy.invited',
+  'unit_proxy.accepted',
+  'unit_proxy.revoked',
+  'unit_proxy.ended',
 ];
 
 /**

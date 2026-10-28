@@ -86,6 +86,7 @@ describe('TenantsService', () => {
       ['resident', 'resident', true, null],
       ['security_supervisor', 'staff', true, null],
       ['technician', 'staff', true, null],
+      ['unit_proxy', 'proxy', true, null],
     ]);
     for (const def of CODE_ACCESS_CATALOG.defaultRoles) {
       const role = roles.find((r) => r.key === def.key)!;

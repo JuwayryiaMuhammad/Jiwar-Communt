@@ -1,8 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AccountType, IdDocumentType } from '@prisma/client';
-import { IsEmail, IsEnum, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 import { IsPhone } from '../../common/validation/is-phone';
 import { withParams } from '../../common/validation/validation-errors';
+
+/**
+ * What a manager creates (ADR 0003). A proxy's account comes only from its
+ * accepted invite (ADR 0063), never from here.
+ */
+export const CREATABLE_ACCOUNT_TYPES = [
+  'resident',
+  'staff',
+  'manager',
+  'family',
+] as const satisfies readonly AccountType[];
 
 /**
  * Manager-only (ADR 0003). No tenantId: it always comes from the token.
@@ -10,9 +28,12 @@ import { withParams } from '../../common/validation/validation-errors';
  * (ADR 0018), which returns the same field codes.
  */
 export class CreateAccountDto {
-  @ApiProperty({ enum: AccountType, enumName: 'AccountType' })
-  @IsEnum(AccountType, withParams({ allowed: Object.values(AccountType) }))
-  type: AccountType;
+  @ApiProperty({ enum: CREATABLE_ACCOUNT_TYPES })
+  @IsIn(
+    [...CREATABLE_ACCOUNT_TYPES],
+    withParams({ allowed: [...CREATABLE_ACCOUNT_TYPES] }),
+  )
+  type: (typeof CREATABLE_ACCOUNT_TYPES)[number];
 
   @ApiProperty({ type: String, minLength: 2, maxLength: 200 })
   @IsString()

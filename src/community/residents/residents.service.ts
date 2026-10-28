@@ -36,8 +36,10 @@ import { CommunityNotifier } from '../notices/community-notifier';
 import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
 import { MovesService } from '../moves/moves.service';
+import { ProxiesService } from '../proxies/proxies.service';
 import { WorkersService } from '../workers/workers.service';
 import { lockAccountShared, lockAccountsForUpdate } from './account-locks';
+import { dbNow } from '../db-clock';
 import type {
   MyUnit,
   NewResident,
@@ -90,6 +92,7 @@ export class ResidentsService {
     private readonly authority: HouseholdAuthority,
     private readonly lifecycle: AccountLifecycle,
     private readonly moves: MovesService,
+    private readonly proxies: ProxiesService,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -319,8 +322,10 @@ export class ResidentsService {
     reasonCode: string,
     options: { flagReview?: boolean } = {},
   ): Promise<AfterCommit[]> {
-    // A move-in still planned will not happen (ADR 0063).
+    // A move-in still planned will not happen, and the proxies this
+    // occupancy appointed end (ADR 0063).
     await this.moves.occupancyEnded(tx, ended.id);
+    await this.proxies.endedOccupancy(tx, ended.id);
     await this.audit.record(tx, {
       action: 'occupancy.ended',
       targetId: ended.id,
@@ -754,7 +759,14 @@ export class ResidentsService {
           { ...place, reason: reason.text },
         );
       }
-      after.push(...(await this.endHouseholdIn(tx, unitId, reason)));
+      after.push(
+        ...(await this.endHouseholdIn(
+          tx,
+          unitId,
+          reason,
+          'ownership_transferred',
+        )),
+      );
       const created = await tx.unitOccupancy.create({
         data: {
           id: newId(),
@@ -904,8 +916,32 @@ export class ResidentsService {
     tx: TenantTxClient,
     unitId: string,
     reason: { code: string; text: string },
+    proxiesEnd: 'household_ended' | 'ownership_transferred' = 'household_ended',
   ): Promise<AfterCommit[]> {
     const ended = await this.households.endAllForUnit(tx, unitId, reason);
+    // ADR 0063: the unit's proxies end with its household, and closed mode
+    // is the household's choice, so it ends too.
+    const proxies = await this.proxies.endForUnit(tx, unitId, proxiesEnd);
+    const unit = await tx.unit.findUniqueOrThrow({
+      where: { id: unitId },
+      select: { closedSince: true },
+    });
+    if (unit.closedSince) {
+      await tx.unit.update({
+        where: { id: unitId },
+        data: { closedSince: null },
+      });
+      await this.audit.record(tx, {
+        action: 'unit.closed_mode_changed',
+        targetId: unitId,
+        changes: diffChanges(
+          { closed: true },
+          { closed: false },
+          'unit.closed_mode_changed',
+        ),
+        metadata: { reasonCode: proxiesEnd },
+      });
+    }
     const after = [
       ...ended.after,
       ...(await this.delegations.endWhere(tx, { unitId }, 'household_ended')),
@@ -929,6 +965,7 @@ export class ResidentsService {
         membersEnded: ended.members,
         invitesRevoked: ended.invites,
         engagementsEnded: workers,
+        proxiesEnded: proxies,
       },
     });
     return after;
@@ -1163,6 +1200,8 @@ export class ResidentsService {
    */
   async setUnitClosed(unitId: string, closed: boolean): Promise<void> {
     await this.tenantTx.withTenantTx(async (tx) => {
+      // The caller's account first, then the unit (ADR 0036, 0063).
+      await lockAccountShared(tx, this.ctx.accountId);
       await lockUnits(tx, [unitId]);
       await this.authority.assertVisible(tx, unitId);
       const mine = await tx.unitOccupancy.findFirst({
@@ -1170,15 +1209,23 @@ export class ResidentsService {
           unitId,
           accountId: this.ctx.accountId,
           status: 'active',
-          isPrimary: true,
           occupancyType: 'owner',
         },
-        select: { id: true },
+        select: { id: true, isPrimary: true },
       });
-      if (!mine) {
+      // The owner primary, or any owner of a unit with no primary (ADR
+      // 0063: nobody else could close it); a tenant never.
+      const allowed =
+        mine !== null &&
+        (mine.isPrimary ||
+          (await tx.unitOccupancy.findFirst({
+            where: { unitId, status: 'active', isPrimary: true },
+            select: { id: true },
+          })) === null);
+      if (!allowed) {
         throw appError.forbidden(
           ErrorCode.NOT_PRIMARY_RESIDENT,
-          "Only the unit's owner-resident primary can close it",
+          "Only the unit's owner primary, or an owner of a unit with no primary, can close it",
         );
       }
       const unit = await tx.unit.findUniqueOrThrow({
@@ -1188,7 +1235,7 @@ export class ResidentsService {
       if ((unit.closedSince !== null) === closed) return;
       await tx.unit.update({
         where: { id: unitId },
-        data: { closedSince: closed ? new Date() : null },
+        data: { closedSince: closed ? await dbNow(tx) : null },
       });
       await this.audit.record(tx, {
         action: 'unit.closed_mode_changed',

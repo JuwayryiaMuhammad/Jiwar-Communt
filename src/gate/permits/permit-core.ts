@@ -90,7 +90,7 @@ export class PermitCore {
     const allowed =
       kind === 'event'
         ? caps.visitorsInvite
-        : (await this.community.permitAuthority(tx, unitId)) !== null;
+        : (await this.community.permitAuthority(tx, unitId, kind)) !== null;
     if (!allowed)
       throw appError.forbidden(
         ErrorCode.PERMIT_NOT_ALLOWED,

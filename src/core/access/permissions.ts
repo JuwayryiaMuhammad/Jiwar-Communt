@@ -27,7 +27,7 @@ export interface PermissionDefinition {
 }
 
 export const PERMISSIONS = {
-  'units.read': { kinds: ['manager', 'resident', 'family'] },
+  'units.read': { kinds: ['manager', 'resident', 'family', 'proxy'] },
   'units.create': { kinds: ['manager'] },
   // The compound's units as a list (`GET /units`) for a staff role: their
   // codes, buildings and floors, never their people. Not `units.read`: that
@@ -80,7 +80,7 @@ export const PERMISSIONS = {
   'gate.operate': { kinds: ['staff'] },
   'gate.manage': { kinds: ['manager'] },
   'gate.read': { kinds: ['manager'] },
-  'visitors.invite': { kinds: ['resident', 'family'] },
+  'visitors.invite': { kinds: ['resident', 'family', 'proxy'] },
   // One's own photo, shown to the guard at the gate (ADR 0031).
   'profile.photo': { kinds: ['resident', 'family'] },
   // Their own email, and asking for a name or phone change (ADR 0062).
@@ -89,7 +89,7 @@ export const PERMISSIONS = {
   // (capabilities.tickets decides per unit); technicians work the ones
   // assigned to them; dispatchers (a supervisor, or the manager) assign
   // them and see every ticket; the manager sets categories and settings.
-  'tickets.create': { kinds: ['resident', 'family'] },
+  'tickets.create': { kinds: ['resident', 'family', 'proxy'] },
   'tickets.work': { kinds: ['staff'] },
   'tickets.dispatch': { kinds: ['staff', 'manager'] },
   'maintenance.manage': { kinds: ['manager'] },
@@ -111,7 +111,7 @@ export const PERMISSIONS = {
   // follow their own; handlers (a staff member, or the manager) answer,
   // assign and close them and run the appointments; the manager sets the
   // topics, targets, office hours and reads the ratings.
-  'requests.create': { kinds: ['resident', 'family'] },
+  'requests.create': { kinds: ['resident', 'family', 'proxy'] },
   'requests.handle': { kinds: ['staff', 'manager'] },
   'requests.manage': { kinds: ['manager'] },
   // Community life (ADR 0040). Residents and family read what is published
@@ -119,7 +119,7 @@ export const PERMISSIONS = {
   // decides per unit) and send suggestions; staff holding
   // `community.publish` write announcements, works, events and polls, and
   // those holding `community.suggestions` handle the suggestions.
-  'community.read': { kinds: ['resident', 'family'] },
+  'community.read': { kinds: ['resident', 'family', 'proxy'] },
   'suggestions.create': { kinds: ['resident', 'family'] },
   'community.publish': { kinds: ['staff', 'manager'] },
   'community.suggestions': { kinds: ['staff', 'manager'] },
@@ -196,7 +196,7 @@ export const PERMISSIONS = {
   // `permits.manage` decides them, removes a contractor worker, unlocks a
   // locked-out worker or guard and sets the compound's work hours. The
   // guard sees and records them with `gate.operate`, inside a shift.
-  'permits.request': { kinds: ['resident', 'family'] },
+  'permits.request': { kinds: ['resident', 'family', 'proxy'] },
   'permits.manage': { kinds: ['staff', 'manager'] },
   // Guard shifts and tasks (ADR 0050). A guard works inside a shift with
   // `gate.operate`. `guard_roster.manage` keeps the roster (weekly

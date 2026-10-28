@@ -1,8 +1,18 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
 import { R11A2_COVERAGE } from '../setup/audit-coverage-split';
-import { day } from '../setup/compound-clock';
-import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { PROXY_EXPIRY_SWEEP } from '../../src/community/proxies/proxies.service';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { day, daysLater } from '../setup/compound-clock';
+import { nationalIdFor } from '../setup/fixtures';
+import {
+  API,
+  createHttpHarness,
+  uniqueEmail,
+  uniquePhone,
+  type HttpHarness,
+} from '../setup/http-app';
+import { waitForOtp } from '../setup/mailpit';
 import { leakText } from '../setup/leak-text';
 import { permitHelpers, type Who } from '../setup/permits';
 
@@ -134,6 +144,94 @@ describe('Audit coverage — R11a-2', () => {
             unitId: s.home.id,
             direction: 'out',
             reasonCode: 'dues_disputed',
+          },
+        }),
+      ]);
+    });
+  });
+
+  describe('proxies (ADR 0063)', () => {
+    it("invited, accepted by the system for the person, revoked; another ended by its invite's expiry", async () => {
+      const s = await p.setUp('R11a-2 Proxies Audit');
+      const email = uniqueEmail('proxy-audit');
+      const planted = [email, 'Audit Proxy Name'];
+      const body = {
+        fullName: 'Audit Proxy Name',
+        email,
+        phone: uniquePhone(),
+        idDocumentType: 'national_id',
+        idDocumentNumber: nationalIdFor(),
+        scopes: ['tickets'],
+        endsOn: day(30),
+      };
+      const created = (
+        await http('post', `/units/${s.home.id}/proxies`, s.alice, body).expect(
+          201,
+        )
+      ).body as { proxy: { id: string }; token: string };
+      const id = created.proxy.id;
+      expect(
+        await entries(s.c.tenantId, 'unit_proxy.invited', id, planted),
+      ).toEqual([
+        expect.objectContaining({
+          actorId: s.alice.id,
+          metadata: expect.objectContaining({
+            unitId: s.home.id,
+            scopes: ['tickets'],
+          }) as unknown,
+        }),
+      ]);
+
+      const since = new Date();
+      await h
+        .http()
+        .post(`${API}/proxy-invites/accept/start`)
+        .send({ token: created.token })
+        .expect(202);
+      const code = await waitForOtp(email, since);
+      await h
+        .http()
+        .post(`${API}/proxy-invites/accept/complete`)
+        .send({ token: created.token, code })
+        .expect(200);
+      expect(
+        await entries(s.c.tenantId, 'unit_proxy.accepted', id, planted),
+      ).toEqual([
+        expect.objectContaining({
+          actorType: 'system',
+          metadata: expect.objectContaining({ unitId: s.home.id }) as unknown,
+        }),
+      ]);
+
+      await http(
+        'post',
+        `/units/${s.home.id}/proxies/${id}/revoke`,
+        s.alice,
+      ).expect(200);
+      expect(
+        await entries(s.c.tenantId, 'unit_proxy.revoked', id, planted),
+      ).toEqual([
+        expect.objectContaining({
+          actorId: s.alice.id,
+          metadata: { unitId: s.home.id, wasActive: true },
+        }),
+      ]);
+
+      const unanswered = (
+        await http('post', `/units/${s.home.id}/proxies`, s.alice, {
+          ...body,
+          email: uniqueEmail('proxy-audit-2'),
+        }).expect(201)
+      ).body as { proxy: { id: string } };
+      await h.moduleRef.get(SweepRunner).run(PROXY_EXPIRY_SWEEP, daysLater(8));
+      expect(
+        await entries(s.c.tenantId, 'unit_proxy.ended', unanswered.proxy.id),
+      ).toEqual([
+        expect.objectContaining({
+          metadata: {
+            unitId: s.home.id,
+            wasActive: false,
+            reasonCode: 'invite_expired',
           },
         }),
       ]);

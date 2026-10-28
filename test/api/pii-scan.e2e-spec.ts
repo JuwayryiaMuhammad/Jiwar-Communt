@@ -1369,6 +1369,9 @@ describe('API v0 — PII leak scan', () => {
         id: '0192a5f0-1c2b-7d3e-8f40-0000000063a2',
       },
       '/staff/moves/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000063a3',
+      // ADR 0063: proxies (none appointed here: empty lists).
+      '/units/{unitId}/proxies': a.homeUnitId,
+      '/staff/units/{unitId}/proxies': a.homeUnitId,
       '/staff/units/{unitId}/contracts/{id}': {
         unitId: a.homeUnitId,
         id: '0192a5f0-1c2b-7d3e-8f40-0000000062c4',

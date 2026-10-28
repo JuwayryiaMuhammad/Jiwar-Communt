@@ -276,7 +276,8 @@
           "resident",
           "staff",
           "manager",
-          "family"
+          "family",
+          "proxy"
         ],
         "type": "string"
       },
@@ -9547,6 +9548,23 @@
         ],
         "type": "object"
       },
+      "CompleteProxyDto": {
+        "properties": {
+          "code": {
+            "pattern": "^\\d{6}$",
+            "type": "string"
+          },
+          "token": {
+            "description": "The token from the proxy invitation link.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "code"
+        ],
+        "type": "object"
+      },
       "CompleteRegistrationDto": {
         "properties": {
           "areaSqm": {
@@ -10497,11 +10515,13 @@
             "type": "string"
           },
           "type": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AccountType"
-              }
-            ]
+            "enum": [
+              "resident",
+              "staff",
+              "manager",
+              "family"
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -13489,6 +13509,22 @@
           "id",
           "token",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "CreatedProxyView": {
+        "properties": {
+          "proxy": {
+            "$ref": "#/components/schemas/ProxyView"
+          },
+          "token": {
+            "description": "Shown once. The link is `<PUBLIC_APP_URL>/x#<token>`; share it with the person.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proxy",
+          "token"
         ],
         "type": "object"
       },
@@ -30022,6 +30058,75 @@
         ],
         "type": "object"
       },
+      "NewProxyDto": {
+        "properties": {
+          "birthDate": {
+            "description": "Required for a passport, ignored for a national ID.",
+            "format": "date",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "endsOn": {
+            "description": "Its last day (the compound’s calendar), a year ahead at most.",
+            "format": "date",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idDocumentNumber": {
+            "description": "14-digit national ID, or a passport number.",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "nationality": {
+            "description": "ISO 3166-1 alpha-2; required for a passport.",
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "scopes": {
+            "description": "What the proxy may do while the unit is closed or has no primary.",
+            "items": {
+              "enum": [
+                "inspections",
+                "tickets",
+                "visitors_invite",
+                "works",
+                "requests"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "idDocumentType",
+          "idDocumentNumber",
+          "fullName",
+          "email",
+          "phone",
+          "scopes",
+          "endsOn"
+        ],
+        "type": "object"
+      },
       "NewUnitDocumentDto": {
         "properties": {
           "expiresOn": {
@@ -36133,6 +36238,165 @@
         "required": [
           "rationale",
           "outcome"
+        ],
+        "type": "object"
+      },
+      "ProxyAcceptedView": {
+        "properties": {
+          "accepted": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accepted"
+        ],
+        "type": "object"
+      },
+      "ProxyCodeRequestedView": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "ProxyPlaceView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "proxyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "enum": [
+                "inspections",
+                "tickets",
+                "visitors_invite",
+                "works",
+                "requests"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "usable": {
+            "description": "The unit is closed or has no primary: you may act.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "proxyId",
+          "unitId",
+          "unitCode",
+          "scopes",
+          "expiresAt",
+          "usable"
+        ],
+        "type": "object"
+      },
+      "ProxyTokenDto": {
+        "properties": {
+          "token": {
+            "description": "The token from the proxy invitation link.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "ProxyView": {
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endReason": {
+            "description": "revoked | expired | invite_expired | ownership_transferred | household_ended | appointer_left | erased",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inviteExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "description": "The invite’s name, then the account’s; null once ended.",
+            "nullable": true,
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "enum": [
+                "inspections",
+                "tickets",
+                "visitors_invite",
+                "works",
+                "requests"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "invited",
+              "active",
+              "ended"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "status",
+          "scopes",
+          "name",
+          "expiresAt",
+          "inviteExpiresAt",
+          "acceptedAt",
+          "endedAt",
+          "endReason",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -79729,6 +79993,37 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/proxy-units": {
+      "get": {
+        "operationId": "MyProxyUnitsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProxyPlaceView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The units I look after as a proxy",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/push-tokens": {
       "delete": {
         "operationId": "PushTokensController_remove",
@@ -86038,6 +86333,72 @@
           "tickets"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/proxy-invites/accept/complete": {
+      "post": {
+        "operationId": "ProxyAcceptanceController_complete",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteProxyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxyAcceptedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Accept a proxy invite with the code",
+        "tags": [
+          "public"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/proxy-invites/accept/start": {
+      "post": {
+        "operationId": "ProxyAcceptanceController_start",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxyCodeRequestedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Start accepting a proxy invite (emails a code)",
+        "tags": [
+          "public"
+        ],
         "x-stability": "draft"
       }
     },
@@ -101369,6 +101730,46 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/units/{unitId}/proxies": {
+      "get": {
+        "operationId": "StaffProxiesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProxyView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A unit’s proxies",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/units/{unitId}/refunds": {
       "post": {
         "description": "Recorded by hand: no call to the payment provider. At most the unit’s credit now; spends the session’s step-up.",
@@ -109016,6 +109417,137 @@
           "permits"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/proxies": {
+      "get": {
+        "operationId": "ProxiesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProxyView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The unit’s proxies",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ProxiesController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewProxyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedProxyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Appoint a proxy for the unit",
+        "tags": [
+          "units"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/proxies/{id}/revoke": {
+      "post": {
+        "operationId": "ProxiesController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a proxy of the unit",
+        "tags": [
+          "units"
+        ],
         "x-stability": "draft"
       }
     },

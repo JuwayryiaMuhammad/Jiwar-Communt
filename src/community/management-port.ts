@@ -9,7 +9,8 @@ export interface RequestAuthor {
 }
 
 /** Who can be a request's author at all: the people of a household. */
-const AUTHOR_TYPES = ['resident', 'family'] as const;
+// A unit proxy asks the management too, with its `requests` scope (ADR 0063).
+const AUTHOR_TYPES = ['resident', 'family', 'proxy'] as const;
 
 /**
  * What the management domain reads from the community domain (ADR 0015,
@@ -47,10 +48,19 @@ export class CommunityManagementPort {
     accountId: string,
     unitId: string,
   ): Promise<boolean> {
-    return (
-      (await this.capabilities.placeOf(tx, accountId, unitId))?.unitView ===
-      true
-    );
+    const caps = await this.capabilities.placeOf(tx, accountId, unitId);
+    if (caps?.unitView !== true) return false;
+    // A unit proxy names the unit only with its `requests` scope (ADR 0063).
+    const account = await tx.account.findUnique({
+      where: { id: accountId },
+      select: { type: true },
+    });
+    if (account?.type !== 'proxy') return true;
+    const proxy = await tx.unitProxy.findFirst({
+      where: { unitId, accountId, status: 'active' },
+      select: { scopes: true },
+    });
+    return proxy?.scopes.includes('requests') === true;
   }
 
   /**

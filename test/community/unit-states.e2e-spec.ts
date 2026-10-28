@@ -454,6 +454,8 @@ describe('Unit states', () => {
         membersEnded: 2,
         invitesRevoked: 1,
         engagementsEnded: 1,
+        // ADR 0063: the unit had no proxy.
+        proxiesEnded: 0,
       });
     });
 

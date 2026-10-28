@@ -49,6 +49,11 @@ const EN = {
     intro: 'Your code to make this address your Jiwar email is',
     ignore: 'If you did not ask for this, ignore this email.',
   },
+  proxy_accept: {
+    subject: 'Your Jiwar proxy invitation code',
+    intro: 'Your code to accept looking after a unit on Jiwar is',
+    ignore: 'If you were not expecting this invitation, ignore this email.',
+  },
 } satisfies Record<OtpPurpose, Record<string, string>>;
 
 const AR = {
@@ -76,6 +81,11 @@ const AR = {
     subject: 'أكّد بريدك الجديد على جوار',
     intro: 'رمز اعتماد هذا العنوان بريدًا لحسابك على جوار هو',
     ignore: 'إذا لم تطلب ذلك، تجاهل هذه الرسالة.',
+  },
+  proxy_accept: {
+    subject: 'رمز قبول الوكالة على جوار',
+    intro: 'رمز قبول رعاية وحدة نيابة عن مالكها على جوار هو',
+    ignore: 'إذا لم تكن تنتظر هذه الدعوة، تجاهل هذه الرسالة.',
   },
 } satisfies Record<OtpPurpose, Record<string, string>>;
 

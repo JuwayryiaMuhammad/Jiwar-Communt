@@ -13,6 +13,7 @@ import { GOVERNANCE_VOICE_ROUTES } from './governance-voice';
 import { FORMAL_NOTICE_ROUTES } from './formal-notices';
 import { RESIDENT_ITEM_ROUTES } from './resident-items';
 import { MOVE_ROUTES } from './moves';
+import { PROXY_ROUTES } from './proxies';
 import type { Row } from '../registry';
 import { APPROVALS_ROUTES } from './approvals';
 import { ASSIST_ROUTES } from './assist';
@@ -208,6 +209,7 @@ export const ROUTES: Row[] = [
   ...COMPOUND_DOCUMENT_ROUTES,
   ...CONTRACT_ROUTES,
   ...MOVE_ROUTES,
+  ...PROXY_ROUTES,
   ...CLEARANCE_DEPOSIT_ROUTES,
   ...ERASURE_ROUTES,
   ...ADMIN_ROUTES,

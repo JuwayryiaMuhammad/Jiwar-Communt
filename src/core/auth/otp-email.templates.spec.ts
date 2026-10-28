@@ -32,6 +32,17 @@ describe('OTP email templates', () => {
     expect(ar.text).toContain('042917');
   });
 
+  it('proxy codes have their own wording in both languages (ADR 0063)', () => {
+    const en = renderOtpEmail('en', '042917', 300, 'proxy_accept');
+    expect(en.subject).toBe('Your Jiwar proxy invitation code');
+    expect(en.text).toContain('looking after a unit');
+    expect(en.text).not.toContain('log in');
+    const ar = renderOtpEmail('ar', '042917', 300, 'proxy_accept');
+    expect(ar.subject).toBe('رمز قبول الوكالة على جوار');
+    expect(ar.html).toContain('dir="rtl"');
+    expect(ar.text).toContain('042917');
+  });
+
   it.each([
     [1, 'دقيقة واحدة'],
     [2, 'دقيقتين'],

@@ -35328,6 +35328,84 @@
           }
         },
         {
+          "name": "Accept a proxy invite with the code",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\",\n  \"code\": \"000000\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes |  |\n| `token` | string | yes | The token from the proxy invitation link. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proxy-invites",
+                "accept",
+                "complete"
+              ],
+              "raw": "{{baseUrl}}/api/v1/proxy-invites/accept/complete"
+            }
+          }
+        },
+        {
+          "name": "Start accepting a proxy invite (emails a code)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes | The token from the proxy invitation link. |\n\n**Responses:** 202",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proxy-invites",
+                "accept",
+                "start"
+              ],
+              "raw": "{{baseUrl}}/api/v1/proxy-invites/accept/start"
+            }
+          }
+        },
+        {
           "name": "Open a child's pickup code from its link",
           "request": {
             "auth": {
@@ -39224,6 +39302,26 @@
           }
         },
         {
+          "name": "The units I look after as a proxy",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "proxy-units"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/proxy-units"
+            }
+          }
+        },
+        {
           "name": "Convert a tenant into an owner",
           "request": {
             "body": {
@@ -39979,6 +40077,35 @@
           }
         },
         {
+          "name": "A unit’s proxies",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "proxies"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/proxies",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the units I may see",
           "request": {
             "description": "**Responses:** 200",
@@ -40698,6 +40825,112 @@
                 "steps"
               ],
               "raw": "{{baseUrl}}/api/v1/units/:unitId/moves/:id/steps",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The unit’s proxies",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "proxies"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/proxies",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Appoint a proxy for the unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idDocumentType\": \"national_id\",\n  \"idDocumentNumber\": \"\",\n  \"fullName\": \"\",\n  \"email\": \"\",\n  \"phone\": \"\",\n  \"scopes\": [\n    \"inspections\"\n  ],\n  \"endsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `birthDate` | string (date) |  | Required for a passport, ignored for a national ID. |\n| `email` | string (email) | yes |  |\n| `endsOn` | string (date) | yes | Its last day (the compound’s calendar), a year ahead at most. |\n| `fullName` | string | yes |  |\n| `idDocumentNumber` | string | yes | 14-digit national ID, or a passport number. |\n| `idDocumentType` | `national_id` \\| `passport` | yes |  |\n| `nationality` | string |  | ISO 3166-1 alpha-2; required for a passport. |\n| `phone` | string | yes |  |\n| `scopes` | `inspections` \\| `tickets` \\| `visitors_invite` \\| `works` \\| `requests`[] | yes | What the proxy may do while the unit is closed or has no primary. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "proxies"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/proxies",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End a proxy of the unit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "proxies",
+                ":id",
+                "revoke"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/proxies/:id/revoke",
               "variable": [
                 {
                   "description": "",

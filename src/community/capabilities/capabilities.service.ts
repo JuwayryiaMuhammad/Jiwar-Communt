@@ -16,6 +16,7 @@ import {
   type Capabilities,
   type Subject,
   type UnitState,
+  type ProxyScope,
 } from './capabilities';
 
 /** A yes/no capability (ADR 0020), e.g. visitorsInvite or tickets. */
@@ -172,8 +173,13 @@ export class CapabilitiesService {
     if (!unit) {
       throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
     }
+    const primary = await tx.unitOccupancy.findFirst({
+      where: { unitId, status: 'active', isPrimary: true },
+      select: { id: true },
+    });
     return {
       closed: unit.closedSince !== null,
+      vacant: primary === null,
       reviewReasons: unit.reviewFlags.map((f) => f.reason),
     };
   }
@@ -210,7 +216,19 @@ export class CapabilitiesService {
         })),
       };
     }
-    return occupancy ? occupancySubject(occupancy) : null;
+    if (occupancy) return occupancySubject(occupancy);
+    // A unit proxy (ADR 0063): its own account, its scopes, live until it
+    // ends or expires (read against the database's clock).
+    const proxy = await tx.unitProxy.findFirst({
+      where: { unitId, accountId, status: 'active' },
+      select: { scopes: true, expiresAt: true },
+    });
+    if (!proxy) return null;
+    return {
+      kind: 'proxy',
+      scopes: proxy.scopes as ProxyScope[],
+      live: proxy.expiresAt > (await dbNow(tx)),
+    };
   }
 }
 

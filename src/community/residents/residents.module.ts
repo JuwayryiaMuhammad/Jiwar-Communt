@@ -32,6 +32,14 @@ import {
   StaffMovesController,
 } from '../moves/moves.controller';
 import { MovesService } from '../moves/moves.service';
+import {
+  MyProxyUnitsController,
+  ProxiesController,
+  ProxyAcceptanceController,
+  StaffProxiesController,
+} from '../proxies/proxies.controller';
+import { ProxiesService } from '../proxies/proxies.service';
+import { ProxyAcceptanceService } from '../proxies/proxy-acceptance.service';
 import { RegistrationsController } from './registrations.controller';
 import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsController } from './residents.controller';
@@ -54,6 +62,10 @@ import { ResidentsService } from './residents.service';
     StaffContractsController,
     MovesController,
     StaffMovesController,
+    ProxiesController,
+    MyProxyUnitsController,
+    StaffProxiesController,
+    ProxyAcceptanceController,
   ],
   imports: [
     AccountsModule,
@@ -74,6 +86,8 @@ import { ResidentsService } from './residents.service';
     UnitDocumentsService,
     ContractsService,
     MovesService,
+    ProxiesService,
+    ProxyAcceptanceService,
     CommunityExportSections,
   ],
   exports: [ResidentsService, RegistrationService, MovesService],

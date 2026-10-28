@@ -59,10 +59,12 @@ describe('Permits — works by a contractor (ADR 0049)', () => {
     const member = await p.family(c.c, c.home.id, c.alice);
     const rented = await p.unit(c.c, 'P2');
     const landlord = await p.landlord(c.c, rented.id);
+    await p.x.resident(c.c, [rented.id], 'tenant');
     expect(
       p.status(await p.worksRaw(member, c.home.id), 403).body,
     ).toMatchObject({ code: 'PERMIT_NOT_ALLOWED' });
-    // A landlord never lives there: never its primary.
+    // A landlord never lives there: never its primary. (The owner of a unit
+    // with no primary asks: ADR 0063, test/community/proxies.)
     expect(
       p.status(await p.worksRaw(landlord, rented.id), 403).body,
     ).toMatchObject({ code: 'PERMIT_NOT_ALLOWED' });

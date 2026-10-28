@@ -61,6 +61,11 @@ export class IdentifierHasher {
     return this.hmac(`invite:${token}`);
   }
 
+  /** A unit proxy invite's token (ADR 0063). Never stored raw. */
+  hashProxyInviteToken(token: string): string {
+    return this.hmac(`proxy-invite:${token}`);
+  }
+
   /** A compound registration link token (ADR 0024). Never stored raw. */
   hashRegistrationLink(token: string): string {
     return this.hmac(`registration-link:${token}`);

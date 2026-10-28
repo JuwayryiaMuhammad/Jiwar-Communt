@@ -2067,4 +2067,51 @@ describe('Permission sync', () => {
       });
     });
   });
+
+  describe('Phase R11a-2 (ADR 0063)', () => {
+    const offered = [
+      'units.read',
+      'community.read',
+      'visitors.invite',
+      'tickets.create',
+      'requests.create',
+      'permits.request',
+    ];
+    /** The catalog before R11a-2: no permission offered to a proxy, no unit_proxy role. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).map(([p, def]) => [
+          p,
+          { ...def, kinds: def.kinds.filter((k) => k !== 'proxy') },
+        ]),
+      ),
+      defaultRoles: base.defaultRoles.filter((r) => r.key !== 'unit_proxy'),
+    };
+
+    it('reaches an existing compound: the unit_proxy role with its six permissions, no new permission, nobody else changed', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync R11a-2 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect(report.added).toEqual([]);
+      expect(report.rolesCreated).toEqual(['unit_proxy']);
+      const proxy = await role(t, 'unit_proxy');
+      expect([...proxy.permissions].sort()).toEqual([...offered].sort());
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
 });

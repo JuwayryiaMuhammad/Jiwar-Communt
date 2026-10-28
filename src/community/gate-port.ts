@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RequestContext } from '../core/common/cls/request-context';
 import type { WorkerCapacity, WorkerEngagementStatus } from '@prisma/client';
 import { IdentifierHasher } from '../core/auth/identifier';
 import type { FieldError } from '../core/common/errors';
@@ -73,6 +74,7 @@ const ENGAGEMENT = {
 @Injectable()
 export class CommunityGatePort {
   constructor(
+    private readonly ctx: RequestContext,
     private readonly capabilities: CapabilitiesService,
     private readonly household: HouseholdAuthority,
     private readonly hasher: IdentifierHasher,
@@ -454,9 +456,46 @@ export class CommunityGatePort {
   async permitAuthority(
     tx: TenantTxClient,
     unitId: string,
+    kind?: string,
   ): Promise<{ onBehalfOf: string | null } | null> {
     const by = await this.household.find(tx, unitId, 'permits');
-    return by ? { onBehalfOf: by.onBehalfOf } : null;
+    if (by) return { onBehalfOf: by.onBehalfOf };
+    const me = this.ctx.accountId;
+    // An owner of a unit with no primary (ADR 0063): nobody else could ask.
+    const owner = await tx.unitOccupancy.findFirst({
+      where: {
+        unitId,
+        accountId: me,
+        status: 'active',
+        occupancyType: 'owner',
+      },
+      select: { id: true },
+    });
+    if (
+      owner &&
+      !(await tx.unitOccupancy.findFirst({
+        where: { unitId, status: 'active', isPrimary: true },
+        select: { id: true },
+      }))
+    )
+      return { onBehalfOf: null };
+    // A unit proxy with `works`, for works only, while it may act (ADR
+    // 0063): on behalf of the owner who appointed it.
+    if (kind === 'works') {
+      const proxy = await tx.unitProxy.findFirst({
+        where: { unitId, accountId: me, status: 'active' },
+        select: {
+          scopes: true,
+          appointedBy: { select: { accountId: true } },
+        },
+      });
+      if (
+        proxy?.scopes.includes('works') &&
+        (await this.capabilities.placeOf(tx, me, unitId))?.unitView
+      )
+        return { onBehalfOf: proxy.appointedBy.accountId };
+    }
+    return null;
   }
 
   /**

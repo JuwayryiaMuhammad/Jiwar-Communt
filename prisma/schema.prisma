@@ -163,6 +163,8 @@ enum AccountType {
   manager
   /// A household member with a login (ADR 0016). Minors have no account.
   family
+  /// An outside person an owner trusts with a closed or vacant unit (ADR 0063).
+  proxy
 
   @@map("account_type")
 }
@@ -328,6 +330,8 @@ enum OtpPurpose {
   step_up
   /// Proves an account's new email (ADR 0062), sent to that address.
   contact_change
+  /// Accepts a unit proxy invite (ADR 0063), sent to the invited email.
+  proxy_accept
 
   @@map("otp_purpose")
 }
@@ -527,6 +531,8 @@ model Tenant {
   contractRenewals             ContractRenewal[]
   unitMoves                    UnitMove[]
   unitMoveSteps                UnitMoveStep[]
+  unitProxies                  UnitProxy[]
+  proxyInviteTokens            ProxyInviteToken[]
   financeClearances            FinanceClearance[]
   clearanceLinks               ClearanceLink[]
   financeDeposits              FinanceDeposit[]
@@ -965,6 +971,9 @@ model Account {
   movesDone                      UnitMove[]                          @relation("MoveDoer")
   movesCancelled                 UnitMove[]                          @relation("MoveCanceller")
   moveSteps                      UnitMoveStep[]
+  proxiesCreated                 UnitProxy[]                         @relation("ProxyCreator")
+  proxyPlaces                    UnitProxy[]                         @relation("ProxyAccount")
+  proxiesEnded                   UnitProxy[]                         @relation("ProxyEnder")
   clearancesRequested            FinanceClearance[]                  @relation("ClearanceRequester")
   depositsRecorded               FinanceDeposit[]                    @relation("DepositRecorder")
   depositEvents                  FinanceDepositEvent[]               @relation("DepositEventBy")
@@ -1180,6 +1189,7 @@ model Unit {
   documents UnitDocument[]
   contracts UnitContract[]
   moves     UnitMove[]
+  proxies   UnitProxy[]
   clearances FinanceClearance[]
   deposits FinanceDeposit[]
   @@unique([tenantId, code])
@@ -1229,6 +1239,7 @@ model UnitOccupancy {
   contractParties UnitContractParty[]
   contractRenewals ContractRenewal[]
   moves            UnitMove[]
+  proxiesAppointed UnitProxy[]
   clearances FinanceClearance[]
   deposits FinanceDeposit[]
   @@unique([tenantId, id])
@@ -1836,6 +1847,62 @@ model UnitMove {
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "unit_moves_number_key")
   @@map("unit_moves")
+}
+
+/// A unit proxy (ADR 0063): appointed by an owner occupancy, accepted by
+/// the person into their own `proxy` account, ended once (trigger). The
+/// invitee's details live here only while invited.
+model UnitProxy {
+  id                     String    @id @db.Uuid
+  tenantId               String    @map("tenant_id") @db.Uuid
+  unitId                 String    @map("unit_id") @db.Uuid
+  appointedByOccupancyId String    @map("appointed_by_occupancy_id") @db.Uuid
+  createdBy              String    @map("created_by") @db.Uuid
+  createdAt              DateTime  @map("created_at") @db.Timestamptz(3)
+  /// PROXY_SCOPES (CHECK).
+  scopes                 String[]
+  expiresAt              DateTime  @map("expires_at") @db.Timestamptz(3)
+  /// invited | active | ended (CHECK).
+  status                 String    @default("invited")
+  fullName               String?   @map("full_name")
+  email                  String?
+  phone                  String?
+  idDocumentType         IdDocumentType? @map("id_document_type")
+  idDocumentNumber       String?   @map("id_document_number")
+  nationality            String?   @db.Char(2)
+  birthDate              DateTime? @map("birth_date") @db.Date
+  inviteExpiresAt        DateTime  @map("invite_expires_at") @db.Timestamptz(3)
+  accountId              String?   @map("account_id") @db.Uuid
+  acceptedAt             DateTime? @map("accepted_at") @db.Timestamptz(3)
+  endedAt                DateTime? @map("ended_at") @db.Timestamptz(3)
+  endReason              String?   @map("end_reason")
+  endedBy                String?   @map("ended_by") @db.Uuid
+
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit        Unit          @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  appointedBy UnitOccupancy @relation(fields: [tenantId, appointedByOccupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  creator     Account       @relation("ProxyCreator", fields: [tenantId, createdBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  account     Account?      @relation("ProxyAccount", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  ender       Account?      @relation("ProxyEnder", fields: [tenantId, endedBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  inviteToken ProxyInviteToken?
+
+  @@unique([tenantId, id])
+  @@map("unit_proxies")
+}
+
+/// A proxy invite link's pointer (ADR 0063): global, the HMAC of its token.
+model ProxyInviteToken {
+  tokenHash String   @id @map("token_hash") @db.Char(64)
+  tenantId  String   @map("tenant_id") @db.Uuid
+  proxyId   String   @map("proxy_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  proxy  UnitProxy @relation(fields: [tenantId, proxyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, proxyId], map: "proxy_invite_tokens_one_per_proxy")
+  @@map("proxy_invite_tokens")
 }
 
 /// A manual step of a move's checklist, ticked once (ADR 0063).

@@ -459,6 +459,23 @@ export class CommunityGatePort {
     return by ? { onBehalfOf: by.onBehalfOf } : null;
   }
 
+  /**
+   * The unit's move planned that way, the newest, or null (ADR 0063): the
+   * move a move permit serves.
+   */
+  async plannedMove(
+    tx: TenantTxClient,
+    unitId: string,
+    direction: 'in' | 'out',
+  ): Promise<string | null> {
+    const row = await tx.unitMove.findFirst({
+      where: { unitId, direction, status: 'planned' },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    return row?.id ?? null;
+  }
+
   /** The unit's primary resident now, or null (ADR 0045: who is told). */
   async primaryOf(tx: TenantTxClient, unitId: string): Promise<string | null> {
     const row = await tx.unitOccupancy.findFirst({

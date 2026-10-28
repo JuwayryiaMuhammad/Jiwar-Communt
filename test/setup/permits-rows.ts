@@ -67,7 +67,11 @@ export function permitShape(
         description: 'Row words',
       };
     case 'move':
-      return { truckPlate: 'ROW 123', itemsDescription: 'Row items' };
+      return {
+        truckPlate: 'ROW 123',
+        itemsDescription: 'Row items',
+        moveDirection: 'in',
+      };
     case 'material_exit':
       return { items: [{ name: 'Row item', quantity: 1 }] };
     case 'event':

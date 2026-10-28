@@ -48,6 +48,14 @@ export const AUDIT_ACTIONS = {
   'deposit.refund_requested': { log: 'tenant', target: 'deposit' },
   'deposit.refund_withdrawn': { log: 'tenant', target: 'deposit' },
   'deposit.settled': { log: 'tenant', target: 'deposit' },
+  // metadata: unitId, occupancyId, direction, side (system | resident | management).
+  'unit_move.planned': { log: 'tenant', target: 'unit_move' },
+  // metadata: unitId, step, side.
+  'unit_move.step_done': { log: 'tenant', target: 'unit_move' },
+  // metadata: unitId, direction, reasonCode (a handover with no clearance).
+  'unit_move.done': { log: 'tenant', target: 'unit_move' },
+  // metadata: unitId, direction, reasonCode, side.
+  'unit_move.cancelled': { log: 'tenant', target: 'unit_move' },
   'contract.recorded': { log: 'tenant', target: 'contract' },
   'contract.voided': { log: 'tenant', target: 'contract' },
   'contract_renewal.requested': { log: 'tenant', target: 'contract_renewal' },

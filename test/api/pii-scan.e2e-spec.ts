@@ -1361,6 +1361,14 @@ describe('API v0 — PII leak scan', () => {
         id: '0192a5f0-1c2b-7d3e-8f40-0000000062c3',
       },
       '/staff/units/{unitId}/contracts': a.homeUnitId,
+      // ADR 0063: moves — the home's move-in is real (the lists scan it);
+      // one move by id is not found.
+      '/units/{unitId}/moves': a.homeUnitId,
+      '/units/{unitId}/moves/{id}': {
+        unitId: a.homeUnitId,
+        id: '0192a5f0-1c2b-7d3e-8f40-0000000063a2',
+      },
+      '/staff/moves/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000063a3',
       '/staff/units/{unitId}/contracts/{id}': {
         unitId: a.homeUnitId,
         id: '0192a5f0-1c2b-7d3e-8f40-0000000062c4',

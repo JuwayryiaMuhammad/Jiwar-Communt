@@ -93,6 +93,7 @@ export const PERMIT_ROUTES: Row[] = [
         window: { from: '10:00', to: '12:00' },
         truckPlate: 'ABC 123',
         itemsDescription: 'Sofas',
+        direction: 'out',
       }),
     },
     invalid: {
@@ -101,6 +102,7 @@ export const PERMIT_ROUTES: Row[] = [
         window: { from: '10:00', to: '25:00' },
         truckPlate: 7,
         itemsDescription: '',
+        direction: 'sideways',
       },
       fields: [
         { field: 'window.to', code: 'INVALID_FORMAT' },
@@ -109,6 +111,12 @@ export const PERMIT_ROUTES: Row[] = [
           field: 'itemsDescription',
           code: 'INVALID_LENGTH',
           params: { min: 1, max: 1000 },
+        },
+        // ADR 0063.
+        {
+          field: 'direction',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['in', 'out'] },
         },
       ],
     },

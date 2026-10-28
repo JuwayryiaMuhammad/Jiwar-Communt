@@ -183,6 +183,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'نُشر إصدار جديد من اللائحة أو من حقوقك. افتح التطبيق لقراءته.',
     },
   },
+  'unit_move.notice_given': {
+    en: {
+      title: 'Notice to move out',
+      body: 'A resident gave notice to move out on {plannedOn}. Open the moves board.',
+    },
+    ar: {
+      title: 'إخطار بالإخلاء',
+      body: 'أخطر أحد السكان بالإخلاء يوم {plannedOn}. افتح لوحة الانتقالات.',
+    },
+  },
   'unit_document.warranty_expiring': {
     en: {
       title: 'A warranty ends soon',

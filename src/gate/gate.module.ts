@@ -300,6 +300,7 @@ import {
 import { ChildRecordsService } from './children/child-records.service';
 import { ChildExportSections } from './children/child-export-sections';
 import { PickupPageService } from './children/pickup-page.service';
+import { PermitMoveSteps } from './permits/permit-move-steps';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -521,6 +522,7 @@ import { PickupPageService } from './children/pickup-page.service';
     PermitsService,
     PermitWorkersService,
     PermitRequestsService,
+    PermitMoveSteps,
     PermitGuestsService,
     StaffPermitsService,
     PermitSweeps,

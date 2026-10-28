@@ -11,7 +11,7 @@ import { RequirePermissions } from '../../core/access/require-permissions.decora
 import { ApiArea } from '../../core/common/http/decorators';
 import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
-import { ConvertToOwnerDto, ResidenceDto } from './dto/units.dto';
+import { ConvertToOwnerDto, HandoverDto, ResidenceDto } from './dto/units.dto';
 import { ResidentsService } from './residents.service';
 import { OccupancyResponse } from './views/occupancy.views';
 
@@ -64,14 +64,21 @@ export class OccupanciesController {
     );
   }
 
-  /** The keys are back: the archive loses the emergency button. */
+  /**
+   * The keys are back: the archive loses the emergency button, and a
+   * planned move-out is done. With no clearance, a code says why
+   * (MOVE_HANDOVER_REASON_REQUIRED otherwise; ADR 0063).
+   */
   @Post(':id/handover')
   @ApiOperation({ summary: "Record the keys' handover" })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: OccupancyResponse })
   async handover(
     @Param('id', parseId()) id: string,
+    @Body() dto: HandoverDto,
   ): Promise<OccupancyResponse> {
-    return OccupancyResponse.from(await this.residents.recordHandover(id));
+    return OccupancyResponse.from(
+      await this.residents.recordHandover(id, dto.reasonCode),
+    );
   }
 }

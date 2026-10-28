@@ -353,7 +353,7 @@ export class DepositsService implements OnModuleInit {
   }
 }
 
-function heldOf(d: FinanceDeposit & { events: FinanceDepositEvent[] }) {
+export function heldOf(d: FinanceDeposit & { events: FinanceDepositEvent[] }) {
   return d.events
     .filter((e) => MONEY_EVENTS.includes(e.kind))
     .reduce((left, e) => left.sub(e.amount!), money(d.amount));

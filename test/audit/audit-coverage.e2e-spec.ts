@@ -51,6 +51,7 @@ import {
   PHASE_4_COVERAGE,
   R1_COVERAGE,
   R11A_COVERAGE,
+  R11A2_COVERAGE,
   RESIDENT_SCREENS_COVERAGE,
   VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
@@ -867,6 +868,7 @@ describe('Audit coverage', () => {
         ...PARCELS_COVERAGE,
         ...R1_COVERAGE,
         ...R11A_COVERAGE,
+        ...R11A2_COVERAGE,
         ...RESIDENT_SCREENS_COVERAGE,
         ...MANAGEMENT_COVERAGE,
         ...ENGAGEMENT_COVERAGE,

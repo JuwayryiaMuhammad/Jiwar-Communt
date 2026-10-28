@@ -2188,6 +2188,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code and closed_at are tested IS NULL first; the list and the bound run only on a value',
   },
+  // Moves (ADR 0063).
+  unit_moves_shape: {
+    guarded:
+      'each optional column is tested IS NULL first; the lists and the bounds run only on a value',
+  },
+  unit_move_steps_shape: {},
+  unit_permits_move_direction: {
+    guarded:
+      'move_direction IS NULL is tested first; the list runs only on a value',
+  },
   // Compound documents (ADR 0062).
   compound_document_versions_kind: {},
   compound_document_versions_number: {},

@@ -525,6 +525,8 @@ model Tenant {
   unitContracts                UnitContract[]
   unitContractParties          UnitContractParty[]
   contractRenewals             ContractRenewal[]
+  unitMoves                    UnitMove[]
+  unitMoveSteps                UnitMoveStep[]
   financeClearances            FinanceClearance[]
   clearanceLinks               ClearanceLink[]
   financeDeposits              FinanceDeposit[]
@@ -959,6 +961,10 @@ model Account {
   contractsCreated               UnitContract[]                      @relation("ContractCreator")
   renewalsRequested              ContractRenewal[]                   @relation("RenewalRequester")
   renewalsClosed                 ContractRenewal[]                   @relation("RenewalCloser")
+  movesCreated                   UnitMove[]                          @relation("MoveCreator")
+  movesDone                      UnitMove[]                          @relation("MoveDoer")
+  movesCancelled                 UnitMove[]                          @relation("MoveCanceller")
+  moveSteps                      UnitMoveStep[]
   clearancesRequested            FinanceClearance[]                  @relation("ClearanceRequester")
   depositsRecorded               FinanceDeposit[]                    @relation("DepositRecorder")
   depositEvents                  FinanceDepositEvent[]               @relation("DepositEventBy")
@@ -1173,6 +1179,7 @@ model Unit {
 
   documents UnitDocument[]
   contracts UnitContract[]
+  moves     UnitMove[]
   clearances FinanceClearance[]
   deposits FinanceDeposit[]
   @@unique([tenantId, code])
@@ -1221,6 +1228,7 @@ model UnitOccupancy {
   documents UnitDocument[]
   contractParties UnitContractParty[]
   contractRenewals ContractRenewal[]
+  moves            UnitMove[]
   clearances FinanceClearance[]
   deposits FinanceDeposit[]
   @@unique([tenantId, id])
@@ -1790,6 +1798,63 @@ model UnitContract {
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "unit_contracts_number_key")
   @@map("unit_contracts")
+}
+
+/// A move in or out of a unit (ADR 0063): an occupancy's, planned, then
+/// done or cancelled once (trigger). Its checklist's manual steps are
+/// `UnitMoveStep`s; the others are read from the domains (MoveSteps).
+model UnitMove {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  number         Int
+  unitId         String    @map("unit_id") @db.Uuid
+  occupancyId    String    @map("occupancy_id") @db.Uuid
+  /// in | out (CHECK).
+  direction      String
+  plannedOn      DateTime  @map("planned_on") @db.Date
+  /// planned | done | cancelled (CHECK).
+  status         String    @default("planned")
+  /// Null when the system planned it (a residing occupancy began).
+  createdBy      String?   @map("created_by") @db.Uuid
+  createdAt      DateTime  @map("created_at") @db.Timestamptz(3)
+  doneAt         DateTime? @map("done_at") @db.Timestamptz(3)
+  doneBy         String?   @map("done_by") @db.Uuid
+  /// A move-out handed over with no clearance: why (REASON_CODES.handoverWithoutClearance).
+  handoverReason String?   @map("handover_reason")
+  cancelledAt    DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelledBy    String?   @map("cancelled_by") @db.Uuid
+  cancelReason   String?   @map("cancel_reason")
+
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit      Unit           @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  occupancy UnitOccupancy  @relation(fields: [tenantId, occupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  creator   Account?       @relation("MoveCreator", fields: [tenantId, createdBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  doer      Account?       @relation("MoveDoer", fields: [tenantId, doneBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  canceller Account?       @relation("MoveCanceller", fields: [tenantId, cancelledBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  steps     UnitMoveStep[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "unit_moves_number_key")
+  @@map("unit_moves")
+}
+
+/// A manual step of a move's checklist, ticked once (ADR 0063).
+model UnitMoveStep {
+  id       String   @id @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  moveId   String   @map("move_id") @db.Uuid
+  step     String
+  /// resident | management (CHECK).
+  side     String
+  doneBy   String   @map("done_by") @db.Uuid
+  doneAt   DateTime @map("done_at") @db.Timestamptz(3)
+
+  tenant Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  move   UnitMove @relation(fields: [tenantId, moveId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  doer   Account  @relation(fields: [tenantId, doneBy], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([moveId, step], map: "unit_move_steps_once")
+  @@map("unit_move_steps")
 }
 
 /// The occupancies a contract binds (ADR 0062): written once.
@@ -7201,6 +7266,12 @@ model UnitPermit {
   decisionAppealClosedAt DateTime? @map("decision_appeal_closed_at") @db.Timestamptz(3)
   appealOverturnedAt     DateTime? @map("appeal_overturned_at") @db.Timestamptz(3)
   appealOverturnedById   String?   @map("appeal_overturned_by_account_id") @db.Uuid
+  /// A move permit's direction, in | out (ADR 0063); null on legacy permits only.
+  moveDirection     String?   @map("move_direction")
+  /// The move it serves, when one was planned (ADR 0063).
+  moveId            String?   @map("move_id") @db.Uuid
+  /// Every permit from before ADR 0063 (no direction); never set again.
+  legacyMove        Boolean   @default(false) @map("legacy_move")
   createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 

@@ -48,6 +48,7 @@ import {
   TopicsController,
 } from './topics/topics.controller';
 import { TopicsService } from './topics/topics.service';
+import { UtilitiesMoveStep } from './requests/utilities-move-step';
 
 /**
  * Requests to the management (ADR 0039), and the appeals of staff
@@ -85,6 +86,7 @@ import { TopicsService } from './topics/topics.service';
     RequestProgress,
     MessagesService,
     RequestsService,
+    UtilitiesMoveStep,
     RequestLifecycle,
     RequestEscalation,
     AppointmentsService,

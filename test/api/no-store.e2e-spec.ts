@@ -1175,6 +1175,7 @@ describe('API v0 — no-store', () => {
         window: { from: '10:00', to: '12:00' },
         truckPlate: 'NS 1',
         itemsDescription: 'Boxes',
+        direction: 'in',
       });
     },
     'POST /units/{unitId}/permits/material-exits': async () => {

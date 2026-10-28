@@ -109,6 +109,7 @@ export class PermitRequestsService {
       window: { from: string; to: string };
       truckPlate: string;
       itemsDescription: string;
+      direction: 'in' | 'out';
     },
   ): Promise<PermitRecord> {
     return this.request(unitId, 'move', async (tx, at) => {
@@ -175,12 +176,20 @@ export class PermitRequestsService {
           unitId,
           startsAt: startsAt!,
           endsAt: endsAt!,
-          data: { truckPlate: plate, itemsDescription: items },
+          data: {
+            truckPlate: plate,
+            itemsDescription: items,
+            // The way it goes, and the move it serves when one is planned
+            // (ADR 0063); a permit asked first serves no move.
+            moveDirection: input.direction,
+            moveId: await this.core.plannedMove(tx, unitId, input.direction),
+          },
           metadata: {
             date: input.date,
             window: `${input.window.from}-${input.window.to}`,
             truckPlate: true,
             itemsDescription: true,
+            direction: input.direction,
           },
         },
         at.id,

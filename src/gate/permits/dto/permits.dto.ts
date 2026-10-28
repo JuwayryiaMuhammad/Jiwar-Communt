@@ -240,6 +240,14 @@ export class CreateMovePermitDto {
     withParams(ITEMS_DESCRIPTION),
   )
   itemsDescription: string;
+
+  @ApiProperty({
+    enum: ['in', 'out'],
+    description:
+      'Moving in or out (ADR 0063): the permit serves the unit’s move planned that way, if any.',
+  })
+  @IsIn(['in', 'out'], withParams({ allowed: ['in', 'out'] }))
+  direction: 'in' | 'out';
 }
 
 export class MaterialItemDto {

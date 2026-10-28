@@ -32,6 +32,7 @@ import { AuthModule } from './core/auth/auth.module';
 import { BoardMattersModule } from './core/board-matters/board-matters.module';
 import { DecisionAppealsModule } from './core/decision-appeals/decision-appeals.module';
 import { ResidentItemsModule } from './core/resident-items/resident-items.module';
+import { MoveStepsModule } from './core/moves/move-steps.module';
 import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
 import { PdfModule } from './core/pdf/pdf.module';
 import { ConsentsModule } from './core/consents/consents.module';
@@ -121,6 +122,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     BoardMattersModule,
     DecisionAppealsModule,
     ResidentItemsModule,
+    MoveStepsModule,
     FormalNoticesModule,
     PdfModule,
     AssistModule,

@@ -718,6 +718,14 @@ export const R11A_COVERAGE: readonly string[] = [
   'deposit.settled',
 ];
 
+/** Moving in and out, the closed unit and its proxies (ADR 0063). */
+export const R11A2_COVERAGE: readonly string[] = [
+  'unit_move.planned',
+  'unit_move.step_done',
+  'unit_move.done',
+  'unit_move.cancelled',
+];
+
 /**
  * Assets, plans and inspections (ADR 0064): the common areas, the asset
  * register and its imports, the checklists, the maintenance plans and the

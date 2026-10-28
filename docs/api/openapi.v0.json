@@ -4007,6 +4007,92 @@
         ],
         "type": "object"
       },
+      "BoardMoveView": {
+        "properties": {
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "in",
+              "out"
+            ],
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "handoverReason": {
+            "description": "A move-out handed over with no clearance: why (a code).",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupancyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "plannedBySomeone": {
+            "description": "False when the occupancy’s start planned it.",
+            "type": "boolean"
+          },
+          "plannedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "reference": {
+            "description": "`MV-` and the number.",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "done",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "occupancyId",
+          "direction",
+          "plannedOn",
+          "status",
+          "plannedBySomeone",
+          "createdAt",
+          "doneAt",
+          "handoverReason",
+          "cancelledAt",
+          "cancelReason",
+          "unitCode"
+        ],
+        "type": "object"
+      },
       "BoardNowView": {
         "properties": {
           "board": {
@@ -7015,6 +7101,43 @@
           "submittedById",
           "attestationSha256",
           "items"
+        ],
+        "type": "object"
+      },
+      "ChecklistStepView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "key": {
+            "type": "string"
+          },
+          "reference": {
+            "description": "A derived step’s reference, e.g. the permit’s number.",
+            "nullable": true,
+            "type": "string"
+          },
+          "side": {
+            "description": "`derived`: read from where it lives (a permit, a request, a clearance, the deposits).",
+            "enum": [
+              "resident",
+              "management",
+              "derived"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "side",
+          "done",
+          "at",
+          "reference"
         ],
         "type": "object"
       },
@@ -11835,6 +11958,14 @@
             "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
             "type": "string"
           },
+          "direction": {
+            "description": "Moving in or out (ADR 0063): the permit serves the unit’s move planned that way, if any.",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "type": "string"
+          },
           "itemsDescription": {
             "example": "Two sofas, a fridge and twenty boxes",
             "maxLength": 1000,
@@ -11860,7 +11991,8 @@
           "date",
           "window",
           "truckPlate",
-          "itemsDescription"
+          "itemsDescription",
+          "direction"
         ],
         "type": "object"
       },
@@ -23140,6 +23272,15 @@
         ],
         "type": "object"
       },
+      "HandoverDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "Needed when the occupancy’s planned move-out has no clearance: a code of REASON_CODES.handoverWithoutClearance (MOVE_HANDOVER_REASON_REQUIRED otherwise).",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "HandoverView": {
         "properties": {
           "claimId": {
@@ -28067,6 +28208,24 @@
         },
         "type": "object"
       },
+      "MoveDetailView": {
+        "properties": {
+          "checklist": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistStepView"
+            },
+            "type": "array"
+          },
+          "move": {
+            "$ref": "#/components/schemas/MoveView"
+          }
+        },
+        "required": [
+          "move",
+          "checklist"
+        ],
+        "type": "object"
+      },
       "MoveDetailsView": {
         "properties": {
           "date": {
@@ -28074,8 +28233,23 @@
             "example": "2026-11-05",
             "type": "string"
           },
+          "direction": {
+            "description": "Null on a permit from before directions (ADR 0063).",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
           "itemsDescription": {
             "description": "Null once the requester was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "moveId": {
+            "description": "The move it serves, when one was planned (ADR 0063).",
+            "format": "uuid",
             "nullable": true,
             "type": "string"
           },
@@ -28092,7 +28266,22 @@
           "date",
           "window",
           "truckPlate",
-          "itemsDescription"
+          "itemsDescription",
+          "direction",
+          "moveId"
+        ],
+        "type": "object"
+      },
+      "MoveOutNoticeDto": {
+        "properties": {
+          "plannedOn": {
+            "description": "The compound’s day, from today to a year ahead.",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plannedOn"
         ],
         "type": "object"
       },
@@ -28121,6 +28310,18 @@
         ],
         "type": "object"
       },
+      "MoveStepDto": {
+        "properties": {
+          "step": {
+            "description": "A manual step of the caller’s side (see the checklist).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step"
+        ],
+        "type": "object"
+      },
       "MoveSuggestionDto": {
         "properties": {
           "response": {
@@ -28140,6 +28341,88 @@
         },
         "required": [
           "status"
+        ],
+        "type": "object"
+      },
+      "MoveView": {
+        "properties": {
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "in",
+              "out"
+            ],
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "handoverReason": {
+            "description": "A move-out handed over with no clearance: why (a code).",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupancyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "plannedBySomeone": {
+            "description": "False when the occupancy’s start planned it.",
+            "type": "boolean"
+          },
+          "plannedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "reference": {
+            "description": "`MV-` and the number.",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "done",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "occupancyId",
+          "direction",
+          "plannedOn",
+          "status",
+          "plannedBySomeone",
+          "createdAt",
+          "doneAt",
+          "handoverReason",
+          "cancelledAt",
+          "cancelReason"
         ],
         "type": "object"
       },
@@ -29711,6 +29994,31 @@
           "idDocumentNumber",
           "fullName",
           "relation"
+        ],
+        "type": "object"
+      },
+      "NewMoveDto": {
+        "properties": {
+          "direction": {
+            "enum": [
+              "in",
+              "out"
+            ],
+            "type": "string"
+          },
+          "occupancyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "plannedOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "occupancyId",
+          "direction",
+          "plannedOn"
         ],
         "type": "object"
       },
@@ -83135,6 +83443,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HandoverDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -93954,6 +94272,229 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/moves": {
+      "get": {
+        "operationId": "StaffMovesController_board",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default: planned, unless a unit is named (then all).",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "planned",
+                "done",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BoardMoveView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Moves: planned ones, or a unit’s",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/moves/{id}": {
+      "get": {
+        "operationId": "StaffMovesController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A move, with its checklist",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/moves/{id}/cancel": {
+      "post": {
+        "operationId": "StaffMovesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a move, with a code",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/moves/{id}/done": {
+      "post": {
+        "operationId": "StaffMovesController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm a move-in",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/moves/{id}/steps": {
+      "post": {
+        "operationId": "StaffMovesController_tick",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveStepDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tick a step of the management’s side",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/parking-reports": {
       "get": {
         "description": "`status=open` is the queue, oldest first.",
@@ -100718,6 +101259,53 @@
           }
         ],
         "summary": "Delete a unit document of the management’s",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/moves": {
+      "post": {
+        "operationId": "StaffMovesController_plan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewMoveDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Plan a move for an occupancy",
         "tags": [
           "units"
         ],
@@ -107724,6 +108312,248 @@
         "summary": "List a unit’s invoices, newest first",
         "tags": [
           "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/moves": {
+      "get": {
+        "operationId": "MovesController_mine",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MoveView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My moves in and out of the unit",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/moves/move-out": {
+      "post": {
+        "operationId": "MovesController_noticeMoveOut",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveOutNoticeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Give notice to move out",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/moves/{id}": {
+      "get": {
+        "operationId": "MovesController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One of my moves, with its checklist",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/moves/{id}/cancel": {
+      "post": {
+        "operationId": "MovesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my notice to move out",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/moves/{id}/steps": {
+      "post": {
+        "operationId": "MovesController_tick",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveStepDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tick a step of my side",
+        "tags": [
+          "units"
         ],
         "x-stability": "draft"
       }

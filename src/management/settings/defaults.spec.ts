@@ -5,6 +5,7 @@ import {
   DEFAULT_TOPICS,
   RELEASE_TOPIC,
   SYSTEM_TOPICS,
+  UNIT_TOPICS,
 } from './defaults';
 
 const backfill = readFileSync(
@@ -103,5 +104,28 @@ describe('default management topics and office hours', () => {
     }));
     expect(rows).toEqual(SYSTEM_TOPICS);
     expect(DEFAULT_TOPICS.map((t) => t.key)).not.toContain('partner_service');
+  });
+
+  it('the unit topics match their backfills (ADR 0063), row for row', () => {
+    const sql = ['20261120090000_unit_moves']
+      .map((m) =>
+        readFileSync(
+          join(__dirname, `../../../prisma/migrations/${m}/migration.sql`),
+          'utf8',
+        ),
+      )
+      .join('\n');
+    const rows = [
+      ...sql.matchAll(
+        /\('([a-z_]+)', '([^']+)', '([^']+)', (\d+)\)\) AS s\(key/g,
+      ),
+    ].map(([, key, nameAr, nameEn, hours]) => ({
+      key,
+      nameAr,
+      nameEn,
+      targetResponseHours: Number(hours),
+    }));
+    expect(rows).toEqual(UNIT_TOPICS);
+    expect(DEFAULT_TOPICS.map((t) => t.key)).not.toContain('utilities');
   });
 });

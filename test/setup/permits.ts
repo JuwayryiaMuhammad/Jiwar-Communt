@@ -128,6 +128,8 @@ export interface PermitBody {
     window: { from: string; to: string };
     truckPlate: string | null;
     itemsDescription: string | null;
+    direction: string | null;
+    moveId: string | null;
   } | null;
   materialExit: {
     validFrom: string;
@@ -311,6 +313,8 @@ export function permitHelpers(h: HttpHarness) {
       window: withinHours(r, { from: '10:00', to: '12:00' }),
       truckPlate: 'ن ق ل ٤٥٦',
       itemsDescription: 'Two sofas and a fridge',
+      // ADR 0063: every new move permit says which way it goes.
+      direction: 'in',
       ...over,
     };
   }

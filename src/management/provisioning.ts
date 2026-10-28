@@ -7,6 +7,7 @@ import {
   DEFAULT_TOPICS,
   RELEASE_TOPIC,
   SYSTEM_TOPICS,
+  UNIT_TOPICS,
 } from './settings/defaults';
 
 /**
@@ -28,7 +29,12 @@ export class ManagementProvisioning implements OnModuleInit {
     await tx.managementRequestSettings.create({ data: { tenantId } });
     await tx.managementRequestCounter.create({ data: { tenantId } });
     await tx.managementRequestTopic.createMany({
-      data: [...DEFAULT_TOPICS, RELEASE_TOPIC, ...SYSTEM_TOPICS].map((t) => ({
+      data: [
+        ...DEFAULT_TOPICS,
+        RELEASE_TOPIC,
+        ...SYSTEM_TOPICS,
+        ...UNIT_TOPICS,
+      ].map((t) => ({
         id: newId(),
         tenantId,
         ...t,

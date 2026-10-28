@@ -188,6 +188,19 @@ export class MoveDetailsView {
     description: 'Null once the requester was erased.',
   })
   itemsDescription: string | null;
+  @ApiProperty({
+    enum: ['in', 'out'],
+    nullable: true,
+    description: 'Null on a permit from before directions (ADR 0063).',
+  })
+  direction: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The move it serves, when one was planned (ADR 0063).',
+  })
+  moveId: string | null;
 }
 
 export class MaterialItemView {
@@ -385,6 +398,8 @@ export class PermitBaseView {
               window: { from: local(p.startsAt), to: local(p.endsAt) },
               truckPlate: p.truckPlate,
               itemsDescription: p.itemsDescription,
+              direction: p.moveDirection,
+              moveId: p.moveId,
             }
           : null,
       materialExit:

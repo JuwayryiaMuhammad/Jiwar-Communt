@@ -208,6 +208,17 @@ export const NOTIFICATION_KINDS = {
     target: 'compound_document',
     params: { subject: {}, versionNo: {} },
   },
+  /**
+   * A residing primary gave notice to move out (ADR 0063): to the holders
+   * of `residents.manage`; the planned day only.
+   */
+  'unit_move.notice_given': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'unit_move',
+    params: { plannedOn: {} },
+  },
   /** A warranty in the unit's vault ends within 30 days (ADR 0062). */
   'unit_document.warranty_expiring': {
     priority: 'normal',

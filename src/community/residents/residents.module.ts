@@ -27,6 +27,11 @@ import {
   StaffContractsController,
 } from '../contracts/contracts.controller';
 import { ContractsService } from '../contracts/contracts.service';
+import {
+  MovesController,
+  StaffMovesController,
+} from '../moves/moves.controller';
+import { MovesService } from '../moves/moves.service';
 import { RegistrationsController } from './registrations.controller';
 import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsController } from './residents.controller';
@@ -47,6 +52,8 @@ import { ResidentsService } from './residents.service';
     StaffUnitDocumentsController,
     ContractsController,
     StaffContractsController,
+    MovesController,
+    StaffMovesController,
   ],
   imports: [
     AccountsModule,
@@ -66,8 +73,9 @@ import { ResidentsService } from './residents.service';
     RegistrationDocumentsService,
     UnitDocumentsService,
     ContractsService,
+    MovesService,
     CommunityExportSections,
   ],
-  exports: [ResidentsService, RegistrationService],
+  exports: [ResidentsService, RegistrationService, MovesService],
 })
 export class ResidentsModule {}

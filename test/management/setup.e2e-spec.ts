@@ -43,6 +43,8 @@ describe('Management requests — topics, settings and office hours', () => {
         // ADR 0058: the request to release a hold.
         ['release_request', 48, true],
         ['security_gate', 24, true],
+        // ADR 0063: about a resident's unit.
+        ['utilities', 72, true],
       ]);
       const offered = await topics('/management-request-topics', s.owner.token);
       expect(offered.map((t) => t.key)).toEqual(

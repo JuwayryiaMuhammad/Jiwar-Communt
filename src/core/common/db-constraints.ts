@@ -81,6 +81,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   unit_contracts_file_id_key: null,
   contract_renewals_tenant_id_id_key: null,
   contract_renewals_one_open: null,
+  // Moves (ADR 0063): numbered under an advisory lock; one planned each way
+  // per occupancy and a step ticked once, both checked first under the
+  // unit's lock (MOVE_ALREADY_PLANNED, MOVE_STEP_DONE).
+  unit_moves_tenant_id_id_key: null,
+  unit_moves_number_key: null,
+  unit_moves_one_planned: null,
+  unit_move_steps_once: null,
   // Clearances and deposits (ADR 0062): numbers from the finance counters;
   // a random code, unique by its 128 bits.
   finance_clearances_tenant_id_id_key: null,

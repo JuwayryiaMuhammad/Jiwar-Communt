@@ -35,6 +35,7 @@ import { COMMUNITY_NOTICES } from '../notices/community-notices';
 import { CommunityNotifier } from '../notices/community-notifier';
 import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
+import { MovesService } from '../moves/moves.service';
 import { WorkersService } from '../workers/workers.service';
 import { lockAccountShared, lockAccountsForUpdate } from './account-locks';
 import type {
@@ -88,6 +89,7 @@ export class ResidentsService {
     private readonly workers: WorkersService,
     private readonly authority: HouseholdAuthority,
     private readonly lifecycle: AccountLifecycle,
+    private readonly moves: MovesService,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -317,6 +319,8 @@ export class ResidentsService {
     reasonCode: string,
     options: { flagReview?: boolean } = {},
   ): Promise<AfterCommit[]> {
+    // A move-in still planned will not happen (ADR 0063).
+    await this.moves.occupancyEnded(tx, ended.id);
     await this.audit.record(tx, {
       action: 'occupancy.ended',
       targetId: ended.id,
@@ -1108,9 +1112,13 @@ export class ResidentsService {
 
   /**
    * The former occupant handed the unit over (`residents.manage`): the
-   * archive stops showing that unit's emergency button.
+   * archive stops showing that unit's emergency button, and a planned
+   * move-out is done (ADR 0063) — with a code when there is no clearance.
    */
-  async recordHandover(occupancyId: string): Promise<OccupancyView> {
+  async recordHandover(
+    occupancyId: string,
+    reasonCode?: string,
+  ): Promise<OccupancyView> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const found = await tx.unitOccupancy.findFirst({
         where: { id: occupancyId, status: 'ended', handedOverAt: null },
@@ -1123,6 +1131,7 @@ export class ResidentsService {
         data: { handedOverAt: new Date() },
       });
       if (count === 0) throw occupancyNotFound();
+      await this.moves.handedOver(tx, occupancyId, reasonCode);
       const o = await tx.unitOccupancy.findUniqueOrThrow({
         where: { id: occupancyId },
         include: { unit: { select: { code: true } } },
@@ -1242,6 +1251,7 @@ export class ResidentsService {
         'occupancy.created',
       ),
     });
+    await this.moves.occupancyStarted(tx, o);
     if (o.isPrimary)
       await this.lifecycle.householdStarted(tx, {
         tenantId: o.tenantId,

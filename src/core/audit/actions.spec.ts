@@ -173,6 +173,8 @@ describe('audit catalog', () => {
         'contract_renewal',
         'clearance',
         'deposit',
+        // ADR 0063
+        'unit_move',
         // ADR 0064
         'common_area',
         'asset_type',

@@ -3,10 +3,14 @@ import {
   DEFAULT_TOPICS as ADR_0039_TOPICS,
   RELEASE_TOPIC,
   SYSTEM_TOPICS,
+  UNIT_TOPICS,
 } from '../../src/management/settings/defaults';
 
-/** ADR 0039's five, and the release topic of ADR 0058. */
-const DEFAULT_TOPICS = [...ADR_0039_TOPICS, RELEASE_TOPIC];
+/**
+ * ADR 0039's five, the release topic of ADR 0058, and ADR 0063's topics
+ * about a resident's unit.
+ */
+const DEFAULT_TOPICS = [...ADR_0039_TOPICS, RELEASE_TOPIC, ...UNIT_TOPICS];
 import { communityHelpers } from '../setup/community';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 

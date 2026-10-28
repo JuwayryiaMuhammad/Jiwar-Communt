@@ -186,8 +186,8 @@ describe('Permits tables — CHECKs, triggers and privileges', () => {
     ).rejects.toThrow(/keeps who they are/);
     const inserted = await attempt(
       migrator,
-      `INSERT INTO unit_permits (id, tenant_id, number, kind, unit_id, requested_by_account_id, starts_at, ends_at, truck_plate, items_description, updated_at)
-       VALUES (gen_random_uuid(), '${tenantId}', 777001, 'move', '${unitId}', '${accountId}', now(), now() + interval '1 hour', 'أ ب ١٢٣', 'Sofa', now())
+      `INSERT INTO unit_permits (id, tenant_id, number, kind, unit_id, requested_by_account_id, starts_at, ends_at, truck_plate, items_description, move_direction, updated_at)
+       VALUES (gen_random_uuid(), '${tenantId}', 777001, 'move', '${unitId}', '${accountId}', now(), now() + interval '1 hour', 'أ ب ١٢٣', 'Sofa', 'in', now())
        RETURNING plate_key`,
     );
     expect(inserted!.rows[0]).toEqual({ plate_key: 'اب123' });
@@ -369,14 +369,31 @@ describe('Permits tables — CHECKs, triggers and privileges', () => {
             kind: `'move'`,
             truck_plate: `'A 1'`,
             items_description: `'Sofa'`,
+            move_direction: `'in'`,
             description: `'Words'`,
           }),
         /unit_permits_kind_shape/,
       ],
       [
         'a move without its truck',
-        () => insert({ kind: `'move'`, items_description: `'Sofa'` }),
+        () =>
+          insert({
+            kind: `'move'`,
+            items_description: `'Sofa'`,
+            move_direction: `'in'`,
+          }),
         /unit_permits_kind_shape/,
+      ],
+      [
+        // ADR 0063: a new move says which way it goes.
+        'a new move without its direction',
+        () =>
+          insert({
+            kind: `'move'`,
+            truck_plate: `'A 1'`,
+            items_description: `'Sofa'`,
+          }),
+        /unit_permits_move_direction/,
       ],
       [
         'an event without its size',
@@ -483,6 +500,7 @@ describe('Permits tables — CHECKs, triggers and privileges', () => {
             kind: `'move'`,
             truck_plate: `'A 1'`,
             items_description: `'Sofa'`,
+            move_direction: `'in'`,
           }),
           insert({
             kind: `'material_exit'`,

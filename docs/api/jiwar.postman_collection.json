@@ -34976,9 +34976,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"date\": \"2026-11-05\",\n  \"window\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  },\n  \"truckPlate\": \"ن ق ل ٤٥٦\",\n  \"itemsDescription\": \"Two sofas, a fridge and twenty boxes\"\n}"
+              "raw": "{\n  \"date\": \"2026-11-05\",\n  \"window\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  },\n  \"truckPlate\": \"ن ق ل ٤٥٦\",\n  \"itemsDescription\": \"Two sofas, a fridge and twenty boxes\",\n  \"direction\": \"in\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `date` | string | yes | The local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE); a work day of the compound, not a day off (NOT_A_WORK_DAY). |\n| `itemsDescription` | string | yes |  |\n| `truckPlate` | string | yes | The truck’s plate. Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength). |\n| `window` | object | yes | Inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to); not over already (INVALID_VALUE on `window.to`). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `date` | string | yes | The local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE); a work day of the compound, not a day off (NOT_A_WORK_DAY). |\n| `direction` | `in` \\| `out` | yes | Moving in or out (ADR 0063): the permit serves the unit’s move planned that way, if any. |\n| `itemsDescription` | string | yes |  |\n| `truckPlate` | string | yes | The truck’s plate. Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength). |\n| `window` | object | yes | Inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to); not over already (INVALID_VALUE on `window.to`). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -39312,8 +39312,23 @@
         {
           "name": "Record the keys' handover",
           "request": {
-            "description": "**Responses:** 200",
-            "header": [],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string |  | Needed when the occupancy’s planned move-out has no clearance: a code of REASON_CODES.handoverWithoutClearance (MOVE_HANDOVER_REASON_REQUIRED otherwise). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "method": "POST",
             "url": {
               "host": [
@@ -39478,6 +39493,185 @@
                 "void"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/contracts/:id/void",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Moves: planned ones, or a unit’s",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "moves"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "Default: planned, unless a unit is named (then all).",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/moves"
+            }
+          }
+        },
+        {
+          "name": "A move, with its checklist",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "moves",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/moves/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel a move, with a code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "moves",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/moves/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Confirm a move-in",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "moves",
+                ":id",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/moves/:id/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Tick a step of the management’s side",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"step\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `step` | string | yes | A manual step of the caller’s side (see the checklist). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "moves",
+                ":id",
+                "steps"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/moves/:id/steps",
               "variable": [
                 {
                   "description": "",
@@ -39734,6 +39928,50 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Plan a move for an occupancy",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"occupancyId\": \"\",\n  \"direction\": \"in\",\n  \"plannedOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `direction` | `in` \\| `out` | yes |  |\n| `occupancyId` | string (uuid) | yes |  |\n| `plannedOn` | string (date) | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "moves"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/moves",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
                   "value": ""
                 }
               ]
@@ -40254,6 +40492,212 @@
                 "delete"
               ],
               "raw": "{{baseUrl}}/api/v1/units/:unitId/documents/:id/delete",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My moves in and out of the unit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "moves"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/moves",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Give notice to move out",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"plannedOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `plannedOn` | string (date) | yes | The compound’s day, from today to a year ahead. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "moves",
+                "move-out"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/moves/move-out",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "One of my moves, with its checklist",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "moves",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/moves/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw my notice to move out",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "moves",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/moves/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Tick a step of my side",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"step\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `step` | string | yes | A manual step of the caller’s side (see the checklist). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "moves",
+                ":id",
+                "steps"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/moves/:id/steps",
               "variable": [
                 {
                   "description": "",

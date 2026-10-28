@@ -12435,6 +12435,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/moves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Moves: planned ones, or a unit’s */
+        get: operations["StaffMovesController_board"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/moves/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A move, with its checklist */
+        get: operations["StaffMovesController_open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/moves/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a move, with a code */
+        post: operations["StaffMovesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/moves/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm a move-in */
+        post: operations["StaffMovesController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/moves/{id}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tick a step of the management’s side */
+        post: operations["StaffMovesController_tick"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/parking-reports": {
         parameters: {
             query?: never;
@@ -14649,6 +14734,23 @@ export interface paths {
         put?: never;
         /** Delete a unit document of the management’s */
         post: operations["StaffUnitDocumentsController_remove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/moves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Plan a move for an occupancy */
+        post: operations["StaffMovesController_plan"];
         delete?: never;
         options?: never;
         head?: never;
@@ -16991,6 +17093,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/moves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My moves in and out of the unit */
+        get: operations["MovesController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/moves/move-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Give notice to move out */
+        post: operations["MovesController_noticeMoveOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/moves/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of my moves, with its checklist */
+        get: operations["MovesController_open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/moves/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my notice to move out */
+        post: operations["MovesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/moves/{id}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tick a step of my side */
+        post: operations["MovesController_tick"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/parking": {
         parameters: {
             query?: never;
@@ -18988,6 +19175,34 @@ export interface components {
             tally: components["schemas"]["BoardTallyView"];
             votes: components["schemas"]["BoardVoteView"][];
         };
+        BoardMoveView: {
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            direction: "in" | "out";
+            /** Format: date-time */
+            doneAt: string | null;
+            /** @description A move-out handed over with no clearance: why (a code). */
+            handoverReason: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            occupancyId: string;
+            /** @description False when the occupancy’s start planned it. */
+            plannedBySomeone: boolean;
+            /** Format: date */
+            plannedOn: string;
+            /** @description `MV-` and the number. */
+            reference: string;
+            /** @enum {string} */
+            status: "planned" | "done" | "cancelled";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
         BoardNowView: {
             board: components["schemas"]["BoardTermView"] | null;
         };
@@ -19918,6 +20133,19 @@ export interface components {
             /** Format: uuid */
             submittedById: string | null;
             version: number;
+        };
+        ChecklistStepView: {
+            /** Format: date-time */
+            at: string | null;
+            done: boolean;
+            key: string;
+            /** @description A derived step’s reference, e.g. the permit’s number. */
+            reference: string | null;
+            /**
+             * @description `derived`: read from where it lives (a permit, a request, a clearance, the deposits).
+             * @enum {string}
+             */
+            side: "resident" | "management" | "derived";
         };
         ChecklistSummaryView: {
             active: boolean;
@@ -21564,6 +21792,11 @@ export interface components {
              * @example 2026-11-05
              */
             date: string;
+            /**
+             * @description Moving in or out (ADR 0063): the permit serves the unit’s move planned that way, if any.
+             * @enum {string}
+             */
+            direction: "in" | "out";
             /** @example Two sofas, a fridge and twenty boxes */
             itemsDescription: string;
             /**
@@ -25100,6 +25333,10 @@ export interface components {
             status: components["schemas"]["ParcelStatus"];
             unitCode: string;
         };
+        HandoverDto: {
+            /** @description Needed when the occupancy’s planned move-out has no clearance: a code of REASON_CODES.handoverWithoutClearance (MOVE_HANDOVER_REASON_REQUIRED otherwise). */
+            reasonCode?: string;
+        };
         HandoverView: {
             /**
              * Format: uuid
@@ -26673,17 +26910,38 @@ export interface components {
             /** Format: uuid */
             unitId?: string;
         };
+        MoveDetailView: {
+            checklist: components["schemas"]["ChecklistStepView"][];
+            move: components["schemas"]["MoveView"];
+        };
         MoveDetailsView: {
             /**
              * @description Local.
              * @example 2026-11-05
              */
             date: string;
+            /**
+             * @description Null on a permit from before directions (ADR 0063).
+             * @enum {string|null}
+             */
+            direction: "in" | "out" | null;
             /** @description Null once the requester was erased. */
             itemsDescription: string | null;
+            /**
+             * Format: uuid
+             * @description The move it serves, when one was planned (ADR 0063).
+             */
+            moveId: string | null;
             /** @description Null once purged, 30 days after the move. */
             truckPlate: string | null;
             window: components["schemas"]["PermitHoursView"];
+        };
+        MoveOutNoticeDto: {
+            /**
+             * Format: date
+             * @description The compound’s day, from today to a year ahead.
+             */
+            plannedOn: string;
         };
         MoveOutOption: {
             /** @description EGP, invoiced by the management. */
@@ -26699,11 +26957,42 @@ export interface components {
              */
             noticeBy: string;
         };
+        MoveStepDto: {
+            /** @description A manual step of the caller’s side (see the checklist). */
+            step: string;
+        };
         MoveSuggestionDto: {
             /** @description What the staff tell the author. Required to decline. Replaces an earlier answer. */
             response?: string;
             /** @description A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final. */
             status: components["schemas"]["SuggestionStatus"];
+        };
+        MoveView: {
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            direction: "in" | "out";
+            /** Format: date-time */
+            doneAt: string | null;
+            /** @description A move-out handed over with no clearance: why (a code). */
+            handoverReason: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            occupancyId: string;
+            /** @description False when the occupancy’s start planned it. */
+            plannedBySomeone: boolean;
+            /** Format: date */
+            plannedOn: string;
+            /** @description `MV-` and the number. */
+            reference: string;
+            /** @enum {string} */
+            status: "planned" | "done" | "cancelled";
+            /** Format: uuid */
+            unitId: string;
         };
         MyChildView: {
             /** @example Omar */
@@ -27209,6 +27498,14 @@ export interface components {
             /** @description ISO 3166-1 alpha-2; required for a passport. */
             nationality?: string;
             relation: components["schemas"]["HouseholdRelation"];
+        };
+        NewMoveDto: {
+            /** @enum {string} */
+            direction: "in" | "out";
+            /** Format: uuid */
+            occupancyId: string;
+            /** Format: date */
+            plannedOn: string;
         };
         NewUnitDocumentDto: {
             /**
@@ -49032,7 +49329,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HandoverDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -54528,6 +54829,121 @@ export interface operations {
             };
         };
     };
+    StaffMovesController_board: {
+        parameters: {
+            query?: {
+                unitId?: string;
+                /** @description Default: planned, unless a unit is named (then all). */
+                status?: "planned" | "done" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardMoveView"][];
+                };
+            };
+        };
+    };
+    StaffMovesController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveDetailView"];
+                };
+            };
+        };
+    };
+    StaffMovesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveView"];
+                };
+            };
+        };
+    };
+    StaffMovesController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveView"];
+                };
+            };
+        };
+    };
+    StaffMovesController_tick: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveStepDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveDetailView"];
+                };
+            };
+        };
+    };
     StaffParkingReportsController_list: {
         parameters: {
             query?: {
@@ -57798,6 +58214,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    StaffMovesController_plan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewMoveDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveView"];
+                };
             };
         };
     };
@@ -61368,6 +61809,126 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceViewList"];
+                };
+            };
+        };
+    };
+    MovesController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveView"][];
+                };
+            };
+        };
+    };
+    MovesController_noticeMoveOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveOutNoticeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveView"];
+                };
+            };
+        };
+    };
+    MovesController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveDetailView"];
+                };
+            };
+        };
+    };
+    MovesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveView"];
+                };
+            };
+        };
+    };
+    MovesController_tick: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveStepDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveDetailView"];
                 };
             };
         };

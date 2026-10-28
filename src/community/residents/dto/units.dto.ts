@@ -57,3 +57,16 @@ export class ResidenceDto {
   @IsBoolean()
   resides: boolean;
 }
+
+/** The handover of an ended occupancy (ADR 0063). */
+export class HandoverDto {
+  @ApiProperty({
+    type: String,
+    required: false,
+    description:
+      'Needed when the occupancy’s planned move-out has no clearance: a code of REASON_CODES.handoverWithoutClearance (MOVE_HANDOVER_REASON_REQUIRED otherwise).',
+  })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+}

@@ -110,6 +110,15 @@ export class PermitCore {
     return this.community.primaryOf(tx, unitId);
   }
 
+  /** The unit's move planned that way, which a move permit serves (ADR 0063). */
+  plannedMove(
+    tx: TenantTxClient,
+    unitId: string,
+    direction: 'in' | 'out',
+  ): Promise<string | null> {
+    return this.community.plannedMove(tx, unitId, direction);
+  }
+
   /** Active holders of a permission. */
   holding(tx: TenantTxClient, permission: Permission): Promise<string[]> {
     return this.safety.holding(tx, permission);

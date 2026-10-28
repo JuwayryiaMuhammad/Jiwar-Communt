@@ -180,6 +180,10 @@ export const REASON_CODES = {
     'works_unfinished',
     'other',
   ],
+  /** Why a move is cancelled (ADR 0063); `occupancy_ended` is the system's. */
+  moveCancel: ['plans_changed', 'data_error', 'other'],
+  /** Why a unit is handed over with no clearance (ADR 0063). */
+  handoverWithoutClearance: ['dues_settle_later', 'dues_disputed', 'other'],
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
   // A manager acting for an account (ADR 0036): how the person asked.

@@ -8,7 +8,7 @@ import { ValidateBy, type ValidationOptions } from 'class-validator';
 export const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 /** Whether `YYYY-MM-DD` names a real day (no 31 April, no 29 February 2026). */
-export function isRealDate(value: unknown): boolean {
+export function isRealDate(value: unknown): value is string {
   if (typeof value !== 'string' || !LOCAL_DATE.test(value)) return false;
   const d = new Date(`${value}T00:00:00Z`);
   return d.toISOString().slice(0, 10) === value;

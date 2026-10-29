@@ -16,11 +16,13 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import { MONEY } from '../../money';
 import { INVOICE_FILTERS, type InvoiceFilter } from '../balances';
 
-/** A local day of the compound, `YYYY-MM-DD`. */
-export const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const DESCRIPTION = { min: 1, max: 200 } as const;
 const LINES = { min: 1, max: 20 } as const;
 const BUILDING = { min: 1, max: 100 } as const;
@@ -92,7 +94,7 @@ export class IssueInvoicesDto {
     description: 'A local day of the compound: from today to 366 days ahead.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   dueOn: string;
 
   @ApiProperty({

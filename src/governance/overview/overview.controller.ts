@@ -1,11 +1,13 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../core/common/validation/local-date';
 import { BoardOverviewService, type BoardOverview } from './overview.service';
-
-const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 export class BoardOverviewQueryDto {
   @ApiProperty({
@@ -16,7 +18,7 @@ export class BoardOverviewQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiProperty({
@@ -27,7 +29,7 @@ export class BoardOverviewQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 }
 

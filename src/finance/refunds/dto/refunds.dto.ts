@@ -2,8 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RefundChannel } from '@prisma/client';
 import { IsEnum, IsOptional, IsString, IsUUID, Matches } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import { MONEY } from '../../money';
-import { LOCAL_DATE } from '../../invoices/dto/invoices.dto';
 import { REFERENCE } from '../../payments/dto/payments.dto';
 
 /**
@@ -46,7 +49,7 @@ export class RecordRefundDto {
     description: 'The local day the money was paid back: up to 31 days ago.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   refundedOn: string;
 }
 
@@ -74,7 +77,7 @@ export class RefundsQueryDto extends PageQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiProperty({
@@ -85,6 +88,6 @@ export class RefundsQueryDto extends PageQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 }

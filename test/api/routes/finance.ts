@@ -122,7 +122,7 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
       body: {
         target: 'street',
         kind: 'rent',
-        dueOn: '2026-13-01',
+        dueOn: '2026-02-30',
         lines: LINES,
       },
       fields: [
@@ -248,7 +248,7 @@ export const FINANCE_INSTALMENT_ROUTES: Row[] = [
       code: 'INVOICE_NOT_FOUND',
     },
     invalid: {
-      body: { instalments: [{ dueOn: '2099-13-01', amount: '0' }] },
+      body: { instalments: [{ dueOn: '2027-02-29', amount: '0' }] },
       fields: [
         {
           field: 'instalments',
@@ -302,7 +302,7 @@ export const FINANCE_INSTALMENT_ROUTES: Row[] = [
       code: 'INSTALMENT_PLAN_NOT_FOUND',
     },
     invalid: {
-      body: { dueOn: 'soon' },
+      body: { dueOn: '2026-04-31' },
       fields: [{ field: 'dueOn', code: 'INVALID_FORMAT' }],
     },
   },
@@ -443,7 +443,7 @@ export const FINANCE_REFUND_ROUTES: Row[] = [
       code: 'UNIT_NOT_FOUND',
     },
     invalid: {
-      body: { amount: '1', channel: 'cheque', refundedOn: 'today' },
+      body: { amount: '1', channel: 'cheque', refundedOn: '2026-13-01' },
       fields: [
         { field: 'channel', code: 'INVALID_VALUE' },
         { field: 'refundedOn', code: 'INVALID_FORMAT' },
@@ -474,8 +474,11 @@ export const FINANCE_REFUND_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { from: 'yesterday' },
-      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+      query: { from: '2026-02-30', to: '2027-02-29' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
   },
   {
@@ -494,8 +497,11 @@ export const FINANCE_REFUND_ROUTES: Row[] = [
 
 const BAD_PERIOD: Pick<Row, 'invalid'> = {
   invalid: {
-    query: { from: 'yesterday', to: '2026-01-31' },
-    fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+    query: { from: '2026-04-31', to: '2026-02-30' },
+    fields: [
+      { field: 'from', code: 'INVALID_FORMAT' },
+      { field: 'to', code: 'INVALID_FORMAT' },
+    ],
   },
 };
 
@@ -562,7 +568,7 @@ export const FINANCE_REPORT_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { day: 'today' },
+      query: { day: '2027-02-29' },
       fields: [{ field: 'day', code: 'INVALID_FORMAT' }],
     },
     ...(exported ? { noStore: true } : {}),
@@ -692,8 +698,12 @@ export const FINANCE_PAYMENT_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { channel: 'post' },
-      fields: [{ field: 'channel', code: 'INVALID_VALUE' }],
+      query: { channel: 'post', from: '2026-04-31', to: '2026-13-01' },
+      fields: [
+        { field: 'channel', code: 'INVALID_VALUE' },
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
   },
   {
@@ -720,13 +730,14 @@ export const FINANCE_PAYMENT_ROUTES: Row[] = [
       code: 'UNIT_NOT_FOUND',
     },
     invalid: {
-      body: { amount: '10', method: 'card', paidOn: '2026-10-15' },
+      body: { amount: '10', method: 'card', paidOn: '2026-02-30' },
       fields: [
         {
           field: 'method',
           code: 'INVALID_VALUE',
           params: { allowed: ['cash', 'bank_transfer', 'cheque'] },
         },
+        { field: 'paidOn', code: 'INVALID_FORMAT' },
       ],
     },
   },

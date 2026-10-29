@@ -17,7 +17,10 @@ import {
 import { LARGE_AMOUNT } from '../../../core/common/amounts';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../invoices/dto/invoices.dto';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import {
   BUDGET_CATEGORIES,
   BUDGET_LIMITS,
@@ -150,7 +153,7 @@ export class RecordExpenseDto {
     description: 'Within the budget’s year, not ahead (DAY_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   spentOn: string;
 
   @ApiProperty({
@@ -203,12 +206,12 @@ export class ExpensesQueryDto extends PageQueryDto {
   @ApiProperty({ type: String, pattern: LOCAL_DATE.source, required: false })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiProperty({ type: String, pattern: LOCAL_DATE.source, required: false })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 }

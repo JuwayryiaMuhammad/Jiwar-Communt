@@ -7,13 +7,15 @@ import {
   IsString,
   IsUUID,
   Length,
-  Matches,
   Max,
   Min,
 } from 'class-validator';
 import { HTTP_DEFAULT_LIMIT } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../invoices/dto/invoices.dto';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 
 /** What the ledger journals (ADR 0048). */
 export const LEDGER_TYPES = [
@@ -39,7 +41,7 @@ export class PeriodDto {
     description: 'First local day, included.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from: string;
 
   @ApiProperty({
@@ -48,7 +50,7 @@ export class PeriodDto {
     description: 'Last local day, included: at most 366 days after `from`.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to: string;
 }
 

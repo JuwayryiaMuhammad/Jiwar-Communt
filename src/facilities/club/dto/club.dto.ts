@@ -18,7 +18,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../bookings/dto/bookings.dto';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 
 const NAME = { min: 1, max: 80 } as const;
 const DAYS = { min: 1, max: 730 } as const;
@@ -190,7 +193,7 @@ export class RecordClubPaymentDto {
       'The local day it was paid: not in the future, at most 90 days ago (PAID_ON_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   paidOn: string;
 }
 

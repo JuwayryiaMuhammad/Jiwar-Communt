@@ -562,7 +562,7 @@ export const BOARD_PUBLICATION_ROUTES: Row[] = [
     invalid: {
       body: {
         kind: 'rumour',
-        decidedOn: '2026-11-01',
+        decidedOn: '2026-02-30',
         titleEn: 'x',
         bodyEn: 'y',
       },
@@ -572,6 +572,7 @@ export const BOARD_PUBLICATION_ROUTES: Row[] = [
           code: 'INVALID_VALUE',
           params: { allowed: ['decision', 'minutes'] },
         },
+        { field: 'decidedOn', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,

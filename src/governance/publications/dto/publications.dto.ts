@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID, Matches } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
   BOARD_NOTICE_BODY_MAX,
   BOARD_NOTICE_TITLE_MAX,
 } from '../../../engagement';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 
-const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 export const PUBLICATION_KINDS = ['decision', 'minutes'] as const;
 
 const text = (max: number, description?: string) =>
@@ -55,7 +58,7 @@ export class PublishBoardPublicationDto extends BoardPublicationTextDto {
       'The local day the board decided or met: today, or up to a year ago (DAY_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   decidedOn: string;
 
   @ApiProperty({

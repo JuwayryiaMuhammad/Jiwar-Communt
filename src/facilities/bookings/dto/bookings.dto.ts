@@ -8,16 +8,18 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  Matches,
   Max,
   Min,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { ToInstant } from '../../../core/common/validation/instant';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 
 const GUESTS = { min: 0, max: 50 } as const;
-export const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 export class CreateBookingDto {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -78,7 +80,7 @@ export class FacilitySlotsQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   date?: string;
 
   @ApiProperty({
@@ -154,7 +156,7 @@ export class FacilityDayQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   date?: string;
 }
 

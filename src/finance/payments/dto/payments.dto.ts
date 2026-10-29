@@ -13,7 +13,10 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../invoices/dto/invoices.dto';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import { MONEY } from '../../money';
 
 export const OFFICE_METHODS = ['cash', 'bank_transfer', 'cheque'] as const;
@@ -54,7 +57,7 @@ export class RecordOfficePaymentDto {
     description: 'The local day it was paid: today or up to 31 days ago.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   paidOn: string;
 
   @ApiProperty({
@@ -114,7 +117,7 @@ export class StaffPaymentsQueryDto extends PageQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiProperty({
@@ -125,6 +128,6 @@ export class StaffPaymentsQueryDto extends PageQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 }

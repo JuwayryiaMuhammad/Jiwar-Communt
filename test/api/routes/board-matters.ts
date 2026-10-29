@@ -348,10 +348,13 @@ export const BUDGET_ROUTES: Row[] = [
         budgetLineId: 'x',
         vendor: 'v',
         amount: '1.00',
-        spentOn: '2027-01-01',
+        spentOn: '2026-04-31',
         invoiceFileId: '0193b8a4-0000-7000-8000-000000000000',
       },
-      fields: [{ field: 'budgetLineId', code: 'INVALID_UUID' }],
+      fields: [
+        { field: 'budgetLineId', code: 'INVALID_UUID' },
+        { field: 'spentOn', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -362,7 +365,14 @@ export const BUDGET_ROUTES: Row[] = [
     as: 'manager',
     denied: 'owner',
     foreign: 'none',
-    invalid: pageInvalid,
+    invalid: {
+      query: { ...pageInvalid.query, from: '2026-02-30', to: '2026-13-01' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+        ...pageInvalid.fields,
+      ],
+    },
     noStore: true,
   },
   {
@@ -643,8 +653,11 @@ export const BOARD_OVERVIEW_ROUTES: Row[] = [
     denied: 'owner',
     foreign: 'none',
     invalid: {
-      query: { from: 'x' },
-      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+      query: { from: '2027-02-29', to: '2026-04-31' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },

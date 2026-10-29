@@ -5,6 +5,7 @@ import { RequestContext } from '../../core/common/cls/request-context';
 import type { Page } from '../../core/common/cursor';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { addDays } from '../../core/common/slots/day-slots';
+import { isRealDate } from '../../core/common/validation/local-date';
 import {
   TenantTx,
   type TenantTxClient,
@@ -298,8 +299,7 @@ function decodeCursor(cursor: string): Cursor {
     ) as [unknown, unknown, unknown];
     const at = typeof iso === 'string' ? new Date(iso) : new Date(NaN);
     if (
-      typeof day === 'string' &&
-      /^\d{4}-\d{2}-\d{2}$/.test(day) &&
+      isRealDate(day) &&
       !Number.isNaN(at.getTime()) &&
       typeof id === 'string' &&
       isUUID(id)

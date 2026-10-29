@@ -262,6 +262,31 @@ describe('Finance — ledger', () => {
       .expect(200);
   });
 
+  it('a cursor naming a day that does not exist is refused, never read by the database', async () => {
+    const { home } = await busyUnit('Cursor-1');
+    const first = await ledger({ unitId: home.id, limit: '1' });
+    expect(first.nextCursor).not.toBeNull();
+    const [, at, id] = JSON.parse(
+      Buffer.from(first.nextCursor!, 'base64url').toString('utf8'),
+    ) as [string, string, string];
+    // The real cursor's instant and id, and a day shaped right that is none.
+    const forged = Buffer.from(JSON.stringify(['2026-02-30', at, id])).toString(
+      'base64url',
+    );
+    const qs = new URLSearchParams({
+      from: day(0),
+      to: day(0),
+      unitId: home.id,
+      cursor: forged,
+    });
+    const res = await f
+      .http('get', `/staff/finance/ledger?${qs}`, s.accountant.token)
+      .expect(400);
+    expect(body<{ fields: unknown[] }>(res).fields).toEqual([
+      { field: 'cursor', code: 'INVALID_FORMAT' },
+    ]);
+  });
+
   it('the CSV holds the same rows: a download, a byte-order mark, a header, formulas defused', async () => {
     const { home } = await busyUnit('=SUM(A1)');
     const json = (await ledger({ unitId: home.id })).data;

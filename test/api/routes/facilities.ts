@@ -168,7 +168,7 @@ export const BOOKING_ROUTES: Row[] = [
       code: 'FACILITY_NOT_FOUND',
     },
     invalid: {
-      query: { date: '2031-13-01' },
+      query: { date: '2026-02-30' },
       fields: [{ field: 'date', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -324,7 +324,7 @@ export const STAFF_BOOKING_ROUTES: Row[] = [
       code: 'FACILITY_NOT_FOUND',
     },
     invalid: {
-      query: { date: 'today' },
+      query: { date: '2026-04-31' },
       fields: [{ field: 'date', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -663,9 +663,12 @@ export const CLUB_ROUTES: Row[] = [
         planId: newId(),
         amount: '500',
         receiptNumber: 'R 1',
-        paidOn: day(0),
+        paidOn: '2027-02-29',
       },
-      fields: [{ field: 'receiptNumber', code: 'INVALID_FORMAT' }],
+      fields: [
+        { field: 'receiptNumber', code: 'INVALID_FORMAT' },
+        { field: 'paidOn', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },

@@ -13,8 +13,11 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import { MONEY } from '../../money';
-import { LOCAL_DATE } from '../../invoices/dto/invoices.dto';
 
 /** How many instalments a plan has (ADR 0048). */
 export const INSTALMENTS = { min: 2, max: 24 } as const;
@@ -33,7 +36,7 @@ export class InstalmentDto {
       'A local day of the compound: from today to 730 days ahead, after the instalment before.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   dueOn: string;
 
   @ApiProperty({
@@ -73,7 +76,7 @@ export class CancelInstalmentPlanDto {
       'When the remainder invoice falls due: from today to 366 days ahead.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   dueOn: string;
 }
 

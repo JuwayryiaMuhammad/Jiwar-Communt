@@ -2355,6 +2355,8 @@ enum NotificationCategory {
   governance
   /// A resident's requests to the compound's service partners (ADR 0060).
   partners
+  /// Water, electricity and gas cut off in their buildings (ADR 0066).
+  utilities
 
   @@map("notification_category")
 }

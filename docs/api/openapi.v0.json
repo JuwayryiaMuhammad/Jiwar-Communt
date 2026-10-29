@@ -32440,7 +32440,8 @@
           "permits",
           "guard_duty",
           "governance",
-          "partners"
+          "partners",
+          "utilities"
         ],
         "type": "string"
       },

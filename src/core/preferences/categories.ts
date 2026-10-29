@@ -35,6 +35,8 @@ export const NOTIFICATION_CATEGORIES = [
   'governance',
   // A resident's requests to the compound's service partners (ADR 0060).
   'partners',
+  // Water, electricity and gas cut off in their buildings (ADR 0066).
+  'utilities',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

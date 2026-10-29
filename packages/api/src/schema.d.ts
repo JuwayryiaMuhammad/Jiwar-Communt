@@ -5401,6 +5401,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/energy/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The spike rule */
+        get: operations["EnergySettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change the spike rule */
+        patch: operations["EnergySettingsController_update"];
+        trace?: never;
+    };
     "/api/v1/maintenance/inspection-report": {
         parameters: {
             query?: never;
@@ -5577,6 +5595,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/meter-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The spike alerts, the newest first */
+        get: operations["MeterAlertsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/meter-alerts/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Acknowledge an alert, once */
+        post: operations["MeterAlertsController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/meters": {
         parameters: {
             query?: never;
@@ -5611,6 +5663,58 @@ export interface paths {
         head?: never;
         /** Change a meter’s serial or installation day */
         patch: operations["MetersController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/meters/{id}/readings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A meter’s readings, the latest day first */
+        get: operations["MetersController_readingsOf"];
+        put?: never;
+        /** Enter a reading by hand */
+        post: operations["MetersController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/meters/{id}/readings/{readingId}/correct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Correct a reading, once */
+        post: operations["MetersController_correct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/meters/{id}/readings/{readingId}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a reading, once */
+        post: operations["MetersController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/maintenance/meters/{id}/retire": {
@@ -16280,6 +16384,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/meters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A meter to read */
+        get: operations["TechnicianMetersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/meters/{id}/readings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a meter’s reading */
+        post: operations["TechnicianMetersController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/part-requests/{id}/cancel": {
         parameters: {
             query?: never;
@@ -22229,6 +22367,17 @@ export interface components {
             /** @description False: they let the unit (a landlord). */
             resides?: boolean;
         };
+        CorrectReadingDto: {
+            /**
+             * Format: date
+             * @description Another day, if the day was wrong.
+             */
+            readOn?: string;
+            /** @description From `readingCorrect`. */
+            reasonCode: string;
+            reset?: boolean;
+            value: string;
+        };
         CostTotalsView: {
             contractor: string;
             labour: string;
@@ -24586,6 +24735,17 @@ export interface components {
             /** @description For the next guard and the management. */
             notes?: string;
         };
+        EnergySettingsDto: {
+            /** @description From 1.2 to 10: a spike is the daily use above the mean times this. */
+            anomalyFactor?: string;
+            /** @description How many earlier periods make the mean. */
+            anomalyPeriods?: number;
+        };
+        EnergySettingsView: {
+            /** @description Two decimals, 1.2 to 10. */
+            anomalyFactor: string;
+            anomalyPeriods: number;
+        };
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
@@ -24887,6 +25047,11 @@ export interface components {
         ExitEscortView: {
             firstName: string | null;
             kind: components["schemas"]["ChildEscortKind"];
+        };
+        ExpectedRangeView: {
+            from: string;
+            /** @description Null until the meter has a few periods behind it. */
+            to: string | null;
         };
         ExpenseAuthorizationView: {
             /**
@@ -27525,6 +27690,11 @@ export interface components {
          * @enum {string}
          */
         LaneReason: "ambulance" | "fire_truck" | "moving_truck" | "large_delivery";
+        LastReadingView: {
+            /** Format: date */
+            readOn: string;
+            value: string;
+        };
         LedgerEntryView: {
             /** @description Positive, two decimals. */
             amount: string;
@@ -28176,11 +28346,83 @@ export interface components {
             body: string;
         };
         /** @enum {string} */
+        MeterAlertKind: "spike";
+        MeterAlertView: {
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            /** @description The mean of the periods before, a day. */
+            baselineRate: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The period’s use a day, in the kind’s unit. */
+            dailyRate: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MeterAlertKind"];
+            /** Format: uuid */
+            meterId: string;
+            /** Format: date */
+            readOn: string;
+            /** Format: uuid */
+            readingId: string;
+        };
+        MeterAlertViewList: {
+            data: components["schemas"]["MeterAlertView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
         MeterKind: "electricity" | "water" | "gas" | "fuel" | "run_hours";
         /** @enum {string} */
         MeterMode: "cumulative" | "interval";
         /** @enum {string} */
+        MeterReadingSource: "manual" | "import" | "technician";
+        MeterReadingView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            meterId: string;
+            /** Format: date */
+            readOn: string;
+            /** Format: date-time */
+            recordedAt: string;
+            reset: boolean;
+            source: components["schemas"]["MeterReadingSource"];
+            /**
+             * Format: date-time
+             * @description Corrected or withdrawn then.
+             */
+            supersededAt: string | null;
+            supersededReason: components["schemas"]["ReadingCorrectReason"] | null;
+            /**
+             * Format: uuid
+             * @description The reading this one corrects.
+             */
+            supersedesId: string | null;
+            /** @description Four decimals, before the multiplier. */
+            value: string;
+        };
+        MeterReadingViewList: {
+            data: components["schemas"]["MeterReadingView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
         MeterRetireReason: "replaced" | "removed" | "faulty" | "other";
+        MeterToReadView: {
+            active: boolean;
+            /** @description The common area it is in. */
+            areaCode: string | null;
+            code: string;
+            /** @description Where today’s reading is expected, in the register’s figures. */
+            expected: components["schemas"]["ExpectedRangeView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MeterKind"];
+            last: components["schemas"]["LastReadingView"] | null;
+            mode: components["schemas"]["MeterMode"];
+            unit: string;
+            /** @description The unit it is in. */
+            unitCode: string | null;
+        };
         MeterView: {
             active: boolean;
             /** Format: uuid */
@@ -31122,6 +31364,8 @@ export interface components {
         ReadAllView: {
             read: number;
         };
+        /** @enum {string} */
+        ReadingCorrectReason: "misread" | "wrong_meter" | "wrong_day" | "other";
         ReadingDto: {
             metricKey: string;
             /**
@@ -31293,6 +31537,20 @@ export interface components {
             paidOn: string;
             /** @description For a transfer or a cheque, and only for them. */
             reference?: string;
+        };
+        RecordReadingDto: {
+            /**
+             * Format: date
+             * @description The compound’s day it was read: by today, at most 400 days back.
+             */
+            readOn: string;
+            /**
+             * @description The register started again from zero (replaced or rolled over).
+             * @default false
+             */
+            reset: boolean;
+            /** @description The register as it stands (cumulative) or the use since the last reading (interval), before the multiplier. */
+            value: string;
         };
         RecordReadingsDto: {
             readings: components["schemas"]["ReadingDto"][];
@@ -45966,6 +46224,48 @@ export interface operations {
             };
         };
     };
+    EnergySettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnergySettingsView"];
+                };
+            };
+        };
+    };
+    EnergySettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnergySettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnergySettingsView"];
+                };
+            };
+        };
+    };
     InspectionReportController_report: {
         parameters: {
             query: {
@@ -46273,6 +46573,53 @@ export interface operations {
             };
         };
     };
+    MeterAlertsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                meterId?: string;
+                /** @description `true`: not acknowledged yet. */
+                open?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterAlertViewList"];
+                };
+            };
+        };
+    };
+    MeterAlertsController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterAlertView"];
+                };
+            };
+        };
+    };
     MetersController_list: {
         parameters: {
             query?: {
@@ -46368,6 +46715,116 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeterView"];
+                };
+            };
+        };
+    };
+    MetersController_readingsOf: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `true` lists the corrected and withdrawn ones too. */
+                superseded?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingViewList"];
+                };
+            };
+        };
+    };
+    MetersController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordReadingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingView"];
+                };
+            };
+        };
+    };
+    MetersController_correct: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+                readingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectReadingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingView"];
+                };
+            };
+        };
+    };
+    MetersController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                readingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingView"];
                 };
             };
         };
@@ -62524,6 +62981,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InspectionView"];
+                };
+            };
+        };
+    };
+    TechnicianMetersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterToReadView"];
+                };
+            };
+        };
+    };
+    TechnicianMetersController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordReadingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingView"];
                 };
             };
         };

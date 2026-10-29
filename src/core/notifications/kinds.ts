@@ -2241,6 +2241,14 @@ export const NOTIFICATION_KINDS = {
     target: 'stock_item',
     params: { itemRef: {} },
   },
+  /** A meter's latest period used far more than its mean (ADR 0066). */
+  'meter.anomaly': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'meter',
+    params: { meterRef: {}, readOn: {} },
+  },
   /** A maintenance contract ends within its notice days (ADR 0065). */
   'maintenance_contract.expiring': {
     priority: 'normal',

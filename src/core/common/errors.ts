@@ -1474,6 +1474,14 @@ export const ErrorCode = {
   METER_NOT_FOUND: 'METER_NOT_FOUND',
   /** Retired: it takes no reading and never changes again (409). */
   METER_RETIRED: 'METER_RETIRED',
+  READING_NOT_FOUND: 'READING_NOT_FOUND',
+  /** The meter has a live reading that day: correct it instead; params.readingId (409). */
+  READING_EXISTS: 'READING_EXISTS',
+  /** Corrected or withdrawn already: a reading is superseded once (409). */
+  READING_ALREADY_CORRECTED: 'READING_ALREADY_CORRECTED',
+  METER_ALERT_NOT_FOUND: 'METER_ALERT_NOT_FOUND',
+  /** Acknowledged once (409). */
+  METER_ALERT_ACKNOWLEDGED: 'METER_ALERT_ACKNOWLEDGED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1715,6 +1723,10 @@ export const FieldErrorCode = {
   INSPECTOR_NOT_ELIGIBLE: 'INSPECTOR_NOT_ELIGIBLE',
   /** ADR 0065: an asset a contract covers must exist and not be retired. */
   ASSET_NOT_AVAILABLE: 'ASSET_NOT_AVAILABLE',
+  /** ADR 0066: a cumulative register only climbs; params.previous. */
+  READING_BELOW_PREVIOUS: 'READING_BELOW_PREVIOUS',
+  /** ADR 0066: a backdated reading is not above the one after it; params.next. */
+  READING_ABOVE_NEXT: 'READING_ABOVE_NEXT',
 } as const;
 
 export type FieldErrorCode =

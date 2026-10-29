@@ -1,11 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Length,
   Matches,
+  Max,
+  Min,
   ValidateIf,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
@@ -20,6 +24,8 @@ import {
   type MeterKind,
   type MeterMode,
 } from '../meter-rules';
+import { ANOMALY_PERIODS } from '../energy-settings.service';
+import { READING_VALUE } from '../reading-rules';
 
 const BOOL = ['true', 'false'] as const;
 const allowed = (xs: readonly string[]) => withParams({ allowed: [...xs] });
@@ -145,4 +151,116 @@ export class MetersQueryDto extends PageQueryDto {
   @IsOptional()
   @IsIn(BOOL, allowed(BOOL))
   active?: (typeof BOOL)[number];
+}
+
+export class RecordReadingDto {
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description:
+      'The compound’s day it was read: by today, at most 400 days back.',
+  })
+  @IsString()
+  @IsLocalDate()
+  readOn: string;
+
+  @ApiProperty({
+    type: String,
+    pattern: READING_VALUE.source,
+    description:
+      'The register as it stands (cumulative) or the use since the last reading (interval), before the multiplier.',
+  })
+  @IsString()
+  @Matches(READING_VALUE)
+  value: string;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    default: false,
+    description:
+      'The register started again from zero (replaced or rolled over).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  reset?: boolean;
+}
+
+export class CorrectReadingDto {
+  @ApiProperty({ type: String, pattern: READING_VALUE.source })
+  @IsString()
+  @Matches(READING_VALUE)
+  value: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date',
+    description: 'Another day, if the day was wrong.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsLocalDate()
+  readOn?: string;
+
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
+  @IsBoolean()
+  reset?: boolean;
+
+  @ApiProperty({ type: String, description: 'From `readingCorrect`.' })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+}
+
+export class ReadingsQueryDto extends PageQueryDto {
+  @ApiPropertyOptional({
+    enum: BOOL,
+    description: '`true` lists the corrected and withdrawn ones too.',
+  })
+  @IsOptional()
+  @IsIn(BOOL, allowed(BOOL))
+  superseded?: (typeof BOOL)[number];
+}
+
+export class MeterAlertsQueryDto extends PageQueryDto {
+  @ApiPropertyOptional({ type: String, format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  meterId?: string;
+
+  @ApiPropertyOptional({
+    enum: BOOL,
+    description: '`true`: not acknowledged yet.',
+  })
+  @IsOptional()
+  @IsIn(BOOL, allowed(BOOL))
+  open?: (typeof BOOL)[number];
+}
+
+/** A factor with up to two decimals. */
+const FACTOR = /^\d{1,2}(\.\d{1,2})?$/;
+
+export class EnergySettingsDto {
+  @ApiPropertyOptional({
+    type: String,
+    pattern: FACTOR.source,
+    description:
+      'From 1.2 to 10: a spike is the daily use above the mean times this.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(FACTOR)
+  anomalyFactor?: string;
+
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: ANOMALY_PERIODS.min,
+    maximum: ANOMALY_PERIODS.max,
+    description: 'How many earlier periods make the mean.',
+  })
+  @IsOptional()
+  @IsInt(withParams({ ...ANOMALY_PERIODS }))
+  @Min(ANOMALY_PERIODS.min, withParams({ ...ANOMALY_PERIODS }))
+  @Max(ANOMALY_PERIODS.max, withParams({ ...ANOMALY_PERIODS }))
+  anomalyPeriods?: number;
 }

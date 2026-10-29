@@ -10739,6 +10739,31 @@
         },
         "type": "object"
       },
+      "CorrectReadingDto": {
+        "properties": {
+          "readOn": {
+            "description": "Another day, if the day was wrong.",
+            "format": "date",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From `readingCorrect`.",
+            "type": "string"
+          },
+          "reset": {
+            "type": "boolean"
+          },
+          "value": {
+            "pattern": "^\\d{1,12}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CostTotalsView": {
         "properties": {
           "contractor": {
@@ -17410,6 +17435,38 @@
         },
         "type": "object"
       },
+      "EnergySettingsDto": {
+        "properties": {
+          "anomalyFactor": {
+            "description": "From 1.2 to 10: a spike is the daily use above the mean times this.",
+            "pattern": "^\\d{1,2}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "anomalyPeriods": {
+            "description": "How many earlier periods make the mean.",
+            "maximum": 24,
+            "minimum": 3,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "EnergySettingsView": {
+        "properties": {
+          "anomalyFactor": {
+            "description": "Two decimals, 1.2 to 10.",
+            "type": "string"
+          },
+          "anomalyPeriods": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "anomalyFactor",
+          "anomalyPeriods"
+        ],
+        "type": "object"
+      },
       "EngagementDetailView": {
         "properties": {
           "capacity": {
@@ -18390,6 +18447,23 @@
         "required": [
           "kind",
           "firstName"
+        ],
+        "type": "object"
+      },
+      "ExpectedRangeView": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "description": "Null until the meter has a few periods behind it.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
         ],
         "type": "object"
       },
@@ -27054,6 +27128,22 @@
         ],
         "type": "string"
       },
+      "LastReadingView": {
+        "properties": {
+          "readOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "readOn",
+          "value"
+        ],
+        "type": "object"
+      },
       "LedgerEntryView": {
         "properties": {
           "amount": {
@@ -29165,6 +29255,87 @@
         ],
         "type": "object"
       },
+      "MeterAlertKind": {
+        "enum": [
+          "spike"
+        ],
+        "type": "string"
+      },
+      "MeterAlertView": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "baselineRate": {
+            "description": "The mean of the periods before, a day.",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dailyRate": {
+            "description": "The period’s use a day, in the kind’s unit.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterAlertKind"
+              }
+            ]
+          },
+          "meterId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "readOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "readingId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "meterId",
+          "readingId",
+          "readOn",
+          "kind",
+          "dailyRate",
+          "baselineRate",
+          "createdAt",
+          "acknowledgedAt"
+        ],
+        "type": "object"
+      },
+      "MeterAlertViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MeterAlertView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MeterKind": {
         "enum": [
           "electricity",
@@ -29182,6 +29353,100 @@
         ],
         "type": "string"
       },
+      "MeterReadingSource": {
+        "enum": [
+          "manual",
+          "import",
+          "technician"
+        ],
+        "type": "string"
+      },
+      "MeterReadingView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "meterId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "readOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reset": {
+            "type": "boolean"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterReadingSource"
+              }
+            ]
+          },
+          "supersededAt": {
+            "description": "Corrected or withdrawn then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "supersededReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReadingCorrectReason"
+              }
+            ],
+            "nullable": true
+          },
+          "supersedesId": {
+            "description": "The reading this one corrects.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "value": {
+            "description": "Four decimals, before the multiplier.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "meterId",
+          "readOn",
+          "value",
+          "reset",
+          "source",
+          "supersedesId",
+          "recordedAt",
+          "supersededAt",
+          "supersededReason"
+        ],
+        "type": "object"
+      },
+      "MeterReadingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MeterReadingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MeterRetireReason": {
         "enum": [
           "replaced",
@@ -29190,6 +29455,79 @@
           "other"
         ],
         "type": "string"
+      },
+      "MeterToReadView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "areaCode": {
+            "description": "The common area it is in.",
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "expected": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExpectedRangeView"
+              }
+            ],
+            "description": "Where today’s reading is expected, in the register’s figures.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "last": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LastReadingView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterMode"
+              }
+            ]
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The unit it is in.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "unit",
+          "mode",
+          "unitCode",
+          "areaCode",
+          "active",
+          "last",
+          "expected"
+        ],
+        "type": "object"
       },
       "MeterView": {
         "properties": {
@@ -38375,6 +38713,15 @@
         ],
         "type": "object"
       },
+      "ReadingCorrectReason": {
+        "enum": [
+          "misread",
+          "wrong_meter",
+          "wrong_day",
+          "other"
+        ],
+        "type": "string"
+      },
       "ReadingDto": {
         "properties": {
           "metricKey": {
@@ -38809,6 +39156,30 @@
           "amount",
           "method",
           "paidOn"
+        ],
+        "type": "object"
+      },
+      "RecordReadingDto": {
+        "properties": {
+          "readOn": {
+            "description": "The compound’s day it was read: by today, at most 400 days back.",
+            "format": "date",
+            "type": "string"
+          },
+          "reset": {
+            "default": false,
+            "description": "The register started again from zero (replaced or rolled over).",
+            "type": "boolean"
+          },
+          "value": {
+            "description": "The register as it stands (cumulative) or the use since the last reading (interval), before the multiplier.",
+            "pattern": "^\\d{1,12}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "readOn",
+          "value"
         ],
         "type": "object"
       },
@@ -76415,6 +76786,70 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/energy/settings": {
+      "get": {
+        "operationId": "EnergySettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergySettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The spike rule",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "EnergySettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnergySettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergySettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the spike rule",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/inspection-report": {
       "get": {
         "operationId": "InspectionReportController_report",
@@ -77041,6 +77476,114 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/meter-alerts": {
+      "get": {
+        "operationId": "MeterAlertsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "meterId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: not acknowledged yet.",
+            "in": "query",
+            "name": "open",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterAlertViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The spike alerts, the newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meter-alerts/{id}/acknowledge": {
+      "post": {
+        "operationId": "MeterAlertsController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterAlertView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge an alert, once",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/meters": {
       "get": {
         "operationId": "MetersController_list",
@@ -77250,6 +77793,249 @@
           }
         ],
         "summary": "Change a meter’s serial or installation day",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meters/{id}/readings": {
+      "get": {
+        "operationId": "MetersController_readingsOf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`true` lists the corrected and withdrawn ones too.",
+            "in": "query",
+            "name": "superseded",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A meter’s readings, the latest day first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "MetersController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordReadingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enter a reading by hand",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meters/{id}/readings/{readingId}/correct": {
+      "post": {
+        "operationId": "MetersController_correct",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "readingId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectReadingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Correct a reading, once",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meters/{id}/readings/{readingId}/withdraw": {
+      "post": {
+        "operationId": "MetersController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "readingId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a reading, once",
         "tags": [
           "maintenance"
         ],
@@ -108953,6 +109739,99 @@
           "maintenance"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/meters/{id}": {
+      "get": {
+        "operationId": "TechnicianMetersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterToReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A meter to read",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/meters/{id}/readings": {
+      "post": {
+        "operationId": "TechnicianMetersController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordReadingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a meter’s reading",
+        "tags": [
+          "maintenance"
+        ],
         "x-stability": "draft"
       }
     },

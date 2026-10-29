@@ -74,6 +74,101 @@ describe('Audit coverage — energy and utilities', () => {
     });
   });
 
+  describe('readings, alerts and the spike rule', () => {
+    it('meter_reading.corrected and .withdrawn, meter_alert.acknowledged, energy.settings_changed — ids, days, values and codes', async () => {
+      const m = await e.meter(s);
+      const post = (readOn: string, value: string) =>
+        e
+          .http(
+            'post',
+            `/maintenance/meters/${m.id}/readings`,
+            s.manager.token,
+            {
+              readOn,
+              value,
+            },
+          )
+          .expect(201);
+      const first = (await post(day(-50), '900')).body as { id: string };
+      await post(day(-40), '1000');
+      await post(day(-30), '1100');
+      await post(day(-20), '1200');
+      await post(day(-10), '1300');
+      const fixed = (
+        await e
+          .http(
+            'post',
+            `/maintenance/meters/${m.id}/readings/${first.id}/correct`,
+            s.manager.token,
+            { value: '890', reasonCode: 'misread' },
+          )
+          .expect(201)
+      ).body as { id: string };
+      expect(
+        await single(s.c, 'meter_reading.corrected', fixed.id),
+      ).toMatchObject({
+        actorId: s.manager.id,
+        metadata: {
+          meterId: m.id,
+          supersedesId: first.id,
+          readOn: day(-50),
+          value: '890.0000',
+          reset: false,
+          reasonCode: 'misread',
+        },
+      });
+      await e
+        .http(
+          'post',
+          `/maintenance/meters/${m.id}/readings/${fixed.id}/withdraw`,
+          s.manager.token,
+          { reasonCode: 'wrong_meter' },
+        )
+        .expect(200);
+      expect(
+        (await single(s.c, 'meter_reading.withdrawn', fixed.id)).metadata,
+      ).toEqual({ meterId: m.id, readOn: day(-50), reasonCode: 'wrong_meter' });
+      await e
+        .http('post', `/maintenance/meters/${m.id}/readings`, s.manager.token, {
+          readOn: day(0),
+          value: '2000',
+        })
+        .expect(201);
+      const alert = (
+        (
+          await e
+            .http(
+              'get',
+              `/maintenance/meter-alerts?meterId=${m.id}`,
+              s.manager.token,
+            )
+            .expect(200)
+        ).body as { data: { id: string }[] }
+      ).data[0];
+      await e
+        .http(
+          'post',
+          `/maintenance/meter-alerts/${alert.id}/acknowledge`,
+          s.supervisor.token,
+        )
+        .expect(200);
+      expect(
+        await single(s.c, 'meter_alert.acknowledged', alert.id),
+      ).toMatchObject({
+        actorId: s.supervisor.id,
+        metadata: { meterId: m.id },
+      });
+      await e
+        .http('patch', '/maintenance/energy/settings', s.manager.token, {
+          anomalyFactor: '3',
+        })
+        .expect(200);
+      expect(
+        (await single(s.c, 'energy.settings_changed', s.c.tenantId)).changes,
+      ).toEqual({ anomalyFactor: { from: '2.00', to: '3.00' } });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every energy entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

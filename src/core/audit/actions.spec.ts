@@ -198,6 +198,8 @@ describe('audit catalog', () => {
         'maintenance_contract',
         // ADR 0066
         'meter',
+        'meter_reading',
+        'meter_alert',
       ]).toContain(def.target);
     }
   });

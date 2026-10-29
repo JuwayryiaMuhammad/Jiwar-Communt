@@ -2332,6 +2332,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   meters_multiplier_range: {},
   meters_location_one: {},
   meters_serial_length: { guarded: 'serial IS NULL is tested first' },
+  maintenance_settings_anomaly_range: {},
+  meter_readings_value_range: {},
+  meter_readings_source_shape: {},
+  meter_readings_superseded_shape: {
+    guarded:
+      'superseded_reason is tested IS NULL first, and its IS NULL is paired with superseded_at',
+  },
+  meter_readings_not_self: { guarded: 'supersedes_id IS NULL is tested first' },
+  meter_alerts_kind_known: {},
+  meter_alerts_rates_range: {},
   meters_retired_shape: {
     guarded:
       'retire_reason is tested IS NULL first, and its IS NULL is paired with retired_at; active is NOT NULL',

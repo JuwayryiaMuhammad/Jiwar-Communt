@@ -3667,6 +3667,9 @@ model MaintenanceSettings {
   /// ADR 0065: past its expected life, an asset is advised for replacement
   /// once a year's repairs cost this share (%) of its replacement cost.
   replaceCostSharePct Int   @default(50) @map("replace_cost_share_pct")
+  /// A spike is a period's daily use above the mean of the last `anomalyPeriods` times this (ADR 0066).
+  anomalyFactor       Decimal  @default(2.00) @map("anomaly_factor") @db.Decimal(4, 2)
+  anomalyPeriods      Int      @default(6) @map("anomaly_periods") @db.SmallInt
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -10502,4 +10505,54 @@ model Meter {
   @@unique([tenantId, code])
   @@index([tenantId, kind, code], map: "meters_list_idx")
   @@map("meters")
+}
+
+/// What a meter showed on a day of the compound's calendar (ADR 0066), never
+/// edited: one live reading per meter and day; a correction supersedes it.
+model MeterReading {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  meterId            String    @map("meter_id") @db.Uuid
+  readOn             DateTime  @map("read_on") @db.Date
+  /// The register (cumulative) or the use since the last reading (interval), before the multiplier.
+  value              Decimal   @db.Decimal(16, 4)
+  /// The register started again from zero at this reading.
+  reset              Boolean   @default(false)
+  /// READING_SOURCES.
+  source             String
+  importId           String?   @map("import_id") @db.Uuid
+  /// The reading this one corrects.
+  supersedesId       String?   @map("supersedes_id") @db.Uuid
+  recordedById       String?   @map("recorded_by_account_id") @db.Uuid
+  recordedAt         DateTime  @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  supersededAt       DateTime? @map("superseded_at") @db.Timestamptz(3)
+  supersededById     String?   @map("superseded_by_account_id") @db.Uuid
+  /// REASON_CODES.readingCorrect.
+  supersededReason   String?   @map("superseded_reason")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, meterId, readOn, id], map: "meter_readings_meter_idx")
+  @@map("meter_readings")
+}
+
+/// A spike in a meter's use (ADR 0066), once per meter and day.
+model MeterAlert {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  meterId          String    @map("meter_id") @db.Uuid
+  readingId        String    @map("reading_id") @db.Uuid
+  readOn           DateTime  @map("read_on") @db.Date
+  /// ALERT_KINDS.
+  kind             String
+  /// In the kind's unit a day, after the multiplier.
+  dailyRate        Decimal   @map("daily_rate") @db.Decimal(16, 4)
+  baselineRate     Decimal   @map("baseline_rate") @db.Decimal(16, 4)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  acknowledgedAt   DateTime? @map("acknowledged_at") @db.Timestamptz(3)
+  acknowledgedById String?   @map("acknowledged_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, meterId, readOn], map: "meter_alerts_meter_day_key")
+  @@index([tenantId, createdAt, id], map: "meter_alerts_list_idx")
+  @@map("meter_alerts")
 }

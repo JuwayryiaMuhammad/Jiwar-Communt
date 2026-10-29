@@ -22875,6 +22875,63 @@
           }
         },
         {
+          "name": "The spike rule",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/settings"
+            }
+          }
+        },
+        {
+          "name": "Change the spike rule",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"anomalyFactor\": \"\",\n  \"anomalyPeriods\": 3\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `anomalyFactor` | string |  | From 1.2 to 10: a spike is the daily use above the mean times this. |\n| `anomalyPeriods` | number |  | How many earlier periods make the mean. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/settings"
+            }
+          }
+        },
+        {
           "name": "The inspections of a period: done, on time, failed, followed up",
           "request": {
             "description": "**Responses:** 200",
@@ -23347,6 +23404,81 @@
           }
         },
         {
+          "name": "The spike alerts, the newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meter-alerts"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "meterId",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: not acknowledged yet.",
+                  "disabled": true,
+                  "key": "open",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meter-alerts"
+            }
+          }
+        },
+        {
+          "name": "Acknowledge an alert, once",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meter-alerts",
+                ":id",
+                "acknowledge"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meter-alerts/:id/acknowledge",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the meters, oldest first",
           "request": {
             "description": "**Responses:** 200",
@@ -23509,6 +23641,211 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A meter’s readings, the latest day first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters",
+                ":id",
+                "readings"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`true` lists the corrected and withdrawn ones too.",
+                  "disabled": true,
+                  "key": "superseded",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id/readings",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Enter a reading by hand",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"readOn\": \"2026-01-01\",\n  \"value\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `readOn` | string (date) | yes | The compound’s day it was read: by today, at most 400 days back. |\n| `reset` | boolean |  | The register started again from zero (replaced or rolled over). |\n| `value` | string | yes | The register as it stands (cumulative) or the use since the last reading (interval), before the multiplier. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters",
+                ":id",
+                "readings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id/readings",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Correct a reading, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"value\": \"\",\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `readOn` | string (date) |  | Another day, if the day was wrong. |\n| `reasonCode` | string | yes | From `readingCorrect`. |\n| `reset` | boolean |  |  |\n| `value` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters",
+                ":id",
+                "readings",
+                ":readingId",
+                "correct"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id/readings/:readingId/correct",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "readingId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw a reading, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters",
+                ":id",
+                "readings",
+                ":readingId",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id/readings/:readingId/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "readingId",
                   "value": ""
                 }
               ]
@@ -27069,6 +27406,83 @@
                 "submit"
               ],
               "raw": "{{baseUrl}}/api/v1/technician/inspections/:id/submit",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A meter to read",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "meters",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/meters/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a meter’s reading",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"readOn\": \"2026-01-01\",\n  \"value\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `readOn` | string (date) | yes | The compound’s day it was read: by today, at most 400 days back. |\n| `reset` | boolean |  | The register started again from zero (replaced or rolled over). |\n| `value` | string | yes | The register as it stands (cumulative) or the use since the last reading (interval), before the multiplier. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "meters",
+                ":id",
+                "readings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/meters/:id/readings",
               "variable": [
                 {
                   "description": "",

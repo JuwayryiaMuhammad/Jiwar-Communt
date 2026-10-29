@@ -1952,6 +1952,12 @@ export const AUDIT_ACTIONS = {
   'meter.created': { log: 'tenant', target: 'meter' },
   'meter.updated': { log: 'tenant', target: 'meter' },
   'meter.retired': { log: 'tenant', target: 'meter' },
+  // A reading is a fact, not a decision: only its correction or withdrawal
+  // is audited, as an alert's acknowledgement and the spike rule are.
+  'meter_reading.corrected': { log: 'tenant', target: 'meter_reading' },
+  'meter_reading.withdrawn': { log: 'tenant', target: 'meter_reading' },
+  'meter_alert.acknowledged': { log: 'tenant', target: 'meter_alert' },
+  'energy.settings_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

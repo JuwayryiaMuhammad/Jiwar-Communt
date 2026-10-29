@@ -313,6 +313,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'البلاغ رقم {ticketNumber}: لم يصرف المخزن {itemRef}.',
     },
   },
+  'meter.anomaly': {
+    en: {
+      title: 'A meter ran high',
+      body: 'Meter {meterRef} used far more than usual up to {readOn}.',
+    },
+    ar: {
+      title: 'استهلاك مرتفع في عداد',
+      body: 'استهلك العداد {meterRef} أكثر من المعتاد بكثير حتى {readOn}.',
+    },
+  },
   'maintenance_contract.expiring': {
     en: {
       title: 'A contract ends soon',

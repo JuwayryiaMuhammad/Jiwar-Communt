@@ -337,3 +337,10 @@ test('a contract’s end (ADR 0065) reads as its code and date, and opens it for
   assert.equal(notificationHref(ending, (p) => p === 'assets.manage'), '/contracts/c1');
   assert.equal(notificationHref(ending, (p) => p === 'assets.read'), null);
 });
+
+test('a meter’s spike (ADR 0066) reads as its code and day, and opens the meter for who reads energy', () => {
+  const high = { kind: 'meter.anomaly', params: { meterRef: 'W-POOL', readOn: '2026-12-20' }, targetType: 'meter', targetId: 'm1' };
+  assert.equal(notificationText(high), 'Meter W-POOL used far more than usual up to 2026-12-20');
+  assert.equal(notificationHref(high, (p) => p === 'energy.read'), '/meters/m1');
+  assert.equal(notificationHref(high, (p) => p === 'assets.read'), null);
+});

@@ -819,4 +819,8 @@ export const ENERGY_COVERAGE: readonly string[] = [
   'meter.created',
   'meter.updated',
   'meter.retired',
+  'meter_reading.corrected',
+  'meter_reading.withdrawn',
+  'meter_alert.acknowledged',
+  'energy.settings_changed',
 ];

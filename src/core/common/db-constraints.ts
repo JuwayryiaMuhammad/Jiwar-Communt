@@ -354,6 +354,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Meters (ADR 0066): the code is the compound's to choose.
   meters_tenant_id_id_key: null,
   meters_tenant_id_code_key: ['code'],
+  // A meter's readings and alerts (ADR 0066): written under the meter's
+  // FOR UPDATE after their checks (READING_EXISTS, READING_ALREADY_CORRECTED),
+  // an alert ON CONFLICT: a violation is a race and names nothing.
+  meter_readings_tenant_id_id_key: null,
+  meter_readings_live_day: null,
+  meter_readings_supersedes_key: null,
+  meter_alerts_tenant_id_id_key: null,
+  meter_alerts_meter_day_key: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

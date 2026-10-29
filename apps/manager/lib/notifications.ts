@@ -300,6 +300,7 @@ const TEXT: Record<string, (p: P) => string> = {
   'asset.warranty_expiring': (p) => `The warranty of asset ${p.assetRef} ends on ${p.endsOn}`,
   'stock.reorder_level': (p) => `${p.itemRef} is at or under its reorder level`,
   'maintenance_contract.expiring': (p) => `Contract ${p.contractRef} ends on ${p.endsOn}`,
+  'meter.anomaly': (p) => `Meter ${p.meterRef} used far more than usual up to ${p.readOn}`,
   'part_request.created': (p) => `${ticket(p)} asks the store for ${p.itemRef}`,
   'maintenance.plan_overdue': (p) => `Planned work on asset ${p.assetRef}, due ${p.dueOn}, is overdue`,
   'inspection.assigned': (p) => `An inspection of ${p.targetRef} is yours, due ${p.dueOn}`,
@@ -325,6 +326,8 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'asset' && n.targetId) return can('assets.read') ? `/assets/${n.targetId}` : null;
   if (n.targetType === 'stock_item' && n.targetId) return can('stock.manage') ? `/stock/${n.targetId}` : null;
   if (n.targetType === 'maintenance_contract' && n.targetId) return can('assets.manage') ? `/contracts/${n.targetId}` : null;
+  // Energy (ADR 0066).
+  if (n.targetType === 'meter' && n.targetId) return can('energy.read') ? `/meters/${n.targetId}` : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

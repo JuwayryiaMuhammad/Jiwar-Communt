@@ -254,6 +254,9 @@ export interface World
   bContractId: string;
   /** ADR 0066: compound B's meter, in its common area. */
   bMeterId: string;
+  /** ADR 0066: a reading of it, and a spike alert on it. */
+  bReadingId: string;
+  bMeterAlertId: string;
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
@@ -974,6 +977,32 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     }),
   );
+  const bReading = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.meterReading.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        meterId: bMeter.id,
+        readOn: new Date('2026-01-01T00:00:00.000Z'),
+        value: '10',
+        source: 'manual',
+      },
+    }),
+  );
+  const bMeterAlert = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.meterAlert.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        meterId: bMeter.id,
+        readingId: bReading.id,
+        readOn: new Date('2026-01-01T00:00:00.000Z'),
+        kind: 'spike',
+        dailyRate: '9',
+        baselineRate: '1',
+      },
+    }),
+  );
   const bInspectionChecklist = await helpers.asManager(b, () =>
     h.moduleRef.get(ChecklistsService).create({
       key: 'world_inspection',
@@ -1519,6 +1548,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPartRequestId: bPartRequest.id,
     bContractId: bContract.id,
     bMeterId: bMeter.id,
+    bReadingId: bReading.id,
+    bMeterAlertId: bMeterAlert.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
     bRecommendationId: bRecommendation.id,

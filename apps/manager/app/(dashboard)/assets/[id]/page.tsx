@@ -26,6 +26,7 @@ import { useState } from 'react';
 import { EditAssetDialog } from '@/components/assets/asset-dialogs';
 import { CONDITION_TONE, eventText, HEALTH_TONE, placeText } from '@/components/assets/format';
 import { TagDialog } from '@/components/assets/tag-dialog';
+import { AssetContractsPanel, AssetEconomicsPanel } from '@/components/operations/asset-economics';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
@@ -303,6 +304,8 @@ export default function AssetPage() {
             </div>
             <div className="stack">
               <Impact id={a.id} />
+              <AssetEconomicsPanel id={a.id} />
+              <AssetContractsPanel id={a.id} />
               <Plans id={a.id} />
               <Documents id={a.id} />
             </div>

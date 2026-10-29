@@ -315,6 +315,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <RefreshCcw aria-hidden />,
           show: can('assets.manage'),
         },
+        // The store, contracts and what it all cost (ADR 0065).
+        { href: '/stock', label: 'Stock', icon: <Package aria-hidden />, show: can('stock.manage') },
+        { href: '/contracts', label: 'Contracts', icon: <Handshake aria-hidden />, show: can('assets.manage') },
+        { href: '/economics', label: 'Economics', icon: <Receipt aria-hidden />, show: can('assets.manage') },
       ],
     },
     {

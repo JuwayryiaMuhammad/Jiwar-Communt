@@ -57,6 +57,21 @@ export type InspectionSummary = Schema<'InspectionSummaryView'>;
 export type Inspection = Schema<'InspectionView'>;
 export type InspectionReport = Schema<'InspectionReportView'>;
 export type Replacement = Schema<'ReplacementRecommendationView'>;
+// Maintenance operations (ADR 0065).
+export type TicketCosts = Schema<'TicketCostsView'>;
+export type TicketCostEntry = Schema<'TicketCostEntryView'>;
+export type QuoteSuggestion = Schema<'QuoteSuggestionView'>;
+export type Store = Schema<'StoreView'>;
+export type StockItem = Schema<'StockItemView'>;
+export type StockItemCard = Schema<'StockItemCardView'>;
+export type StockMovement = Schema<'StockMovementView'>;
+export type PartRequest = Schema<'PartRequestView'>;
+export type TicketParts = Schema<'TicketPartsView'>;
+export type MaintenanceContract = Schema<'MaintenanceContractView'>;
+export type AssetEconomics = Schema<'AssetEconomicsView'>;
+export type CompoundEconomics = Schema<'CompoundEconomicsView'>;
+export type MaintenanceKpis = Schema<'MaintenanceKpisView'>;
+export type TechnicianStats = Schema<'TechnicianStatsView'>;
 export interface AssetFilters {
   status?: AssetSummary['status'] | '';
   commonAreaId?: string;
@@ -517,6 +532,22 @@ export const keys = {
   inspectionReport: (from: string, to: string) => ['inspections', 'report', from, to] as const,
   replacements: (filters: object) => ['assets', 'replacements', filters] as const,
   ticketChecklist: (id: string) => ['tickets', 'detail', id, 'checklist'] as const,
+  ticketCosts: (id: string) => ['tickets', 'detail', id, 'costs'] as const,
+  ticketParts: (id: string) => ['tickets', 'detail', id, 'parts'] as const,
+  quoteSuggestions: (id: string) => ['tickets', 'detail', id, 'quote-suggestions'] as const,
+  stockAll: ['stock'] as const,
+  stores: ['stock', 'stores'] as const,
+  stockItems: (filters: object) => ['stock', 'items', filters] as const,
+  stockItem: (id: string) => ['stock', 'items', 'detail', id] as const,
+  stockMovements: (filters: object) => ['stock', 'movements', filters] as const,
+  partRequests: (filters: object) => ['stock', 'part-requests', filters] as const,
+  contractsAll: ['contracts'] as const,
+  contracts: (filters: object) => ['contracts', 'list', filters] as const,
+  contract: (id: string) => ['contracts', 'detail', id] as const,
+  assetEconomics: (id: string) => ['assets', 'detail', id, 'economics'] as const,
+  economics: (from: string, to: string) => ['economics', from, to] as const,
+  kpis: (from: string, to: string) => ['kpis', from, to] as const,
+  technicianStats: (from: string, to: string) => ['technician-stats', from, to] as const,
   maintenanceSettings: ['maintenance-settings'] as const,
   dispatchSettings: ['dispatch-settings'] as const,
   slaSettings: ['sla-settings'] as const,
@@ -826,7 +857,7 @@ export const fetchers = {
   assetEvents: (id: string, cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/maintenance/assets/{id}/events', { params: { path: { id }, query: { cursor, limit } } })),
   assetImpact: (id: string) => unwrap(api.GET('/api/v1/maintenance/assets/{id}/impact', { params: { path: { id } } })),
-  documents: (subject: { assetId?: string; assetTypeId?: string; commonAreaId?: string }) =>
+  documents: (subject: { assetId?: string; assetTypeId?: string; commonAreaId?: string; contractId?: string }) =>
     unwrap(api.GET('/api/v1/maintenance/documents', { params: { query: subject } })),
   assetImports: (cursor?: string, limit = 20) =>
     unwrap(api.GET('/api/v1/maintenance/asset-imports', { params: { query: { cursor, limit } } })),
@@ -862,6 +893,43 @@ export const fetchers = {
     ),
   ticketChecklist: (id: string) =>
     unwrap(api.GET('/api/v1/maintenance/tickets/{id}/checklist', { params: { path: { id } } })),
+  // Maintenance operations (ADR 0065).
+  ticketCosts: (id: string) => unwrap(api.GET('/api/v1/maintenance/tickets/{id}/costs', { params: { path: { id } } })),
+  ticketParts: (id: string) => unwrap(api.GET('/api/v1/maintenance/tickets/{id}/parts', { params: { path: { id } } })),
+  quoteSuggestions: (id: string) =>
+    unwrap(api.GET('/api/v1/maintenance/tickets/{id}/quote-suggestions', { params: { path: { id } } })),
+  stores: () => unwrap(api.GET('/api/v1/maintenance/stores', { params: { query: { limit: 100 } } })),
+  stockItems: (filters: { active?: 'true' | 'false' | ''; below?: 'true' | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/stock/items', {
+        params: { query: { ...(clean(filters) as { active?: 'true' | 'false'; below?: 'true' }), cursor, limit } },
+      }),
+    ),
+  stockItem: (id: string) => unwrap(api.GET('/api/v1/maintenance/stock/items/{id}', { params: { path: { id } } })),
+  stockMovements: (filters: { itemId?: string; storeId?: string; ticketId?: string }, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/stock/movements', { params: { query: { ...filters, cursor, limit } } })),
+  partRequests: (filters: { status?: PartRequest['status'] | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/part-requests', {
+        params: { query: { ...(clean(filters) as { status?: PartRequest['status'] }), cursor, limit } },
+      }),
+    ),
+  contracts: (filters: { status?: MaintenanceContract['status'] | ''; assetId?: string }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/contracts', {
+        params: {
+          query: { ...(clean(filters) as { status?: MaintenanceContract['status']; assetId?: string }), cursor, limit },
+        },
+      }),
+    ),
+  contract: (id: string) => unwrap(api.GET('/api/v1/maintenance/contracts/{id}', { params: { path: { id } } })),
+  assetEconomics: (id: string) =>
+    unwrap(api.GET('/api/v1/maintenance/assets/{id}/economics', { params: { path: { id } } })),
+  economics: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/maintenance/economics', { params: { query: { from, to } } })),
+  kpis: (from: string, to: string) => unwrap(api.GET('/api/v1/maintenance/kpis', { params: { query: { from, to } } })),
+  technicianStats: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/maintenance/technicians/stats', { params: { query: { from, to } } })),
   maintenanceSettings: () => unwrap(api.GET('/api/v1/maintenance/settings')),
   dispatchSettings: () => unwrap(api.GET('/api/v1/maintenance/dispatch-settings')),
   slaSettings: () => unwrap(api.GET('/api/v1/maintenance/sla-settings')),

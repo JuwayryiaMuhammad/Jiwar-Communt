@@ -10,7 +10,16 @@ import { fetchers, keys, type MaintenanceSettings } from '@/lib/queries';
 import { formatClock, formatMinutes } from './format';
 
 type Form = Record<keyof MaintenanceSettings, string>;
-const FIELDS = ['autoCloseHours', 'reopenDays', 'maxReportPhotos', 'visitHoursStart', 'visitHoursEnd', 'visitSlotMinutes'] as const;
+const FIELDS = [
+  'autoCloseHours',
+  'reopenDays',
+  'maxReportPhotos',
+  'visitHoursStart',
+  'visitHoursEnd',
+  'visitSlotMinutes',
+  // ADR 0065.
+  'replaceCostSharePct',
+] as const;
 const toForm = (s: MaintenanceSettings): Form => Object.fromEntries(FIELDS.map((k) => [k, String(s[k])])) as Form;
 
 /** Half-hour steps over the day, plus the saved value when it is off the grid. */
@@ -135,6 +144,15 @@ export function Rules() {
               </Field>
               <Field label="Photos per report" hint="How many photos the reporter may attach (1 to 10)." error={err('maxReportPhotos')}>
                 {(p) => <Input {...p} type="number" min={1} max={10} value={form.maxReportPhotos} onChange={(e) => set('maxReportPhotos', e.target.value)} />}
+              </Field>
+              <Field
+                label="Replace at (%)"
+                hint="Past its expected life, an asset is advised for replacement once a year’s repairs cost this share of a new one."
+                error={err('replaceCostSharePct')}
+              >
+                {(p) => (
+                  <Input {...p} type="number" min={1} max={100} value={form.replaceCostSharePct} onChange={(e) => set('replaceCostSharePct', e.target.value)} />
+                )}
               </Field>
             </div>
           </CardBody>

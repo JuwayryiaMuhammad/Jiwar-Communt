@@ -2323,6 +2323,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   maintenance_contracts_alert_shape: {
     guarded: 'expiry_alerted_for IS NULL is tested first; ends_on is NOT NULL',
   },
+  // Asset economics' one setting (ADR 0065).
+  maintenance_settings_replace_share_range: {},
 };
 
 interface Check {

@@ -39,6 +39,8 @@ const SETTINGS = [
   'autoCloseHours',
   'maxReportPhotos',
   'reopenDays',
+  // ADR 0065.
+  'replaceCostSharePct',
   // ADR 0038.
   'visitHoursEnd',
   'visitHoursStart',
@@ -1553,21 +1555,23 @@ describe('API v0 — maintenance (ADR 0032)', () => {
         autoCloseHours: 72,
         reopenDays: 7,
         maxReportPhotos: 5,
+        replaceCostSharePct: 50,
         ...VISIT_HOURS,
       });
       const patched = await call(w, 'PATCH', '/maintenance/settings', {
         token: manager(),
-        body: { autoCloseHours: 48 },
+        body: { autoCloseHours: 48, replaceCostSharePct: 40 },
       }).expect(200);
       expect(patched.body).toEqual({
         autoCloseHours: 48,
         reopenDays: 7,
         maxReportPhotos: 5,
+        replaceCostSharePct: 40,
         ...VISIT_HOURS,
       });
       await call(w, 'PATCH', '/maintenance/settings', {
         token: manager(),
-        body: { autoCloseHours: 72 },
+        body: { autoCloseHours: 72, replaceCostSharePct: 50 },
       }).expect(200);
     });
   });

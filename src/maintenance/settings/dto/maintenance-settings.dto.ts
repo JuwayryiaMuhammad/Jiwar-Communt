@@ -7,6 +7,7 @@ import {
   REOPEN_DAYS,
   VISIT_HOURS_END,
   VISIT_HOURS_START,
+  REPLACE_COST_SHARE_PCT,
   VISIT_SLOT_MINUTES,
 } from '../maintenance-settings.service';
 
@@ -90,4 +91,18 @@ export class UpdateMaintenanceSettingsDto {
   @Min(VISIT_SLOT_MINUTES.min, withParams({ ...VISIT_SLOT_MINUTES }))
   @Max(VISIT_SLOT_MINUTES.max, withParams({ ...VISIT_SLOT_MINUTES }))
   visitSlotMinutes?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: REPLACE_COST_SHARE_PCT.min,
+    maximum: REPLACE_COST_SHARE_PCT.max,
+    description:
+      'ADR 0065: past its expected life, an asset is advised for replacement once a year’s repairs cost this share (%) of its replacement cost.',
+  })
+  @IsOptional()
+  @IsInt(withParams({ ...REPLACE_COST_SHARE_PCT }))
+  @Min(REPLACE_COST_SHARE_PCT.min, withParams({ ...REPLACE_COST_SHARE_PCT }))
+  @Max(REPLACE_COST_SHARE_PCT.max, withParams({ ...REPLACE_COST_SHARE_PCT }))
+  replaceCostSharePct?: number;
 }

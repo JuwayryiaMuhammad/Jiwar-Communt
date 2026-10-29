@@ -37,6 +37,12 @@ export class MaintenanceSettingsResponse {
     description: 'The length of a slot residents may pick.',
   })
   visitSlotMinutes: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'ADR 0065: the share (%) of its replacement cost a year’s repairs reach before an asset past its life is advised for replacement.',
+  })
+  replaceCostSharePct: number;
 
   static from(s: MaintenanceSettingsView): MaintenanceSettingsResponse {
     return {
@@ -46,6 +52,7 @@ export class MaintenanceSettingsResponse {
       visitHoursStart: s.visitHoursStart,
       visitHoursEnd: s.visitHoursEnd,
       visitSlotMinutes: s.visitSlotMinutes,
+      replaceCostSharePct: s.replaceCostSharePct,
     };
   }
 }

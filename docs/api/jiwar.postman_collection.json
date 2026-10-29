@@ -21803,6 +21803,35 @@
           }
         },
         {
+          "name": "Get what an asset cost, its downtime and the advice",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id",
+                "economics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id/economics",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "An asset’s history, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -22812,6 +22841,40 @@
           }
         },
         {
+          "name": "Get the compound’s maintenance spend and capital plan",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "economics"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/economics"
+            }
+          }
+        },
+        {
           "name": "The inspections of a period: done, on time, failed, followed up",
           "request": {
             "description": "**Responses:** 200",
@@ -23246,6 +23309,40 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Get the maintenance KPIs over a period",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "kpis"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/kpis"
             }
           }
         },
@@ -24189,9 +24286,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"autoCloseHours\": 1,\n  \"maxReportPhotos\": 1,\n  \"reopenDays\": 1,\n  \"visitHoursEnd\": 1,\n  \"visitHoursStart\": 0,\n  \"visitSlotMinutes\": 15\n}"
+              "raw": "{\n  \"autoCloseHours\": 1,\n  \"maxReportPhotos\": 1,\n  \"reopenDays\": 1,\n  \"replaceCostSharePct\": 1,\n  \"visitHoursEnd\": 1,\n  \"visitHoursStart\": 0,\n  \"visitSlotMinutes\": 15\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `autoCloseHours` | number |  | Hours a completed ticket waits for the reporter. |\n| `maxReportPhotos` | number |  | Photos the reporter may attach to a ticket. |\n| `reopenDays` | number |  | Days after closing during which the reporter may reopen. |\n| `visitHoursEnd` | number |  | Visiting hours end, minutes after local midnight; at least one slot after the start. |\n| `visitHoursStart` | number |  | Visiting hours start, minutes after local midnight (ADR 0038). |\n| `visitSlotMinutes` | number |  | The length of a slot residents may pick. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `autoCloseHours` | number |  | Hours a completed ticket waits for the reporter. |\n| `maxReportPhotos` | number |  | Photos the reporter may attach to a ticket. |\n| `reopenDays` | number |  | Days after closing during which the reporter may reopen. |\n| `replaceCostSharePct` | number |  | ADR 0065: past its expected life, an asset is advised for replacement once a year’s repairs cost this share (%) of its replacement cost. |\n| `visitHoursEnd` | number |  | Visiting hours end, minutes after local midnight; at least one slot after the start. |\n| `visitHoursStart` | number |  | Visiting hours start, minutes after local midnight (ADR 0038). |\n| `visitSlotMinutes` | number |  | The length of a slot residents may pick. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",

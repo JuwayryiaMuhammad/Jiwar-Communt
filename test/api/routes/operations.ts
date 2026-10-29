@@ -609,3 +609,27 @@ export const MAINTENANCE_CONTRACT_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+/** Asset economics and the KPIs (ADR 0065): `assets.manage`. */
+export const ECONOMICS_ROUTES: Row[] = [
+  keeper({
+    method: 'GET',
+    path: '/maintenance/assets/{id}/economics',
+    foreign: { params: (w) => ({ id: w.bAssetId }), code: 'ASSET_NOT_FOUND' },
+    invalid: 'none',
+  }),
+  ...['/maintenance/economics', '/maintenance/kpis'].map((path) =>
+    keeper({
+      method: 'GET',
+      path,
+      foreign: 'none',
+      invalid: {
+        query: { from: 'last week', to: '2026-1-1' },
+        fields: [
+          { field: 'from', code: 'INVALID_FORMAT' },
+          { field: 'to', code: 'INVALID_FORMAT' },
+        ],
+      },
+    }),
+  ),
+];

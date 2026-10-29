@@ -5020,6 +5020,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/assets/{id}/economics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get what an asset cost, its downtime and the advice */
+        get: operations["EconomicsController_asset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/assets/{id}/events": {
         parameters: {
             query?: never;
@@ -5367,6 +5384,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/economics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the compound’s maintenance spend and capital plan */
+        get: operations["EconomicsController_compound"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/inspection-report": {
         parameters: {
             query?: never;
@@ -5520,6 +5554,23 @@ export interface paths {
         put?: never;
         /** Call an inspection off; `reasonCode` from `inspectionCancel` */
         post: operations["InspectionsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/kpis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the maintenance KPIs over a period */
+        get: operations["EconomicsController_kpis"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -19361,6 +19412,28 @@ export interface components {
             nameAr: string;
             nameEn: string;
         };
+        AssetEconomicsView: {
+            advice: components["schemas"]["ReplacementAdvice"];
+            ageYears: number | null;
+            /** Format: uuid */
+            assetId: string;
+            /** @description Everything, ever. */
+            cumulative: components["schemas"]["SpendSplitView"];
+            /** @description EGP: downtime days × its cost of a day; null without one. */
+            downtimeCost: string | null;
+            /** @description Days they stood open, together. */
+            downtimeDays: number;
+            /** @description Corrective tickets, ever, not cancelled. */
+            failures: number;
+            /** @description EGP, the last twelve months. */
+            lastYear: string;
+            lifeYears: number | null;
+            mtbfDays: number | null;
+            reasons: components["schemas"]["ReplacementAdviceReason"][];
+            replacementCost: string | null;
+            replacementYear: number | null;
+            reserve: components["schemas"]["ReserveView"] | null;
+        };
         AssetEventView: {
             /** Format: uuid */
             actorId: string | null;
@@ -19425,6 +19498,12 @@ export interface components {
             source: "run" | "manual";
             unit: string | null;
             value: string;
+        };
+        AssetSpendView: {
+            amount: string;
+            /** Format: uuid */
+            assetId: string;
+            code: string;
         };
         AssetStatusDto: {
             /**
@@ -20670,6 +20749,12 @@ export interface components {
             visitorsNotify: boolean;
             warrantyClaims: boolean;
         };
+        CapitalYearView: {
+            /** @description EGP of replacements due. */
+            amount: string;
+            assets: number;
+            year: number;
+        };
         CardIncidentCreatedView: {
             /** @description 8 digits, shown once. */
             accessCode: string;
@@ -20807,6 +20892,10 @@ export interface components {
             category: components["schemas"]["NotificationCategory"];
             email: boolean;
             push: boolean;
+        };
+        CategorySpendView: {
+            amount: string;
+            categoryKey: string;
         };
         CategorySwitchDto: {
             category: components["schemas"]["NotificationCategory"];
@@ -21843,6 +21932,19 @@ export interface components {
             titleAr: string;
             titleEn: string;
             versionNo: number;
+        };
+        CompoundEconomicsView: {
+            byCategory: components["schemas"]["CategorySpendView"][];
+            /** @description The compound’s months. */
+            byMonth: components["schemas"]["MonthSpendView"][];
+            /** @description Five years from this one; an overdue replacement in the first. */
+            capitalPlan: components["schemas"]["CapitalYearView"][];
+            period: components["schemas"]["PeriodView"];
+            /** @description Straight-line, every asset with a cost and a life. */
+            reserve: components["schemas"]["ReserveView"];
+            spend: components["schemas"]["SpendSplitView"];
+            /** @description The ten that cost most. */
+            topAssets: components["schemas"]["AssetSpendView"][];
         };
         ConfirmDto: {
             /** @description For the maintenance team. Never in the audit trail. */
@@ -27557,6 +27659,20 @@ export interface components {
             data: components["schemas"]["MaintenanceDocumentView"][];
             nextCursor: string | null;
         };
+        MaintenanceKpisView: {
+            completedCorrective: number;
+            completedPlanned: number;
+            /** @description 0–1. */
+            compliance: number | null;
+            failures: number;
+            mtbfDays: number | null;
+            mttrHours: number | null;
+            occurrencesDue: number;
+            occurrencesOnTime: number;
+            period: components["schemas"]["PeriodView"];
+            /** @description 0–1. */
+            plannedShare: number | null;
+        };
         MaintenancePlanSummaryView: {
             active: boolean;
             /** Format: uuid */
@@ -27618,6 +27734,8 @@ export interface components {
             maxReportPhotos: number;
             /** @description Days after closing during which the reporter may reopen. */
             reopenDays: number;
+            /** @description ADR 0065: the share (%) of its replacement cost a year’s repairs reach before an asset past its life is advised for replacement. */
+            replaceCostSharePct: number;
             /** @description Visiting hours end, minutes after local midnight. */
             visitHoursEnd: number;
             /** @description Visiting hours start, minutes after midnight in the compound’s time zone. */
@@ -27922,6 +28040,11 @@ export interface components {
             metricKey: string;
             /** @description The one before, to compare. */
             previous: components["schemas"]["AssetReadingView"] | null;
+        };
+        MonthSpendView: {
+            amount: string;
+            /** @example 2026-10 */
+            month: string;
         };
         MoveAssetDto: {
             /** Format: uuid */
@@ -29780,6 +29903,13 @@ export interface components {
             data: components["schemas"]["PendingRegistrationView"][];
             nextCursor: string | null;
         };
+        PeriodView: {
+            days: number;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+        };
         PermissionDecisionDto: {
             /** @enum {string} */
             decision: "approve" | "decline";
@@ -31309,6 +31439,10 @@ export interface components {
             /** @description The whole set; keys from GET /permissions. The manager role keeps roles.manage and residents.manage. */
             permissions: string[];
         };
+        /** @enum {string} */
+        ReplacementAdvice: "replace" | "repair" | "unknown";
+        /** @enum {string} */
+        ReplacementAdviceReason: "repairs_exceed_replacement" | "past_life_and_costly" | "no_replacement_cost";
         ReplacementRecommendationView: {
             /** Format: uuid */
             assetId: string;
@@ -31681,6 +31815,12 @@ export interface components {
              * @description Where it is held.
              */
             storeId: string;
+        };
+        ReserveView: {
+            /** @description EGP built up by now. */
+            accrued: string;
+            /** @description EGP to set aside a year. */
+            annual: string;
         };
         ResidenceDto: {
             resides: boolean;
@@ -33195,6 +33335,19 @@ export interface components {
         SpecialtyViewList: {
             data: components["schemas"]["SpecialtyView"][];
             nextCursor: string | null;
+        };
+        SpendSplitView: {
+            contractor: string;
+            /** @description Repairs: everything else. */
+            corrective: string;
+            labour: string;
+            other: string;
+            /** @description Net of parts returned. */
+            parts: string;
+            /** @description A plan’s work orders and residents’ check-ups. */
+            planned: string;
+            /** @description EGP, voided entries left out. */
+            total: string;
         };
         /**
          * @description `works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance.
@@ -36735,6 +36888,8 @@ export interface components {
             maxReportPhotos?: number;
             /** @description Days after closing during which the reporter may reopen. */
             reopenDays?: number;
+            /** @description ADR 0065: past its expected life, an asset is advised for replacement once a year’s repairs cost this share (%) of its replacement cost. */
+            replaceCostSharePct?: number;
             /** @description Visiting hours end, minutes after local midnight; at least one slot after the start. */
             visitHoursEnd?: number;
             /** @description Visiting hours start, minutes after local midnight (ADR 0038). */
@@ -44928,6 +45083,27 @@ export interface operations {
             };
         };
     };
+    EconomicsController_asset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetEconomicsView"];
+                };
+            };
+        };
+    };
     AssetsController_events: {
         parameters: {
             query?: {
@@ -45560,6 +45736,30 @@ export interface operations {
             };
         };
     };
+    EconomicsController_compound: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundEconomicsView"];
+                };
+            };
+        };
+    };
     InspectionReportController_report: {
         parameters: {
             query: {
@@ -45839,6 +46039,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InspectionView"];
+                };
+            };
+        };
+    };
+    EconomicsController_kpis: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceKpisView"];
                 };
             };
         };

@@ -3664,6 +3664,9 @@ model MaintenanceSettings {
   visitHoursStart  Int      @default(480) @map("visit_hours_start")
   visitHoursEnd    Int      @default(1080) @map("visit_hours_end")
   visitSlotMinutes Int      @default(60) @map("visit_slot_minutes")
+  /// ADR 0065: past its expected life, an asset is advised for replacement
+  /// once a year's repairs cost this share (%) of its replacement cost.
+  replaceCostSharePct Int   @default(50) @map("replace_cost_share_pct")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 

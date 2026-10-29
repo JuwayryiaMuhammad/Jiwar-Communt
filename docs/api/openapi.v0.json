@@ -1764,6 +1764,98 @@
         ],
         "type": "object"
       },
+      "AssetEconomicsView": {
+        "properties": {
+          "advice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReplacementAdvice"
+              }
+            ]
+          },
+          "ageYears": {
+            "nullable": true,
+            "type": "number"
+          },
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "cumulative": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SpendSplitView"
+              }
+            ],
+            "description": "Everything, ever."
+          },
+          "downtimeCost": {
+            "description": "EGP: downtime days × its cost of a day; null without one.",
+            "nullable": true,
+            "type": "string"
+          },
+          "downtimeDays": {
+            "description": "Days they stood open, together.",
+            "type": "number"
+          },
+          "failures": {
+            "description": "Corrective tickets, ever, not cancelled.",
+            "type": "number"
+          },
+          "lastYear": {
+            "description": "EGP, the last twelve months.",
+            "type": "string"
+          },
+          "lifeYears": {
+            "nullable": true,
+            "type": "number"
+          },
+          "mtbfDays": {
+            "nullable": true,
+            "type": "number"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/ReplacementAdviceReason"
+            },
+            "type": "array"
+          },
+          "replacementCost": {
+            "nullable": true,
+            "type": "string"
+          },
+          "replacementYear": {
+            "nullable": true,
+            "type": "number"
+          },
+          "reserve": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReserveView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "assetId",
+          "cumulative",
+          "lastYear",
+          "failures",
+          "downtimeDays",
+          "downtimeCost",
+          "mtbfDays",
+          "ageYears",
+          "lifeYears",
+          "replacementCost",
+          "replacementYear",
+          "advice",
+          "reasons",
+          "reserve"
+        ],
+        "type": "object"
+      },
       "AssetEventView": {
         "properties": {
           "actorId": {
@@ -2002,6 +2094,26 @@
           "unit",
           "source",
           "occurredAt"
+        ],
+        "type": "object"
+      },
+      "AssetSpendView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "code",
+          "amount"
         ],
         "type": "object"
       },
@@ -6169,6 +6281,26 @@
         ],
         "type": "object"
       },
+      "CapitalYearView": {
+        "properties": {
+          "amount": {
+            "description": "EGP of replacements due.",
+            "type": "string"
+          },
+          "assets": {
+            "type": "number"
+          },
+          "year": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "year",
+          "amount",
+          "assets"
+        ],
+        "type": "object"
+      },
       "CardIncidentCreatedView": {
         "properties": {
           "accessCode": {
@@ -6623,6 +6755,21 @@
           "category",
           "email",
           "push"
+        ],
+        "type": "object"
+      },
+      "CategorySpendView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "categoryKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryKey",
+          "amount"
         ],
         "type": "object"
       },
@@ -9979,6 +10126,61 @@
           "changesAr",
           "boardPublicationId",
           "fileUrl"
+        ],
+        "type": "object"
+      },
+      "CompoundEconomicsView": {
+        "properties": {
+          "byCategory": {
+            "items": {
+              "$ref": "#/components/schemas/CategorySpendView"
+            },
+            "type": "array"
+          },
+          "byMonth": {
+            "description": "The compound’s months.",
+            "items": {
+              "$ref": "#/components/schemas/MonthSpendView"
+            },
+            "type": "array"
+          },
+          "capitalPlan": {
+            "description": "Five years from this one; an overdue replacement in the first.",
+            "items": {
+              "$ref": "#/components/schemas/CapitalYearView"
+            },
+            "type": "array"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodView"
+          },
+          "reserve": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReserveView"
+              }
+            ],
+            "description": "Straight-line, every asset with a cost and a life."
+          },
+          "spend": {
+            "$ref": "#/components/schemas/SpendSplitView"
+          },
+          "topAssets": {
+            "description": "The ten that cost most.",
+            "items": {
+              "$ref": "#/components/schemas/AssetSpendView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "period",
+          "spend",
+          "byMonth",
+          "byCategory",
+          "topAssets",
+          "capitalPlan",
+          "reserve"
         ],
         "type": "object"
       },
@@ -27637,6 +27839,59 @@
         ],
         "type": "object"
       },
+      "MaintenanceKpisView": {
+        "properties": {
+          "completedCorrective": {
+            "type": "number"
+          },
+          "completedPlanned": {
+            "type": "number"
+          },
+          "compliance": {
+            "description": "0–1.",
+            "nullable": true,
+            "type": "number"
+          },
+          "failures": {
+            "type": "number"
+          },
+          "mtbfDays": {
+            "nullable": true,
+            "type": "number"
+          },
+          "mttrHours": {
+            "nullable": true,
+            "type": "number"
+          },
+          "occurrencesDue": {
+            "type": "number"
+          },
+          "occurrencesOnTime": {
+            "type": "number"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodView"
+          },
+          "plannedShare": {
+            "description": "0–1.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "period",
+          "completedPlanned",
+          "completedCorrective",
+          "plannedShare",
+          "mttrHours",
+          "failures",
+          "mtbfDays",
+          "occurrencesDue",
+          "occurrencesOnTime",
+          "compliance"
+        ],
+        "type": "object"
+      },
       "MaintenancePlanSummaryView": {
         "properties": {
           "active": {
@@ -27837,6 +28092,10 @@
             "description": "Days after closing during which the reporter may reopen.",
             "type": "number"
           },
+          "replaceCostSharePct": {
+            "description": "ADR 0065: the share (%) of its replacement cost a year’s repairs reach before an asset past its life is advised for replacement.",
+            "type": "number"
+          },
           "visitHoursEnd": {
             "description": "Visiting hours end, minutes after local midnight.",
             "type": "number"
@@ -27856,7 +28115,8 @@
           "maxReportPhotos",
           "visitHoursStart",
           "visitHoursEnd",
-          "visitSlotMinutes"
+          "visitSlotMinutes",
+          "replaceCostSharePct"
         ],
         "type": "object"
       },
@@ -28868,6 +29128,22 @@
           "metricKey",
           "last",
           "previous"
+        ],
+        "type": "object"
+      },
+      "MonthSpendView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "amount"
         ],
         "type": "object"
       },
@@ -34636,6 +34912,27 @@
         ],
         "type": "object"
       },
+      "PeriodView": {
+        "properties": {
+          "days": {
+            "type": "number"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "days"
+        ],
+        "type": "object"
+      },
       "PermissionDecisionDto": {
         "properties": {
           "decision": {
@@ -39401,6 +39698,22 @@
         ],
         "type": "object"
       },
+      "ReplacementAdvice": {
+        "enum": [
+          "replace",
+          "repair",
+          "unknown"
+        ],
+        "type": "string"
+      },
+      "ReplacementAdviceReason": {
+        "enum": [
+          "repairs_exceed_replacement",
+          "past_life_and_costly",
+          "no_replacement_cost"
+        ],
+        "type": "string"
+      },
       "ReplacementRecommendationView": {
         "properties": {
           "assetId": {
@@ -40543,6 +40856,23 @@
         },
         "required": [
           "storeId"
+        ],
+        "type": "object"
+      },
+      "ReserveView": {
+        "properties": {
+          "accrued": {
+            "description": "EGP built up by now.",
+            "type": "string"
+          },
+          "annual": {
+            "description": "EGP to set aside a year.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "annual",
+          "accrued"
         ],
         "type": "object"
       },
@@ -45572,6 +45902,45 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SpendSplitView": {
+        "properties": {
+          "contractor": {
+            "type": "string"
+          },
+          "corrective": {
+            "description": "Repairs: everything else.",
+            "type": "string"
+          },
+          "labour": {
+            "type": "string"
+          },
+          "other": {
+            "type": "string"
+          },
+          "parts": {
+            "description": "Net of parts returned.",
+            "type": "string"
+          },
+          "planned": {
+            "description": "A plan’s work orders and residents’ check-ups.",
+            "type": "string"
+          },
+          "total": {
+            "description": "EGP, voided entries left out.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total",
+          "labour",
+          "contractor",
+          "parts",
+          "other",
+          "planned",
+          "corrective"
         ],
         "type": "object"
       },
@@ -57826,6 +58195,12 @@
           "reopenDays": {
             "description": "Days after closing during which the reporter may reopen.",
             "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          },
+          "replaceCostSharePct": {
+            "description": "ADR 0065: past its expected life, an asset is advised for replacement once a year’s repairs cost this share (%) of its replacement cost.",
+            "maximum": 100,
             "minimum": 1,
             "type": "number"
           },
@@ -74485,6 +74860,43 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/assets/{id}/economics": {
+      "get": {
+        "operationId": "EconomicsController_asset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetEconomicsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get what an asset cost, its downtime and the advice",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/assets/{id}/events": {
       "get": {
         "operationId": "AssetsController_events",
@@ -75656,6 +76068,57 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/economics": {
+      "get": {
+        "operationId": "EconomicsController_compound",
+        "parameters": [
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompoundEconomicsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the compound’s maintenance spend and capital plan",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/inspection-report": {
       "get": {
         "operationId": "InspectionReportController_report",
@@ -76228,6 +76691,57 @@
           "maintenance"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/kpis": {
+      "get": {
+        "operationId": "EconomicsController_kpis",
+        "parameters": [
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceKpisView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the maintenance KPIs over a period",
+        "tags": [
+          "maintenance"
+        ],
         "x-stability": "draft"
       }
     },

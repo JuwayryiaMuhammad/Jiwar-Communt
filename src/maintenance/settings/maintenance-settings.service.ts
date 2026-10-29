@@ -21,6 +21,12 @@ export type MaintenanceSettingsView = {
   visitHoursStart: number;
   visitHoursEnd: number;
   visitSlotMinutes: number;
+  /**
+   * Asset economics (ADR 0065): past its expected life, an asset is
+   * advised for replacement once a year's repairs cost this share (%) of
+   * its replacement cost.
+   */
+  replaceCostSharePct: number;
 };
 
 export const AUTO_CLOSE_HOURS = { min: 1, max: 720 } as const;
@@ -30,6 +36,7 @@ export const VISIT_HOURS_START = { min: 0, max: 1439 } as const;
 export const VISIT_HOURS_END = { min: 1, max: 1440 } as const;
 /** Never longer than a visit (4 h, ADR 0034). */
 export const VISIT_SLOT_MINUTES = { min: 15, max: 240 } as const;
+export const REPLACE_COST_SHARE_PCT = { min: 1, max: 100 } as const;
 
 const RANGES = {
   autoCloseHours: AUTO_CLOSE_HOURS,
@@ -38,6 +45,7 @@ const RANGES = {
   visitHoursStart: VISIT_HOURS_START,
   visitHoursEnd: VISIT_HOURS_END,
   visitSlotMinutes: VISIT_SLOT_MINUTES,
+  replaceCostSharePct: REPLACE_COST_SHARE_PCT,
 } as const;
 
 function view(s: MaintenanceSettings): MaintenanceSettingsView {
@@ -48,6 +56,7 @@ function view(s: MaintenanceSettings): MaintenanceSettingsView {
     visitHoursStart: s.visitHoursStart,
     visitHoursEnd: s.visitHoursEnd,
     visitSlotMinutes: s.visitSlotMinutes,
+    replaceCostSharePct: s.replaceCostSharePct,
   };
 }
 
@@ -126,6 +135,7 @@ export class MaintenanceSettingsService {
           visitHoursStart: input.visitHoursStart,
           visitHoursEnd: input.visitHoursEnd,
           visitSlotMinutes: input.visitSlotMinutes,
+          replaceCostSharePct: input.replaceCostSharePct,
         },
       });
       const changes = diffChanges(

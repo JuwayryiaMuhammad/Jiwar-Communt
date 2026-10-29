@@ -15,7 +15,9 @@
 -- a pending registration (its personal data) and a rejected one (none);
 -- files owned and pending, owned and ready, and attached to a record;
 -- maintenance categories (the second compound has no `general`) and two
--- open tickets, one in a unit and one in a common area.
+-- open tickets, one in a unit and one in a common area; a pending move
+-- permit and a pending works permit, an open inspection task of a unit, and
+-- (the first compound) a `utilities` topic of the management's own.
 -- ============================================================================
 
 DO $$
@@ -168,5 +170,31 @@ BEGIN
                          created_by_account_id, reporter_account_id, priority, description, updated_at) VALUES
       (gen_random_uuid(), t, 1, u1, NULL, 'kitchen', cat, res1, res1, 'normal', 'The kitchen tap drips', now()),
       (gen_random_uuid(), t, 2, NULL, 'Pool', NULL, cat, mgr, res2, 'urgent', 'The pool pump is loud', now());
+
+    -- Permits as they were before a move permit had a direction (ADR 0063):
+    -- the loaded copy names one only where the column exists. An open
+    -- inspection task, made by the management before a resident could ask.
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'unit_permits' AND column_name = 'move_direction') THEN
+      INSERT INTO unit_permits (id, tenant_id, number, kind, unit_id, requested_by_account_id, starts_at, ends_at,
+                                truck_plate, items_description, move_direction, updated_at) VALUES
+        (gen_random_uuid(), t, 1, 'move', u1, res1, now() + interval '2 days', now() + interval '2 days 4 hours',
+         'ABC 123', 'Boxes and a sofa', 'in', now());
+    ELSE
+      INSERT INTO unit_permits (id, tenant_id, number, kind, unit_id, requested_by_account_id, starts_at, ends_at,
+                                truck_plate, items_description, updated_at) VALUES
+        (gen_random_uuid(), t, 1, 'move', u1, res1, now() + interval '2 days', now() + interval '2 days 4 hours',
+         'ABC 123', 'Boxes and a sofa', now());
+    END IF;
+    INSERT INTO unit_permits (id, tenant_id, number, kind, unit_id, requested_by_account_id, starts_at, ends_at,
+                              work_type, daily_from, daily_to, contractor_company, description, updated_at) VALUES
+      (gen_random_uuid(), t, 1, 'works', u2, res2, date_trunc('day', now()) + interval '3 days',
+       date_trunc('day', now()) + interval '10 days', 'finishing', 540, 1020, 'Seed Builders', 'Tiling the kitchen', now());
+    INSERT INTO guard_tasks (id, tenant_id, kind, unit_id, gate_id, created_by_account_id, updated_at) VALUES
+      (gen_random_uuid(), t, 'closed_unit_inspection', u1, gate, mgr, now());
+    IF c = 1 THEN
+      INSERT INTO management_request_topics (id, tenant_id, key, name_ar, name_en, target_response_hours, updated_at)
+      VALUES (gen_random_uuid(), t, 'utilities', 'المرافق', 'Utilities (ours)', 48, now());
+    END IF;
   END LOOP;
 END $$;

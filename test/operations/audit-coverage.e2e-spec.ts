@@ -383,6 +383,84 @@ describe('Audit coverage — maintenance operations', () => {
     });
   });
 
+  describe('contracts', () => {
+    it('maintenance_contract.* — dates, values and codes; the vendor and scope as changed only', async () => {
+      const made = (
+        await o
+          .http('post', '/maintenance/contracts', s.manager.token, {
+            code: `AUD-${Date.now()}`,
+            kind: 'service',
+            vendorName: 'AUDIT-secret Vendor Ltd',
+            vendorPhone: '+20 100 000 0001',
+            scope: 'AUDIT-secret everything',
+            startsOn: '2026-01-01',
+            endsOn: '2026-12-31',
+            annualValue: '5000',
+          })
+          .expect(201)
+      ).body as { id: string; code: string };
+      const created = await single(
+        s.c,
+        'maintenance_contract.created',
+        made.id,
+      );
+      expect(created.changes).toMatchObject({
+        code: { from: null, to: made.code },
+        kind: { from: null, to: 'service' },
+        vendorName: { changed: true },
+        vendorPhone: { changed: true },
+        scope: { changed: true },
+        startsOn: { from: null, to: '2026-01-01' },
+        endsOn: { from: null, to: '2026-12-31' },
+        annualValue: { from: null, to: '5000.00' },
+      });
+      await o
+        .http('patch', `/maintenance/contracts/${made.id}`, s.manager.token, {
+          annualValue: '5500',
+          vendorName: 'AUDIT-secret Other Ltd',
+        })
+        .expect(200);
+      expect(
+        (await single(s.c, 'maintenance_contract.updated', made.id)).changes,
+      ).toEqual({
+        vendorName: { changed: true },
+        annualValue: { from: '5000.00', to: '5500.00' },
+      });
+      const asset = await o.asset(s);
+      await o
+        .http(
+          'put',
+          `/maintenance/contracts/${made.id}/assets`,
+          s.manager.token,
+          {
+            assetIds: [asset],
+          },
+        )
+        .expect(200);
+      expect(
+        (await single(s.c, 'maintenance_contract.assets_changed', made.id))
+          .metadata,
+      ).toEqual({ added: [asset], removed: [] });
+      await o
+        .http(
+          'post',
+          `/maintenance/contracts/${made.id}/terminate`,
+          s.manager.token,
+          {
+            reasonCode: 'budget',
+          },
+        )
+        .expect(200);
+      expect(
+        (await single(s.c, 'maintenance_contract.terminated', made.id))
+          .metadata,
+      ).toEqual({ reasonCode: 'budget' });
+      const rows = await read.tenant(s.c.tenantId, { targetId: made.id });
+      expect(JSON.stringify(rows)).not.toContain('AUDIT-secret');
+      expect(JSON.stringify(rows)).not.toContain('+20 100');
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every operations entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

@@ -313,6 +313,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'البلاغ رقم {ticketNumber}: لم يصرف المخزن {itemRef}.',
     },
   },
+  'maintenance_contract.expiring': {
+    en: {
+      title: 'A contract ends soon',
+      body: 'Contract {contractRef} ends on {endsOn}.',
+    },
+    ar: {
+      title: 'عقد ينتهي قريبًا',
+      body: 'ينتهي العقد {contractRef} في {endsOn}.',
+    },
+  },
   'stock.reorder_level': {
     en: {
       title: 'Time to reorder',

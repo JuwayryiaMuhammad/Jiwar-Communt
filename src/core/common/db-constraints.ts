@@ -348,6 +348,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   stock_movements_issue_once: null,
   stock_movements_transfer_pair: null,
   ticket_cost_entries_movement_key: null,
+  // Maintenance contracts (ADR 0065): the code is the compound's to choose.
+  maintenance_contracts_tenant_id_id_key: null,
+  maintenance_contracts_tenant_id_code_key: ['code'],
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

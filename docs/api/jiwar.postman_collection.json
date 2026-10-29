@@ -21774,6 +21774,35 @@
           }
         },
         {
+          "name": "List the contracts covering an asset now",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "assets",
+                ":id",
+                "contracts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/assets/:id/contracts",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "An asset’s history, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -22368,6 +22397,251 @@
           }
         },
         {
+          "name": "List contracts by end date",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "Read from its dates on the compound’s today.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "Covering it.",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts"
+            }
+          }
+        },
+        {
+          "name": "Record a contract",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"\",\n  \"kind\": \"amc\",\n  \"vendorName\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"endsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  | EGP a year. |\n| `code` | string | yes | The compound’s reference for it, unique. Never changes. |\n| `endsOn` | string (date) | yes | Its last day; after `startsOn`. |\n| `kind` | `amc` \\| `service` \\| `warranty_extension` \\| `other` | yes |  |\n| `noticeDays` | number |  | How many days before its end the end is announced. |\n| `scope` | string |  | What it covers, in the compound’s words. |\n| `startsOn` | string (date) | yes |  |\n| `vendorName` | string | yes |  |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts"
+            }
+          }
+        },
+        {
+          "name": "Get a contract",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a contract’s terms",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"annualValue\": \"\",\n  \"endsOn\": \"2026-01-01\",\n  \"noticeDays\": 0,\n  \"scope\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"vendorName\": \"\",\n  \"vendorPhone\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  |  |\n| `endsOn` | string (date) |  |  |\n| `noticeDays` | number |  |  |\n| `scope` | string |  |  |\n| `startsOn` | string (date) |  |  |\n| `vendorName` | string |  |  |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set the assets a contract covers",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"assetIds\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetIds` | string (uuid)[] | yes | Every asset it covers from now on. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts",
+                ":id",
+                "assets"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id/assets",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End a contract before its date",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts",
+                ":id",
+                "terminate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id/terminate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the dispatch settings",
           "request": {
             "description": "**Responses:** 200",
@@ -22456,6 +22730,12 @@
                   "disabled": true,
                   "key": "commonAreaId",
                   "value": ""
+                },
+                {
+                  "description": "A maintenance contract (ADR 0065).",
+                  "disabled": true,
+                  "key": "contractId",
+                  "value": ""
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/documents"
@@ -22474,7 +22754,7 @@
               },
               "raw": "{\n  \"fileId\": \"\",\n  \"kind\": \"plan\",\n  \"title\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  |  |\n| `assetTypeId` | string (uuid) |  |  |\n| `commonAreaId` | string (uuid) |  |  |\n| `fileId` | string (uuid) | yes | One of the caller’s finalized `asset_document` files. |\n| `kind` | `plan` \\| `manual` \\| `warranty` \\| `certificate` \\| `photo` \\| `other` | yes |  |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  |  |\n| `assetTypeId` | string (uuid) |  |  |\n| `commonAreaId` | string (uuid) |  |  |\n| `contractId` | string (uuid) |  | A maintenance contract (ADR 0065). |\n| `fileId` | string (uuid) | yes | One of the caller’s finalized `asset_document` files. |\n| `kind` | `plan` \\| `manual` \\| `warranty` \\| `certificate` \\| `photo` \\| `other` | yes |  |\n| `title` | string | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

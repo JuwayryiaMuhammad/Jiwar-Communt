@@ -23,6 +23,8 @@ import type { DocumentKind } from './asset-rules';
 import { AssetsService } from './assets.service';
 import { assetTypeNotFound } from './asset-types.service';
 
+import { contractNotFound } from '../contracts/contracts.service';
+
 export const DOCUMENT_RESOURCE = 'maintenance_document';
 /** Documents one asset, type or area holds at once. */
 export const DOCUMENTS_PER_SUBJECT = 50;
@@ -31,6 +33,8 @@ export interface DocumentSubject {
   assetId?: string;
   assetTypeId?: string;
   commonAreaId?: string;
+  /** ADR 0065: a maintenance contract's papers. */
+  contractId?: string;
 }
 
 export interface DocumentRead {
@@ -46,7 +50,8 @@ const documentNotFound = () =>
 
 /**
  * The register's documents (ADR 0064): plans, manuals, warranty cards, of
- * an asset, an asset type or a common area. Added with `assets.manage`,
+ * an asset, an asset type, a common area or a maintenance contract (ADR
+ * 0065). Added with `assets.manage`,
  * read by every `assets.read` holder (the technician in the field), each
  * read a presigned URL (no-store). Removed once, never changed: the row
  * stays for the record, its file is deleted.
@@ -187,9 +192,9 @@ export class DocumentsService implements OnModuleInit {
     s: DocumentSubject,
     mode: 'read' | 'write',
   ): Promise<DocumentSubject> {
-    const given = (['assetId', 'assetTypeId', 'commonAreaId'] as const).filter(
-      (k) => s[k] !== undefined,
-    );
+    const given = (
+      ['assetId', 'assetTypeId', 'commonAreaId', 'contractId'] as const
+    ).filter((k) => s[k] !== undefined);
     if (given.length !== 1) {
       const fields: FieldError[] = given.length
         ? given
@@ -212,6 +217,8 @@ export class DocumentsService implements OnModuleInit {
         await tx.$queryRaw`SELECT id FROM assets WHERE id = ${s.assetId}::uuid FOR NO KEY UPDATE`;
       else if (s.commonAreaId !== undefined)
         await tx.$queryRaw`SELECT id FROM common_areas WHERE id = ${s.commonAreaId}::uuid FOR NO KEY UPDATE`;
+      else if (s.contractId !== undefined)
+        await tx.$queryRaw`SELECT id FROM maintenance_contracts WHERE id = ${s.contractId}::uuid FOR NO KEY UPDATE`;
       else
         await tx.$queryRaw`SELECT id FROM asset_types WHERE id = ${s.assetTypeId}::uuid FOR NO KEY UPDATE`;
     }
@@ -232,6 +239,13 @@ export class DocumentsService implements OnModuleInit {
           'This common area is retired',
         );
       return { commonAreaId: s.commonAreaId };
+    }
+    if (s.contractId !== undefined) {
+      const contract = await tx.maintenanceContract.findUnique({
+        where: { id: s.contractId },
+      });
+      if (!contract) throw contractNotFound();
+      return { contractId: s.contractId };
     }
     if (!(await tx.assetType.findUnique({ where: { id: s.assetTypeId } })))
       throw assetTypeNotFound();

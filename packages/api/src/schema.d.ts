@@ -5003,6 +5003,23 @@ export interface paths {
         patch: operations["AssetsController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/assets/{id}/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the contracts covering an asset now */
+        get: operations["AssetContractsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/assets/{id}/events": {
         parameters: {
             query?: never;
@@ -5221,6 +5238,76 @@ export interface paths {
         /** Replace the items: a new version; open runs keep theirs */
         put: operations["ChecklistsController_replaceItems"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List contracts by end date */
+        get: operations["MaintenanceContractsController_list"];
+        put?: never;
+        /** Record a contract */
+        post: operations["MaintenanceContractsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/contracts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a contract */
+        get: operations["MaintenanceContractsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a contract’s terms */
+        patch: operations["MaintenanceContractsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/contracts/{id}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the assets a contract covers */
+        put: operations["MaintenanceContractsController_setAssets"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/contracts/{id}/terminate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End a contract before its date */
+        post: operations["MaintenanceContractsController_terminate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -18851,6 +18938,11 @@ export interface components {
             commonAreaId?: string;
             /**
              * Format: uuid
+             * @description A maintenance contract (ADR 0065).
+             */
+            contractId?: string;
+            /**
+             * Format: uuid
              * @description One of the caller’s finalized `asset_document` files.
              */
             fileId: string;
@@ -21793,6 +21885,10 @@ export interface components {
             email?: string;
             phone?: string;
         };
+        ContractAssetsDto: {
+            /** @description Every asset it covers from now on. */
+            assetIds: string[];
+        };
         ContractReadView: {
             /** Format: date-time */
             createdAt: string;
@@ -21943,6 +22039,20 @@ export interface components {
              * @description A vehicle the plate lookup found (`matches[].vehicle`): registered, pending or active. Checked, never kept.
              */
             vehicleId: string;
+        };
+        CoveringContractView: {
+            code: string;
+            /** Format: date */
+            endsOn: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MaintenanceContractKind"];
+            vendorName: string;
+            vendorPhone: string | null;
+        };
+        CoveringContractViewList: {
+            data: components["schemas"]["CoveringContractView"][];
+            nextCursor: string | null;
         };
         CreateAccessibilityRequestDto: {
             assistanceKind: components["schemas"]["AssistanceKind"];
@@ -22264,6 +22374,29 @@ export interface components {
              * @description One of the author’s own units, when they have several.
              */
             unitId?: string;
+        };
+        CreateContractDto: {
+            /** @description EGP a year. */
+            annualValue?: string;
+            /** @description The compound’s reference for it, unique. Never changes. */
+            code: string;
+            /**
+             * Format: date
+             * @description Its last day; after `startsOn`.
+             */
+            endsOn: string;
+            kind: components["schemas"]["MaintenanceContractKind"];
+            /**
+             * @description How many days before its end the end is announced.
+             * @default 30
+             */
+            noticeDays: number;
+            /** @description What it covers, in the compound’s words. */
+            scope?: string;
+            /** Format: date */
+            startsOn: string;
+            vendorName: string;
+            vendorPhone?: string;
         };
         CreateDelegationDto: {
             /**
@@ -27362,6 +27495,40 @@ export interface components {
             data: components["schemas"]["LoginView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        MaintenanceContractKind: "amc" | "service" | "warranty_extension" | "other";
+        /**
+         * @description From its dates on the compound’s today.
+         * @enum {string}
+         */
+        MaintenanceContractStatus: "upcoming" | "active" | "ended" | "terminated";
+        MaintenanceContractView: {
+            /** @description EGP a year. */
+            annualValue: string | null;
+            assetIds: string[];
+            code: string;
+            /** Format: date */
+            endsOn: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MaintenanceContractKind"];
+            noticeDays: number;
+            scope: string | null;
+            /** Format: date */
+            startsOn: string;
+            /** @description From its dates on the compound’s today. */
+            status: components["schemas"]["MaintenanceContractStatus"];
+            /** Format: date-time */
+            terminatedAt: string | null;
+            /** @description REASON_CODES.contractTerminate. */
+            terminationReason: string | null;
+            vendorName: string;
+            vendorPhone: string | null;
+        };
+        MaintenanceContractViewList: {
+            data: components["schemas"]["MaintenanceContractView"][];
+            nextCursor: string | null;
+        };
         MaintenanceDocumentView: {
             /** Format: date-time */
             addedAt: string;
@@ -27371,6 +27538,11 @@ export interface components {
             assetTypeId: string | null;
             /** Format: uuid */
             commonAreaId: string | null;
+            /**
+             * Format: uuid
+             * @description A maintenance contract’s papers (ADR 0065).
+             */
+            contractId: string | null;
             /** Format: uuid */
             id: string;
             /** @enum {string} */
@@ -36383,6 +36555,17 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
         };
+        UpdateContractDto: {
+            annualValue?: string | null;
+            /** Format: date */
+            endsOn?: string;
+            noticeDays?: number;
+            scope?: string | null;
+            /** Format: date */
+            startsOn?: string;
+            vendorName?: string;
+            vendorPhone?: string | null;
+        };
         UpdateDispatchSettingsDto: {
             /** @description Assign tickets automatically. Off until the manager turns it on, after setting technicians’ specialties. */
             autoDispatchEnabled?: boolean;
@@ -44724,6 +44907,27 @@ export interface operations {
             };
         };
     };
+    AssetContractsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoveringContractViewList"];
+                };
+            };
+        };
+    };
     AssetsController_events: {
         parameters: {
             query?: {
@@ -45095,6 +45299,155 @@ export interface operations {
             };
         };
     };
+    MaintenanceContractsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Read from its dates on the compound’s today. */
+                status?: "upcoming" | "active" | "ended" | "terminated";
+                /** @description Covering it. */
+                assetId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceContractViewList"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateContractDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceContractView"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceContractView"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateContractDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceContractView"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_setAssets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContractAssetsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceContractView"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_terminate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceContractView"];
+                };
+            };
+        };
+    };
     DispatchSettingsController_get: {
         parameters: {
             query?: never;
@@ -45143,6 +45496,8 @@ export interface operations {
                 assetId?: string;
                 assetTypeId?: string;
                 commonAreaId?: string;
+                /** @description A maintenance contract (ADR 0065). */
+                contractId?: string;
             };
             header?: never;
             path?: never;

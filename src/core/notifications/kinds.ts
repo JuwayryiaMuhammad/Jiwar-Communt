@@ -2241,6 +2241,14 @@ export const NOTIFICATION_KINDS = {
     target: 'stock_item',
     params: { itemRef: {} },
   },
+  /** A maintenance contract ends within its notice days (ADR 0065). */
+  'maintenance_contract.expiring': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'maintenance_contract',
+    params: { contractRef: {}, endsOn: {} },
+  },
   'asset.warranty_expiring': {
     priority: 'normal',
     category: 'maintenance',

@@ -1466,6 +1466,10 @@ export const ErrorCode = {
   TICKET_NOT_TAKING_PARTS: 'TICKET_NOT_TAKING_PARTS',
   /** More than was issued to the ticket, net of returns; params.returnable (409). */
   PART_RETURN_EXCEEDS_ISSUED: 'PART_RETURN_EXCEEDS_ISSUED',
+  // Maintenance contracts (ADR 0065)
+  MAINTENANCE_CONTRACT_NOT_FOUND: 'MAINTENANCE_CONTRACT_NOT_FOUND',
+  /** Terminated once: it never changes (409). */
+  MAINTENANCE_CONTRACT_TERMINATED: 'MAINTENANCE_CONTRACT_TERMINATED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1705,6 +1709,8 @@ export const FieldErrorCode = {
   PLAN_OWNER_NOT_ELIGIBLE: 'PLAN_OWNER_NOT_ELIGIBLE',
   /** Not an active account holding inspections.perform. */
   INSPECTOR_NOT_ELIGIBLE: 'INSPECTOR_NOT_ELIGIBLE',
+  /** ADR 0065: an asset a contract covers must exist and not be retired. */
+  ASSET_NOT_AVAILABLE: 'ASSET_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

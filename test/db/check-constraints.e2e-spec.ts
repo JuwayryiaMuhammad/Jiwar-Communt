@@ -2303,6 +2303,26 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'unit_cost and reason_code are tested IS NOT NULL before they are compared',
   },
   ticket_cost_entries_part_shape: {},
+  // Maintenance contracts (ADR 0065).
+  maintenance_contracts_code_shape: {},
+  maintenance_contracts_kind_known: {},
+  maintenance_contracts_texts_length: {
+    guarded: 'scope IS NULL is tested first; vendor_name is NOT NULL',
+  },
+  maintenance_contracts_vendor_phone_shape: {
+    guarded: 'vendor_phone IS NULL is tested first',
+  },
+  maintenance_contracts_dates: {},
+  maintenance_contracts_value_range: {
+    guarded: 'annual_value IS NULL is tested first',
+  },
+  maintenance_contracts_termination_shape: {
+    guarded:
+      'termination_reason is tested IS NULL first, and its IS NULL is paired with terminated_at',
+  },
+  maintenance_contracts_alert_shape: {
+    guarded: 'expiry_alerted_for IS NULL is tested first; ends_on is NOT NULL',
+  },
 };
 
 interface Check {

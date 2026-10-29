@@ -484,3 +484,128 @@ export const TECHNICIAN_PART_ROUTES: Row[] = [
     },
   }),
 ];
+
+const CONTRACT_KINDS = ['amc', 'service', 'warranty_extension', 'other'];
+const CONTRACT_STATUSES = ['upcoming', 'active', 'ended', 'terminated'];
+/** The register's keepers' routes: `assets.manage`, which a technician lacks. */
+const keeper = (row: Omit<Row, 'auth' | 'as' | 'denied'>): Row => ({
+  auth: 'tenant',
+  as: 'manager',
+  denied: 'technician',
+  ...row,
+});
+
+/** Maintenance contracts (ADR 0065). */
+export const MAINTENANCE_CONTRACT_ROUTES: Row[] = [
+  keeper({
+    method: 'GET',
+    path: '/maintenance/contracts',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'open', assetId: 'x' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: CONTRACT_STATUSES },
+        },
+        { field: 'assetId', code: 'INVALID_UUID' },
+      ],
+    },
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/contracts',
+    foreign: 'none',
+    invalid: {
+      body: {
+        code: '',
+        kind: 'lease',
+        vendorName: '',
+        startsOn: '2026-13-01',
+        endsOn: 'soon',
+        noticeDays: 365,
+      },
+      fields: [
+        { field: 'code', code: 'INVALID_FORMAT' },
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: CONTRACT_KINDS },
+        },
+        {
+          field: 'vendorName',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+        { field: 'startsOn', code: 'INVALID_FORMAT' },
+        { field: 'endsOn', code: 'INVALID_FORMAT' },
+        {
+          field: 'noticeDays',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 180 },
+        },
+      ],
+    },
+  }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/contracts/{id}',
+    foreign: {
+      params: (w) => ({ id: w.bContractId }),
+      code: 'MAINTENANCE_CONTRACT_NOT_FOUND',
+    },
+    invalid: 'none',
+  }),
+  keeper({
+    method: 'PATCH',
+    path: '/maintenance/contracts/{id}',
+    foreign: {
+      params: (w) => ({ id: w.bContractId }),
+      body: () => ({ noticeDays: 10 }),
+      code: 'MAINTENANCE_CONTRACT_NOT_FOUND',
+    },
+    invalid: {
+      body: { vendorPhone: 'call me', annualValue: '-1' },
+      fields: [
+        { field: 'vendorPhone', code: 'INVALID_FORMAT' },
+        { field: 'annualValue', code: 'INVALID_FORMAT' },
+      ],
+    },
+  }),
+  keeper({
+    method: 'PUT',
+    path: '/maintenance/contracts/{id}/assets',
+    foreign: {
+      params: (w) => ({ id: w.bContractId }),
+      body: () => ({ assetIds: [] }),
+      code: 'MAINTENANCE_CONTRACT_NOT_FOUND',
+    },
+    invalid: {
+      body: { assetIds: 'x' },
+      fields: [{ field: 'assetIds', code: 'INVALID_TYPE' }],
+    },
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/contracts/{id}/terminate',
+    foreign: {
+      params: (w) => ({ id: w.bContractId }),
+      body: () => ({ reasonCode: 'budget' }),
+      code: 'MAINTENANCE_CONTRACT_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: ['x'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  }),
+  {
+    method: 'GET',
+    path: '/maintenance/assets/{id}/contracts',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: { params: (w) => ({ id: w.bAssetId }), code: 'ASSET_NOT_FOUND' },
+    invalid: 'none',
+  },
+];

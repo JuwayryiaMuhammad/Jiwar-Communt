@@ -139,6 +139,12 @@ import { PartRequestsService } from './stock/part-requests.service';
 import { StockItemsService } from './stock/stock-items.service';
 import { StockLedger } from './stock/stock-ledger';
 import { StoresService } from './stock/stores.service';
+import {
+  AssetContractsController,
+  MaintenanceContractsController,
+} from './contracts/contracts.controller';
+import { MaintenanceContractsService } from './contracts/contracts.service';
+import { ContractSweep } from './contracts/contract-sweep';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -196,6 +202,8 @@ import { StoresService } from './stock/stores.service';
     PartRequestsController,
     DispatchTicketPartsController,
     TechnicianPartsController,
+    MaintenanceContractsController,
+    AssetContractsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -259,6 +267,8 @@ import { StoresService } from './stock/stores.service';
     StoresService,
     StockItemsService,
     PartRequestsService,
+    MaintenanceContractsService,
+    ContractSweep,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

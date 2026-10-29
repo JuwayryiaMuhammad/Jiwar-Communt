@@ -805,4 +805,8 @@ export const OPERATIONS_COVERAGE: readonly string[] = [
   'part_request.issued',
   'part_request.declined',
   'part_request.cancelled',
+  'maintenance_contract.created',
+  'maintenance_contract.updated',
+  'maintenance_contract.terminated',
+  'maintenance_contract.assets_changed',
 ];

@@ -330,3 +330,10 @@ test('the store’s notices (ADR 0065): a part asked for opens the queue, a reor
   assert.equal(notificationHref(low, (p) => p === 'stock.manage'), '/stock/i1');
   assert.equal(notificationHref(low, () => false), null);
 });
+
+test('a contract’s end (ADR 0065) reads as its code and date, and opens it for who keeps the register', () => {
+  const ending = { kind: 'maintenance_contract.expiring', params: { contractRef: 'AMC-LIFTS', endsOn: '2026-12-31' }, targetType: 'maintenance_contract', targetId: 'c1' };
+  assert.equal(notificationText(ending), 'Contract AMC-LIFTS ends on 2026-12-31');
+  assert.equal(notificationHref(ending, (p) => p === 'assets.manage'), '/contracts/c1');
+  assert.equal(notificationHref(ending, (p) => p === 'assets.read'), null);
+});

@@ -401,6 +401,11 @@
             "format": "uuid",
             "type": "string"
           },
+          "contractId": {
+            "description": "A maintenance contract (ADR 0065).",
+            "format": "uuid",
+            "type": "string"
+          },
           "fileId": {
             "description": "One of the caller’s finalized `asset_document` files.",
             "format": "uuid",
@@ -10113,6 +10118,23 @@
         },
         "type": "object"
       },
+      "ContractAssetsDto": {
+        "properties": {
+          "assetIds": {
+            "description": "Every asset it covers from now on.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "type": "array"
+          }
+        },
+        "required": [
+          "assetIds"
+        ],
+        "type": "object"
+      },
       "ContractReadView": {
         "properties": {
           "createdAt": {
@@ -10562,6 +10584,63 @@
         "required": [
           "vehicleId",
           "direction"
+        ],
+        "type": "object"
+      },
+      "CoveringContractView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaintenanceContractKind"
+              }
+            ]
+          },
+          "vendorName": {
+            "type": "string"
+          },
+          "vendorPhone": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "vendorName",
+          "vendorPhone",
+          "endsOn"
+        ],
+        "type": "object"
+      },
+      "CoveringContractViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CoveringContractView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -11420,6 +11499,67 @@
           "categoryId",
           "targetUnitCode",
           "body"
+        ],
+        "type": "object"
+      },
+      "CreateContractDto": {
+        "properties": {
+          "annualValue": {
+            "description": "EGP a year.",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "code": {
+            "description": "The compound’s reference for it, unique. Never changes.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+            "type": "string"
+          },
+          "endsOn": {
+            "description": "Its last day; after `startsOn`.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaintenanceContractKind"
+              }
+            ]
+          },
+          "noticeDays": {
+            "default": 30,
+            "description": "How many days before its end the end is announced.",
+            "maximum": 180,
+            "minimum": 0,
+            "type": "number"
+          },
+          "scope": {
+            "description": "What it covers, in the compound’s words.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "vendorName": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "vendorPhone": {
+            "pattern": "^[0-9+() -]{3,30}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "kind",
+          "vendorName",
+          "startsOn",
+          "endsOn"
         ],
         "type": "object"
       },
@@ -27283,6 +27423,131 @@
         ],
         "type": "object"
       },
+      "MaintenanceContractKind": {
+        "enum": [
+          "amc",
+          "service",
+          "warranty_extension",
+          "other"
+        ],
+        "type": "string"
+      },
+      "MaintenanceContractStatus": {
+        "description": "From its dates on the compound’s today.",
+        "enum": [
+          "upcoming",
+          "active",
+          "ended",
+          "terminated"
+        ],
+        "type": "string"
+      },
+      "MaintenanceContractView": {
+        "properties": {
+          "annualValue": {
+            "description": "EGP a year.",
+            "nullable": true,
+            "type": "string"
+          },
+          "assetIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "code": {
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaintenanceContractKind"
+              }
+            ]
+          },
+          "noticeDays": {
+            "type": "number"
+          },
+          "scope": {
+            "nullable": true,
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaintenanceContractStatus"
+              }
+            ],
+            "description": "From its dates on the compound’s today."
+          },
+          "terminatedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "terminationReason": {
+            "description": "REASON_CODES.contractTerminate.",
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorName": {
+            "type": "string"
+          },
+          "vendorPhone": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "status",
+          "vendorName",
+          "vendorPhone",
+          "scope",
+          "startsOn",
+          "endsOn",
+          "annualValue",
+          "noticeDays",
+          "terminatedAt",
+          "terminationReason",
+          "assetIds"
+        ],
+        "type": "object"
+      },
+      "MaintenanceContractViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MaintenanceContractView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MaintenanceDocumentView": {
         "properties": {
           "addedAt": {
@@ -27300,6 +27565,12 @@
             "type": "string"
           },
           "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractId": {
+            "description": "A maintenance contract’s papers (ADR 0065).",
             "format": "uuid",
             "nullable": true,
             "type": "string"
@@ -27338,6 +27609,7 @@
           "assetId",
           "assetTypeId",
           "commonAreaId",
+          "contractId",
           "kind",
           "title",
           "url",
@@ -56995,6 +57267,46 @@
         },
         "type": "object"
       },
+      "UpdateContractDto": {
+        "properties": {
+          "annualValue": {
+            "nullable": true,
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "noticeDays": {
+            "maximum": 180,
+            "minimum": 0,
+            "type": "number"
+          },
+          "scope": {
+            "maxLength": 1000,
+            "nullable": true,
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "vendorName": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "vendorPhone": {
+            "nullable": true,
+            "pattern": "^[0-9+() -]{3,30}$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateDispatchSettingsDto": {
         "properties": {
           "autoDispatchEnabled": {
@@ -74136,6 +74448,43 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/assets/{id}/contracts": {
+      "get": {
+        "operationId": "AssetContractsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoveringContractViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the contracts covering an asset now",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/assets/{id}/events": {
       "get": {
         "operationId": "AssetsController_events",
@@ -74803,6 +75152,302 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/contracts": {
+      "get": {
+        "operationId": "MaintenanceContractsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Read from its dates on the compound’s today.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "upcoming",
+                "active",
+                "ended",
+                "terminated"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Covering it.",
+            "in": "query",
+            "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceContractViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List contracts by end date",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "MaintenanceContractsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContractDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceContractView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a contract",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/contracts/{id}": {
+      "get": {
+        "operationId": "MaintenanceContractsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceContractView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a contract",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "MaintenanceContractsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContractDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceContractView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a contract’s terms",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/contracts/{id}/assets": {
+      "put": {
+        "operationId": "MaintenanceContractsController_setAssets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractAssetsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceContractView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the assets a contract covers",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/contracts/{id}/terminate": {
+      "post": {
+        "operationId": "MaintenanceContractsController_terminate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceContractView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a contract before its date",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/dispatch-settings": {
       "get": {
         "operationId": "DispatchSettingsController_get",
@@ -74892,6 +75537,16 @@
           {
             "in": "query",
             "name": "commonAreaId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A maintenance contract (ADR 0065).",
+            "in": "query",
+            "name": "contractId",
             "required": false,
             "schema": {
               "format": "uuid",

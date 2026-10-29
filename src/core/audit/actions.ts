@@ -1927,6 +1927,26 @@ export const AUDIT_ACTIONS = {
   'part_request.issued': { log: 'tenant', target: 'part_request' },
   'part_request.declined': { log: 'tenant', target: 'part_request' },
   'part_request.cancelled': { log: 'tenant', target: 'part_request' },
+  // Maintenance contracts (ADR 0065): dates, values and codes; the
+  // vendor's name and phone and the scope as `{ changed }`.
+  'maintenance_contract.created': {
+    log: 'tenant',
+    target: 'maintenance_contract',
+    sensitive: ['vendorName', 'vendorPhone', 'scope'],
+  },
+  'maintenance_contract.updated': {
+    log: 'tenant',
+    target: 'maintenance_contract',
+    sensitive: ['vendorName', 'vendorPhone', 'scope'],
+  },
+  'maintenance_contract.terminated': {
+    log: 'tenant',
+    target: 'maintenance_contract',
+  },
+  'maintenance_contract.assets_changed': {
+    log: 'tenant',
+    target: 'maintenance_contract',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -195,6 +195,7 @@ describe('audit catalog', () => {
         'store',
         'stock_item',
         'part_request',
+        'maintenance_contract',
       ]).toContain(def.target);
     }
   });

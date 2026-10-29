@@ -7,7 +7,7 @@ import {
   type DocumentKind,
 } from '../asset-rules';
 
-/** Exactly one of the three. */
+/** Exactly one of the four. */
 export class DocumentSubjectDto {
   @ApiPropertyOptional({ type: String, format: 'uuid' })
   @IsOptional()
@@ -23,6 +23,15 @@ export class DocumentSubjectDto {
   @IsOptional()
   @IsUUID()
   commonAreaId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description: 'A maintenance contract (ADR 0065).',
+  })
+  @IsOptional()
+  @IsUUID()
+  contractId?: string;
 }
 
 export class AddDocumentDto extends DocumentSubjectDto {

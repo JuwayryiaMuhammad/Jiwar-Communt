@@ -12,6 +12,13 @@ export class MaintenanceDocumentView {
   assetTypeId: string | null;
   @ApiProperty({ type: String, format: 'uuid', nullable: true })
   commonAreaId: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'A maintenance contract’s papers (ADR 0065).',
+  })
+  contractId: string | null;
   @ApiProperty({ enum: DOCUMENT_KINDS })
   kind: DocumentKind;
   @ApiProperty({ type: String })
@@ -33,6 +40,7 @@ export class MaintenanceDocumentView {
       assetId: d.assetId,
       assetTypeId: d.assetTypeId,
       commonAreaId: d.commonAreaId,
+      contractId: d.contractId,
       kind: d.kind as DocumentKind,
       title: d.title,
       url: read?.url ?? null,

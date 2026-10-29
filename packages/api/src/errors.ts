@@ -304,6 +304,8 @@ const ERROR_TEXT: Record<string, string> = {
   PART_REQUEST_WRONG_STATUS: 'This part request cannot do that now.',
   TICKET_NOT_TAKING_PARTS: 'Parts go to a ticket whose work is in hand.',
   PART_RETURN_EXCEEDS_ISSUED: 'That is more than was issued to this ticket.',
+  MAINTENANCE_CONTRACT_NOT_FOUND: 'This contract was not found.',
+  MAINTENANCE_CONTRACT_TERMINATED: 'This contract is terminated.',
   // Facilities and bookings, the club (ADR 0044).
   FACILITY_NOT_FOUND: 'This facility does not exist.',
   FACILITY_NOT_BOOKABLE: 'This facility is walk-in: it takes no booking and has no peak times.',
@@ -561,6 +563,7 @@ const FIELD_TEXT: Record<string, string> = {
   CHECKLIST_NOT_AVAILABLE: 'Not a checklist in use for this.',
   PLAN_OWNER_NOT_ELIGIBLE: 'Must be someone who dispatches maintenance.',
   INSPECTOR_NOT_ELIGIBLE: 'Must be someone who performs inspections.',
+  ASSET_NOT_AVAILABLE: 'Must be an asset of the register that is not retired.',
   SPECIALTY_NOT_AVAILABLE: 'This specialty is no longer in use.',
   VISIT_TOO_SOON: 'Too soon: a visit needs at least 15 minutes of notice.',
   VISIT_TOO_FAR: 'Too far ahead: at most 30 days.',

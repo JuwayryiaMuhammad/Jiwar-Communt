@@ -9945,6 +9945,8 @@ model MaintenanceDocument {
   assetId      String?   @map("asset_id") @db.Uuid
   assetTypeId  String?   @map("asset_type_id") @db.Uuid
   commonAreaId String?   @map("common_area_id") @db.Uuid
+  /// A maintenance contract's papers (ADR 0065).
+  contractId   String?   @map("contract_id") @db.Uuid
   fileId       String    @unique @map("file_id") @db.Uuid
   /// plan, manual, warranty, certificate, photo, other.
   kind         String
@@ -10410,4 +10412,54 @@ model StockMovement {
   @@index([tenantId, itemId, occurredAt(sort: Desc), id(sort: Desc)], map: "stock_movements_item_idx")
   @@index([tenantId, storeId, occurredAt(sort: Desc), id(sort: Desc)], map: "stock_movements_store_idx")
   @@map("stock_movements")
+}
+
+/// The compound's agreement with a vendor (ADR 0065): dates, a yearly value,
+/// the assets it covers. Terminated once, with a reason (a trigger).
+model MaintenanceContract {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  code               String
+  /// CONTRACT_KINDS.
+  kind               String
+  vendorName         String    @map("vendor_name")
+  vendorPhone        String?   @map("vendor_phone")
+  scope              String?
+  startsOn           DateTime  @map("starts_on") @db.Date
+  endsOn             DateTime  @map("ends_on") @db.Date
+  /// EGP a year.
+  annualValue        Decimal?  @map("annual_value") @db.Decimal(12, 2)
+  /// How many days before its end the end is announced.
+  noticeDays         Int       @default(30) @map("notice_days")
+  terminatedAt       DateTime? @map("terminated_at") @db.Timestamptz(3)
+  terminatedById     String?   @map("terminated_by_account_id") @db.Uuid
+  /// REASON_CODES.contractTerminate.
+  terminationReason  String?   @map("termination_reason")
+  /// The end date last announced: once per end date.
+  expiryAlertedFor   DateTime? @map("expiry_alerted_for") @db.Date
+  createdById        String?   @map("created_by_account_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  assets MaintenanceContractAsset[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, endsOn, id], map: "maintenance_contracts_list_idx")
+  @@map("maintenance_contracts")
+}
+
+/// An asset a contract covers.
+model MaintenanceContractAsset {
+  tenantId   String   @map("tenant_id") @db.Uuid
+  contractId String   @map("contract_id") @db.Uuid
+  assetId    String   @map("asset_id") @db.Uuid
+  addedById  String?  @map("added_by_account_id") @db.Uuid
+  addedAt    DateTime @map("added_at") @db.Timestamptz(3)
+
+  contract MaintenanceContract @relation(fields: [tenantId, contractId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "maintenance_contract_assets_contract_fkey")
+
+  @@id([contractId, assetId])
+  @@index([tenantId, assetId], map: "maintenance_contract_assets_asset_idx")
+  @@map("maintenance_contract_assets")
 }

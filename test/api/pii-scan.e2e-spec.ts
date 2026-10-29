@@ -1349,6 +1349,8 @@ describe('API v0 — PII leak scan', () => {
       // B's store and item: not found for everyone of A.
       '/maintenance/stores/{id}': w.bStoreId,
       '/maintenance/stock/items/{id}': w.bStockItemId,
+      '/maintenance/contracts/{id}': w.bContractId,
+      '/maintenance/assets/{id}/contracts': w.bAssetId,
       // ADR 0058: a formal notice (none here: not found).
       '/me/notices/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000058e2',
       // ADR 0062: the compound's documents (none published here).

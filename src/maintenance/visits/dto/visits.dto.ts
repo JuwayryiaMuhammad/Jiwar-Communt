@@ -6,7 +6,6 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  Matches,
   Max,
   Min,
   ValidateIf,
@@ -15,6 +14,7 @@ import { ExclusiveWith } from '../../../core/common/validation/exclusive-with';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { SLOT_DAYS } from '../visit-slots';
 import { ToInstant } from '../../../core/common/validation/instant';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 
 /** A window: checked against the database's clock (ADR 0034). */
 export class VisitWindowDto {
@@ -87,7 +87,7 @@ export class VisitSlotsQueryDto {
       'The first day, `YYYY-MM-DD` in the compound’s time zone; today by default.',
   })
   @IsOptional()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, withParams({ format: 'YYYY-MM-DD' }))
+  @IsLocalDate(withParams({ format: 'YYYY-MM-DD' }))
   from?: string;
 
   @ApiProperty({

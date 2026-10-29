@@ -13,7 +13,7 @@ import type {
 } from '@prisma/client';
 import { CommunityMaintenancePort } from '../../community';
 import { RequestContext } from '../../core/common/cls/request-context';
-import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
+import { appError, ErrorCode } from '../../core/common/errors';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
 import {
@@ -404,7 +404,6 @@ export class VisitsService {
     ticketId: string,
     q: { from?: LocalDate; days?: number },
   ): Promise<Slot[]> {
-    assertRealDay(q.from);
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.access.forRead(tx, ticketId, 'resident');
       if (ticket.unitId === null)
@@ -457,7 +456,6 @@ export class VisitsService {
     unitId: string,
     q: { from?: LocalDate; days?: number },
   ): Promise<Slot[]> {
-    assertRealDay(q.from);
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const place = await this.community.placeIn(tx, me, unitId);
@@ -834,18 +832,4 @@ export class VisitsService {
     );
     return visit;
   }
-}
-
-/** The DTO checked the shape; this is a real day (not 2030-02-31). */
-function assertRealDay(from: LocalDate | undefined): void {
-  if (from !== undefined && addDays(from, 0) !== from)
-    throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid day', {
-      fields: [
-        {
-          field: 'from',
-          code: FieldErrorCode.INVALID_FORMAT,
-          params: { format: 'YYYY-MM-DD' },
-        },
-      ],
-    });
 }

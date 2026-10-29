@@ -9,12 +9,12 @@ import {
   IsString,
   IsUUID,
   Length,
-  Matches,
   ValidateIf,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { ExclusiveWith } from '../../../core/common/validation/exclusive-with';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { CLAIM_NOTE_LENGTH } from '../../claims/claims.service';
 import { BOARDS, POST_STATES, type Board, type PostState } from '../post-rules';
 import {
@@ -24,7 +24,6 @@ import {
 } from '../posts.service';
 
 const BOOLEAN = ['true', 'false'] as const;
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export class CreatePostDto {
   @ApiProperty({
@@ -79,7 +78,7 @@ export class CreatePostDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(DAY)
+  @IsLocalDate()
   occurredOn?: string;
 
   @ApiProperty({

@@ -81,14 +81,6 @@ const invalid = (fields: FieldError[]) =>
     fields,
   });
 
-/** `YYYY-MM-DD` that is a real calendar day. */
-function assertRealDay(from: LocalDate | undefined): void {
-  if (from === undefined) return;
-  const day = new Date(`${from}T00:00:00.000Z`);
-  if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== from)
-    throw invalid([{ field: 'from', code: FieldErrorCode.INVALID_FORMAT }]);
-}
-
 /**
  * Appointments with the management (ADR 0039), on requests of type
  * `appointment`. The resident picks a free slot of the office hours; staff
@@ -158,7 +150,6 @@ export class AppointmentsService implements OnModuleInit {
    * under the slot's lock.
    */
   slots(q: { from?: LocalDate; days?: number }): Promise<OpenSlot[]> {
-    assertRealDay(q.from);
     return this.tenantTx.withTenantTx(async (tx) => {
       const settings = await this.settings.inTx(tx);
       const calendar = await this.calendar(tx, settings.appointmentSlotMinutes);

@@ -11,7 +11,6 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  Matches,
   Max,
   Min,
 } from 'class-validator';
@@ -19,6 +18,7 @@ import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { SLOT_DAYS } from '../appointment-slots';
 import { ToInstant } from '../../../core/common/validation/instant';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 
 /** Which days to offer slots for. */
 export class AppointmentSlotsQueryDto {
@@ -30,7 +30,7 @@ export class AppointmentSlotsQueryDto {
       'The first day, `YYYY-MM-DD` in the compound’s time zone; today by default.',
   })
   @IsOptional()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, withParams({ format: 'YYYY-MM-DD' }))
+  @IsLocalDate(withParams({ format: 'YYYY-MM-DD' }))
   from?: string;
 
   @ApiProperty({

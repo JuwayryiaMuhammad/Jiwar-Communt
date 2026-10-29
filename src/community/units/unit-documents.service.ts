@@ -603,7 +603,8 @@ function validate(
     });
   let expiresOn: Date | null = null;
   if (input.kind === 'warranty') {
-    if (!input.expiresOn || !/^\d{4}-\d{2}-\d{2}$/.test(input.expiresOn))
+    // The DTO took a real day (@IsLocalDate); a warranty needs one.
+    if (!input.expiresOn)
       fields.push({ field: 'expiresOn', code: FieldErrorCode.FIELD_REQUIRED });
     else expiresOn = new Date(`${input.expiresOn}T00:00:00Z`);
   } else if (input.expiresOn !== undefined)

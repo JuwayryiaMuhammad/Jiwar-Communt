@@ -4,6 +4,7 @@ import type {
   Prisma,
 } from '@prisma/client';
 import { localDate } from '../../core/common/slots/day-slots';
+import { isRealDate } from '../../core/common/validation/local-date';
 
 // ============================================================================
 // The two boards (ADR 0042), as pure rules. A post is on its board while
@@ -80,9 +81,6 @@ export function parseDay(
   now: Date,
   timeZone: string,
 ): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
-  const day = new Date(`${text}T00:00:00.000Z`);
-  if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== text)
-    return null;
-  return text > localDate(now, timeZone) ? null : day;
+  if (!isRealDate(text) || text > localDate(now, timeZone)) return null;
+  return new Date(`${text}T00:00:00.000Z`);
 }

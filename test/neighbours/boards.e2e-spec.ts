@@ -165,13 +165,14 @@ describe('Neighbours — the lost-and-found and lending boards', () => {
           body: 'A wallet',
           ...over,
         });
-      for (const occurredOn of ['2999-01-01', '2026-02-30'])
-        expect(fields(await post({ occurredOn }).expect(400))).toEqual([
-          { field: 'occurredOn', code: 'INVALID_VALUE' },
-        ]);
       expect(
-        fields(await post({ occurredOn: '1/2/2026' }).expect(400)),
-      ).toEqual([{ field: 'occurredOn', code: 'INVALID_FORMAT' }]);
+        fields(await post({ occurredOn: '2999-01-01' }).expect(400)),
+      ).toEqual([{ field: 'occurredOn', code: 'INVALID_VALUE' }]);
+      // A day that does not exist fails as its shape would, in the DTO.
+      for (const occurredOn of ['1/2/2026', '2026-02-30', '2026-13-01'])
+        expect(fields(await post({ occurredOn }).expect(400))).toEqual([
+          { field: 'occurredOn', code: 'INVALID_FORMAT' },
+        ]);
       const four = [];
       for (let i = 0; i < 4; i++)
         four.push(await n.file(s.alice, 'neighbour_post_photo'));

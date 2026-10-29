@@ -301,8 +301,13 @@ export const MANAGEMENT_RESIDENT_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { days: '99' },
+      query: { from: '2026-04-31', days: '99' },
       fields: [
+        {
+          field: 'from',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
+        },
         {
           field: 'days',
           code: 'INVALID_NUMBER',
@@ -533,7 +538,7 @@ export const MANAGEMENT_STAFF_ROUTES: Row[] = [
     denied: 'technician',
     foreign: 'none',
     invalid: {
-      query: { from: 'tomorrow' },
+      query: { from: '2026-13-01' },
       fields: [
         {
           field: 'from',

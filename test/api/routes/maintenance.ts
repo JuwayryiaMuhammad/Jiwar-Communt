@@ -1143,7 +1143,7 @@ export const PREVENTIVE_ROUTES: Row[] = [
     // The unit is in the query; the suite itself tries another compound's.
     foreign: 'none',
     invalid: {
-      query: { unitId: 'x', days: '15', from: '11/10/2026' },
+      query: { unitId: 'x', days: '15', from: '2026-02-30' },
       fields: [
         { field: 'unitId', code: 'INVALID_UUID' },
         {
@@ -1172,7 +1172,7 @@ export const VISIT_ROUTES: Row[] = [
       code: 'TICKET_NOT_FOUND',
     },
     invalid: {
-      query: { days: '15', from: '11/10/2026' },
+      query: { days: '15', from: '2027-02-29' },
       fields: [
         {
           field: 'from',

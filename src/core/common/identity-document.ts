@@ -6,6 +6,7 @@ import {
 } from './egyptian-national-id';
 import { appError, ErrorCode, FieldErrorCode, type FieldError } from './errors';
 import { NATIONALITIES } from './iso-countries';
+import { isRealDate } from './validation/local-date';
 
 // ============================================================================
 // Identity documents (ADR 0018): an Egyptian national ID or a passport.
@@ -165,17 +166,8 @@ export function checkBirthDate(
       Date.UTC(raw.getUTCFullYear(), raw.getUTCMonth(), raw.getUTCDate()),
     );
   } else {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
-    if (!m) return invalid;
-    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
-    date = new Date(Date.UTC(y, mo - 1, d));
-    if (
-      date.getUTCFullYear() !== y ||
-      date.getUTCMonth() !== mo - 1 ||
-      date.getUTCDate() !== d
-    ) {
-      return invalid;
-    }
+    if (!isRealDate(raw)) return invalid;
+    date = new Date(`${raw}T00:00:00.000Z`);
   }
   if (date > today || ageOn(date, today) > MAX_AGE) return invalid;
   return { date };

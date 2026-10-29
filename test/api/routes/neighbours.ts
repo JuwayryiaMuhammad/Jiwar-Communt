@@ -560,7 +560,7 @@ export const NEIGHBOUR_BOARD_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      body: { kind: 'gift', body: '' },
+      body: { kind: 'gift', body: '', occurredOn: '2026-02-30' },
       fields: [
         {
           field: 'kind',
@@ -568,6 +568,7 @@ export const NEIGHBOUR_BOARD_ROUTES: Row[] = [
           params: { allowed: ['lost', 'found', 'lend', 'borrow'] },
         },
         { field: 'body', code: 'INVALID_LENGTH', params: { min: 1, max: 500 } },
+        { field: 'occurredOn', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -689,7 +690,7 @@ export const NEIGHBOUR_BOARD_ROUTES: Row[] = [
     denied: 'owner',
     foreign: 'none',
     invalid: {
-      body: { kind: 'gift', body: '' },
+      body: { kind: 'gift', body: '', occurredOn: '2026-02-30' },
       fields: [
         {
           field: 'kind',
@@ -697,6 +698,7 @@ export const NEIGHBOUR_BOARD_ROUTES: Row[] = [
           params: { allowed: ['lost', 'found', 'lend', 'borrow'] },
         },
         { field: 'body', code: 'INVALID_LENGTH', params: { min: 1, max: 500 } },
+        { field: 'occurredOn', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,

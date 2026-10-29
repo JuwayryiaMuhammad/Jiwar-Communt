@@ -5,6 +5,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import boundaries from './eslint.boundaries.cjs';
 import instants from './eslint.instants.cjs';
+import localDates from './eslint.local-dates.cjs';
 import testClock from './eslint.test-clock.cjs';
 import txConcurrency from './eslint.tx-concurrency.cjs';
 
@@ -12,6 +13,7 @@ const { boundaryConfigs } = boundaries;
 const { txConcurrencyConfigs } = txConcurrency;
 const { testClockConfigs } = testClock;
 const { instantConfigs } = instants;
+const { localDateConfigs } = localDates;
 
 export default tseslint.config(
   {
@@ -20,6 +22,7 @@ export default tseslint.config(
       'eslint.config.mjs',
       'eslint.boundaries.cjs',
       'eslint.instants.cjs',
+      'eslint.local-dates.cjs',
       'eslint.tx-concurrency.cjs',
       'eslint.test-clock.cjs',
       'dist/**',
@@ -70,6 +73,10 @@ export default tseslint.config(
   // An instant needs its offset (eslint.instants.cjs, ADR 0025)
   // ==========================================================================
   ...instantConfigs,
+  // ==========================================================================
+  // A calendar day is one that exists (eslint.local-dates.cjs, ADR 0025)
+  // ==========================================================================
+  ...localDateConfigs,
   // ==========================================================================
   // Tests read the compound's day from one helper (eslint.test-clock.cjs)
   // ==========================================================================

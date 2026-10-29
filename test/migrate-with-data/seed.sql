@@ -33,6 +33,7 @@ DECLARE
   h text;
   lp text;
   cat uuid;
+  area uuid; doc uuid;
 BEGIN
   FOR c IN 1..2 LOOP
     s := substr(md5(random()::text || clock_timestamp()::text), 1, 10);
@@ -170,6 +171,22 @@ BEGIN
                          created_by_account_id, reporter_account_id, priority, description, updated_at) VALUES
       (gen_random_uuid(), t, 1, u1, NULL, 'kitchen', cat, res1, res1, 'normal', 'The kitchen tap drips', now()),
       (gen_random_uuid(), t, 2, NULL, 'Pool', NULL, cat, mgr, res2, 'urgent', 'The pool pump is loud', now());
+
+    -- The register as M1-2 finds it (ADR 0065): the compound's maintenance
+    -- settings, which gain the replacement share, and a common area's
+    -- document, whose subject CHECK and trigger gain a contract.
+    INSERT INTO maintenance_settings (tenant_id, updated_at) VALUES (t, now());
+    area := gen_random_uuid();
+    INSERT INTO common_areas (id, tenant_id, kind, code, name_ar, name_en, updated_at) VALUES
+      (area, t, 'area', 'POOL', 'حمام السباحة', 'Pool', now());
+    doc := gen_random_uuid();
+    INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes,
+                       status, upload_expires_at, finalized_at, attached_at) VALUES
+      (doc, t, NULL, 'asset_document', 'application/pdf', 4096,
+       'ready', now() - interval '1 day', now() - interval '1 day', now() - interval '1 day');
+    INSERT INTO maintenance_documents (id, tenant_id, common_area_id, file_id, kind, title,
+                                       added_by_account_id, added_at) VALUES
+      (gen_random_uuid(), t, area, doc, 'plan', 'The pool plant room', mgr, now());
 
     -- Permits as they were before a move permit had a direction (ADR 0063):
     -- the loaded copy names one only where the column exists. An open

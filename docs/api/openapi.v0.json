@@ -480,6 +480,37 @@
         ],
         "type": "object"
       },
+      "AdjustStockDto": {
+        "properties": {
+          "delta": {
+            "description": "Signed: `-2` takes two off, `1.5` adds one and a half.",
+            "pattern": "^-?(?!0+(\\.0{1,3})?$)\\d{1,9}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `stockAdjust`.",
+            "enum": [
+              "count_correction",
+              "damaged",
+              "expired",
+              "lost",
+              "found",
+              "other"
+            ],
+            "type": "string"
+          },
+          "storeId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "storeId",
+          "delta",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "AgendaProposalOutcome": {
         "enum": [
           "accepted",
@@ -6433,6 +6464,62 @@
         },
         "required": [
           "optionIds"
+        ],
+        "type": "object"
+      },
+      "CatalogueItemView": {
+        "properties": {
+          "available": {
+            "description": "Some is free in a store.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockUnit"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "nameAr",
+          "nameEn",
+          "unit",
+          "available"
+        ],
+        "type": "object"
+      },
+      "CatalogueItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogueItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -13050,6 +13137,74 @@
         "required": [
           "description",
           "action"
+        ],
+        "type": "object"
+      },
+      "CreateStockItemDto": {
+        "properties": {
+          "nameAr": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reorderLevel": {
+            "description": "Warn who keeps the store once what it holds falls to this or below.",
+            "pattern": "^\\d{1,9}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "sku": {
+            "description": "The compound’s SKU, unique. Never changes.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockUnit"
+              }
+            ]
+          }
+        },
+        "required": [
+          "sku",
+          "nameAr",
+          "nameEn",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "CreateStoreDto": {
+        "properties": {
+          "code": {
+            "description": "The compound’s short code, unique. Never changes.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "The common area it is in.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nameAr",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -31892,6 +32047,104 @@
         ],
         "type": "object"
       },
+      "PartRequestStatus": {
+        "enum": [
+          "requested",
+          "reserved",
+          "issued",
+          "declined",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "PartRequestView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "`partRequestDecline` or `partRequestCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "requestedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reservedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartRequestStatus"
+              }
+            ]
+          },
+          "storeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ticketId",
+          "itemId",
+          "quantity",
+          "status",
+          "storeId",
+          "requestedById",
+          "requestedAt",
+          "reservedAt",
+          "closedAt",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "PartRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PartRequestView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PartnerCancelPartnerRequestDto": {
         "properties": {
           "reasonCode": {
@@ -37488,6 +37741,34 @@
         ],
         "type": "object"
       },
+      "ReceiveStockDto": {
+        "properties": {
+          "quantity": {
+            "pattern": "^(?!0+(\\.0{1,3})?$)\\d{1,9}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "reference": {
+            "description": "The delivery note or invoice number.",
+            "maxLength": 60,
+            "type": "string"
+          },
+          "storeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCost": {
+            "description": "EGP for one.",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "storeId",
+          "quantity",
+          "unitCost"
+        ],
+        "type": "object"
+      },
       "RecommendReplacementDto": {
         "properties": {
           "note": {
@@ -39784,6 +40065,23 @@
         ],
         "type": "object"
       },
+      "RequestPartDto": {
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^(?!0+(\\.0{1,3})?$)\\d{1,9}(\\.\\d{1,3})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "quantity"
+        ],
+        "type": "object"
+      },
       "RequestPartnerView": {
         "properties": {
           "businessPhone": {
@@ -39960,6 +40258,19 @@
         "required": [
           "id",
           "code"
+        ],
+        "type": "object"
+      },
+      "ReservePartDto": {
+        "properties": {
+          "storeId": {
+            "description": "Where it is held.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "storeId"
         ],
         "type": "object"
       },
@@ -42246,6 +42557,29 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReturnPartDto": {
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^(?!0+(\\.0{1,3})?$)\\d{1,9}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "storeId": {
+            "description": "Where it goes back.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "storeId",
+          "quantity"
         ],
         "type": "object"
       },
@@ -52801,6 +53135,301 @@
         ],
         "type": "object"
       },
+      "StockItemCardView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "averageCost": {
+            "description": "EGP for one, over what was received; null before any receipt.",
+            "nullable": true,
+            "type": "string"
+          },
+          "belowReorderLevel": {
+            "description": "At or under its reorder level (the warning stands).",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "levels": {
+            "description": "By store code.",
+            "items": {
+              "$ref": "#/components/schemas/StockLevelView"
+            },
+            "type": "array"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "onHand": {
+            "description": "Held, every store together.",
+            "type": "string"
+          },
+          "reorderLevel": {
+            "description": "Three decimals.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reserved": {
+            "description": "Of that, reserved for requests.",
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockUnit"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "nameAr",
+          "nameEn",
+          "unit",
+          "reorderLevel",
+          "averageCost",
+          "active",
+          "onHand",
+          "reserved",
+          "belowReorderLevel",
+          "levels"
+        ],
+        "type": "object"
+      },
+      "StockItemView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "averageCost": {
+            "description": "EGP for one, over what was received; null before any receipt.",
+            "nullable": true,
+            "type": "string"
+          },
+          "belowReorderLevel": {
+            "description": "At or under its reorder level (the warning stands).",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "onHand": {
+            "description": "Held, every store together.",
+            "type": "string"
+          },
+          "reorderLevel": {
+            "description": "Three decimals.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reserved": {
+            "description": "Of that, reserved for requests.",
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockUnit"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "nameAr",
+          "nameEn",
+          "unit",
+          "reorderLevel",
+          "averageCost",
+          "active",
+          "onHand",
+          "reserved",
+          "belowReorderLevel"
+        ],
+        "type": "object"
+      },
+      "StockItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StockItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StockLevelView": {
+        "properties": {
+          "quantity": {
+            "type": "string"
+          },
+          "reserved": {
+            "type": "string"
+          },
+          "store": {
+            "$ref": "#/components/schemas/StoreView"
+          }
+        },
+        "required": [
+          "store",
+          "quantity",
+          "reserved"
+        ],
+        "type": "object"
+      },
+      "StockMovementKind": {
+        "enum": [
+          "receive",
+          "adjust",
+          "transfer",
+          "issue",
+          "return"
+        ],
+        "type": "string"
+      },
+      "StockMovementView": {
+        "properties": {
+          "actorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockMovementKind"
+              }
+            ]
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "partRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Signed: out is negative.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "An adjustment’s `stockAdjust` code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "storeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "transferId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCost": {
+            "description": "A receipt’s, EGP.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "storeId",
+          "kind",
+          "quantity",
+          "unitCost",
+          "reference",
+          "reasonCode",
+          "transferId",
+          "ticketId",
+          "partRequestId",
+          "actorId",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "StockMovementViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StockMovementView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StockUnit": {
+        "enum": [
+          "piece",
+          "metre",
+          "litre",
+          "kilogram",
+          "box",
+          "set",
+          "pair",
+          "roll"
+        ],
+        "type": "string"
+      },
       "StopWorkDto": {
         "properties": {
           "reasonCode": {
@@ -52810,6 +53439,64 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "StoreView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameAr",
+          "nameEn",
+          "commonAreaId",
+          "active",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StoreViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StoreView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -54056,6 +54743,51 @@
         ],
         "type": "string"
       },
+      "TicketPartView": {
+        "properties": {
+          "issued": {
+            "type": "string"
+          },
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "returned": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "sku",
+          "issued",
+          "returned"
+        ],
+        "type": "object"
+      },
+      "TicketPartsView": {
+        "properties": {
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/TicketPartView"
+            },
+            "type": "array"
+          },
+          "requests": {
+            "items": {
+              "$ref": "#/components/schemas/PartRequestView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "requests",
+          "parts"
+        ],
+        "type": "object"
+      },
       "TicketPhotoDto": {
         "properties": {
           "fileId": {
@@ -54793,6 +55525,28 @@
           "reasonCode",
           "reason",
           "toAccountId"
+        ],
+        "type": "object"
+      },
+      "TransferStockDto": {
+        "properties": {
+          "fromStoreId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^(?!0+(\\.0{1,3})?$)\\d{1,9}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "toStoreId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromStoreId",
+          "toStoreId",
+          "quantity"
         ],
         "type": "object"
       },
@@ -57366,6 +58120,50 @@
         "properties": {
           "active": {
             "description": "False retires it: it counts for no category and no technician.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateStockItemDto": {
+        "properties": {
+          "active": {
+            "description": "`false` retires it: no receipt, no request.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reorderLevel": {
+            "description": "`null`: no reorder warning.",
+            "nullable": true,
+            "pattern": "^\\d{1,9}(\\.\\d{1,3})?$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateStoreDto": {
+        "properties": {
+          "active": {
+            "description": "`false` retires it: nothing goes in or out.",
             "type": "boolean"
           },
           "nameAr": {
@@ -74778,6 +75576,202 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/part-requests": {
+      "get": {
+        "operationId": "PartRequestsController_queue",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "The open ones (requested and reserved) when left out.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "requested",
+                "reserved",
+                "issued",
+                "declined",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List part requests, oldest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/part-requests/{id}/decline": {
+      "post": {
+        "operationId": "PartRequestsController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a part request",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/part-requests/{id}/issue": {
+      "post": {
+        "operationId": "PartRequestsController_issue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hand the reserved part over to the technician",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/part-requests/{id}/reserve": {
+      "post": {
+        "operationId": "PartRequestsController_reserve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservePartDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hold the part in a store for the ticket",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/plan-occurrences/{id}/defer": {
       "post": {
         "operationId": "PlanOccurrencesController_defer",
@@ -75914,6 +76908,629 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/stock/items": {
+      "get": {
+        "operationId": "StockController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: only those at or under their reorder level.",
+            "in": "query",
+            "name": "below",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the items with what is held, oldest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StockController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStockItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockItemCardView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an item",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/stock/items/{id}": {
+      "get": {
+        "operationId": "StockController_card",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockItemCardView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an item with each store’s level",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StockController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStockItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockItemCardView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename an item, set its reorder level, retire it",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/stock/items/{id}/adjust": {
+      "post": {
+        "operationId": "StockController_adjust",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustStockDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set a store’s level right, up or down",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/stock/items/{id}/receive": {
+      "post": {
+        "operationId": "StockController_receive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiveStockDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Receive the item into a store, at its cost",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/stock/items/{id}/transfer": {
+      "post": {
+        "operationId": "StockController_transfer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferStockDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementView"
+                }
+              }
+            },
+            "description": "The movement out; its pair in shares `transferId`."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move the item from one store to another",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/stock/movements": {
+      "get": {
+        "operationId": "StockController_movements",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "itemId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "storeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ticketId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List movements, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/stores": {
+      "get": {
+        "operationId": "StoresController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the stores, oldest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StoresController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoreDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a store",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/stores/{id}": {
+      "get": {
+        "operationId": "StoresController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a store",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StoresController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename or retire a store",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/technicians": {
       "get": {
         "operationId": "TechniciansController_list",
@@ -76855,6 +78472,43 @@
           }
         ],
         "summary": "Post to a ticket's thread",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/parts": {
+      "get": {
+        "operationId": "DispatchTicketPartsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketPartsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a ticket’s part requests and what it got",
         "tags": [
           "maintenance"
         ],
@@ -105465,6 +107119,53 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/technician/part-requests/{id}/cancel": {
+      "post": {
+        "operationId": "TechnicianPartsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a part request before it is issued",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/technician/plans/upcoming": {
       "get": {
         "operationId": "FieldController_upcoming",
@@ -105525,6 +107226,65 @@
           }
         ],
         "summary": "Scan an asset’s or an area’s tag: its card; sixty a minute",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/stock/items": {
+      "get": {
+        "operationId": "TechnicianPartsController_catalogue",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Part of a SKU or a name.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 60,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find an item to ask for",
         "tags": [
           "maintenance"
         ],
@@ -106029,6 +107789,155 @@
         "summary": "Post to the ticket's thread",
         "tags": [
           "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/part-requests": {
+      "post": {
+        "operationId": "TechnicianPartsController_request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPartDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask the store for a part",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/part-returns": {
+      "post": {
+        "operationId": "TechnicianPartsController_returnPart",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnPartDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Return an unused part to a store",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/parts": {
+      "get": {
+        "operationId": "TechnicianPartsController_parts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketPartsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my ticket’s part requests and what it got",
+        "tags": [
+          "maintenance"
         ],
         "x-stability": "draft"
       }

@@ -5439,6 +5439,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/part-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List part requests, oldest first */
+        get: operations["PartRequestsController_queue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/part-requests/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a part request */
+        post: operations["PartRequestsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/part-requests/{id}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hand the reserved part over to the technician */
+        post: operations["PartRequestsController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/part-requests/{id}/reserve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hold the part in a store for the ticket */
+        post: operations["PartRequestsController_reserve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/plan-occurrences/{id}/defer": {
         parameters: {
             query?: never;
@@ -5785,6 +5853,146 @@ export interface paths {
         patch: operations["SpecialtiesController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/stock/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the items with what is held, oldest first */
+        get: operations["StockController_list"];
+        put?: never;
+        /** Add an item */
+        post: operations["StockController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/stock/items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an item with each store’s level */
+        get: operations["StockController_card"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename an item, set its reorder level, retire it */
+        patch: operations["StockController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/stock/items/{id}/adjust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set a store’s level right, up or down */
+        post: operations["StockController_adjust"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/stock/items/{id}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Receive the item into a store, at its cost */
+        post: operations["StockController_receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/stock/items/{id}/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move the item from one store to another */
+        post: operations["StockController_transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/stock/movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List movements, newest first */
+        get: operations["StockController_movements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/stores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the stores, oldest first */
+        get: operations["StoresController_list"];
+        put?: never;
+        /** Add a store */
+        post: operations["StoresController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/stores/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a store */
+        get: operations["StoresController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename or retire a store */
+        patch: operations["StoresController_update"];
+        trace?: never;
+    };
     "/api/v1/maintenance/technicians": {
         parameters: {
             query?: never;
@@ -6071,6 +6279,23 @@ export interface paths {
         put?: never;
         /** Post to a ticket's thread */
         post: operations["DispatchTicketsController_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/parts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a ticket’s part requests and what it got */
+        get: operations["DispatchTicketPartsController_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -15830,6 +16055,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/part-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call off a part request before it is issued */
+        post: operations["TechnicianPartsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/plans/upcoming": {
         parameters: {
             query?: never;
@@ -15858,6 +16100,23 @@ export interface paths {
         put?: never;
         /** Scan an asset’s or an area’s tag: its card; sixty a minute */
         post: operations["FieldController_scan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/stock/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Find an item to ask for */
+        get: operations["TechnicianPartsController_catalogue"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -16029,6 +16288,57 @@ export interface paths {
         put?: never;
         /** Post to the ticket's thread */
         post: operations["TechnicianTicketsController_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/part-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask the store for a part */
+        post: operations["TechnicianPartsController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/part-returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Return an unused part to a store */
+        post: operations["TechnicianPartsController_returnPart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/parts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my ticket’s part requests and what it got */
+        get: operations["TechnicianPartsController_parts"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -18570,6 +18880,17 @@ export interface components {
              */
             photoFileId: string;
         };
+        AdjustStockDto: {
+            /** @description Signed: `-2` takes two off, `1.5` adds one and a half. */
+            delta: string;
+            /**
+             * @description From the closed list `stockAdjust`.
+             * @enum {string}
+             */
+            reasonCode: "count_correction" | "damaged" | "expired" | "lost" | "found" | "other";
+            /** Format: uuid */
+            storeId: string;
+        };
         /** @enum {string} */
         AgendaProposalOutcome: "accepted" | "declined";
         /** @enum {string} */
@@ -20351,6 +20672,20 @@ export interface components {
              * @description The unit whose vote this is. Required only when the caller casts the vote of several units in this poll.
              */
             unitId?: string;
+        };
+        CatalogueItemView: {
+            /** @description Some is free in a store. */
+            available: boolean;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            sku: string;
+            unit: components["schemas"]["StockUnit"];
+        };
+        CatalogueItemViewList: {
+            data: components["schemas"]["CatalogueItemView"][];
+            nextCursor: string | null;
         };
         CategoryChangeDto: {
             /**
@@ -22668,6 +23003,26 @@ export interface components {
              * @example My mother, Hoda, grey Toyota
              */
             description: string;
+        };
+        CreateStockItemDto: {
+            nameAr: string;
+            nameEn: string;
+            /** @description Warn who keeps the store once what it holds falls to this or below. */
+            reorderLevel?: string;
+            /** @description The compound’s SKU, unique. Never changes. */
+            sku: string;
+            unit: components["schemas"]["StockUnit"];
+        };
+        CreateStoreDto: {
+            /** @description The compound’s short code, unique. Never changes. */
+            code: string;
+            /**
+             * Format: uuid
+             * @description The common area it is in.
+             */
+            commonAreaId?: string;
+            nameAr: string;
+            nameEn: string;
         };
         CreateSuggestionDto: {
             /** @description The suggestion, in the resident’s words. Private to its author and the staff. */
@@ -28503,6 +28858,34 @@ export interface components {
             /** @example Basement 2, row C */
             place: string;
         };
+        /** @enum {string} */
+        PartRequestStatus: "requested" | "reserved" | "issued" | "declined" | "cancelled";
+        PartRequestView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            quantity: string;
+            /** @description `partRequestDecline` or `partRequestCancel`. */
+            reasonCode: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            /** Format: uuid */
+            requestedById: string | null;
+            /** Format: date-time */
+            reservedAt: string | null;
+            status: components["schemas"]["PartRequestStatus"];
+            /** Format: uuid */
+            storeId: string | null;
+            /** Format: uuid */
+            ticketId: string;
+        };
+        PartRequestViewList: {
+            data: components["schemas"]["PartRequestView"][];
+            nextCursor: string | null;
+        };
         PartnerCancelPartnerRequestDto: {
             /** @description From the closed list `partnerRequestPartnerCancel`. */
             reasonCode: string;
@@ -30308,6 +30691,15 @@ export interface components {
             /** @description The unit the parcel is for. */
             unitCode: string;
         };
+        ReceiveStockDto: {
+            quantity: string;
+            /** @description The delivery note or invoice number. */
+            reference?: string;
+            /** Format: uuid */
+            storeId: string;
+            /** @description EGP for one. */
+            unitCost: string;
+        };
         RecommendReplacementDto: {
             note?: string;
             /** @enum {string} */
@@ -31039,6 +31431,11 @@ export interface components {
             /** @description Email or phone (local Egyptian format or international). */
             identifier: string;
         };
+        RequestPartDto: {
+            /** Format: uuid */
+            itemId: string;
+            quantity: string;
+        };
         RequestPartnerView: {
             /**
              * @description Its business phone: the requester calls it, never the reverse.
@@ -31105,6 +31502,13 @@ export interface components {
             code: string | null;
             /** Format: uuid */
             id: string;
+        };
+        ReservePartDto: {
+            /**
+             * Format: uuid
+             * @description Where it is held.
+             */
+            storeId: string;
         };
         ResidenceDto: {
             resides: boolean;
@@ -31773,6 +32177,16 @@ export interface components {
         RetireAssetDto: {
             /** @enum {string} */
             reasonCode: "replaced" | "disposed" | "sold" | "transferred" | "created_in_error" | "other";
+        };
+        ReturnPartDto: {
+            /** Format: uuid */
+            itemId: string;
+            quantity: string;
+            /**
+             * Format: uuid
+             * @description Where it goes back.
+             */
+            storeId: string;
         };
         ReverseClubPaymentDto: {
             /** @description From the closed list `clubPaymentReverse`. */
@@ -34825,9 +35239,108 @@ export interface components {
              */
             expiresAt: string;
         };
+        StockItemCardView: {
+            active: boolean;
+            /** @description EGP for one, over what was received; null before any receipt. */
+            averageCost: string | null;
+            /** @description At or under its reorder level (the warning stands). */
+            belowReorderLevel: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description By store code. */
+            levels: components["schemas"]["StockLevelView"][];
+            nameAr: string;
+            nameEn: string;
+            /** @description Held, every store together. */
+            onHand: string;
+            /** @description Three decimals. */
+            reorderLevel: string | null;
+            /** @description Of that, reserved for requests. */
+            reserved: string;
+            sku: string;
+            unit: components["schemas"]["StockUnit"];
+        };
+        StockItemView: {
+            active: boolean;
+            /** @description EGP for one, over what was received; null before any receipt. */
+            averageCost: string | null;
+            /** @description At or under its reorder level (the warning stands). */
+            belowReorderLevel: boolean;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description Held, every store together. */
+            onHand: string;
+            /** @description Three decimals. */
+            reorderLevel: string | null;
+            /** @description Of that, reserved for requests. */
+            reserved: string;
+            sku: string;
+            unit: components["schemas"]["StockUnit"];
+        };
+        StockItemViewList: {
+            data: components["schemas"]["StockItemView"][];
+            nextCursor: string | null;
+        };
+        StockLevelView: {
+            quantity: string;
+            reserved: string;
+            store: components["schemas"]["StoreView"];
+        };
+        /** @enum {string} */
+        StockMovementKind: "receive" | "adjust" | "transfer" | "issue" | "return";
+        StockMovementView: {
+            /** Format: uuid */
+            actorId: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            kind: components["schemas"]["StockMovementKind"];
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: uuid */
+            partRequestId: string | null;
+            /** @description Signed: out is negative. */
+            quantity: string;
+            /** @description An adjustment’s `stockAdjust` code. */
+            reasonCode: string | null;
+            reference: string | null;
+            /** Format: uuid */
+            storeId: string;
+            /** Format: uuid */
+            ticketId: string | null;
+            /** Format: uuid */
+            transferId: string | null;
+            /** @description A receipt’s, EGP. */
+            unitCost: string | null;
+        };
+        StockMovementViewList: {
+            data: components["schemas"]["StockMovementView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        StockUnit: "piece" | "metre" | "litre" | "kilogram" | "box" | "set" | "pair" | "roll";
         StopWorkDto: {
             /** @description From the closed list `permitWorkStop`. */
             reasonCode: string;
+        };
+        StoreView: {
+            active: boolean;
+            code: string;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        StoreViewList: {
+            data: components["schemas"]["StoreView"][];
+            nextCursor: string | null;
         };
         SuggestQuoteDto: {
             /** @description EGP, e.g. `350` or `350.50`; below ten million. */
@@ -35194,6 +35707,17 @@ export interface components {
          * @enum {string}
          */
         TicketOrigin: "resident" | "plan" | "inspection" | "field";
+        TicketPartView: {
+            issued: string;
+            /** Format: uuid */
+            itemId: string;
+            returned: string;
+            sku: string;
+        };
+        TicketPartsView: {
+            parts: components["schemas"]["TicketPartView"][];
+            requests: components["schemas"]["PartRequestView"][];
+        };
         TicketPhotoDto: {
             /**
              * Format: uuid
@@ -35413,6 +35937,13 @@ export interface components {
              * @description An active resident account: the new owner.
              */
             toAccountId: string;
+        };
+        TransferStockDto: {
+            /** Format: uuid */
+            fromStoreId: string;
+            quantity: string;
+            /** Format: uuid */
+            toStoreId: string;
         };
         TurnOnChildControlDto: {
             /** @description Whether the child may leave the compound alone. */
@@ -36268,6 +36799,20 @@ export interface components {
         };
         UpdateSpecialtyDto: {
             /** @description False retires it: it counts for no category and no technician. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+        };
+        UpdateStockItemDto: {
+            /** @description `false` retires it: no receipt, no request. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+            /** @description `null`: no reorder warning. */
+            reorderLevel?: string | null;
+        };
+        UpdateStoreDto: {
+            /** @description `false` retires it: nothing goes in or out. */
             active?: boolean;
             nameAr?: string;
             nameEn?: string;
@@ -44943,6 +45488,102 @@ export interface operations {
             };
         };
     };
+    PartRequestsController_queue: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description The open ones (requested and reserved) when left out. */
+                status?: "requested" | "reserved" | "issued" | "declined" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartRequestViewList"];
+                };
+            };
+        };
+    };
+    PartRequestsController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartRequestView"];
+                };
+            };
+        };
+    };
+    PartRequestsController_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartRequestView"];
+                };
+            };
+        };
+    };
+    PartRequestsController_reserve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReservePartDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartRequestView"];
+                };
+            };
+        };
+    };
     PlanOccurrencesController_defer: {
         parameters: {
             query?: never;
@@ -45550,6 +46191,310 @@ export interface operations {
             };
         };
     };
+    StockController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                active?: "true" | "false";
+                /** @description `true`: only those at or under their reorder level. */
+                below?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockItemViewList"];
+                };
+            };
+        };
+    };
+    StockController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStockItemDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockItemCardView"];
+                };
+            };
+        };
+    };
+    StockController_card: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockItemCardView"];
+                };
+            };
+        };
+    };
+    StockController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStockItemDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockItemCardView"];
+                };
+            };
+        };
+    };
+    StockController_adjust: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustStockDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockMovementView"];
+                };
+            };
+        };
+    };
+    StockController_receive: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiveStockDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockMovementView"];
+                };
+            };
+        };
+    };
+    StockController_transfer: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferStockDto"];
+            };
+        };
+        responses: {
+            /** @description The movement out; its pair in shares `transferId`. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockMovementView"];
+                };
+            };
+        };
+    };
+    StockController_movements: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                itemId?: string;
+                storeId?: string;
+                ticketId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockMovementViewList"];
+                };
+            };
+        };
+    };
+    StoresController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreViewList"];
+                };
+            };
+        };
+    };
+    StoresController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStoreDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreView"];
+                };
+            };
+        };
+    };
+    StoresController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreView"];
+                };
+            };
+        };
+    };
+    StoresController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStoreDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreView"];
+                };
+            };
+        };
+    };
     TechniciansController_list: {
         parameters: {
             query?: never;
@@ -46020,6 +46965,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MessageCreatedView"];
+                };
+            };
+        };
+    };
+    DispatchTicketPartsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketPartsView"];
                 };
             };
         };
@@ -60603,6 +61569,31 @@ export interface operations {
             };
         };
     };
+    TechnicianPartsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartRequestView"];
+                };
+            };
+        };
+    };
     FieldController_upcoming: {
         parameters: {
             query?: never;
@@ -60641,6 +61632,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScanResultView"];
+                };
+            };
+        };
+    };
+    TechnicianPartsController_catalogue: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Part of a SKU or a name. */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueItemViewList"];
                 };
             };
         };
@@ -60897,6 +61913,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MessageCreatedView"];
+                };
+            };
+        };
+    };
+    TechnicianPartsController_request: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestPartDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartRequestView"];
+                };
+            };
+        };
+    };
+    TechnicianPartsController_returnPart: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnPartDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockMovementView"];
+                };
+            };
+        };
+    };
+    TechnicianPartsController_parts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketPartsView"];
                 };
             };
         };

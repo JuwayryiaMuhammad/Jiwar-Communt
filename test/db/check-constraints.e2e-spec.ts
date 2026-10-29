@@ -2275,6 +2275,34 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   ticket_quote_suggestions_decided_after: {
     guarded: 'decided_at IS NULL is tested first; suggested_at is NOT NULL',
   },
+  // The maintenance store (ADR 0065).
+  stores_code_shape: {},
+  stores_names_length: {},
+  stock_items_sku_shape: {},
+  stock_items_names_length: {},
+  stock_items_unit_known: {},
+  stock_items_amounts_range: {
+    guarded: 'reorder_level and average_cost are tested IS NULL first',
+  },
+  stock_items_alert_shape: {},
+  stock_levels_amounts: {},
+  part_requests_quantity_positive: {},
+  part_requests_state_shape: {
+    guarded:
+      'reason_code is tested IS NOT NULL before its IN; the others only under IS [NOT] NULL',
+  },
+  part_requests_times_after: {
+    guarded:
+      'reserved_at and closed_at are tested IS NULL first; requested_at is NOT NULL',
+  },
+  stock_movements_reference_length: {
+    guarded: 'reference IS NULL is tested first',
+  },
+  stock_movements_kind_shape: {
+    guarded:
+      'unit_cost and reason_code are tested IS NOT NULL before they are compared',
+  },
+  ticket_cost_entries_part_shape: {},
 };
 
 interface Check {

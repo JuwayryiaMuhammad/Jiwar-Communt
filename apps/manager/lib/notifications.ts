@@ -298,6 +298,8 @@ const TEXT: Record<string, (p: P) => string> = {
   'club_membership.expiring': () => 'Your club membership ends within a week',
   // The asset register, plans and inspections (ADR 0064).
   'asset.warranty_expiring': (p) => `The warranty of asset ${p.assetRef} ends on ${p.endsOn}`,
+  'stock.reorder_level': (p) => `${p.itemRef} is at or under its reorder level`,
+  'part_request.created': (p) => `${ticket(p)} asks the store for ${p.itemRef}`,
   'maintenance.plan_overdue': (p) => `Planned work on asset ${p.assetRef}, due ${p.dueOn}, is overdue`,
   'inspection.assigned': (p) => `An inspection of ${p.targetRef} is yours, due ${p.dueOn}`,
   'inspection.overdue': (p) => `The inspection of ${p.targetRef}, due ${p.dueOn}, is overdue`,
@@ -315,9 +317,12 @@ export function notificationText(n: NotificationLike): string {
  * reader's permissions: a link is offered only where the page would open.
  */
 export function notificationHref(n: NotificationLike, can: (permission: string) => boolean): string | null {
+  // A part request is the store's to answer, on its queue (ADR 0065).
+  if (n.kind === 'part_request.created') return can('stock.manage') ? '/stock/part-requests' : null;
   if (n.targetType === 'ticket' && n.targetId) return can('tickets.dispatch') ? `/maintenance/${n.targetId}` : null;
   // The asset register (ADR 0064).
   if (n.targetType === 'asset' && n.targetId) return can('assets.read') ? `/assets/${n.targetId}` : null;
+  if (n.targetType === 'stock_item' && n.targetId) return can('stock.manage') ? `/stock/${n.targetId}` : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

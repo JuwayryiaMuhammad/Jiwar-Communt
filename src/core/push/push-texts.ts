@@ -283,6 +283,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'اكتمل العمل على البلاغ رقم {ticketNumber}. يرجى التأكيد.',
     },
   },
+  'part_request.created': {
+    en: {
+      title: 'A part to give out',
+      body: 'Ticket #{ticketNumber} asks for {itemRef}.',
+    },
+    ar: {
+      title: 'طلب قطعة',
+      body: 'البلاغ رقم {ticketNumber} يطلب {itemRef}.',
+    },
+  },
+  'part_request.reserved': {
+    en: {
+      title: 'Your part is ready',
+      body: 'Ticket #{ticketNumber}: {itemRef} is held for you at the store.',
+    },
+    ar: {
+      title: 'القطعة جاهزة',
+      body: 'البلاغ رقم {ticketNumber}: {itemRef} محجوزة لك في المخزن.',
+    },
+  },
+  'part_request.declined': {
+    en: {
+      title: 'Part not given',
+      body: 'Ticket #{ticketNumber}: the store did not give {itemRef}.',
+    },
+    ar: {
+      title: 'لم تُصرف القطعة',
+      body: 'البلاغ رقم {ticketNumber}: لم يصرف المخزن {itemRef}.',
+    },
+  },
+  'stock.reorder_level': {
+    en: {
+      title: 'Time to reorder',
+      body: '{itemRef} is at or under its reorder level.',
+    },
+    ar: {
+      title: 'حان وقت إعادة الطلب',
+      body: '{itemRef} عند حد إعادة الطلب أو أقل.',
+    },
+  },
   'ticket.quote_suggested': {
     en: {
       title: 'A quote to send',

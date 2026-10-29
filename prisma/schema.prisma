@@ -3828,6 +3828,9 @@ model TicketCostEntry {
   voidedById   String?   @map("voided_by_account_id") @db.Uuid
   /// REASON_CODES.ticketCostVoid.
   voidReason   String?   @map("void_reason")
+  /// A part's entry: its stock item and the movement that wrote it (ADR 0065).
+  itemId       String?   @map("item_id") @db.Uuid
+  movementId   String?   @map("movement_id") @db.Uuid
 
   ticket Ticket @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_cost_entries_ticket_fkey")
 
@@ -10283,4 +10286,128 @@ model AssetReplacementRecommendation {
   @@unique([tenantId, id])
   @@index([tenantId, status, recommendedAt(sort: Desc), id(sort: Desc)], map: "asset_replacement_recommendations_queue_idx")
   @@map("asset_replacement_recommendations")
+}
+
+/// Where the maintenance store keeps parts (ADR 0065); retired, never deleted.
+model Store {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  /// `^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$`, unique per compound.
+  code         String
+  nameAr       String   @map("name_ar")
+  nameEn       String   @map("name_en")
+  /// The common area it is in, if any.
+  commonAreaId String?  @map("common_area_id") @db.Uuid
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  levels StockLevel[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, createdAt, id], map: "stores_list_idx")
+  @@map("stores")
+}
+
+/// What the store keeps (ADR 0065): a SKU, a unit, the level to reorder at,
+/// the average cost of what was received.
+model StockItem {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  sku              String
+  nameAr           String    @map("name_ar")
+  nameEn           String    @map("name_en")
+  /// STOCK_UNITS.
+  unit             String
+  reorderLevel     Decimal?  @map("reorder_level") @db.Decimal(12, 3)
+  /// Null until the first receipt.
+  averageCost      Decimal?  @map("average_cost") @db.Decimal(12, 2)
+  active           Boolean   @default(true)
+  /// The reorder warning, once; cleared when stock is above the level again.
+  reorderAlertedAt DateTime? @map("reorder_alerted_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  levels StockLevel[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, sku])
+  @@index([tenantId, createdAt, id], map: "stock_items_list_idx")
+  @@map("stock_items")
+}
+
+/// How much of an item a store holds, and how much of it is reserved.
+model StockLevel {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  storeId   String   @map("store_id") @db.Uuid
+  itemId    String   @map("item_id") @db.Uuid
+  quantity  Decimal  @default(0) @db.Decimal(12, 3)
+  reserved  Decimal  @default(0) @db.Decimal(12, 3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  store Store     @relation(fields: [tenantId, storeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "stock_levels_store_fkey")
+  item  StockItem @relation(fields: [tenantId, itemId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "stock_levels_item_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, storeId, itemId], map: "stock_levels_store_item_key")
+  @@index([tenantId, itemId, storeId], map: "stock_levels_item_idx")
+  @@map("stock_levels")
+}
+
+/// A technician asks for a part on their ticket (ADR 0065); the store
+/// reserves, issues or declines it, once; forward only (a trigger).
+model PartRequest {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  ticketId      String    @map("ticket_id") @db.Uuid
+  itemId        String    @map("item_id") @db.Uuid
+  quantity      Decimal   @db.Decimal(12, 3)
+  /// `requested`, `reserved`, `issued`, `declined` or `cancelled`.
+  status        String    @default("requested")
+  /// Where it is reserved, from `reserved` on.
+  storeId       String?   @map("store_id") @db.Uuid
+  requestedById String?   @map("requested_by_account_id") @db.Uuid
+  requestedAt   DateTime  @map("requested_at") @db.Timestamptz(3)
+  reservedById  String?   @map("reserved_by_account_id") @db.Uuid
+  reservedAt    DateTime? @map("reserved_at") @db.Timestamptz(3)
+  closedById    String?   @map("closed_by_account_id") @db.Uuid
+  closedAt      DateTime? @map("closed_at") @db.Timestamptz(3)
+  /// partRequestDecline or partRequestCancel.
+  reasonCode    String?   @map("reason_code")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, ticketId, requestedAt, id], map: "part_requests_ticket_idx")
+  @@index([tenantId, status, requestedAt, id], map: "part_requests_queue_idx")
+  @@map("part_requests")
+}
+
+/// Every change of a stock level (ADR 0065), never edited: a receipt, an
+/// adjustment, half of a transfer, a part issued to or returned from a
+/// ticket. `quantity` is signed.
+model StockMovement {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  itemId        String   @map("item_id") @db.Uuid
+  storeId       String   @map("store_id") @db.Uuid
+  /// `receive`, `adjust`, `transfer`, `issue` or `return`.
+  kind          String
+  quantity      Decimal  @db.Decimal(12, 3)
+  /// A receipt's cost of one.
+  unitCost      Decimal? @map("unit_cost") @db.Decimal(12, 2)
+  /// A receipt's delivery note or invoice number.
+  reference     String?
+  /// An adjustment's REASON_CODES.stockAdjust.
+  reasonCode    String?  @map("reason_code")
+  transferId    String?  @map("transfer_id") @db.Uuid
+  ticketId      String?  @map("ticket_id") @db.Uuid
+  partRequestId String?  @map("part_request_id") @db.Uuid
+  actorId       String?  @map("actor_account_id") @db.Uuid
+  occurredAt    DateTime @map("occurred_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, itemId, occurredAt(sort: Desc), id(sort: Desc)], map: "stock_movements_item_idx")
+  @@index([tenantId, storeId, occurredAt(sort: Desc), id(sort: Desc)], map: "stock_movements_store_idx")
+  @@map("stock_movements")
 }

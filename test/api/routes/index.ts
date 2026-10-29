@@ -1,4 +1,9 @@
-import { COST_ROUTES, QUOTE_SUGGESTION_ROUTES } from './operations';
+import {
+  COST_ROUTES,
+  QUOTE_SUGGESTION_ROUTES,
+  STOCK_ROUTES,
+  TECHNICIAN_PART_ROUTES,
+} from './operations';
 import {
   ASSET_ROUTES,
   CHECKLIST_ROUTES,
@@ -362,4 +367,6 @@ export const ROUTES: Row[] = [
   // ADR 0065.
   ...COST_ROUTES,
   ...QUOTE_SUGGESTION_ROUTES,
+  ...STOCK_ROUTES,
+  ...TECHNICIAN_PART_ROUTES,
 ];

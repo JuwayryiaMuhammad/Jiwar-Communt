@@ -1450,6 +1450,22 @@ export const ErrorCode = {
   QUOTE_SUGGESTION_EXISTS: 'QUOTE_SUGGESTION_EXISTS',
   /** Sent or dismissed once; params.status (409). */
   QUOTE_SUGGESTION_DECIDED: 'QUOTE_SUGGESTION_DECIDED',
+  // The maintenance store (ADR 0065)
+  STORE_NOT_FOUND: 'STORE_NOT_FOUND',
+  /** The store is retired: nothing goes in or out (409). */
+  STORE_RETIRED: 'STORE_RETIRED',
+  STOCK_ITEM_NOT_FOUND: 'STOCK_ITEM_NOT_FOUND',
+  /** The item is retired: not received, not requested (409). */
+  STOCK_ITEM_RETIRED: 'STOCK_ITEM_RETIRED',
+  /** Not that much free in the store; params.available (409). */
+  STOCK_INSUFFICIENT: 'STOCK_INSUFFICIENT',
+  PART_REQUEST_NOT_FOUND: 'PART_REQUEST_NOT_FOUND',
+  /** Not in a status this allows; params.status (409). */
+  PART_REQUEST_WRONG_STATUS: 'PART_REQUEST_WRONG_STATUS',
+  /** Parts go to a ticket whose work is in hand; params.status (409). */
+  TICKET_NOT_TAKING_PARTS: 'TICKET_NOT_TAKING_PARTS',
+  /** More than was issued to the ticket, net of returns; params.returnable (409). */
+  PART_RETURN_EXCEEDS_ISSUED: 'PART_RETURN_EXCEEDS_ISSUED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

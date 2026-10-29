@@ -192,6 +192,9 @@ describe('audit catalog', () => {
         // ADR 0065
         'ticket_cost_entry',
         'ticket_quote_suggestion',
+        'store',
+        'stock_item',
+        'part_request',
       ]).toContain(def.target);
     }
   });

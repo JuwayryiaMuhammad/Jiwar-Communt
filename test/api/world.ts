@@ -246,6 +246,10 @@ export interface World
   /** ADR 0065: a cost entry and a suggested quote on compound B's ticket. */
   bCostEntryId: string;
   bQuoteSuggestionId: string;
+  /** ADR 0065: compound B's store, stock item and a part request on its ticket. */
+  bStoreId: string;
+  bStockItemId: string;
+  bPartRequestId: string;
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
@@ -906,6 +910,42 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     }),
   );
+  const bStore = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.store.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        code: 'WORLD-STORE',
+        nameAr: 'مخزن',
+        nameEn: 'World store',
+      },
+    }),
+  );
+  const bStockItem = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.stockItem.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        sku: 'WORLD-PART',
+        nameAr: 'قطعة',
+        nameEn: 'World part',
+        unit: 'piece',
+      },
+    }),
+  );
+  const bPartRequest = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.partRequest.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        ticketId: bTicket.id,
+        itemId: bStockItem.id,
+        quantity: '1',
+        requestedById: b.ids.technician,
+        requestedAt: new Date(),
+      },
+    }),
+  );
   const bInspectionChecklist = await helpers.asManager(b, () =>
     h.moduleRef.get(ChecklistsService).create({
       key: 'world_inspection',
@@ -1446,6 +1486,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bOccurrenceId: bOccurrence.id,
     bCostEntryId: bCostEntry.id,
     bQuoteSuggestionId: bQuoteSuggestion.id,
+    bStoreId: bStore.id,
+    bStockItemId: bStockItem.id,
+    bPartRequestId: bPartRequest.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
     bRecommendationId: bRecommendation.id,

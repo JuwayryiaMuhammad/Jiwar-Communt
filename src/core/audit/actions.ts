@@ -1896,6 +1896,37 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'ticket_quote_suggestion',
   },
+  // The maintenance store (ADR 0065): codes, quantities and costs; names
+  // as `{ changed }`; a receipt's reference only as whether it has one.
+  'store.created': {
+    log: 'tenant',
+    target: 'store',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'store.updated': {
+    log: 'tenant',
+    target: 'store',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'stock_item.created': {
+    log: 'tenant',
+    target: 'stock_item',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'stock_item.updated': {
+    log: 'tenant',
+    target: 'stock_item',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'stock.received': { log: 'tenant', target: 'stock_item' },
+  'stock.adjusted': { log: 'tenant', target: 'stock_item' },
+  'stock.transferred': { log: 'tenant', target: 'stock_item' },
+  'stock.returned': { log: 'tenant', target: 'stock_item' },
+  'part_request.requested': { log: 'tenant', target: 'part_request' },
+  'part_request.reserved': { log: 'tenant', target: 'part_request' },
+  'part_request.issued': { log: 'tenant', target: 'part_request' },
+  'part_request.declined': { log: 'tenant', target: 'part_request' },
+  'part_request.cancelled': { log: 'tenant', target: 'part_request' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

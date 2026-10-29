@@ -128,6 +128,17 @@ import {
   TechnicianQuoteSuggestionsController,
 } from './quotes/quote-suggestions.controller';
 import { QuoteSuggestionsService } from './quotes/quote-suggestions.service';
+import {
+  DispatchTicketPartsController,
+  PartRequestsController,
+  StockController,
+  StoresController,
+  TechnicianPartsController,
+} from './stock/stock.controller';
+import { PartRequestsService } from './stock/part-requests.service';
+import { StockItemsService } from './stock/stock-items.service';
+import { StockLedger } from './stock/stock-ledger';
+import { StoresService } from './stock/stores.service';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -180,6 +191,11 @@ import { QuoteSuggestionsService } from './quotes/quote-suggestions.service';
     TicketCostsController,
     TechnicianQuoteSuggestionsController,
     DispatchQuoteSuggestionsController,
+    StoresController,
+    StockController,
+    PartRequestsController,
+    DispatchTicketPartsController,
+    TechnicianPartsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -239,6 +255,10 @@ import { QuoteSuggestionsService } from './quotes/quote-suggestions.service';
     ReplacementsService,
     TicketCostsService,
     QuoteSuggestionsService,
+    StockLedger,
+    StoresService,
+    StockItemsService,
+    PartRequestsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

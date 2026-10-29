@@ -319,3 +319,14 @@ test('a technician’s suggested quote (ADR 0065) reads as an amount to send and
   assert.equal(notificationHref(suggested, (p) => p === 'tickets.dispatch'), '/maintenance/t1');
   assert.equal(notificationHref(suggested, () => false), null);
 });
+
+test('the store’s notices (ADR 0065): a part asked for opens the queue, a reorder warning the item', () => {
+  const asked = { kind: 'part_request.created', params: { ticketNumber: 'MT-000042', itemRef: 'VALVE-15' }, targetType: 'ticket', targetId: 't1' };
+  assert.match(notificationText(asked), /asks the store for VALVE-15/);
+  assert.equal(notificationHref(asked, (p) => p === 'stock.manage'), '/stock/part-requests');
+  assert.equal(notificationHref(asked, (p) => p === 'tickets.dispatch'), null);
+  const low = { kind: 'stock.reorder_level', params: { itemRef: 'VALVE-15' }, targetType: 'stock_item', targetId: 'i1' };
+  assert.equal(notificationText(low), 'VALVE-15 is at or under its reorder level');
+  assert.equal(notificationHref(low, (p) => p === 'stock.manage'), '/stock/i1');
+  assert.equal(notificationHref(low, () => false), null);
+});

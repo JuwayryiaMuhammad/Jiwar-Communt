@@ -333,6 +333,21 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   ticket_quote_suggestions_tenant_id_id_key: null,
   ticket_quote_suggestions_one_pending: null,
   ticket_quote_suggestions_quote_key: null,
+  // The store (ADR 0065): codes are the compound's to choose; a level is
+  // made once per store and item (ON CONFLICT), a request issued once and
+  // a transfer written as one pair under the item's lock: those name
+  // nothing.
+  stores_tenant_id_id_key: null,
+  stores_tenant_id_code_key: ['code'],
+  stock_items_tenant_id_id_key: null,
+  stock_items_tenant_id_sku_key: ['sku'],
+  stock_levels_tenant_id_id_key: null,
+  stock_levels_store_item_key: null,
+  part_requests_tenant_id_id_key: null,
+  stock_movements_tenant_id_id_key: null,
+  stock_movements_issue_once: null,
+  stock_movements_transfer_pair: null,
+  ticket_cost_entries_movement_key: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

@@ -366,6 +366,30 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true }, reason: {} },
   },
+  /** A technician asks the store for a part (who keeps it; ADR 0065). */
+  'part_request.created': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, itemRef: {} },
+  },
+  /** The store holds the part: collect it (the technician; ADR 0065). */
+  'part_request.reserved': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, itemRef: {} },
+  },
+  /** The store will not give it, and says why (the technician; ADR 0065). */
+  'part_request.declined': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, itemRef: {}, reason: {} },
+  },
   'ticket.declined': {
     priority: 'normal',
     category: 'maintenance',
@@ -2209,6 +2233,14 @@ export const NOTIFICATION_KINDS = {
   // (its code in the register) and the day only, never its name or its
   // vendor.
   /** An asset's warranty ends within 30 days. */
+  /** What the store holds of an item fell to its reorder level (ADR 0065). */
+  'stock.reorder_level': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'stock_item',
+    params: { itemRef: {} },
+  },
   'asset.warranty_expiring': {
     priority: 'normal',
     category: 'maintenance',

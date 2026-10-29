@@ -1,5 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import type { TicketCostEntry } from '@prisma/client';
+import type { Prisma, Ticket, TicketCostEntry } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -29,6 +29,17 @@ export interface RecordedCost {
   description: string;
   quantity: string;
   unitAmount: string;
+}
+
+/** A part the store issued (positive) or took back (negative) for a ticket. */
+export interface PartCost {
+  ticket: Pick<Ticket, 'id' | 'tenantId'>;
+  itemId: string;
+  movementId: string;
+  quantity: Prisma.Decimal;
+  unitAmount: Prisma.Decimal;
+  actorId: string | null;
+  at: Date;
 }
 
 export interface TicketCosts {
@@ -177,6 +188,31 @@ export class TicketCostsService implements OnModuleInit {
         metadata: { ticketId: entry.ticketId, reasonCode: reason },
       });
       return voided;
+    });
+  }
+
+  /**
+   * The store's entry for a part it issued or took back, in its
+   * transaction, under the ticket's lock it holds. Not audited apart: the
+   * movement's audit row says it.
+   */
+  async part(tx: TenantTxClient, p: PartCost): Promise<TicketCostEntry> {
+    await this.requireRoom(tx, p.ticket.id);
+    return tx.ticketCostEntry.create({
+      data: {
+        id: newId(),
+        tenantId: p.ticket.tenantId,
+        ticketId: p.ticket.id,
+        kind: 'part',
+        description: null,
+        quantity: p.quantity,
+        unitAmount: p.unitAmount,
+        amount: costAmount(p.quantity, p.unitAmount),
+        itemId: p.itemId,
+        movementId: p.movementId,
+        enteredById: p.actorId,
+        enteredAt: p.at,
+      },
     });
   }
 

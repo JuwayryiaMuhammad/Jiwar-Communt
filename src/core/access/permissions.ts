@@ -105,6 +105,14 @@ export const PERMISSIONS = {
   // The maintenance store (ADR 0065): items, levels, receipts, adjustments,
   // transfers, and the technicians' part requests it reserves and issues.
   'stock.manage': { kinds: ['staff', 'manager'] },
+  // Energy and utilities (ADR 0066): meters, their readings, consumption,
+  // tariffs, saving measures and utility outages. A unit's consumption shows
+  // when it stands empty, so reading it is the supervisor's and the
+  // manager's; a technician records a meter's reading and sees only that
+  // meter's last one and the range it is expected in.
+  'energy.read': { kinds: ['staff', 'manager'] },
+  'energy.manage': { kinds: ['staff', 'manager'] },
+  'meters.record': { kinds: ['staff'] },
   // Parcels (ADR 0035). Guards receive and hand over inside a shift; the
   // manager reads every parcel (no names) and sets the holding periods.
   // Residents act through the capability `parcels`, with no permission.

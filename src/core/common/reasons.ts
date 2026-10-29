@@ -872,4 +872,11 @@ export const REASON_CODES = {
     'budget',
     'other',
   ],
+  // Energy and utilities (ADR 0066): why a meter is retired, why a reading
+  // is corrected, what an outage cuts and why one is called off; the
+  // migrations' CHECKs repeat them.
+  meterRetire: ['replaced', 'removed', 'faulty', 'other'],
+  readingCorrect: ['misread', 'wrong_meter', 'wrong_day', 'other'],
+  outageKind: ['water', 'electricity', 'gas', 'other'],
+  outageCancel: ['not_needed', 'rescheduled', 'entered_in_error', 'other'],
 } as const;

@@ -56,6 +56,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'assets.manage',
       'inspections.manage',
       'stock.manage',
+      'energy.read',
+      'energy.manage',
       'parcels.manage',
       'requests.handle',
       'requests.manage',
@@ -189,17 +191,24 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
   },
   {
     // Maintenance technicians (ADR 0032): the tickets assigned to them;
-    // the asset register in the field and their inspections (ADR 0064).
+    // the asset register in the field and their inspections (ADR 0064);
+    // the meters they read (ADR 0066).
     key: 'technician',
     kind: 'staff',
     kindDefault: false,
-    permissions: ['tickets.work', 'assets.read', 'inspections.perform'],
+    permissions: [
+      'tickets.work',
+      'assets.read',
+      'inspections.perform',
+      'meters.record',
+    ],
   },
   {
     // Maintenance dispatch (ADR 0032): the queue and assignment. The
     // manager dispatches too, so a compound without one still works. The
     // asset register, the plans and the inspection rounds (ADR 0064); the
-    // maintenance store (ADR 0065).
+    // maintenance store (ADR 0065); the meters, consumption and utility
+    // outages (ADR 0066).
     key: 'maintenance_supervisor',
     kind: 'staff',
     kindDefault: false,
@@ -209,6 +218,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'assets.manage',
       'inspections.manage',
       'stock.manage',
+      'energy.read',
+      'energy.manage',
+      'meters.record',
     ],
   },
   {

@@ -304,3 +304,9 @@ SLA، تقييمات، تعليقات، تاريخ الحالات، الإسنا
 - **قائمة الفحص بتاعة أمر العمل:** `GET /technician/tickets/:id/checklist` · `PUT …/checklist/items/:itemId` (وانت شغال أو موقف مؤقت) · `POST …/checklist/submit`. ما ينفعش "تم" والقائمة مفتوحة (`409 CHECKLIST_NOT_SUBMITTED`).
 - **الجاي في تخصصي:** `GET /technician/plans/upcoming`: الخطط اللي ميعادها خلال ٣٠ يوم في فئات تخصصاتي، وأوامر العمل المخططة اللي معايا.
 - **ترتيب بالأولوية:** `GET /technician/tickets?sort=priority`: الطوارئ ثم العاجل ثم العادي (الأحدث جوه كل واحدة)؛ الـcursor بتاعه خاص بيه.
+
+## القطع، اللي اتعمل، وعرض السعر (ADR 0065)
+- **القطع:** يدوّر في الكتالوج (`GET /technician/stock/items?q=`، فيه ولا لأ)، يطلب على البلاغ وهو في إيده، يلغي قبل الصرف، ويرجّع اللي ماستخدمهوش. لما المخزن يحجز بيوصله `part_request.reserved`، ولو رفض `part_request.declined` بالسبب. التفاصيل في [10-stock](10-stock.md).
+- **اللي اتعمل:** مع الإتمام `{ actionCode, note? }` — الساكن بيشوف الكود بس.
+- **عرض سعر:** لو لقى تكلفة قبل ما يبدأ: `POST /technician/tickets/:id/quote-suggestions`، والتوزيع يبعته للسكان أو يرفضه ([11-costs-and-quotes](11-costs-and-quotes.md)).
+- **أدائي:** `GET /technician/stats?from=&to=`.

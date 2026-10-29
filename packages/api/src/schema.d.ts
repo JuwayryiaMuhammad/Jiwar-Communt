@@ -5629,6 +5629,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/meter-reading-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The imports, the newest first */
+        get: operations["MeterReadingImportsController_list"];
+        put?: never;
+        /** Check a sheet of readings */
+        post: operations["MeterReadingImportsController_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/meter-reading-imports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An import and its problems */
+        get: operations["MeterReadingImportsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/meter-reading-imports/{id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply a valid import, once */
+        post: operations["MeterReadingImportsController_apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/meters": {
         parameters: {
             query?: never;
@@ -21190,6 +21242,13 @@ export interface components {
              */
             fileId: string;
         };
+        CheckReadingImportDto: {
+            /**
+             * Format: uuid
+             * @description One of the caller’s finalized `data_import` files: UTF-8 CSV, a header row (meter, read_on, value, and reset).
+             */
+            fileId: string;
+        };
         ChecklistAnswerDto: {
             note?: string;
             /** @description The caller’s finalized `checklist_photo` files, added to the answer’s (three at most). */
@@ -28374,6 +28433,26 @@ export interface components {
         MeterKind: "electricity" | "water" | "gas" | "fuel" | "run_hours";
         /** @enum {string} */
         MeterMode: "cumulative" | "interval";
+        MeterReadingImportView: {
+            /** Format: date-time */
+            appliedAt: string | null;
+            /** @description Readings written, once applied. */
+            appliedCount: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            errorCount: number;
+            /** @description The first 100 problems, in sheet order. Never a cell’s text. */
+            errors: components["schemas"]["ReadingImportProblemView"][];
+            /** Format: uuid */
+            id: string;
+            rowCount: number;
+            /** @enum {string} */
+            status: "valid" | "invalid" | "applied";
+        };
+        MeterReadingImportViewList: {
+            data: components["schemas"]["MeterReadingImportView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         MeterReadingSource: "manual" | "import" | "technician";
         MeterReadingView: {
@@ -31375,6 +31454,13 @@ export interface components {
             occurredAt: string;
             unit?: string;
             value: string;
+        };
+        ReadingImportProblemView: {
+            code: string;
+            /** @description The column. */
+            field: string;
+            /** @description The sheet’s line, the header being 1. */
+            line: number;
         };
         ReasonCodeDto: {
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
@@ -46616,6 +46702,97 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeterAlertView"];
+                };
+            };
+        };
+    };
+    MeterReadingImportsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingImportViewList"];
+                };
+            };
+        };
+    };
+    MeterReadingImportsController_check: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckReadingImportDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingImportView"];
+                };
+            };
+        };
+    };
+    MeterReadingImportsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingImportView"];
+                };
+            };
+        };
+    };
+    MeterReadingImportsController_apply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterReadingImportView"];
                 };
             };
         };

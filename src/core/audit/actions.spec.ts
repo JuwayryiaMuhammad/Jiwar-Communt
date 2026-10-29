@@ -200,6 +200,7 @@ describe('audit catalog', () => {
         'meter',
         'meter_reading',
         'meter_alert',
+        'meter_reading_import',
       ]).toContain(def.target);
     }
   });

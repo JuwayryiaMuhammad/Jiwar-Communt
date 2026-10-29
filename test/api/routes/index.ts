@@ -9,6 +9,7 @@ import {
 } from './operations';
 import {
   METER_ROUTES,
+  READING_IMPORT_ROUTES,
   READING_ROUTES,
   TECHNICIAN_METER_ROUTES,
 } from './energy';
@@ -384,4 +385,5 @@ export const ROUTES: Row[] = [
   ...METER_ROUTES,
   ...READING_ROUTES,
   ...TECHNICIAN_METER_ROUTES,
+  ...READING_IMPORT_ROUTES,
 ];

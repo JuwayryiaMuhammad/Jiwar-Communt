@@ -232,3 +232,49 @@ export const TECHNICIAN_METER_ROUTES: Row[] = [
     },
   },
 ];
+
+/** Sheets of meter readings (ADR 0066). */
+export const READING_IMPORT_ROUTES: Row[] = [
+  keeper({
+    method: 'GET',
+    path: '/maintenance/meter-reading-imports',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/meter-reading-imports',
+    foreign: 'none',
+    invalid: {
+      body: { fileId: 'x' },
+      fields: [{ field: 'fileId', code: 'INVALID_UUID' }],
+    },
+  }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/meter-reading-imports/{id}',
+    foreign: {
+      params: (w) => ({ id: w.bReadingImportId }),
+      code: 'METER_READING_IMPORT_NOT_FOUND',
+    },
+    invalid: 'none',
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/meter-reading-imports/{id}/apply',
+    foreign: {
+      params: (w) => ({ id: w.bReadingImportId }),
+      code: 'METER_READING_IMPORT_NOT_FOUND',
+    },
+    invalid: 'none',
+  }),
+];

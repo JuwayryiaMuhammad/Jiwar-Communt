@@ -264,3 +264,14 @@ export class EnergySettingsDto {
   @Max(ANOMALY_PERIODS.max, withParams({ ...ANOMALY_PERIODS }))
   anomalyPeriods?: number;
 }
+
+export class CheckReadingImportDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description:
+      'One of the caller’s finalized `data_import` files: UTF-8 CSV, a header row (meter, read_on, value, and reset).',
+  })
+  @IsUUID()
+  fileId: string;
+}

@@ -6,6 +6,7 @@ import { ChecklistsService } from '../../src/maintenance/checklists/checklists.s
 import { AssetsService } from '../../src/maintenance/assets/assets.service';
 import { DocumentsService } from '../../src/maintenance/assets/documents.service';
 import { AssetImportsService } from '../../src/maintenance/assets/asset-imports.service';
+import { MeterReadingImportsService } from '../../src/maintenance/energy/reading-imports.service';
 import { CommonAreasService } from '../../src/maintenance/locations/common-areas.service';
 import type { AccountType } from '@prisma/client';
 import { newId } from '../../src/core/common/uuid';
@@ -257,6 +258,8 @@ export interface World
   /** ADR 0066: a reading of it, and a spike alert on it. */
   bReadingId: string;
   bMeterAlertId: string;
+  /** ADR 0066: a sheet of B's readings, checked. */
+  bReadingImportId: string;
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
@@ -1053,6 +1056,17 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     await files.finalize(b.tokens.manager, fileId).expect(200);
     return h.moduleRef.get(AssetImportsService).check(fileId);
   });
+  const bReadingImport = await helpers.asManager(b, async () => {
+    const files = fileHelpers(h);
+    const fileId = await files.uploaded(
+      b.tokens.manager,
+      'data_import',
+      'text/csv',
+      Buffer.from('meter,read_on,value\nWORLD-M1,2026-01-02,11\n'),
+    );
+    await files.finalize(b.tokens.manager, fileId).expect(200);
+    return h.moduleRef.get(MeterReadingImportsService).check(fileId);
+  });
   const aPreventiveService = await service(a);
   // Facilities (ADR 0044).
   const facilityOf = (c: typeof a, roomy: boolean) =>
@@ -1550,6 +1564,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bMeterId: bMeter.id,
     bReadingId: bReading.id,
     bMeterAlertId: bMeterAlert.id,
+    bReadingImportId: bReadingImport.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
     bRecommendationId: bRecommendation.id,

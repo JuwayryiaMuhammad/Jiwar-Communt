@@ -350,12 +350,13 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['tickets.work', 'inspections.perform'],
   },
-  // A sheet to import (ADR 0064): the asset register now. UTF-8 CSV, 1 MB,
-  // read whole by the import and never served back.
+  // A sheet to import (ADR 0064): the asset register, and meter readings
+  // (ADR 0066). UTF-8 CSV, 1 MB, read whole by the import and never served
+  // back.
   data_import: {
     types: CSV_TYPES,
     maxBytes: 1 * MB,
-    uploaders: ['assets.manage'],
+    uploaders: ['assets.manage', 'energy.manage'],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

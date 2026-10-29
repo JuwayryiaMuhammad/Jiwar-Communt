@@ -16,12 +16,18 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
-import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
+import {
+  ListOf,
+  PageQueryDto,
+  toList,
+  type ListResponse,
+} from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { ReasonCodeDto } from '../tickets/dto/tickets.dto';
 import { MeterAlertsService } from './alerts.service';
 import {
+  CheckReadingImportDto,
   CorrectReadingDto,
   CreateMeterDto,
   EnergySettingsDto,
@@ -33,10 +39,12 @@ import {
 } from './dto/energy.dto';
 import { EnergySettingsService } from './energy-settings.service';
 import { MetersService } from './meters.service';
+import { MeterReadingImportsService } from './reading-imports.service';
 import { ReadingsService } from './readings.service';
 import {
   EnergySettingsView,
   MeterAlertView,
+  MeterReadingImportView,
   MeterReadingView,
   MeterToReadView,
   MeterView,
@@ -236,5 +244,54 @@ export class TechnicianMetersController {
     return MeterReadingView.from(
       await this.readings.record(id, dto, 'technician'),
     );
+  }
+}
+
+/** Sheets of meter readings (ADR 0066): checked whole, applied once. */
+@ApiArea('maintenance')
+@RequirePermissions('energy.manage')
+@Controller('maintenance/meter-reading-imports')
+export class MeterReadingImportsController {
+  constructor(private readonly imports: MeterReadingImportsService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'The imports, the newest first' })
+  @ApiOkResponse({ type: ListOf(MeterReadingImportView) })
+  async list(
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<MeterReadingImportView>> {
+    return toList(await this.imports.list(q), (i) =>
+      MeterReadingImportView.from(i),
+    );
+  }
+
+  @Post()
+  @Idempotent()
+  @ApiOperation({ summary: 'Check a sheet of readings' })
+  @ApiCreatedResponse({ type: MeterReadingImportView })
+  async check(
+    @Body() dto: CheckReadingImportDto,
+  ): Promise<MeterReadingImportView> {
+    return MeterReadingImportView.from(await this.imports.check(dto.fileId));
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'An import and its problems' })
+  @ApiOkResponse({ type: MeterReadingImportView })
+  async get(
+    @Param('id', parseId()) id: string,
+  ): Promise<MeterReadingImportView> {
+    return MeterReadingImportView.from(await this.imports.get(id));
+  }
+
+  /** Checked again under the meters' locks: every row is written, or the import turns invalid. */
+  @Post(':id/apply')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Apply a valid import, once' })
+  @ApiOkResponse({ type: MeterReadingImportView })
+  async apply(
+    @Param('id', parseId()) id: string,
+  ): Promise<MeterReadingImportView> {
+    return MeterReadingImportView.from(await this.imports.apply(id));
   }
 }

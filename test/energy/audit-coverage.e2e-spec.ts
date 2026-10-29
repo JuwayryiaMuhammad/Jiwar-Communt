@@ -4,6 +4,7 @@ import { ENERGY_COVERAGE } from '../setup/audit-coverage-split';
 import type { Compound } from '../setup/community';
 import { day } from '../setup/compound-clock';
 import { energyHelpers, type EnergySetUp } from '../setup/energy';
+import { fileHelpers } from '../setup/files';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 /**
@@ -166,6 +167,44 @@ describe('Audit coverage — energy and utilities', () => {
       expect(
         (await single(s.c, 'energy.settings_changed', s.c.tenantId)).changes,
       ).toEqual({ anomalyFactor: { from: '2.00', to: '3.00' } });
+    });
+  });
+
+  describe('reading imports', () => {
+    it('meter_reading_import.checked and .applied — the file, the counts, never a cell', async () => {
+      const m = await e.meter(s);
+      const files = fileHelpers(h);
+      const fileId = await files.uploaded(
+        s.manager.token,
+        'data_import',
+        'text/csv',
+        Buffer.from(`meter,read_on,value\n${m.code},${day(-1)},42\n`),
+      );
+      await files.finalize(s.manager.token, fileId).expect(200);
+      const checked = (
+        await e
+          .http('post', '/maintenance/meter-reading-imports', s.manager.token, {
+            fileId,
+          })
+          .expect(201)
+      ).body as { id: string };
+      expect(
+        (await single(s.c, 'meter_reading_import.checked', checked.id))
+          .metadata,
+      ).toEqual({ fileId, rowCount: 1, errorCount: 0 });
+      await e
+        .http(
+          'post',
+          `/maintenance/meter-reading-imports/${checked.id}/apply`,
+          s.manager.token,
+        )
+        .expect(200);
+      expect(
+        (await single(s.c, 'meter_reading_import.applied', checked.id))
+          .metadata,
+      ).toEqual({ created: 1 });
+      const rows = await read.tenant(s.c.tenantId, { targetId: checked.id });
+      expect(JSON.stringify(rows)).not.toContain(m.code);
     });
   });
 

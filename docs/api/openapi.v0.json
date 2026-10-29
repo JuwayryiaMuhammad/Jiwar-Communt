@@ -6947,6 +6947,19 @@
         ],
         "type": "object"
       },
+      "CheckReadingImportDto": {
+        "properties": {
+          "fileId": {
+            "description": "One of the caller’s finalized `data_import` files: UTF-8 CSV, a header row (meter, read_on, value, and reset).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
       "ChecklistAnswerDto": {
         "properties": {
           "note": {
@@ -29353,6 +29366,79 @@
         ],
         "type": "string"
       },
+      "MeterReadingImportView": {
+        "properties": {
+          "appliedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "appliedCount": {
+            "description": "Readings written, once applied.",
+            "nullable": true,
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "errorCount": {
+            "type": "number"
+          },
+          "errors": {
+            "description": "The first 100 problems, in sheet order. Never a cell’s text.",
+            "items": {
+              "$ref": "#/components/schemas/ReadingImportProblemView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rowCount": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "invalid",
+              "applied"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "rowCount",
+          "errorCount",
+          "errors",
+          "appliedCount",
+          "createdAt",
+          "appliedAt"
+        ],
+        "type": "object"
+      },
+      "MeterReadingImportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MeterReadingImportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MeterReadingSource": {
         "enum": [
           "manual",
@@ -38747,6 +38833,27 @@
           "metricKey",
           "value",
           "occurredAt"
+        ],
+        "type": "object"
+      },
+      "ReadingImportProblemView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "field": {
+            "description": "The column.",
+            "type": "string"
+          },
+          "line": {
+            "description": "The sheet’s line, the header being 1.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "line",
+          "field",
+          "code"
         ],
         "type": "object"
       },
@@ -77578,6 +77685,175 @@
           }
         ],
         "summary": "Acknowledge an alert, once",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meter-reading-imports": {
+      "get": {
+        "operationId": "MeterReadingImportsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingImportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The imports, the newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "MeterReadingImportsController_check",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckReadingImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check a sheet of readings",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meter-reading-imports/{id}": {
+      "get": {
+        "operationId": "MeterReadingImportsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An import and its problems",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meter-reading-imports/{id}/apply": {
+      "post": {
+        "operationId": "MeterReadingImportsController_apply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterReadingImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Apply a valid import, once",
         "tags": [
           "maintenance"
         ],

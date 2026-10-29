@@ -1958,6 +1958,14 @@ export const AUDIT_ACTIONS = {
   'meter_reading.withdrawn': { log: 'tenant', target: 'meter_reading' },
   'meter_alert.acknowledged': { log: 'tenant', target: 'meter_alert' },
   'energy.settings_changed': { log: 'tenant', target: 'tenant' },
+  'meter_reading_import.checked': {
+    log: 'tenant',
+    target: 'meter_reading_import',
+  },
+  'meter_reading_import.applied': {
+    log: 'tenant',
+    target: 'meter_reading_import',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

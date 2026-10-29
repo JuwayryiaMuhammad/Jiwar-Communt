@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import type { Meter, MeterAlert, MeterReading } from '@prisma/client';
+import type {
+  Meter,
+  MeterAlert,
+  MeterReading,
+  MeterReadingImport,
+} from '@prisma/client';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { ofDateColumn, ofDateColumnOrNull } from '../../schedules/local-dates';
 import type { EnergySettingsView as EnergySettings } from '../energy-settings.service';
@@ -9,6 +14,7 @@ import {
   METER_UNITS,
   type MeterKind,
 } from '../meter-rules';
+import type { ReadingProblem } from '../reading-import-rules';
 import { ALERT_KINDS, READING_SOURCES, reading } from '../reading-rules';
 import type { MeterToRead } from '../readings.service';
 
@@ -243,5 +249,56 @@ export class EnergySettingsView {
 
   static from(s: EnergySettings): EnergySettingsView {
     return { ...s };
+  }
+}
+
+class ReadingImportProblemView {
+  @ApiProperty({
+    type: Number,
+    description: 'The sheet’s line, the header being 1.',
+  })
+  line: number;
+  @ApiProperty({ type: String, description: 'The column.' })
+  field: string;
+  @ApiProperty({ type: String })
+  code: string;
+}
+
+export class MeterReadingImportView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: ['valid', 'invalid', 'applied'] })
+  status: 'valid' | 'invalid' | 'applied';
+  @ApiProperty({ type: Number })
+  rowCount: number;
+  @ApiProperty({ type: Number })
+  errorCount: number;
+  @ApiProperty({
+    type: [ReadingImportProblemView],
+    description: 'The first 100 problems, in sheet order. Never a cell’s text.',
+  })
+  errors: ReadingImportProblemView[];
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Readings written, once applied.',
+  })
+  appliedCount: number | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  appliedAt: Date | null;
+
+  static from(i: MeterReadingImport): MeterReadingImportView {
+    return {
+      id: i.id,
+      status: i.status as MeterReadingImportView['status'],
+      rowCount: i.rowCount,
+      errorCount: i.errorCount,
+      errors: i.errors as unknown as ReadingProblem[],
+      appliedCount: i.appliedCount,
+      createdAt: i.createdAt,
+      appliedAt: i.appliedAt,
+    };
   }
 }

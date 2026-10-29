@@ -1353,6 +1353,7 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/meters/{id}': w.bMeterId,
       '/maintenance/meters/{id}/readings': w.bMeterId,
       '/technician/meters/{id}': w.bMeterId,
+      '/maintenance/meter-reading-imports/{id}': w.bReadingImportId,
       '/maintenance/assets/{id}/contracts': w.bAssetId,
       '/maintenance/assets/{id}/economics': w.bAssetId,
       '/maintenance/technicians/{id}/stats': w.b.ids.technician,

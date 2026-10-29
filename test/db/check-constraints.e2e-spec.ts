@@ -2342,6 +2342,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   meter_readings_not_self: { guarded: 'supersedes_id IS NULL is tested first' },
   meter_alerts_kind_known: {},
   meter_alerts_rates_range: {},
+  meter_reading_imports_status_known: {},
+  meter_reading_imports_counts_range: {},
+  meter_reading_imports_state_shape: {
+    guarded:
+      'applied_at and applied_count are only tested IS [NOT] NULL; status and error_count are NOT NULL',
+  },
   meters_retired_shape: {
     guarded:
       'retire_reason is tested IS NULL first, and its IS NULL is paired with retired_at; active is NOT NULL',

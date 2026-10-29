@@ -10556,3 +10556,25 @@ model MeterAlert {
   @@index([tenantId, createdAt, id], map: "meter_alerts_list_idx")
   @@map("meter_alerts")
 }
+
+/// A sheet of meter readings (ADR 0066), checked whole and applied once.
+model MeterReadingImport {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  fileId       String    @unique @map("file_id") @db.Uuid
+  /// valid, invalid, applied.
+  status       String
+  rowCount     Int       @map("row_count")
+  errorCount   Int       @map("error_count")
+  /// The first 100 problems: `{ line, field, code }`, never a cell's text.
+  errors       Json      @default("[]")
+  createdById  String?   @map("created_by_account_id") @db.Uuid
+  createdAt    DateTime  @map("created_at") @db.Timestamptz(3)
+  appliedAt    DateTime? @map("applied_at") @db.Timestamptz(3)
+  appliedById  String?   @map("applied_by_account_id") @db.Uuid
+  appliedCount Int?      @map("applied_count")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "meter_reading_imports_list_idx")
+  @@map("meter_reading_imports")
+}

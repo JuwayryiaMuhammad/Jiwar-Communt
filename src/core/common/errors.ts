@@ -1482,6 +1482,11 @@ export const ErrorCode = {
   METER_ALERT_NOT_FOUND: 'METER_ALERT_NOT_FOUND',
   /** Acknowledged once (409). */
   METER_ALERT_ACKNOWLEDGED: 'METER_ALERT_ACKNOWLEDGED',
+  METER_READING_IMPORT_NOT_FOUND: 'METER_READING_IMPORT_NOT_FOUND',
+  /** Only a valid import is applied, once; params.status (409). */
+  METER_READING_IMPORT_NOT_VALID: 'METER_READING_IMPORT_NOT_VALID',
+  /** The sheet is not CSV a spreadsheet would write; params.problem, params.line? (422). */
+  METER_READING_IMPORT_UNREADABLE: 'METER_READING_IMPORT_UNREADABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1727,6 +1732,10 @@ export const FieldErrorCode = {
   READING_BELOW_PREVIOUS: 'READING_BELOW_PREVIOUS',
   /** ADR 0066: a backdated reading is not above the one after it; params.next. */
   READING_ABOVE_NEXT: 'READING_ABOVE_NEXT',
+  /** ADR 0066: an imported row's meter is unknown or retired. */
+  METER_NOT_AVAILABLE: 'METER_NOT_AVAILABLE',
+  /** ADR 0066: an imported row's meter has a live reading that day. */
+  READING_EXISTS: 'READING_EXISTS',
 } as const;
 
 export type FieldErrorCode =

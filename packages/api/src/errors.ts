@@ -313,6 +313,9 @@ const ERROR_TEXT: Record<string, string> = {
   READING_ALREADY_CORRECTED: 'This reading was corrected or withdrawn already.',
   METER_ALERT_NOT_FOUND: 'This alert was not found.',
   METER_ALERT_ACKNOWLEDGED: 'This alert is acknowledged already.',
+  METER_READING_IMPORT_NOT_FOUND: 'This import was not found.',
+  METER_READING_IMPORT_NOT_VALID: 'Only a valid import is applied, once.',
+  METER_READING_IMPORT_UNREADABLE: 'This sheet is not CSV a spreadsheet would write.',
   // Facilities and bookings, the club (ADR 0044).
   FACILITY_NOT_FOUND: 'This facility does not exist.',
   FACILITY_NOT_BOOKABLE: 'This facility is walk-in: it takes no booking and has no peak times.',
@@ -573,6 +576,8 @@ const FIELD_TEXT: Record<string, string> = {
   ASSET_NOT_AVAILABLE: 'Must be an asset of the register that is not retired.',
   READING_BELOW_PREVIOUS: 'Below the reading before it: the register only climbs, unless it was reset.',
   READING_ABOVE_NEXT: 'Above the reading after it: the register only climbs.',
+  METER_NOT_AVAILABLE: 'Must be a meter of the compound that is not retired.',
+  READING_EXISTS: 'This meter has a reading that day.',
   SPECIALTY_NOT_AVAILABLE: 'This specialty is no longer in use.',
   VISIT_TOO_SOON: 'Too soon: a visit needs at least 15 minutes of notice.',
   VISIT_TOO_FAR: 'Too far ahead: at most 30 days.',

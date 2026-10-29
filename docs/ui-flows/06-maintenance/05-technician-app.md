@@ -310,3 +310,9 @@ SLA، تقييمات، تعليقات، تاريخ الحالات، الإسنا
 - **اللي اتعمل:** مع الإتمام `{ actionCode, note? }` — الساكن بيشوف الكود بس.
 - **عرض سعر:** لو لقى تكلفة قبل ما يبدأ: `POST /technician/tickets/:id/quote-suggestions`، والتوزيع يبعته للسكان أو يرفضه ([11-costs-and-quotes](11-costs-and-quotes.md)).
 - **أدائي:** `GET /technician/stats?from=&to=`.
+
+## العدادات (ADR 0066)
+> بصلاحية `meters.record` (موجودة عند الفني) — مش `energy.read`: الفني مابيشوفش استهلاك الوحدات.
+
+- `GET /technician/meters/:id`: كود العداد ونوعه ومكانه، آخر قراءة حية، والمدى المتوقع للنهارده.
+- `POST /technician/meters/:id/readings { readOn, value, reset? }` (+ `Idempotency-Key`): يوم الكمبوند، قراءة واحدة في اليوم، والعداد التراكمي مابيرجعش لورا إلا لو `reset`. التفاصيل في [14-energy](14-energy.md).

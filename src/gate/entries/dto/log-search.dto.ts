@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator';
+import { IsOptional, IsString, IsUUID, Length } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 
 /** A search of the gate log: in a body, so the name is never in a URL. */
 export class LogSearchDto {
@@ -11,12 +11,12 @@ export class LogSearchDto {
     description: 'The compound’s first day. 31 days at most (PERIOD_TOO_LONG).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from: string;
 
   @ApiProperty({ type: String, example: '2026-11-04' })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to: string;
 
   @ApiProperty({ type: String, format: 'uuid', required: false })

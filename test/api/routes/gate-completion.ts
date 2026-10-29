@@ -255,8 +255,11 @@ export const SERVICE_VEHICLE_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { from: 'yesterday' },
-      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+      query: { from: '2026-02-30', to: '2026-13-01' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
   },
 ];
@@ -414,8 +417,11 @@ export const TRAFFIC_ROUTES: Row[] = [
       denied: 'guard',
       foreign: 'none',
       invalid: {
-        query: { from: 'last week' },
-        fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+        query: { from: '2026-04-31', to: '2027-02-29' },
+        fields: [
+          { field: 'from', code: 'INVALID_FORMAT' },
+          { field: 'to', code: 'INVALID_FORMAT' },
+        ],
       },
     }),
   ),
@@ -432,7 +438,7 @@ export const LOG_SEARCH_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      body: { from: 'monday', to: 'friday' },
+      body: { from: '2027-02-29', to: '2026-02-30' },
       fields: [
         { field: 'from', code: 'INVALID_FORMAT' },
         { field: 'to', code: 'INVALID_FORMAT' },

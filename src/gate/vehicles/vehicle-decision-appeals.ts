@@ -4,6 +4,7 @@ import { CommunityGatePort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
 import { addDays } from '../../core/common/slots/day-slots';
 import { newId } from '../../core/common/uuid';
+import { isRealDate } from '../../core/common/validation/local-date';
 import {
   DecisionAppeals,
   type DecisionAppealEffect,
@@ -12,9 +13,6 @@ import {
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { VehicleCore } from './vehicle-core';
 import { asDate, MAX_PERMIT_DAYS, normalizeSticker } from './vehicle-rules';
-
-/** A local day, YYYY-MM-DD. */
-const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 /**
  * A rejected vehicle appealed to the management (ADR 0059), registered with
@@ -107,7 +105,7 @@ export class VehicleDecisionAppeals implements OnModuleInit {
       : null;
     const day = ev.overturn?.permitValidUntil ?? null;
     // A board's overturn names no deciding account: a person approves it.
-    if (!sticker || !day || !LOCAL_DATE.test(day) || !ev.decidedById)
+    if (!sticker || !day || !isRealDate(day) || !ev.decidedById)
       return { effect: 'follow_up', reason: 'needs_sticker' };
     const registrant = await tx.account.findUnique({
       where: { id: v.registeredById },

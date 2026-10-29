@@ -1,8 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID, Matches } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 
 const STATUSES = [
   'scheduled',
@@ -23,13 +23,13 @@ export class RunsQueryDto extends PageQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiPropertyOptional({ type: String, example: '2026-11-07' })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 
   @ApiPropertyOptional({ type: String, format: 'uuid' })

@@ -30,7 +30,11 @@ export const PERMIT_SETTINGS_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      body: { workDays: [], workHours: { from: '9', to: '17:00' } },
+      body: {
+        workDays: [],
+        workHours: { from: '9', to: '17:00' },
+        daysOff: ['2026-02-30'],
+      },
       fields: [
         {
           field: 'workDays',
@@ -38,6 +42,7 @@ export const PERMIT_SETTINGS_ROUTES: Row[] = [
           params: { min: 1, max: 7 },
         },
         { field: 'workHours.from', code: 'INVALID_FORMAT' },
+        { field: 'daysOff', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -67,7 +72,12 @@ export const PERMIT_ROUTES: Row[] = [
       body: () => worksBody,
     },
     invalid: {
-      body: { ...worksBody, workType: 'demolition', startsOn: 'tomorrow' },
+      body: {
+        ...worksBody,
+        workType: 'demolition',
+        startsOn: '2026-04-31',
+        endsOn: '2027-02-29',
+      },
       fields: [
         {
           field: 'workType',
@@ -75,6 +85,7 @@ export const PERMIT_ROUTES: Row[] = [
           params: { allowed: ['renovation', 'finishing'] },
         },
         { field: 'startsOn', code: 'INVALID_FORMAT' },
+        { field: 'endsOn', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -98,13 +109,14 @@ export const PERMIT_ROUTES: Row[] = [
     },
     invalid: {
       body: {
-        date: '2099-01-05',
+        date: '2026-13-01',
         window: { from: '10:00', to: '25:00' },
         truckPlate: 7,
         itemsDescription: '',
         direction: 'sideways',
       },
       fields: [
+        { field: 'date', code: 'INVALID_FORMAT' },
         { field: 'window.to', code: 'INVALID_FORMAT' },
         { field: 'truckPlate', code: 'INVALID_TYPE' },
         {
@@ -139,11 +151,13 @@ export const PERMIT_ROUTES: Row[] = [
     },
     invalid: {
       body: {
-        validFrom: '2099-01-05',
-        validUntil: '2099-01-06',
+        validFrom: '2026-02-30',
+        validUntil: '2026-04-31',
         items: [{ name: 'Tiles', quantity: 1.5 }],
       },
       fields: [
+        { field: 'validFrom', code: 'INVALID_FORMAT' },
+        { field: 'validUntil', code: 'INVALID_FORMAT' },
         {
           field: 'items.0.quantity',
           code: 'INVALID_NUMBER',

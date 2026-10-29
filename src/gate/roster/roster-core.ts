@@ -104,11 +104,7 @@ export class RosterCore {
       q.from ?? addDays(localDate(await dbNow(tx), tz), -defaults.back);
     const to = q.to ?? addDays(from, defaults.span);
     const fields: Parameters<typeof invalid>[0] = [];
-    if (!isCalendarDay(from))
-      fields.push({ field: 'from', code: FieldErrorCode.INVALID_VALUE });
-    if (!isCalendarDay(to))
-      fields.push({ field: 'to', code: FieldErrorCode.INVALID_VALUE });
-    else if (to < from)
+    if (to < from)
       fields.push({ field: 'to', code: FieldErrorCode.ENDS_BEFORE_START });
     else if (dayCount(from, to) > MAX_RANGE_DAYS)
       fields.push({
@@ -406,11 +402,6 @@ export class RosterCore {
     if (!row) return null;
     return tx.guardRosterSlot.findUniqueOrThrow({ where: { id } });
   }
-}
-
-/** A real calendar day (`2026-02-30` is not). */
-export function isCalendarDay(day: string): boolean {
-  return addDays(day, 0) === day;
 }
 
 /** The first instant of a compound day (a day the clock skips starts later). */

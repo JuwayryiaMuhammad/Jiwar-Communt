@@ -594,9 +594,12 @@ export const VIOLATION_ROUTES: Row[] = [
         kind: 'noise',
         unitCode: 'U-1',
         amount: '0',
-        occurredOn: '2026-10-15',
+        occurredOn: '2026-04-31',
       },
-      fields: [{ field: 'amount', code: 'INVALID_FORMAT' }],
+      fields: [
+        { field: 'amount', code: 'INVALID_FORMAT' },
+        { field: 'occurredOn', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -682,7 +685,7 @@ export const VIOLATION_ROUTES: Row[] = [
     denied: 'owner',
     foreign: 'none',
     invalid: {
-      body: { kind: 'noise', unitCode: 'U-1', occurredOn: 'yesterday' },
+      body: { kind: 'noise', unitCode: 'U-1', occurredOn: '2026-02-30' },
       fields: [{ field: 'occurredOn', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -707,8 +710,11 @@ export const VIOLATION_PAYMENT_ROUTES: Row[] = [
       }),
     },
     invalid: {
-      body: { amount: '100', receiptNumber: 'no spaces', paidOn: '2026-10-15' },
-      fields: [{ field: 'receiptNumber', code: 'INVALID_FORMAT' }],
+      body: { amount: '100', receiptNumber: 'no spaces', paidOn: '2027-02-29' },
+      fields: [
+        { field: 'receiptNumber', code: 'INVALID_FORMAT' },
+        { field: 'paidOn', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -743,8 +749,11 @@ export const SECURITY_REPORT_ROUTES: Row[] = (
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { from: '1 Nov' },
-      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+      query: { from: '2026-13-01', to: '2026-04-31' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   })),

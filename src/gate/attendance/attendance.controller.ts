@@ -3,6 +3,7 @@ import { ApiOkResponse, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { RequireAnyPermission } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
+import { IsLocalDate } from '../../core/common/validation/local-date';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import {
   ATTENDANCE_MAX_DAYS,
@@ -19,6 +20,7 @@ export class AttendanceQueryDto {
   })
   @IsOptional()
   @IsString()
+  @IsLocalDate()
   from?: string;
 
   @ApiProperty({
@@ -29,6 +31,7 @@ export class AttendanceQueryDto {
   })
   @IsOptional()
   @IsString()
+  @IsLocalDate()
   to?: string;
 }
 

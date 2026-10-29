@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, Matches } from 'class-validator';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 
 export class PatrolReportQueryDto {
   @ApiPropertyOptional({
@@ -11,13 +11,13 @@ export class PatrolReportQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiPropertyOptional({ type: String, example: '2026-11-07' })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 
   @ApiPropertyOptional({ type: String, format: 'uuid' })

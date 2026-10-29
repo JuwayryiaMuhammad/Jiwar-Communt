@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { toCsv, type CsvColumn } from '../../core/common/csv';
-import { FieldErrorCode } from '../../core/common/errors';
 import { accountRef } from '../../core/common/http/personal';
-import { invalid } from '../../core/common/localized';
 import { addDays, localDate } from '../../core/common/slots/day-slots';
 import {
   TenantTx,
@@ -11,7 +9,7 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { dbNow } from '../db-clock';
 import { DutyNamesReader } from '../roster/duty-names';
-import { isCalendarDay, midnight, RosterCore } from '../roster/roster-core';
+import { midnight, RosterCore } from '../roster/roster-core';
 import { isLate, LATE_AFTER_MINUTES } from '../roster/roster-rules';
 import { PostView } from '../roster/views/roster.views';
 import type {
@@ -207,8 +205,6 @@ export class DailyReportService {
   ): Promise<DailyReportView> {
     const tz = await this.roster.timeZone(tx);
     const date = q.date ?? localDate(await dbNow(tx), tz);
-    if (!isCalendarDay(date))
-      throw invalid([{ field: 'date', code: FieldErrorCode.INVALID_VALUE }]);
     const start = midnight(date, tz);
     const end = midnight(addDays(date, 1), tz);
     const onlyGate = q.gateId ?? null;

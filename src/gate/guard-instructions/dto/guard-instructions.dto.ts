@@ -6,11 +6,13 @@ import {
   IsString,
   IsUUID,
   Length,
-  Matches,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import {
   INSTRUCTION_STATES,
   type InstructionState,
@@ -69,7 +71,7 @@ export class SendGuardInstructionDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   validFrom?: string;
 
   @ApiPropertyOptional({
@@ -81,7 +83,7 @@ export class SendGuardInstructionDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   validUntil?: string;
 }
 

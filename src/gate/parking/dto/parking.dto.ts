@@ -7,14 +7,12 @@ import {
   IsString,
   IsUUID,
   Length,
-  Matches,
   Max,
   Min,
   ValidateIf,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
 import {
   AREA_CAPACITY,
   AREA_NAME,
@@ -23,6 +21,10 @@ import {
   VISITOR_NAME,
 } from '../parking-rules';
 import { IsInstant } from '../../../core/common/validation/instant';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 
 export class CreateVisitorParkingDto {
   @ApiProperty({
@@ -217,7 +219,7 @@ export class StaffVisitorParkingQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   day?: string;
 }
 

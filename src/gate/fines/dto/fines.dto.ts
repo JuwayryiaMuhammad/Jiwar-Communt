@@ -12,7 +12,10 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { PLATE_MAX } from '../../../core/common/vehicle-plate';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import { APPEAL_TEXT, FINE_AMOUNT, NOTE, RECEIPT } from '../fine-rules';
 
 export class IssueFineDto {
@@ -79,7 +82,7 @@ export class IssueFineDto {
       'The local day it happened: not ahead, at most 90 days ago (DAY_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   occurredOn: string;
 
   @ApiProperty({
@@ -214,7 +217,7 @@ export class RecordFinePaymentDto {
       'The local day it was paid: not ahead, at most 90 days ago, not before the fine’s day (PAID_ON_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   paidOn: string;
 }
 

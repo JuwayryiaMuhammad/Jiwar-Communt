@@ -1,6 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, Matches } from 'class-validator';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 
 export class DailyReportQueryDto {
   @ApiPropertyOptional({
@@ -10,7 +13,7 @@ export class DailyReportQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   date?: string;
 
   @ApiPropertyOptional({

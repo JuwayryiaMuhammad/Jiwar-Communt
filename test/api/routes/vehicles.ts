@@ -164,7 +164,7 @@ export const VEHICLE_ROUTES: Row[] = [
       body: {
         version: 0,
         stickerNumber: 'S-1',
-        permitValidUntil: '2027-13-01',
+        permitValidUntil: '2027-02-29',
       },
       fields: [
         { field: 'permitValidUntil', code: 'INVALID_FORMAT' },
@@ -202,7 +202,7 @@ export const VEHICLE_ROUTES: Row[] = [
       body: () => ({ permitValidUntil: '2099-01-01' }),
     },
     invalid: {
-      body: { permitValidUntil: 'soon' },
+      body: { permitValidUntil: '2026-04-31' },
       fields: [{ field: 'permitValidUntil', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -460,7 +460,7 @@ export const PARKING_ROUTES: Row[] = [
     denied: 'owner',
     foreign: 'none',
     invalid: {
-      query: { day: 'today' },
+      query: { day: '2026-02-30' },
       fields: [{ field: 'day', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -580,9 +580,12 @@ export const FINE_ROUTES: Row[] = [
         plate: 'AB 1',
         reason: 'blocking',
         amount: '0',
-        occurredOn: '2026-10-15',
+        occurredOn: '2026-13-01',
       },
-      fields: [{ field: 'amount', code: 'INVALID_FORMAT' }],
+      fields: [
+        { field: 'amount', code: 'INVALID_FORMAT' },
+        { field: 'occurredOn', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -678,8 +681,11 @@ export const FINE_PAYMENT_ROUTES: Row[] = [
       }),
     },
     invalid: {
-      body: { amount: '300', receiptNumber: 'no spaces', paidOn: '2026-10-15' },
-      fields: [{ field: 'receiptNumber', code: 'INVALID_FORMAT' }],
+      body: { amount: '300', receiptNumber: 'no spaces', paidOn: '2026-02-30' },
+      fields: [
+        { field: 'receiptNumber', code: 'INVALID_FORMAT' },
+        { field: 'paidOn', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -808,9 +814,12 @@ export const PARKING_REPORT_ROUTES: Row[] = [
         plate: 'AB 1',
         reason: 'blocking',
         amount: 'free',
-        occurredOn: '2026-10-15',
+        occurredOn: '2027-02-29',
       },
-      fields: [{ field: 'amount', code: 'INVALID_FORMAT' }],
+      fields: [
+        { field: 'amount', code: 'INVALID_FORMAT' },
+        { field: 'occurredOn', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },

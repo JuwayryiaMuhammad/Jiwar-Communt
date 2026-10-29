@@ -38,11 +38,13 @@ export const ROSTER_ROUTES: Row[] = [
       body: {
         guardId: 'guard-1',
         schedule: VALID_SCHEDULE,
-        effectiveFrom: '2026-1-1',
+        effectiveFrom: '2026-02-30',
+        effectiveUntil: '2026-04-31',
       },
       fields: [
         { field: 'guardId', code: 'INVALID_UUID' },
         { field: 'effectiveFrom', code: 'INVALID_FORMAT' },
+        { field: 'effectiveUntil', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -101,8 +103,11 @@ export const ROSTER_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { from: '2026-13-01' },
-      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+      query: { from: '2027-02-29', to: '2026-13-01' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -131,8 +136,11 @@ export const ROSTER_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { guardId: 'guard-1' },
-      fields: [{ field: 'guardId', code: 'INVALID_UUID' }],
+      query: { from: '2026-02-30', guardId: 'guard-1' },
+      fields: [
+        { field: 'guardId', code: 'INVALID_UUID' },
+        { field: 'from', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -144,7 +152,7 @@ export const ROSTER_ROUTES: Row[] = [
     denied: 'manager',
     foreign: 'none',
     invalid: {
-      query: { to: 'tomorrow' },
+      query: { to: '2026-04-31' },
       fields: [{ field: 'to', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -157,7 +165,7 @@ export const ROSTER_ROUTES: Row[] = [
     denied: 'manager',
     foreign: 'none',
     invalid: {
-      query: { from: 'today' },
+      query: { from: '2027-02-29' },
       fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -207,8 +215,11 @@ export const HANDOVER_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { state: 'done' },
-      fields: [{ field: 'state', code: 'INVALID_VALUE' }],
+      query: { to: '2026-13-01', state: 'done' },
+      fields: [
+        { field: 'state', code: 'INVALID_VALUE' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -554,7 +565,13 @@ export const INSTRUCTION_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      body: { title: '', body: 'Words', audience: 'everyone' },
+      body: {
+        title: '',
+        body: 'Words',
+        audience: 'everyone',
+        validFrom: '2026-02-30',
+        validUntil: '2027-02-29',
+      },
       fields: [
         {
           field: 'title',
@@ -562,6 +579,8 @@ export const INSTRUCTION_ROUTES: Row[] = [
           params: { min: 1, max: 120 },
         },
         { field: 'audience', code: 'INVALID_VALUE' },
+        { field: 'validFrom', code: 'INVALID_FORMAT' },
+        { field: 'validUntil', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -799,7 +818,7 @@ export const DAILY_REPORT_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { date: '5 Nov' },
+      query: { date: '2026-04-31' },
       fields: [{ field: 'date', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -812,8 +831,11 @@ export const DAILY_REPORT_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { gateId: 'gate-1' },
-      fields: [{ field: 'gateId', code: 'INVALID_UUID' }],
+      query: { date: '2026-02-30', gateId: 'gate-1' },
+      fields: [
+        { field: 'date', code: 'INVALID_FORMAT' },
+        { field: 'gateId', code: 'INVALID_UUID' },
+      ],
     },
     noStore: true,
   },

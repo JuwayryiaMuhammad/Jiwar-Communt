@@ -356,8 +356,11 @@ export const STAFF_RUN_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { from: '2026-13-01' },
-      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+      query: { from: '2026-02-30', to: '2026-04-31' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -430,8 +433,12 @@ export const PATROL_REPORT_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      query: { routeId: 'route-1' },
-      fields: [{ field: 'routeId', code: 'INVALID_UUID' }],
+      query: { from: '2027-02-29', to: '2026-13-01', routeId: 'route-1' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+        { field: 'routeId', code: 'INVALID_UUID' },
+      ],
     },
     noStore: true,
   },

@@ -13,7 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { PERMIT_LIMITS, TIME_OF_DAY } from '../permit-rules';
 
 /** A time window of one day, in the compound's time zone. */
@@ -75,6 +75,6 @@ export class UpdatePermitSettingsDto {
     withParams({ min: 0, max: PERMIT_LIMITS.daysOff }),
   )
   @IsString({ each: true })
-  @Matches(LOCAL_DATE, { each: true })
+  @IsLocalDate({ each: true })
   daysOff?: string[];
 }

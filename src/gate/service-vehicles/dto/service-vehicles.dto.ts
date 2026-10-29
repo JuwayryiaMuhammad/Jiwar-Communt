@@ -1,16 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsIn,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Length,
-  Matches,
-} from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { PLATE_MAX } from '../../../core/common/vehicle-plate';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import {
   COMPANY_MAX,
   SERVICE_VEHICLE_KINDS,
@@ -71,12 +64,12 @@ export class ServiceVehicleLogQueryDto extends PageQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiPropertyOptional({ type: String, example: '2026-11-04' })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 }

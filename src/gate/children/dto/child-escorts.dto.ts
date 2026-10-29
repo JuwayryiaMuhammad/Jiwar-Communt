@@ -7,14 +7,16 @@ import {
   IsString,
   IsUUID,
   Length,
-  Matches,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { IsPhone } from '../../../core/common/validation/is-phone';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import { PostDto, WeeklyScheduleDto } from '../../roster/dto/roster.dto';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
 
 /** An outside person who may collect the child: they get a pickup code. */
 export class OutsideEscortDto {
@@ -58,7 +60,7 @@ export class EscortValidityDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   validFrom?: string;
 
   @ApiProperty({
@@ -71,7 +73,7 @@ export class EscortValidityDto {
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   validUntil?: string | null;
 
   @ApiProperty({

@@ -13,8 +13,11 @@ export const ATTENDANCE_ROUTES: Row[] = [
       code: 'ENGAGEMENT_NOT_FOUND',
     },
     invalid: {
-      query: { from: 'yesterday' },
-      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+      query: { from: '2026-04-31', to: '2026-02-30' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
     },
   },
 ];

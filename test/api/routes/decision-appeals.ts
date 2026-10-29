@@ -112,13 +112,18 @@ export const DECISION_APPEAL_ROUTES: Row[] = [
       body: () => ({ outcome: 'upheld', rationale: 'Reviewed.' }),
     },
     invalid: {
-      body: { outcome: 'maybe', rationale: 'Reviewed.' },
+      body: {
+        outcome: 'maybe',
+        rationale: 'Reviewed.',
+        permitValidUntil: '2027-02-29',
+      },
       fields: [
         {
           field: 'outcome',
           code: 'INVALID_VALUE',
           params: { allowed: ['upheld', 'overturned'] },
         },
+        { field: 'permitValidUntil', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,

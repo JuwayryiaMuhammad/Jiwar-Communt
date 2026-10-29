@@ -10,8 +10,11 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import { RECEIPT } from '../../fines/fine-rules';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
 import { AMOUNT, APPEAL_TEXT, NOTE } from '../violations.service';
 
 const KINDS = REASON_CODES.violationKind;
@@ -83,7 +86,7 @@ export class IssueViolationDto {
       'The local day it happened: not ahead, at most 90 days ago (DAY_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   occurredOn: string;
 
   @ApiProperty({
@@ -212,7 +215,7 @@ export class RecordViolationPaymentDto {
       'The local day it was paid: not ahead, at most 90 days ago, not before the violation’s day (PAID_ON_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   paidOn: string;
 }
 

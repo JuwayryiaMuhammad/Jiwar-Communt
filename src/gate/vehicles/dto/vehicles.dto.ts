@@ -9,13 +9,16 @@ import {
   IsString,
   IsUUID,
   Length,
-  Matches,
   Max,
   Min,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { PLATE_MAX } from '../../../core/common/vehicle-plate';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 import { VEHICLE_SETTING_RANGES, type VehicleSettingName } from '../defaults';
 import {
   COLOR,
@@ -23,9 +26,6 @@ import {
   PERMIT_STATUSES,
   type PermitStatus,
 } from '../vehicle-rules';
-
-/** A local day of the compound, `YYYY-MM-DD`. */
-export const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 const PLATE_DOC =
   'Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength).';
@@ -200,7 +200,7 @@ export class ApproveVehicleDto extends VersionedDto {
       'The permit’s last local day: after today, at most 731 days ahead (PERMIT_DATE_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   permitValidUntil: string;
 }
 
@@ -221,7 +221,7 @@ export class RenewVehicleDto {
       'The new last local day: after today, not before the current one, at most 731 days ahead.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   permitValidUntil: string;
 }
 

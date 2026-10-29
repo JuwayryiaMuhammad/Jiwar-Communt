@@ -17,12 +17,7 @@ import { dbNow } from '../db-clock';
 import { GuardGateView } from '../gates/views/gate.views';
 import { PlaceView } from '../places/views/place.views';
 import { DutyNamesReader } from './duty-names';
-import {
-  dateOnly,
-  isCalendarDay,
-  RosterCore,
-  type Period,
-} from './roster-core';
+import { dateOnly, RosterCore, type Period } from './roster-core';
 import { LATE_AFTER_MINUTES, MAX_SLOT_MINUTES } from './roster-rules';
 import {
   GuardAttendanceView,
@@ -105,11 +100,6 @@ export class RosterService implements OnModuleInit {
   }): Promise<RosterTemplateView> {
     const fields: Parameters<typeof invalid>[0] = [];
     const schedule = checkWeeklySchedule(input.schedule, fields);
-    for (const field of ['effectiveFrom', 'effectiveUntil'] as const) {
-      const day = input[field];
-      if (day !== undefined && !isCalendarDay(day))
-        fields.push({ field, code: FieldErrorCode.INVALID_VALUE });
-    }
     if (
       input.effectiveUntil !== undefined &&
       input.effectiveUntil < input.effectiveFrom

@@ -12,6 +12,10 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
+import {
   DECISION_APPEAL_KINDS,
   DECISION_APPEAL_LIMITS,
   DECISION_APPEAL_OUTCOMES,
@@ -20,9 +24,6 @@ import {
   type DecisionAppealOutcome,
   type DecisionAppealStatus,
 } from '../appeal-rules';
-
-/** A local day, YYYY-MM-DD (as the vehicles' approval takes it). */
-const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 export class LodgeDecisionAppealDto {
   @ApiProperty({ enum: DECISION_APPEAL_KINDS, enumName: 'DecisionAppealKind' })
@@ -132,6 +133,6 @@ export class DecideDecisionAppealDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   permitValidUntil?: string;
 }

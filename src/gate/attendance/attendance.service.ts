@@ -17,7 +17,6 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { dbNow } from '../db-clock';
 
 export const ATTENDANCE_MAX_DAYS = 93;
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY = 86_400_000;
 
 export interface AttendanceDay {
@@ -59,8 +58,6 @@ export class AttendanceService {
     range: { from?: string; to?: string },
   ): Promise<Attendance> {
     const tenantId = this.ctx.tenantId;
-    // Input first: a bad range is a 400 whatever the engagement.
-    checkFormats(range);
     return this.tenantTx.withTenantTx(async (tx) => {
       if (!(await this.community.authorizeEngagement(tx, engagementId)))
         throw appError.notFound(
@@ -130,25 +127,8 @@ export function attendanceRange(
   return { from: range.from ?? addDays(to, -29), to };
 }
 
-function checkFormats(range: { from?: string; to?: string }): void {
-  const fields: FieldError[] = [];
-  for (const field of ['from', 'to'] as const) {
-    const d = range[field];
-    if (d !== undefined && !isDate(d))
-      fields.push({ field, code: FieldErrorCode.INVALID_FORMAT });
-  }
-  if (fields.length)
-    throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid date', {
-      fields,
-    });
-}
-
-function isDate(d: string): boolean {
-  return DATE.test(d) && !Number.isNaN(Date.parse(`${d}T00:00:00Z`));
-}
-
 function checkRange(from: string, to: string): void {
-  // Formats were checked on the way in; defaults are always well formed.
+  // The DTO took real days only (@IsLocalDate); defaults are always real.
   const fields: FieldError[] = [];
   {
     const span =

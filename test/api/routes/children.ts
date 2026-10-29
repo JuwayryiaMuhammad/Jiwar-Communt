@@ -135,13 +135,19 @@ export const CHILD_ESCORT_ROUTES: Row[] = [
       }),
     },
     invalid: {
-      body: { kind: 'friend' },
+      body: {
+        validFrom: '2026-02-30',
+        validUntil: '2026-04-31',
+        kind: 'friend',
+      },
       fields: [
         {
           field: 'kind',
           code: 'INVALID_VALUE',
           params: { allowed: ['adult', 'worker', 'outside'] },
         },
+        { field: 'validFrom', code: 'INVALID_FORMAT' },
+        { field: 'validUntil', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -162,8 +168,11 @@ export const CHILD_ESCORT_ROUTES: Row[] = [
       body: () => ({ validUntil: null }),
     },
     invalid: {
-      body: { validUntil: '2026-13-01' },
-      fields: [{ field: 'validUntil', code: 'INVALID_FORMAT' }],
+      body: { validFrom: '2027-02-29', validUntil: '2026-13-01' },
+      fields: [
+        { field: 'validFrom', code: 'INVALID_FORMAT' },
+        { field: 'validUntil', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },

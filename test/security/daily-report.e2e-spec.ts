@@ -344,7 +344,7 @@ describe('The daily report', () => {
       supervisor.token,
     );
     expect((bad.body as { fields: unknown[] }).fields).toEqual([
-      { field: 'date', code: 'INVALID_VALUE' },
+      { field: 'date', code: 'INVALID_FORMAT' },
     ]);
     const guard = await x.guard(s.c);
     expect(

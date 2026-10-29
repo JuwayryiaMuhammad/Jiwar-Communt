@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches } from 'class-validator';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { IsOptional, IsString } from 'class-validator';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 
 /** The incidents and violations reports' period (ADR 0053). */
 export class SecurityReportQueryDto {
@@ -12,12 +12,12 @@ export class SecurityReportQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiPropertyOptional({ type: String, example: '2026-11-07' })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 }

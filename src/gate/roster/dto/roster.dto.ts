@@ -8,12 +8,14 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  Matches,
   ValidateNested,
 } from 'class-validator';
 import { REASON_CODES } from '../../../core/common/reasons';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
 import { ToInstant } from '../../../core/common/validation/instant';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 
 class WeeklyWindowDto {
   @ApiProperty({ type: String, example: '22:00' })
@@ -86,7 +88,7 @@ export class CreateRosterTemplateDto extends PostDto {
     description: 'Its first day, `YYYY-MM-DD`: today or later.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   effectiveFrom: string;
 
   @ApiPropertyOptional({
@@ -96,7 +98,7 @@ export class CreateRosterTemplateDto extends PostDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   effectiveUntil?: string;
 }
 
@@ -146,7 +148,7 @@ export class RosterRangeQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiPropertyOptional({
@@ -156,7 +158,7 @@ export class RosterRangeQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 }
 

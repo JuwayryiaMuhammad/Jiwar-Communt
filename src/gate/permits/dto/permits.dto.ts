@@ -23,11 +23,14 @@ import { PLATE_MAX } from '../../../core/common/vehicle-plate';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
 import { PERMIT_LIMITS } from '../permit-rules';
 import { PERMIT_VIEW_STATUSES } from '../views/permit.views';
 import { PermitHoursDto } from './permit-settings.dto';
 import { ToInstant } from '../../../core/common/validation/instant';
+import {
+  IsLocalDate,
+  LOCAL_DATE,
+} from '../../../core/common/validation/local-date';
 
 export const CONTRACTOR_COMPANY = { min: 1, max: 120 } as const;
 export const PERMIT_DESCRIPTION = { min: 1, max: 1000 } as const;
@@ -55,7 +58,7 @@ export class CreateWorksPermitDto {
       'The first local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   startsOn: string;
 
   @ApiProperty({
@@ -66,7 +69,7 @@ export class CreateWorksPermitDto {
       'The last local day: not before `startsOn` (ENDS_BEFORE_START), 180 days at most (PERIOD_TOO_LONG); the period holds a work day (NOT_A_WORK_DAY).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   endsOn: string;
 
   @ApiProperty({
@@ -206,7 +209,7 @@ export class CreateMovePermitDto {
       'The local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE); a work day of the compound, not a day off (NOT_A_WORK_DAY).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   date: string;
 
   @ApiProperty({
@@ -283,7 +286,7 @@ export class CreateMaterialExitDto {
       'The first local day it may be used: from today, at most 90 days ahead (DAY_OUT_OF_RANGE).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   validFrom: string;
 
   @ApiProperty({
@@ -294,7 +297,7 @@ export class CreateMaterialExitDto {
       'The last local day: not before `validFrom` (ENDS_BEFORE_START), seven days at most (PERIOD_TOO_LONG).',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   validUntil: string;
 
   @ApiProperty({

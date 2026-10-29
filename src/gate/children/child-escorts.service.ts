@@ -38,7 +38,7 @@ import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { DutyNamesReader } from '../roster/duty-names';
-import { isCalendarDay, RosterCore } from '../roster/roster-core';
+import { RosterCore } from '../roster/roster-core';
 import { PostView } from '../roster/views/roster.views';
 import {
   ChildCore,
@@ -469,12 +469,6 @@ export class ChildEscortsService implements OnModuleInit {
     before: ChildEscort | null,
   ) {
     const fields: FieldError[] = [];
-    for (const field of ['validFrom', 'validUntil'] as const) {
-      const day = input[field];
-      if (typeof day === 'string' && !isCalendarDay(day))
-        fields.push({ field, code: FieldErrorCode.INVALID_VALUE });
-    }
-    if (fields.length) throw invalid(fields);
     const today = ofDate(await this.core.today(tx));
     const validFrom =
       input.validFrom ?? (before ? ofDate(before.validFrom) : today);

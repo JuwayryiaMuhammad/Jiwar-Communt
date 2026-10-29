@@ -196,6 +196,8 @@ describe('audit catalog', () => {
         'stock_item',
         'part_request',
         'maintenance_contract',
+        // ADR 0066
+        'meter',
       ]).toContain(def.target);
     }
   });

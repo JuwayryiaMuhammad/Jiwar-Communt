@@ -810,3 +810,13 @@ export const OPERATIONS_COVERAGE: readonly string[] = [
   'maintenance_contract.terminated',
   'maintenance_contract.assets_changed',
 ];
+
+/**
+ * Energy and utilities (ADR 0066): meters, their readings and imports,
+ * tariffs, saving measures and utility outages. test/energy/audit-coverage.
+ */
+export const ENERGY_COVERAGE: readonly string[] = [
+  'meter.created',
+  'meter.updated',
+  'meter.retired',
+];

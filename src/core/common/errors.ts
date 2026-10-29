@@ -1470,6 +1470,10 @@ export const ErrorCode = {
   MAINTENANCE_CONTRACT_NOT_FOUND: 'MAINTENANCE_CONTRACT_NOT_FOUND',
   /** Terminated once: it never changes (409). */
   MAINTENANCE_CONTRACT_TERMINATED: 'MAINTENANCE_CONTRACT_TERMINATED',
+  // Energy and utilities (ADR 0066)
+  METER_NOT_FOUND: 'METER_NOT_FOUND',
+  /** Retired: it takes no reading and never changes again (409). */
+  METER_RETIRED: 'METER_RETIRED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

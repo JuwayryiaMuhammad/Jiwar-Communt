@@ -5577,6 +5577,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/meters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the meters, oldest first */
+        get: operations["MetersController_list"];
+        put?: never;
+        /** Add a meter */
+        post: operations["MetersController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/meters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a meter */
+        get: operations["MetersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a meter’s serial or installation day */
+        patch: operations["MetersController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/meters/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retire a meter for good */
+        post: operations["MetersController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/part-requests": {
         parameters: {
             query?: never;
@@ -22848,6 +22901,42 @@ export interface components {
              */
             validUntil: string;
         };
+        CreateMeterDto: {
+            /**
+             * Format: uuid
+             * @description On this asset (a generator’s hours), where it stands.
+             */
+            assetId?: string;
+            /** @description The compound’s short code, unique. Never changes. */
+            code: string;
+            /**
+             * Format: uuid
+             * @description In this common area.
+             */
+            commonAreaId?: string;
+            /**
+             * Format: date
+             * @description The compound’s day it was installed; not after today.
+             */
+            installedOn?: string;
+            kind: components["schemas"]["MeterKind"];
+            /**
+             * @description `cumulative`: the register as it stands; `interval`: what was used since the last reading. Never changes.
+             * @default cumulative
+             */
+            mode: components["schemas"]["MeterMode"];
+            /**
+             * @description What one step of the register is worth, more than 0. Never changes.
+             * @default 1
+             */
+            multiplier: string;
+            serial?: string;
+            /**
+             * Format: uuid
+             * @description In this unit. Exactly one of unitId, commonAreaId, assetId.
+             */
+            unitId?: string;
+        };
         CreateMovePermitDto: {
             /**
              * @description The local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE); a work day of the compound, not a day off (NOT_A_WORK_DAY).
@@ -28085,6 +28174,42 @@ export interface components {
         };
         MessageDto: {
             body: string;
+        };
+        /** @enum {string} */
+        MeterKind: "electricity" | "water" | "gas" | "fuel" | "run_hours";
+        /** @enum {string} */
+        MeterMode: "cumulative" | "interval";
+        /** @enum {string} */
+        MeterRetireReason: "replaced" | "removed" | "faulty" | "other";
+        MeterView: {
+            active: boolean;
+            /** Format: uuid */
+            assetId: string | null;
+            code: string;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            installedOn: string | null;
+            kind: components["schemas"]["MeterKind"];
+            mode: components["schemas"]["MeterMode"];
+            /** @description Four decimals. */
+            multiplier: string;
+            retireReason: components["schemas"]["MeterRetireReason"] | null;
+            /** Format: date-time */
+            retiredAt: string | null;
+            serial: string | null;
+            /** @description kWh, m³, L or h. */
+            unit: string;
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        MeterViewList: {
+            data: components["schemas"]["MeterView"][];
+            nextCursor: string | null;
         };
         MetricReadingsView: {
             last: components["schemas"]["AssetReadingView"];
@@ -36972,6 +37097,11 @@ export interface components {
             visitHoursStart?: number;
             /** @description The length of a slot residents may pick. */
             visitSlotMinutes?: number;
+        };
+        UpdateMeterDto: {
+            /** Format: date */
+            installedOn?: string | null;
+            serial?: string | null;
         };
         UpdateNeighbourSettingsDto: {
             /** @description Days a lending post stays on the board. */
@@ -46139,6 +46269,130 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MaintenanceKpisView"];
+                };
+            };
+        };
+    };
+    MetersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: components["schemas"]["MeterKind"];
+                unitId?: string;
+                commonAreaId?: string;
+                active?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterViewList"];
+                };
+            };
+        };
+    };
+    MetersController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMeterDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterView"];
+                };
+            };
+        };
+    };
+    MetersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterView"];
+                };
+            };
+        };
+    };
+    MetersController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMeterDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterView"];
+                };
+            };
+        };
+    };
+    MetersController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeterView"];
                 };
             };
         };

@@ -7,6 +7,7 @@ import {
   TECHNICIAN_PART_ROUTES,
   TECHNICIAN_STATS_ROUTES,
 } from './operations';
+import { METER_ROUTES } from './energy';
 import {
   ASSET_ROUTES,
   CHECKLIST_ROUTES,
@@ -375,4 +376,6 @@ export const ROUTES: Row[] = [
   ...MAINTENANCE_CONTRACT_ROUTES,
   ...ECONOMICS_ROUTES,
   ...TECHNICIAN_STATS_ROUTES,
+  // ADR 0066.
+  ...METER_ROUTES,
 ];

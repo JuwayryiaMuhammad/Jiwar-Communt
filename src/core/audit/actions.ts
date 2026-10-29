@@ -1947,6 +1947,11 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'maintenance_contract',
   },
+  // Energy and utilities (ADR 0066): codes, kinds, ids, days and values;
+  // nothing here names a person.
+  'meter.created': { log: 'tenant', target: 'meter' },
+  'meter.updated': { log: 'tenant', target: 'meter' },
+  'meter.retired': { log: 'tenant', target: 'meter' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

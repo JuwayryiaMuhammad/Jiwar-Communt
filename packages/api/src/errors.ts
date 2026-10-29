@@ -306,6 +306,8 @@ const ERROR_TEXT: Record<string, string> = {
   PART_RETURN_EXCEEDS_ISSUED: 'That is more than was issued to this ticket.',
   MAINTENANCE_CONTRACT_NOT_FOUND: 'This contract was not found.',
   MAINTENANCE_CONTRACT_TERMINATED: 'This contract is terminated.',
+  METER_NOT_FOUND: 'This meter was not found.',
+  METER_RETIRED: 'This meter is retired.',
   // Facilities and bookings, the club (ADR 0044).
   FACILITY_NOT_FOUND: 'This facility does not exist.',
   FACILITY_NOT_BOOKABLE: 'This facility is walk-in: it takes no booking and has no peak times.',

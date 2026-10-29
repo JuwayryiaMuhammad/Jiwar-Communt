@@ -252,6 +252,8 @@ export interface World
   bPartRequestId: string;
   /** ADR 0065: compound B's maintenance contract. */
   bContractId: string;
+  /** ADR 0066: compound B's meter, in its common area. */
+  bMeterId: string;
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
@@ -961,6 +963,17 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     }),
   );
+  const bMeter = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.meter.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        code: 'WORLD-M1',
+        kind: 'water',
+        commonAreaId: bCommonArea.id,
+      },
+    }),
+  );
   const bInspectionChecklist = await helpers.asManager(b, () =>
     h.moduleRef.get(ChecklistsService).create({
       key: 'world_inspection',
@@ -1505,6 +1518,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bStockItemId: bStockItem.id,
     bPartRequestId: bPartRequest.id,
     bContractId: bContract.id,
+    bMeterId: bMeter.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
     bRecommendationId: bRecommendation.id,

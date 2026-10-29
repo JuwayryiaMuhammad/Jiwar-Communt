@@ -23347,6 +23347,219 @@
           }
         },
         {
+          "name": "List the meters, oldest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "commonAreaId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "active",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters"
+            }
+          }
+        },
+        {
+          "name": "Add a meter",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"\",\n  \"kind\": \"electricity\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  | On this asset (a generator’s hours), where it stands. |\n| `code` | string | yes | The compound’s short code, unique. Never changes. |\n| `commonAreaId` | string (uuid) |  | In this common area. |\n| `installedOn` | string (date) |  | The compound’s day it was installed; not after today. |\n| `kind` | `electricity` \\| `water` \\| `gas` \\| `fuel` \\| `run_hours` | yes |  |\n| `mode` | `cumulative` \\| `interval` |  | `cumulative`: the register as it stands; `interval`: what was used since the last reading. Never changes. |\n| `multiplier` | string |  | What one step of the register is worth, more than 0. Never changes. |\n| `serial` | string |  |  |\n| `unitId` | string (uuid) |  | In this unit. Exactly one of unitId, commonAreaId, assetId. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters"
+            }
+          }
+        },
+        {
+          "name": "Get a meter",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a meter’s serial or installation day",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"installedOn\": \"2026-01-01\",\n  \"serial\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `installedOn` | string (date) |  |  |\n| `serial` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retire a meter for good",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters",
+                ":id",
+                "retire"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id/retire",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List part requests, oldest first",
           "request": {
             "description": "**Responses:** 200",

@@ -10466,3 +10466,40 @@ model MaintenanceContractAsset {
   @@index([tenantId, assetId], map: "maintenance_contract_assets_asset_idx")
   @@map("maintenance_contract_assets")
 }
+
+/// What the compound measures (ADR 0066): a unit's or a common area's
+/// electricity, water, gas, fuel or a generator's running hours. Its code,
+/// kind, mode, multiplier and place never change (a trigger); retired
+/// once, with a reason.
+model Meter {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  /// `^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$`, unique per compound.
+  code          String
+  /// METER_KINDS.
+  kind          String
+  /// `cumulative` (a register that only climbs) or `interval` (what was used since the last reading).
+  mode          String    @default("cumulative")
+  /// What one step of the register is worth, in the kind's unit.
+  multiplier    Decimal   @default(1) @db.Decimal(10, 4)
+  /// In a unit or in a common area: exactly one.
+  unitId        String?   @map("unit_id") @db.Uuid
+  commonAreaId  String?   @map("common_area_id") @db.Uuid
+  /// The asset it measures (a generator's hours), where the meter stands.
+  assetId       String?   @map("asset_id") @db.Uuid
+  serial        String?
+  installedOn   DateTime? @map("installed_on") @db.Date
+  active        Boolean   @default(true)
+  retiredAt     DateTime? @map("retired_at") @db.Timestamptz(3)
+  retiredById   String?   @map("retired_by_account_id") @db.Uuid
+  /// REASON_CODES.meterRetire.
+  retireReason  String?   @map("retire_reason")
+  createdById   String?   @map("created_by_account_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, kind, code], map: "meters_list_idx")
+  @@map("meters")
+}

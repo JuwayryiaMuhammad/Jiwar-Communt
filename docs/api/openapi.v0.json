@@ -12456,6 +12456,66 @@
         ],
         "type": "object"
       },
+      "CreateMeterDto": {
+        "properties": {
+          "assetId": {
+            "description": "On this asset (a generator’s hours), where it stands.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "description": "The compound’s short code, unique. Never changes.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "In this common area.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "installedOn": {
+            "description": "The compound’s day it was installed; not after today.",
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterMode"
+              }
+            ],
+            "default": "cumulative",
+            "description": "`cumulative`: the register as it stands; `interval`: what was used since the last reading. Never changes."
+          },
+          "multiplier": {
+            "default": "1",
+            "description": "What one step of the register is worth, more than 0. Never changes.",
+            "pattern": "^\\d{1,5}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "serial": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "unitId": {
+            "description": "In this unit. Exactly one of unitId, commonAreaId, assetId.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "kind"
+        ],
+        "type": "object"
+      },
       "CreateMovePermitDto": {
         "properties": {
           "date": {
@@ -29102,6 +29162,146 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "MeterKind": {
+        "enum": [
+          "electricity",
+          "water",
+          "gas",
+          "fuel",
+          "run_hours"
+        ],
+        "type": "string"
+      },
+      "MeterMode": {
+        "enum": [
+          "cumulative",
+          "interval"
+        ],
+        "type": "string"
+      },
+      "MeterRetireReason": {
+        "enum": [
+          "replaced",
+          "removed",
+          "faulty",
+          "other"
+        ],
+        "type": "string"
+      },
+      "MeterView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "installedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterMode"
+              }
+            ]
+          },
+          "multiplier": {
+            "description": "Four decimals.",
+            "type": "string"
+          },
+          "retireReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterRetireReason"
+              }
+            ],
+            "nullable": true
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "serial": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "description": "kWh, m³, L or h.",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "unit",
+          "mode",
+          "multiplier",
+          "unitId",
+          "commonAreaId",
+          "assetId",
+          "serial",
+          "installedOn",
+          "active",
+          "retiredAt",
+          "retireReason",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MeterViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MeterView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -58306,6 +58506,21 @@
         },
         "type": "object"
       },
+      "UpdateMeterDto": {
+        "properties": {
+          "installedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "serial": {
+            "maxLength": 60,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateNeighbourSettingsDto": {
         "properties": {
           "lendingExpiryDays": {
@@ -76820,6 +77035,268 @@
           }
         ],
         "summary": "Get the maintenance KPIs over a period",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meters": {
+      "get": {
+        "operationId": "MetersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MeterKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "commonAreaId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the meters, oldest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "MetersController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMeterDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a meter",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meters/{id}": {
+      "get": {
+        "operationId": "MetersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a meter",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "MetersController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeterDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a meter’s serial or installation day",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meters/{id}/retire": {
+      "post": {
+        "operationId": "MetersController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retire a meter for good",
         "tags": [
           "maintenance"
         ],

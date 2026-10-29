@@ -2325,6 +2325,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   // Asset economics' one setting (ADR 0065).
   maintenance_settings_replace_share_range: {},
+  // Meters (ADR 0066).
+  meters_code_shape: {},
+  meters_kind_known: {},
+  meters_mode_known: {},
+  meters_multiplier_range: {},
+  meters_location_one: {},
+  meters_serial_length: { guarded: 'serial IS NULL is tested first' },
+  meters_retired_shape: {
+    guarded:
+      'retire_reason is tested IS NULL first, and its IS NULL is paired with retired_at; active is NOT NULL',
+  },
 };
 
 interface Check {

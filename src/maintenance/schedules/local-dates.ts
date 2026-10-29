@@ -3,21 +3,20 @@ import {
   localDate,
   type LocalDate,
 } from '../../core/common/slots/day-slots';
+import {
+  IsLocalDate,
+  isRealDate,
+  LOCAL_DATE,
+} from '../../core/common/validation/local-date';
 
 /**
  * Dates of the compound's calendar (ADR 0064): a due date, a warranty's
- * end, a commissioning day. `YYYY-MM-DD` in the API; a DATE column in the
- * database, which Prisma hands over as midnight UTC. Arithmetic is on the
- * date itself, never on instants, so a DST change moves nothing.
+ * end, a commissioning day. `YYYY-MM-DD` in the API, a day that exists
+ * (`@IsLocalDate()`); a DATE column in the database, which Prisma hands
+ * over as midnight UTC. Arithmetic is on the date itself, never on
+ * instants, so a DST change moves nothing.
  */
-export const LOCAL_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-
-/** Whether `YYYY-MM-DD` names a real day (no 31 April). */
-export function isRealDate(value: string): boolean {
-  if (!LOCAL_DATE.test(value)) return false;
-  const d = new Date(`${value}T00:00:00Z`);
-  return d.toISOString().slice(0, 10) === value;
-}
+export { IsLocalDate, isRealDate, LOCAL_DATE };
 
 /** A DATE column's value from `YYYY-MM-DD`. */
 export const dateColumn = (value: LocalDate): Date =>

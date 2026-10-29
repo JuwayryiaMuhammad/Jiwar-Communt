@@ -178,7 +178,14 @@ export const REGISTRATION_ROUTES: Row[] = [
 
 // A unit's document vault (ADR 0062).
 const NEW_DOCUMENT_INVALID = {
-  body: { fileId: 'x', kind: 'deed', title: '', visibility: 'all' },
+  body: {
+    fileId: 'x',
+    kind: 'deed',
+    title: '',
+    visibility: 'all',
+    // Shaped as a day, and no day.
+    expiresOn: '2026-02-30',
+  },
   fields: [
     { field: 'fileId', code: 'INVALID_UUID' },
     {
@@ -201,6 +208,11 @@ const NEW_DOCUMENT_INVALID = {
       field: 'visibility',
       code: 'INVALID_VALUE',
       params: { allowed: ['private', 'owners', 'occupants'] },
+    },
+    {
+      field: 'expiresOn',
+      code: 'INVALID_FORMAT',
+      params: { format: 'YYYY-MM-DD' },
     },
   ],
 };
@@ -351,7 +363,7 @@ export const COMPOUND_DOCUMENT_ROUTES: Row[] = [
         titleAr: 'لائحة',
         bodyEn: 'Body',
         bodyAr: 'نص',
-        effectiveOn: 'soon',
+        effectiveOn: '2026-02-30',
       },
       fields: [
         {
@@ -465,8 +477,10 @@ export const CONTRACT_ROUTES: Row[] = [
       body: {
         kind: 'rent',
         partyOccupancyIds: [],
-        signedOn: 'x',
-        startsOn: '2026-01-01',
+        // Shaped as days, and no days.
+        signedOn: '2026-02-30',
+        startsOn: '2026-04-31',
+        endsOn: '2027-02-29',
         fileId: UNKNOWN,
       },
       fields: [
@@ -482,6 +496,16 @@ export const CONTRACT_ROUTES: Row[] = [
         },
         {
           field: 'signedOn',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
+        },
+        {
+          field: 'startsOn',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
+        },
+        {
+          field: 'endsOn',
           code: 'INVALID_FORMAT',
           params: { format: 'YYYY-MM-DD' },
         },
@@ -651,7 +675,7 @@ export const CLEARANCE_DEPOSIT_ROUTES: Row[] = [
         occupancyId: 'x',
         kind: 'rent',
         amount: '10',
-        receivedOn: '2026-01-01',
+        receivedOn: '2026-02-30',
         method: 'cash',
       },
       fields: [
@@ -662,6 +686,11 @@ export const CLEARANCE_DEPOSIT_ROUTES: Row[] = [
           params: {
             allowed: ['finishing_works', 'move', 'maintenance_fund', 'other'],
           },
+        },
+        {
+          field: 'receivedOn',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
         },
       ],
     },

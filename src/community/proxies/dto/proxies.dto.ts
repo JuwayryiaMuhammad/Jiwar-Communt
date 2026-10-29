@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { IdentityDocumentDto } from '../../../core/common/http/identity-document.dto';
 import { IsPhone } from '../../../core/common/validation/is-phone';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { PROXY_SCOPES } from '../../capabilities/capabilities';
 
@@ -52,7 +53,7 @@ export class NewProxyDto extends IdentityDocumentDto {
     description:
       'Its last day (the compound’s calendar), a year ahead at most.',
   })
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, withParams({ format: 'YYYY-MM-DD' }))
+  @IsLocalDate(withParams({ format: 'YYYY-MM-DD' }))
   endsOn: string;
 }
 

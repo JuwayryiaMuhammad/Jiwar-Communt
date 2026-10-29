@@ -523,7 +523,7 @@ export const MAINTENANCE_CONTRACT_ROUTES: Row[] = [
         kind: 'lease',
         vendorName: '',
         startsOn: '2026-13-01',
-        endsOn: 'soon',
+        endsOn: '2027-02-29',
         noticeDays: 365,
       },
       fields: [
@@ -566,9 +566,14 @@ export const MAINTENANCE_CONTRACT_ROUTES: Row[] = [
       code: 'MAINTENANCE_CONTRACT_NOT_FOUND',
     },
     invalid: {
-      body: { vendorPhone: 'call me', annualValue: '-1' },
+      body: {
+        vendorPhone: 'call me',
+        startsOn: '2026-02-30',
+        annualValue: '-1',
+      },
       fields: [
         { field: 'vendorPhone', code: 'INVALID_FORMAT' },
+        { field: 'startsOn', code: 'INVALID_FORMAT' },
         { field: 'annualValue', code: 'INVALID_FORMAT' },
       ],
     },
@@ -636,7 +641,10 @@ export const ECONOMICS_ROUTES: Row[] = [
 
 const BAD_PERIOD = {
   query: { from: '2026-02-30', to: 'today' },
-  fields: [{ field: 'to', code: 'INVALID_FORMAT' }],
+  fields: [
+    { field: 'from', code: 'INVALID_FORMAT' },
+    { field: 'to', code: 'INVALID_FORMAT' },
+  ],
 };
 
 /** How technicians work (ADR 0065). */

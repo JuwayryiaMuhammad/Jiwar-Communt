@@ -46,7 +46,8 @@ export const PROXY_ROUTES: Row[] = [
         idDocumentType: 'national_id',
         idDocumentNumber: '29001011234567',
         scopes: ['money'],
-        endsOn: 'later',
+        // Shaped as a day, and no day: `::date` refused it with a 500.
+        endsOn: '2026-02-30',
       },
       fields: [
         {

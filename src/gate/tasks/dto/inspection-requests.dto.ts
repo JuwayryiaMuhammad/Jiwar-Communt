@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, Matches } from 'class-validator';
+import { IsIn, IsOptional } from 'class-validator';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { withParams } from '../../../core/common/validation/validation-errors';
 
 /** A closed unit's owner, or its proxy, asks for a visit (ADR 0063). */
@@ -9,7 +10,7 @@ export class NewInspectionRequestDto {
     format: 'date',
     description: 'The compound’s day, from today to 90 days ahead.',
   })
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, withParams({ format: 'YYYY-MM-DD' }))
+  @IsLocalDate(withParams({ format: 'YYYY-MM-DD' }))
   preferredOn: string;
 }
 

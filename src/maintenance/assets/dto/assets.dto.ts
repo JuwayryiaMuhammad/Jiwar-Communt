@@ -16,7 +16,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { REASON_CODES } from '../../../core/common/reasons';
-import { LOCAL_DATE } from '../../schedules/local-dates';
+import { IsLocalDate } from '../../schedules/local-dates';
 import {
   ASSET_CODE,
   ASSET_CONDITIONS,
@@ -83,7 +83,7 @@ class AssetFactsDto {
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   commissionedOn?: string | null;
 
   @ApiPropertyOptional({
@@ -165,7 +165,7 @@ class AssetFactsDto {
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   warrantyEndsOn?: string | null;
 
   @ApiPropertyOptional({ enum: ASSET_CRITICALITIES, default: 'medium' })

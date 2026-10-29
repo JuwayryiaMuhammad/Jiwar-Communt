@@ -17,7 +17,8 @@ export const INSPECTION_REQUEST_ROUTES: Row[] = [
       code: 'UNIT_NOT_FOUND',
     },
     invalid: {
-      body: { preferredOn: 'soon' },
+      // Shaped as a day, and no day.
+      body: { preferredOn: '2026-02-30' },
       fields: [
         {
           field: 'preferredOn',

@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsUUID, Matches } from 'class-validator';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { MOVE_DIRECTIONS } from '../move-checklist';
 
 const DATE = withParams({ format: 'YYYY-MM-DD' });
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** The residing primary's notice to move out (ADR 0063). */
 export class MoveOutNoticeDto {
@@ -13,7 +13,7 @@ export class MoveOutNoticeDto {
     format: 'date',
     description: 'The compound’s day, from today to a year ahead.',
   })
-  @Matches(ISO_DATE, DATE)
+  @IsLocalDate(DATE)
   plannedOn: string;
 }
 
@@ -28,7 +28,7 @@ export class NewMoveDto {
   direction: string;
 
   @ApiProperty({ type: String, format: 'date' })
-  @Matches(ISO_DATE, DATE)
+  @IsLocalDate(DATE)
   plannedOn: string;
 }
 

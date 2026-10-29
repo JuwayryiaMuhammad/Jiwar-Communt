@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import {
   appError,
   ErrorCode,
@@ -9,6 +9,7 @@ import {
 import {
   addDays,
   daysBetween,
+  IsLocalDate,
   isRealDate,
   LOCAL_DATE,
   type LocalDate,
@@ -37,7 +38,7 @@ export class PeriodQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from?: string;
 
   @ApiPropertyOptional({
@@ -48,7 +49,7 @@ export class PeriodQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to?: string;
 }
 

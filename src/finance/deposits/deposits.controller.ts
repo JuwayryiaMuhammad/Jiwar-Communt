@@ -28,6 +28,7 @@ import {
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
+import { IsLocalDate } from '../../core/common/validation/local-date';
 import { withParams } from '../../core/common/validation/validation-errors';
 import {
   DEPOSIT_KINDS,
@@ -126,7 +127,7 @@ export class NewDepositDto {
   amount: string;
 
   @ApiProperty({ type: String, format: 'date' })
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, withParams({ format: 'YYYY-MM-DD' }))
+  @IsLocalDate(withParams({ format: 'YYYY-MM-DD' }))
   receivedOn: string;
 
   @ApiProperty({ enum: DEPOSIT_METHODS })

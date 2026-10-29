@@ -1,6 +1,12 @@
 import type { Row } from '../registry';
 
 const KINDS = ['building', 'area', 'facility'];
+/**
+ * A day shaped right that does not exist: a pattern lets it through, and
+ * `new Date` rolls it over to 2 March. Every date the register takes is
+ * refused with it (INVALID_FORMAT).
+ */
+const NO_SUCH_DAY = '2026-02-30';
 
 /** The asset register (ADR 0064): its common areas. */
 export const COMMON_AREA_ROUTES: Row[] = [
@@ -185,7 +191,15 @@ export const ASSET_ROUTES: Row[] = [
     denied: 'technician',
     foreign: 'none',
     invalid: {
-      body: { code: 'with space', typeId: 'x', nameAr: '', nameEn: 'Pump' },
+      body: {
+        code: 'with space',
+        typeId: 'x',
+        nameAr: '',
+        nameEn: 'Pump',
+        // Shaped as days, and no day: never stored rolled over.
+        commissionedOn: NO_SUCH_DAY,
+        warrantyEndsOn: '2026-04-31',
+      },
       fields: [
         { field: 'code', code: 'INVALID_FORMAT' },
         { field: 'typeId', code: 'INVALID_UUID' },
@@ -194,6 +208,8 @@ export const ASSET_ROUTES: Row[] = [
           code: 'INVALID_LENGTH',
           params: { min: 1, max: 120 },
         },
+        { field: 'commissionedOn', code: 'INVALID_FORMAT' },
+        { field: 'warrantyEndsOn', code: 'INVALID_FORMAT' },
       ],
     },
   },
@@ -218,8 +234,14 @@ export const ASSET_ROUTES: Row[] = [
       code: 'ASSET_NOT_FOUND',
     },
     invalid: {
-      body: { condition: 'broken' },
+      body: {
+        condition: 'broken',
+        commissionedOn: NO_SUCH_DAY,
+        warrantyEndsOn: '2026-04-31',
+      },
       fields: [
+        { field: 'commissionedOn', code: 'INVALID_FORMAT' },
+        { field: 'warrantyEndsOn', code: 'INVALID_FORMAT' },
         {
           field: 'condition',
           code: 'INVALID_VALUE',
@@ -636,7 +658,13 @@ export const PLAN_ROUTES: Row[] = [
     denied: 'technician',
     foreign: 'none',
     invalid: {
-      body: { every: 0, assetId: 'x', title: '', trigger: 'weekly' },
+      body: {
+        every: 0,
+        assetId: 'x',
+        title: '',
+        trigger: 'weekly',
+        anchorOn: NO_SUCH_DAY,
+      },
       fields: [
         { field: 'assetId', code: 'INVALID_UUID' },
         {
@@ -654,6 +682,7 @@ export const PLAN_ROUTES: Row[] = [
           code: 'INVALID_NUMBER',
           params: { min: 1, max: 365 },
         },
+        { field: 'anchorOn', code: 'INVALID_FORMAT' },
       ],
     },
   },
@@ -681,8 +710,9 @@ export const PLAN_ROUTES: Row[] = [
       code: 'MAINTENANCE_PLAN_NOT_FOUND',
     },
     invalid: {
-      body: { leadDays: 61 },
+      body: { leadDays: 61, anchorOn: NO_SUCH_DAY },
       fields: [
+        { field: 'anchorOn', code: 'INVALID_FORMAT' },
         {
           field: 'leadDays',
           code: 'INVALID_NUMBER',
@@ -728,7 +758,7 @@ export const PLAN_ROUTES: Row[] = [
       code: 'MAINTENANCE_PLAN_NOT_FOUND',
     },
     invalid: {
-      body: { toDate: 'soon' },
+      body: { toDate: NO_SUCH_DAY },
       fields: [{ field: 'toDate', code: 'INVALID_FORMAT' }],
     },
   },
@@ -781,7 +811,7 @@ export const PLAN_ROUTES: Row[] = [
       code: 'PLAN_OCCURRENCE_NOT_FOUND',
     },
     invalid: {
-      body: { toDate: 'soon' },
+      body: { toDate: NO_SUCH_DAY },
       fields: [{ field: 'toDate', code: 'INVALID_FORMAT' }],
     },
   },
@@ -794,7 +824,7 @@ const INSPECTION_STATUS_LIST = [
   'cancelled',
 ];
 const periodInvalid = {
-  query: { from: 'x', to: 'y' },
+  query: { from: NO_SUCH_DAY, to: '2026-04-31' },
   fields: [
     { field: 'from', code: 'INVALID_FORMAT' },
     { field: 'to', code: 'INVALID_FORMAT' },
@@ -835,7 +865,7 @@ export const INSPECTION_ROUTES: Row[] = [
         assigneeId: 'x',
         every: 0,
         unit: 'hour',
-        anchorOn: 'soon',
+        anchorOn: NO_SUCH_DAY,
       },
       fields: [
         {
@@ -883,8 +913,9 @@ export const INSPECTION_ROUTES: Row[] = [
       code: 'INSPECTION_ROUND_NOT_FOUND',
     },
     invalid: {
-      body: { leadDays: 61 },
+      body: { leadDays: 61, anchorOn: NO_SUCH_DAY },
       fields: [
+        { field: 'anchorOn', code: 'INVALID_FORMAT' },
         {
           field: 'leadDays',
           code: 'INVALID_NUMBER',
@@ -943,7 +974,7 @@ export const INSPECTION_ROUTES: Row[] = [
     denied: 'technician',
     foreign: 'none',
     invalid: {
-      body: { checklistId: 'x', assigneeId: 'x', dueOn: 'soon' },
+      body: { checklistId: 'x', assigneeId: 'x', dueOn: NO_SUCH_DAY },
       fields: [
         { field: 'checklistId', code: 'INVALID_UUID' },
         { field: 'assigneeId', code: 'INVALID_UUID' },

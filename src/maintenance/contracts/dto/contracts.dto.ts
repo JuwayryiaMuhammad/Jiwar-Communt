@@ -16,7 +16,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { MONEY } from '../../costs/cost-rules';
-import { LOCAL_DATE } from '../../schedules/local-dates';
+import { IsLocalDate, LOCAL_DATE } from '../../schedules/local-dates';
 import { STOCK_CODE } from '../../stock/stock-rules';
 import {
   CONTRACT_ASSETS_MAX,
@@ -69,7 +69,7 @@ export class CreateContractDto {
 
   @ApiProperty({ type: String, format: 'date', pattern: LOCAL_DATE.source })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   startsOn: string;
 
   @ApiProperty({
@@ -79,7 +79,7 @@ export class CreateContractDto {
     description: 'Its last day; after `startsOn`.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   endsOn: string;
 
   @ApiPropertyOptional({
@@ -146,7 +146,7 @@ export class UpdateContractDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   startsOn?: string;
 
   @ApiPropertyOptional({
@@ -156,7 +156,7 @@ export class UpdateContractDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   endsOn?: string;
 
   @ApiPropertyOptional({ type: String, nullable: true, pattern: MONEY.source })

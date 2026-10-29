@@ -16,7 +16,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { METRIC_KEY } from '../../checklists/checklist-rules';
-import { LOCAL_DATE } from '../../schedules/local-dates';
+import { IsLocalDate } from '../../schedules/local-dates';
 import {
   RECURRENCE_EVERY,
   RECURRENCE_UNITS,
@@ -60,7 +60,7 @@ class PlanTimingDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   anchorOn?: string;
 
   @ApiPropertyOptional({
@@ -210,7 +210,7 @@ export class DeferPlanDto {
     description: 'From today, within a year.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   toDate: string;
 
   @ApiProperty({ type: String, description: 'From `planDefer`.' })

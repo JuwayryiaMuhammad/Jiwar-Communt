@@ -30,7 +30,8 @@ export const MOVE_ROUTES: Row[] = [
       code: 'UNIT_NOT_FOUND',
     },
     invalid: {
-      body: { plannedOn: 'soon' },
+      // Shaped as a day, and no day.
+      body: { plannedOn: '2026-02-30' },
       fields: [
         {
           field: 'plannedOn',
@@ -130,12 +131,17 @@ export const MOVE_ROUTES: Row[] = [
       code: 'UNIT_NOT_FOUND',
     },
     invalid: {
-      body: { occupancyId: UNKNOWN, direction: 'up', plannedOn: '2099-01-05' },
+      body: { occupancyId: UNKNOWN, direction: 'up', plannedOn: '2027-02-29' },
       fields: [
         {
           field: 'direction',
           code: 'INVALID_VALUE',
           params: { allowed: ['in', 'out'] },
+        },
+        {
+          field: 'plannedOn',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
         },
       ],
     },

@@ -7,15 +7,14 @@ import {
   IsInt,
   IsOptional,
   IsUUID,
-  Matches,
   Max,
   Min,
 } from 'class-validator';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { CONTRACT_KINDS } from '../contracts.service';
 
 const DATE = withParams({ format: 'YYYY-MM-DD' });
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** A contract the management holds a copy of (ADR 0062). */
 export class NewContractDto {
@@ -38,11 +37,11 @@ export class NewContractDto {
   partyOccupancyIds: string[];
 
   @ApiProperty({ type: String, format: 'date' })
-  @Matches(ISO_DATE, DATE)
+  @IsLocalDate(DATE)
   signedOn: string;
 
   @ApiProperty({ type: String, format: 'date' })
-  @Matches(ISO_DATE, DATE)
+  @IsLocalDate(DATE)
   startsOn: string;
 
   @ApiProperty({
@@ -52,7 +51,7 @@ export class NewContractDto {
     description: 'A lease’s last day; required for a lease.',
   })
   @IsOptional()
-  @Matches(ISO_DATE, DATE)
+  @IsLocalDate(DATE)
   endsOn?: string;
 
   @ApiProperty({

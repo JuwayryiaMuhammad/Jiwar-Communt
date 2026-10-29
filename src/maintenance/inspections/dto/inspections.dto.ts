@@ -6,13 +6,12 @@ import {
   IsString,
   IsUUID,
   Length,
-  Matches,
   Max,
   Min,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { LOCAL_DATE } from '../../schedules/local-dates';
+import { IsLocalDate } from '../../schedules/local-dates';
 import {
   RECURRENCE_EVERY,
   RECURRENCE_UNITS,
@@ -90,7 +89,7 @@ export class CreateRoundDto extends TargetDto {
 
   @ApiProperty({ type: String, format: 'date' })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   anchorOn: string;
 
   @ApiPropertyOptional({
@@ -146,7 +145,7 @@ export class UpdateRoundDto {
   @ApiPropertyOptional({ type: String, format: 'date' })
   @IsOptional()
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   anchorOn?: string;
 
   @ApiPropertyOptional({
@@ -180,7 +179,7 @@ export class CreateInspectionDto extends TargetDto {
     description: 'Today or later, the compound’s day.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   dueOn: string;
 }
 
@@ -245,7 +244,7 @@ export class InspectionReportQueryDto {
     description: 'Due on or after, the compound’s day.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   from: string;
 
   @ApiProperty({
@@ -254,6 +253,6 @@ export class InspectionReportQueryDto {
     description: 'Due on or before; at most 366 days after `from`.',
   })
   @IsString()
-  @Matches(LOCAL_DATE)
+  @IsLocalDate()
   to: string;
 }

@@ -1,12 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsIn,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Length,
-  Matches,
-} from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import {
   ADDABLE_KINDS,
@@ -47,6 +41,6 @@ export class NewUnitDocumentDto {
       'A warranty’s end date: required for a warranty, refused otherwise.',
   })
   @IsOptional()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, withParams({ format: 'YYYY-MM-DD' }))
+  @IsLocalDate(withParams({ format: 'YYYY-MM-DD' }))
   expiresOn?: string;
 }

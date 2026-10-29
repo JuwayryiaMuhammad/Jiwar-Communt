@@ -22,7 +22,6 @@ import { dbNow } from '../db-clock';
 import { CompoundCalendar } from '../schedules/compound-calendar';
 import {
   dateColumn,
-  isRealDate,
   ofDateColumn,
   type LocalDate,
 } from '../schedules/local-dates';
@@ -150,7 +149,6 @@ export class MaintenanceContractsService implements OnModuleInit {
 
   /** A duplicate code is DUPLICATE_RESOURCE on `code` (db-constraints). */
   create(input: ContractInput): Promise<ContractRead> {
-    requireRealDates(input);
     if (input.endsOn <= input.startsOn)
       throw invalid([
         { field: 'endsOn', code: FieldErrorCode.ENDS_BEFORE_START },
@@ -191,7 +189,6 @@ export class MaintenanceContractsService implements OnModuleInit {
 
   /** Its terms; never a terminated one; a new end date is announced afresh. */
   update(id: string, input: ContractUpdate): Promise<ContractRead> {
-    requireRealDates(input);
     return this.tenantTx
       .withTenantTx(async (tx) => {
         const before = await this.lock(tx, id);
@@ -357,16 +354,6 @@ export class MaintenanceContractsService implements OnModuleInit {
     if (!c) throw contractNotFound();
     return c;
   }
-}
-
-/** A calendar day that exists: the pattern lets 2026-02-30 through. */
-function requireRealDates(d: { startsOn?: LocalDate; endsOn?: LocalDate }) {
-  const fields = (['startsOn', 'endsOn'] as const).flatMap((field) =>
-    d[field] !== undefined && !isRealDate(d[field])
-      ? [{ field, code: FieldErrorCode.INVALID_FORMAT }]
-      : [],
-  );
-  if (fields.length) throw invalid(fields);
 }
 
 function statusWhere(status: ContractStatus | undefined, day: Date) {

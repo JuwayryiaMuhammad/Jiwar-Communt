@@ -13,6 +13,7 @@ import {
 } from '../../core/common/errors';
 import { parseIdentityDocument } from '../../core/common/identity-document';
 import { newId } from '../../core/common/uuid';
+import { isRealDate } from '../../core/common/validation/local-date';
 import { GlobalDbService } from '../../core/database/global-db.service';
 import {
   TenantTx,
@@ -430,8 +431,8 @@ export class ProxiesService implements OnModuleInit {
     day: string,
     now: Date,
   ): Promise<Date> {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || Number.isNaN(Date.parse(day)))
-      throw invalid('endsOn', { maxDaysAhead: MAX_DAYS });
+    // Date.parse takes 2026-02-30, and `::date` below would not.
+    if (!isRealDate(day)) throw invalid('endsOn', { maxDaysAhead: MAX_DAYS });
     const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
     const [{ end }] = await tx.$queryRaw<{ end: Date }[]>`
       SELECT ((${day}::date + 1)::timestamp AT TIME ZONE ${timezone}) AS "end"`;

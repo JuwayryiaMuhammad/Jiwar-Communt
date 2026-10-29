@@ -10321,6 +10321,111 @@
         ],
         "type": "object"
       },
+      "ConsumptionGroup": {
+        "enum": [
+          "meter",
+          "building",
+          "area"
+        ],
+        "type": "string"
+      },
+      "ConsumptionGroupView": {
+        "properties": {
+          "cost": {
+            "nullable": true,
+            "type": "string"
+          },
+          "key": {
+            "description": "The meter’s id, the building’s name or the common area’s id; null: none.",
+            "nullable": true,
+            "type": "string"
+          },
+          "label": {
+            "nullable": true,
+            "type": "string"
+          },
+          "meters": {
+            "type": "number"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/UsePartView"
+            },
+            "type": "array"
+          },
+          "perOccupiedUnit": {
+            "description": "Use an occupied unit: to compare buildings by.",
+            "nullable": true,
+            "type": "string"
+          },
+          "perSqm": {
+            "description": "Use a square metre of the units’ floor area.",
+            "nullable": true,
+            "type": "string"
+          },
+          "use": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "meters",
+          "use",
+          "cost",
+          "perSqm",
+          "perOccupiedUnit",
+          "months"
+        ],
+        "type": "object"
+      },
+      "ConsumptionView": {
+        "properties": {
+          "cost": {
+            "nullable": true,
+            "type": "string"
+          },
+          "groupBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsumptionGroup"
+              }
+            ]
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/ConsumptionGroupView"
+            },
+            "type": "array"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodView"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "use": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "unit",
+          "groupBy",
+          "period",
+          "use",
+          "cost",
+          "groups"
+        ],
+        "type": "object"
+      },
       "ContactDto": {
         "properties": {
           "email": {
@@ -12494,6 +12599,48 @@
         ],
         "type": "object"
       },
+      "CreateMeasureDto": {
+        "properties": {
+          "building": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "cost": {
+            "description": "EGP it cost.",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ],
+            "description": "What it saves."
+          },
+          "meterId": {
+            "description": "On this meter, of the same kind. Or a building, or neither: the compound.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsOn": {
+            "description": "The compound’s day it starts; at most a year ahead.",
+            "format": "date",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "kind",
+          "startsOn"
+        ],
+        "type": "object"
+      },
       "CreateMeterDto": {
         "properties": {
           "assetId": {
@@ -13695,6 +13842,33 @@
           "key",
           "nameAr",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateTariffDto": {
+        "properties": {
+          "effectiveOn": {
+            "description": "The compound’s day it is in force from.",
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "pricePerUnit": {
+            "description": "EGP a unit of the kind (kWh, m³, L, h).",
+            "pattern": "^\\d{1,8}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "effectiveOn",
+          "pricePerUnit"
         ],
         "type": "object"
       },
@@ -17155,6 +17329,28 @@
         ],
         "type": "object"
       },
+      "EffectSideView": {
+        "properties": {
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "perDay": {
+            "description": "Use a day, four decimals.",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "perDay"
+        ],
+        "type": "object"
+      },
       "EmergencyContactsView": {
         "properties": {
           "family": {
@@ -17409,6 +17605,19 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "EndMeasureDto": {
+        "properties": {
+          "endedOn": {
+            "description": "The compound’s day it ended: from its start to today.",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endedOn"
         ],
         "type": "object"
       },
@@ -29043,6 +29252,179 @@
           "photoUrl",
           "role",
           "permissions"
+        ],
+        "type": "object"
+      },
+      "MeasureCardView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cost": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "effect": {
+            "$ref": "#/components/schemas/MeasureEffectView"
+          },
+          "endedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "meterId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "meterId",
+          "building",
+          "startsOn",
+          "endedOn",
+          "cost",
+          "createdAt",
+          "effect"
+        ],
+        "type": "object"
+      },
+      "MeasureEffectView": {
+        "properties": {
+          "after": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EffectSideView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "before": {
+            "$ref": "#/components/schemas/EffectSideView"
+          },
+          "changePct": {
+            "description": "(after − before) / before a day, %; one decimal.",
+            "nullable": true,
+            "type": "string"
+          },
+          "complete": {
+            "description": "The after side has all its days.",
+            "type": "boolean"
+          },
+          "weeks": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "weeks",
+          "before",
+          "after",
+          "complete",
+          "changePct"
+        ],
+        "type": "object"
+      },
+      "MeasureView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cost": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "meterId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "meterId",
+          "building",
+          "startsOn",
+          "endedOn",
+          "cost",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MeasureViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MeasureView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -55088,6 +55470,41 @@
         ],
         "type": "object"
       },
+      "TariffView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "effectiveOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "pricePerUnit": {
+            "description": "EGP a unit, four decimals.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "effectiveOn",
+          "pricePerUnit",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "TaskUnitView": {
         "properties": {
           "building": {
@@ -59868,6 +60285,29 @@
           "method",
           "headers",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "UsePartView": {
+        "properties": {
+          "cost": {
+            "description": "EGP at the tariffs in force; null where none was.",
+            "nullable": true,
+            "type": "string"
+          },
+          "month": {
+            "description": "YYYY-MM.",
+            "type": "string"
+          },
+          "use": {
+            "description": "In the kind’s unit, four decimals.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "use",
+          "cost"
         ],
         "type": "object"
       },
@@ -76893,6 +77333,333 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/energy/consumption": {
+      "get": {
+        "operationId": "EnergyController_report",
+        "parameters": [
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/MeterKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ConsumptionGroup"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumptionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Use and cost of a kind over a period, by meter, building or area",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/energy/consumption/export": {
+      "get": {
+        "description": "UTF-8 with a byte-order mark: one row a group and month — the group, the month, the use and the cost.",
+        "operationId": "EnergyController_export",
+        "parameters": [
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/MeterKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ConsumptionGroup"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The same as CSV",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/energy/measures": {
+      "get": {
+        "operationId": "EnergyController_measureList",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasureViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The saving measures, the latest start first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "EnergyController_addMeasure",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMeasureDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasureView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a saving measure",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/energy/measures/{id}": {
+      "get": {
+        "operationId": "EnergyController_measure",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Whole weeks before and after its start.",
+            "in": "query",
+            "name": "weeks",
+            "required": false,
+            "schema": {
+              "default": 4,
+              "maximum": 26,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasureCardView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A measure and its effect, read now",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/energy/measures/{id}/end": {
+      "post": {
+        "operationId": "EnergyController_endMeasure",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndMeasureDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasureView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a measure, once",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/energy/settings": {
       "get": {
         "operationId": "EnergySettingsController_get",
@@ -76951,6 +77718,92 @@
           }
         ],
         "summary": "Change the spike rule",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/energy/tariffs": {
+      "get": {
+        "operationId": "EnergyController_tariffList",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MeterKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TariffView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The tariffs, by kind, the latest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "EnergyController_addTariff",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTariffDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TariffView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a tariff from a day on",
         "tags": [
           "maintenance"
         ],
@@ -78069,6 +78922,65 @@
           }
         ],
         "summary": "Change a meter’s serial or installation day",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/meters/{id}/consumption": {
+      "get": {
+        "operationId": "MetersController_consumptionOf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumptionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A meter’s use over a period, by month",
         "tags": [
           "maintenance"
         ],

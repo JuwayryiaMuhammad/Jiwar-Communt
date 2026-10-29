@@ -260,6 +260,8 @@ export interface World
   bMeterAlertId: string;
   /** ADR 0066: a sheet of B's readings, checked. */
   bReadingImportId: string;
+  /** ADR 0066: a saving measure of B's. */
+  bMeasureId: string;
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
@@ -1056,6 +1058,17 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     await files.finalize(b.tokens.manager, fileId).expect(200);
     return h.moduleRef.get(AssetImportsService).check(fileId);
   });
+  const bMeasure = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.energyMeasure.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        title: 'World LEDs',
+        kind: 'electricity',
+        startsOn: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    }),
+  );
   const bReadingImport = await helpers.asManager(b, async () => {
     const files = fileHelpers(h);
     const fileId = await files.uploaded(
@@ -1565,6 +1578,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bReadingId: bReading.id,
     bMeterAlertId: bMeterAlert.id,
     bReadingImportId: bReadingImport.id,
+    bMeasureId: bMeasure.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
     bRecommendationId: bRecommendation.id,

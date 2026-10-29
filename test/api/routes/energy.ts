@@ -278,3 +278,139 @@ export const READING_IMPORT_ROUTES: Row[] = [
     invalid: 'none',
   }),
 ];
+
+const KIND_INVALID = {
+  field: 'kind',
+  code: 'INVALID_VALUE',
+  params: { allowed: METER_KINDS },
+};
+
+/** Consumption, tariffs and saving measures (ADR 0066). */
+export const CONSUMPTION_ROUTES: Row[] = [
+  keeper({
+    method: 'GET',
+    path: '/maintenance/energy/consumption',
+    foreign: 'none',
+    invalid: {
+      query: { kind: 'steam', groupBy: 'floor', from: NO_SUCH_DAY },
+      // The query's own fields first, then the period's it extends.
+      fields: [
+        KIND_INVALID,
+        {
+          field: 'groupBy',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['meter', 'building', 'area'] },
+        },
+        { field: 'from', code: 'INVALID_FORMAT' },
+      ],
+    },
+  }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/energy/consumption/export',
+    foreign: 'none',
+    invalid: {
+      query: { kind: 'steam' },
+      fields: [KIND_INVALID],
+    },
+    noStore: true,
+  }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/meters/{id}/consumption',
+    foreign: { params: (w) => ({ id: w.bMeterId }), code: 'METER_NOT_FOUND' },
+    invalid: {
+      query: { from: NO_SUCH_DAY, to: '2026-04-31' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        { field: 'to', code: 'INVALID_FORMAT' },
+      ],
+    },
+  }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/energy/tariffs',
+    foreign: 'none',
+    invalid: { query: { kind: 'steam' }, fields: [KIND_INVALID] },
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/energy/tariffs',
+    foreign: 'none',
+    invalid: {
+      body: { kind: 'steam', effectiveOn: NO_SUCH_DAY, pricePerUnit: '-1' },
+      fields: [
+        KIND_INVALID,
+        { field: 'effectiveOn', code: 'INVALID_FORMAT' },
+        { field: 'pricePerUnit', code: 'INVALID_FORMAT' },
+      ],
+    },
+  }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/energy/measures',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/energy/measures',
+    foreign: 'none',
+    invalid: {
+      body: {
+        title: '',
+        kind: 'steam',
+        meterId: 'x',
+        startsOn: NO_SUCH_DAY,
+        cost: '-5',
+      },
+      fields: [
+        {
+          field: 'title',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+        KIND_INVALID,
+        { field: 'meterId', code: 'INVALID_UUID' },
+        { field: 'startsOn', code: 'INVALID_FORMAT' },
+        { field: 'cost', code: 'INVALID_FORMAT' },
+      ],
+    },
+  }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/energy/measures/{id}',
+    foreign: {
+      params: (w) => ({ id: w.bMeasureId }),
+      code: 'ENERGY_MEASURE_NOT_FOUND',
+    },
+    invalid: {
+      query: { weeks: '27' },
+      fields: [
+        { field: 'weeks', code: 'INVALID_NUMBER', params: { min: 1, max: 26 } },
+      ],
+    },
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/energy/measures/{id}/end',
+    foreign: {
+      params: (w) => ({ id: w.bMeasureId }),
+      body: () => ({ endedOn: '2026-01-02' }),
+      code: 'ENERGY_MEASURE_NOT_FOUND',
+    },
+    invalid: {
+      body: { endedOn: NO_SUCH_DAY },
+      fields: [{ field: 'endedOn', code: 'INVALID_FORMAT' }],
+    },
+  }),
+];

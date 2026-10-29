@@ -5401,6 +5401,95 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/energy/consumption": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Use and cost of a kind over a period, by meter, building or area */
+        get: operations["EnergyController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/energy/consumption/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The same as CSV
+         * @description UTF-8 with a byte-order mark: one row a group and month — the group, the month, the use and the cost.
+         */
+        get: operations["EnergyController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/energy/measures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The saving measures, the latest start first */
+        get: operations["EnergyController_measureList"];
+        put?: never;
+        /** Add a saving measure */
+        post: operations["EnergyController_addMeasure"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/energy/measures/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A measure and its effect, read now */
+        get: operations["EnergyController_measure"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/energy/measures/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End a measure, once */
+        post: operations["EnergyController_endMeasure"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/energy/settings": {
         parameters: {
             query?: never;
@@ -5417,6 +5506,24 @@ export interface paths {
         head?: never;
         /** Change the spike rule */
         patch: operations["EnergySettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/energy/tariffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tariffs, by kind, the latest first */
+        get: operations["EnergyController_tariffList"];
+        put?: never;
+        /** Add a tariff from a day on */
+        post: operations["EnergyController_addTariff"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/maintenance/inspection-report": {
@@ -5715,6 +5822,23 @@ export interface paths {
         head?: never;
         /** Change a meter’s serial or installation day */
         patch: operations["MetersController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/meters/{id}/consumption": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A meter’s use over a period, by month */
+        get: operations["MetersController_consumptionOf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/maintenance/meters/{id}/readings": {
@@ -22283,6 +22407,30 @@ export interface components {
             /** @description The reader granted it. */
             mine: boolean;
         };
+        /** @enum {string} */
+        ConsumptionGroup: "meter" | "building" | "area";
+        ConsumptionGroupView: {
+            cost: string | null;
+            /** @description The meter’s id, the building’s name or the common area’s id; null: none. */
+            key: string | null;
+            label: string | null;
+            meters: number;
+            months: components["schemas"]["UsePartView"][];
+            /** @description Use an occupied unit: to compare buildings by. */
+            perOccupiedUnit: string | null;
+            /** @description Use a square metre of the units’ floor area. */
+            perSqm: string | null;
+            use: string;
+        };
+        ConsumptionView: {
+            cost: string | null;
+            groupBy: components["schemas"]["ConsumptionGroup"];
+            groups: components["schemas"]["ConsumptionGroupView"][];
+            kind: components["schemas"]["MeterKind"];
+            period: components["schemas"]["PeriodView"];
+            unit: string;
+            use: string;
+        };
         ContactDto: {
             /** Format: email */
             email?: string;
@@ -23109,6 +23257,24 @@ export interface components {
              */
             validUntil: string;
         };
+        CreateMeasureDto: {
+            building?: string;
+            /** @description EGP it cost. */
+            cost?: string;
+            /** @description What it saves. */
+            kind: components["schemas"]["MeterKind"];
+            /**
+             * Format: uuid
+             * @description On this meter, of the same kind. Or a building, or neither: the compound.
+             */
+            meterId?: string;
+            /**
+             * Format: date
+             * @description The compound’s day it starts; at most a year ahead.
+             */
+            startsOn: string;
+            title: string;
+        };
         CreateMeterDto: {
             /**
              * Format: uuid
@@ -23626,6 +23792,16 @@ export interface components {
             key: string;
             nameAr: string;
             nameEn: string;
+        };
+        CreateTariffDto: {
+            /**
+             * Format: date
+             * @description The compound’s day it is in force from.
+             */
+            effectiveOn: string;
+            kind: components["schemas"]["MeterKind"];
+            /** @description EGP a unit of the kind (kWh, m³, L, h). */
+            pricePerUnit: string;
         };
         CreateTenantDto: {
             manager: components["schemas"]["NewManagerDto"];
@@ -24703,6 +24879,14 @@ export interface components {
             /** @description The fiscal year, named after the calendar year it starts in: the one under way, the one before or the next. */
             fiscalYear: number;
         };
+        EffectSideView: {
+            /** Format: date */
+            from: string;
+            /** @description Use a day, four decimals. */
+            perDay: string;
+            /** Format: date */
+            to: string;
+        };
         EmergencyContactsView: {
             /** @description The other people who live in the unit, the primary first. Empty for a caller who does not live there (a landlord). */
             family: components["schemas"]["FamilyContactView"][];
@@ -24782,6 +24966,13 @@ export interface components {
             note?: string;
             /** @description From the closed list `gateLockdownEnd`. */
             reasonCode: string;
+        };
+        EndMeasureDto: {
+            /**
+             * Format: date
+             * @description The compound’s day it ended: from its start to today.
+             */
+            endedOn: string;
         };
         EndOptionsView: {
             contract: components["schemas"]["ContractView"];
@@ -28341,6 +28532,54 @@ export interface components {
             role: components["schemas"]["MyRoleView"];
             status: components["schemas"]["AccountStatus"];
             type: components["schemas"]["AccountType"];
+        };
+        MeasureCardView: {
+            building: string | null;
+            /** @description EGP. */
+            cost: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            effect: components["schemas"]["MeasureEffectView"];
+            /** Format: date */
+            endedOn: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MeterKind"];
+            /** Format: uuid */
+            meterId: string | null;
+            /** Format: date */
+            startsOn: string;
+            title: string;
+        };
+        MeasureEffectView: {
+            after: components["schemas"]["EffectSideView"] | null;
+            before: components["schemas"]["EffectSideView"];
+            /** @description (after − before) / before a day, %; one decimal. */
+            changePct: string | null;
+            /** @description The after side has all its days. */
+            complete: boolean;
+            weeks: number;
+        };
+        MeasureView: {
+            building: string | null;
+            /** @description EGP. */
+            cost: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            endedOn: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MeterKind"];
+            /** Format: uuid */
+            meterId: string | null;
+            /** Format: date */
+            startsOn: string;
+            title: string;
+        };
+        MeasureViewList: {
+            data: components["schemas"]["MeasureView"][];
+            nextCursor: string | null;
         };
         /** @enum {string} */
         MediaKind: "audio" | "video";
@@ -36270,6 +36509,17 @@ export interface components {
             /** @description What the QR holds: `JWA1.…` (an asset) or `JWL1.…` (an area). */
             code: string;
         };
+        TariffView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            effectiveOn: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MeterKind"];
+            /** @description EGP a unit, four decimals. */
+            pricePerUnit: string;
+        };
         TaskUnitView: {
             building: string | null;
             unitCode: string;
@@ -37784,6 +38034,14 @@ export interface components {
             method: "PUT";
             /** @description Presigned; shown once. */
             url: string;
+        };
+        UsePartView: {
+            /** @description EGP at the tariffs in force; null where none was. */
+            cost: string | null;
+            /** @description YYYY-MM. */
+            month: string;
+            /** @description In the kind’s unit, four decimals. */
+            use: string;
         };
         VehicleCountedView: {
             /** @enum {boolean} */
@@ -46310,6 +46568,156 @@ export interface operations {
             };
         };
     };
+    EnergyController_report: {
+        parameters: {
+            query: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+                kind: components["schemas"]["MeterKind"];
+                groupBy?: components["schemas"]["ConsumptionGroup"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsumptionView"];
+                };
+            };
+        };
+    };
+    EnergyController_export: {
+        parameters: {
+            query: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+                kind: components["schemas"]["MeterKind"];
+                groupBy?: components["schemas"]["ConsumptionGroup"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    EnergyController_measureList: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasureViewList"];
+                };
+            };
+        };
+    };
+    EnergyController_addMeasure: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMeasureDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasureView"];
+                };
+            };
+        };
+    };
+    EnergyController_measure: {
+        parameters: {
+            query?: {
+                /** @description Whole weeks before and after its start. */
+                weeks?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasureCardView"];
+                };
+            };
+        };
+    };
+    EnergyController_endMeasure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EndMeasureDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasureView"];
+                };
+            };
+        };
+    };
     EnergySettingsController_get: {
         parameters: {
             query?: never;
@@ -46348,6 +46756,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EnergySettingsView"];
+                };
+            };
+        };
+    };
+    EnergyController_tariffList: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["MeterKind"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TariffView"][];
+                };
+            };
+        };
+    };
+    EnergyController_addTariff: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTariffDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TariffView"];
                 };
             };
         };
@@ -46892,6 +47347,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeterView"];
+                };
+            };
+        };
+    };
+    MetersController_consumptionOf: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsumptionView"];
                 };
             };
         };

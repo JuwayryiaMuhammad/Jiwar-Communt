@@ -1966,6 +1966,9 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'meter_reading_import',
   },
+  'energy_tariff.created': { log: 'tenant', target: 'energy_tariff' },
+  'energy_measure.created': { log: 'tenant', target: 'energy_measure' },
+  'energy_measure.ended': { log: 'tenant', target: 'energy_measure' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

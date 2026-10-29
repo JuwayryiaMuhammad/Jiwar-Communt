@@ -2342,6 +2342,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   meter_readings_not_self: { guarded: 'supersedes_id IS NULL is tested first' },
   meter_alerts_kind_known: {},
   meter_alerts_rates_range: {},
+  energy_tariffs_kind_known: {},
+  energy_tariffs_price_range: {},
+  energy_measures_kind_known: {},
+  energy_measures_title_length: {},
+  energy_measures_scope_one: {},
+  energy_measures_building_length: {
+    guarded: 'building IS NULL is tested first',
+  },
+  energy_measures_cost_range: { guarded: 'cost IS NULL is tested first' },
+  energy_measures_ended_shape: {
+    guarded: 'ended_on IS NULL is tested first; starts_on is NOT NULL',
+  },
   meter_reading_imports_status_known: {},
   meter_reading_imports_counts_range: {},
   meter_reading_imports_state_shape: {

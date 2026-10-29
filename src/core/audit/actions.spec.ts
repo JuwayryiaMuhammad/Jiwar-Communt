@@ -201,6 +201,8 @@ describe('audit catalog', () => {
         'meter_reading',
         'meter_alert',
         'meter_reading_import',
+        'energy_tariff',
+        'energy_measure',
       ]).toContain(def.target);
     }
   });

@@ -8,14 +8,17 @@ import {
   Patch,
   Post,
   Query,
+  StreamableFile,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiProduces,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
-import { ApiArea } from '../../core/common/http/decorators';
+import { csvFile } from '../../core/common/csv';
+import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   ListOf,
   PageQueryDto,
@@ -24,30 +27,44 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { PeriodQueryDto } from '../economics/period';
 import { ReasonCodeDto } from '../tickets/dto/tickets.dto';
 import { MeterAlertsService } from './alerts.service';
+import { ConsumptionService } from './consumption.service';
 import {
   CheckReadingImportDto,
+  ConsumptionQueryDto,
   CorrectReadingDto,
+  CreateMeasureDto,
   CreateMeterDto,
+  CreateTariffDto,
+  EndMeasureDto,
   EnergySettingsDto,
+  MeasureQueryDto,
   MeterAlertsQueryDto,
   MetersQueryDto,
   ReadingsQueryDto,
   RecordReadingDto,
+  TariffsQueryDto,
   UpdateMeterDto,
 } from './dto/energy.dto';
 import { EnergySettingsService } from './energy-settings.service';
+import { MeasuresService } from './measures.service';
 import { MetersService } from './meters.service';
 import { MeterReadingImportsService } from './reading-imports.service';
 import { ReadingsService } from './readings.service';
+import { TariffsService } from './tariffs.service';
 import {
+  ConsumptionView,
   EnergySettingsView,
+  MeasureCardView,
+  MeasureView,
   MeterAlertView,
   MeterReadingImportView,
   MeterReadingView,
   MeterToReadView,
   MeterView,
+  TariffView,
 } from './views/energy.views';
 
 /** The compound's meters (ADR 0066). */
@@ -57,7 +74,19 @@ export class MetersController {
   constructor(
     private readonly meters: MetersService,
     private readonly readings: ReadingsService,
+    private readonly consumption: ConsumptionService,
   ) {}
+
+  @Get(':id/consumption')
+  @RequirePermissions('energy.read')
+  @ApiOperation({ summary: 'A meter’s use over a period, by month' })
+  @ApiOkResponse({ type: ConsumptionView })
+  async consumptionOf(
+    @Param('id', parseId()) id: string,
+    @Query() q: PeriodQueryDto,
+  ): Promise<ConsumptionView> {
+    return ConsumptionView.from(await this.consumption.ofMeter(id, q));
+  }
 
   @Get()
   @RequirePermissions('energy.read')
@@ -293,5 +322,104 @@ export class MeterReadingImportsController {
     @Param('id', parseId()) id: string,
   ): Promise<MeterReadingImportView> {
     return MeterReadingImportView.from(await this.imports.apply(id));
+  }
+}
+
+const CSV =
+  'UTF-8 with a byte-order mark: one row a group and month — the group, the month, the use and the cost.';
+
+/**
+ * Consumption, tariffs and saving measures (ADR 0066), computed on read.
+ * A unit's use shows when it stands empty: `energy.read` only.
+ */
+@ApiArea('maintenance')
+@Controller('maintenance/energy')
+export class EnergyController {
+  constructor(
+    private readonly consumption: ConsumptionService,
+    private readonly tariffs: TariffsService,
+    private readonly measures: MeasuresService,
+  ) {}
+
+  @Get('consumption')
+  @RequirePermissions('energy.read')
+  @ApiOperation({
+    summary: 'Use and cost of a kind over a period, by meter, building or area',
+  })
+  @ApiOkResponse({ type: ConsumptionView })
+  async report(@Query() q: ConsumptionQueryDto): Promise<ConsumptionView> {
+    return ConsumptionView.from(await this.consumption.report(q));
+  }
+
+  @Get('consumption/export')
+  @RequirePermissions('energy.read')
+  @NoStore()
+  @ApiProduces('text/csv')
+  @ApiOperation({ summary: 'The same as CSV', description: CSV })
+  @ApiOkResponse({ schema: { type: 'string' } })
+  async export(@Query() q: ConsumptionQueryDto): Promise<StreamableFile> {
+    return csvFile(
+      `consumption-${q.kind}-${q.from ?? 'from'}-${q.to ?? 'today'}.csv`,
+      await this.consumption.csv(q),
+    );
+  }
+
+  @Get('tariffs')
+  @RequirePermissions('energy.read')
+  @ApiOperation({ summary: 'The tariffs, by kind, the latest first' })
+  @ApiOkResponse({ type: [TariffView] })
+  async tariffList(@Query() q: TariffsQueryDto): Promise<TariffView[]> {
+    return (await this.tariffs.list(q)).map((t) => TariffView.from(t));
+  }
+
+  @Post('tariffs')
+  @RequirePermissions('energy.manage')
+  @Idempotent()
+  @ApiOperation({ summary: 'Add a tariff from a day on' })
+  @ApiCreatedResponse({ type: TariffView })
+  async addTariff(@Body() dto: CreateTariffDto): Promise<TariffView> {
+    return TariffView.from(await this.tariffs.create(dto));
+  }
+
+  @Get('measures')
+  @RequirePermissions('energy.read')
+  @ApiOperation({ summary: 'The saving measures, the latest start first' })
+  @ApiOkResponse({ type: ListOf(MeasureView) })
+  async measureList(
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<MeasureView>> {
+    return toList(await this.measures.list(q), (m) => MeasureView.from(m));
+  }
+
+  @Post('measures')
+  @RequirePermissions('energy.manage')
+  @Idempotent()
+  @ApiOperation({ summary: 'Add a saving measure' })
+  @ApiCreatedResponse({ type: MeasureView })
+  async addMeasure(@Body() dto: CreateMeasureDto): Promise<MeasureView> {
+    return MeasureView.from(await this.measures.create(dto));
+  }
+
+  @Get('measures/:id')
+  @RequirePermissions('energy.read')
+  @ApiOperation({ summary: 'A measure and its effect, read now' })
+  @ApiOkResponse({ type: MeasureCardView })
+  async measure(
+    @Param('id', parseId()) id: string,
+    @Query() q: MeasureQueryDto,
+  ): Promise<MeasureCardView> {
+    return MeasureCardView.card(await this.measures.get(id, q.weeks));
+  }
+
+  @Post('measures/:id/end')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions('energy.manage')
+  @ApiOperation({ summary: 'End a measure, once' })
+  @ApiOkResponse({ type: MeasureView })
+  async endMeasure(
+    @Param('id', parseId()) id: string,
+    @Body() dto: EndMeasureDto,
+  ): Promise<MeasureView> {
+    return MeasureView.from(await this.measures.end(id, dto.endedOn));
   }
 }

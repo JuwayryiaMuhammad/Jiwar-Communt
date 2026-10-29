@@ -1,13 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type {
+  EnergyMeasure,
+  EnergyTariff,
   Meter,
   MeterAlert,
   MeterReading,
   MeterReadingImport,
 } from '@prisma/client';
 import { REASON_CODES } from '../../../core/common/reasons';
+import { PeriodView } from '../../economics/views/economics.views';
 import { ofDateColumn, ofDateColumnOrNull } from '../../schedules/local-dates';
+import type {
+  ConsumptionGroupRead,
+  ConsumptionReport,
+  UsePart,
+} from '../consumption.service';
+import { CONSUMPTION_GROUPS } from '../consumption-rules';
 import type { EnergySettingsView as EnergySettings } from '../energy-settings.service';
+import type { MeasureEffect } from '../measures.service';
 import {
   METER_KINDS,
   METER_MODES,
@@ -299,6 +309,197 @@ export class MeterReadingImportView {
       appliedCount: i.appliedCount,
       createdAt: i.createdAt,
       appliedAt: i.appliedAt,
+    };
+  }
+}
+
+export class TariffView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: METER_KINDS, enumName: 'MeterKind' })
+  kind: string;
+  @ApiProperty({ type: String, format: 'date' })
+  effectiveOn: string;
+  @ApiProperty({ type: String, description: 'EGP a unit, four decimals.' })
+  pricePerUnit: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(t: EnergyTariff): TariffView {
+    return {
+      id: t.id,
+      kind: t.kind,
+      effectiveOn: ofDateColumn(t.effectiveOn),
+      pricePerUnit: t.pricePerUnit.toFixed(4),
+      createdAt: t.createdAt,
+    };
+  }
+}
+
+class UsePartView {
+  @ApiProperty({ type: String, description: 'YYYY-MM.' })
+  month: string;
+  @ApiProperty({
+    type: String,
+    description: 'In the kind’s unit, four decimals.',
+  })
+  use: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'EGP at the tariffs in force; null where none was.',
+  })
+  cost: string | null;
+
+  static from(p: UsePart): UsePartView {
+    return { ...p };
+  }
+}
+
+class ConsumptionGroupView {
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'The meter’s id, the building’s name or the common area’s id; null: none.',
+  })
+  key: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  label: string | null;
+  @ApiProperty({ type: Number })
+  meters: number;
+  @ApiProperty({ type: String })
+  use: string;
+  @ApiProperty({ type: String, nullable: true })
+  cost: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Use a square metre of the units’ floor area.',
+  })
+  perSqm: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Use an occupied unit: to compare buildings by.',
+  })
+  perOccupiedUnit: string | null;
+  @ApiProperty({ type: [UsePartView] })
+  months: UsePartView[];
+
+  static from(g: ConsumptionGroupRead): ConsumptionGroupView {
+    return { ...g, months: g.months.map((m) => UsePartView.from(m)) };
+  }
+}
+
+export class ConsumptionView {
+  @ApiProperty({ enum: METER_KINDS, enumName: 'MeterKind' })
+  kind: string;
+  @ApiProperty({ type: String })
+  unit: string;
+  @ApiProperty({ enum: CONSUMPTION_GROUPS, enumName: 'ConsumptionGroup' })
+  groupBy: string;
+  @ApiProperty({ type: PeriodView })
+  period: PeriodView;
+  @ApiProperty({ type: String })
+  use: string;
+  @ApiProperty({ type: String, nullable: true })
+  cost: string | null;
+  @ApiProperty({ type: [ConsumptionGroupView] })
+  groups: ConsumptionGroupView[];
+
+  static from(r: ConsumptionReport): ConsumptionView {
+    return {
+      kind: r.kind,
+      unit: r.unit,
+      groupBy: r.groupBy,
+      period: PeriodView.from(r.period),
+      use: r.use,
+      cost: r.cost,
+      groups: r.groups.map((g) => ConsumptionGroupView.from(g)),
+    };
+  }
+}
+
+class EffectSideView {
+  @ApiProperty({ type: String, format: 'date' })
+  from: string;
+  @ApiProperty({ type: String, format: 'date' })
+  to: string;
+  @ApiProperty({ type: String, description: 'Use a day, four decimals.' })
+  perDay: string;
+}
+
+class MeasureEffectView {
+  @ApiProperty({ type: Number })
+  weeks: number;
+  @ApiProperty({ type: EffectSideView })
+  before: EffectSideView;
+  @ApiProperty({ type: EffectSideView, nullable: true })
+  after: EffectSideView | null;
+  @ApiProperty({
+    type: Boolean,
+    description: 'The after side has all its days.',
+  })
+  complete: boolean;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: '(after − before) / before a day, %; one decimal.',
+  })
+  changePct: string | null;
+
+  static from(e: MeasureEffect): MeasureEffectView {
+    return { ...e };
+  }
+}
+
+export class MeasureView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String })
+  title: string;
+  @ApiProperty({ enum: METER_KINDS, enumName: 'MeterKind' })
+  kind: string;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  meterId: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  building: string | null;
+  @ApiProperty({ type: String, format: 'date' })
+  startsOn: string;
+  @ApiProperty({ type: String, format: 'date', nullable: true })
+  endedOn: string | null;
+  @ApiProperty({ type: String, nullable: true, description: 'EGP.' })
+  cost: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(m: EnergyMeasure): MeasureView {
+    return {
+      id: m.id,
+      title: m.title,
+      kind: m.kind,
+      meterId: m.meterId,
+      building: m.building,
+      startsOn: ofDateColumn(m.startsOn),
+      endedOn: ofDateColumnOrNull(m.endedOn),
+      cost: m.cost?.toFixed(2) ?? null,
+      createdAt: m.createdAt,
+    };
+  }
+}
+
+export class MeasureCardView extends MeasureView {
+  @ApiProperty({ type: MeasureEffectView })
+  effect: MeasureEffectView;
+
+  static card(r: {
+    measure: EnergyMeasure;
+    effect: MeasureEffect;
+  }): MeasureCardView {
+    return {
+      ...MeasureView.from(r.measure),
+      effect: MeasureEffectView.from(r.effect),
     };
   }
 }

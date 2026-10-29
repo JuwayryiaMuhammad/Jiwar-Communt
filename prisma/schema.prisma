@@ -10578,3 +10578,44 @@ model MeterReadingImport {
   @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "meter_reading_imports_list_idx")
   @@map("meter_reading_imports")
 }
+
+/// What a unit of a kind costs from a day on (ADR 0066), never edited.
+model EnergyTariff {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  /// METER_KINDS.
+  kind         String
+  effectiveOn  DateTime @map("effective_on") @db.Date
+  /// EGP per unit of the kind (kWh, m³, L, h).
+  pricePerUnit Decimal  @map("price_per_unit") @db.Decimal(12, 4)
+  createdById  String?  @map("created_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, kind, effectiveOn], map: "energy_tariffs_kind_day_key")
+  @@map("energy_tariffs")
+}
+
+/// Something done to use less (ADR 0066): its effect is read, never stored.
+model EnergyMeasure {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  title       String
+  /// METER_KINDS: what it saves.
+  kind        String
+  /// On one meter, one building, or the whole compound (neither).
+  meterId     String?   @map("meter_id") @db.Uuid
+  building    String?
+  startsOn    DateTime  @map("starts_on") @db.Date
+  endedOn     DateTime? @map("ended_on") @db.Date
+  /// EGP it cost.
+  cost        Decimal?  @db.Decimal(12, 2)
+  createdById String?   @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  endedAt     DateTime? @map("ended_at") @db.Timestamptz(3)
+  endedById   String?   @map("ended_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@index([tenantId, startsOn, id], map: "energy_measures_list_idx")
+  @@map("energy_measures")
+}

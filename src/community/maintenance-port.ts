@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 import type { Capabilities } from './capabilities/capabilities';
 import { CapabilitiesService } from './capabilities/capabilities.service';
@@ -276,6 +277,52 @@ export class CommunityMaintenancePort {
       select: { building: true },
     });
     return new Set(rows.map((r) => r.building!));
+  }
+
+  /**
+   * What energy reports need of the units a meter is in (ADR 0066): the
+   * code, the building, the floor area and whether someone lives there now.
+   */
+  async energyUnits(
+    tx: TenantTxClient,
+    unitIds: readonly string[],
+  ): Promise<
+    Map<
+      string,
+      {
+        code: string;
+        building: string | null;
+        areaSqm: Prisma.Decimal | null;
+        occupied: boolean;
+      }
+    >
+  > {
+    if (!unitIds.length) return new Map();
+    const units = await tx.unit.findMany({
+      where: { id: { in: [...new Set(unitIds)] } },
+      select: {
+        id: true,
+        code: true,
+        building: true,
+        areaSqm: true,
+        occupancies: {
+          where: { status: 'active', resides: true },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    });
+    return new Map(
+      units.map((u) => [
+        u.id,
+        {
+          code: u.code,
+          building: u.building,
+          areaSqm: u.areaSqm,
+          occupied: u.occupancies.length > 0,
+        },
+      ]),
+    );
   }
 
   /** Whether someone lives in the unit now (ADR 0064). */

@@ -12,8 +12,11 @@ import {
   Min,
   ValidateIf,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { MONEY } from '../../costs/cost-rules';
+import { PeriodQueryDto } from '../../economics/period';
 import { IsLocalDate } from '../../schedules/local-dates';
 import {
   METER_CODE,
@@ -24,6 +27,11 @@ import {
   type MeterKind,
   type MeterMode,
 } from '../meter-rules';
+import {
+  CONSUMPTION_GROUPS,
+  MEASURE_WEEKS,
+  type ConsumptionGroup,
+} from '../consumption-rules';
 import { ANOMALY_PERIODS } from '../energy-settings.service';
 import { READING_VALUE } from '../reading-rules';
 
@@ -274,4 +282,139 @@ export class CheckReadingImportDto {
   })
   @IsUUID()
   fileId: string;
+}
+
+export class ConsumptionQueryDto extends PeriodQueryDto {
+  @ApiProperty({ enum: METER_KINDS, enumName: 'MeterKind' })
+  @IsIn(METER_KINDS, allowed(METER_KINDS))
+  kind: MeterKind;
+
+  @ApiPropertyOptional({
+    enum: CONSUMPTION_GROUPS,
+    enumName: 'ConsumptionGroup',
+    default: 'building',
+  })
+  @IsOptional()
+  @IsIn(CONSUMPTION_GROUPS, allowed(CONSUMPTION_GROUPS))
+  groupBy?: ConsumptionGroup;
+}
+
+/** EGP a unit, four decimals. */
+const PRICE = /^\d{1,8}(\.\d{1,4})?$/;
+
+export class CreateTariffDto {
+  @ApiProperty({ enum: METER_KINDS, enumName: 'MeterKind' })
+  @IsIn(METER_KINDS, allowed(METER_KINDS))
+  kind: MeterKind;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'The compound’s day it is in force from.',
+  })
+  @IsString()
+  @IsLocalDate()
+  effectiveOn: string;
+
+  @ApiProperty({
+    type: String,
+    pattern: PRICE.source,
+    description: 'EGP a unit of the kind (kWh, m³, L, h).',
+  })
+  @IsString()
+  @Matches(PRICE)
+  pricePerUnit: string;
+}
+
+export class TariffsQueryDto {
+  @ApiPropertyOptional({ enum: METER_KINDS, enumName: 'MeterKind' })
+  @IsOptional()
+  @IsIn(METER_KINDS, allowed(METER_KINDS))
+  kind?: MeterKind;
+}
+
+const MEASURE_TITLE = { min: 1, max: 120 };
+const BUILDING = { min: 1, max: 80 };
+
+export class CreateMeasureDto {
+  @ApiProperty({ type: String, minLength: 1, maxLength: MEASURE_TITLE.max })
+  @IsString()
+  @Length(MEASURE_TITLE.min, MEASURE_TITLE.max, withParams(MEASURE_TITLE))
+  title: string;
+
+  @ApiProperty({
+    enum: METER_KINDS,
+    enumName: 'MeterKind',
+    description: 'What it saves.',
+  })
+  @IsIn(METER_KINDS, allowed(METER_KINDS))
+  kind: MeterKind;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'On this meter, of the same kind. Or a building, or neither: the compound.',
+  })
+  @IsOptional()
+  @IsUUID()
+  meterId?: string;
+
+  @ApiPropertyOptional({ type: String, maxLength: BUILDING.max })
+  @IsOptional()
+  @IsString()
+  @Length(BUILDING.min, BUILDING.max, withParams(BUILDING))
+  building?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'The compound’s day it starts; at most a year ahead.',
+  })
+  @IsString()
+  @IsLocalDate()
+  startsOn: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    pattern: MONEY.source,
+    description: 'EGP it cost.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(MONEY)
+  cost?: string;
+}
+
+export class MeasureQueryDto {
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: MEASURE_WEEKS.min,
+    maximum: MEASURE_WEEKS.max,
+    default: MEASURE_WEEKS.default,
+    description: 'Whole weeks before and after its start.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt(withParams({ min: MEASURE_WEEKS.min, max: MEASURE_WEEKS.max }))
+  @Min(
+    MEASURE_WEEKS.min,
+    withParams({ min: MEASURE_WEEKS.min, max: MEASURE_WEEKS.max }),
+  )
+  @Max(
+    MEASURE_WEEKS.max,
+    withParams({ min: MEASURE_WEEKS.min, max: MEASURE_WEEKS.max }),
+  )
+  weeks?: number;
+}
+
+export class EndMeasureDto {
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'The compound’s day it ended: from its start to today.',
+  })
+  @IsString()
+  @IsLocalDate()
+  endedOn: string;
 }

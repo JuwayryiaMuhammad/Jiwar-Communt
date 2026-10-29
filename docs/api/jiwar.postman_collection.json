@@ -22875,6 +22875,257 @@
           }
         },
         {
+          "name": "Use and cost of a kind over a period, by meter, building or area",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "consumption"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "(required)",
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/consumption?kind="
+            }
+          }
+        },
+        {
+          "name": "The same as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "consumption",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "(required)",
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/consumption/export?kind="
+            }
+          }
+        },
+        {
+          "name": "The saving measures, the latest start first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "measures"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/measures"
+            }
+          }
+        },
+        {
+          "name": "Add a saving measure",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"title\": \"\",\n  \"kind\": \"electricity\",\n  \"startsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `building` | string |  |  |\n| `cost` | string |  | EGP it cost. |\n| `kind` | `electricity` \\| `water` \\| `gas` \\| `fuel` \\| `run_hours` | yes | What it saves. |\n| `meterId` | string (uuid) |  | On this meter, of the same kind. Or a building, or neither: the compound. |\n| `startsOn` | string (date) | yes | The compound’s day it starts; at most a year ahead. |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "measures"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/measures"
+            }
+          }
+        },
+        {
+          "name": "A measure and its effect, read now",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "measures",
+                ":id"
+              ],
+              "query": [
+                {
+                  "description": "Whole weeks before and after its start.",
+                  "disabled": true,
+                  "key": "weeks",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/measures/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End a measure, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"endedOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endedOn` | string (date) | yes | The compound’s day it ended: from its start to today. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "measures",
+                ":id",
+                "end"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/measures/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "The spike rule",
           "request": {
             "description": "**Responses:** 200",
@@ -22928,6 +23179,76 @@
                 "settings"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/energy/settings"
+            }
+          }
+        },
+        {
+          "name": "The tariffs, by kind, the latest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "tariffs"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/tariffs"
+            }
+          }
+        },
+        {
+          "name": "Add a tariff from a day on",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"electricity\",\n  \"effectiveOn\": \"2026-01-01\",\n  \"pricePerUnit\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `effectiveOn` | string (date) | yes | The compound’s day it is in force from. |\n| `kind` | `electricity` \\| `water` \\| `gas` \\| `fuel` \\| `run_hours` | yes |  |\n| `pricePerUnit` | string | yes | EGP a unit of the kind (kWh, m³, L, h). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "energy",
+                "tariffs"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/energy/tariffs"
             }
           }
         },
@@ -23768,6 +24089,49 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A meter’s use over a period, by month",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "meters",
+                ":id",
+                "consumption"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/meters/:id/consumption",
               "variable": [
                 {
                   "description": "",

@@ -146,7 +146,11 @@ import {
 import { MaintenanceContractsService } from './contracts/contracts.service';
 import { ContractSweep } from './contracts/contract-sweep';
 import { MeterAlertsService } from './energy/alerts.service';
+import { ConsumptionService } from './energy/consumption.service';
+import { MeasuresService } from './energy/measures.service';
+import { TariffsService } from './energy/tariffs.service';
 import {
+  EnergyController,
   EnergySettingsController,
   MeterAlertsController,
   MeterReadingImportsController,
@@ -229,6 +233,7 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     EnergySettingsController,
     TechnicianMetersController,
     MeterReadingImportsController,
+    EnergyController,
     MyTechnicianStatsController,
     TechnicianStatsController,
   ],
@@ -302,6 +307,9 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     MeterAlertsService,
     EnergySettingsService,
     MeterReadingImportsService,
+    ConsumptionService,
+    TariffsService,
+    MeasuresService,
     TechnicianStatsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).

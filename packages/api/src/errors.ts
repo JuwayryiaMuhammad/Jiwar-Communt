@@ -316,6 +316,9 @@ const ERROR_TEXT: Record<string, string> = {
   METER_READING_IMPORT_NOT_FOUND: 'This import was not found.',
   METER_READING_IMPORT_NOT_VALID: 'Only a valid import is applied, once.',
   METER_READING_IMPORT_UNREADABLE: 'This sheet is not CSV a spreadsheet would write.',
+  ENERGY_TARIFF_NOT_FOUND: 'This tariff was not found.',
+  ENERGY_MEASURE_NOT_FOUND: 'This measure was not found.',
+  ENERGY_MEASURE_ENDED: 'This measure is ended already.',
   // Facilities and bookings, the club (ADR 0044).
   FACILITY_NOT_FOUND: 'This facility does not exist.',
   FACILITY_NOT_BOOKABLE: 'This facility is walk-in: it takes no booking and has no peak times.',

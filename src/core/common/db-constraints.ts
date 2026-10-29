@@ -364,6 +364,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   meter_alerts_meter_day_key: null,
   meter_reading_imports_tenant_id_id_key: null,
   meter_reading_imports_file_id_key: null,
+  // Tariffs and measures (ADR 0066): one tariff a kind and day.
+  energy_tariffs_tenant_id_id_key: null,
+  energy_tariffs_kind_day_key: ['effectiveOn'],
+  energy_measures_tenant_id_id_key: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

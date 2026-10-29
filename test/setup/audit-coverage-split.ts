@@ -825,4 +825,7 @@ export const ENERGY_COVERAGE: readonly string[] = [
   'energy.settings_changed',
   'meter_reading_import.checked',
   'meter_reading_import.applied',
+  'energy_tariff.created',
+  'energy_measure.created',
+  'energy_measure.ended',
 ];

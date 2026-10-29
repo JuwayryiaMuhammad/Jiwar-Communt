@@ -1487,6 +1487,10 @@ export const ErrorCode = {
   METER_READING_IMPORT_NOT_VALID: 'METER_READING_IMPORT_NOT_VALID',
   /** The sheet is not CSV a spreadsheet would write; params.problem, params.line? (422). */
   METER_READING_IMPORT_UNREADABLE: 'METER_READING_IMPORT_UNREADABLE',
+  ENERGY_TARIFF_NOT_FOUND: 'ENERGY_TARIFF_NOT_FOUND',
+  ENERGY_MEASURE_NOT_FOUND: 'ENERGY_MEASURE_NOT_FOUND',
+  /** Ended once (409). */
+  ENERGY_MEASURE_ENDED: 'ENERGY_MEASURE_ENDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

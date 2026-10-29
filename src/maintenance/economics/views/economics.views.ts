@@ -54,7 +54,7 @@ class ReserveView {
   accrued: string;
 }
 
-class PeriodView {
+export class PeriodView {
   @ApiProperty({ type: String, format: 'date' })
   from: string;
   @ApiProperty({ type: String, format: 'date' })

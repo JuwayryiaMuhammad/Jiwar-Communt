@@ -208,6 +208,59 @@ describe('Audit coverage — energy and utilities', () => {
     });
   });
 
+  describe('tariffs and measures', () => {
+    it('energy_tariff.created, energy_measure.created and .ended — kinds, days, prices and costs', async () => {
+      const tariff = (
+        await e
+          .http('post', '/maintenance/energy/tariffs', s.manager.token, {
+            kind: 'gas',
+            effectiveOn: day(-1),
+            pricePerUnit: '3.25',
+          })
+          .expect(201)
+      ).body as { id: string };
+      expect(
+        await single(s.c, 'energy_tariff.created', tariff.id),
+      ).toMatchObject({
+        actorId: s.manager.id,
+        metadata: { kind: 'gas', effectiveOn: day(-1), pricePerUnit: '3.2500' },
+      });
+      const measure = (
+        await e
+          .http('post', '/maintenance/energy/measures', s.manager.token, {
+            title: 'AUDIT-secret insulation',
+            kind: 'gas',
+            building: s.building,
+            startsOn: day(-5),
+            cost: '900',
+          })
+          .expect(201)
+      ).body as { id: string };
+      expect(
+        (await single(s.c, 'energy_measure.created', measure.id)).metadata,
+      ).toEqual({
+        kind: 'gas',
+        meterId: null,
+        building: s.building,
+        startsOn: day(-5),
+        cost: '900.00',
+      });
+      await e
+        .http(
+          'post',
+          `/maintenance/energy/measures/${measure.id}/end`,
+          s.manager.token,
+          { endedOn: day(-1) },
+        )
+        .expect(200);
+      expect(
+        (await single(s.c, 'energy_measure.ended', measure.id)).metadata,
+      ).toEqual({ endedOn: day(-1) });
+      const rows = await read.tenant(s.c.tenantId, { targetId: measure.id });
+      expect(JSON.stringify(rows)).not.toContain('AUDIT-secret');
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every energy entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

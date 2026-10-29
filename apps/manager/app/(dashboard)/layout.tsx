@@ -78,6 +78,9 @@ import {
   Wallet,
   CloudOff,
   Smartphone,
+  Gauge,
+  Zap,
+  ZapOff,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -319,6 +322,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/stock', label: 'Stock', icon: <Package aria-hidden />, show: can('stock.manage') },
         { href: '/contracts', label: 'Contracts', icon: <Handshake aria-hidden />, show: can('assets.manage') },
         { href: '/economics', label: 'Economics', icon: <Receipt aria-hidden />, show: can('assets.manage') },
+        // Energy and utilities (ADR 0066).
+        { href: '/meters', label: 'Meters', icon: <Gauge aria-hidden />, show: can('energy.read') },
+        { href: '/energy', label: 'Energy', icon: <Zap aria-hidden />, show: can('energy.read') },
+        { href: '/outages', label: 'Outages', icon: <ZapOff aria-hidden />, show: can('energy.read') },
       ],
     },
     {

@@ -72,6 +72,17 @@ export type AssetEconomics = Schema<'AssetEconomicsView'>;
 export type CompoundEconomics = Schema<'CompoundEconomicsView'>;
 export type MaintenanceKpis = Schema<'MaintenanceKpisView'>;
 export type TechnicianStats = Schema<'TechnicianStatsView'>;
+// Energy and utilities (ADR 0066).
+export type Meter = Schema<'MeterView'>;
+export type MeterReading = Schema<'MeterReadingView'>;
+export type MeterAlert = Schema<'MeterAlertView'>;
+export type MeterReadingImport = Schema<'MeterReadingImportView'>;
+export type EnergySettings = Schema<'EnergySettingsView'>;
+export type Consumption = Schema<'ConsumptionView'>;
+export type Tariff = Schema<'TariffView'>;
+export type Measure = Schema<'MeasureView'>;
+export type MeasureCard = Schema<'MeasureCardView'>;
+export type Outage = Schema<'OutageView'>;
 export interface AssetFilters {
   status?: AssetSummary['status'] | '';
   commonAreaId?: string;
@@ -549,6 +560,19 @@ export const keys = {
   kpis: (from: string, to: string) => ['kpis', from, to] as const,
   technicianStats: (from: string, to: string) => ['technician-stats', from, to] as const,
   maintenanceSettings: ['maintenance-settings'] as const,
+  energyAll: ['energy'] as const,
+  meters: (filters: object) => ['energy', 'meters', filters] as const,
+  meter: (id: string) => ['energy', 'meters', 'detail', id] as const,
+  meterReadings: (id: string, superseded: boolean) => ['energy', 'meters', 'detail', id, 'readings', superseded] as const,
+  meterConsumption: (id: string, from: string, to: string) => ['energy', 'meters', 'detail', id, 'consumption', from, to] as const,
+  meterAlerts: (filters: object) => ['energy', 'alerts', filters] as const,
+  readingImports: ['energy', 'imports'] as const,
+  energySettings: ['energy', 'settings'] as const,
+  consumption: (filters: object) => ['energy', 'consumption', filters] as const,
+  tariffs: ['energy', 'tariffs'] as const,
+  measures: ['energy', 'measures'] as const,
+  measure: (id: string, weeks: number) => ['energy', 'measures', id, weeks] as const,
+  outages: ['outages'] as const,
   dispatchSettings: ['dispatch-settings'] as const,
   slaSettings: ['sla-settings'] as const,
   account: (id: string) => ['accounts', 'detail', id] as const,
@@ -931,6 +955,40 @@ export const fetchers = {
   technicianStats: (from: string, to: string) =>
     unwrap(api.GET('/api/v1/maintenance/technicians/stats', { params: { query: { from, to } } })),
   maintenanceSettings: () => unwrap(api.GET('/api/v1/maintenance/settings')),
+  // Energy and utilities (ADR 0066).
+  meters: (filters: { kind?: Meter['kind'] | ''; active?: 'true' | 'false' | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/meters', {
+        params: { query: { ...(clean(filters) as { kind?: Meter['kind']; active?: 'true' | 'false' }), cursor, limit } },
+      }),
+    ),
+  meter: (id: string) => unwrap(api.GET('/api/v1/maintenance/meters/{id}', { params: { path: { id } } })),
+  meterReadings: (id: string, superseded: boolean, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/meters/{id}/readings', {
+        params: { path: { id }, query: { ...(superseded ? { superseded: 'true' as const } : {}), cursor, limit } },
+      }),
+    ),
+  meterConsumption: (id: string, from: string, to: string) =>
+    unwrap(api.GET('/api/v1/maintenance/meters/{id}/consumption', { params: { path: { id }, query: { from, to } } })),
+  meterAlerts: (filters: { open?: 'true' | 'false' | ''; meterId?: string }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/meter-alerts', {
+        params: { query: { ...(clean(filters) as { open?: 'true' | 'false'; meterId?: string }), cursor, limit } },
+      }),
+    ),
+  readingImports: (cursor?: string, limit = 20) =>
+    unwrap(api.GET('/api/v1/maintenance/meter-reading-imports', { params: { query: { cursor, limit } } })),
+  energySettings: () => unwrap(api.GET('/api/v1/maintenance/energy/settings')),
+  consumption: (q: { kind: Meter['kind']; groupBy: 'meter' | 'building' | 'area'; from: string; to: string }) =>
+    unwrap(api.GET('/api/v1/maintenance/energy/consumption', { params: { query: q } })),
+  tariffs: () => unwrap(api.GET('/api/v1/maintenance/energy/tariffs', { params: { query: {} } })),
+  measures: (cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/energy/measures', { params: { query: { cursor, limit } } })),
+  measure: (id: string, weeks: number) =>
+    unwrap(api.GET('/api/v1/maintenance/energy/measures/{id}', { params: { path: { id }, query: { weeks } } })),
+  outages: (cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/outages', { params: { query: { cursor, limit } } })),
   dispatchSettings: () => unwrap(api.GET('/api/v1/maintenance/dispatch-settings')),
   slaSettings: () => unwrap(api.GET('/api/v1/maintenance/sla-settings')),
   account: (id: string) => unwrap(api.GET('/api/v1/accounts/{id}', { params: { path: { id } } })),

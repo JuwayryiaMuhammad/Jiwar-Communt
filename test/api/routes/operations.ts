@@ -633,3 +633,42 @@ export const ECONOMICS_ROUTES: Row[] = [
     }),
   ),
 ];
+
+const BAD_PERIOD = {
+  query: { from: '2026-02-30', to: 'today' },
+  fields: [{ field: 'to', code: 'INVALID_FORMAT' }],
+};
+
+/** How technicians work (ADR 0065). */
+export const TECHNICIAN_STATS_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/technician/stats',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: BAD_PERIOD,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/technicians/stats',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: BAD_PERIOD,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/technicians/{id}/stats',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.b.ids.technician }),
+      code: 'TECHNICIAN_NOT_FOUND',
+    },
+    invalid: BAD_PERIOD,
+  },
+];

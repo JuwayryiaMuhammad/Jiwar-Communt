@@ -24994,6 +24994,41 @@
           }
         },
         {
+          "name": "List how each technician’s work went over a period",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "technicians",
+                "stats"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/technicians/stats"
+            }
+          }
+        },
+        {
           "name": "Set a technician's availability",
           "request": {
             "body": {
@@ -25071,6 +25106,49 @@
                 "specialties"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/technicians/:id/specialties",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get how a technician’s work went over a period",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "technicians",
+                ":id",
+                "stats"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/technicians/:id/stats",
               "variable": [
                 {
                   "description": "",
@@ -26885,6 +26963,40 @@
                 "scan"
               ],
               "raw": "{{baseUrl}}/api/v1/technician/scan"
+            }
+          }
+        },
+        {
+          "name": "Get how my work went over a period",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "stats"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/stats"
             }
           }
         },

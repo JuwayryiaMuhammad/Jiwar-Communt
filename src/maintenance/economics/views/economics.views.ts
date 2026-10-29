@@ -8,6 +8,7 @@ import type {
   SpendSplit,
 } from '../economics.service';
 import type { Period } from '../period';
+import type { TechnicianStats } from '../technician-stats.service';
 
 const egp = (v: Prisma.Decimal) => v.toFixed(2);
 const egpOrNull = (v: Prisma.Decimal | null) => (v === null ? null : egp(v));
@@ -248,5 +249,52 @@ export class MaintenanceKpisView {
 
   static from(k: MaintenanceKpis): MaintenanceKpisView {
     return { ...k, period: PeriodView.from(k.period) };
+  }
+}
+
+/** How a technician works over a period (ADR 0065). */
+export class TechnicianStatsView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  technicianId: string;
+  @ApiProperty({ type: PeriodView })
+  period: PeriodView;
+  @ApiProperty({ type: Number, description: 'Completions they made.' })
+  completed: number;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Mean hours from a ticket’s opening to their completion.',
+  })
+  meanHoursToComplete: number | null;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Of their completions, those the reporter rejected or reopened.',
+  })
+  sentBack: number;
+  @ApiProperty({ type: Number })
+  slaMet: number;
+  @ApiProperty({ type: Number })
+  slaBreached: number;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: '0–1: resolution clocks met over met or breached.',
+  })
+  slaAdherence: number | null;
+  @ApiProperty({ type: Number, description: 'Residents’ ratings of them.' })
+  ratings: number;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      '1–5; null under three ratings, which would point at who gave them.',
+  })
+  meanRating: number | null;
+  @ApiProperty({ type: Number, description: 'Tickets in their hands now.' })
+  inHand: number;
+
+  static from(t: TechnicianStats): TechnicianStatsView {
+    return { ...t, period: PeriodView.from(t.period) };
   }
 }

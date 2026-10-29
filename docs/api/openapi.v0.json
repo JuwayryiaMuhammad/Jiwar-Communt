@@ -54585,6 +54585,87 @@
         ],
         "type": "object"
       },
+      "TechnicianStatsView": {
+        "properties": {
+          "completed": {
+            "description": "Completions they made.",
+            "type": "number"
+          },
+          "inHand": {
+            "description": "Tickets in their hands now.",
+            "type": "number"
+          },
+          "meanHoursToComplete": {
+            "description": "Mean hours from a ticket’s opening to their completion.",
+            "nullable": true,
+            "type": "number"
+          },
+          "meanRating": {
+            "description": "1–5; null under three ratings, which would point at who gave them.",
+            "nullable": true,
+            "type": "number"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodView"
+          },
+          "ratings": {
+            "description": "Residents’ ratings of them.",
+            "type": "number"
+          },
+          "sentBack": {
+            "description": "Of their completions, those the reporter rejected or reopened.",
+            "type": "number"
+          },
+          "slaAdherence": {
+            "description": "0–1: resolution clocks met over met or breached.",
+            "nullable": true,
+            "type": "number"
+          },
+          "slaBreached": {
+            "type": "number"
+          },
+          "slaMet": {
+            "type": "number"
+          },
+          "technicianId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "technicianId",
+          "period",
+          "completed",
+          "meanHoursToComplete",
+          "sentBack",
+          "slaMet",
+          "slaBreached",
+          "slaAdherence",
+          "ratings",
+          "meanRating",
+          "inHand"
+        ],
+        "type": "object"
+      },
+      "TechnicianStatsViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TechnicianStatsView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "TechnicianTicketDetailView": {
         "properties": {
           "assetId": {
@@ -78728,6 +78809,57 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/technicians/stats": {
+      "get": {
+        "operationId": "TechnicianStatsController_all",
+        "parameters": [
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianStatsViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List how each technician’s work went over a period",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/technicians/{id}/availability": {
       "post": {
         "operationId": "DispatchAvailabilityController_set",
@@ -78809,6 +78941,65 @@
           }
         ],
         "summary": "Replace a technician's specialties",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/technicians/{id}/stats": {
+      "get": {
+        "operationId": "TechnicianStatsController_one",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianStatsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get how a technician’s work went over a period",
         "tags": [
           "maintenance"
         ],
@@ -108395,6 +108586,57 @@
           }
         ],
         "summary": "Scan an asset’s or an area’s tag: its card; sixty a minute",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/stats": {
+      "get": {
+        "operationId": "MyTechnicianStatsController_mine",
+        "parameters": [
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianStatsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get how my work went over a period",
         "tags": [
           "maintenance"
         ],

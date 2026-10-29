@@ -147,6 +147,11 @@ import { MaintenanceContractsService } from './contracts/contracts.service';
 import { ContractSweep } from './contracts/contract-sweep';
 import { EconomicsController } from './economics/economics.controller';
 import { EconomicsService } from './economics/economics.service';
+import {
+  MyTechnicianStatsController,
+  TechnicianStatsController,
+} from './economics/technician-stats.controller';
+import { TechnicianStatsService } from './economics/technician-stats.service';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -207,6 +212,8 @@ import { EconomicsService } from './economics/economics.service';
     MaintenanceContractsController,
     AssetContractsController,
     EconomicsController,
+    MyTechnicianStatsController,
+    TechnicianStatsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -273,6 +280,7 @@ import { EconomicsService } from './economics/economics.service';
     MaintenanceContractsService,
     ContractSweep,
     EconomicsService,
+    TechnicianStatsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

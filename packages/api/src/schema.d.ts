@@ -6148,6 +6148,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/technicians/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List how each technician’s work went over a period */
+        get: operations["TechnicianStatsController_all"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/technicians/{id}/availability": {
         parameters: {
             query?: never;
@@ -6175,6 +6192,23 @@ export interface paths {
         get?: never;
         /** Replace a technician's specialties */
         put: operations["TechniciansController_setSpecialties"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/technicians/{id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get how a technician’s work went over a period */
+        get: operations["TechnicianStatsController_one"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -16238,6 +16272,23 @@ export interface paths {
         put?: never;
         /** Scan an asset’s or an area’s tag: its card; sixty a minute */
         post: operations["FieldController_scan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get how my work went over a period */
+        get: operations["MyTechnicianStatsController_mine"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -35800,6 +35851,31 @@ export interface components {
             firstName: string | null;
             kind: components["schemas"]["VisitReceiverKind"];
         };
+        TechnicianStatsView: {
+            /** @description Completions they made. */
+            completed: number;
+            /** @description Tickets in their hands now. */
+            inHand: number;
+            /** @description Mean hours from a ticket’s opening to their completion. */
+            meanHoursToComplete: number | null;
+            /** @description 1–5; null under three ratings, which would point at who gave them. */
+            meanRating: number | null;
+            period: components["schemas"]["PeriodView"];
+            /** @description Residents’ ratings of them. */
+            ratings: number;
+            /** @description Of their completions, those the reporter rejected or reopened. */
+            sentBack: number;
+            /** @description 0–1: resolution clocks met over met or breached. */
+            slaAdherence: number | null;
+            slaBreached: number;
+            slaMet: number;
+            /** Format: uuid */
+            technicianId: string;
+        };
+        TechnicianStatsViewList: {
+            data: components["schemas"]["TechnicianStatsView"][];
+            nextCursor: string | null;
+        };
         TechnicianTicketDetailView: {
             /**
              * Format: uuid
@@ -47093,6 +47169,30 @@ export interface operations {
             };
         };
     };
+    TechnicianStatsController_all: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianStatsViewList"];
+                };
+            };
+        };
+    };
     DispatchAvailabilityController_set: {
         parameters: {
             query?: never;
@@ -47138,6 +47238,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    TechnicianStatsController_one: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianStatsView"];
+                };
             };
         };
     };
@@ -62211,6 +62337,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScanResultView"];
+                };
+            };
+        };
+    };
+    MyTechnicianStatsController_mine: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianStatsView"];
                 };
             };
         };

@@ -42,6 +42,7 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'maintenance.manage': 'Set up maintenance',
   'assets.read': 'See the asset register, its plans and checklists',
   'assets.manage': 'Keep the asset register, its common areas, documents and maintenance plans',
+  'stock.manage': 'Keep the maintenance store: items, stock, receipts and the technicians’ part requests',
   'inspections.perform': 'Perform the inspections given to them',
   'inspections.manage': 'Schedule inspections and rounds, and read their report',
   'parcels.handle': 'Receive and hand over parcels',

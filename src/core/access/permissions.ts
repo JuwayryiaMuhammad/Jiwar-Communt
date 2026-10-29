@@ -102,6 +102,9 @@ export const PERMISSIONS = {
   'assets.manage': { kinds: ['staff', 'manager'] },
   'inspections.perform': { kinds: ['staff'] },
   'inspections.manage': { kinds: ['staff', 'manager'] },
+  // The maintenance store (ADR 0065): items, levels, receipts, adjustments,
+  // transfers, and the technicians' part requests it reserves and issues.
+  'stock.manage': { kinds: ['staff', 'manager'] },
   // Parcels (ADR 0035). Guards receive and hand over inside a shift; the
   // manager reads every parcel (no names) and sets the holding periods.
   // Residents act through the capability `parcels`, with no permission.

@@ -832,4 +832,44 @@ export const REASON_CODES = {
     'other',
   ],
   replacementDecline: ['repair_first', 'budget', 'not_needed', 'other'],
+  // The maintenance store (ADR 0065): why a level is set by hand, why a
+  // part request is declined or called off; the migration's CHECKs repeat
+  // them.
+  stockAdjust: [
+    'count_correction',
+    'damaged',
+    'expired',
+    'lost',
+    'found',
+    'other',
+  ],
+  partRequestDecline: ['out_of_stock', 'wrong_part', 'not_needed', 'other'],
+  partRequestCancel: ['not_needed', 'found_elsewhere', 'other'],
+  // A ticket's costs and its completion (ADR 0065): why an entry is voided,
+  // what the technician did, why dispatch does not send a technician's
+  // quote.
+  ticketCostVoid: ['entered_in_error', 'duplicate', 'other'],
+  ticketCompletionAction: [
+    'repaired',
+    'part_replaced',
+    'adjusted',
+    'cleaned',
+    'no_fault_found',
+    'referred_to_vendor',
+    'other',
+  ],
+  quoteSuggestionDismiss: [
+    'not_needed',
+    'amount_wrong',
+    'covered_by_contract',
+    'other',
+  ],
+  // A maintenance contract ended before its date (ADR 0065).
+  contractTerminate: [
+    'vendor_performance',
+    'replaced',
+    'not_needed',
+    'budget',
+    'other',
+  ],
 } as const;

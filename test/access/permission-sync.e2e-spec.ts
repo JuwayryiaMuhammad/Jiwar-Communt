@@ -1001,7 +1001,7 @@ describe('Permission sync', () => {
       'maintenance_supervisor',
     ]);
     // Created as the catalog has them now: with the asset register and the
-    // inspections they gained in M1-1 (ADR 0064).
+    // inspections they gained in M1-1 (ADR 0064), and the store (ADR 0065).
     expect((await role(t, 'technician')).permissions).toEqual([
       'assets.read',
       'inspections.perform',
@@ -1011,6 +1011,7 @@ describe('Permission sync', () => {
       'assets.manage',
       'assets.read',
       'inspections.manage',
+      'stock.manage',
       'tickets.dispatch',
     ]);
     expect((await role(t, 'manager')).permissions).toEqual(
@@ -2000,6 +2001,57 @@ describe('Permission sync', () => {
         'inspections.manage',
       ]);
       for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'security_supervisor',
+        'accountant',
+      ])
+        expect(await has(key)).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M1-2 (ADR 0065)', () => {
+    const m12 = ['stock.manage'];
+    /** The catalog before M1-2: none of its permissions anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m12.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m12.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: the maintenance supervisor and the manager keep the store, nobody else', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M1-2 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual(m12);
+      expect(report.rolesCreated).toEqual([]);
+      const has = async (key: string) =>
+        (await role(t, key)).permissions.filter((p) => m12.includes(p));
+      for (const key of ['maintenance_supervisor', 'manager'])
+        expect(await has(key)).toEqual(['stock.manage']);
+      for (const key of [
+        'technician',
         'resident',
         'family_member',
         'guard',

@@ -55,6 +55,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'assets.read',
       'assets.manage',
       'inspections.manage',
+      'stock.manage',
       'parcels.manage',
       'requests.handle',
       'requests.manage',
@@ -197,7 +198,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
   {
     // Maintenance dispatch (ADR 0032): the queue and assignment. The
     // manager dispatches too, so a compound without one still works. The
-    // asset register, the plans and the inspection rounds (ADR 0064).
+    // asset register, the plans and the inspection rounds (ADR 0064); the
+    // maintenance store (ADR 0065).
     key: 'maintenance_supervisor',
     kind: 'staff',
     kindDefault: false,
@@ -206,6 +208,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'assets.read',
       'assets.manage',
       'inspections.manage',
+      'stock.manage',
     ],
   },
   {

@@ -204,6 +204,14 @@ export const REASON_CODES = {
   inspectionCancel: ['not_needed', 'duplicate', 'target_unavailable', 'other'],
   replacementReason: ['end_of_life', 'repeated_failures', 'repair_uneconomic', 'safety', 'obsolete', 'other'],
   replacementDecline: ['repair_first', 'budget', 'not_needed', 'other'],
+  // The store, a ticket's costs and completion, contracts (ADR 0065).
+  stockAdjust: ['count_correction', 'damaged', 'expired', 'lost', 'found', 'other'],
+  partRequestDecline: ['out_of_stock', 'wrong_part', 'not_needed', 'other'],
+  partRequestCancel: ['not_needed', 'found_elsewhere', 'other'],
+  ticketCostVoid: ['entered_in_error', 'duplicate', 'other'],
+  ticketCompletionAction: ['repaired', 'part_replaced', 'adjusted', 'cleaned', 'no_fault_found', 'referred_to_vendor', 'other'],
+  quoteSuggestionDismiss: ['not_needed', 'amount_wrong', 'covered_by_contract', 'other'],
+  contractTerminate: ['vendor_performance', 'replaced', 'not_needed', 'budget', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

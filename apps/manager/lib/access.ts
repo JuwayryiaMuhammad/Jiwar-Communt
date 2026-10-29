@@ -24,6 +24,7 @@ export const ENTRY_PERMISSIONS = [
   'maintenance.manage',
   'assets.manage',
   'inspections.manage',
+  'stock.manage',
   'requests.handle',
   'requests.manage',
   'community.publish',

@@ -261,6 +261,83 @@ describe('Audit coverage — energy and utilities', () => {
     });
   });
 
+  describe('outages', () => {
+    it('utility_outage.created, .updated, .cancelled and .ended — the kind, the buildings, the instants; the note as changed only', async () => {
+      const at = (hours: number) =>
+        new Date(Date.now() + hours * 3_600_000).toISOString();
+      const made = (
+        await e
+          .http('post', '/maintenance/outages', s.manager.token, {
+            kind: 'electricity',
+            planned: true,
+            scope: 'buildings',
+            buildings: [s.building],
+            startsAt: at(72),
+            endsAt: at(74),
+            note: 'AUDIT-secret call Ahmed',
+          })
+          .expect(201)
+      ).body as { id: string; startsAt: string; endsAt: string };
+      expect(
+        await single(s.c, 'utility_outage.created', made.id),
+      ).toMatchObject({
+        actorId: s.manager.id,
+        changes: {
+          kind: { from: null, to: 'electricity' },
+          planned: { from: null, to: true },
+          scope: { from: null, to: 'buildings' },
+          buildings: { from: null, to: [s.building] },
+          startsAt: { from: null, to: made.startsAt },
+          endsAt: { from: null, to: made.endsAt },
+          note: { changed: true },
+        },
+      });
+      const endsAt = at(75);
+      await e
+        .http('patch', `/maintenance/outages/${made.id}`, s.manager.token, {
+          endsAt,
+        })
+        .expect(200);
+      expect(
+        (await single(s.c, 'utility_outage.updated', made.id)).changes,
+      ).toEqual({
+        endsAt: { from: made.endsAt, to: new Date(endsAt).toISOString() },
+      });
+      await e
+        .http(
+          'post',
+          `/maintenance/outages/${made.id}/cancel`,
+          s.manager.token,
+          {
+            reasonCode: 'not_needed',
+          },
+        )
+        .expect(200);
+      expect(
+        (await single(s.c, 'utility_outage.cancelled', made.id)).metadata,
+      ).toEqual({ kind: 'electricity', reasonCode: 'not_needed' });
+      const on = (
+        await e
+          .http('post', '/maintenance/outages', s.manager.token, {
+            kind: 'gas',
+            planned: false,
+            scope: 'compound',
+            startsAt: at(-1),
+            endsAt: at(2),
+          })
+          .expect(201)
+      ).body as { id: string };
+      await e
+        .http('post', `/maintenance/outages/${on.id}/end`, s.manager.token)
+        .expect(200);
+      expect(
+        (await single(s.c, 'utility_outage.ended', on.id)).metadata,
+      ).toEqual({ kind: 'gas' });
+      const rows = await read.tenant(s.c.tenantId, { targetId: made.id });
+      expect(JSON.stringify(rows)).not.toContain('AUDIT-secret');
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every energy entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

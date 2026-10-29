@@ -2241,6 +2241,39 @@ export const NOTIFICATION_KINDS = {
     target: 'stock_item',
     params: { itemRef: {} },
   },
+  /**
+   * A utility outage in a resident's building (ADR 0066): told 48 hours
+   * ahead, or at once; a new start, its end and its cancellation go to
+   * exactly those told. The kind and the instants, never the note.
+   */
+  'utility_outage.announced': {
+    priority: 'normal',
+    category: 'utilities',
+    critical: false,
+    target: 'utility_outage',
+    params: { outageKind: {}, startsAt: {}, endsAt: {} },
+  },
+  'utility_outage.rescheduled': {
+    priority: 'normal',
+    category: 'utilities',
+    critical: false,
+    target: 'utility_outage',
+    params: { outageKind: {}, startsAt: {}, endsAt: {} },
+  },
+  'utility_outage.ended': {
+    priority: 'normal',
+    category: 'utilities',
+    critical: false,
+    target: 'utility_outage',
+    params: { outageKind: {}, startsAt: {}, endsAt: {} },
+  },
+  'utility_outage.cancelled': {
+    priority: 'normal',
+    category: 'utilities',
+    critical: false,
+    target: 'utility_outage',
+    params: { outageKind: {}, startsAt: {}, endsAt: {} },
+  },
   /** A meter's latest period used far more than its mean (ADR 0066). */
   'meter.anomaly': {
     priority: 'normal',

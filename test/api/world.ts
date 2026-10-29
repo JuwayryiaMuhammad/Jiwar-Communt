@@ -262,6 +262,8 @@ export interface World
   bReadingImportId: string;
   /** ADR 0066: a saving measure of B's. */
   bMeasureId: string;
+  /** ADR 0066: an outage of B's, told to no one yet. */
+  bOutageId: string;
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
@@ -1069,6 +1071,19 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     }),
   );
+  const bOutage = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.utilityOutage.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        kind: 'water',
+        planned: true,
+        scope: 'compound',
+        startsAt: new Date('2099-01-05T08:00:00.000Z'),
+        endsAt: new Date('2099-01-05T12:00:00.000Z'),
+      },
+    }),
+  );
   const bReadingImport = await helpers.asManager(b, async () => {
     const files = fileHelpers(h);
     const fileId = await files.uploaded(
@@ -1579,6 +1594,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bMeterAlertId: bMeterAlert.id,
     bReadingImportId: bReadingImport.id,
     bMeasureId: bMeasure.id,
+    bOutageId: bOutage.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
     bRecommendationId: bRecommendation.id,

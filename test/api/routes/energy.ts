@@ -414,3 +414,114 @@ export const CONSUMPTION_ROUTES: Row[] = [
     },
   }),
 ];
+
+const IN_A_WEEK = '2099-01-05T08:00:00+02:00';
+const LATER = '2099-01-05T12:00:00+02:00';
+
+/** Utility outages (ADR 0066), and the ones a resident was told of. */
+export const OUTAGE_ROUTES: Row[] = [
+  keeper({
+    method: 'GET',
+    path: '/maintenance/outages',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/outages',
+    foreign: 'none',
+    invalid: {
+      body: {
+        kind: 'steam',
+        planned: 'yes',
+        buildings: [''],
+        startsAt: '2099-01-05T08:00:00',
+        endsAt: '2099-01-05 12:00Z',
+      },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['water', 'electricity', 'gas', 'other'] },
+        },
+        { field: 'planned', code: 'INVALID_TYPE' },
+        // The scope is required: the whole compound is said, never implied.
+        { field: 'scope', code: 'FIELD_REQUIRED' },
+        {
+          field: 'buildings',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 100 },
+        },
+        { field: 'startsAt', code: 'INVALID_FORMAT' },
+        { field: 'endsAt', code: 'INVALID_FORMAT' },
+      ],
+    },
+  }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/outages/{id}',
+    foreign: {
+      params: (w) => ({ id: w.bOutageId }),
+      code: 'UTILITY_OUTAGE_NOT_FOUND',
+    },
+    invalid: 'none',
+  }),
+  keeper({
+    method: 'PATCH',
+    path: '/maintenance/outages/{id}',
+    foreign: {
+      params: (w) => ({ id: w.bOutageId }),
+      body: () => ({ endsAt: LATER }),
+      code: 'UTILITY_OUTAGE_NOT_FOUND',
+    },
+    invalid: {
+      body: { scope: 'street', startsAt: IN_A_WEEK.slice(0, 19), note: '' },
+      fields: [
+        {
+          field: 'scope',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['compound', 'buildings'] },
+        },
+        { field: 'startsAt', code: 'INVALID_FORMAT' },
+        { field: 'note', code: 'INVALID_LENGTH', params: { min: 1, max: 500 } },
+      ],
+    },
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/outages/{id}/end',
+    foreign: {
+      params: (w) => ({ id: w.bOutageId }),
+      code: 'UTILITY_OUTAGE_NOT_FOUND',
+    },
+    invalid: 'none',
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/outages/{id}/cancel',
+    foreign: {
+      params: (w) => ({ id: w.bOutageId }),
+      body: () => ({ reasonCode: 'not_needed' }),
+      code: 'UTILITY_OUTAGE_NOT_FOUND',
+    },
+    invalid: 'none',
+  }),
+  {
+    method: 'GET',
+    path: '/me/outages',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'none',
+    foreign: 'none',
+    invalid: 'none',
+  },
+];

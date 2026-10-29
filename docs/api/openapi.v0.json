@@ -12747,6 +12747,60 @@
         ],
         "type": "object"
       },
+      "CreateOutageDto": {
+        "properties": {
+          "buildings": {
+            "description": "Buildings, as their units name them: with `buildings`, and only then.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "endsAt": {
+            "description": "With its offset; after the start, two weeks at most.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutageKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "What the residents are asked to do (store water, …).",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "planned": {
+            "description": "Planned: its residents are told 48 hours before it starts (at once when it starts sooner); not planned: at once.",
+            "type": "boolean"
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutageScope"
+              }
+            ],
+            "description": "`compound`: no building named; `buildings`: 1 to 50 named."
+          },
+          "startsAt": {
+            "description": "With its offset; a year ahead at most.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "planned",
+          "scope",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
       "CreateParkingReportDto": {
         "properties": {
           "location": {
@@ -30865,6 +30919,41 @@
         ],
         "type": "object"
       },
+      "MyOutageView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutageKind"
+              }
+            ]
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "startsAt",
+          "endsAt",
+          "note"
+        ],
+        "type": "object"
+      },
       "MyParkingReportView": {
         "properties": {
           "createdAt": {
@@ -33267,6 +33356,138 @@
         "required": [
           "loginTicket",
           "accounts"
+        ],
+        "type": "object"
+      },
+      "OutageCancelReason": {
+        "enum": [
+          "not_needed",
+          "rescheduled",
+          "entered_in_error",
+          "other"
+        ],
+        "type": "string"
+      },
+      "OutageKind": {
+        "enum": [
+          "water",
+          "electricity",
+          "gas",
+          "other"
+        ],
+        "type": "string"
+      },
+      "OutageScope": {
+        "enum": [
+          "compound",
+          "buildings"
+        ],
+        "type": "string"
+      },
+      "OutageView": {
+        "properties": {
+          "buildings": {
+            "description": "None for the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutageCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutageKind"
+              }
+            ]
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "notifiedAt": {
+            "description": "Its residents were first told then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "planned": {
+            "type": "boolean"
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutageScope"
+              }
+            ]
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "planned",
+          "scope",
+          "buildings",
+          "startsAt",
+          "endsAt",
+          "note",
+          "notifiedAt",
+          "endedAt",
+          "cancelledAt",
+          "cancelReason",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "OutageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/OutageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -59452,6 +59673,39 @@
         },
         "type": "object"
       },
+      "UpdateOutageDto": {
+        "properties": {
+          "buildings": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "nullable": true,
+            "type": "string"
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutageScope"
+              }
+            ]
+          },
+          "startsAt": {
+            "description": "Only before it starts; told anew once.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateParcelSettingsDto": {
         "properties": {
           "parcelManagerDays": {
@@ -79278,6 +79532,267 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/outages": {
+      "get": {
+        "operationId": "OutagesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The outages, the latest start first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "OutagesController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOutageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enter an outage; its residents are told",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/outages/{id}": {
+      "get": {
+        "operationId": "OutagesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an outage",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "OutagesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOutageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change its buildings, its end, its note, or its start before it starts",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/outages/{id}/cancel": {
+      "post": {
+        "operationId": "OutagesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call it off before it starts",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/outages/{id}/end": {
+      "post": {
+        "operationId": "OutagesController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "It is over: those told are told",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/part-requests": {
       "get": {
         "operationId": "PartRequestsController_queue",
@@ -86241,6 +86756,37 @@
         "summary": "Put an archived notification back in the list",
         "tags": [
           "notifications"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/outages": {
+      "get": {
+        "operationId": "MyOutagesController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyOutageView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The outages I was told of that have not ended",
+        "tags": [
+          "me"
         ],
         "x-stability": "draft"
       }

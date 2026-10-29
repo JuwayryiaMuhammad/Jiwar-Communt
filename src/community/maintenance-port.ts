@@ -325,6 +325,37 @@ export class CommunityMaintenancePort {
     );
   }
 
+  /**
+   * Who is told of a utility outage (ADR 0066): every active resident and
+   * household member of a unit in the buildings (all the compound's when
+   * `null`), once each, by account id.
+   */
+  async residentsOf(
+    tx: TenantTxClient,
+    buildings: readonly string[] | null,
+  ): Promise<string[]> {
+    const unit = buildings === null ? {} : { building: { in: [...buildings] } };
+    const account = {
+      status: 'active' as const,
+      type: { in: ['resident' as const, 'family' as const] },
+    };
+    const occupancies = await tx.unitOccupancy.findMany({
+      where: { status: 'active', unit, account },
+      select: { accountId: true },
+    });
+    const members = await tx.householdMember.findMany({
+      where: { status: 'active', accountId: { not: null }, unit, account },
+      select: { accountId: true },
+    });
+    return [
+      ...new Set(
+        [...occupancies, ...members].flatMap((p) =>
+          p.accountId ? [p.accountId] : [],
+        ),
+      ),
+    ].sort();
+  }
+
   /** Whether someone lives in the unit now (ADR 0064). */
   async unitOccupied(tx: TenantTxClient, unitId: string): Promise<boolean> {
     return (

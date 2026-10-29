@@ -313,6 +313,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'البلاغ رقم {ticketNumber}: لم يصرف المخزن {itemRef}.',
     },
   },
+  'utility_outage.announced': {
+    en: {
+      title: 'A utility outage is planned',
+      body: 'The {outageKind} supply is cut from {startsAt} to {endsAt}.',
+    },
+    ar: {
+      title: 'انقطاع مرافق مخطط له',
+      body: 'تنقطع خدمة {outageKind} من {startsAt} حتى {endsAt}.',
+    },
+  },
+  'utility_outage.rescheduled': {
+    en: {
+      title: 'An outage has moved',
+      body: 'The {outageKind} outage is now from {startsAt} to {endsAt}.',
+    },
+    ar: {
+      title: 'تغيّر موعد انقطاع',
+      body: 'أصبح انقطاع {outageKind} من {startsAt} حتى {endsAt}.',
+    },
+  },
+  'utility_outage.ended': {
+    en: {
+      title: 'The supply is back',
+      body: 'The {outageKind} outage has ended.',
+    },
+    ar: {
+      title: 'عادت الخدمة',
+      body: 'انتهى انقطاع {outageKind}.',
+    },
+  },
+  'utility_outage.cancelled': {
+    en: {
+      title: 'An outage is called off',
+      body: 'The {outageKind} outage from {startsAt} will not happen.',
+    },
+    ar: {
+      title: 'أُلغي انقطاع',
+      body: 'لن يحدث انقطاع {outageKind} المقرر من {startsAt}.',
+    },
+  },
   'meter.anomaly': {
     en: {
       title: 'A meter ran high',

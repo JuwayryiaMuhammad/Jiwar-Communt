@@ -828,4 +828,8 @@ export const ENERGY_COVERAGE: readonly string[] = [
   'energy_tariff.created',
   'energy_measure.created',
   'energy_measure.ended',
+  'utility_outage.created',
+  'utility_outage.updated',
+  'utility_outage.ended',
+  'utility_outage.cancelled',
 ];

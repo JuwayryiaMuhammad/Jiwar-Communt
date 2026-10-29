@@ -1969,6 +1969,19 @@ export const AUDIT_ACTIONS = {
   'energy_tariff.created': { log: 'tenant', target: 'energy_tariff' },
   'energy_measure.created': { log: 'tenant', target: 'energy_measure' },
   'energy_measure.ended': { log: 'tenant', target: 'energy_measure' },
+  // A note is what residents are asked to do: recorded as changed only.
+  'utility_outage.created': {
+    log: 'tenant',
+    target: 'utility_outage',
+    sensitive: ['note'],
+  },
+  'utility_outage.updated': {
+    log: 'tenant',
+    target: 'utility_outage',
+    sensitive: ['note'],
+  },
+  'utility_outage.ended': { log: 'tenant', target: 'utility_outage' },
+  'utility_outage.cancelled': { log: 'tenant', target: 'utility_outage' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

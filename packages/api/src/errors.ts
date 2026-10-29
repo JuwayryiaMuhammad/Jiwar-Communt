@@ -319,6 +319,10 @@ const ERROR_TEXT: Record<string, string> = {
   ENERGY_TARIFF_NOT_FOUND: 'This tariff was not found.',
   ENERGY_MEASURE_NOT_FOUND: 'This measure was not found.',
   ENERGY_MEASURE_ENDED: 'This measure is ended already.',
+  UTILITY_OUTAGE_NOT_FOUND: 'This outage was not found.',
+  UTILITY_OUTAGE_CLOSED: 'This outage is ended or cancelled.',
+  UTILITY_OUTAGE_STARTED: 'This outage has started: end it instead.',
+  UTILITY_OUTAGE_NOT_STARTED: 'This outage has not started: cancel it instead.',
   // Facilities and bookings, the club (ADR 0044).
   FACILITY_NOT_FOUND: 'This facility does not exist.',
   FACILITY_NOT_BOOKABLE: 'This facility is walk-in: it takes no booking and has no peak times.',

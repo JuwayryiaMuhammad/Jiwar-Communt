@@ -10621,3 +10621,54 @@ model EnergyMeasure {
   @@index([tenantId, startsOn, id], map: "energy_measures_list_idx")
   @@map("energy_measures")
 }
+
+/// Water, electricity or gas cut off in the compound or some buildings
+/// (ADR 0066); its residents told 48 hours ahead, each one recorded.
+model UtilityOutage {
+  id                  String    @id @db.Uuid
+  tenantId            String    @map("tenant_id") @db.Uuid
+  /// REASON_CODES.outageKind.
+  kind                String
+  /// Planned: told 48 hours ahead; otherwise at once.
+  planned             Boolean
+  /// OUTAGE_SCOPES: `compound` (no building) or `buildings` (1 to 50).
+  scope               String
+  /// The buildings it cuts; none for the whole compound.
+  buildings           String[]  @default([])
+  startsAt            DateTime  @map("starts_at") @db.Timestamptz(3)
+  endsAt              DateTime  @map("ends_at") @db.Timestamptz(3)
+  /// What the residents are asked to do; at most 500 characters.
+  note                String?
+  notifiedAt          DateTime? @map("notified_at") @db.Timestamptz(3)
+  /// The start last told: a new one is told again, once.
+  announcedStartsAt   DateTime? @map("announced_starts_at") @db.Timestamptz(3)
+  endedAt             DateTime? @map("ended_at") @db.Timestamptz(3)
+  endedById           String?   @map("ended_by_account_id") @db.Uuid
+  cancelledAt         DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById       String?   @map("cancelled_by_account_id") @db.Uuid
+  /// REASON_CODES.outageCancel.
+  cancelReason        String?   @map("cancel_reason")
+  createdById         String?   @map("created_by_account_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  recipients UtilityOutageRecipient[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, startsAt, id], map: "utility_outages_list_idx")
+  @@map("utility_outages")
+}
+
+/// Who was told of an outage, and when.
+model UtilityOutageRecipient {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  outageId  String   @map("outage_id") @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  toldAt    DateTime @map("told_at") @db.Timestamptz(3)
+
+  outage UtilityOutage @relation(fields: [tenantId, outageId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "utility_outage_recipients_outage_fkey")
+
+  @@id([outageId, accountId])
+  @@index([tenantId, accountId], map: "utility_outage_recipients_account_idx")
+  @@map("utility_outage_recipients")
+}

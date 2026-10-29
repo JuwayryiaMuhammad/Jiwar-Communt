@@ -2354,6 +2354,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   energy_measures_ended_shape: {
     guarded: 'ended_on IS NULL is tested first; starts_on is NOT NULL',
   },
+  utility_outages_kind_known: {},
+  utility_outages_scope_shape: {},
+  utility_outages_window: {},
+  utility_outages_note_length: { guarded: 'note IS NULL is tested first' },
+  utility_outages_state_shape: {
+    guarded:
+      'cancel_reason is tested IS NULL first; the instants are only tested IS [NOT] NULL',
+  },
   meter_reading_imports_status_known: {},
   meter_reading_imports_counts_range: {},
   meter_reading_imports_state_shape: {

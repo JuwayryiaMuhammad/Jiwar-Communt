@@ -1491,6 +1491,13 @@ export const ErrorCode = {
   ENERGY_MEASURE_NOT_FOUND: 'ENERGY_MEASURE_NOT_FOUND',
   /** Ended once (409). */
   ENERGY_MEASURE_ENDED: 'ENERGY_MEASURE_ENDED',
+  UTILITY_OUTAGE_NOT_FOUND: 'UTILITY_OUTAGE_NOT_FOUND',
+  /** Ended or cancelled: it never changes again (409). */
+  UTILITY_OUTAGE_CLOSED: 'UTILITY_OUTAGE_CLOSED',
+  /** Its start has passed: it is ended, not cancelled or moved (409). */
+  UTILITY_OUTAGE_STARTED: 'UTILITY_OUTAGE_STARTED',
+  /** It has not started: it is cancelled, not ended (409). */
+  UTILITY_OUTAGE_NOT_STARTED: 'UTILITY_OUTAGE_NOT_STARTED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -203,6 +203,7 @@ describe('audit catalog', () => {
         'meter_reading_import',
         'energy_tariff',
         'energy_measure',
+        'utility_outage',
       ]).toContain(def.target);
     }
   });

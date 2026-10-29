@@ -5910,6 +5910,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/outages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The outages, the latest start first */
+        get: operations["OutagesController_list"];
+        put?: never;
+        /** Enter an outage; its residents are told */
+        post: operations["OutagesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/outages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an outage */
+        get: operations["OutagesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change its buildings, its end, its note, or its start before it starts */
+        patch: operations["OutagesController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/outages/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call it off before it starts */
+        post: operations["OutagesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/outages/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** It is over: those told are told */
+        post: operations["OutagesController_end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/part-requests": {
         parameters: {
             query?: never;
@@ -8215,6 +8285,23 @@ export interface paths {
         put?: never;
         /** Put an archived notification back in the list */
         post: operations["NotificationsController_unarchive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/outages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The outages I was told of that have not ended */
+        get: operations["MyOutagesController_mine"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -23332,6 +23419,27 @@ export interface components {
             /** @description Inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to); not over already (INVALID_VALUE on `window.to`). */
             window: components["schemas"]["PermitHoursDto"];
         };
+        CreateOutageDto: {
+            /** @description Buildings, as their units name them: with `buildings`, and only then. */
+            buildings?: string[];
+            /**
+             * Format: date-time
+             * @description With its offset; after the start, two weeks at most.
+             */
+            endsAt: string;
+            kind: components["schemas"]["OutageKind"];
+            /** @description What the residents are asked to do (store water, …). */
+            note?: string;
+            /** @description Planned: its residents are told 48 hours before it starts (at once when it starts sooner); not planned: at once. */
+            planned: boolean;
+            /** @description `compound`: no building named; `buildings`: 1 to 50 named. */
+            scope: components["schemas"]["OutageScope"];
+            /**
+             * Format: date-time
+             * @description With its offset; a year ahead at most.
+             */
+            startsAt: string;
+        };
         CreateParkingReportDto: {
             /** @example Visitor area B, by the gym */
             location: string;
@@ -29025,6 +29133,16 @@ export interface components {
             publicationId: string;
             unitCode: string;
         };
+        MyOutageView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["OutageKind"];
+            note: string | null;
+            /** Format: date-time */
+            startsAt: string;
+        };
         MyParkingReportView: {
             /** Format: date-time */
             createdAt: string;
@@ -29783,6 +29901,42 @@ export interface components {
             accounts: components["schemas"]["LoginAccountView"][];
             /** @description Single use, short-lived. Exchange it with POST /auth/select-account. */
             loginTicket: string;
+        };
+        /** @enum {string} */
+        OutageCancelReason: "not_needed" | "rescheduled" | "entered_in_error" | "other";
+        /** @enum {string} */
+        OutageKind: "water" | "electricity" | "gas" | "other";
+        /** @enum {string} */
+        OutageScope: "compound" | "buildings";
+        OutageView: {
+            /** @description None for the whole compound. */
+            buildings: string[];
+            cancelReason: components["schemas"]["OutageCancelReason"] | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["OutageKind"];
+            note: string | null;
+            /**
+             * Format: date-time
+             * @description Its residents were first told then.
+             */
+            notifiedAt: string | null;
+            planned: boolean;
+            scope: components["schemas"]["OutageScope"];
+            /** Format: date-time */
+            startsAt: string;
+        };
+        OutageViewList: {
+            data: components["schemas"]["OutageView"][];
+            nextCursor: string | null;
         };
         OutsideEscortDto: {
             /** @example Mona Adel */
@@ -37708,6 +37862,18 @@ export interface components {
             maxOpenComplaints?: number;
             /** @description Posts one author may have on the boards at once. */
             maxOpenPosts?: number;
+        };
+        UpdateOutageDto: {
+            buildings?: string[];
+            /** Format: date-time */
+            endsAt?: string;
+            note?: string | null;
+            scope?: components["schemas"]["OutageScope"];
+            /**
+             * Format: date-time
+             * @description Only before it starts; told anew once.
+             */
+            startsAt?: string;
         };
         UpdateParcelSettingsDto: {
             /** @description Days before the managers are told, once, and an unclaimed parcel may be returned. Always more than the reminder. */
@@ -47512,6 +47678,147 @@ export interface operations {
             };
         };
     };
+    OutagesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutageViewList"];
+                };
+            };
+        };
+    };
+    OutagesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOutageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutageView"];
+                };
+            };
+        };
+    };
+    OutagesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutageView"];
+                };
+            };
+        };
+    };
+    OutagesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOutageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutageView"];
+                };
+            };
+        };
+    };
+    OutagesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutageView"];
+                };
+            };
+        };
+    };
+    OutagesController_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutageView"];
+                };
+            };
+        };
+    };
     PartRequestsController_queue: {
         parameters: {
             query?: {
@@ -51179,6 +51486,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    MyOutagesController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyOutageView"][];
+                };
             };
         };
     };

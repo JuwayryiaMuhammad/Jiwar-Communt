@@ -8,6 +8,7 @@ import {
   type TicketDispatchAttempt,
   type TicketEscalation,
   type TicketAttachmentKind,
+  type TicketCompletion,
   type TicketFeedback,
   type TicketPriority,
   type TicketStatus,
@@ -187,6 +188,11 @@ export interface TicketDetail extends TicketRead {
    * null for everyone else.
    */
   reporterPhone: string | null;
+  /**
+   * The last completion (ADR 0065); a resident's view keeps its code only,
+   * and only from before they lost `tickets` on the unit.
+   */
+  completion: TicketCompletion | null;
 }
 
 /**
@@ -715,6 +721,13 @@ export class TicketsService implements OnModuleInit {
         audience === 'technician'
           ? await this.sharedPhone(tx, ticket, this.ctx.accountId)
           : null;
+      const completion = await tx.ticketCompletion.findFirst({
+        where: {
+          ticketId: id,
+          ...(until ? { completedAt: { lt: until } } : {}),
+        },
+        orderBy: [{ completedAt: 'desc' }, { id: 'desc' }],
+      });
       return {
         ...read,
         photos,
@@ -725,6 +738,7 @@ export class TicketsService implements OnModuleInit {
         escalations,
         escalatedAt,
         reporterPhone,
+        completion,
       };
     });
   }

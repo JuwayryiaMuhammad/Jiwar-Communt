@@ -283,6 +283,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'اكتمل العمل على البلاغ رقم {ticketNumber}. يرجى التأكيد.',
     },
   },
+  'ticket.quote_suggested': {
+    en: {
+      title: 'A quote to send',
+      body: 'Ticket #{ticketNumber}: the technician suggests {amount} EGP. Send it to the residents or dismiss it.',
+    },
+    ar: {
+      title: 'عرض سعر مقترح',
+      body: 'البلاغ رقم {ticketNumber}: يقترح الفني {amount} جنيه. أرسله إلى السكان أو ارفضه.',
+    },
+  },
+  'ticket.quote_suggestion_dismissed': {
+    en: {
+      title: 'Suggested quote not sent',
+      body: 'Ticket #{ticketNumber}: dispatch did not send the quote you suggested.',
+    },
+    ar: {
+      title: 'لم يُرسل عرض السعر المقترح',
+      body: 'البلاغ رقم {ticketNumber}: لم يرسل فريق التوزيع عرض السعر الذي اقترحته.',
+    },
+  },
   'ticket.quote_proposed': {
     en: {
       title: 'A quote to approve',

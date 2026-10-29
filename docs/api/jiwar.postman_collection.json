@@ -23516,6 +23516,94 @@
           }
         },
         {
+          "name": "Dismiss a suggested quote",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "quote-suggestions",
+                ":id",
+                "dismiss"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/quote-suggestions/:id/dismiss",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send a suggested quote to the residents",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\",\n  \"note\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string |  | EGP; the suggestion’s amount when left out. |\n| `note` | string |  | What the residents read; the suggestion’s note when left out. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "quote-suggestions",
+                ":id",
+                "send"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/quote-suggestions/:id/send",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List recommendations to replace, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -23951,6 +24039,50 @@
           }
         },
         {
+          "name": "Void a cost entry, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "ticket-costs",
+                ":id",
+                "void"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/ticket-costs/:id/void",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the compound's tickets",
           "request": {
             "description": "**Responses:** 200",
@@ -24367,6 +24499,84 @@
           }
         },
         {
+          "name": "List a ticket’s costs and their totals",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                ":id",
+                "costs"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/costs",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record labour, a contractor or another cost",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"labour\",\n  \"description\": \"\",\n  \"quantity\": \"\",\n  \"unitAmount\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string | yes | What it was: hours of whom, which contractor, what. |\n| `kind` | `labour` \\| `contractor` \\| `other` | yes | A part’s cost is the store’s: it is written as it issues. |\n| `quantity` | string | yes | Positive, three decimals at most: hours, visits, items. |\n| `unitAmount` | string | yes | EGP for one, e.g. `150` or `150.50`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                ":id",
+                "costs"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/costs",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the dispatch engine's attempts on a ticket",
           "request": {
             "description": "**Responses:** 200",
@@ -24550,6 +24760,35 @@
                 "priority"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/priority",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List a ticket’s suggested quotes, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                ":id",
+                "quote-suggestions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/quote-suggestions",
               "variable": [
                 {
                   "description": "",
@@ -25633,6 +25872,84 @@
                 "submit"
               ],
               "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/checklist/submit",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List my ticket’s suggested quotes, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "tickets",
+                ":id",
+                "quote-suggestions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/quote-suggestions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Suggest a quote for dispatch to send",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP, e.g. `350` or `350.50`; below ten million. |\n| `note` | string |  | What the residents read: the work and what it includes. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "tickets",
+                ":id",
+                "quote-suggestions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/quote-suggestions",
               "variable": [
                 {
                   "description": "",
@@ -37378,8 +37695,23 @@
         {
           "name": "Mark the work as done",
           "request": {
-            "description": "**Responses:** 204",
-            "header": [],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"actionCode\": \"repaired\",\n  \"note\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `actionCode` | `repaired` \\| `part_replaced` \\| `adjusted` \\| `cleaned` \\| `no_fault_found` \\| `referred_to_vendor` \\| `other` |  | What was done (`ticketCompletionAction`); the resident sees it. |\n| `note` | string |  | For the staff only; needs `actionCode`. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "method": "POST",
             "url": {
               "host": [

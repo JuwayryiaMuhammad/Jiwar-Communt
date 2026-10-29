@@ -104,6 +104,8 @@ const RESIDENT_DETAIL = [
   'reporter.firstName',
   'reporter.id',
   'technician',
+  // ADR 0065: what the technician did, as a code; null until they say.
+  'completionAction',
 ].sort();
 const DISPATCH = [
   'category',
@@ -170,6 +172,8 @@ const TECHNICIAN_DETAIL = [
   'reporterFirstName',
   // ADR 0036: null unless the reporter shares their phone.
   'reporterPhone',
+  // ADR 0065: the last completion; null until there is one.
+  'completion',
 ].sort();
 const DISPATCH_DETAIL = [
   ...DISPATCH,
@@ -187,6 +191,8 @@ const DISPATCH_DETAIL = [
   'reporter',
   'reporter.fullName',
   'reporter.id',
+  // ADR 0065.
+  'completion',
 ].sort();
 
 describe('API v0 — maintenance (ADR 0032)', () => {

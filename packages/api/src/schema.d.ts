@@ -5629,6 +5629,40 @@ export interface paths {
         patch: operations["PreventiveServicesController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/quote-suggestions/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss a suggested quote */
+        post: operations["DispatchQuoteSuggestionsController_dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/quote-suggestions/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a suggested quote to the residents */
+        post: operations["DispatchQuoteSuggestionsController_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/replacement-recommendations": {
         parameters: {
             query?: never;
@@ -5802,6 +5836,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/ticket-costs/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void a cost entry, once */
+        post: operations["TicketCostsController_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets": {
         parameters: {
             query?: never;
@@ -5956,6 +6007,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a ticket’s costs and their totals */
+        get: operations["TicketCostsController_list"];
+        put?: never;
+        /** Record labour, a contractor or another cost */
+        post: operations["TicketCostsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/dispatch-attempts": {
         parameters: {
             query?: never;
@@ -6019,6 +6088,23 @@ export interface paths {
         put?: never;
         /** Change a ticket's priority */
         post: operations["DispatchTicketsController_priority"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/quote-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a ticket’s suggested quotes, newest first */
+        get: operations["DispatchQuoteSuggestionsController_list"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -15966,6 +16052,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/tickets/{id}/quote-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my ticket’s suggested quotes, newest first */
+        get: operations["TechnicianQuoteSuggestionsController_list"];
+        put?: never;
+        /** Suggest a quote for dispatch to send */
+        post: operations["TechnicianQuoteSuggestionsController_suggest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/tickets/{id}/resume": {
         parameters: {
             query?: never;
@@ -21240,6 +21344,15 @@ export interface components {
             unitCode: string;
             unitType?: components["schemas"]["UnitType"];
         };
+        CompleteTicketDto: {
+            /**
+             * @description What was done (`ticketCompletionAction`); the resident sees it.
+             * @enum {string}
+             */
+            actionCode?: "repaired" | "part_replaced" | "adjusted" | "cleaned" | "no_fault_found" | "referred_to_vendor" | "other";
+            /** @description For the staff only; needs `actionCode`. */
+            note?: string;
+        };
         ComplianceCaseResponse: {
             /** Format: date-time */
             closedAt: string | null;
@@ -21478,6 +21591,15 @@ export interface components {
         ConvertToOwnerDto: {
             /** @description False: they let the unit (a landlord). */
             resides?: boolean;
+        };
+        CostTotalsView: {
+            contractor: string;
+            labour: string;
+            other: string;
+            /** @description Net of parts taken back. */
+            parts: string;
+            /** @description EGP, voided entries left out. */
+            total: string;
         };
         CountVehicleDto: {
             direction: components["schemas"]["GateDirection"];
@@ -23385,6 +23507,8 @@ export interface components {
             commonAreaId: string | null;
             /** Format: date-time */
             completedAt: string | null;
+            /** @description The last completion (ADR 0065). */
+            completion: components["schemas"]["TicketCompletionView"] | null;
             confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
             /** Format: date-time */
             createdAt: string;
@@ -30017,6 +30141,34 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        QuoteSuggestionView: {
+            /** @description EGP. */
+            amount: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @description REASON_CODES.quoteSuggestionDismiss. */
+            dismissReason: string | null;
+            /** Format: uuid */
+            id: string;
+            note: string | null;
+            /**
+             * Format: uuid
+             * @description The quote it was sent as.
+             */
+            quoteId: string | null;
+            /** @enum {string} */
+            status: "pending" | "sent" | "dismissed";
+            /** Format: date-time */
+            suggestedAt: string;
+            /** Format: uuid */
+            suggestedById: string | null;
+            /** Format: uuid */
+            ticketId: string;
+        };
+        QuoteSuggestionViewList: {
+            data: components["schemas"]["QuoteSuggestionView"][];
+            nextCursor: string | null;
+        };
         RaiseApprovalDto: {
             alternatives?: components["schemas"]["ApprovalAlternativeDto"][];
             /** @description The caller’s uploads of purpose `approval_attachment` (FILE_NOT_AVAILABLE). */
@@ -30178,6 +30330,19 @@ export interface components {
             planId: string;
             /** @description Once per compound (DUPLICATE_VALUE). */
             receiptNumber: string;
+        };
+        RecordCostDto: {
+            /** @description What it was: hours of whom, which contractor, what. */
+            description: string;
+            /**
+             * @description A part’s cost is the store’s: it is written as it issues.
+             * @enum {string}
+             */
+            kind: "labour" | "contractor" | "other";
+            /** @description Positive, three decimals at most: hours, visits, items. */
+            quantity: string;
+            /** @description EGP for one, e.g. `150` or `150.50`. */
+            unitAmount: string;
         };
         RecordEntryDto: {
             direction: components["schemas"]["GateDirection"];
@@ -31394,6 +31559,8 @@ export interface components {
             commonArea: string | null;
             /** Format: date-time */
             completedAt: string | null;
+            /** @description What the technician did at the last completion (ADR 0065), a code from `ticketCompletionAction`; their note is for the staff. */
+            completionAction: string | null;
             confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
             /** Format: date-time */
             createdAt: string;
@@ -32123,6 +32290,12 @@ export interface components {
         SendNoticeDto: {
             /** @description The management’s own words to the unit. The only text of the matter the unit ever reads: never the complaint’s. */
             body: string;
+        };
+        SendSuggestionDto: {
+            /** @description EGP; the suggestion’s amount when left out. */
+            amount?: string;
+            /** @description What the residents read; the suggestion’s note when left out. */
+            note?: string;
         };
         ServiceGateView: {
             /** Format: uuid */
@@ -34656,6 +34829,12 @@ export interface components {
             /** @description From the closed list `permitWorkStop`. */
             reasonCode: string;
         };
+        SuggestQuoteDto: {
+            /** @description EGP, e.g. `350` or `350.50`; below ten million. */
+            amount: string;
+            /** @description What the residents read: the work and what it includes. */
+            note?: string;
+        };
         SuggestionAuthorView: {
             fullName: string | null;
             /** Format: uuid */
@@ -34798,6 +34977,8 @@ export interface components {
              * @description A work order’s common area, when it names one.
              */
             commonAreaId: string | null;
+            /** @description The last completion (ADR 0065). */
+            completion: components["schemas"]["TicketCompletionView"] | null;
             confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
             /** Format: date-time */
             createdAt: string;
@@ -34947,8 +35128,48 @@ export interface components {
             nameAr: string;
             nameEn: string;
         };
+        TicketCompletionView: {
+            /** @description REASON_CODES.ticketCompletionAction. */
+            actionCode: string;
+            /** Format: date-time */
+            completedAt: string;
+            /** @description For the staff. */
+            note: string | null;
+        };
         /** @enum {string} */
         TicketConfirmationStatus: "pending" | "confirmed" | "rejected" | "auto_closed";
+        TicketCostEntryView: {
+            /** @description EGP: quantity × unit amount. */
+            amount: string;
+            /** @description What dispatch recorded; a part’s entry has none. */
+            description: string | null;
+            /** Format: date-time */
+            enteredAt: string;
+            /** Format: uuid */
+            enteredById: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description A part’s stock item.
+             */
+            itemId: string | null;
+            kind: components["schemas"]["TicketCostKind"];
+            /** @description Three decimals; a part taken back is negative. */
+            quantity: string;
+            /** @description EGP. */
+            unitAmount: string;
+            /** @description REASON_CODES.ticketCostVoid. */
+            voidReason: string | null;
+            /** Format: date-time */
+            voidedAt: string | null;
+        };
+        /** @enum {string} */
+        TicketCostKind: "labour" | "contractor" | "part" | "other";
+        TicketCostsView: {
+            data: components["schemas"]["TicketCostEntryView"][];
+            totals: components["schemas"]["CostTotalsView"];
+        };
         TicketCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -45057,6 +45278,56 @@ export interface operations {
             };
         };
     };
+    DispatchQuoteSuggestionsController_dismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteSuggestionView"];
+                };
+            };
+        };
+    };
+    DispatchQuoteSuggestionsController_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendSuggestionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteSuggestionView"];
+                };
+            };
+        };
+    };
     ReplacementsController_list: {
         parameters: {
             query?: {
@@ -45346,6 +45617,31 @@ export interface operations {
             };
         };
     };
+    TicketCostsController_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketCostEntryView"];
+                };
+            };
+        };
+    };
     DispatchTicketsController_list: {
         parameters: {
             query?: {
@@ -45584,6 +45880,55 @@ export interface operations {
             };
         };
     };
+    TicketCostsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketCostsView"];
+                };
+            };
+        };
+    };
+    TicketCostsController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordCostDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketCostEntryView"];
+                };
+            };
+        };
+    };
     DispatchTicketsController_dispatchAttempts: {
         parameters: {
             query?: never;
@@ -45699,6 +46044,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DispatchQuoteSuggestionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteSuggestionViewList"];
+                };
             };
         };
     };
@@ -60403,7 +60769,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteTicketDto"];
+            };
+        };
         responses: {
             204: {
                 headers: {
@@ -60552,6 +60922,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PhotoAddedView"];
+                };
+            };
+        };
+    };
+    TechnicianQuoteSuggestionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteSuggestionViewList"];
+                };
+            };
+        };
+    };
+    TechnicianQuoteSuggestionsController_suggest: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestQuoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteSuggestionView"];
                 };
             };
         };

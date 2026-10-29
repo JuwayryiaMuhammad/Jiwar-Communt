@@ -288,6 +288,13 @@ const ERROR_TEXT: Record<string, string> = {
   REPLACEMENT_RECOMMENDATION_NOT_FOUND: 'Recommendation not found.',
   REPLACEMENT_RECOMMENDATION_EXISTS: 'A recommendation for this asset waits.',
   REPLACEMENT_RECOMMENDATION_DECIDED: 'This recommendation is decided.',
+  TICKET_COST_ENTRY_NOT_FOUND: 'This cost entry was not found.',
+  TICKET_COST_ENTRY_VOIDED: 'This cost entry is voided already.',
+  TICKET_COST_ENTRY_IS_PART: 'A part’s cost is undone by returning the part to the store.',
+  TICKET_COST_LIMIT_REACHED: 'This ticket holds as many cost entries as it may.',
+  QUOTE_SUGGESTION_NOT_FOUND: 'This suggested quote was not found.',
+  QUOTE_SUGGESTION_EXISTS: 'A suggested quote already waits on this ticket.',
+  QUOTE_SUGGESTION_DECIDED: 'This suggested quote is decided.',
   // Facilities and bookings, the club (ADR 0044).
   FACILITY_NOT_FOUND: 'This facility does not exist.',
   FACILITY_NOT_BOOKABLE: 'This facility is walk-in: it takes no booking and has no peak times.',

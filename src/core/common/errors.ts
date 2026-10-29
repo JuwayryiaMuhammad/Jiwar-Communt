@@ -1437,6 +1437,19 @@ export const ErrorCode = {
   REPLACEMENT_RECOMMENDATION_EXISTS: 'REPLACEMENT_RECOMMENDATION_EXISTS',
   /** Decided once; params.status (409). */
   REPLACEMENT_RECOMMENDATION_DECIDED: 'REPLACEMENT_RECOMMENDATION_DECIDED',
+  // A ticket's costs, its completion, the technician's quotes (ADR 0065)
+  TICKET_COST_ENTRY_NOT_FOUND: 'TICKET_COST_ENTRY_NOT_FOUND',
+  /** Voided already: an entry is voided once (409). */
+  TICKET_COST_ENTRY_VOIDED: 'TICKET_COST_ENTRY_VOIDED',
+  /** A part's entry is the store's: return the part instead (409). */
+  TICKET_COST_ENTRY_IS_PART: 'TICKET_COST_ENTRY_IS_PART',
+  /** The ticket holds as many cost entries as it may; params.max (409). */
+  TICKET_COST_LIMIT_REACHED: 'TICKET_COST_LIMIT_REACHED',
+  QUOTE_SUGGESTION_NOT_FOUND: 'QUOTE_SUGGESTION_NOT_FOUND',
+  /** One suggestion waits per ticket (409). */
+  QUOTE_SUGGESTION_EXISTS: 'QUOTE_SUGGESTION_EXISTS',
+  /** Sent or dismissed once; params.status (409). */
+  QUOTE_SUGGESTION_DECIDED: 'QUOTE_SUGGESTION_DECIDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

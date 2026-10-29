@@ -325,6 +325,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Checked under the asset's lock first: REPLACEMENT_RECOMMENDATION_EXISTS.
   asset_replacement_recommendations_tenant_id_id_key: null,
   asset_replacement_recommendations_one_pending: null,
+  // A ticket's costs, completions and suggested quotes (ADR 0065): each
+  // written under the ticket's lock after its check
+  // (QUOTE_SUGGESTION_EXISTS); a violation is a race and names nothing.
+  ticket_cost_entries_tenant_id_id_key: null,
+  ticket_completions_tenant_id_id_key: null,
+  ticket_quote_suggestions_tenant_id_id_key: null,
+  ticket_quote_suggestions_one_pending: null,
+  ticket_quote_suggestions_quote_key: null,
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

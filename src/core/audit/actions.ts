@@ -1875,6 +1875,27 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'asset_replacement_recommendation',
   },
+  // A ticket's costs and the technicians' suggested quotes (ADR 0065):
+  // amounts and codes; what an entry or a note says, as `{ changed }`.
+  'ticket_cost.recorded': {
+    log: 'tenant',
+    target: 'ticket_cost_entry',
+    sensitive: ['description'],
+  },
+  'ticket_cost.voided': { log: 'tenant', target: 'ticket_cost_entry' },
+  'quote_suggestion.made': {
+    log: 'tenant',
+    target: 'ticket_quote_suggestion',
+    sensitive: ['note'],
+  },
+  'quote_suggestion.sent': {
+    log: 'tenant',
+    target: 'ticket_quote_suggestion',
+  },
+  'quote_suggestion.dismissed': {
+    log: 'tenant',
+    target: 'ticket_quote_suggestion',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

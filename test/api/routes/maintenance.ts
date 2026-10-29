@@ -652,7 +652,28 @@ export const WORK_ROUTES: Row[] = [
     { holdReason: 'awaiting_parts' },
   ),
   technicianAction('resume'),
-  technicianAction('complete'),
+  // ADR 0065: what was done, from a closed list; a note goes with it.
+  technicianAction('complete', {
+    body: { actionCode: 'fixed', note: '' },
+    fields: [
+      {
+        field: 'actionCode',
+        code: 'INVALID_VALUE',
+        params: {
+          allowed: [
+            'repaired',
+            'part_replaced',
+            'adjusted',
+            'cleaned',
+            'no_fault_found',
+            'referred_to_vendor',
+            'other',
+          ],
+        },
+      },
+      { field: 'note', code: 'INVALID_LENGTH', params: { min: 1, max: 2000 } },
+    ],
+  }),
   technicianAction(
     'decline',
     {

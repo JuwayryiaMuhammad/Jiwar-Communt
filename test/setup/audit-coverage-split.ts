@@ -780,3 +780,16 @@ export const ASSETS_COVERAGE: readonly string[] = [
   'asset_replacement.accepted',
   'asset_replacement.declined',
 ];
+
+/**
+ * Maintenance operations (ADR 0065): a ticket's costs and the technicians'
+ * suggested quotes, the store and its part requests, maintenance
+ * contracts. test/operations/audit-coverage.
+ */
+export const OPERATIONS_COVERAGE: readonly string[] = [
+  'ticket_cost.recorded',
+  'ticket_cost.voided',
+  'quote_suggestion.made',
+  'quote_suggestion.sent',
+  'quote_suggestion.dismissed',
+];

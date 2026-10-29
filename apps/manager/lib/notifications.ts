@@ -207,6 +207,7 @@ const TEXT: Record<string, (p: P) => string> = {
     `${ticket(p)} is now ${words(p.status)}${p.holdReason ? ` (${words(p.holdReason)})` : ''}${inUnit(p)}`,
   'ticket.completed': (p) => `${ticket(p)} is done and waits for confirmation${inUnit(p)}`,
   'ticket.declined': (p) => `${ticket(p)} was declined by its technician and is back in the queue${inUnit(p)}`,
+  'ticket.quote_suggested': (p) => `${ticket(p)}: the technician suggests a ${p.amount} EGP quote to send${inUnit(p)}`,
   'ticket.technician_unavailable': (p) => `${ticket(p)} is back in the queue: its technician is unavailable${inUnit(p)}`,
   'ticket.priority_changed': (p) => `${ticket(p)} is now ${words(p.priority)} priority${inUnit(p)}`,
   'ticket.rejected': (p) => `${ticket(p)}: the reporter rejected the work (${p.rejectionCount}×)${inUnit(p)}`,

@@ -2,6 +2,8 @@ import { residentReporter } from './ticket-visibility';
 import { Injectable } from '@nestjs/common';
 import type { Ticket, TicketHoldReason, TicketStatus } from '@prisma/client';
 import { RequestContext } from '../../core/common/cls/request-context';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
+import { newId } from '../../core/common/uuid';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import {
   TenantTx,
@@ -21,6 +23,13 @@ import { assertCan, NOT_STARTED, type TicketAction } from './ticket-rules';
  * (back to the queue). Each action locks the ticket and checks the rules
  * after the lock.
  */
+/** What the technician did, said as they complete (ADR 0065). */
+export interface CompletionInput {
+  /** REASON_CODES.ticketCompletionAction (the DTO checks the list). */
+  actionCode?: (typeof REASON_CODES.ticketCompletionAction)[number];
+  note?: string;
+}
+
 /** Runs as a ticket is completed, under its lock (ADR 0064). */
 export type CompletionHook = (
   tx: TenantTxClient,
@@ -70,9 +79,45 @@ export class WorkService {
     return this.move(id, 'resume', 'in_progress');
   }
 
-  /** Done: the reporter is asked to confirm, or the sweep closes it. */
-  complete(id: string): Promise<void> {
-    return this.move(id, 'complete', 'completed');
+  /**
+   * Done: the reporter is asked to confirm, or the sweep closes it. What
+   * the technician did (ADR 0065) is recorded with it, in the same
+   * transaction and at the same instant: a code the resident sees, a note
+   * for the staff.
+   */
+  complete(id: string, done: CompletionInput = {}): Promise<void> {
+    const actionCode = done.actionCode;
+    if (done.note !== undefined && actionCode === undefined)
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'A note goes with what was done',
+        {
+          fields: [
+            { field: 'actionCode', code: FieldErrorCode.FIELD_REQUIRED },
+          ],
+        },
+      );
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const ticket = await this.lock(tx, id, 'complete');
+      await this.moveInTx(tx, ticket, 'completed');
+      if (actionCode === undefined) return;
+      const { completedAt } = await tx.ticket.findUniqueOrThrow({
+        where: { id },
+        select: { completedAt: true },
+      });
+      await tx.ticketCompletion.create({
+        data: {
+          id: newId(),
+          tenantId: ticket.tenantId,
+          ticketId: id,
+          cycle: ticket.cycle,
+          actionCode,
+          note: done.note?.trim() || null,
+          technicianId: this.ctx.accountId,
+          completedAt: completedAt!,
+        },
+      });
+    });
   }
 
   /**

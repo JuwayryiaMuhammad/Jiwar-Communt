@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { TicketQuoteSuggestion } from '@prisma/client';
 import { QUOTE_STATUSES, type QuoteStatus } from '../quote-rules';
 import type { QuoteRead } from '../quotes.service';
 
@@ -99,4 +100,52 @@ export class DispatchQuoteView {
 export class QuoteCreatedView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
+}
+
+/** A price the technician suggested (ADR 0065): staff only. */
+export class QuoteSuggestionView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, format: 'uuid' })
+  ticketId: string;
+  @ApiProperty({ type: String, description: 'EGP.' })
+  amount: string;
+  @ApiProperty({ type: String, nullable: true })
+  note: string | null;
+  @ApiProperty({ enum: ['pending', 'sent', 'dismissed'] })
+  status: string;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  suggestedById: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  suggestedAt: Date;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  decidedAt: Date | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'REASON_CODES.quoteSuggestionDismiss.',
+  })
+  dismissReason: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The quote it was sent as.',
+  })
+  quoteId: string | null;
+
+  static from(s: TicketQuoteSuggestion): QuoteSuggestionView {
+    return {
+      id: s.id,
+      ticketId: s.ticketId,
+      amount: s.amount.toFixed(2),
+      note: s.note,
+      status: s.status,
+      suggestedById: s.suggestedById,
+      suggestedAt: s.suggestedAt,
+      decidedAt: s.decidedAt,
+      dismissReason: s.dismissReason,
+      quoteId: s.quoteId,
+    };
+  }
 }

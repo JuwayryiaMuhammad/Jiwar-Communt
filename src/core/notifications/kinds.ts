@@ -350,6 +350,22 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
+  /** A technician suggests a quote for the ticket (dispatchers; ADR 0065). */
+  'ticket.quote_suggested': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true }, amount: {} },
+  },
+  /** Dispatch did not send it, and says why (the technician; ADR 0065). */
+  'ticket.quote_suggestion_dismissed': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true }, reason: {} },
+  },
   'ticket.declined': {
     priority: 'normal',
     category: 'maintenance',

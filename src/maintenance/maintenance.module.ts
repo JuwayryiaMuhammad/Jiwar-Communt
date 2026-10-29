@@ -121,6 +121,13 @@ import {
 import { FieldWorkService } from './field/field-work.service';
 import { ReplacementsService } from './field/replacements.service';
 import { QuotesService } from './quotes/quotes.service';
+import { TicketCostsController } from './costs/ticket-costs.controller';
+import { TicketCostsService } from './costs/ticket-costs.service';
+import {
+  DispatchQuoteSuggestionsController,
+  TechnicianQuoteSuggestionsController,
+} from './quotes/quote-suggestions.controller';
+import { QuoteSuggestionsService } from './quotes/quote-suggestions.service';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -170,6 +177,9 @@ import { QuotesService } from './quotes/quotes.service';
     MyInspectionsController,
     FieldController,
     ReplacementsController,
+    TicketCostsController,
+    TechnicianQuoteSuggestionsController,
+    DispatchQuoteSuggestionsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -227,6 +237,8 @@ import { QuotesService } from './quotes/quotes.service';
     InspectionSweep,
     FieldWorkService,
     ReplacementsService,
+    TicketCostsService,
+    QuoteSuggestionsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
   exports: [ResidentTicketSummary],

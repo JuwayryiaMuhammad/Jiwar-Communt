@@ -3743,6 +3743,9 @@ model Ticket {
   visits            TicketVisit[]
   slaClocks         TicketSlaClock[]
   quotes            TicketQuote[]
+  costEntries       TicketCostEntry[]
+  completions       TicketCompletion[]
+  quoteSuggestions  TicketQuoteSuggestion[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
@@ -3797,10 +3800,86 @@ model TicketQuote {
   withdrawnAt   DateTime? @map("withdrawn_at") @db.Timestamptz(3)
 
   ticket Ticket @relation(fields: [tenantId, ticketId], references: [tenantId, id], onUpdate: Restrict, map: "ticket_quotes_ticket_fkey")
+  suggestion TicketQuoteSuggestion[]
 
   @@unique([tenantId, id])
   @@index([tenantId, ticketId, proposedAt, id], map: "ticket_quotes_ticket_idx")
   @@map("ticket_quotes")
+}
+
+/// What a job cost (ADR 0065): labour, a contractor or other costs dispatch
+/// records, and the parts the store issued for it (negative when returned).
+/// Voided once, never edited (a trigger); a part's entry is undone by a return.
+model TicketCostEntry {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  ticketId     String    @map("ticket_id") @db.Uuid
+  /// `labour`, `contractor`, `part` or `other`.
+  kind         String
+  /// What dispatch recorded; a part's entry has none (its item says it).
+  description  String?
+  quantity     Decimal   @db.Decimal(12, 3)
+  unitAmount   Decimal   @map("unit_amount") @db.Decimal(12, 2)
+  /// quantity × unit amount, rounded to the piastre (a CHECK).
+  amount       Decimal   @db.Decimal(14, 2)
+  enteredById  String?   @map("entered_by_account_id") @db.Uuid
+  enteredAt    DateTime  @map("entered_at") @db.Timestamptz(3)
+  voidedAt     DateTime? @map("voided_at") @db.Timestamptz(3)
+  voidedById   String?   @map("voided_by_account_id") @db.Uuid
+  /// REASON_CODES.ticketCostVoid.
+  voidReason   String?   @map("void_reason")
+
+  ticket Ticket @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_cost_entries_ticket_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, ticketId, enteredAt, id], map: "ticket_cost_entries_ticket_idx")
+  @@map("ticket_cost_entries")
+}
+
+/// What the technician did, each time they completed the job (ADR 0065): a
+/// code the resident sees, a note for the staff. Never changes.
+model TicketCompletion {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  ticketId     String   @map("ticket_id") @db.Uuid
+  cycle        Int
+  /// REASON_CODES.ticketCompletionAction.
+  actionCode   String   @map("action_code")
+  note         String?
+  technicianId String?  @map("technician_account_id") @db.Uuid
+  completedAt  DateTime @map("completed_at") @db.Timestamptz(3)
+
+  ticket Ticket @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_completions_ticket_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, ticketId, completedAt(sort: Desc), id(sort: Desc)], map: "ticket_completions_ticket_idx")
+  @@map("ticket_completions")
+}
+
+/// A price the technician found on site (ADR 0065), for dispatch to send as
+/// the ticket's quote (ADR 0058) or to dismiss, once. One waits per ticket.
+model TicketQuoteSuggestion {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  ticketId      String    @map("ticket_id") @db.Uuid
+  amount        Decimal   @db.Decimal(12, 2)
+  note          String?
+  /// `pending`, `sent` or `dismissed`.
+  status        String    @default("pending")
+  suggestedById String?   @map("suggested_by_account_id") @db.Uuid
+  suggestedAt   DateTime  @map("suggested_at") @db.Timestamptz(3)
+  decidedById   String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt     DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.quoteSuggestionDismiss.
+  dismissReason String?   @map("dismiss_reason")
+  quoteId       String?   @map("quote_id") @db.Uuid
+
+  ticket Ticket       @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_quote_suggestions_ticket_fkey")
+  quote  TicketQuote? @relation(fields: [tenantId, quoteId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_quote_suggestions_quote_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, ticketId, suggestedAt(sort: Desc), id(sort: Desc)], map: "ticket_quote_suggestions_ticket_idx")
+  @@map("ticket_quote_suggestions")
 }
 
 /// A resident asked for attention on an overdue ticket (ADR 0038): once per

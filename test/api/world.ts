@@ -1,3 +1,4 @@
+import { TicketCostsService } from '../../src/maintenance/costs/ticket-costs.service';
 import { FieldWorkService } from '../../src/maintenance/field/field-work.service';
 import { InspectionsService } from '../../src/maintenance/inspections/inspections.service';
 import { PlansService } from '../../src/maintenance/plans/plans.service';
@@ -242,6 +243,9 @@ export interface World
   /** One of B's plans, and the occurrence it opened (ADR 0064). */
   bPlanId: string;
   bOccurrenceId: string;
+  /** ADR 0065: a cost entry and a suggested quote on compound B's ticket. */
+  bCostEntryId: string;
+  bQuoteSuggestionId: string;
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
@@ -882,6 +886,26 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { ticketId: bOccurrenceTicket! },
     }),
   );
+  const bCostEntry = await helpers.asManager(b, () =>
+    h.moduleRef.get(TicketCostsService).record(bTicket.id, {
+      kind: 'labour',
+      description: 'World labour',
+      quantity: '1',
+      unitAmount: '100',
+    }),
+  );
+  const bQuoteSuggestion = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.ticketQuoteSuggestion.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        ticketId: bTicket.id,
+        amount: '250.00',
+        suggestedById: b.ids.technician,
+        suggestedAt: new Date(),
+      },
+    }),
+  );
   const bInspectionChecklist = await helpers.asManager(b, () =>
     h.moduleRef.get(ChecklistsService).create({
       key: 'world_inspection',
@@ -1420,6 +1444,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bChecklistId: bChecklist.template.id,
     bPlanId: bPlan.plan.id,
     bOccurrenceId: bOccurrence.id,
+    bCostEntryId: bCostEntry.id,
+    bQuoteSuggestionId: bQuoteSuggestion.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
     bRecommendationId: bRecommendation.id,

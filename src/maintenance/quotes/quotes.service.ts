@@ -66,7 +66,6 @@ export class QuotesService implements OnModuleInit {
     ticketId: string,
     input: { amount: string; note?: string },
   ): Promise<{ id: string }> {
-    const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: QUOTE_RESOURCE, id });
@@ -74,58 +73,72 @@ export class QuotesService implements OnModuleInit {
       const ticket = await this.access.load(tx, ticketId, 'dispatch', {
         lock: true,
       });
-      // The compound's own work orders are its cost, never a household's
-      // to approve (ADR 0064).
-      if (
-        ticket.origin !== 'resident' ||
-        ticket.unitId === null ||
-        !QUOTABLE.includes(ticket.status)
-      )
-        throw appError.conflict(
-          ErrorCode.TICKET_QUOTE_NOT_ALLOWED,
-          'A quote is for a resident’s unit ticket before its work starts',
-          { params: { status: ticket.status } },
-        );
-      if (
-        await tx.ticketQuote.count({ where: { ticketId, status: 'proposed' } })
-      )
-        throw appError.conflict(
-          ErrorCode.TICKET_QUOTE_EXISTS,
-          'A quote of this ticket already waits',
-        );
-      const quote = await tx.ticketQuote.create({
-        data: {
-          id,
-          tenantId: ticket.tenantId,
-          ticketId,
-          amount: input.amount,
-          note: input.note ?? null,
-          proposedById: me,
-        },
-      });
-      await this.audit.record(tx, {
-        action: 'ticket_quote.proposed',
-        targetId: id,
-        changes: diffChanges(
-          null,
-          {
-            ticketId,
-            amount: quote.amount.toFixed(2),
-            note: quote.note,
-          },
-          'ticket_quote.proposed',
-        ),
-      });
-      await this.notices.send(
-        tx,
-        await this.deciders(tx, ticket),
-        'ticket.quote_proposed',
-        ticket,
-        { amount: quote.amount.toFixed(2) },
-        me,
-      );
-      return { id };
+      return this.proposeLocked(tx, ticket, id, input);
     });
+  }
+
+  /**
+   * The quote, for a ticket the caller (dispatch) holds locked after its
+   * own account: from `propose`, or as a technician's suggestion is sent
+   * (ADR 0065).
+   */
+  async proposeLocked(
+    tx: TenantTxClient,
+    ticket: Ticket,
+    id: string,
+    input: { amount: string; note?: string },
+  ): Promise<{ id: string }> {
+    const me = this.ctx.accountId;
+    const ticketId = ticket.id;
+    // The compound's own work orders are its cost, never a household's
+    // to approve (ADR 0064).
+    if (
+      ticket.origin !== 'resident' ||
+      ticket.unitId === null ||
+      !QUOTABLE.includes(ticket.status)
+    )
+      throw appError.conflict(
+        ErrorCode.TICKET_QUOTE_NOT_ALLOWED,
+        'A quote is for a resident’s unit ticket before its work starts',
+        { params: { status: ticket.status } },
+      );
+    if (await tx.ticketQuote.count({ where: { ticketId, status: 'proposed' } }))
+      throw appError.conflict(
+        ErrorCode.TICKET_QUOTE_EXISTS,
+        'A quote of this ticket already waits',
+      );
+    const quote = await tx.ticketQuote.create({
+      data: {
+        id,
+        tenantId: ticket.tenantId,
+        ticketId,
+        amount: input.amount,
+        note: input.note ?? null,
+        proposedById: me,
+      },
+    });
+    await this.audit.record(tx, {
+      action: 'ticket_quote.proposed',
+      targetId: id,
+      changes: diffChanges(
+        null,
+        {
+          ticketId,
+          amount: quote.amount.toFixed(2),
+          note: quote.note,
+        },
+        'ticket_quote.proposed',
+      ),
+    });
+    await this.notices.send(
+      tx,
+      await this.deciders(tx, ticket),
+      'ticket.quote_proposed',
+      ticket,
+      { amount: quote.amount.toFixed(2) },
+      me,
+    );
+    return { id };
   }
 
   /** Dispatch: takes back a quote that waits. */

@@ -189,6 +189,9 @@ describe('audit catalog', () => {
         'inspection_round',
         'inspection',
         'asset_replacement_recommendation',
+        // ADR 0065
+        'ticket_cost_entry',
+        'ticket_quote_suggestion',
       ]).toContain(def.target);
     }
   });

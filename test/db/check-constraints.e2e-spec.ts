@@ -2249,6 +2249,32 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   account_identity_changes_decided_after: {
     guarded: 'decided_at IS NULL is tested first; created_at is NOT NULL',
   },
+  // A ticket's costs, completions and suggested quotes (ADR 0065).
+  ticket_cost_entries_kind_known: {},
+  ticket_cost_entries_description_shape: {
+    guarded: 'description is tested IS NULL or IS NOT NULL first on each side',
+  },
+  ticket_cost_entries_amounts: {},
+  ticket_cost_entries_void_shape: {
+    guarded:
+      'void_reason and voided_at are tested IS NULL first; entered_at is NOT NULL',
+  },
+  ticket_completions_action_known: {},
+  ticket_completions_note_length: {
+    guarded: 'note IS NULL is tested first',
+  },
+  ticket_completions_cycle_positive: {},
+  ticket_quote_suggestions_amount_range: {},
+  ticket_quote_suggestions_note_length: {
+    guarded: 'note IS NULL is tested first',
+  },
+  ticket_quote_suggestions_state_shape: {
+    guarded:
+      'dismiss_reason is tested IS NOT NULL before its IN; the others only under IS [NOT] NULL',
+  },
+  ticket_quote_suggestions_decided_after: {
+    guarded: 'decided_at IS NULL is tested first; suggested_at is NOT NULL',
+  },
 };
 
 interface Check {

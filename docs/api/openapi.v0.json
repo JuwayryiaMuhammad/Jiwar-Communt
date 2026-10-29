@@ -9664,6 +9664,29 @@
         ],
         "type": "object"
       },
+      "CompleteTicketDto": {
+        "properties": {
+          "actionCode": {
+            "description": "What was done (`ticketCompletionAction`); the resident sees it.",
+            "enum": [
+              "repaired",
+              "part_replaced",
+              "adjusted",
+              "cleaned",
+              "no_fault_found",
+              "referred_to_vendor",
+              "other"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "description": "For the staff only; needs `actionCode`.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ComplianceCaseResponse": {
         "properties": {
           "closedAt": {
@@ -10403,6 +10426,35 @@
             "type": "boolean"
           }
         },
+        "type": "object"
+      },
+      "CostTotalsView": {
+        "properties": {
+          "contractor": {
+            "type": "string"
+          },
+          "labour": {
+            "type": "string"
+          },
+          "other": {
+            "type": "string"
+          },
+          "parts": {
+            "description": "Net of parts taken back.",
+            "type": "string"
+          },
+          "total": {
+            "description": "EGP, voided entries left out.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total",
+          "labour",
+          "contractor",
+          "parts",
+          "other"
+        ],
         "type": "object"
       },
       "CountVehicleDto": {
@@ -15580,6 +15632,16 @@
             "nullable": true,
             "type": "string"
           },
+          "completion": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketCompletionView"
+              }
+            ],
+            "description": "The last completion (ADR 0065).",
+            "nullable": true,
+            "type": "object"
+          },
           "confirmationStatus": {
             "allOf": [
               {
@@ -15775,7 +15837,8 @@
           "completedAt",
           "closedAt",
           "cancelledAt",
-          "escalations"
+          "escalations",
+          "completion"
         ],
         "type": "object"
       },
@@ -36938,6 +37001,91 @@
         ],
         "type": "object"
       },
+      "QuoteSuggestionView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "dismissReason": {
+            "description": "REASON_CODES.quoteSuggestionDismiss.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "quoteId": {
+            "description": "The quote it was sent as.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "sent",
+              "dismissed"
+            ],
+            "type": "string"
+          },
+          "suggestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "suggestedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ticketId",
+          "amount",
+          "note",
+          "status",
+          "suggestedById",
+          "suggestedAt",
+          "decidedAt",
+          "dismissReason",
+          "quoteId"
+        ],
+        "type": "object"
+      },
+      "QuoteSuggestionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteSuggestionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "RaiseApprovalDto": {
         "properties": {
           "alternatives": {
@@ -37399,6 +37547,41 @@
           "amount",
           "receiptNumber",
           "paidOn"
+        ],
+        "type": "object"
+      },
+      "RecordCostDto": {
+        "properties": {
+          "description": {
+            "description": "What it was: hours of whom, which contractor, what.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "kind": {
+            "description": "A part’s cost is the store’s: it is written as it issues.",
+            "enum": [
+              "labour",
+              "contractor",
+              "other"
+            ],
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Positive, three decimals at most: hours, visits, items.",
+            "pattern": "^(?!0+(\\.0{1,3})?$)\\d{1,9}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "unitAmount": {
+            "description": "EGP for one, e.g. `150` or `150.50`.",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "description",
+          "quantity",
+          "unitAmount"
         ],
         "type": "object"
       },
@@ -41306,6 +41489,11 @@
             "nullable": true,
             "type": "string"
           },
+          "completionAction": {
+            "description": "What the technician did at the last completion (ADR 0065), a code from `ticketCompletionAction`; their note is for the staff.",
+            "nullable": true,
+            "type": "string"
+          },
           "confirmationStatus": {
             "allOf": [
               {
@@ -41494,7 +41682,8 @@
           "completedAt",
           "closedAt",
           "autoCloseAt",
-          "reopenUntil"
+          "reopenUntil",
+          "completionAction"
         ],
         "type": "object"
       },
@@ -43720,6 +43909,21 @@
         "required": [
           "body"
         ],
+        "type": "object"
+      },
+      "SendSuggestionDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP; the suggestion’s amount when left out.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "note": {
+            "description": "What the residents read; the suggestion’s note when left out.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "ServiceGateView": {
@@ -52609,6 +52813,24 @@
         ],
         "type": "object"
       },
+      "SuggestQuoteDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, e.g. `350` or `350.50`; below ten million.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "note": {
+            "description": "What the residents read: the work and what it includes.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "type": "object"
+      },
       "SuggestionAuthorView": {
         "properties": {
           "fullName": {
@@ -53061,6 +53283,16 @@
             "nullable": true,
             "type": "string"
           },
+          "completion": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketCompletionView"
+              }
+            ],
+            "description": "The last completion (ADR 0065).",
+            "nullable": true,
+            "type": "object"
+          },
           "confirmationStatus": {
             "allOf": [
               {
@@ -53206,7 +53438,8 @@
           "confirmationStatus",
           "reporterFirstName",
           "reporterPhone",
-          "photos"
+          "photos",
+          "completion"
         ],
         "type": "object"
       },
@@ -53621,6 +53854,29 @@
         ],
         "type": "object"
       },
+      "TicketCompletionView": {
+        "properties": {
+          "actionCode": {
+            "description": "REASON_CODES.ticketCompletionAction.",
+            "type": "string"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "note": {
+            "description": "For the staff.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "actionCode",
+          "note",
+          "completedAt"
+        ],
+        "type": "object"
+      },
       "TicketConfirmationStatus": {
         "enum": [
           "pending",
@@ -53629,6 +53885,104 @@
           "auto_closed"
         ],
         "type": "string"
+      },
+      "TicketCostEntryView": {
+        "properties": {
+          "amount": {
+            "description": "EGP: quantity × unit amount.",
+            "type": "string"
+          },
+          "description": {
+            "description": "What dispatch recorded; a part’s entry has none.",
+            "nullable": true,
+            "type": "string"
+          },
+          "enteredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "enteredById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "A part’s stock item.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketCostKind"
+              }
+            ]
+          },
+          "quantity": {
+            "description": "Three decimals; a part taken back is negative.",
+            "type": "string"
+          },
+          "unitAmount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "voidReason": {
+            "description": "REASON_CODES.ticketCostVoid.",
+            "nullable": true,
+            "type": "string"
+          },
+          "voidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "description",
+          "quantity",
+          "unitAmount",
+          "amount",
+          "itemId",
+          "enteredById",
+          "enteredAt",
+          "voidedAt",
+          "voidReason"
+        ],
+        "type": "object"
+      },
+      "TicketCostKind": {
+        "enum": [
+          "labour",
+          "contractor",
+          "part",
+          "other"
+        ],
+        "type": "string"
+      },
+      "TicketCostsView": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TicketCostEntryView"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CostTotalsView"
+          }
+        },
+        "required": [
+          "data",
+          "totals"
+        ],
+        "type": "object"
       },
       "TicketCreatedView": {
         "properties": {
@@ -75072,6 +75426,100 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/quote-suggestions/{id}/dismiss": {
+      "post": {
+        "operationId": "DispatchQuoteSuggestionsController_dismiss",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteSuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Dismiss a suggested quote",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/quote-suggestions/{id}/send": {
+      "post": {
+        "operationId": "DispatchQuoteSuggestionsController_send",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendSuggestionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteSuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send a suggested quote to the residents",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/replacement-recommendations": {
       "get": {
         "operationId": "ReplacementsController_list",
@@ -75575,6 +76023,53 @@
           }
         ],
         "summary": "Replace a technician's specialties",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/ticket-costs/{id}/void": {
+      "post": {
+        "operationId": "TicketCostsController_void",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketCostEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Void a cost entry, once",
         "tags": [
           "maintenance"
         ],
@@ -76090,6 +76585,97 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/tickets/{id}/costs": {
+      "get": {
+        "operationId": "TicketCostsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketCostsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a ticket’s costs and their totals",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "TicketCostsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordCostDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketCostEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record labour, a contractor or another cost",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/tickets/{id}/dispatch-attempts": {
       "get": {
         "operationId": "DispatchTicketsController_dispatchAttempts",
@@ -76309,6 +76895,43 @@
           }
         ],
         "summary": "Change a ticket's priority",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/quote-suggestions": {
+      "get": {
+        "operationId": "DispatchQuoteSuggestionsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteSuggestionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a ticket’s suggested quotes, newest first",
         "tags": [
           "maintenance"
         ],
@@ -105162,6 +105785,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteTicketDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": ""
@@ -105443,6 +106076,97 @@
         "summary": "Add a photo to the ticket",
         "tags": [
           "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/quote-suggestions": {
+      "get": {
+        "operationId": "TechnicianQuoteSuggestionsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteSuggestionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my ticket’s suggested quotes, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "TechnicianQuoteSuggestionsController_suggest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestQuoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteSuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suggest a quote for dispatch to send",
+        "tags": [
+          "maintenance"
         ],
         "x-stability": "draft"
       }

@@ -1340,6 +1340,10 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0058: the quotes.
       '/tickets/{id}/quotes': ticket.id,
       '/maintenance/tickets/{id}/quotes': ticket.id,
+      // ADR 0065: the ticket's costs and suggested quotes, staff only.
+      '/maintenance/tickets/{id}/costs': ticket.id,
+      '/maintenance/tickets/{id}/quote-suggestions': ticket.id,
+      '/technician/tickets/{id}/quote-suggestions': ticket.id,
       // ADR 0058: a formal notice (none here: not found).
       '/me/notices/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000058e2',
       // ADR 0062: the compound's documents (none published here).

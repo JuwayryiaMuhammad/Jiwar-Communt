@@ -32,6 +32,7 @@ import {
   ReasonCodeDto,
   StaffMessageDto,
   TechnicianTicketsQueryDto,
+  CompleteTicketDto,
   WorkPhotoDto,
 } from './dto/tickets.dto';
 import { TicketsService } from './tickets.service';
@@ -126,12 +127,19 @@ export class TechnicianTicketsController {
     return this.work.resume(id);
   }
 
+  /**
+   * What was done (ADR 0065), optional: `actionCode` from the closed list
+   * `ticketCompletionAction`, and a note for the staff with it.
+   */
   @Post(':id/complete')
   @ApiOperation({ summary: 'Mark the work as done' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
-  complete(@Param('id', parseId()) id: string): Promise<void> {
-    return this.work.complete(id);
+  complete(
+    @Param('id', parseId()) id: string,
+    @Body() dto: CompleteTicketDto,
+  ): Promise<void> {
+    return this.work.complete(id, dto);
   }
 
   /** `reasonCode` from the closed list `ticketDecline`. */

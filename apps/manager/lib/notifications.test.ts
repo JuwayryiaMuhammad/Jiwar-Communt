@@ -312,3 +312,10 @@ test('the asset register’s notices (ADR 0064): their words and where they lead
   assert.equal(notificationText(inspection), 'The inspection of ROOF, due 2026-10-20, is overdue');
   assert.equal(notificationHref(inspection, (p) => p === 'inspections.manage'), '/inspections/i1');
 });
+
+test('a technician’s suggested quote (ADR 0065) reads as an amount to send and opens the ticket for dispatch', () => {
+  const suggested = { kind: 'ticket.quote_suggested', params: { ticketNumber: 'MT-000042', amount: '350.00' }, targetType: 'ticket', targetId: 't1' };
+  assert.match(notificationText(suggested), /350\.00 EGP quote to send/);
+  assert.equal(notificationHref(suggested, (p) => p === 'tickets.dispatch'), '/maintenance/t1');
+  assert.equal(notificationHref(suggested, () => false), null);
+});

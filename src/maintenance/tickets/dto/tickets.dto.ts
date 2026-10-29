@@ -22,6 +22,7 @@ import {
   Min,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
+import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import {
   COMMON_AREA_LENGTH,
@@ -280,6 +281,33 @@ export class WorkPhotoDto extends TicketPhotoDto {
   @ApiProperty({ enum: ['before', 'after'] })
   @IsIn(['before', 'after'], withParams({ allowed: ['before', 'after'] }))
   kind: Exclude<TicketAttachmentKind, 'report'>;
+}
+
+/** What was done, as the technician completes (ADR 0065); optional. */
+export class CompleteTicketDto {
+  @ApiProperty({
+    enum: REASON_CODES.ticketCompletionAction,
+    required: false,
+    description:
+      'What was done (`ticketCompletionAction`); the resident sees it.',
+  })
+  @IsOptional()
+  @IsIn(
+    REASON_CODES.ticketCompletionAction,
+    withParams({ allowed: [...REASON_CODES.ticketCompletionAction] }),
+  )
+  actionCode?: (typeof REASON_CODES.ticketCompletionAction)[number];
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    maxLength: 2000,
+    description: 'For the staff only; needs `actionCode`.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 2000, withParams({ min: 1, max: 2000 }))
+  note?: string;
 }
 
 /** A code from a closed list, and nothing else. */

@@ -332,6 +332,26 @@ export class ResidentTicketView {
   }
 }
 
+/** What the technician did when they completed the job (ADR 0065): staff. */
+class TicketCompletionView {
+  @ApiProperty({
+    type: String,
+    description: 'REASON_CODES.ticketCompletionAction.',
+  })
+  actionCode: string;
+  @ApiProperty({ type: String, nullable: true, description: 'For the staff.' })
+  note: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  completedAt: Date;
+}
+
+const completionOf = (d: TicketDetail): TicketCompletionView | null =>
+  d.completion && {
+    actionCode: d.completion.actionCode,
+    note: d.completion.note,
+    completedAt: d.completion.completedAt,
+  };
+
 export class ResidentTicketDetailView extends ResidentTicketView {
   @ApiProperty({
     type: String,
@@ -371,6 +391,13 @@ export class ResidentTicketDetailView extends ResidentTicketView {
     description: 'While closed: until when it may be reopened.',
   })
   reopenUntil: Date | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'What the technician did at the last completion (ADR 0065), a code from `ticketCompletionAction`; their note is for the staff.',
+  })
+  completionAction: string | null;
 
   static fromDetail(d: TicketDetail, me: string): ResidentTicketDetailView {
     const t = d.ticket;
@@ -393,6 +420,7 @@ export class ResidentTicketDetailView extends ResidentTicketView {
         t.status === 'closed' && t.closedAt
           ? new Date(t.closedAt.getTime() + d.settings.reopenDays * DAY)
           : null,
+      completionAction: d.completion?.actionCode ?? null,
     };
   }
 }
@@ -536,6 +564,12 @@ export class TechnicianTicketDetailView extends TechnicianTicketView {
   reporterPhone: string | null;
   @ApiProperty({ type: [PhotoView] })
   photos: PhotoView[];
+  @ApiProperty({
+    type: TicketCompletionView,
+    nullable: true,
+    description: 'The last completion (ADR 0065).',
+  })
+  completion: TicketCompletionView | null;
 
   static fromDetail(d: TicketDetail): TechnicianTicketDetailView {
     const t = d.ticket;
@@ -551,6 +585,7 @@ export class TechnicianTicketDetailView extends TechnicianTicketView {
         : firstNameOf(reporter.fullName),
       reporterPhone: d.reporterPhone,
       photos: d.photos.map((p) => PhotoView.from(p)),
+      completion: completionOf(d),
     };
   }
 }
@@ -771,6 +806,12 @@ export class DispatchTicketDetailView extends DispatchTicketView {
     description: "ADR 0038: the residents' escalations, oldest first.",
   })
   escalations: EscalationView[];
+  @ApiProperty({
+    type: TicketCompletionView,
+    nullable: true,
+    description: 'The last completion (ADR 0065).',
+  })
+  completion: TicketCompletionView | null;
 
   static fromDetail(d: TicketDetail): DispatchTicketDetailView {
     const t = d.ticket;
@@ -801,6 +842,7 @@ export class DispatchTicketDetailView extends DispatchTicketView {
         by: full(d, e.accountId),
         at: e.createdAt,
       })),
+      completion: completionOf(d),
     };
   }
 }

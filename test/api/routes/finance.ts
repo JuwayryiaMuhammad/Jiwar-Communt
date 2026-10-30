@@ -227,6 +227,33 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
     },
     invalid: 'none',
   },
+  // A receipt's PDF (ADR 0069), drawn on demand.
+  {
+    method: 'GET',
+    path: '/payments/{id}/receipt',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFinancePaymentId }),
+      code: 'PAYMENT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/payments/{id}/receipt',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bFinancePaymentId }),
+      code: 'PAYMENT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
   // Where the fees went (ADR 0069): whoever sees some unit's money.
   {
     method: 'GET',

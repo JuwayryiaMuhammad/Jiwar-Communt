@@ -95454,6 +95454,46 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/payments/{id}/receipt": {
+      "get": {
+        "description": "Drawn on demand, never stored: no name, no reference; the public page and code that verify it (ADR 0069).",
+        "operationId": "UnitPaymentsController_receipt",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One of my units’ receipts as a PDF",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/permissions": {
       "get": {
         "operationId": "RolesController_catalog",
@@ -107725,6 +107765,45 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/payments/{id}/receipt": {
+      "get": {
+        "operationId": "StaffPaymentsController_receipt",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A payment’s receipt as a PDF",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

@@ -1585,6 +1585,17 @@ describe('API v0 — PII leak scan', () => {
       '/staff/billing-plans/{id}/overrides': piiPlan,
       '/staff/payments/{id}': piiPayment,
       '/payments/{id}': piiPayment,
+      // ADR 0069: a receipt's PDF (none here: not found, never bytes to scan).
+      '/payments/{id}/receipt': '0192a5f0-1c2b-7d3e-8f40-0000000069a1',
+      '/staff/payments/{id}/receipt': '0192a5f0-1c2b-7d3e-8f40-0000000069a2',
+      // ADR 0069: fees, an invoice against the one before, a plan's changes,
+      // a spending report (a foreign one: not found), a household's use.
+      '/units/{unitId}/fees': unit.id,
+      '/invoices/{id}/comparison': piiInvoice.invoiceId,
+      '/staff/billing-plans/{id}/amount-changes': piiPlan,
+      '/finance/spending-reports/{id}': w.bSpendingReportId,
+      '/units/{unitId}/consumption': unit.id,
+      '/units/{unitId}/consumption/benchmark': unit.id,
       '/units/{unitId}/payments': unit.id,
       '/units/{unitId}/statement': unit.id,
       '/staff/units/{unitId}/statement': unit.id,
@@ -1809,6 +1820,11 @@ describe('API v0 — PII leak scan', () => {
       '/gate/unit-permits': { unitCode: unit.code },
       // ADR 0058: the resident's search, by a reference every compound has.
       '/me/search': { q: 'MT-1' },
+      // ADR 0069: a household's month against its building's.
+      '/units/{unitId}/consumption/benchmark': {
+        kind: 'water',
+        month: '2026-01',
+      },
     };
 
     const leaks: string[] = [];

@@ -10378,6 +10378,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments/{id}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One of my units’ receipts as a PDF
+         * @description Drawn on demand, never stored: no name, no reference; the public page and code that verify it (ADR 0069).
+         */
+        get: operations["UnitPaymentsController_receipt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permissions": {
         parameters: {
             query?: never;
@@ -14602,6 +14622,23 @@ export interface paths {
         };
         /** Get a payment, its receipt and what it paid */
         get: operations["StaffPaymentsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/payments/{id}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A payment’s receipt as a PDF */
+        get: operations["StaffPaymentsController_receipt"];
         put?: never;
         post?: never;
         delete?: never;
@@ -56278,6 +56315,27 @@ export interface operations {
             };
         };
     };
+    UnitPaymentsController_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
     RolesController_catalog: {
         parameters: {
             query?: never;
@@ -62534,6 +62592,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentDetailView"];
+                };
+            };
+        };
+    };
+    StaffPaymentsController_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
                 };
             };
         };

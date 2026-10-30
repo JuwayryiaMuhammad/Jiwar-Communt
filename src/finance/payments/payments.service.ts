@@ -342,6 +342,28 @@ export class PaymentsService implements OnModuleInit {
     return this.tenantTx.withTenantTx((tx) => this.detailIn(tx, id, true));
   }
 
+  /**
+   * A payment in the caller's transaction (ADR 0069, a receipt's PDF): the
+   * staff's, or one of the caller's units' (financeView); else not found.
+   */
+  async readable(
+    tx: TenantTxClient,
+    id: string,
+    staff: boolean,
+  ): Promise<PaymentDetailView> {
+    if (!staff) {
+      const p = await tx.financePayment.findUnique({ where: { id } });
+      if (p?.kind !== 'payment') throw paymentNotFound();
+      const caps = await this.community.placeIn(
+        tx,
+        this.ctx.accountId,
+        p.unitId,
+      );
+      if (!caps?.financeView) throw paymentNotFound();
+    }
+    return this.detailIn(tx, id, staff);
+  }
+
   /** One of the caller's units' payments; else not found. */
   mine(id: string): Promise<PaymentDetailView> {
     return this.tenantTx.withTenantTx(async (tx) => {

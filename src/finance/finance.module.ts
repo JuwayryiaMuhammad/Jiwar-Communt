@@ -32,6 +32,7 @@ import { BillingPlansController } from './billing-plans/billing-plans.controller
 import { BillingPlansService } from './billing-plans/billing-plans.service';
 import { FeesController } from './fees/fees.controller';
 import { FeesService } from './fees/fees.service';
+import { ReceiptPdfService } from './payments/receipt-pdf.service';
 import {
   SpendingReportsController,
   StaffSpendingReportsController,
@@ -142,6 +143,7 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     FinanceProvisioning,
     FinanceAccess,
     FeesService,
+    ReceiptPdfService,
     SpendingReportsService,
     BudgetsService,
     BudgetMatters,

@@ -9335,6 +9335,34 @@
           }
         },
         {
+          "name": "One of my units’ receipts as a PDF",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                ":id",
+                "receipt"
+              ],
+              "raw": "{{baseUrl}}/api/v1/payments/:id/receipt",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the billing plans, active first",
           "request": {
             "description": "**Responses:** 200",
@@ -11486,6 +11514,35 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/payments/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A payment’s receipt as a PDF",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "payments",
+                ":id",
+                "receipt"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/payments/:id/receipt",
               "variable": [
                 {
                   "description": "",

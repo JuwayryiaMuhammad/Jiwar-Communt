@@ -1,14 +1,23 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  StreamableFile,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiProduces,
 } from '@nestjs/swagger';
 import {
   RequireAnyPermission,
   RequirePermissions,
 } from '../../core/access/require-permissions.decorator';
-import { ApiArea } from '../../core/common/http/decorators';
+import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   ListOf,
   PageQueryDto,
@@ -23,6 +32,13 @@ import {
   StaffPaymentsQueryDto,
 } from './dto/payments.dto';
 import { PaymentsService } from './payments.service';
+import { ReceiptPdfService } from './receipt-pdf.service';
+
+const pdf = (name: string, body: Buffer) =>
+  new StreamableFile(body, {
+    type: 'application/pdf',
+    disposition: `attachment; filename="${name}"`,
+  });
 import {
   PaymentDetailView,
   PaymentView,
@@ -33,7 +49,10 @@ import {
 @ApiArea('finance')
 @Controller('staff')
 export class StaffPaymentsController {
-  constructor(private readonly payments: PaymentsService) {}
+  constructor(
+    private readonly payments: PaymentsService,
+    private readonly receipts: ReceiptPdfService,
+  ) {}
 
   @Get('payments')
   @RequirePermissions('finance.payments')
@@ -51,6 +70,17 @@ export class StaffPaymentsController {
   @ApiOkResponse({ type: PaymentDetailView })
   detail(@Param('id', parseId()) id: string): Promise<PaymentDetailView> {
     return this.payments.detail(id);
+  }
+
+  @Get('payments/:id/receipt')
+  @RequirePermissions('finance.payments')
+  @ApiOperation({ summary: 'A payment’s receipt as a PDF' })
+  @NoStore()
+  @ApiProduces('application/pdf')
+  @ApiOkResponse({ schema: { type: 'string', format: 'binary' } })
+  async receipt(@Param('id', parseId()) id: string): Promise<StreamableFile> {
+    const { name, body } = await this.receipts.draw(id, true);
+    return pdf(name, body);
   }
 
   @Post('units/:unitId/payments')
@@ -101,7 +131,10 @@ export class StaffPaymentsController {
 @RequirePermissions('units.read')
 @Controller()
 export class UnitPaymentsController {
-  constructor(private readonly payments: PaymentsService) {}
+  constructor(
+    private readonly payments: PaymentsService,
+    private readonly receipts: ReceiptPdfService,
+  ) {}
 
   @Get('units/:unitId/payments')
   @ApiOperation({ summary: 'List a unit’s payments, newest first' })
@@ -118,6 +151,20 @@ export class UnitPaymentsController {
   @ApiOkResponse({ type: PaymentDetailView })
   detail(@Param('id', parseId()) id: string): Promise<PaymentDetailView> {
     return this.payments.mine(id);
+  }
+
+  @Get('payments/:id/receipt')
+  @ApiOperation({
+    summary: 'One of my units’ receipts as a PDF',
+    description:
+      'Drawn on demand, never stored: no name, no reference; the public page and code that verify it (ADR 0069).',
+  })
+  @NoStore()
+  @ApiProduces('application/pdf')
+  @ApiOkResponse({ schema: { type: 'string', format: 'binary' } })
+  async receipt(@Param('id', parseId()) id: string): Promise<StreamableFile> {
+    const { name, body } = await this.receipts.draw(id, false);
+    return pdf(name, body);
   }
 
   @Get('units/:unitId/statement')

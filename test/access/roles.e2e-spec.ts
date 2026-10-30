@@ -206,6 +206,33 @@ describe('Roles', () => {
       ).rejects.toMatchObject({ code: 'PERMISSION_NOT_ASSIGNABLE' });
   });
 
+  it('a sheet to import is uploaded with assets.manage or energy.manage, and with neither is refused (ADR 0064, 0066)', async () => {
+    const c = await compound();
+    expect(c.managerRole.permissions).toEqual(
+      expect.arrayContaining(['assets.manage', 'energy.manage']),
+    );
+    const others = c.managerRole.permissions.filter(
+      (p) => p !== 'assets.manage' && p !== 'energy.manage',
+    );
+    const declare = () =>
+      h
+        .http()
+        .post(`${API}/files/uploads`)
+        .set('Authorization', `Bearer ${c.token}`)
+        .send({ purpose: 'data_import', contentType: 'text/csv', size: 100 });
+    for (const [held, status] of [
+      [[], 403],
+      [['assets.manage'], 201],
+      [['energy.manage'], 201],
+    ] as const) {
+      await as(c.tenant.id, c.manager.id, () =>
+        roles.replacePermissions(c.managerRole.id, [...others, ...held]),
+      );
+      const res = await declare().expect(status);
+      if (status === 403) expect(res.body).toMatchObject({ code: 'FORBIDDEN' });
+    }
+  });
+
   it('protects the manager role from lockout', async () => {
     const c = await compound();
     for (const dropped of ['roles.manage', 'residents.manage']) {

@@ -299,6 +299,13 @@ describe('file purposes', () => {
   it('nobody uploads an export', () => {
     expect(FILE_PURPOSES.data_export.uploaders).toEqual([]);
   });
+
+  it('a sheet to import is uploaded by whoever keeps the register or the meters (ADR 0064, 0066)', () => {
+    expect(FILE_PURPOSES.data_import.uploaders).toEqual([
+      'assets.manage',
+      'energy.manage',
+    ]);
+  });
 });
 
 describe('matchesSignature', () => {

@@ -233,6 +233,19 @@ export class ShiftsService implements OnModuleInit {
     return shift;
   }
 
+  /**
+   * A zone's open shifts, locked as their end locks them, before the zone
+   * itself is retired (ADR 0056's lock order: the shift, then the place).
+   * A guard write in flight holds its shift FOR SHARE: the retirement
+   * waits for it here, never while holding the place it may read.
+   */
+  async lockOpenInZone(tx: TenantTxClient, placeId: string): Promise<void> {
+    await tx.$queryRaw`
+      SELECT id FROM guard_shifts
+       WHERE place_id = ${placeId}::uuid AND ended_at IS NULL
+       ORDER BY id FOR NO KEY UPDATE`;
+  }
+
   /** A guard's open shift, if any. */
   onDuty(
     tx: TenantTxClient,

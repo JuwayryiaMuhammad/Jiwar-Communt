@@ -93,6 +93,11 @@ export class PlacesService {
     },
   ): Promise<Place> {
     return this.tenantTx.withTenantTx(async (tx) => {
+      // A retirement takes the zone's open shifts before the place (ADR
+      // 0056's lock order: the shift, then the place). A guard write holds
+      // its shift FOR SHARE and may then read this place FOR SHARE; taking
+      // the place first would wait for that write while it waits for us.
+      if (input.active === false) await this.shifts.lockOpenInZone(tx, id);
       const before = await tx.place.findUnique({ where: { id } });
       if (!before) throw placeNotFound();
       const place = await tx.place.update({

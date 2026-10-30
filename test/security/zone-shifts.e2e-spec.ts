@@ -1,3 +1,4 @@
+import { queuedBehind } from '../setup/held-lock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityHelpers } from '../setup/security';
 
@@ -11,6 +12,10 @@ const code = (res: { status: number; body: unknown }) => ({
  * places). A zone shift is a shift: one open per guard, ended by a zone
  * retired as a gate deactivated ends its own. The gate's actions refuse it;
  * the responders' work takes it.
+ *
+ * A retirement takes the zone's shifts before the place (ADR 0056's lock
+ * order), so a guard write that holds its shift and then reads the place
+ * never deadlocks with it.
  */
 describe('Zone shifts', () => {
   let h: HttpHarness;
@@ -130,5 +135,46 @@ describe('Zone shifts', () => {
       );
       expect(open).toBe(0);
     }
+  });
+
+  it('a retirement queued before a write naming the zone: the shift first, never a deadlock', async () => {
+    const created = await x
+      .http('post', '/places', s.manager.token, {
+        nameEn: 'Deadlock lane',
+        nameAr: 'ممر الانتظار',
+      })
+      .expect(201);
+    const zoneId = (created.body as { id: string }).id;
+    const guard = await x.guard(s.c);
+    await x.start(guard, { zoneId });
+    // The place held: the retirement queues first, the guard's found item
+    // (its shift, then this place) after it.
+    const [retired, registered] = await queuedBehind(
+      {
+        sql: 'SELECT id FROM places WHERE id = $1 FOR UPDATE',
+        params: [zoneId],
+      },
+      [
+        () =>
+          x.http('patch', `/places/${zoneId}`, s.manager.token, {
+            active: false,
+          }),
+        () =>
+          x.http('post', '/gate/found-items', guard.token, {
+            description: 'Keys by the back lane',
+            placeId: zoneId,
+          }),
+      ],
+    );
+    expect(retired.status).toBe(200);
+    expect([
+      { status: 403, code: 'NO_OPEN_SHIFT' },
+      { status: 404, code: 'PLACE_NOT_FOUND' },
+    ]).toContainEqual(code(registered));
+    expect(
+      await x.inTx(s.c, (tx) =>
+        tx.foundItem.count({ where: { placeId: zoneId } }),
+      ),
+    ).toBe(0);
   });
 });

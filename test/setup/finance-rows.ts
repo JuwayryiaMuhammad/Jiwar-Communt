@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { day, dbDate } from './compound-clock';
+import { approvalRequestRow } from './governance-rows';
 
 /**
  * Raw rows of the finance tables (ADR 0046), written straight through the
@@ -460,6 +461,38 @@ export async function budgetRow(
     },
   });
   return id;
+}
+
+let budgetApprovals = 0;
+
+/**
+ * Approves a draft budget the way the board's path does (ADR 0055):
+ * submitted with an approval request of its own, then active. Its lines and
+ * expenses go in first, while it is a draft (the database holds them to
+ * that); approval requests are numbered past the world's.
+ */
+export async function activateBudget(
+  tx: TenantTxClient,
+  r: { tenantId: string; budgetId: string; raisedById: string },
+): Promise<void> {
+  const requestId = await approvalRequestRow(tx, {
+    tenantId: r.tenantId,
+    raisedById: r.raisedById,
+    number: 9100 + budgetApprovals++,
+  });
+  const now = new Date();
+  await tx.financeBudget.update({
+    where: { id: r.budgetId },
+    data: {
+      status: 'submitted',
+      approvalRequestId: requestId,
+      submittedAt: now,
+    },
+  });
+  await tx.financeBudget.update({
+    where: { id: r.budgetId },
+    data: { status: 'active', decidedAt: now },
+  });
 }
 
 /** A line of a draft budget; its id. */

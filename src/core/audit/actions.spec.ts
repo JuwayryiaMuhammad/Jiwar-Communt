@@ -210,6 +210,8 @@ describe('audit catalog', () => {
         'facility_ban',
         'work_permit',
         'safety_instruction',
+        // ADR 0069.
+        'spending_report',
       ]).toContain(def.target);
     }
   });

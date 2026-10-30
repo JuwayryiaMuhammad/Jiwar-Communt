@@ -227,6 +227,59 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
     },
     invalid: 'none',
   },
+  // Where the fees went (ADR 0069): whoever sees some unit's money.
+  {
+    method: 'GET',
+    path: '/finance/spending-reports',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/finance/spending-reports/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bSpendingReportId }),
+      code: 'SPENDING_REPORT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/finance/spending-reports',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/finance/spending-reports',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({ budgetId: w.bBudgetId }),
+      code: 'BUDGET_NOT_FOUND',
+    },
+    invalid: {
+      body: { summaryEn: '' },
+      fields: [
+        {
+          field: 'summaryEn',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 2000 },
+        },
+      ],
+    },
+  },
   // Fee transparency (ADR 0069).
   {
     method: 'GET',

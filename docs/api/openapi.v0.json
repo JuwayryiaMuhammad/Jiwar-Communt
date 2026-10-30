@@ -40112,6 +40112,34 @@
         ],
         "type": "object"
       },
+      "PublishSpendingReportDto": {
+        "properties": {
+          "budgetId": {
+            "description": "An active budget; the fiscal year under way’s when left out.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SpendingReportItemDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "summaryAr": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "summaryEn": {
+            "description": "With `summaryAr`, or neither.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PublishSuggestionDto": {
         "properties": {
           "textAr": {
@@ -48810,6 +48838,206 @@
           "other",
           "planned",
           "corrective"
+        ],
+        "type": "object"
+      },
+      "SpendingDecisionView": {
+        "properties": {
+          "decidedOn": {
+            "description": "Null once the board archived it.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "publicationId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "publicationId",
+          "decidedOn"
+        ],
+        "type": "object"
+      },
+      "SpendingItemView": {
+        "properties": {
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SpendingDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "position": {
+            "type": "number"
+          },
+          "textAr": {
+            "type": "string"
+          },
+          "textEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "textEn",
+          "textAr",
+          "decision"
+        ],
+        "type": "object"
+      },
+      "SpendingLineView": {
+        "properties": {
+          "allowance": {
+            "description": "What the budget allows the category, increases included.",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BudgetCategory"
+              }
+            ]
+          },
+          "spent": {
+            "description": "Spent on it as of the day.",
+            "type": "string"
+          },
+          "usedPct": {
+            "description": "spent ÷ allowance, a percentage.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "allowance",
+          "spent",
+          "usedPct"
+        ],
+        "type": "object"
+      },
+      "SpendingReportItemDto": {
+        "properties": {
+          "decisionPublicationId": {
+            "description": "The board’s published decision it carried out.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "textAr": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "textEn": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "textEn",
+          "textAr"
+        ],
+        "type": "object"
+      },
+      "SpendingReportView": {
+        "properties": {
+          "asOf": {
+            "description": "Spent up to this day.",
+            "format": "date",
+            "type": "string"
+          },
+          "fiscalYear": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SpendingItemView"
+            },
+            "type": "array"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/SpendingLineView"
+            },
+            "type": "array"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "summaryAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "summaryEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/SpendingTotalsView"
+          }
+        },
+        "required": [
+          "id",
+          "fiscalYear",
+          "startsOn",
+          "asOf",
+          "summaryEn",
+          "summaryAr",
+          "publishedAt",
+          "lines",
+          "totals",
+          "items"
+        ],
+        "type": "object"
+      },
+      "SpendingReportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SpendingReportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SpendingTotalsView": {
+        "properties": {
+          "allowance": {
+            "type": "string"
+          },
+          "spent": {
+            "type": "string"
+          },
+          "usedPct": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowance",
+          "spent",
+          "usedPct"
         ],
         "type": "object"
       },
@@ -70316,6 +70544,71 @@
         "summary": "Finalize an upload once the file is PUT",
         "tags": [
           "files"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/finance/spending-reports": {
+      "get": {
+        "operationId": "SpendingReportsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpendingReportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List where the fees went, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/finance/spending-reports/{id}": {
+      "get": {
+        "operationId": "SpendingReportsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpendingReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a spending report",
+        "tags": [
+          "finance"
         ],
         "x-stability": "draft"
       }
@@ -102479,6 +102772,81 @@
           "finance"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/spending-reports": {
+      "get": {
+        "operationId": "StaffSpendingReportsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpendingReportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the published spending reports, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "One act: the figures are the budget’s as of the compound’s today, and the report never changes after. One a budget a day.",
+        "operationId": "StaffSpendingReportsController_publish",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishSpendingReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpendingReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish where the fees went: a budget as of today, by category",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },

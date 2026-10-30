@@ -1541,6 +1541,9 @@ export const ErrorCode = {
   // Money and the unit (ADR 0069)
   /** Only the household living there reads its consumption: never a landlord (403). */
   CONSUMPTION_NOT_ALLOWED: 'CONSUMPTION_NOT_ALLOWED',
+  SPENDING_REPORT_NOT_FOUND: 'SPENDING_REPORT_NOT_FOUND',
+  /** The budget has a report of this day already: one a day (409, params.reportId). */
+  SPENDING_REPORT_EXISTS: 'SPENDING_REPORT_EXISTS',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

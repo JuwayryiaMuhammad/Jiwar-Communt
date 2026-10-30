@@ -1385,6 +1385,17 @@ export const NOTIFICATION_KINDS = {
     target: 'payment',
     params: {},
   },
+  /**
+   * Where the fees went (ADR 0069): a spending report, to everyone who
+   * sees a unit's money — tenants as well as owners.
+   */
+  'finance.spending_report_published': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'spending_report',
+    params: { fiscalYear: {}, asOf: {} },
+  },
   // Finance part 2 (ADR 0048), under the same rules.
   /** An invoice of the unit was split into instalments: one notice, not one per instalment. */
   'instalment_plan.created': {

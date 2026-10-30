@@ -6955,6 +6955,61 @@ model BillingPlan {
   @@map("billing_plans")
 }
 
+/// A snapshot of a budget as of a day (ADR 0069): each category's allowance
+/// and spend, and the improvements it paid for. Published once, immutable.
+model FinanceSpendingReport {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  budgetId    String   @map("budget_id") @db.Uuid
+  fiscalYear  Int      @map("fiscal_year") @db.SmallInt
+  startsOn    DateTime @map("starts_on") @db.Date
+  asOf        DateTime @map("as_of") @db.Date
+  summaryEn   String?  @map("summary_en")
+  summaryAr   String?  @map("summary_ar")
+  publishedBy String   @map("published_by") @db.Uuid
+  publishedAt DateTime @default(now()) @map("published_at") @db.Timestamptz(3)
+
+  lines FinanceSpendingReportLine[]
+  items FinanceSpendingReportItem[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, budgetId, asOf], map: "finance_spending_reports_day_key")
+  @@index([tenantId, publishedAt, id], map: "finance_spending_reports_published_idx")
+  @@map("finance_spending_reports")
+}
+
+model FinanceSpendingReportLine {
+  tenantId  String  @map("tenant_id") @db.Uuid
+  reportId  String  @map("report_id") @db.Uuid
+  category  String
+  allowance Decimal @db.Decimal(14, 2)
+  spent     Decimal @db.Decimal(14, 2)
+
+  report FinanceSpendingReport @relation(fields: [tenantId, reportId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_spending_report_lines_report_fkey")
+
+  @@id([reportId, category])
+  @@index([tenantId, reportId], map: "finance_spending_report_lines_tenant_idx")
+  @@map("finance_spending_report_lines")
+}
+
+/// An improvement a report says the fees paid for, in the staff's words;
+/// it may cite the board's published decision.
+model FinanceSpendingReportItem {
+  id                    String  @id @db.Uuid
+  tenantId              String  @map("tenant_id") @db.Uuid
+  reportId              String  @map("report_id") @db.Uuid
+  position              Int     @db.SmallInt
+  decisionPublicationId String? @map("decision_publication_id") @db.Uuid
+  textEn                String  @map("text_en")
+  textAr                String  @map("text_ar")
+
+  report FinanceSpendingReport @relation(fields: [tenantId, reportId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_spending_report_items_report_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, reportId, position], map: "finance_spending_report_items_position_key")
+  @@map("finance_spending_report_items")
+}
+
 /// A plan's amount changed (ADR 0069): from, to, the first period billed at
 /// it, and the board's published decision when it decided it. Immutable.
 model BillingPlanAmountChange {

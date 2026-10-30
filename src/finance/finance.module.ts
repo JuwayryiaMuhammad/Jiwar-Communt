@@ -32,6 +32,11 @@ import { BillingPlansController } from './billing-plans/billing-plans.controller
 import { BillingPlansService } from './billing-plans/billing-plans.service';
 import { FeesController } from './fees/fees.controller';
 import { FeesService } from './fees/fees.service';
+import {
+  SpendingReportsController,
+  StaffSpendingReportsController,
+} from './spending/spending-reports.controller';
+import { SpendingReportsService } from './spending/spending-reports.service';
 import { CredentialVault } from './gateway/credential-vault';
 import { GatewayController } from './gateway/gateway.controller';
 import { GatewayKeys } from './gateway/gateway-keys';
@@ -118,6 +123,8 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     ReportsController,
     BillingPlansController,
     FeesController,
+    StaffSpendingReportsController,
+    SpendingReportsController,
     StaffPaymentsController,
     UnitPaymentsController,
     PaymentSessionsController,
@@ -135,6 +142,7 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     FinanceProvisioning,
     FinanceAccess,
     FeesService,
+    SpendingReportsService,
     BudgetsService,
     BudgetMatters,
     ExpensesService,

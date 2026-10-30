@@ -9028,6 +9028,54 @@
           }
         },
         {
+          "name": "List where the fees went, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "finance",
+                "spending-reports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/finance/spending-reports"
+            }
+          }
+        },
+        {
+          "name": "Get a spending report",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "finance",
+                "spending-reports",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/finance/spending-reports/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get an instalment plan of one of my units",
           "request": {
             "description": "**Responses:** 200",
@@ -10781,6 +10829,68 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/reports/outstanding/export"
+            }
+          }
+        },
+        {
+          "name": "List the published spending reports, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "spending-reports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/spending-reports"
+            }
+          }
+        },
+        {
+          "name": "Publish where the fees went: a budget as of today, by category",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"budgetId\": \"\",\n  \"items\": [],\n  \"summaryAr\": \"\",\n  \"summaryEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetId` | string (uuid) |  | An active budget; the fiscal year under way’s when left out. |\n| `items` | object[] |  |  |\n| `summaryAr` | string |  |  |\n| `summaryEn` | string |  | With `summaryAr`, or neither. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "spending-reports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/spending-reports"
             }
           }
         },

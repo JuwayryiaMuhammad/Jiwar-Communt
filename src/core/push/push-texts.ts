@@ -1571,6 +1571,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم استلام دفعة لوحدتك. الإيصال متاح في التطبيق.',
     },
   },
+  'finance.spending_report_published': {
+    en: {
+      title: 'Where the fees went',
+      body: 'The {fiscalYear} spending report up to {asOf} is in the app.',
+    },
+    ar: {
+      title: 'أين ذهبت الرسوم',
+      body: 'تقرير إنفاق {fiscalYear} حتى {asOf} متاح في التطبيق.',
+    },
+  },
   'instalment_plan.created': {
     en: {
       title: 'Instalment plan set up',

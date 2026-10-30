@@ -48,6 +48,49 @@ export class CommunityFinancePort {
     return this.capabilities.holders(tx, unitId, 'financeView');
   }
 
+  /**
+   * Who reads the compound's spending reports (ADR 0069): every active
+   * account that sees some unit's money now — its occupants, and adult
+   * members given `finance` — on units whose money no death review pauses.
+   */
+  async financeReaders(tx: TenantTxClient): Promise<string[]> {
+    const paused = (
+      await tx.unitReviewFlag.findMany({
+        where: { reason: 'primary_deceased', clearedAt: null },
+        select: { unitId: true },
+      })
+    ).map((f) => f.unitId);
+    const occupants = await tx.unitOccupancy.findMany({
+      where: {
+        status: 'active',
+        unitId: { notIn: paused },
+        account: { status: 'active' },
+      },
+      select: { accountId: true },
+    });
+    const members = await tx.householdMemberGrant.findMany({
+      where: {
+        permission: 'finance',
+        revokedAt: null,
+        member: {
+          status: 'active',
+          isMinor: false,
+          unitId: { notIn: paused },
+          account: { status: 'active' },
+        },
+      },
+      select: { member: { select: { accountId: true } } },
+    });
+    return [
+      ...new Set([
+        ...occupants.map((o) => o.accountId),
+        ...members.flatMap((m) =>
+          m.member.accountId ? [m.member.accountId] : [],
+        ),
+      ]),
+    ].sort();
+  }
+
   /** The units whose money the account sees now. */
   financeUnits(tx: TenantTxClient, accountId: string): Promise<string[]> {
     return this.capabilities.unitsWhere(tx, accountId, 'financeView');

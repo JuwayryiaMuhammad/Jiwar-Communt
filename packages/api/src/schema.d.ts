@@ -2049,6 +2049,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/finance/spending-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List where the fees went, newest first */
+        get: operations["SpendingReportsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/finance/spending-reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a spending report */
+        get: operations["SpendingReportsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate-requests/{id}/decide": {
         parameters: {
             query?: never;
@@ -12912,6 +12946,27 @@ export interface paths {
         get: operations["ReportsController_outstandingCsv"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/spending-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the published spending reports, newest first */
+        get: operations["StaffSpendingReportsController_list"];
+        put?: never;
+        /**
+         * Publish where the fees went: a budget as of today, by category
+         * @description One act: the figures are the budget’s as of the compound’s today, and the report never changes after. One a budget a day.
+         */
+        post: operations["StaffSpendingReportsController_publish"];
         delete?: never;
         options?: never;
         head?: never;
@@ -32743,6 +32798,17 @@ export interface components {
             textAr: string;
             textEn: string;
         };
+        PublishSpendingReportDto: {
+            /**
+             * Format: uuid
+             * @description An active budget; the fiscal year under way’s when left out.
+             */
+            budgetId?: string;
+            items?: components["schemas"]["SpendingReportItemDto"][];
+            summaryAr?: string;
+            /** @description With `summaryAr`, or neither. */
+            summaryEn?: string;
+        };
         PublishSuggestionDto: {
             textAr?: string | null;
             textEn?: string | null;
@@ -35446,6 +35512,67 @@ export interface components {
             planned: string;
             /** @description EGP, voided entries left out. */
             total: string;
+        };
+        SpendingDecisionView: {
+            /**
+             * Format: date
+             * @description Null once the board archived it.
+             */
+            decidedOn: string | null;
+            /** Format: uuid */
+            publicationId: string;
+        };
+        SpendingItemView: {
+            decision: components["schemas"]["SpendingDecisionView"] | null;
+            position: number;
+            textAr: string;
+            textEn: string;
+        };
+        SpendingLineView: {
+            /** @description What the budget allows the category, increases included. */
+            allowance: string;
+            category: components["schemas"]["BudgetCategory"];
+            /** @description Spent on it as of the day. */
+            spent: string;
+            /** @description spent ÷ allowance, a percentage. */
+            usedPct: string;
+        };
+        SpendingReportItemDto: {
+            /**
+             * Format: uuid
+             * @description The board’s published decision it carried out.
+             */
+            decisionPublicationId?: string;
+            textAr: string;
+            textEn: string;
+        };
+        SpendingReportView: {
+            /**
+             * Format: date
+             * @description Spent up to this day.
+             */
+            asOf: string;
+            fiscalYear: number;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["SpendingItemView"][];
+            lines: components["schemas"]["SpendingLineView"][];
+            /** Format: date-time */
+            publishedAt: string;
+            /** Format: date */
+            startsOn: string;
+            summaryAr: string | null;
+            summaryEn: string | null;
+            totals: components["schemas"]["SpendingTotalsView"];
+        };
+        SpendingReportViewList: {
+            data: components["schemas"]["SpendingReportView"][];
+            nextCursor: string | null;
+        };
+        SpendingTotalsView: {
+            allowance: string;
+            spent: string;
+            usedPct: string;
         };
         /**
          * @description `works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance.
@@ -43151,6 +43278,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FileView"];
+                };
+            };
+        };
+    };
+    SpendingReportsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpendingReportViewList"];
+                };
+            };
+        };
+    };
+    SpendingReportsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpendingReportView"];
                 };
             };
         };
@@ -59965,6 +60132,51 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    StaffSpendingReportsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpendingReportViewList"];
+                };
+            };
+        };
+    };
+    StaffSpendingReportsController_publish: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishSpendingReportDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpendingReportView"];
                 };
             };
         };

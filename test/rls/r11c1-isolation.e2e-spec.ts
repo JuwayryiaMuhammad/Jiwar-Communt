@@ -1,10 +1,11 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { newId } from '../../src/core/common/uuid';
+import { BUDGET_CATEGORIES } from '../../src/finance/budgets/budget-rules';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { dbDate } from '../setup/compound-clock';
-import { planRow } from '../setup/finance-rows';
+import { activateBudget, budgetRow, planRow } from '../setup/finance-rows';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 
 /** What a seed needs from one compound. */
@@ -13,6 +14,8 @@ interface Side {
   unitId: string;
   staffId: string;
   planId: string;
+  budgetId: string;
+  reportId: string;
 }
 
 /**
@@ -25,6 +28,27 @@ interface Table {
   key?: string;
   insert(tx: TenantTxClient, own: Side, link: Side): Promise<string>;
   linked?: boolean;
+}
+
+/** Each report its own day, so "one a budget a day" is never in the way. */
+let reportDays = 0;
+let lineCategories = 0;
+
+async function spendingReport(tx: TenantTxClient, own: Side, link: Side) {
+  const id = newId();
+  const d = String(1 + (reportDays++ % 28)).padStart(2, '0');
+  await tx.financeSpendingReport.create({
+    data: {
+      id,
+      tenantId: own.tenantId,
+      budgetId: link.budgetId,
+      fiscalYear: 2031,
+      startsOn: dbDate('2031-01-01'),
+      asOf: dbDate(`2031-0${1 + Math.floor(reportDays / 28)}-${d}`),
+      publishedBy: link.staffId,
+    },
+  });
+  return id;
 }
 
 /**
@@ -51,6 +75,45 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  { table: 'finance_spending_reports', insert: spendingReport },
+  {
+    table: 'finance_spending_report_lines',
+    key: 'report_id',
+    insert: async (tx, own, link) => {
+      // On the linked side's report, a category each time: no report is
+      // made here, so B's attempt meets this table's policy, not the
+      // reports'.
+      const reportId = link.reportId;
+      await tx.financeSpendingReportLine.create({
+        data: {
+          tenantId: own.tenantId,
+          reportId,
+          category:
+            BUDGET_CATEGORIES[lineCategories++ % BUDGET_CATEGORIES.length],
+          allowance: '100',
+          spent: '10',
+        },
+      });
+      return reportId;
+    },
+  },
+  {
+    table: 'finance_spending_report_items',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.financeSpendingReportItem.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          reportId: link.reportId,
+          position: 1 + (reportDays++ % 20),
+          textEn: 'Gardens',
+          textAr: 'الحدائق',
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — money and the unit (ADR 0069)', () => {
@@ -71,6 +134,16 @@ describe('RLS isolation — money and the unit (ADR 0069)', () => {
     const s = { tenantId, unitId: unit.id, staffId: staff.id } as Side;
     await inTenant(s, async (tx) => {
       s.planId = await planRow(tx, { tenantId, createdById: staff.id });
+      s.budgetId = await budgetRow(tx, {
+        tenantId,
+        createdById: staff.id,
+      });
+      await activateBudget(tx, {
+        tenantId,
+        budgetId: s.budgetId,
+        raisedById: staff.id,
+      });
+      s.reportId = await spendingReport(tx, s, s);
     });
     return s;
   };

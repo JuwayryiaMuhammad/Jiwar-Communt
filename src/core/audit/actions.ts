@@ -929,6 +929,9 @@ export const AUDIT_ACTIONS = {
   'billing_plan.override_set': { log: 'tenant', target: 'billing_plan' },
   // metadata: unitId.
   'billing_plan.override_removed': { log: 'tenant', target: 'billing_plan' },
+  // A spending report published (ADR 0069). metadata: budgetId, fiscalYear,
+  // asOf, items (a count); never its words.
+  'spending_report.published': { log: 'tenant', target: 'spending_report' },
   // metadata: unitId, channel, method, amount, paidOn, receiptNumber, the
   // invoices named; never the transfer's or cheque's reference.
   'payment.recorded': { log: 'tenant', target: 'payment' },

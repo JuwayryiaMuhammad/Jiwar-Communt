@@ -867,3 +867,9 @@ export const FIELD_SAFETY_COVERAGE: readonly string[] = [
   'asset_type.permit_hazards_changed',
   'emergency.cancel_requested',
 ];
+
+/**
+ * Money and the unit (ADR 0069): spending reports, plan requests and
+ * collector visits. test/r11c1/audit-coverage.
+ */
+export const R11C1A_COVERAGE: readonly string[] = ['spending_report.published'];

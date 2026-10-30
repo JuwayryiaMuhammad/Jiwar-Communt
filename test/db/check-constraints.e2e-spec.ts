@@ -1148,6 +1148,15 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'each description is tested IS NULL first; its length runs only on a value',
   },
   billing_plan_amount_changes_amounts: {},
+  // Where the fees went (ADR 0069).
+  finance_spending_reports_dates: {},
+  finance_spending_reports_summary: {
+    guarded:
+      'each summary is tested IS NULL first; its length runs only on a value',
+  },
+  finance_spending_report_lines_figures: {},
+  finance_spending_report_lines_category: {},
+  finance_spending_report_items_shape: {},
   // excluded is NOT NULL; the amount only under IS NULL.
   billing_plan_overrides_shape: {},
   billing_plan_overrides_amount: {

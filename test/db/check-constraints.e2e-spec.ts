@@ -1150,6 +1150,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   billing_plan_amount_changes_amounts: {},
   // Where the fees went (ADR 0069).
   finance_spending_reports_dates: {},
+  finance_spending_reports_supersedes_other: {
+    guarded:
+      'IS DISTINCT FROM is never null: a first report (NULL) passes by design',
+  },
   finance_spending_reports_summary: {
     guarded:
       'each summary is tested IS NULL first; its length runs only on a value',

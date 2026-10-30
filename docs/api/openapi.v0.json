@@ -40674,6 +40674,11 @@
             "maxLength": 2000,
             "minLength": 1,
             "type": "string"
+          },
+          "supersedesId": {
+            "description": "The latest report of a budget this one supersedes: of its budget, which `budgetId` may only repeat. Residents then read only the new one.",
+            "format": "uuid",
+            "type": "string"
           }
         },
         "type": "object"
@@ -49525,6 +49530,18 @@
             "nullable": true,
             "type": "string"
           },
+          "supersededById": {
+            "description": "The newer report that replaced this one; residents never read a superseded report, so theirs is always null.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "supersedesId": {
+            "description": "The earlier report of the budget this one replaced.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "totals": {
             "$ref": "#/components/schemas/SpendingTotalsView"
           }
@@ -49537,6 +49554,8 @@
           "summaryEn",
           "summaryAr",
           "publishedAt",
+          "supersedesId",
+          "supersededById",
           "lines",
           "totals",
           "items"
@@ -71352,7 +71371,7 @@
             "bearer": []
           }
         ],
-        "summary": "List where the fees went, newest first",
+        "summary": "List where the fees went, newest first: each budget’s latest",
         "tags": [
           "finance"
         ],
@@ -71361,6 +71380,7 @@
     },
     "/api/v1/finance/spending-reports/{id}": {
       "get": {
+        "description": "A superseded report is not found, with `params.latestId`: the report that replaced it.",
         "operationId": "SpendingReportsController_get",
         "parameters": [
           {
@@ -104081,7 +104101,7 @@
         "x-stability": "draft"
       },
       "post": {
-        "description": "One act: the figures are the budget’s as of the compound’s today, and the report never changes after. One a budget a day.",
+        "description": "One act: the figures are the budget’s as of the compound’s today, and the report never changes after. A budget’s first report supersedes nothing; every later one names the latest it supersedes (`supersedesId`), and residents then read only the new one.",
         "operationId": "StaffSpendingReportsController_publish",
         "parameters": [
           {
@@ -104122,6 +104142,43 @@
           }
         ],
         "summary": "Publish where the fees went: a budget as of today, by category",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/spending-reports/{id}": {
+      "get": {
+        "operationId": "StaffSpendingReportsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpendingReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a spending report, superseded or not",
         "tags": [
           "finance"
         ],

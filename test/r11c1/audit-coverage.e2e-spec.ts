@@ -47,7 +47,7 @@ describe('Audit coverage — money and the unit', () => {
   }
 
   describe('where the fees went', () => {
-    it('spending_report.published — the budget, its year, the day and how many items; never their words', async () => {
+    it('spending_report.published and .superseded — the budget, its year, the day, how many items and the report replaced; never their words', async () => {
       const budgetId = await inTx(async (tx) => {
         const id = await budgetRow(tx, {
           tenantId: s.c.tenantId,
@@ -79,9 +79,34 @@ describe('Audit coverage — money and the unit', () => {
           fiscalYear: report.fiscalYear,
           asOf: report.asOf,
           items: 1,
+          supersedesId: null,
         },
       });
       expect(JSON.stringify(row)).not.toContain(MARKER);
+
+      // A newer report supersedes it: both acts are written, ids only.
+      const newer = (
+        await f
+          .http('post', '/staff/finance/spending-reports', s.accountant.token, {
+            supersedesId: report.id,
+            summaryEn: MARKER,
+            summaryAr: MARKER,
+          })
+          .expect(201)
+      ).body as { id: string };
+      expect(
+        (await single(s.c, 'spending_report.published', newer.id)).metadata,
+      ).toMatchObject({ budgetId, supersedesId: report.id });
+      const replaced = await single(
+        s.c,
+        'spending_report.superseded',
+        report.id,
+      );
+      expect(replaced).toMatchObject({
+        actorId: s.accountant.id,
+        metadata: { budgetId, supersededById: newer.id },
+      });
+      expect(JSON.stringify(replaced)).not.toContain(MARKER);
     });
   });
 

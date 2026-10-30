@@ -83,7 +83,9 @@ Saving tips are a compound document of kind `saving_tips` (`GET /compound-docume
 
 ## Where the fees went
 
-`GET /finance/spending-reports` and `/{id}` (whoever sees some unit's money; tenants too): `fiscalYear`, `asOf`, `summaryEn/Ar`, `lines` (`category`, `allowance`, `spent`, `usedPct`), `totals`, `items` (`textEn/Ar`, `decision`). Push `finance.spending_report_published` (`{ fiscalYear, asOf }`).
+`GET /finance/spending-reports` and `/{id}` (whoever sees some unit's money; tenants too): `fiscalYear`, `asOf`, `summaryEn/Ar`, `lines` (`category`, `allowance`, `spent`, `usedPct`), `totals`, `items` (`textEn/Ar`, `decision`), `supersedesId` (the earlier report it replaced: say "corrected" or "updated"; it is not yours to open). Push `finance.spending_report_published` (`{ fiscalYear, asOf }`).
+
+A published report never changes: a newer one of the same budget supersedes it. The list holds each budget's latest only. Opening a superseded one (an old push) is `404 SPENDING_REPORT_NOT_FOUND` with `params.latestId`: open that instead.
 
 ## Receipts as PDFs
 

@@ -25,6 +25,7 @@ export const SPENDING_REPORT_ITEMS = 20;
 
 export interface SpendingReportInput {
   budgetId?: string;
+  supersedesId?: string;
   summaryEn?: string;
   summaryAr?: string;
   items?: { textEn: string; textAr: string; decisionPublicationId?: string }[];
@@ -38,6 +39,8 @@ export interface SpendingReport {
   summaryEn: string | null;
   summaryAr: string | null;
   publishedAt: Date;
+  supersedesId: string | null;
+  supersededById: string | null;
   lines: {
     category: string;
     allowance: string;
@@ -59,6 +62,13 @@ const notFound = () =>
     'Spending report not found',
   );
 
+const superseded = (reportId: string | null) =>
+  appError.conflict(
+    ErrorCode.SPENDING_REPORT_SUPERSEDED,
+    'A newer report superseded this one already',
+    reportId ? { params: { reportId } } : {},
+  );
+
 const CATEGORY_ORDER = (c: string) =>
   (BUDGET_CATEGORIES as readonly string[]).indexOf(c);
 
@@ -71,8 +81,13 @@ const pct = (part: Prisma.Decimal, whole: Prisma.Decimal) =>
  * category's allowance and what was spent, never an expense, a vendor or a
  * name, and the improvements it paid for in their words, each may cite
  * the board's published decision. Everyone who sees a unit's money reads
- * it — tenants as well as owners — and is told. One snapshot of a budget
- * a day; a report never changes after.
+ * it — tenants as well as owners — and is told.
+ *
+ * A report never changes after. A newer one of the same budget supersedes
+ * its latest instead: a budget's reports are one line (the first
+ * supersedes nothing, each later one the latest before it, each report
+ * once; unique keys decide a race), residents read only the latest and
+ * the staff all of them.
  */
 @Injectable()
 export class SpendingReportsService implements OnModuleInit {
@@ -115,8 +130,31 @@ export class SpendingReportsService implements OnModuleInit {
       await this.access.lockSelf(tx);
       const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
       const today = await localToday(tx, timezone);
-      const budget = input.budgetId
-        ? await tx.financeBudget.findUnique({ where: { id: input.budgetId } })
+      const prior = input.supersedesId
+        ? await tx.financeSpendingReport.findUnique({
+            where: { id: input.supersedesId },
+            select: { id: true, budgetId: true },
+          })
+        : null;
+      if (input.supersedesId && !prior) throw notFound();
+      // A newer report of the same budget: the period is the one it replaces.
+      if (prior && input.budgetId && input.budgetId !== prior.budgetId)
+        throw appError.badRequest(
+          ErrorCode.VALIDATION_FAILED,
+          'Invalid request',
+          {
+            fields: [
+              {
+                field: 'budgetId',
+                code: FieldErrorCode.INVALID_VALUE,
+                params: { budgetId: prior.budgetId },
+              },
+            ],
+          },
+        );
+      const budgetId = prior?.budgetId ?? input.budgetId;
+      const budget = budgetId
+        ? await tx.financeBudget.findUnique({ where: { id: budgetId } })
         : await tx.financeBudget.findFirst({
             where: {
               status: 'active',
@@ -160,17 +198,13 @@ export class SpendingReportsService implements OnModuleInit {
             ErrorCode.BOARD_PUBLICATION_NOT_FOUND,
             'No published board decision has this id',
           );
-      const same = await tx.financeSpendingReport.findUnique({
-        where: {
-          tenantId_budgetId_asOf: {
-            tenantId: this.ctx.txTenantId,
-            budgetId: budget.id,
-            asOf: asDate(asOf),
-          },
-        },
-        select: { id: true },
-      });
-      if (same) throw exists(same.id);
+      if (prior) {
+        const next = await this.successorOf(tx, prior.id);
+        if (next) throw superseded(next);
+      } else {
+        const latest = await this.latestOf(tx, budget.id);
+        if (latest) throw exists(latest);
+      }
       const record = await this.budgets.load(tx, budget);
       try {
         await tx.financeSpendingReport.create({
@@ -183,6 +217,7 @@ export class SpendingReportsService implements OnModuleInit {
             asOf: asDate(asOf),
             summaryEn: input.summaryEn ?? null,
             summaryAr: input.summaryAr ?? null,
+            supersedesId: prior?.id ?? null,
             publishedBy: this.ctx.accountId,
             lines: {
               // The compound comes from the report: a nested row names none.
@@ -204,12 +239,13 @@ export class SpendingReportsService implements OnModuleInit {
           },
         });
       } catch (e) {
-        // A publication of the same budget and day committed first.
+        // Another report of the budget committed first: its first, or the
+        // successor of the same report.
         if (
           e instanceof Prisma.PrismaClientKnownRequestError &&
           e.code === 'P2002'
         )
-          throw exists(null);
+          throw prior ? superseded(null) : exists(null);
         throw e;
       }
       await this.audit.record(tx, {
@@ -220,8 +256,15 @@ export class SpendingReportsService implements OnModuleInit {
           fiscalYear: budget.fiscalYear,
           asOf,
           items: items.length,
+          supersedesId: prior?.id ?? null,
         },
       });
+      if (prior)
+        await this.audit.record(tx, {
+          action: 'spending_report.superseded',
+          targetId: prior.id,
+          metadata: { budgetId: budget.id, supersededById: id },
+        });
       await this.notifier.notify(tx, await this.community.financeReaders(tx), {
         kind: 'finance.spending_report_published',
         params: { fiscalYear: String(budget.fiscalYear), asOf },
@@ -231,22 +274,51 @@ export class SpendingReportsService implements OnModuleInit {
     });
   }
 
-  /** Newest first: the staff's list, and the readers'. */
-  list(): Promise<SpendingReport[]> {
+  /**
+   * Newest first. The staff's list holds every report, superseded ones
+   * too; the readers' only each budget's latest.
+   */
+  list(latestOnly: boolean): Promise<SpendingReport[]> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      const rows = await tx.financeSpendingReport.findMany({
-        orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
-        take: 50,
-        select: { id: true },
-      });
+      const rows = await tx.$queryRaw<{ id: string }[]>`
+        SELECT r.id FROM finance_spending_reports r
+         WHERE NOT ${latestOnly}::boolean OR NOT EXISTS (
+                 SELECT 1 FROM finance_spending_reports n
+                  WHERE n.supersedes_id = r.id)
+         ORDER BY r.published_at DESC, r.id DESC
+         LIMIT 50`;
       const out: SpendingReport[] = [];
       for (const r of rows) out.push(await this.load(tx, r.id));
       return out;
     });
   }
 
+  /** The staff's: any report, superseded or not. */
   get(id: string): Promise<SpendingReport> {
     return this.tenantTx.withTenantTx((tx) => this.load(tx, id));
+  }
+
+  /**
+   * A reader's: the latest of its budget only. A superseded one is not
+   * theirs to read: not found, with the latest to open instead.
+   */
+  getLatest(id: string): Promise<SpendingReport> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const report = await this.load(tx, id);
+      if (report.supersededById === null) return report;
+      let latestId = report.supersededById;
+      for (
+        let next = await this.successorOf(tx, latestId);
+        next;
+        next = await this.successorOf(tx, next)
+      )
+        latestId = next;
+      throw appError.notFound(
+        ErrorCode.SPENDING_REPORT_NOT_FOUND,
+        'A newer report superseded this one',
+        { params: { latestId } },
+      );
+    });
   }
 
   /** For whoever sees some unit's money now; anyone else is refused. */
@@ -255,6 +327,31 @@ export class SpendingReportsService implements OnModuleInit {
       if (!(await this.community.financeUnits(tx, this.ctx.accountId)).length)
         throw appError.forbidden(ErrorCode.FORBIDDEN, 'Not allowed');
     });
+  }
+
+  /** The report that superseded this one, if any. */
+  private async successorOf(
+    tx: TenantTxClient,
+    id: string,
+  ): Promise<string | null> {
+    const next = await tx.financeSpendingReport.findFirst({
+      where: { supersedesId: id },
+      select: { id: true },
+    });
+    return next?.id ?? null;
+  }
+
+  /** A budget's latest report: the one none supersedes. */
+  private async latestOf(
+    tx: TenantTxClient,
+    budgetId: string,
+  ): Promise<string | null> {
+    const [latest] = await tx.$queryRaw<{ id: string }[]>`
+      SELECT r.id FROM finance_spending_reports r
+       WHERE r.budget_id = ${budgetId}::uuid
+         AND NOT EXISTS (SELECT 1 FROM finance_spending_reports n
+                          WHERE n.supersedes_id = r.id)`;
+    return latest?.id ?? null;
   }
 
   private async load(tx: TenantTxClient, id: string): Promise<SpendingReport> {
@@ -301,6 +398,8 @@ export class SpendingReportsService implements OnModuleInit {
       summaryEn: r.summaryEn,
       summaryAr: r.summaryAr,
       publishedAt: r.publishedAt,
+      supersedesId: r.supersedesId,
+      supersededById: await this.successorOf(tx, r.id),
       lines: r.lines
         .sort((a, b) => CATEGORY_ORDER(a.category) - CATEGORY_ORDER(b.category))
         .map((l) => ({
@@ -322,6 +421,6 @@ export class SpendingReportsService implements OnModuleInit {
 const exists = (reportId: string | null) =>
   appError.conflict(
     ErrorCode.SPENDING_REPORT_EXISTS,
-    'The budget has a report of this day already',
+    'The budget has a report already: supersede its latest',
     reportId ? { params: { reportId } } : {},
   );

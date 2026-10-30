@@ -37,8 +37,14 @@ The resident audit (2026-10-21) left R11c with the resident's own unit and its m
 ### Where the fees go
 
 - **A spending report**, published in one act by `finance.reports`: a snapshot of an approved budget as of the compound's today (a closed year as it closed) — each category's allowance and what was spent, never an expense, a vendor or a name — with up to 20 improvements it paid for, in the staff's words, each may cite the board's published decision; a summary in both languages or neither.
-- Three tables, immutable from birth. **One report a budget a day** (a unique key; the loser of a race, `409 SPENDING_REPORT_EXISTS {reportId}`).
-- **Readers:** whoever sees some unit's money now — owners, **tenants**, members given `finance` (`GET /finance/spending-reports`, `/{id}`); each is told (`finance.spending_report_published`), outside units a death review pauses.
+- Three tables, immutable from birth.
+- **A newer report supersedes, never edits.** A published report never changes; a newer one of the same budget names the latest it replaces (`supersedesId`, set at birth and so once). A budget's reports are one line, which the database keeps:
+  - a composite key `(tenant, budget, supersedes)` → `(tenant, budget, id)`: only the same budget's;
+  - a unique key on `supersedes_id`: a report is superseded once (the loser of a race, `409 SPENDING_REPORT_SUPERSEDED {reportId}` — the newer one);
+  - a partial unique key on the budget where `supersedes_id` is null: one first report (a second, `409 SPENDING_REPORT_EXISTS {reportId}` — the latest, to supersede instead);
+  - and never itself (a CHECK).
+  - So a budget always has exactly one latest. This replaces "one a budget a day": a correction the same day is a newer report.
+- **Readers:** whoever sees some unit's money now — owners, **tenants**, members given `finance` (`GET /finance/spending-reports`, `/{id}`): each budget's latest only; a superseded report is `404 SPENDING_REPORT_NOT_FOUND {latestId}`. The staff read every report, superseded ones too (`GET /staff/finance/spending-reports`, `/{id}`, each saying `supersedesId` and `supersededById`). Each reader is told of every report, a newer one too (`finance.spending_report_published`), outside units a death review pauses.
 - No draft: the staff preview the figures in budget-vs-actual (ADR 0055). Improvements cite decisions only: finance may not import engagement, so a done suggestion is described in the staff's words.
 
 ### A receipt as a PDF
@@ -73,7 +79,7 @@ The resident audit (2026-10-21) left R11c with the resident's own unit and its m
 
 - **Resident items:** `instalment_plan_request` and `collector_visit` join `GET /me/requests`.
 - **Notification kinds:** `meter.unit_spike` (utilities); `finance.spending_report_published`, `finance.dues_rising`, `invoice.plan_available`, `instalment_plan_request.submitted|accepted|declined`, `collector_visit.requested|assigned|cancelled|scheduled|failed` (finance). Params are codes, days and instants; never an amount or a name.
-- **Audit:** `spending_report.published`, `plan_request.submitted|withdrawn|accepted|declined`, `collector_visit.requested|assigned|collected|failed|cancelled`, `finance.plan_settings_changed`, `finance.collector_settings_changed`; `billing_plan.updated` gains the effective day and the decision on a new amount. Codes, ids, days, instants and amounts; descriptions and summaries never.
+- **Audit:** `spending_report.published` (with the report it supersedes) and `.superseded` (on the report replaced: the budget and the newer report), `plan_request.submitted|withdrawn|accepted|declined`, `collector_visit.requested|assigned|collected|failed|cancelled`, `finance.plan_settings_changed`, `finance.collector_settings_changed`; `billing_plan.updated` gains the effective day and the decision on a new amount. Codes, ids, days, instants and amounts; descriptions and summaries never.
 
 ## Consequences
 

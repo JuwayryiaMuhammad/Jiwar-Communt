@@ -9197,7 +9197,7 @@
           }
         },
         {
-          "name": "List where the fees went, newest first",
+          "name": "List where the fees went, newest first: each budget’s latest",
           "request": {
             "description": "**Responses:** 200",
             "header": [],
@@ -11441,9 +11441,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"budgetId\": \"\",\n  \"items\": [],\n  \"summaryAr\": \"\",\n  \"summaryEn\": \"\"\n}"
+              "raw": "{\n  \"budgetId\": \"\",\n  \"items\": [],\n  \"summaryAr\": \"\",\n  \"summaryEn\": \"\",\n  \"supersedesId\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetId` | string (uuid) |  | An active budget; the fiscal year under way’s when left out. |\n| `items` | object[] |  |  |\n| `summaryAr` | string |  |  |\n| `summaryEn` | string |  | With `summaryAr`, or neither. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetId` | string (uuid) |  | An active budget; the fiscal year under way’s when left out. |\n| `items` | object[] |  |  |\n| `summaryAr` | string |  |  |\n| `summaryEn` | string |  | With `summaryAr`, or neither. |\n| `supersedesId` | string (uuid) |  | The latest report of a budget this one supersedes: of its budget, which `budgetId` may only repeat. Residents then read only the new one. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -11469,6 +11469,35 @@
                 "spending-reports"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/spending-reports"
+            }
+          }
+        },
+        {
+          "name": "Get a spending report, superseded or not",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "spending-reports",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/spending-reports/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

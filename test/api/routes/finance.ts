@@ -645,6 +645,18 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
     invalid: 'none',
   },
   {
+    method: 'GET',
+    path: '/staff/finance/spending-reports/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bSpendingReportId }),
+      code: 'SPENDING_REPORT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
     method: 'POST',
     path: '/staff/finance/spending-reports',
     auth: 'tenant',

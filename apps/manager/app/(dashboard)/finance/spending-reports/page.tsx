@@ -2,7 +2,7 @@
 
 import { fieldError, formatDateTime, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Textarea, useToast } from '@jiwar/ui';
+import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Textarea, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -16,13 +16,14 @@ type Item = { textEn: string; textAr: string; decisionPublicationId: string };
 const KEY = ['finance', 'spending-reports'] as const;
 const label = (code: string) => code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, ' ');
 
-function Publish({ onClose }: { onClose: () => void }) {
+/** A first report of a budget, or — with `supersedes` — a newer one replacing its latest. */
+function Publish({ supersedes, onClose }: { supersedes?: Report; onClose: () => void }) {
   const toast = useToast();
   const { can } = usePermissions();
   const budgets = useQuery({
     queryKey: ['finance', 'budgets', 'active'],
     queryFn: () => unwrap(api.GET('/api/v1/staff/finance/budgets', { params: { query: { limit: 50 } } })),
-    enabled: can('finance.budget'),
+    enabled: can('finance.budget') && !supersedes,
   });
   const decisions = useQuery({
     queryKey: ['governance', 'publications', 'decisions'],
@@ -38,7 +39,7 @@ function Publish({ onClose }: { onClose: () => void }) {
       unwrap(
         api.POST('/api/v1/staff/finance/spending-reports', {
           body: {
-            ...(budgetId ? { budgetId } : {}),
+            ...(supersedes ? { supersedesId: supersedes.id } : budgetId ? { budgetId } : {}),
             ...(summaryEn.trim() ? { summaryEn: summaryEn.trim(), summaryAr: summaryAr.trim() } : {}),
             items: items.map((i) => ({
               textEn: i.textEn.trim(),
@@ -51,7 +52,11 @@ function Publish({ onClose }: { onClose: () => void }) {
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Published: everyone who pays a unit’s charges is told, tenants included.');
+        toast.show(
+          supersedes
+            ? 'Published: residents now read this one only; the earlier report stays here.'
+            : 'Published: everyone who pays a unit’s charges is told, tenants included.',
+        );
         onClose();
       },
     },
@@ -63,8 +68,12 @@ function Publish({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Publish where the fees went"
-      description="The budget’s figures by category as of today, frozen once published, and the improvements it paid for in your words. Never an expense, a vendor or a name."
+      title={supersedes ? `Supersede the ${supersedes.fiscalYear} report of ${supersedes.asOf}` : 'Publish where the fees went'}
+      description={
+        supersedes
+          ? 'A published report never changes: this newer one, of the same budget as of today, replaces it for residents. The earlier one stays readable here.'
+          : 'The budget’s figures by category as of today, frozen once published, and the improvements it paid for in your words. Never an expense, a vendor or a name.'
+      }
       onSubmit={() => summaryOk && itemsOk && publish.mutate(undefined)}
       footer={
         <>
@@ -76,7 +85,7 @@ function Publish({ onClose }: { onClose: () => void }) {
       }
     >
       <div className="form">
-        {budgets.data ? (
+        {budgets.data && !supersedes ? (
           <Field label="Budget" hint="The year under way’s when left out." error={fieldError(publish.error, 'budgetId')}>
             {(p) => (
               <Select {...p} value={budgetId} onChange={(e) => setBudgetId(e.target.value)}>
@@ -146,7 +155,12 @@ function Publish({ onClose }: { onClose: () => void }) {
 
 function Detail({ report, onClose }: { report: Report; onClose: () => void }) {
   return (
-    <Dialog open onClose={onClose} title={`${report.fiscalYear}, as of ${report.asOf}`} description={report.summaryEn ?? undefined}>
+    <Dialog
+      open
+      onClose={onClose}
+      title={`${report.fiscalYear}, as of ${report.asOf}${report.supersededById ? ' (superseded)' : ''}`}
+      description={report.summaryEn ?? undefined}
+    >
       <Card flush>
         <DataTable<Report['lines'][number]>
           rows={report.lines}
@@ -174,7 +188,8 @@ function Detail({ report, onClose }: { report: Report; onClose: () => void }) {
 /**
  * Where the fees went (ADR 0069): snapshots of an approved budget by
  * category, published to everyone who pays a unit’s charges — tenants as
- * well as owners — and frozen once published.
+ * well as owners — and frozen once published. A newer report of a budget
+ * supersedes its latest: residents read only that, the staff every one.
  */
 export default function SpendingReportsPage() {
   const { ready, can } = usePermissions();
@@ -185,6 +200,7 @@ export default function SpendingReportsPage() {
     enabled: allowed,
   });
   const [publishing, setPublishing] = useState(false);
+  const [superseding, setSuperseding] = useState<Report | null>(null);
   const [open, setOpen] = useState<Report | null>(null);
   if (ready && !allowed)
     return (
@@ -222,15 +238,32 @@ export default function SpendingReportsPage() {
                   </Button>
                 ),
               },
+              {
+                key: 'st',
+                header: 'Residents',
+                cell: (r) => (r.supersededById ? <Badge tone="beige">Superseded</Badge> : <Badge tone="green">Reading</Badge>),
+              },
               { key: 'o', header: 'As of', cell: (r) => r.asOf },
               { key: 's', header: 'Spent', cell: (r) => `${r.totals.spent} of ${r.totals.allowance} EGP (${r.totals.usedPct}%)` },
               { key: 'i', header: 'Improvements', cell: (r) => r.items.length },
               { key: 'p', header: 'Published', cell: (r) => formatDateTime(r.publishedAt) },
+              {
+                key: 'a',
+                header: '',
+                className: 'table__actions',
+                cell: (r) =>
+                  can('finance.reports') && !r.supersededById ? (
+                    <Button size="sm" onClick={() => setSuperseding(r)}>
+                      Supersede
+                    </Button>
+                  ) : null,
+              },
             ]}
           />
         </QueryState>
       </Card>
       {publishing ? <Publish onClose={() => setPublishing(false)} /> : null}
+      {superseding ? <Publish supersedes={superseding} onClose={() => setSuperseding(null)} /> : null}
       {open ? <Detail report={open} onClose={() => setOpen(null)} /> : null}
     </>
   );

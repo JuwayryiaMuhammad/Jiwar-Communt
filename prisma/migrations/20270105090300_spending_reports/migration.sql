@@ -7,7 +7,12 @@
 -- category's allowance and what was spent on it — never an expense, a
 -- vendor or a name — and the improvements it paid for, in the staff's
 -- words, each may cite the board's published decision. Published in one
--- act and never changed after: a later report is another snapshot.
+-- act and never changed after.
+--
+-- A newer report of the same budget supersedes the one before it: a
+-- budget's reports are one line, each naming the one it replaces (set at
+-- birth, so once), and residents read only its latest; the staff read them
+-- all. The first of a budget supersedes nothing, and only one may.
 -- ============================================================================
 
 CREATE TABLE "finance_spending_reports" (
@@ -19,15 +24,25 @@ CREATE TABLE "finance_spending_reports" (
     "as_of" DATE NOT NULL,
     "summary_en" TEXT,
     "summary_ar" TEXT,
+    "supersedes_id" UUID,
     "published_by" UUID NOT NULL,
     "published_at" TIMESTAMPTZ(3) NOT NULL DEFAULT now(),
     CONSTRAINT "finance_spending_reports_pkey" PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX "finance_spending_reports_tenant_id_id_key"
   ON "finance_spending_reports"("tenant_id", "id");
--- One snapshot of a budget a day.
-CREATE UNIQUE INDEX "finance_spending_reports_day_key"
-  ON "finance_spending_reports"("tenant_id", "budget_id", "as_of");
+-- What a successor references: a report of the same budget.
+CREATE UNIQUE INDEX "finance_spending_reports_budget_id_key"
+  ON "finance_spending_reports"("tenant_id", "budget_id", "id");
+-- A report is superseded once: the line never forks.
+CREATE UNIQUE INDEX "finance_spending_reports_supersedes_key"
+  ON "finance_spending_reports"("tenant_id", "supersedes_id")
+  WHERE "supersedes_id" IS NOT NULL;
+-- One first report a budget: every later one supersedes, so a budget has
+-- exactly one latest.
+CREATE UNIQUE INDEX "finance_spending_reports_first_key"
+  ON "finance_spending_reports"("tenant_id", "budget_id")
+  WHERE "supersedes_id" IS NULL;
 CREATE INDEX "finance_spending_reports_published_idx"
   ON "finance_spending_reports"("tenant_id", "published_at", "id");
 ALTER TABLE "finance_spending_reports"
@@ -38,9 +53,17 @@ ALTER TABLE "finance_spending_reports"
   ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT "finance_spending_reports_published_by_fkey"
   FOREIGN KEY ("tenant_id", "published_by") REFERENCES "accounts"("tenant_id", "id")
+  ON DELETE RESTRICT ON UPDATE RESTRICT,
+  -- The same tenant and the same budget: a report supersedes only its own
+  -- budget's.
+  ADD CONSTRAINT "finance_spending_reports_supersedes_fkey"
+  FOREIGN KEY ("tenant_id", "budget_id", "supersedes_id")
+  REFERENCES "finance_spending_reports"("tenant_id", "budget_id", "id")
   ON DELETE RESTRICT ON UPDATE RESTRICT;
 ALTER TABLE "finance_spending_reports" ADD CONSTRAINT "finance_spending_reports_dates"
   CHECK ("as_of" >= "starts_on");
+ALTER TABLE "finance_spending_reports" ADD CONSTRAINT "finance_spending_reports_supersedes_other"
+  CHECK ("supersedes_id" IS DISTINCT FROM "id");
 ALTER TABLE "finance_spending_reports" ADD CONSTRAINT "finance_spending_reports_summary"
   CHECK (("summary_en" IS NULL) = ("summary_ar" IS NULL)
      AND ("summary_en" IS NULL OR char_length("summary_en") BETWEEN 1 AND 2000)
@@ -116,7 +139,8 @@ CREATE TRIGGER finance_spending_report_items_no_truncate
   FOR EACH STATEMENT EXECUTE FUNCTION ticket_history_is_immutable();
 
 -- ----------------------------------------------------------------------------
--- Grants: a report, its lines and its items are only ever inserted.
+-- Grants: a report, its lines and its items are only ever inserted (so a
+-- report's supersedes_id is set once, at birth).
 -- ----------------------------------------------------------------------------
 REVOKE ALL ON "finance_spending_reports", "finance_spending_report_lines",
   "finance_spending_report_items" FROM jiwar_app;

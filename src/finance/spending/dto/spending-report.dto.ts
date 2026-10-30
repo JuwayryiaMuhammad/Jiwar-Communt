@@ -52,6 +52,17 @@ export class PublishSpendingReportDto {
 
   @ApiProperty({
     type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'The latest report of a budget this one supersedes: of its budget, which `budgetId` may only repeat. Residents then read only the new one.',
+  })
+  @IsOptional()
+  @IsUUID()
+  supersedesId?: string;
+
+  @ApiProperty({
+    type: String,
     required: false,
     minLength: SUMMARY.min,
     maxLength: SUMMARY.max,

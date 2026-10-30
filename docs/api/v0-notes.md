@@ -285,7 +285,7 @@ The full notes for the apps are in [`notes/money-and-unit.md`](notes/money-and-u
 - **Consumption.** `GET /units/{unitId}/consumption` and `…/consumption/benchmark` for whoever lives there (capabilities gain `consumptionView`; a landlord is `403 CONSUMPTION_NOT_ALLOWED`), over the household's own tenure; push `meter.unit_spike` (category `utilities`). A compound document kind `saving_tips`.
 - **Outages.** `GET /me/daily-brief` gains `outages`; `GET /me/outages` drops `note`.
 - **Fees.** `GET /units/{unitId}/fees`, `GET /invoices/{id}/comparison`; a billing plan's `descriptionEn/Ar`, `decisionPublicationId` on a new amount, `GET /staff/billing-plans/{id}/amount-changes`.
-- **Where the fees went.** `GET /finance/spending-reports`, `…/{id}` (every payer); `GET/POST /staff/finance/spending-reports`.
+- **Where the fees went.** `GET /finance/spending-reports`, `…/{id}` (every payer: each budget's latest; a superseded one `404 SPENDING_REPORT_NOT_FOUND {latestId}`); `GET/POST /staff/finance/spending-reports`, `GET …/{id}` (all, superseded too); a newer report names the latest it supersedes (`supersedesId`).
 - **Plan decisions.** Accepting or declining a request whose invoice no longer owes or was split is `409 PLAN_REQUEST_LAPSED`.
 - **Receipts.** `GET /payments/{id}/receipt`, `GET /staff/payments/{id}/receipt` (PDF, no-store).
 - **Plans.** `POST /invoices/{id}/plan-requests`, `GET /plan-requests/{id}`, `…/withdraw`; `GET /staff/plan-requests`, `…/{id}`, `…/accept`, `…/decline`; `GET/PATCH /staff/finance/plan-settings`. An invoice's detail gains `planOffer`.

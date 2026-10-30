@@ -73,6 +73,21 @@ export class SpendingReportView {
   summaryAr: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   publishedAt: Date;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The earlier report of the budget this one replaced.',
+  })
+  supersedesId: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description:
+      'The newer report that replaced this one; residents never read a superseded report, so theirs is always null.',
+  })
+  supersededById: string | null;
   @ApiProperty({ type: [SpendingLineView] })
   lines: SpendingLineView[];
   @ApiProperty({ type: SpendingTotalsView })

@@ -2141,7 +2141,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List where the fees went, newest first */
+        /** List where the fees went, newest first: each budget’s latest */
         get: operations["SpendingReportsController_list"];
         put?: never;
         post?: never;
@@ -2158,7 +2158,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a spending report */
+        /**
+         * Get a spending report
+         * @description A superseded report is not found, with `params.latestId`: the report that replaced it.
+         */
         get: operations["SpendingReportsController_get"];
         put?: never;
         post?: never;
@@ -13241,9 +13244,26 @@ export interface paths {
         put?: never;
         /**
          * Publish where the fees went: a budget as of today, by category
-         * @description One act: the figures are the budget’s as of the compound’s today, and the report never changes after. One a budget a day.
+         * @description One act: the figures are the budget’s as of the compound’s today, and the report never changes after. A budget’s first report supersedes nothing; every later one names the latest it supersedes (`supersedesId`), and residents then read only the new one.
          */
         post: operations["StaffSpendingReportsController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/spending-reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a spending report, superseded or not */
+        get: operations["StaffSpendingReportsController_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -33389,6 +33409,11 @@ export interface components {
             summaryAr?: string;
             /** @description With `summaryAr`, or neither. */
             summaryEn?: string;
+            /**
+             * Format: uuid
+             * @description The latest report of a budget this one supersedes: of its budget, which `budgetId` may only repeat. Residents then read only the new one.
+             */
+            supersedesId?: string;
         };
         PublishSuggestionDto: {
             textAr?: string | null;
@@ -36144,6 +36169,16 @@ export interface components {
             startsOn: string;
             summaryAr: string | null;
             summaryEn: string | null;
+            /**
+             * Format: uuid
+             * @description The newer report that replaced this one; residents never read a superseded report, so theirs is always null.
+             */
+            supersededById: string | null;
+            /**
+             * Format: uuid
+             * @description The earlier report of the budget this one replaced.
+             */
+            supersedesId: string | null;
             totals: components["schemas"]["SpendingTotalsView"];
         };
         SpendingReportViewList: {
@@ -61166,6 +61201,27 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpendingReportView"];
+                };
+            };
+        };
+    };
+    StaffSpendingReportsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

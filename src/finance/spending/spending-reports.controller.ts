@@ -36,7 +36,17 @@ export class StaffSpendingReportsController {
   })
   @ApiOkResponse({ type: ListOf(SpendingReportView) })
   async list(): Promise<ListResponse<SpendingReportView>> {
-    return bounded(await this.reports.list(), (r) => r);
+    return bounded(await this.reports.list(false), (r) => r);
+  }
+
+  @Get(':id')
+  @RequireAnyPermission('finance.reports', 'finance.budget')
+  @ApiOperation({
+    summary: 'Get a spending report, superseded or not',
+  })
+  @ApiOkResponse({ type: SpendingReportView })
+  get(@Param('id', parseId()) id: string): Promise<SpendingReport> {
+    return this.reports.get(id);
   }
 
   @Post()
@@ -45,7 +55,7 @@ export class StaffSpendingReportsController {
   @ApiOperation({
     summary: 'Publish where the fees went: a budget as of today, by category',
     description:
-      'One act: the figures are the budget’s as of the compound’s today, and the report never changes after. One a budget a day.',
+      'One act: the figures are the budget’s as of the compound’s today, and the report never changes after. A budget’s first report supersedes nothing; every later one names the latest it supersedes (`supersedesId`), and residents then read only the new one.',
   })
   @ApiCreatedResponse({ type: SpendingReportView })
   publish(@Body() dto: PublishSpendingReportDto): Promise<SpendingReport> {
@@ -64,18 +74,24 @@ export class SpendingReportsController {
   constructor(private readonly reports: SpendingReportsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List where the fees went, newest first' })
+  @ApiOperation({
+    summary: 'List where the fees went, newest first: each budget’s latest',
+  })
   @ApiOkResponse({ type: ListOf(SpendingReportView) })
   async list(): Promise<ListResponse<SpendingReportView>> {
     await this.reports.assertReader();
-    return bounded(await this.reports.list(), (r) => r);
+    return bounded(await this.reports.list(true), (r) => r);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a spending report' })
+  @ApiOperation({
+    summary: 'Get a spending report',
+    description:
+      'A superseded report is not found, with `params.latestId`: the report that replaced it.',
+  })
   @ApiOkResponse({ type: SpendingReportView })
   async get(@Param('id', parseId()) id: string): Promise<SpendingReport> {
     await this.reports.assertReader();
-    return this.reports.get(id);
+    return this.reports.getLatest(id);
   }
 }

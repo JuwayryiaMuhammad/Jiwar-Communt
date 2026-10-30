@@ -37,10 +37,15 @@ interface Table {
   linked?: boolean;
 }
 
-/** Each report its own day, so "one a budget a day" is never in the way. */
+/** Each report its own day, and each item its own position. */
 let reportDays = 0;
 let lineCategories = 0;
 let duesMonths = 0;
+/**
+ * A budget's latest report: each new one supersedes it, so "one first
+ * report a budget" is never in the way.
+ */
+const latestReport = new Map<string, string>();
 
 async function spendingReport(tx: TenantTxClient, own: Side, link: Side) {
   const id = newId();
@@ -53,9 +58,11 @@ async function spendingReport(tx: TenantTxClient, own: Side, link: Side) {
       fiscalYear: 2031,
       startsOn: dbDate('2031-01-01'),
       asOf: dbDate(`2031-0${1 + Math.floor(reportDays / 28)}-${d}`),
+      supersedesId: latestReport.get(link.budgetId) ?? null,
       publishedBy: link.staffId,
     },
   });
+  latestReport.set(link.budgetId, id);
   return id;
 }
 

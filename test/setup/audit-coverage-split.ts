@@ -874,6 +874,7 @@ export const FIELD_SAFETY_COVERAGE: readonly string[] = [
  */
 export const R11C1A_COVERAGE: readonly string[] = [
   'spending_report.published',
+  'spending_report.superseded',
   'plan_request.submitted',
   'plan_request.withdrawn',
   'plan_request.accepted',

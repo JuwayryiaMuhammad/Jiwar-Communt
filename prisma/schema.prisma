@@ -7030,22 +7030,26 @@ model InstalmentPlanRequest {
 /// A snapshot of a budget as of a day (ADR 0069): each category's allowance
 /// and spend, and the improvements it paid for. Published once, immutable.
 model FinanceSpendingReport {
-  id          String   @id @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
-  budgetId    String   @map("budget_id") @db.Uuid
-  fiscalYear  Int      @map("fiscal_year") @db.SmallInt
-  startsOn    DateTime @map("starts_on") @db.Date
-  asOf        DateTime @map("as_of") @db.Date
-  summaryEn   String?  @map("summary_en")
-  summaryAr   String?  @map("summary_ar")
-  publishedBy String   @map("published_by") @db.Uuid
-  publishedAt DateTime @default(now()) @map("published_at") @db.Timestamptz(3)
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  budgetId     String   @map("budget_id") @db.Uuid
+  fiscalYear   Int      @map("fiscal_year") @db.SmallInt
+  startsOn     DateTime @map("starts_on") @db.Date
+  asOf         DateTime @map("as_of") @db.Date
+  summaryEn    String?  @map("summary_en")
+  summaryAr    String?  @map("summary_ar")
+  /// The report of the same budget this one replaces (set once, at birth).
+  /// Unique (partial, migration-only): a report is superseded once; one
+  /// first report a budget.
+  supersedesId String?  @map("supersedes_id") @db.Uuid
+  publishedBy  String   @map("published_by") @db.Uuid
+  publishedAt  DateTime @default(now()) @map("published_at") @db.Timestamptz(3)
 
   lines FinanceSpendingReportLine[]
   items FinanceSpendingReportItem[]
 
   @@unique([tenantId, id])
-  @@unique([tenantId, budgetId, asOf], map: "finance_spending_reports_day_key")
+  @@unique([tenantId, budgetId, id], map: "finance_spending_reports_budget_id_key")
   @@index([tenantId, publishedAt, id], map: "finance_spending_reports_published_idx")
   @@map("finance_spending_reports")
 }

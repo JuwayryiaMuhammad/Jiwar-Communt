@@ -316,3 +316,12 @@ SLA، تقييمات، تعليقات، تاريخ الحالات، الإسنا
 
 - `GET /technician/meters/:id`: كود العداد ونوعه ومكانه، آخر قراءة حية، والمدى المتوقع للنهارده.
 - `POST /technician/meters/:id/readings { readOn, value, reset? }` (+ `Idempotency-Key`): يوم الكمبوند، قراءة واحدة في اليوم، والعداد التراكمي مابيرجعش لورا إلا لو `reset`. التفاصيل في [14-energy](14-energy.md).
+
+## السلامة في الموقع (ADR 0067)
+> بصلاحية `tickets.work`، على البلاغ اللي في إيده، من غير وردية.
+
+- **تصريح عمل:** `POST /technician/tickets/:id/permits { hazard, precautions, expiresAt }` للمخاطر اللي الفئة أو نوع الأصل محتاجينها؛ الشغل مايبدأش ولا يرجع من الإيقاف من غير تصريح ساري. التفاصيل في [17-field-safety](17-field-safety.md).
+- **تعليمات السلامة:** `GET /technician/tickets/:id/safety` و`POST …/safety/acknowledge { instructionId }` قبل البدء.
+- **إصابة أو قرب حادثة أو خطر:** `POST /technician/tickets/:id/incidents { type, severity, occurredAt, description, photoFileIds? }` (`injury | near_miss | hazard`، لحد ٥ صور `incident_photo`). المكان مكان البلاغ.
+- **SOS:** `POST /technician/tickets/:id/sos { type }` (`medical | fire | security | facilities`): الحرس في الوردية والمستجيبين والإدارة بيتبلغوا؛ واحد مفتوح لكل بلاغ (التكرار = ٢٠٠ بنفسه).
+- **طلب إلغاء:** `POST …/sos/cancel-request { reasonCode? }` بيتسجل مرة ويتبلغ للمستجيبين (`emergency.cancel_requested`)، لكن الاستغاثة **بتفضل مفتوحة** لحد ما مستجيب أو الإدارة يقفلوها (`POST /gate/emergencies/:id/resolve`) — اللي تحت ضغط ممكن يتجبر يلغي. الشاشة تقول "اتبعت طلب الإلغاء" مش "اتلغت".

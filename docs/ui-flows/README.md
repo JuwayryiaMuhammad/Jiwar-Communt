@@ -89,6 +89,11 @@
 | [02-staff-inbox](07-management-requests/02-staff-inbox.md) | صندوق وارد الموظفين والتصعيد |
 | [03-management-settings](07-management-requests/03-management-settings.md) | الموضوعات، ساعات العمل، إعدادات الطلبات |
 
+### 08 — المرافق
+| الملف | الفيتشر |
+|---|---|
+| [01-bans-and-usage](08-facilities/01-bans-and-usage.md) | منع حساب من الحجز (مرفق أو الكل) وإلغاء حجوزاته، وتقرير استخدام المرافق |
+
 ---
 
 ## كل تطبيق محتاج يقرا إيه

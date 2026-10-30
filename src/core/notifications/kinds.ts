@@ -1239,6 +1239,17 @@ export const NOTIFICATION_KINDS = {
     target: 'emergency',
     params: {},
   },
+  /**
+   * Who raised a staff SOS asked for it to be called off (ADR 0067): it
+   * stays open; a responder checks and resolves it. As critical as the SOS.
+   */
+  'emergency.cancel_requested': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'emergency',
+    params: {},
+  },
   // Gate services (ADR 0047). The new request is staff work, critical, like
   // a ticket assigned; what the requester is told is not. They carry the
   // kind and codes at most: never a name, a unit or what was written.

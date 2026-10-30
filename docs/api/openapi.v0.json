@@ -17727,6 +17727,22 @@
         ],
         "type": "string"
       },
+      "EmergencyTicketView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "number"
+        ],
+        "type": "object"
+      },
       "EmergencyTimelineStep": {
         "description": "`security_notified`: responders were told (with the report); `management_notified`: escalated; `family_on_the_way`: one entry per member who answered.",
         "enum": [
@@ -25515,12 +25531,19 @@
             "format": "uuid",
             "nullable": true,
             "type": "string"
+          },
+          "ticketId": {
+            "description": "A technician’s report: the ticket it came from (ADR 0067).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
           "emergencyId",
           "gateServiceRequestId",
-          "patrolNoteId"
+          "patrolNoteId",
+          "ticketId"
         ],
         "type": "object"
       },
@@ -49981,6 +50004,17 @@
       },
       "StaffEmergencyView": {
         "properties": {
+          "cancelRequestReason": {
+            "description": "`emergencyCancel`, or none.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelRequestedAt": {
+            "description": "Who raised it asked for it to be called off (ADR 0067): it stays open until a responder or the management resolves it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "closeNote": {
             "description": "The resolving staff’s note.",
             "nullable": true,
@@ -50034,7 +50068,7 @@
                 "$ref": "#/components/schemas/EmergencyLocationView"
               }
             ],
-            "description": "The unit it came from; null for a guard’s SOS.",
+            "description": "The unit it came from, or the unit of the ticket a technician raised it from; null for a guard’s SOS.",
             "nullable": true,
             "type": "object"
           },
@@ -50094,6 +50128,16 @@
               }
             ]
           },
+          "ticket": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyTicketView"
+              }
+            ],
+            "description": "A technician’s SOS (ADR 0067): the ticket in their hands it was raised from.",
+            "nullable": true,
+            "type": "object"
+          },
           "timeline": {
             "items": {
               "$ref": "#/components/schemas/TimelineStepView"
@@ -50116,6 +50160,7 @@
           "reportedAt",
           "location",
           "post",
+          "ticket",
           "reportedBy",
           "responderAccount",
           "responder",
@@ -50128,6 +50173,8 @@
           "familyNotified",
           "familyOnTheWay",
           "timeline",
+          "cancelRequestedAt",
+          "cancelRequestReason",
           "closeReason",
           "closeNote"
         ],
@@ -56770,6 +56817,60 @@
         "enum": [
           "available",
           "unavailable"
+        ],
+        "type": "string"
+      },
+      "TechnicianIncidentDto": {
+        "properties": {
+          "description": {
+            "description": "What happened, in the technician’s words.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "occurredAt": {
+            "description": "At most 30 days back, not more than 5 minutes ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Up to five `incident_photo` uploads of the caller’s.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentSeverity"
+              }
+            ],
+            "description": "`critical` is a critical push to the incidents’ keepers."
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TechnicianIncidentType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "severity",
+          "occurredAt",
+          "description"
+        ],
+        "type": "object"
+      },
+      "TechnicianIncidentType": {
+        "enum": [
+          "injury",
+          "near_miss",
+          "hazard"
         ],
         "type": "string"
       },
@@ -115007,6 +115108,64 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/technician/tickets/{id}/incidents": {
+      "post": {
+        "description": "With no shift: where is the ticket’s — its unit, or the ticket itself. TICKET_NOT_FOUND unless the ticket is in your hands. The incidents’ keepers are told; a critical one is a critical push.",
+        "operationId": "TechnicianIncidentsController_report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TechnicianIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardIncidentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report an injury, a near miss or a hazard from your ticket",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/technician/tickets/{id}/messages": {
       "get": {
         "operationId": "TechnicianTicketsController_messagesOf",
@@ -115607,6 +115766,123 @@
         "tags": [
           "maintenance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/sos": {
+      "post": {
+        "description": "From the ticket in your hands (TICKET_NOT_FOUND otherwise). The guards on shift, the responders and the management are told at once (a critical push); nobody’s family is. One open per ticket: a repeat answers 200 with the open one.",
+        "operationId": "TechnicianSosController_raise",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaiseSosDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": "The open one."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Raise an SOS from your ticket",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/sos/cancel-request": {
+      "post": {
+        "description": "With a code from `emergencyCancel` or none. Recorded once and told to the responders; it stays open until a responder or the management resolves it. EMERGENCY_NOT_FOUND when none of yours is open.",
+        "operationId": "TechnicianSosController_requestCancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelEmergencyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for the SOS you raised from this ticket to be called off",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

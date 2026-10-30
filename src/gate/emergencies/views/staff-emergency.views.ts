@@ -15,6 +15,14 @@ import {
   TimelineStepView,
 } from './emergency.views';
 
+/** The ticket a technician's SOS came from (ADR 0067). */
+export class EmergencyTicketView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: Number })
+  number: number;
+}
+
 /**
  * An emergency as the responders and the management see it (ADR 0047):
  * where, what, who reported it (a first name), who answers. Never a
@@ -34,7 +42,8 @@ export class StaffEmergencyView {
   @ApiProperty({
     type: EmergencyLocationView,
     nullable: true,
-    description: 'The unit it came from; null for a guard’s SOS.',
+    description:
+      'The unit it came from, or the unit of the ticket a technician raised it from; null for a guard’s SOS.',
   })
   location: EmergencyLocationView | null;
   @ApiProperty({
@@ -44,6 +53,13 @@ export class StaffEmergencyView {
       'A guard’s SOS (ADR 0053): the gate or the zone it was raised at; null for a unit’s emergency.',
   })
   post: PostView | null;
+  @ApiProperty({
+    type: EmergencyTicketView,
+    nullable: true,
+    description:
+      'A technician’s SOS (ADR 0067): the ticket in their hands it was raised from.',
+  })
+  ticket: EmergencyTicketView | null;
   @ApiProperty({ type: FirstNameRefView })
   reportedBy: FirstNameRefView;
   @ApiProperty({
@@ -88,6 +104,20 @@ export class StaffEmergencyView {
   familyOnTheWay: number;
   @ApiProperty({ type: [TimelineStepView] })
   timeline: TimelineStepView[];
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Who raised it asked for it to be called off (ADR 0067): it stays open until a responder or the management resolves it.',
+  })
+  cancelRequestedAt: Date | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: '`emergencyCancel`, or none.',
+  })
+  cancelRequestReason: string | null;
   @ApiProperty({ type: String, nullable: true })
   closeReason: string | null;
   @ApiProperty({
@@ -107,6 +137,7 @@ export class StaffEmergencyView {
       reportedAt: e.reportedAt,
       location: r.location && { ...r.location },
       post: r.post,
+      ticket: r.ticket && { ...r.ticket },
       reportedBy: firstNameRef(r.reporter),
       responderAccount: r.responder && firstNameRef(r.responder),
       responder: responderOf(r),
@@ -119,6 +150,8 @@ export class StaffEmergencyView {
       familyNotified: r.alerts.length,
       familyOnTheWay: r.alerts.filter((a) => a.onMyWayAt).length,
       timeline: timeline(r),
+      cancelRequestedAt: e.cancelRequestedAt,
+      cancelRequestReason: e.cancelRequestReason,
       closeReason: e.closeReason,
       closeNote: e.closeNote,
     };

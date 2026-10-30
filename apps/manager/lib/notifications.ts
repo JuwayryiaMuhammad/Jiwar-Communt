@@ -104,6 +104,7 @@ const TEXT: Record<string, (p: P) => string> = {
   'emergency.reported': (p) => `A ${words(p.emergencyType)} emergency was reported`,
   'emergency.escalated': (p) => `Nobody has answered a ${words(p.emergencyType)} emergency`,
   'emergency.cancelled': () => 'An emergency was cancelled by the household',
+  'emergency.cancel_requested': () => 'Who raised an SOS asked to call it off: check on them, then resolve it',
   'emergency.family_alert': () => 'An emergency was reported from your unit',
   'emergency.responder_on_the_way': (p) => `A responder is on the way, about ${p.etaMinutes} minutes`,
   'gate_service.requested': (p) => `A resident asked security for ${words(p.serviceKind)}`,

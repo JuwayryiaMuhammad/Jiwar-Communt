@@ -17393,6 +17393,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/tickets/{id}/incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report an injury, a near miss or a hazard from your ticket
+         * @description With no shift: where is the ticket’s — its unit, or the ticket itself. TICKET_NOT_FOUND unless the ticket is in your hands. The incidents’ keepers are told; a critical one is a critical push.
+         */
+        post: operations["TechnicianIncidentsController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/tickets/{id}/messages": {
         parameters: {
             query?: never;
@@ -17560,6 +17580,46 @@ export interface paths {
         put?: never;
         /** Acknowledge the current safety instructions */
         post: operations["TechnicianSafetyController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/sos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Raise an SOS from your ticket
+         * @description From the ticket in your hands (TICKET_NOT_FOUND otherwise). The guards on shift, the responders and the management are told at once (a critical push); nobody’s family is. One open per ticket: a repeat answers 200 with the open one.
+         */
+        post: operations["TechnicianSosController_raise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/sos/cancel-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for the SOS you raised from this ticket to be called off
+         * @description With a code from `emergencyCancel` or none. Recorded once and told to the responders; it stays open until a responder or the management resolves it. EMERGENCY_NOT_FOUND when none of yours is open.
+         */
+        post: operations["TechnicianSosController_requestCancel"];
         delete?: never;
         options?: never;
         head?: never;
@@ -25648,6 +25708,11 @@ export interface components {
          * @enum {string}
          */
         EmergencyStatus: "reported" | "on_the_way" | "arrived" | "resolved" | "cancelled";
+        EmergencyTicketView: {
+            /** Format: uuid */
+            id: string;
+            number: number;
+        };
         /**
          * @description `security_notified`: responders were told (with the report); `management_notified`: escalated; `family_on_the_way`: one entry per member who answered.
          * @enum {string}
@@ -27954,6 +28019,11 @@ export interface components {
             gateServiceRequestId: string | null;
             /** Format: uuid */
             patrolNoteId: string | null;
+            /**
+             * Format: uuid
+             * @description A technician’s report: the ticket it came from (ADR 0067).
+             */
+            ticketId: string | null;
         };
         IncidentNoteDto: {
             body: string;
@@ -35628,6 +35698,13 @@ export interface components {
             nextCursor: string | null;
         };
         StaffEmergencyView: {
+            /** @description `emergencyCancel`, or none. */
+            cancelRequestReason: string | null;
+            /**
+             * Format: date-time
+             * @description Who raised it asked for it to be called off (ADR 0067): it stays open until a responder or the management resolves it.
+             */
+            cancelRequestedAt: string | null;
             /** @description The resolving staff’s note. */
             closeNote: string | null;
             closeReason: string | null;
@@ -35646,7 +35723,7 @@ export interface components {
             id: string;
             /** @description The caller is its responder. */
             isMine: boolean;
-            /** @description The unit it came from; null for a guard’s SOS. */
+            /** @description The unit it came from, or the unit of the ticket a technician raised it from; null for a guard’s SOS. */
             location: components["schemas"]["EmergencyLocationView"] | null;
             minutesAway: number | null;
             /** @description A guard’s SOS (ADR 0053): the gate or the zone it was raised at; null for a unit’s emergency. */
@@ -35663,6 +35740,8 @@ export interface components {
             /** @description Responders told at the report. */
             respondersNotified: number;
             status: components["schemas"]["EmergencyStatus"];
+            /** @description A technician’s SOS (ADR 0067): the ticket in their hands it was raised from. */
+            ticket: components["schemas"]["EmergencyTicketView"] | null;
             timeline: components["schemas"]["TimelineStepView"][];
             type: components["schemas"]["EmergencyType"];
         };
@@ -37547,6 +37626,22 @@ export interface components {
          * @enum {string}
          */
         TechnicianAvailabilityState: "available" | "unavailable";
+        TechnicianIncidentDto: {
+            /** @description What happened, in the technician’s words. */
+            description: string;
+            /**
+             * Format: date-time
+             * @description At most 30 days back, not more than 5 minutes ahead.
+             */
+            occurredAt: string;
+            /** @description Up to five `incident_photo` uploads of the caller’s. */
+            photoFileIds?: string[];
+            /** @description `critical` is a critical push to the incidents’ keepers. */
+            severity: components["schemas"]["IncidentSeverity"];
+            type: components["schemas"]["TechnicianIncidentType"];
+        };
+        /** @enum {string} */
+        TechnicianIncidentType: "injury" | "near_miss" | "hazard";
         TechnicianMessageView: {
             body: string | null;
             /** Format: date-time */
@@ -66060,6 +66155,34 @@ export interface operations {
             };
         };
     };
+    TechnicianIncidentsController_report: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TechnicianIncidentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardIncidentView"];
+                };
+            };
+        };
+    };
     TechnicianTicketsController_messagesOf: {
         parameters: {
             query?: {
@@ -66374,6 +66497,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SafetyAcknowledgementView"];
+                };
+            };
+        };
+    };
+    TechnicianSosController_raise: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaiseSosDto"];
+            };
+        };
+        responses: {
+            /** @description The open one. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
+                };
+            };
+        };
+    };
+    TechnicianSosController_requestCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelEmergencyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
                 };
             };
         };

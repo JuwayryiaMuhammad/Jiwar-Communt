@@ -54,6 +54,7 @@ import { governanceVoiceCalls } from './no-store-governance-voice';
 import { assetCalls } from './no-store-assets';
 import { energyCalls } from './no-store-energy';
 import { facilityUsageCalls } from './no-store-facility-usage';
+import { technicianSafetyCalls } from './no-store-technician-safety';
 import { buildWorld, type World } from './world';
 
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
@@ -3169,6 +3170,7 @@ describe('API v0 — no-store', () => {
     ...assetCalls(() => w),
     ...energyCalls(() => w),
     ...facilityUsageCalls(() => w),
+    ...technicianSafetyCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

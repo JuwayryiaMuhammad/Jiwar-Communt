@@ -366,3 +366,9 @@ test('a work permit (ADR 0067) reads as its hazard and ticket, never its precaut
   );
   assert.equal(notificationHref(asked, (p) => p === 'tickets.dispatch'), '/maintenance/t1');
 });
+
+test('a request to call off an SOS (ADR 0067) says to check on who raised it, and opens the emergencies for who answers', () => {
+  const asked = n('emergency.cancel_requested', {}, 'emergency', 'e-1');
+  assert.equal(notificationText(asked), 'Who raised an SOS asked to call it off: check on them, then resolve it');
+  assert.equal(notificationHref(asked, (p) => p === 'emergencies.respond'), '/emergencies');
+});

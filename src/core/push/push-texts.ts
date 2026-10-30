@@ -1511,6 +1511,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ألغت الوحدة بلاغ الطوارئ. لا حاجة للتحرك.',
     },
   },
+  'emergency.cancel_requested': {
+    en: {
+      title: 'SOS: asked to stand down',
+      body: 'Who raised the SOS asked to call it off. It stays open: check on them, then resolve it.',
+    },
+    ar: {
+      title: 'طلب إلغاء استغاثة',
+      body: 'طلب صاحب الاستغاثة إلغاءها. تظل مفتوحة: اطمئن عليه ثم أغلقها.',
+    },
+  },
   'invoice.issued': {
     en: {
       title: 'New invoice',

@@ -156,6 +156,81 @@ export const FIELD_SAFETY_ROUTES: Row[] = [
       fields: [{ field: 'instructionId', code: 'INVALID_UUID' }],
     },
   }),
+  technician({
+    method: 'POST',
+    path: '/technician/tickets/{id}/sos',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({ type: 'medical' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { type: 'flood' },
+      fields: [
+        {
+          field: 'type',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['medical', 'fire', 'security', 'facilities'] },
+        },
+      ],
+    },
+    noStore: true,
+  }),
+  technician({
+    method: 'POST',
+    path: '/technician/tickets/{id}/sos/cancel-request',
+    // None of the caller's is open on B's ticket: not found.
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'EMERGENCY_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  }),
+  technician({
+    method: 'POST',
+    path: '/technician/tickets/{id}/incidents',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({
+        type: 'hazard',
+        severity: 'medium',
+        occurredAt: new Date().toISOString(),
+        description: 'Loose cable',
+      }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: {
+        type: 'fire',
+        severity: 'grave',
+        occurredAt: '2099-01-05T08:00:00',
+        description: '',
+      },
+      fields: [
+        {
+          field: 'type',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['injury', 'near_miss', 'hazard'] },
+        },
+        {
+          field: 'severity',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['low', 'medium', 'high', 'critical'] },
+        },
+        { field: 'occurredAt', code: 'INVALID_FORMAT' },
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 4000 },
+        },
+      ],
+    },
+    noStore: true,
+  }),
   keeper({
     method: 'PUT',
     path: '/maintenance/categories/{id}/permit-hazards',

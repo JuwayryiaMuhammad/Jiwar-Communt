@@ -306,6 +306,14 @@ describe('file purposes', () => {
       'energy.manage',
     ]);
   });
+
+  it('an incident’s photo is uploaded by a guard, the incidents’ keepers, or a technician from their ticket (ADR 0053, 0067)', () => {
+    expect(FILE_PURPOSES.incident_photo.uploaders).toEqual([
+      'gate.operate',
+      'incidents.manage',
+      'tickets.work',
+    ]);
+  });
 });
 
 describe('matchesSignature', () => {

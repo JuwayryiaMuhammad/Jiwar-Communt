@@ -7873,6 +7873,100 @@
           }
         },
         {
+          "name": "Raise an SOS from your ticket",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"type\": \"medical\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `type` | `medical` \\| `fire` \\| `security` \\| `facilities` | yes | Raised from the post of your open shift, a gate or a zone (ADR 0053). |\n\n**Responses:** 200, 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "tickets",
+                ":id",
+                "sos"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/sos",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask for the SOS you raised from this ticket to be called off",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string |  | From the closed list `emergencyCancel`; optional. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "tickets",
+                ":id",
+                "sos",
+                "cancel-request"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/sos/cancel-request",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get a unit’s emergency contacts",
           "request": {
             "description": "**Responses:** 200",
@@ -21212,6 +21306,55 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/reports/incidents/export"
+            }
+          }
+        },
+        {
+          "name": "Report an injury, a near miss or a hazard from your ticket",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"type\": \"injury\",\n  \"severity\": \"low\",\n  \"occurredAt\": \"2026-01-01T09:00:00.000Z\",\n  \"description\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string | yes | What happened, in the technician’s words. |\n| `occurredAt` | string (date-time) | yes | At most 30 days back, not more than 5 minutes ahead. |\n| `photoFileIds` | string (uuid)[] |  | Up to five `incident_photo` uploads of the caller’s. |\n| `severity` | `low` \\| `medium` \\| `high` \\| `critical` | yes | `critical` is a critical push to the incidents’ keepers. |\n| `type` | `injury` \\| `near_miss` \\| `hazard` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "tickets",
+                ":id",
+                "incidents"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/tickets/:id/incidents",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         }

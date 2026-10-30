@@ -117,11 +117,16 @@ export class SafetyCore {
   /**
    * One writer at a time for a unit's emergencies or requests of a kind, or
    * for a post's emergencies (`emergency-post`, a gate's or a zone's id: a
-   * guard's SOS, ADR 0053).
+   * guard's SOS, ADR 0053), or a ticket's (`emergency-ticket`: a
+   * technician's SOS, ADR 0067).
    */
   async lockUnit(
     tx: TenantTxClient,
-    scope: 'emergency-unit' | 'gate-service-unit' | 'emergency-post',
+    scope:
+      | 'emergency-unit'
+      | 'gate-service-unit'
+      | 'emergency-post'
+      | 'emergency-ticket',
     unitId: string,
   ): Promise<void> {
     await tx.$executeRaw`

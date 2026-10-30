@@ -28,6 +28,7 @@ import { dbNow } from '../db-clock';
 import { PlacesService } from '../places/places.service';
 import { DutyNamesReader } from '../roster/duty-names';
 import { PostView } from '../roster/views/roster.views';
+import { MaintenanceGatePort } from '../../maintenance';
 import { SafetyCore, type UnitLocation } from '../safety/safety-core';
 import { GateMedia, INCIDENT_MEDIA, type MediaView } from '../media/gate-media';
 import { ShiftsService } from '../shifts/shifts.service';
@@ -36,6 +37,14 @@ import { GuardIncidentView, StaffIncidentView } from './views/incident.views';
 /** A guard's report, replayed as the guard's view; the office's as its own. */
 export const GUARD_INCIDENT_RESOURCE = 'incident_guard';
 export const STAFF_INCIDENT_RESOURCE = 'incident_staff';
+/** A technician's report from their ticket (ADR 0067), replayed as the author's view. */
+export const TECHNICIAN_INCIDENT_RESOURCE = 'incident_technician';
+/** What a technician reports from a ticket (ADR 0067). */
+export const TECHNICIAN_INCIDENT_TYPES = [
+  'injury',
+  'near_miss',
+  'hazard',
+] as const;
 export const MAX_INCIDENT_PHOTOS = 5;
 /** Recordings an incident takes at its report (ADR 0056). */
 export const MAX_INCIDENT_MEDIA = 3;
@@ -61,6 +70,8 @@ export interface NewIncident {
   emergencyId?: string;
   gateServiceRequestId?: string;
   patrolNoteId?: string;
+  /** A technician's: the ticket in their hands it came from (ADR 0067). */
+  ticketId?: string;
 }
 
 /** An incident with what its views show, read in one transaction. */
@@ -123,6 +134,7 @@ export class IncidentsService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly names: DutyNamesReader,
     private readonly media: GateMedia,
+    private readonly tickets: MaintenanceGatePort,
   ) {}
 
   onModuleInit(): void {
@@ -136,13 +148,24 @@ export class IncidentsService implements OnModuleInit {
     this.idempotency.renderer(STAFF_INCIDENT_RESOURCE, async (id) =>
       StaffIncidentView.from(await load(id)),
     );
+    this.idempotency.renderer(TECHNICIAN_INCIDENT_RESOURCE, async (id) =>
+      GuardIncidentView.from(await load(id)),
+    );
   }
 
   // --------------------------------------------------------------------------
   // Reporting: a guard on shift, or the management
   // --------------------------------------------------------------------------
 
-  report(input: NewIncident, side: 'guard' | 'staff'): Promise<IncidentRecord> {
+  /**
+   * A technician (`tickets.work`) reports from the ticket in their hands
+   * (ADR 0067), with no shift: an injury, a near miss or a hazard; where is
+   * the ticket's — its unit, or the ticket itself for a common area's work.
+   */
+  report(
+    input: NewIncident,
+    side: 'guard' | 'staff' | 'technician',
+  ): Promise<IncidentRecord> {
     const photoIds = [...new Set(input.photoFileIds ?? [])];
     if (photoIds.length > MAX_INCIDENT_PHOTOS)
       throw invalid([
@@ -161,7 +184,18 @@ export class IncidentsService implements OnModuleInit {
           params: { max: MAX_INCIDENT_MEDIA },
         },
       ]);
-    if (!input.placeId && !input.unitCode)
+    if (side === 'technician') {
+      if (
+        !(TECHNICIAN_INCIDENT_TYPES as readonly string[]).includes(input.type)
+      )
+        throw invalid([
+          {
+            field: 'type',
+            code: FieldErrorCode.INVALID_VALUE,
+            params: { allowed: [...TECHNICIAN_INCIDENT_TYPES] },
+          },
+        ]);
+    } else if (!input.placeId && !input.unitCode)
       throw invalid([
         { field: 'placeId', code: FieldErrorCode.FIELD_REQUIRED },
         { field: 'unitCode', code: FieldErrorCode.FIELD_REQUIRED },
@@ -173,6 +207,12 @@ export class IncidentsService implements OnModuleInit {
       // for the report, or came first and the guard is refused.
       const shift =
         side === 'guard' ? await this.shifts.requireOnDutyLocked(tx) : null;
+      const ticket =
+        side === 'technician'
+          ? await this.tickets.ownTicket(tx, input.ticketId!, me)
+          : null;
+      if (side === 'technician' && !ticket)
+        throw appError.notFound(ErrorCode.TICKET_NOT_FOUND, 'Ticket not found');
       const now = await dbNow(tx);
       if (
         input.occurredAt.getTime() > now.getTime() + AHEAD_MS ||
@@ -190,7 +230,7 @@ export class IncidentsService implements OnModuleInit {
         input.placeId,
         'placeId',
       );
-      let unitId: string | null = null;
+      let unitId: string | null = ticket?.unitId ?? null;
       if (input.unitCode) {
         const unit = await this.community.unitByCode(tx, input.unitCode);
         if (!unit)
@@ -201,7 +241,11 @@ export class IncidentsService implements OnModuleInit {
       const id = newId();
       await this.idempotency.claim(tx, {
         type:
-          side === 'guard' ? GUARD_INCIDENT_RESOURCE : STAFF_INCIDENT_RESOURCE,
+          side === 'guard'
+            ? GUARD_INCIDENT_RESOURCE
+            : side === 'technician'
+              ? TECHNICIAN_INCIDENT_RESOURCE
+              : STAFF_INCIDENT_RESOURCE,
         id,
       });
       const number = await this.safety.nextNumber(tx, 'incident');
@@ -223,6 +267,7 @@ export class IncidentsService implements OnModuleInit {
           emergencyId: input.emergencyId ?? null,
           gateServiceRequestId: input.gateServiceRequestId ?? null,
           patrolNoteId: input.patrolNoteId ?? null,
+          ticketId: ticket?.id ?? null,
           createdAt: now,
         },
       });
@@ -275,6 +320,7 @@ export class IncidentsService implements OnModuleInit {
           emergencyId: input.emergencyId ?? null,
           gateServiceRequestId: input.gateServiceRequestId ?? null,
           patrolNoteId: input.patrolNoteId ?? null,
+          ...(ticket ? { ticketId: ticket.id } : {}),
         },
       });
       const keepers = await this.safety.holding(tx, 'incidents.manage');

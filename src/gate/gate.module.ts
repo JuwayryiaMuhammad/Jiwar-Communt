@@ -60,6 +60,7 @@ import { VehicleCountsService } from './vehicles/vehicle-counts.service';
 import { LogSearchController } from './entries/log-search.controller';
 import { LogSearchService } from './entries/log-search.service';
 import { CommunityGatePortModule } from '../community';
+import { MaintenanceGatePortModule } from '../maintenance';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
 import { AuthModule } from '../core/auth/auth.module';
@@ -157,6 +158,10 @@ import { EmergencyEscalation } from './emergencies/emergency-escalation';
 import { EmergencyRecords } from './emergencies/emergency-records';
 import { GuardSosController } from './emergencies/guard-sos.controller';
 import { GuardSosService } from './emergencies/guard-sos.service';
+import { SosCore } from './emergencies/sos-core';
+import { TechnicianSosController } from './emergencies/technician-sos.controller';
+import { TechnicianSosService } from './emergencies/technician-sos.service';
+import { TechnicianIncidentsController } from './incidents/technician-incidents.controller';
 import { BlocklistCore } from './blocklist/blocklist-core';
 import { BlocklistService } from './blocklist/blocklist.service';
 import { BlocklistMatcher } from './blocklist/blocklist-matcher';
@@ -330,6 +335,7 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     FilesModule,
     TenantSettingsModule,
     CommunityGatePortModule,
+    MaintenanceGatePortModule,
   ],
   controllers: [
     // The gate offline (ADR 0057).
@@ -384,12 +390,14 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     EmergenciesController,
     EmergencyRespondersController,
     GuardSosController,
+    TechnicianSosController,
     GateLockdownsController,
     StaffLockdownsController,
     StaffBlocklistController,
     GateBlocklistController,
     GateIdLookupController,
     GateIncidentsController,
+    TechnicianIncidentsController,
     StaffIncidentsController,
     UnitViolationsController,
     StaffViolationsController,
@@ -515,6 +523,8 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     EmergenciesService,
     EmergencyRespondersService,
     GuardSosService,
+    SosCore,
+    TechnicianSosService,
     LockdownCore,
     LockdownService,
     LockdownProvisioning,

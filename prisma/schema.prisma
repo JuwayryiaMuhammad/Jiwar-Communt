@@ -7327,6 +7327,12 @@ model Emergency {
   originGateId       String?         @map("origin_gate_id") @db.Uuid
   originPlaceId      String?         @map("origin_place_id") @db.Uuid
   originShiftId      String?         @map("origin_shift_id") @db.Uuid
+  /// A technician's SOS: the ticket in their hands it was raised from (ADR 0067).
+  originTicketId     String?         @map("origin_ticket_id") @db.Uuid
+  /// Who raised it asked for it to be called off (ADR 0067); it stays open until resolved.
+  cancelRequestedAt   DateTime?       @map("cancel_requested_at") @db.Timestamptz(3)
+  /// REASON_CODES.emergencyCancel, or none.
+  cancelRequestReason String?         @map("cancel_request_reason")
   type               EmergencyType
   status             EmergencyStatus @default(reported)
   reportedById       String          @map("reported_by_account_id") @db.Uuid
@@ -9173,6 +9179,8 @@ model Incident {
   emergencyId          String?   @map("emergency_id") @db.Uuid
   gateServiceRequestId String?   @map("gate_service_request_id") @db.Uuid
   patrolNoteId         String?   @map("patrol_note_id") @db.Uuid
+  /// The technician's ticket it came from (ADR 0067).
+  ticketId             String?   @map("ticket_id") @db.Uuid
   /// open | investigating | closed.
   status               String    @default("open")
   investigatorId       String?   @map("investigator_account_id") @db.Uuid

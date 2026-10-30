@@ -152,6 +152,31 @@ describe('Audit coverage — field safety', () => {
     expect(JSON.stringify(rows)).not.toContain('AUDIT-secret');
   });
 
+  it('emergency.cancel_requested — the status and the code; the SOS stays open', async () => {
+    const id = await f.assigned(s, await f.category(s));
+    const sos = (
+      await f
+        .http('post', `/technician/tickets/${id}/sos`, f.tech(s).token, {
+          type: 'medical',
+        })
+        .expect(201)
+    ).body as { id: string };
+    await f
+      .http(
+        'post',
+        `/technician/tickets/${id}/sos/cancel-request`,
+        f.tech(s).token,
+        { reasonCode: 'false_alarm' },
+      )
+      .expect(200);
+    expect(
+      await single(s.c, 'emergency.cancel_requested', sos.id),
+    ).toMatchObject({
+      actorId: f.tech(s).id,
+      metadata: { status: 'reported', reasonCode: 'false_alarm' },
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every field-safety entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

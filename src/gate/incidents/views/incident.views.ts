@@ -26,6 +26,13 @@ export class IncidentLinksView {
   gateServiceRequestId: string | null;
   @ApiProperty({ type: String, format: 'uuid', nullable: true })
   patrolNoteId: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'A technician’s report: the ticket it came from (ADR 0067).',
+  })
+  ticketId: string | null;
 }
 
 /**
@@ -119,6 +126,7 @@ export class GuardIncidentView {
         emergencyId: i.emergencyId,
         gateServiceRequestId: i.gateServiceRequestId,
         patrolNoteId: i.patrolNoteId,
+        ticketId: i.ticketId,
       },
       outcome: i.outcome,
       closedAt: i.closedAt,

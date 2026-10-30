@@ -2431,6 +2431,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   safety_instructions_text_length: {},
   safety_acknowledgements_sha_shape: {},
   safety_acknowledgements_cycle_range: {},
+  incidents_ticket_no_post: {},
+  emergencies_cancel_request: {
+    guarded:
+      'cancel_request_reason IS NULL is tested first; the list runs only on a value',
+  },
 };
 
 interface Check {

@@ -591,6 +591,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // like the unit's.
   emergencies_one_open_at_gate: null,
   emergencies_one_open_in_zone: null,
+  // A technician's SOS (ADR 0067): one open per ticket, under its lock.
+  emergencies_one_open_per_ticket: null,
   // The lockdown (ADR 0053): one live per scope is checked under the
   // compound's lockdown row first: a violation is a race.
   gate_lockdowns_tenant_id_id_key: null,

@@ -6,3 +6,6 @@ export {
   ResidentTicketSummary,
   type TicketSummary,
 } from './tickets/resident-ticket-summary';
+// What the gate reads of a technician's ticket, for their incidents and SOS (ADR 0067).
+export { MaintenanceGatePortModule } from './gate-port.module';
+export { MaintenanceGatePort, type TechnicianTicket } from './gate-port';

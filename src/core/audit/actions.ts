@@ -2037,6 +2037,9 @@ export const AUDIT_ACTIONS = {
     target: 'ticket_category',
   },
   'asset_type.permit_hazards_changed': { log: 'tenant', target: 'asset_type' },
+  // A technician asked for their SOS to be called off; it stays open.
+  // metadata: status, reasonCode.
+  'emergency.cancel_requested': { log: 'tenant', target: 'emergency' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

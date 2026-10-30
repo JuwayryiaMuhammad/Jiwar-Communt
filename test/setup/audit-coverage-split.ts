@@ -865,4 +865,5 @@ export const FIELD_SAFETY_COVERAGE: readonly string[] = [
   'safety_instruction.acknowledged',
   'ticket_category.permit_hazards_changed',
   'asset_type.permit_hazards_changed',
+  'emergency.cancel_requested',
 ];

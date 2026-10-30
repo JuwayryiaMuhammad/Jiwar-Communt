@@ -185,7 +185,8 @@ export const FILE_PURPOSES = {
   incident_photo: {
     types: IMAGE_TYPES,
     maxBytes: 5 * MB,
-    uploaders: ['gate.operate', 'incidents.manage'],
+    // A technician's from their ticket (ADR 0067).
+    uploaders: ['gate.operate', 'incidents.manage', 'tickets.work'],
   },
   // A banned or watched person's face (ADR 0053), for the guards on shift;
   // deleted with the entry's other personal data 30 days after it ends.

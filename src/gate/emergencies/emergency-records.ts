@@ -5,6 +5,7 @@ import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { dbNow } from '../db-clock';
 import { DutyNamesReader } from '../roster/duty-names';
 import { PostView } from '../roster/views/roster.views';
+import { MaintenanceGatePort } from '../../maintenance';
 import { SafetyCore, type UnitLocation } from '../safety/safety-core';
 
 export const EMERGENCY_RESOURCE = 'emergency';
@@ -40,6 +41,11 @@ export interface EmergencyRecord {
   location: UnitLocation | null;
   /** A guard's SOS: the gate or the zone it was raised at. */
   post: PostView | null;
+  /**
+   * A technician's SOS (ADR 0067): the ticket it was raised from; its unit,
+   * if it is in one, is the location.
+   */
+  ticket: { id: string; number: number } | null;
   reporter: Person;
   responder: Person | null;
   /** The phone the responder gives: their gate's, else the compound's. */
@@ -58,6 +64,7 @@ export class EmergencyRecords {
   constructor(
     private readonly core: SafetyCore,
     private readonly names: DutyNamesReader,
+    private readonly tickets: MaintenanceGatePort,
   ) {}
 
   /** The row, locked FOR UPDATE (a write on it) or FOR SHARE (a write beside it). */
@@ -111,9 +118,20 @@ export class EmergencyRecords {
         })
       ).map((a) => [a.id, a]),
     );
+    const tickets = await this.tickets.refs(
+      tx,
+      list.flatMap((e) => (e.originTicketId ? [e.originTicketId] : [])),
+    );
+    const unitOf = (e: Emergency) =>
+      e.unitId ??
+      (e.originTicketId ? tickets.get(e.originTicketId)?.unitId : null) ??
+      null;
     const locations = await this.core.locations(
       tx,
-      list.flatMap((e) => (e.unitId ? [e.unitId] : [])),
+      list.flatMap((e) => {
+        const unitId = unitOf(e);
+        return unitId ? [unitId] : [];
+      }),
     );
     const posts = list.map((e) => ({
       gateId: e.originGateId,
@@ -125,7 +143,7 @@ export class EmergencyRecords {
     for (const e of list)
       out.push({
         emergency: e,
-        location: e.unitId ? locations.get(e.unitId)! : null,
+        location: unitOf(e) ? (locations.get(unitOf(e)!) ?? null) : null,
         post:
           e.originGateId || e.originPlaceId
             ? PostView.of(
@@ -133,6 +151,12 @@ export class EmergencyRecords {
                 names,
               )
             : null,
+        ticket: e.originTicketId
+          ? {
+              id: e.originTicketId,
+              number: tickets.get(e.originTicketId)?.number ?? 0,
+            }
+          : null,
         reporter: people.get(e.reportedById)!,
         responder: e.responderId ? (people.get(e.responderId) ?? null) : null,
         responderPhone: e.responderId

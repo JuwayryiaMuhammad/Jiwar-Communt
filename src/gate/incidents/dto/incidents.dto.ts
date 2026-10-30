@@ -17,6 +17,7 @@ import {
   MAX_INCIDENT_MEDIA,
   MAX_INCIDENT_PHOTOS,
   NOTE,
+  TECHNICIAN_INCIDENT_TYPES,
 } from '../incidents.service';
 import { ToInstant } from '../../../core/common/validation/instant';
 
@@ -204,4 +205,56 @@ export class AcknowledgeIncidentDto {
   })
   @IsIn(ROLES, withParams({ allowed: [...ROLES] }))
   role: (typeof ROLES)[number];
+}
+
+const TECHNICIAN_TYPES = TECHNICIAN_INCIDENT_TYPES;
+
+/**
+ * A technician's report from the ticket in their hands (ADR 0067): an
+ * injury, a near miss or a hazard; where is the ticket's.
+ */
+export class TechnicianIncidentDto {
+  @ApiProperty({ enum: TECHNICIAN_TYPES, enumName: 'TechnicianIncidentType' })
+  @IsIn(TECHNICIAN_TYPES, withParams({ allowed: [...TECHNICIAN_TYPES] }))
+  type: (typeof TECHNICIAN_TYPES)[number];
+
+  @ApiProperty({
+    enum: SEVERITIES,
+    enumName: 'IncidentSeverity',
+    description: '`critical` is a critical push to the incidents’ keepers.',
+  })
+  @IsIn(SEVERITIES, withParams({ allowed: [...SEVERITIES] }))
+  severity: (typeof SEVERITIES)[number];
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'At most 30 days back, not more than 5 minutes ahead.',
+  })
+  @ToInstant()
+  @IsDate()
+  occurredAt: Date;
+
+  @ApiProperty({
+    type: String,
+    minLength: DESCRIPTION.min,
+    maxLength: DESCRIPTION.max,
+    description: 'What happened, in the technician’s words.',
+  })
+  @IsString()
+  @Length(DESCRIPTION.min, DESCRIPTION.max, withParams({ ...DESCRIPTION }))
+  description: string;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    required: false,
+    maxItems: MAX_INCIDENT_PHOTOS,
+    description: 'Up to five `incident_photo` uploads of the caller’s.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_INCIDENT_PHOTOS, withParams({ max: MAX_INCIDENT_PHOTOS }))
+  @IsUUID('all', { each: true })
+  photoFileIds?: string[];
 }

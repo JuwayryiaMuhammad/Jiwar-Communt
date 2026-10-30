@@ -5,6 +5,7 @@ import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
   FACILITIES_COVERAGE,
+  FIELD_SAFETY_COVERAGE,
   FILES_COVERAGE,
   FINANCE_COVERAGE,
   MAINTENANCE_COVERAGE,
@@ -328,13 +329,17 @@ describe('Audit coverage — emergencies and gate services', () => {
           ...FACILITIES_COVERAGE,
           ...VEHICLES_COVERAGE,
           ...FINANCE_COVERAGE,
+          ...FIELD_SAFETY_COVERAGE,
         ]).not.toContain(key);
       }
       expect([...covered].sort()).toEqual([...SAFETY_COVERAGE].sort());
-      // And nothing of the domain is left out of the list.
-      expect(
-        all.filter((k) => /^(place|emergency|gate_service)\./.test(k)).sort(),
-      ).toEqual([...SAFETY_COVERAGE].sort());
+      // And nothing of the domain is left out of the lists: ours, or field
+      // safety's for a technician's SOS (ADR 0067), whose ticket it sets up.
+      const ofDomain = (k: string) =>
+        /^(place|emergency|gate_service)\./.test(k);
+      expect(all.filter(ofDomain).sort()).toEqual(
+        [...SAFETY_COVERAGE, ...FIELD_SAFETY_COVERAGE.filter(ofDomain)].sort(),
+      );
     });
   });
 });

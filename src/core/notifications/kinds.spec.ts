@@ -13,7 +13,8 @@ import {
  * work (a ticket assigned to me, a gate approval request and its reversal),
  * the deletion notices (its confirmation, reminder and delay),
  * emergencies (ADR 0047), a child's unauthorized pickup or exit alone
- * (ADR 0054), and a field exception asked, answered or expired (ADR 0056).
+ * (ADR 0054), a field exception asked, answered or expired (ADR 0056),
+ * and a staff SOS asked to be called off (ADR 0067).
  */
 const CRITICAL_KINDS = [
   'account.deletion_delayed',
@@ -25,6 +26,8 @@ const CRITICAL_KINDS = [
   'child.unauthorized_pickup',
   // ADR 0047.
   'emergency.cancelled',
+  // ADR 0067.
+  'emergency.cancel_requested',
   'emergency.escalated',
   'emergency.family_alert',
   'emergency.reported',

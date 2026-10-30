@@ -65,6 +65,14 @@ describe('a day is one that exists', () => {
       1,
     ],
     ['const ok = (d: string) => /\\d{4}-\\d\\d-\\d\\d/.test(d);', 1],
+    // A period's bound that is any string at all.
+    ['class A { @IsOptional() @IsString() from?: string; }', 1],
+    ['class A { @IsString() since: string; }', 1],
+    ['class A { @IsString() @Length(10, 10) validUntil: string; }', 1],
+    [
+      'class A { @IsOptional() @ValidateIf((_, v) => v !== null) @IsString() effectiveTo?: string | null; }',
+      1,
+    ],
   ])('refuses %s', async (source, count) => {
     const found = await problems(source);
     expect(found).toHaveLength(count);
@@ -81,6 +89,11 @@ describe('a day is one that exists', () => {
     'class A { @ToInstant() @IsDate() validUntil: Date; }',
     'class A { @IsInstant() from: string; }',
     'class A { @IsString() @Matches(TIME) from: string; }',
+    // A bound that says what it is, or a field that only ends like one.
+    'class A { @IsOptional() @ToInstant() @IsDate() until?: Date; }',
+    'class A { @IsUUID() assignedTo: string; }',
+    'class AView { @ApiProperty({ type: String }) from: string; }',
+    'const INSTANT = /^(\\d{4}-\\d{2}-\\d{2})T(\\d{2}):(\\d{2})(?::(\\d{2})(?:\\.\\d{1,9})?)?(?:Z|[+-](\\d{2}):(\\d{2}))$/i;',
     'const MONTH = /^\\d{4}-(0[1-9]|1[0-2])$/;',
     'const TIME = /^([01]\\d|2[0-3]):[0-5]\\d$/;',
     'const INSTANT = /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(?::\\d{2})?(?:Z|[+-]\\d{2}:\\d{2})$/i;',

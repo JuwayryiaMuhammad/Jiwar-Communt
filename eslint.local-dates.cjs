@@ -17,7 +17,11 @@
 //     without @IsLocalDate();
 //   - @Matches(LOCAL_DATE), whatever the field is called (`from`, `to`,
 //     `validUntil`);
-//   - a regex of its own that takes a day (one that accepts 2026-01-01).
+//   - a regex of its own that takes a day (one that accepts 2026-01-01);
+//   - a period's bound (`from`, `to`, `since`, `until`, `…From`, `…To`,
+//     `…Since`, `…Until`) validated as a string and nothing more: it says
+//     what it is (@IsLocalDate(), @IsInstant() or @ToInstant(), a time of
+//     day's pattern) or it takes 2026-02-30 and 'soon' alike.
 // A deliberate exception is a LOCAL_DATE_ALLOWLIST entry, with its reason.
 
 const { relative } = require('node:path');
@@ -52,12 +56,22 @@ const LOCAL_DATE_ALLOWLIST = [
     reason:
       'checkBirthDate (src/core/common/identity-document.ts) reads the day through isRealDate before any lookup and answers INVALID_BIRTH_DATE {maxAge}, the code the apps show; a national ID carries its own birth date and ignores this one.',
   })),
+  ...['WeeklyWindowDto.from', 'WeeklyWindowDto.to'].map((name) => ({
+    file: 'src/gate/roster/dto/roster.dto.ts',
+    name,
+    reason:
+      'A time of day, HH:MM, not a day: checkWeeklySchedule (src/core/common/slots/weekly-schedule.ts) refuses any other as schedule.windows INVALID_FORMAT, the field the dashboards read; a pattern here would move that error to schedule.windows.0.from.',
+  })),
 ];
 
 /** Decorators that validate: a field with one of them is input. */
 const VALIDATOR =
   /^(Is[A-Z]\w*|Matches|Min|Max|(Min|Max)?Length|Array[A-Z]\w*|Validate(If|Nested|By)?|Allow|Equals|NotEquals|ExclusiveWith)$/;
 const DAY_FIELD = /(On|Date)$|^(date|day)$/;
+/** A period's bound, and the decorators that take any string at all. */
+const BOUND_FIELD = /^(from|to|since|until)$|(From|To|Since|Until)$/;
+const ANY_STRING =
+  /^(IsString|IsOptional|IsNotEmpty|IsDefined|ValidateIf|Length|MinLength|MaxLength)$/;
 /**
  * A day's shape takes a day and refuses what only looks like one: the day
  * without its dashes, letters in its places, other separators. A code or
@@ -113,6 +127,7 @@ function dayIsLocalDate(allowlist) {
         dayField: `A day field needs @IsLocalDate(): a pattern or @IsString() alone lets 2026-02-30 through. ${USE}; a deliberate exception goes in LOCAL_DATE_ALLOWLIST (eslint.local-dates.cjs) with its reason.`,
         dayPattern: `@Matches(LOCAL_DATE) checks a day's shape, not the day: 2026-02-30 passes. ${USE}.`,
         dayShape: `A day's shape of its own lets 2026-02-30 through. ${USE}; a deliberate exception goes in LOCAL_DATE_ALLOWLIST (eslint.local-dates.cjs) with its reason.`,
+        boundField: `A period's bound validated as a string alone takes 2026-02-30 and 'soon' alike: say what it is, @IsLocalDate() for a day, @IsInstant() or @ToInstant() for an instant (ADR 0025), a pattern for a time of day; a deliberate exception goes in LOCAL_DATE_ALLOWLIST (eslint.local-dates.cjs) with its reason.`,
       },
     },
     create(context) {
@@ -139,13 +154,23 @@ function dayIsLocalDate(allowlist) {
             )
               context.report({ node: d, messageId: 'dayPattern' });
           }
+          const owner = `${node.parent.parent?.id?.name ?? '?'}.${field}`;
           if (
             field &&
             DAY_FIELD.test(field) &&
             !names.includes('IsLocalDate') &&
-            !allowed.has(`${node.parent.parent?.id?.name ?? '?'}.${field}`)
+            !allowed.has(owner)
           )
             context.report({ node: node.key, messageId: 'dayField' });
+          else if (
+            field &&
+            BOUND_FIELD.test(field) &&
+            names.every(
+              (n) => !n || !VALIDATOR.test(n) || ANY_STRING.test(n),
+            ) &&
+            !allowed.has(owner)
+          )
+            context.report({ node: node.key, messageId: 'boundField' });
         },
         Literal(node) {
           if (!('regex' in node) || !node.regex || file === HOME) return;

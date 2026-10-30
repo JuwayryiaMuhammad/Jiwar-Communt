@@ -108,6 +108,14 @@ describe('Energy — utility outages', () => {
     expect(mine.map((o) => o.id)).toEqual(
       expect.arrayContaining([now.id, soon.id]),
     );
+    // The staff's note never reaches a resident, as it never rides a notice.
+    for (const o of mine)
+      expect(Object.keys(o).sort()).toEqual([
+        'endsAt',
+        'id',
+        'kind',
+        'startsAt',
+      ]);
     expect(
       (
         (await e.http('get', '/me/outages', elsewhere.token).expect(200))

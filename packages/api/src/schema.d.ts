@@ -29906,7 +29906,6 @@ export interface components {
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["OutageKind"];
-            note: string | null;
             /** Format: date-time */
             startsAt: string;
         };

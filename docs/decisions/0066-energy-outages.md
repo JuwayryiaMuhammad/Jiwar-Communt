@@ -85,7 +85,7 @@ The roles' list gives the compound manager the compound's electricity, water, ga
   - A new start is told once to those told (`utility_outage.rescheduled`). New buildings bring an announcement to their residents.
   - The end (`.ended`) and a cancellation (`.cancelled`) go to those told.
 - **Moves and closing:** a start moves only before it. An outage is cancelled before it starts, with an `outageCancel` reason, or ended after. Then it never changes (a trigger).
-- **The resident's side:** a resident reads the outages told to them that have not ended (`GET /me/outages`).
+- **The resident's side:** a resident reads the outages told to them that have not ended (`GET /me/outages`): the kind and the instants, never the note, which is the staff's text.
 - **Notices:** they carry the kind and the instants, never the note. They are in a new category, `utilities` (ADR 0036), so a resident chooses how they come, and not critical: quiet hours and a pause still hold them.
 
 ## Dates and instants

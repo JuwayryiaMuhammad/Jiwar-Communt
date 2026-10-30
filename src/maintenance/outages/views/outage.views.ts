@@ -62,7 +62,10 @@ export class OutageView {
   }
 }
 
-/** An outage as a resident told of it reads it (ADR 0066). */
+/**
+ * An outage as a resident told of it reads it (ADR 0066): the kind and the
+ * instants, never the staff's note, as its notices.
+ */
 export class MyOutageView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -72,8 +75,6 @@ export class MyOutageView {
   startsAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
   endsAt: Date;
-  @ApiProperty({ type: String, nullable: true })
-  note: string | null;
 
   static from(o: UtilityOutage): MyOutageView {
     return {
@@ -81,7 +82,6 @@ export class MyOutageView {
       kind: o.kind,
       startsAt: o.startsAt,
       endsAt: o.endsAt,
-      note: o.note,
     };
   }
 }

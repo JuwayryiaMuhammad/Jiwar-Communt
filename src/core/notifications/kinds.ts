@@ -1389,6 +1389,37 @@ export const NOTIFICATION_KINDS = {
    * Where the fees went (ADR 0069): a spending report, to everyone who
    * sees a unit's money — tenants as well as owners.
    */
+  /** A resident asked for a payment plan (ADR 0069): to the finance staff. */
+  'instalment_plan_request.submitted': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'plan_request',
+    params: {},
+  },
+  /** The requester's plan request accepted: the plan itself is announced too. */
+  'instalment_plan_request.accepted': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'plan_request',
+    params: {},
+  },
+  'instalment_plan_request.declined': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'plan_request',
+    params: { reasonCode: {} },
+  },
+  /** With an invoice's due-soon notice, once: it may be paid by a plan (ADR 0069). */
+  'invoice.plan_available': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'invoice',
+    params: {},
+  },
   'finance.spending_report_published': {
     priority: 'normal',
     category: 'finance',

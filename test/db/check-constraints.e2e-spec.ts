@@ -1157,6 +1157,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   finance_spending_report_lines_figures: {},
   finance_spending_report_lines_category: {},
   finance_spending_report_items_shape: {},
+  // Payment plans residents ask for (ADR 0069).
+  finance_settings_plan_max_months: {},
+  finance_settings_plan_offer_min_amount: {
+    guarded: 'plan_offer_min_amount IS NULL is tested first',
+  },
+  instalment_plan_requests_months: {},
+  instalment_plan_requests_decline_reason: {
+    guarded:
+      'decline_reason IS NULL is tested first; the list runs only on a value',
+  },
+  instalment_plan_requests_state_shape: {},
   // excluded is NOT NULL; the amount only under IS NULL.
   billing_plan_overrides_shape: {},
   billing_plan_overrides_amount: {

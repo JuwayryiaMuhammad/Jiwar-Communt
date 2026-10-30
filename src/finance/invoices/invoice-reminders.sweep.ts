@@ -1,4 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { addDays } from '../../core/common/slots/day-slots';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
@@ -17,7 +18,9 @@ const BATCH = 500;
  * sweep missed that day, until it falls due), and `overdue` once, the day
  * after. No late fee. "Once" is the invoice's notice row, claimed before
  * the notification is written; an invoice paid or credited meanwhile is
- * told nothing.
+ * told nothing. With `due_soon`, an invoice that still owes at least the
+ * compound's offer floor, and is neither an instalment nor split already,
+ * is offered a plan, once (`plan_offer`, ADR 0069).
  */
 @Injectable()
 export class InvoiceRemindersSweep implements OnModuleInit {
@@ -63,14 +66,33 @@ export class InvoiceRemindersSweep implements OnModuleInit {
       async (tx, tenantId, item) => {
         // Still owed and not disputed under the claim: a payment or a
         // dispute in between tells nothing.
-        const [{ owed }] = await tx.$queryRaw<{ owed: boolean }[]>`
+        const [{ owed, outstanding, splittable }] = await tx.$queryRaw<
+          { owed: boolean; outstanding: Prisma.Decimal; splittable: boolean }[]
+        >`
           SELECT (i.total - ${CREDITED_SQL} - ${PAID_SQL}) > 0
-                 AND NOT ${DISPUTED_SQL} AS owed
+                 AND NOT ${DISPUTED_SQL} AS owed,
+                 i.total - ${CREDITED_SQL} - ${PAID_SQL} AS outstanding,
+                 i.instalment_plan_id IS NULL
+                 AND NOT EXISTS (SELECT 1 FROM instalment_plans p
+                                  WHERE p.tenant_id = i.tenant_id AND p.invoice_id = i.id) AS splittable
             FROM invoices i WHERE i.id = ${item.id}::uuid`;
         if (!owed) return 0;
-        return (await this.notices.invoiceNotice(tx, tenantId, item, item.kind))
-          ? 1
-          : 0;
+        const told = await this.notices.invoiceNotice(
+          tx,
+          tenantId,
+          item,
+          item.kind,
+        );
+        if (told && item.kind === 'due_soon' && splittable) {
+          const { planOfferMinAmount } =
+            await tx.financeSettings.findUniqueOrThrow({
+              where: { tenantId },
+              select: { planOfferMinAmount: true },
+            });
+          if (planOfferMinAmount && !planOfferMinAmount.gt(outstanding))
+            await this.notices.invoiceNotice(tx, tenantId, item, 'plan_offer');
+        }
+        return told ? 1 : 0;
       },
     );
   }

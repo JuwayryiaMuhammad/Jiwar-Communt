@@ -1739,6 +1739,20 @@
         ],
         "type": "object"
       },
+      "AskPlanDto": {
+        "properties": {
+          "months": {
+            "description": "Over how many months; at most the compound’s most (`INVALID_VALUE` with `max`).",
+            "maximum": 24,
+            "minimum": 2,
+            "type": "number"
+          }
+        },
+        "required": [
+          "months"
+        ],
+        "type": "object"
+      },
       "AssetAreaRefView": {
         "properties": {
           "building": {
@@ -15898,6 +15912,18 @@
         ],
         "type": "object"
       },
+      "DeclinePlanRequestDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `planRequestDecline`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "DeferPlanDto": {
         "properties": {
           "reasonCode": {
@@ -27614,6 +27640,9 @@
             "nullable": true,
             "type": "object"
           },
+          "planOffer": {
+            "$ref": "#/components/schemas/InvoicePlanOfferView"
+          },
           "rescheduledBy": {
             "allOf": [
               {
@@ -27669,7 +27698,8 @@
           "dispute",
           "lines",
           "creditNotes",
-          "allocations"
+          "allocations",
+          "planOffer"
         ],
         "type": "object"
       },
@@ -27797,6 +27827,35 @@
           "descriptionEn",
           "descriptionAr",
           "amount"
+        ],
+        "type": "object"
+      },
+      "InvoicePlanOfferView": {
+        "properties": {
+          "maxMonths": {
+            "description": "The most months to ask for.",
+            "type": "number"
+          },
+          "mayRequest": {
+            "description": "A request may be made now: it still owes, is no instalment, is not split or disputed, and none waits.",
+            "type": "boolean"
+          },
+          "offered": {
+            "description": "The compound offers a plan for it: it owes at least the offer’s floor.",
+            "type": "boolean"
+          },
+          "pendingRequestId": {
+            "description": "The request that waits on it, if one does.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "mayRequest",
+          "offered",
+          "maxMonths",
+          "pendingRequestId"
         ],
         "type": "object"
       },
@@ -38402,6 +38461,143 @@
         ],
         "type": "object"
       },
+      "PlanRequestDeclineReason": {
+        "enum": [
+          "amount_too_small",
+          "too_many_months",
+          "payment_history",
+          "other"
+        ],
+        "type": "string"
+      },
+      "PlanRequestStatus": {
+        "description": "`lapsed`: it waited on an invoice that was paid, credited or split meanwhile.",
+        "enum": [
+          "pending",
+          "accepted",
+          "declined",
+          "withdrawn",
+          "lapsed"
+        ],
+        "type": "string"
+      },
+      "PlanRequestView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "declineReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlanRequestDeclineReason"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "months": {
+            "type": "number"
+          },
+          "planId": {
+            "description": "The instalment plan an accepted request made.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlanRequestStatus"
+              }
+            ],
+            "description": "`lapsed`: it waited on an invoice that was paid, credited or split meanwhile."
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "invoiceId",
+          "invoiceNumber",
+          "unitId",
+          "months",
+          "status",
+          "createdAt",
+          "decidedAt",
+          "declineReason",
+          "planId"
+        ],
+        "type": "object"
+      },
+      "PlanRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PlanRequestView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PlanSettingsDto": {
+        "properties": {
+          "planMaxMonths": {
+            "maximum": 24,
+            "minimum": 2,
+            "type": "number"
+          },
+          "planOfferMinAmount": {
+            "description": "From what an invoice still owes its due-soon notice offers a plan, EGP; null: never.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PlanSettingsView": {
+        "properties": {
+          "planMaxMonths": {
+            "type": "number"
+          },
+          "planOfferMinAmount": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "planMaxMonths",
+          "planOfferMinAmount"
+        ],
+        "type": "object"
+      },
       "PlanStatsView": {
         "properties": {
           "done": {
@@ -44131,6 +44327,7 @@
           "partner_request",
           "inspection_request",
           "works_inspection",
+          "instalment_plan_request",
           "vehicle_fine",
           "unit_violation",
           "board_appeal",
@@ -77821,6 +78018,62 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/invoices/{id}/plan-requests": {
+      "post": {
+        "operationId": "PlanRequestsController_ask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a payment plan on one of my invoices",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/lane-requests": {
       "post": {
         "description": "The guards on shift at that gate are told first. At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).",
@@ -96044,6 +96297,80 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/plan-requests/{id}": {
+      "get": {
+        "operationId": "PlanRequestsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a payment plan request of my unit",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/plan-requests/{id}/withdraw": {
+      "post": {
+        "operationId": "PlanRequestsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my payment plan request while it waits",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/platform/audit": {
       "get": {
         "operationId": "PlatformAuditController_auditLog",
@@ -102298,6 +102625,70 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/plan-settings": {
+      "get": {
+        "operationId": "StaffPlanRequestsController_getSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s payment plan terms for residents",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StaffPlanRequestsController_setSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the payment plan terms for residents",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/reports/aging": {
       "get": {
         "description": "Not yet due, 1–30, 31–60, 61–90 and 91 days or more; per unit or per building.",
@@ -108051,6 +108442,175 @@
           "permits"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/plan-requests": {
+      "get": {
+        "operationId": "StaffPlanRequestsController_queue",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PlanRequestStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List plan requests of a status, oldest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/plan-requests/{id}": {
+      "get": {
+        "operationId": "StaffPlanRequestsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a plan request",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/plan-requests/{id}/accept": {
+      "post": {
+        "description": "The same split as converting the invoice yourself (ADR 0048): the instalments add up to what it owes now.",
+        "operationId": "StaffPlanRequestsController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertToInstalmentsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept a plan request with the instalments you set",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/plan-requests/{id}/decline": {
+      "post": {
+        "operationId": "StaffPlanRequestsController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeclinePlanRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a plan request with a reason code",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },

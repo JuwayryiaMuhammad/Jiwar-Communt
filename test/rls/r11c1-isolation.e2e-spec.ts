@@ -5,7 +5,13 @@ import { BUDGET_CATEGORIES } from '../../src/finance/budgets/budget-rules';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { dbDate } from '../setup/compound-clock';
-import { activateBudget, budgetRow, planRow } from '../setup/finance-rows';
+import {
+  activateBudget,
+  batchRow,
+  budgetRow,
+  invoiceRow,
+  planRow,
+} from '../setup/finance-rows';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 
 /** What a seed needs from one compound. */
@@ -16,6 +22,7 @@ interface Side {
   planId: string;
   budgetId: string;
   reportId: string;
+  invoiceId: string;
 }
 
 /**
@@ -76,6 +83,26 @@ const TABLES: Table[] = [
     },
   },
   { table: 'finance_spending_reports', insert: spendingReport },
+  {
+    table: 'instalment_plan_requests',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      // Decided rows: one pending a invoice is never in the way.
+      await tx.instalmentPlanRequest.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          invoiceId: link.invoiceId,
+          unitId: link.unitId,
+          requestedById: link.staffId,
+          months: 3,
+          status: 'withdrawn',
+          decidedAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
   {
     table: 'finance_spending_report_lines',
     key: 'report_id',
@@ -144,6 +171,16 @@ describe('RLS isolation — money and the unit (ADR 0069)', () => {
         raisedById: staff.id,
       });
       s.reportId = await spendingReport(tx, s, s);
+      s.invoiceId = await invoiceRow(tx, {
+        tenantId,
+        unitId: unit.id,
+        batchId: await batchRow(tx, {
+          tenantId,
+          unitId: unit.id,
+          createdById: staff.id,
+        }),
+        createdById: staff.id,
+      });
     });
     return s;
   };

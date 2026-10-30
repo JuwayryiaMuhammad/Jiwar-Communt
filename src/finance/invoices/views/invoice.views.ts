@@ -140,6 +140,31 @@ export class InvoiceDisputeRefView {
   mine: boolean;
 }
 
+/** Whether the invoice may be paid by a plan the resident asks for (ADR 0069). */
+export class InvoicePlanOfferView {
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'A request may be made now: it still owes, is no instalment, is not split or disputed, and none waits.',
+  })
+  mayRequest: boolean;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'The compound offers a plan for it: it owes at least the offer’s floor.',
+  })
+  offered: boolean;
+  @ApiProperty({ type: Number, description: 'The most months to ask for.' })
+  maxMonths: number;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The request that waits on it, if one does.',
+  })
+  pendingRequestId: string | null;
+}
+
 export class InvoiceDetailView extends InvoiceView {
   @ApiProperty({ type: String, format: 'uuid' })
   batchId: string;
@@ -174,6 +199,8 @@ export class InvoiceDetailView extends InvoiceView {
   creditNotes: CreditNoteView[];
   @ApiProperty({ type: [InvoiceAllocationView] })
   allocations: InvoiceAllocationView[];
+  @ApiProperty({ type: InvoicePlanOfferView })
+  planOffer: InvoicePlanOfferView;
 }
 
 /** One issue: whom it reached, and how many invoices it made. */

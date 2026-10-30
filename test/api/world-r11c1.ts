@@ -2,7 +2,12 @@ import { newId } from '../../src/core/common/uuid';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
 import { dbDate } from '../setup/compound-clock';
-import { activateBudget, budgetRow } from '../setup/finance-rows';
+import {
+  activateBudget,
+  batchRow,
+  budgetRow,
+  invoiceRow,
+} from '../setup/finance-rows';
 import type { HttpHarness } from '../setup/http-app';
 import type { Side } from './world';
 
@@ -13,6 +18,8 @@ import type { Side } from './world';
 export interface R11c1World {
   /** A spending report of B's, of an approved budget of its own. */
   bSpendingReportId: string;
+  /** A plan request B's owner made on an invoice of B's home (withdrawn). */
+  bPlanRequestId: string;
 }
 
 export async function r11c1World(
@@ -44,7 +51,30 @@ export async function r11c1World(
           publishedBy: b.ids.manager,
         },
       });
-      return { bSpendingReportId };
+      const invoiceId = await invoiceRow(tx, {
+        tenantId: b.tenantId,
+        unitId: b.homeUnitId,
+        batchId: await batchRow(tx, {
+          tenantId: b.tenantId,
+          unitId: b.homeUnitId,
+          createdById: b.ids.manager,
+        }),
+        createdById: b.ids.manager,
+      });
+      const bPlanRequestId = newId();
+      await tx.instalmentPlanRequest.create({
+        data: {
+          id: bPlanRequestId,
+          tenantId: b.tenantId,
+          invoiceId,
+          unitId: b.homeUnitId,
+          requestedById: b.ids.owner,
+          months: 3,
+          status: 'withdrawn',
+          decidedAt: new Date(),
+        },
+      });
+      return { bSpendingReportId, bPlanRequestId };
     }),
   );
 }

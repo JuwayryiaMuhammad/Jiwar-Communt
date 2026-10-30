@@ -6,12 +6,18 @@ import type { NotificationKind } from '../../core/notifications/kinds';
 import { Notifier } from '../../core/notifications/notifier';
 
 /** What an invoice's notice says, once each. */
-export type InvoiceNoticeKind = 'issued' | 'due_soon' | 'overdue';
+export type InvoiceNoticeKind =
+  | 'issued'
+  | 'due_soon'
+  | 'overdue'
+  // A plan may pay it (ADR 0069): offered once, with its due-soon notice.
+  | 'plan_offer';
 
 const KIND: Record<InvoiceNoticeKind, NotificationKind> = {
   issued: 'invoice.issued',
   due_soon: 'invoice.due_soon',
   overdue: 'invoice.overdue',
+  plan_offer: 'invoice.plan_available',
 };
 
 /**

@@ -227,6 +227,143 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
     },
     invalid: 'none',
   },
+  // Payment plans residents ask for (ADR 0069).
+  {
+    method: 'POST',
+    path: '/invoices/{id}/plan-requests',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceId }),
+      body: () => ({ months: 3 }),
+      code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { months: 30 },
+      fields: [
+        {
+          field: 'months',
+          code: 'INVALID_NUMBER',
+          params: { min: 2, max: 24 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/plan-requests/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPlanRequestId }),
+      code: 'PLAN_REQUEST_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/plan-requests/{id}/withdraw',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPlanRequestId }),
+      code: 'PLAN_REQUEST_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/plan-requests',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'open' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: ['pending', 'accepted', 'declined', 'withdrawn', 'lapsed'],
+          },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/plan-requests/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPlanRequestId }),
+      code: 'PLAN_REQUEST_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/plan-requests/{id}/accept',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPlanRequestId }),
+      body: () => ({
+        instalments: [
+          { dueOn: '2099-01-01', amount: '1' },
+          { dueOn: '2099-02-01', amount: '1' },
+        ],
+      }),
+      code: 'PLAN_REQUEST_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/plan-requests/{id}/decline',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPlanRequestId }),
+      body: () => ({ reasonCode: 'other' }),
+      code: 'PLAN_REQUEST_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/finance/plan-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/finance/plan-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { planMaxMonths: 1 },
+      fields: [
+        {
+          field: 'planMaxMonths',
+          code: 'INVALID_NUMBER',
+          params: { min: 2, max: 24 },
+        },
+      ],
+    },
+  },
   // A receipt's PDF (ADR 0069), drawn on demand.
   {
     method: 'GET',

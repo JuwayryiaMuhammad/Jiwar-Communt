@@ -1544,6 +1544,11 @@ export const ErrorCode = {
   SPENDING_REPORT_NOT_FOUND: 'SPENDING_REPORT_NOT_FOUND',
   /** The budget has a report of this day already: one a day (409, params.reportId). */
   SPENDING_REPORT_EXISTS: 'SPENDING_REPORT_EXISTS',
+  PLAN_REQUEST_NOT_FOUND: 'PLAN_REQUEST_NOT_FOUND',
+  /** A request waits on this invoice already: one at a time (409, params.requestId). */
+  PLAN_REQUEST_PENDING: 'PLAN_REQUEST_PENDING',
+  /** Decided or withdrawn already (409, params.status). */
+  PLAN_REQUEST_NOT_PENDING: 'PLAN_REQUEST_NOT_PENDING',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

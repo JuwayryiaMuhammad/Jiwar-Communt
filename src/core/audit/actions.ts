@@ -932,6 +932,14 @@ export const AUDIT_ACTIONS = {
   // A spending report published (ADR 0069). metadata: budgetId, fiscalYear,
   // asOf, items (a count); never its words.
   'spending_report.published': { log: 'tenant', target: 'spending_report' },
+  // A resident's payment plan request (ADR 0069). metadata: unitId,
+  // invoiceId, months (asked) | planId (accepted) | reasonCode (declined).
+  'plan_request.submitted': { log: 'tenant', target: 'plan_request' },
+  'plan_request.withdrawn': { log: 'tenant', target: 'plan_request' },
+  'plan_request.accepted': { log: 'tenant', target: 'plan_request' },
+  'plan_request.declined': { log: 'tenant', target: 'plan_request' },
+  // The plan terms for residents: the most months, the offer's floor.
+  'finance.plan_settings_changed': { log: 'tenant', target: 'tenant' },
   // metadata: unitId, channel, method, amount, paidOn, receiptNumber, the
   // invoices named; never the transfer's or cheque's reference.
   'payment.recorded': { log: 'tenant', target: 'payment' },

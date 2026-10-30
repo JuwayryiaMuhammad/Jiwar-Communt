@@ -4,6 +4,7 @@ import { auditReaders } from '../setup/audit';
 import { R11C1A_COVERAGE } from '../setup/audit-coverage-split';
 import type { Compound } from '../setup/community';
 import { financeHelpers, type FinanceSetUp } from '../setup/finance';
+import { day } from '../setup/compound-clock';
 import {
   activateBudget,
   budgetLineRow,
@@ -80,6 +81,94 @@ describe('Audit coverage — money and the unit', () => {
         },
       });
       expect(JSON.stringify(row)).not.toContain(MARKER);
+    });
+  });
+
+  describe('payment plans residents ask for', () => {
+    const ask = async (token = s.owner.token) => {
+      const { invoiceId } = await f.issue(s.accountant, s.home.id);
+      const r = (
+        await f
+          .http('post', `/invoices/${invoiceId}/plan-requests`, token, {
+            months: 3,
+          })
+          .expect(201)
+      ).body as { id: string };
+      return { invoiceId, id: r.id };
+    };
+
+    it('plan_request.submitted, .withdrawn, .accepted and .declined — the unit, the invoice, the months, the plan, the reason code', async () => {
+      const one = await ask();
+      expect(await single(s.c, 'plan_request.submitted', one.id)).toMatchObject(
+        {
+          actorId: s.owner.id,
+          metadata: { unitId: s.home.id, invoiceId: one.invoiceId, months: 3 },
+        },
+      );
+      await f
+        .http('post', `/plan-requests/${one.id}/withdraw`, s.owner.token)
+        .expect(201);
+      expect(
+        (await single(s.c, 'plan_request.withdrawn', one.id)).metadata,
+      ).toEqual({ unitId: s.home.id, invoiceId: one.invoiceId });
+
+      const two = await ask();
+      const accepted = (
+        await f
+          .http(
+            'post',
+            `/staff/plan-requests/${two.id}/accept`,
+            s.accountant.token,
+            {
+              instalments: [
+                { dueOn: day(10), amount: '500' },
+                { dueOn: day(40), amount: '500' },
+              ],
+            },
+          )
+          .expect(201)
+      ).body as { planId: string };
+      expect(await single(s.c, 'plan_request.accepted', two.id)).toMatchObject({
+        actorId: s.accountant.id,
+        metadata: {
+          unitId: s.home.id,
+          invoiceId: two.invoiceId,
+          planId: accepted.planId,
+        },
+      });
+
+      const three = await ask();
+      await f
+        .http(
+          'post',
+          `/staff/plan-requests/${three.id}/decline`,
+          s.accountant.token,
+          { reasonCode: 'too_many_months' },
+        )
+        .expect(201);
+      expect(
+        (await single(s.c, 'plan_request.declined', three.id)).metadata,
+      ).toEqual({
+        unitId: s.home.id,
+        invoiceId: three.invoiceId,
+        reasonCode: 'too_many_months',
+      });
+    });
+
+    it('finance.plan_settings_changed — the most months and the offer’s floor, from and to', async () => {
+      await f
+        .http('patch', '/staff/finance/plan-settings', s.accountant.token, {
+          planMaxMonths: 12,
+          planOfferMinAmount: '2500',
+        })
+        .expect(200);
+      expect(
+        (await single(s.c, 'finance.plan_settings_changed', s.c.tenantId))
+          .changes,
+      ).toEqual({
+        planMaxMonths: { from: 6, to: 12 },
+        planOfferMinAmount: { from: null, to: '2500.00' },
+      });
     });
   });
 

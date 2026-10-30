@@ -872,4 +872,11 @@ export const FIELD_SAFETY_COVERAGE: readonly string[] = [
  * Money and the unit (ADR 0069): spending reports, plan requests and
  * collector visits. test/r11c1/audit-coverage.
  */
-export const R11C1A_COVERAGE: readonly string[] = ['spending_report.published'];
+export const R11C1A_COVERAGE: readonly string[] = [
+  'spending_report.published',
+  'plan_request.submitted',
+  'plan_request.withdrawn',
+  'plan_request.accepted',
+  'plan_request.declined',
+  'finance.plan_settings_changed',
+];

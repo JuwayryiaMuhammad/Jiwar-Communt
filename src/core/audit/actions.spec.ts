@@ -212,6 +212,7 @@ describe('audit catalog', () => {
         'safety_instruction',
         // ADR 0069.
         'spending_report',
+        'plan_request',
       ]).toContain(def.target);
     }
   });

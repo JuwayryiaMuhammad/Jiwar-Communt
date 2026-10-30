@@ -6628,6 +6628,10 @@ model FinanceSettings {
   fiscalYearStartMonth Int      @default(1) @map("fiscal_year_start_month") @db.SmallInt
   /// Days after the due date before a late-payment notice (ADR 0058): 0–60.
   lateNoticeCureDays   Int      @default(14) @map("late_notice_cure_days") @db.SmallInt
+  /// The most months a resident asks a payment plan over (ADR 0069): 2–24.
+  planMaxMonths        Int      @default(6) @map("plan_max_months") @db.SmallInt
+  /// From what an invoice still owes its due-soon notice offers a plan; null: never.
+  planOfferMinAmount   Decimal? @map("plan_offer_min_amount") @db.Decimal(12, 2)
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -6953,6 +6957,29 @@ model BillingPlan {
 
   @@unique([tenantId, id])
   @@map("billing_plans")
+}
+
+/// A payment plan a resident asked for on an invoice (ADR 0069): pending,
+/// then accepted (with the plan the staff set), declined or withdrawn once.
+model InstalmentPlanRequest {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  invoiceId      String    @map("invoice_id") @db.Uuid
+  unitId         String    @map("unit_id") @db.Uuid
+  requestedById  String    @map("requested_by") @db.Uuid
+  months         Int       @db.SmallInt
+  status         String    @default("pending")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastActivityAt DateTime  @default(now()) @map("last_activity_at") @db.Timestamptz(3)
+  decidedById    String?   @map("decided_by") @db.Uuid
+  decidedAt      DateTime? @map("decided_at") @db.Timestamptz(3)
+  declineReason  String?   @map("decline_reason")
+  planId         String?   @map("plan_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@index([tenantId, requestedById, lastActivityAt, id], map: "instalment_plan_requests_requester_idx")
+  @@index([tenantId, status, createdAt, id], map: "instalment_plan_requests_queue_idx")
+  @@map("instalment_plan_requests")
 }
 
 /// A snapshot of a budget as of a day (ADR 0069): each category's allowance

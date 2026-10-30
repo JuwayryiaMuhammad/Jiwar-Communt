@@ -578,6 +578,21 @@ export class InvoicesService implements OnModuleInit {
         releases: { select: { amount: true } },
       },
     });
+    // A plan the resident may ask for (ADR 0069), read as the request is.
+    const terms = await tx.financeSettings.findUniqueOrThrow({
+      where: { tenantId: invoice.tenantId },
+      select: { planMaxMonths: true, planOfferMinAmount: true },
+    });
+    const waiting = await tx.instalmentPlanRequest.findFirst({
+      where: { invoiceId: invoice.id, status: 'pending' },
+      select: { id: true },
+    });
+    const outstanding = money(view.outstanding);
+    const splittable =
+      !instalmentOf &&
+      !rescheduledBy &&
+      dispute?.status !== 'open' &&
+      outstanding.gt(ZERO);
     return {
       ...view,
       batchId: invoice.batchId,
@@ -625,6 +640,15 @@ export class InvoicesService implements OnModuleInit {
         reversed: a.payment.reversedBy !== null,
         createdAt: a.createdAt,
       })),
+      planOffer: {
+        mayRequest: splittable && !waiting,
+        offered:
+          splittable &&
+          terms.planOfferMinAmount !== null &&
+          !terms.planOfferMinAmount.gt(outstanding),
+        maxMonths: terms.planMaxMonths,
+        pendingRequestId: splittable ? (waiting?.id ?? null) : null,
+      },
     };
   }
 }

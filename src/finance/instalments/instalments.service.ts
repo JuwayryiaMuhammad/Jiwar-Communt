@@ -128,24 +128,7 @@ export class InstalmentsService implements OnModuleInit {
     invoiceId: string,
     dto: ConvertToInstalmentsDto,
   ): Promise<InstalmentPlanDetailView> {
-    const amounts = dto.instalments.map((i) => money(i.amount));
-    const shape: FieldError[] = [];
-    amounts.forEach((a, i) => {
-      if (a.lt(MIN_INSTALMENT))
-        shape.push({
-          field: `instalments.${i}.amount`,
-          code: FieldErrorCode.INVALID_VALUE,
-          params: { min: show(MIN_INSTALMENT) },
-        });
-    });
-    dto.instalments.forEach((inst, i) => {
-      if (i > 0 && inst.dueOn <= dto.instalments[i - 1].dueOn)
-        shape.push({
-          field: `instalments.${i}.dueOn`,
-          code: FieldErrorCode.DUE_DATES_NOT_INCREASING,
-        });
-    });
-    if (shape.length) throw invalid(shape);
+    checkInstalmentShape(dto);
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: INSTALMENT_PLAN_RESOURCE, id });
@@ -153,151 +136,166 @@ export class InstalmentsService implements OnModuleInit {
       const invoice = await tx.invoice.findUnique({ where: { id: invoiceId } });
       if (!invoice) throw invoiceNotFound();
       await this.access.lockUnits(tx, [invoice.unitId]);
-      const today = await this.invoices.today(tx);
-      const latest = addDays(today, MAX_INSTALMENT_DAYS);
-      const first = dto.instalments[0].dueOn;
-      const last = dto.instalments[dto.instalments.length - 1].dueOn;
-      if (first < today || last > latest)
-        throw invalid([
-          {
-            field:
-              first < today
-                ? 'instalments.0.dueOn'
-                : `instalments.${dto.instalments.length - 1}.dueOn`,
-            code: FieldErrorCode.DUE_ON_OUT_OF_RANGE,
-            params: { min: today, max: latest },
-          },
-        ]);
-      if (invoice.instalmentPlanId) throw notConvertible('instalment');
-      if ((await disputedAmong(tx, [invoiceId])).length)
-        throw invoiceDisputed();
-      if (await tx.instalmentPlan.findFirst({ where: { invoiceId } }))
-        throw notConvertible('has_plan');
-      const balance = (await balancesOf(tx, [invoiceId])).get(invoiceId)!;
-      if (balance.outstanding.lte(ZERO)) throw notConvertible('nothing_owed');
-      const total = amounts.reduce((sum, a) => sum.add(a), ZERO);
-      if (!total.eq(balance.outstanding))
-        throw appError.conflict(
-          ErrorCode.INSTALMENTS_DONT_ADD_UP,
-          'The instalments do not add up to what the invoice owes',
-          { params: { outstanding: show(balance.outstanding) } },
-        );
-
-      const tenantId = invoice.tenantId;
-      const count = amounts.length;
-      // COUNTER_ORDER: the plan, its credit note, then the invoices.
-      const planNumber = await takeNumbers(tx, tenantId, 'instalment_plan');
-      const noteNumber = await takeNumbers(tx, tenantId, 'credit_note');
-      const firstNumber = await takeNumbers(tx, tenantId, 'invoice', count);
-      const plan = await tx.instalmentPlan.create({
-        data: {
-          id,
-          tenantId,
-          number: planNumber,
-          unitId: invoice.unitId,
-          invoiceId,
-          instalmentCount: count,
-          total,
-          createdById: this.ctx.accountId,
-        },
-      });
-      const note = await tx.creditNote.create({
-        data: {
-          id: newId(),
-          tenantId,
-          number: noteNumber,
-          invoiceId,
-          amount: total,
-          reasonCode: 'instalment_plan',
-          instalmentPlanId: id,
-          createdById: this.ctx.accountId,
-        },
-      });
-      const originalNumber = formatNumber('invoice', invoice.number);
-      const rows = dto.instalments.map((inst, i) => ({
-        batchId: newId(),
-        invoiceId: newId(),
-        number: firstNumber + i,
-        position: i + 1,
-        dueOn: inst.dueOn,
-        amount: amounts[i],
-      }));
-      // Each instalment comes from its own one-unit batch (every invoice
-      // comes from a batch), carrying its own due date.
-      await tx.invoiceBatch.createMany({
-        data: rows.map((r) => ({
-          id: r.batchId,
-          tenantId,
-          target: 'unit' as const,
-          unitId: invoice.unitId,
-          kind: invoice.kind,
-          unitCount: 1,
-          issuedOn: asDate(today),
-          dueOn: asDate(r.dueOn),
-          createdById: this.ctx.accountId,
-        })),
-      });
-      await tx.invoice.createMany({
-        data: rows.map((r) => ({
-          id: r.invoiceId,
-          tenantId,
-          number: r.number,
-          batchId: r.batchId,
-          unitId: invoice.unitId,
-          kind: invoice.kind,
-          total: r.amount,
-          currency: CURRENCY,
-          issuedOn: asDate(today),
-          dueOn: asDate(r.dueOn),
-          createdById: this.ctx.accountId,
-          instalmentPlanId: id,
-          instalmentPosition: r.position,
-        })),
-      });
-      await tx.invoiceLine.createMany({
-        data: rows.map((r) => ({
-          id: newId(),
-          tenantId,
-          invoiceId: r.invoiceId,
-          position: 1,
-          descriptionEn: `Instalment ${r.position} of ${count} — ${originalNumber}`,
-          descriptionAr: `القسط ${r.position} من ${count} — ${originalNumber}`,
-          amount: r.amount,
-        })),
-      });
-      // The plan announces itself once: its instalments' `issued` notices
-      // are claimed here, so the minute sweep never sends them.
-      await this.notices.claimSilently(
-        tx,
-        tenantId,
-        rows.map((r) => r.invoiceId),
-        'issued',
-      );
-      await supersedeLive(tx, [invoice.unitId]);
-      // Credit the unit holds pays the first instalments at once.
-      await allocateUnit(tx, tenantId, invoice.unitId);
-      await this.audit.record(tx, {
-        action: 'instalment_plan.created',
-        targetId: id,
-        metadata: {
-          unitId: invoice.unitId,
-          invoiceId,
-          number: formatNumber('instalment_plan', planNumber),
-          count,
-          total: show(total),
-          creditNoteId: note.id,
-          firstDueOn: first,
-          lastDueOn: last,
-        },
-      });
-      await this.notices.toUnit(
-        tx,
-        invoice.unitId,
-        'instalment_plan.created',
-        id,
-      );
-      return this.detailIn(tx, plan);
+      return this.convertLocked(tx, invoice, dto, id);
     });
+  }
+
+  /**
+   * The split itself (ADR 0048), under the caller's account and the
+   * invoice's unit lock: also how a resident's plan request is accepted
+   * (ADR 0069), so both make the same plan by the same rules.
+   */
+  async convertLocked(
+    tx: TenantTxClient,
+    invoice: Invoice,
+    dto: ConvertToInstalmentsDto,
+    id: string,
+  ): Promise<InstalmentPlanDetailView> {
+    const invoiceId = invoice.id;
+    const amounts = dto.instalments.map((i) => money(i.amount));
+    const today = await this.invoices.today(tx);
+    const latest = addDays(today, MAX_INSTALMENT_DAYS);
+    const first = dto.instalments[0].dueOn;
+    const last = dto.instalments[dto.instalments.length - 1].dueOn;
+    if (first < today || last > latest)
+      throw invalid([
+        {
+          field:
+            first < today
+              ? 'instalments.0.dueOn'
+              : `instalments.${dto.instalments.length - 1}.dueOn`,
+          code: FieldErrorCode.DUE_ON_OUT_OF_RANGE,
+          params: { min: today, max: latest },
+        },
+      ]);
+    if (invoice.instalmentPlanId) throw notConvertible('instalment');
+    if ((await disputedAmong(tx, [invoiceId])).length) throw invoiceDisputed();
+    if (await tx.instalmentPlan.findFirst({ where: { invoiceId } }))
+      throw notConvertible('has_plan');
+    const balance = (await balancesOf(tx, [invoiceId])).get(invoiceId)!;
+    if (balance.outstanding.lte(ZERO)) throw notConvertible('nothing_owed');
+    const total = amounts.reduce((sum, a) => sum.add(a), ZERO);
+    if (!total.eq(balance.outstanding))
+      throw appError.conflict(
+        ErrorCode.INSTALMENTS_DONT_ADD_UP,
+        'The instalments do not add up to what the invoice owes',
+        { params: { outstanding: show(balance.outstanding) } },
+      );
+
+    const tenantId = invoice.tenantId;
+    const count = amounts.length;
+    // COUNTER_ORDER: the plan, its credit note, then the invoices.
+    const planNumber = await takeNumbers(tx, tenantId, 'instalment_plan');
+    const noteNumber = await takeNumbers(tx, tenantId, 'credit_note');
+    const firstNumber = await takeNumbers(tx, tenantId, 'invoice', count);
+    const plan = await tx.instalmentPlan.create({
+      data: {
+        id,
+        tenantId,
+        number: planNumber,
+        unitId: invoice.unitId,
+        invoiceId,
+        instalmentCount: count,
+        total,
+        createdById: this.ctx.accountId,
+      },
+    });
+    const note = await tx.creditNote.create({
+      data: {
+        id: newId(),
+        tenantId,
+        number: noteNumber,
+        invoiceId,
+        amount: total,
+        reasonCode: 'instalment_plan',
+        instalmentPlanId: id,
+        createdById: this.ctx.accountId,
+      },
+    });
+    const originalNumber = formatNumber('invoice', invoice.number);
+    const rows = dto.instalments.map((inst, i) => ({
+      batchId: newId(),
+      invoiceId: newId(),
+      number: firstNumber + i,
+      position: i + 1,
+      dueOn: inst.dueOn,
+      amount: amounts[i],
+    }));
+    // Each instalment comes from its own one-unit batch (every invoice
+    // comes from a batch), carrying its own due date.
+    await tx.invoiceBatch.createMany({
+      data: rows.map((r) => ({
+        id: r.batchId,
+        tenantId,
+        target: 'unit' as const,
+        unitId: invoice.unitId,
+        kind: invoice.kind,
+        unitCount: 1,
+        issuedOn: asDate(today),
+        dueOn: asDate(r.dueOn),
+        createdById: this.ctx.accountId,
+      })),
+    });
+    await tx.invoice.createMany({
+      data: rows.map((r) => ({
+        id: r.invoiceId,
+        tenantId,
+        number: r.number,
+        batchId: r.batchId,
+        unitId: invoice.unitId,
+        kind: invoice.kind,
+        total: r.amount,
+        currency: CURRENCY,
+        issuedOn: asDate(today),
+        dueOn: asDate(r.dueOn),
+        createdById: this.ctx.accountId,
+        instalmentPlanId: id,
+        instalmentPosition: r.position,
+      })),
+    });
+    await tx.invoiceLine.createMany({
+      data: rows.map((r) => ({
+        id: newId(),
+        tenantId,
+        invoiceId: r.invoiceId,
+        position: 1,
+        descriptionEn: `Instalment ${r.position} of ${count} — ${originalNumber}`,
+        descriptionAr: `القسط ${r.position} من ${count} — ${originalNumber}`,
+        amount: r.amount,
+      })),
+    });
+    // The plan announces itself once: its instalments' `issued` notices
+    // are claimed here, so the minute sweep never sends them.
+    await this.notices.claimSilently(
+      tx,
+      tenantId,
+      rows.map((r) => r.invoiceId),
+      'issued',
+    );
+    await supersedeLive(tx, [invoice.unitId]);
+    // Credit the unit holds pays the first instalments at once.
+    await allocateUnit(tx, tenantId, invoice.unitId);
+    await this.audit.record(tx, {
+      action: 'instalment_plan.created',
+      targetId: id,
+      metadata: {
+        unitId: invoice.unitId,
+        invoiceId,
+        number: formatNumber('instalment_plan', planNumber),
+        count,
+        total: show(total),
+        creditNoteId: note.id,
+        firstDueOn: first,
+        lastDueOn: last,
+      },
+    });
+    await this.notices.toUnit(
+      tx,
+      invoice.unitId,
+      'instalment_plan.created',
+      id,
+    );
+    return this.detailIn(tx, plan);
   }
 
   /**
@@ -579,4 +577,25 @@ export class InstalmentsService implements OnModuleInit {
       };
     });
   }
+}
+
+/** The instalments' own shape (ADR 0048): each at least the minimum, due dates rising. */
+export function checkInstalmentShape(dto: ConvertToInstalmentsDto): void {
+  const shape: FieldError[] = [];
+  dto.instalments.forEach((inst, i) => {
+    if (money(inst.amount).lt(MIN_INSTALMENT))
+      shape.push({
+        field: `instalments.${i}.amount`,
+        code: FieldErrorCode.INVALID_VALUE,
+        params: { min: show(MIN_INSTALMENT) },
+      });
+  });
+  dto.instalments.forEach((inst, i) => {
+    if (i > 0 && inst.dueOn <= dto.instalments[i - 1].dueOn)
+      shape.push({
+        field: `instalments.${i}.dueOn`,
+        code: FieldErrorCode.DUE_DATES_NOT_INCREASING,
+      });
+  });
+  if (shape.length) throw invalid(shape);
 }

@@ -32,6 +32,13 @@ import { BillingPlansController } from './billing-plans/billing-plans.controller
 import { BillingPlansService } from './billing-plans/billing-plans.service';
 import { FeesController } from './fees/fees.controller';
 import { FeesService } from './fees/fees.service';
+import {
+  PlanRequestsController,
+  StaffPlanRequestsController,
+} from './plan-requests/plan-requests.controller';
+import { PlanRequestsService } from './plan-requests/plan-requests.service';
+import { PlanSettingsService } from './plan-requests/plan-settings.service';
+import { ResidentPlanItems } from './plan-requests/resident-plan-items';
 import { ReceiptPdfService } from './payments/receipt-pdf.service';
 import {
   SpendingReportsController,
@@ -124,6 +131,8 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     ReportsController,
     BillingPlansController,
     FeesController,
+    PlanRequestsController,
+    StaffPlanRequestsController,
     StaffSpendingReportsController,
     SpendingReportsController,
     StaffPaymentsController,
@@ -143,6 +152,9 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     FinanceProvisioning,
     FinanceAccess,
     FeesService,
+    PlanRequestsService,
+    PlanSettingsService,
+    ResidentPlanItems,
     ReceiptPdfService,
     SpendingReportsService,
     BudgetsService,

@@ -4841,6 +4841,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invoices/{id}/plan-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask for a payment plan on one of my invoices */
+        post: operations["PlanRequestsController_ask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/lane-requests": {
         parameters: {
             query?: never;
@@ -10627,6 +10644,40 @@ export interface paths {
         patch: operations["PlacesController_update"];
         trace?: never;
     };
+    "/api/v1/plan-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a payment plan request of my unit */
+        get: operations["PlanRequestsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plan-requests/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my payment plan request while it waits */
+        post: operations["PlanRequestsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/audit": {
         parameters: {
             query?: never;
@@ -12787,6 +12838,24 @@ export interface paths {
         patch: operations["LateNoticesController_update"];
         trace?: never;
     };
+    "/api/v1/staff/finance/plan-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s payment plan terms for residents */
+        get: operations["StaffPlanRequestsController_getSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change the payment plan terms for residents */
+        patch: operations["StaffPlanRequestsController_setSettings"];
+        trace?: never;
+    };
     "/api/v1/staff/finance/reports/aging": {
         parameters: {
             query?: never;
@@ -14734,6 +14803,77 @@ export interface paths {
          * @description The guard applies the new rules from the next entry; permits already approved keep their own dates and hours.
          */
         patch: operations["PermitSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/plan-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List plan requests of a status, oldest first */
+        get: operations["StaffPlanRequestsController_queue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/plan-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a plan request */
+        get: operations["StaffPlanRequestsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/plan-requests/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept a plan request with the instalments you set
+         * @description The same split as converting the invoice yourself (ADR 0048): the instalments add up to what it owes now.
+         */
+        post: operations["StaffPlanRequestsController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/plan-requests/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a plan request with a reason code */
+        post: operations["StaffPlanRequestsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/readiness-items": {
@@ -20677,6 +20817,10 @@ export interface components {
             /** Format: uuid */
             occupancyId: string;
         };
+        AskPlanDto: {
+            /** @description Over how many months; at most the compound’s most (`INVALID_VALUE` with `max`). */
+            months: number;
+        };
         AssetAreaRefView: {
             building: string | null;
             code: string;
@@ -25340,6 +25484,10 @@ export interface components {
             /** @description From the closed list `partnerRequestDecline`. */
             reasonCode: string;
         };
+        DeclinePlanRequestDto: {
+            /** @description From the closed list `planRequestDecline`. */
+            reasonCode: string;
+        };
         DeferPlanDto: {
             /** @description From `planDefer`. */
             reasonCode: string;
@@ -28861,6 +29009,7 @@ export interface components {
             paid: string;
             /** @description The billing plan and period of a recurring invoice. */
             plan: components["schemas"]["InvoicePlanView"] | null;
+            planOffer: components["schemas"]["InvoicePlanOfferView"];
             /** @description On an invoice an instalment plan took over. */
             rescheduledBy: components["schemas"]["InvoiceRescheduledByView"] | null;
             /** @enum {string} */
@@ -28909,6 +29058,19 @@ export interface components {
             descriptionAr: string;
             descriptionEn: string;
             position: number;
+        };
+        InvoicePlanOfferView: {
+            /** @description The most months to ask for. */
+            maxMonths: number;
+            /** @description A request may be made now: it still owes, is no instalment, is not split or disputed, and none waits. */
+            mayRequest: boolean;
+            /** @description The compound offers a plan for it: it owes at least the offer’s floor. */
+            offered: boolean;
+            /**
+             * Format: uuid
+             * @description The request that waits on it, if one does.
+             */
+            pendingRequestId: string | null;
         };
         InvoicePlanView: {
             /** Format: uuid */
@@ -32316,6 +32478,49 @@ export interface components {
             data: components["schemas"]["PlanOccurrenceView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        PlanRequestDeclineReason: "amount_too_small" | "too_many_months" | "payment_history" | "other";
+        /**
+         * @description `lapsed`: it waited on an invoice that was paid, credited or split meanwhile.
+         * @enum {string}
+         */
+        PlanRequestStatus: "pending" | "accepted" | "declined" | "withdrawn" | "lapsed";
+        PlanRequestView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            declineReason: components["schemas"]["PlanRequestDeclineReason"] | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            invoiceId: string;
+            /** @example INV-000123 */
+            invoiceNumber: string;
+            months: number;
+            /**
+             * Format: uuid
+             * @description The instalment plan an accepted request made.
+             */
+            planId: string | null;
+            /** @description `lapsed`: it waited on an invoice that was paid, credited or split meanwhile. */
+            status: components["schemas"]["PlanRequestStatus"];
+            /** Format: uuid */
+            unitId: string;
+        };
+        PlanRequestViewList: {
+            data: components["schemas"]["PlanRequestView"][];
+            nextCursor: string | null;
+        };
+        PlanSettingsDto: {
+            planMaxMonths?: number;
+            /** @description From what an invoice still owes its due-soon notice offers a plan, EGP; null: never. */
+            planOfferMinAmount?: string | null;
+        };
+        PlanSettingsView: {
+            planMaxMonths: number;
+            planOfferMinAmount: string | null;
+        };
         PlanStatsView: {
             done: number;
             /** @description Done by the due date plus the grace. */
@@ -34128,7 +34333,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "inspection_request" | "works_inspection" | "vehicle_fine" | "unit_violation" | "board_appeal" | "decision_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
+        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "inspection_request" | "works_inspection" | "instalment_plan_request" | "vehicle_fine" | "unit_violation" | "board_appeal" | "decision_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
         ResidentItemView: {
             /** @description Where its appeal stands (the appeals list); null elsewhere. */
             appeal: components["schemas"]["ItemAppealView"] | null;
@@ -47148,6 +47353,34 @@ export interface operations {
             };
         };
     };
+    PlanRequestsController_ask: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskPlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanRequestView"];
+                };
+            };
+        };
+    };
     GateServicesController_lane: {
         parameters: {
             query?: never;
@@ -56630,6 +56863,48 @@ export interface operations {
             };
         };
     };
+    PlanRequestsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanRequestView"];
+                };
+            };
+        };
+    };
+    PlanRequestsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanRequestView"];
+                };
+            };
+        };
+    };
     PlatformAuditController_auditLog: {
         parameters: {
             query?: {
@@ -59960,6 +60235,48 @@ export interface operations {
             };
         };
     };
+    StaffPlanRequestsController_getSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanSettingsView"];
+                };
+            };
+        };
+    };
+    StaffPlanRequestsController_setSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanSettingsView"];
+                };
+            };
+        };
+    };
     ReportsController_aging: {
         parameters: {
             query?: {
@@ -62750,6 +63067,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PermitSettingsResponse"];
+                };
+            };
+        };
+    };
+    StaffPlanRequestsController_queue: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["PlanRequestStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanRequestViewList"];
+                };
+            };
+        };
+    };
+    StaffPlanRequestsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanRequestView"];
+                };
+            };
+        };
+    };
+    StaffPlanRequestsController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConvertToInstalmentsDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanRequestView"];
+                };
+            };
+        };
+    };
+    StaffPlanRequestsController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclinePlanRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanRequestView"];
                 };
             };
         };

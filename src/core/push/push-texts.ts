@@ -1571,6 +1571,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم استلام دفعة لوحدتك. الإيصال متاح في التطبيق.',
     },
   },
+  'instalment_plan_request.submitted': {
+    en: {
+      title: 'A payment plan was asked for',
+      body: 'A resident asked for a payment plan on an invoice.',
+    },
+    ar: {
+      title: 'طلب خطة سداد',
+      body: 'طلب ساكن خطة سداد على فاتورة.',
+    },
+  },
+  'instalment_plan_request.accepted': {
+    en: {
+      title: 'Your payment plan was accepted',
+      body: 'The management set your instalments. They are in the app.',
+    },
+    ar: {
+      title: 'قُبلت خطة السداد',
+      body: 'حددت الإدارة أقساطك، وهي متاحة في التطبيق.',
+    },
+  },
+  'instalment_plan_request.declined': {
+    en: {
+      title: 'Your payment plan was not accepted',
+      body: 'The management declined your payment plan request.',
+    },
+    ar: {
+      title: 'لم تُقبل خطة السداد',
+      body: 'رفضت الإدارة طلب خطة السداد.',
+    },
+  },
+  'invoice.plan_available': {
+    en: {
+      title: 'You may pay in instalments',
+      body: 'An invoice due soon may be paid by a plan. Ask for one in the app.',
+    },
+    ar: {
+      title: 'يمكنك السداد بالتقسيط',
+      body: 'فاتورة يقترب موعدها يمكن سدادها بخطة. اطلبها من التطبيق.',
+    },
+  },
   'finance.spending_report_published': {
     en: {
       title: 'Where the fees went',

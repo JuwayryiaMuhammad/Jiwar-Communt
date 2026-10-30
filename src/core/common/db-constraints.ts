@@ -474,6 +474,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   bookings_one_holding_per_unit_slot: null,
   facility_closures_tenant_id_id_key: null,
   booking_suspensions_tenant_id_id_key: null,
+  // Facility bans (ADR 0067): one not lifted per account and scope, checked
+  // under the account's FOR UPDATE first (FACILITY_BAN_EXISTS); a violation
+  // is a race and names nothing.
+  facility_bans_tenant_id_id_key: null,
+  facility_bans_open_key: null,
   // A no-show is marked once (its row lock): a race.
   booking_suspensions_trigger_booking_id_key: null,
   club_plans_tenant_id_id_key: null,

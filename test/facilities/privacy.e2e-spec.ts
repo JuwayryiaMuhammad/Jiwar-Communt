@@ -68,12 +68,35 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
     const plan = await f.plan(s.c, s.manager);
     const membership = await f.membership(s.c, accountant, home.id);
     await f.pay(accountant, membership, plan).expect(201);
+    // A ban from another facility (ADR 0067): its own, in the export.
+    const pool = await f.facility(s.c, s.manager, { nameEn: 'Pool' });
+    const ban = (
+      await f
+        .http('post', '/staff/facility-bans', s.handler.token, {
+          accountId: p.id,
+          facilityId: pool,
+          reasonCode: 'safety',
+          endsOn: day(9),
+        })
+        .expect(201)
+    ).body as { id: string };
 
     const archive = await exportOf(p);
     const section = archive.names.filter((x) => x.startsWith('facilities/'));
     expect(section.sort()).toEqual([
+      'facilities/bans.json',
       'facilities/bookings.json',
       `facilities/club/${home.code}.json`,
+    ]);
+    expect(JSON.parse(archive.text('facilities/bans.json'))).toMatchObject([
+      {
+        id: ban.id,
+        facilityId: pool,
+        reasonCode: 'safety',
+        endsOn: day(9),
+        state: 'in_force',
+        liftedAt: null,
+      },
     ]);
     const bookings = JSON.parse(archive.text('facilities/bookings.json')) as {
       id: string;

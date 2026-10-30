@@ -848,6 +848,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'closure_id IS NULL is tested first; with a closure the state shape has set the side and the reason',
   },
+  bookings_ban: {
+    guarded:
+      'cancel_reason and cancelled_side are compared with IS NOT DISTINCT FROM, which is never NULL; ban_id is only tested IS [NOT] NULL',
+  },
+  facility_bans_reason_known: {},
+  facility_bans_lifted_shape: {
+    guarded:
+      'lift_reason_code is compared only once lifted_by_account_id IS NULL is false, and the shape pairs a lifter with a lift and a lift with its reason',
+  },
+  facility_bans_lift_reason_known: {
+    guarded: 'lift_reason_code IS NULL is tested first',
+  },
   facility_closures_window: {},
   facility_closures_reason: {},
   facility_closures_lifted_shape: {},

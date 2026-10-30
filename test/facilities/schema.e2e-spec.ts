@@ -111,6 +111,7 @@ describe('Facilities tables — CHECKs, triggers and privileges', () => {
       'facility_settings',
       'bookings',
       'booking_suspensions',
+      'facility_bans',
       'club_plans',
       'club_memberships',
       'club_membership_people',

@@ -1089,6 +1089,25 @@ export const NOTIFICATION_KINDS = {
     target: 'booking_suspension',
     params: {},
   },
+  /**
+   * The staff banned the account from booking one facility or all, and
+   * lifted the ban (ADR 0067): to the account. The scope and the last day,
+   * never the reason.
+   */
+  'facility_ban.started': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'facility_ban',
+    params: { scope: {}, until: { optional: true } },
+  },
+  'facility_ban.lifted': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'facility_ban',
+    params: { scope: {} },
+  },
   /** A confirmed booking starts in about two hours: to its booker, once. */
   'booking.reminder': {
     priority: 'normal',

@@ -222,6 +222,8 @@ export const REASON_CODES = {
   contractReviewDecision: ['renew', 'replace', 'end'],
   facilityBan: ['rules_violation', 'damage', 'safety', 'misconduct', 'other'],
   facilityBanLift: ['staff_error', 'exception_granted', 'other'],
+  facilityBanSystemLift: ['ended'],
+  bookingBanCancel: ['facility_ban'],
   workPermitReject: ['precautions_insufficient', 'not_qualified', 'wrong_hazard', 'not_needed', 'other'],
   workPermitRevoke: ['unsafe_conditions', 'precautions_not_followed', 'scope_changed', 'other'],
   workHazard: ['hot_work', 'height', 'live_electrical', 'confined_space', 'pool_chemicals'],

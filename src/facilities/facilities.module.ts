@@ -43,6 +43,13 @@ import {
   StaffFacilitiesController,
 } from './setup/facilities.controller';
 import { FacilitiesService } from './setup/facilities.service';
+import {
+  FacilityBansController,
+  OwnFacilityBansController,
+} from './bans/bans.controller';
+import { FacilityBansService } from './bans/bans.service';
+import { FacilityUsageController } from './usage/usage.controller';
+import { FacilityUsageService } from './usage/usage.service';
 
 /**
  * Facilities and bookings, the club (ADR 0044). Reads community through
@@ -66,6 +73,9 @@ import { FacilitiesService } from './setup/facilities.service';
     ResidentClubController,
     ClubPlansController,
     ClubMembershipsController,
+    FacilityBansController,
+    OwnFacilityBansController,
+    FacilityUsageController,
   ],
   providers: [
     ResidentBookingItems,
@@ -83,6 +93,8 @@ import { FacilitiesService } from './setup/facilities.service';
     ClubService,
     FacilitiesLifecycle,
     FacilitiesExportSections,
+    FacilityBansService,
+    FacilityUsageService,
   ],
 })
 export class FacilitiesModule {}

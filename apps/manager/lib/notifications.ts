@@ -295,6 +295,9 @@ const TEXT: Record<string, (p: P) => string> = {
   'booking.cancelled_by_closure': (p) => `Your booking was cancelled: the facility is closed (${words(p.reason)})`,
   'booking.reminder': () => 'Your booking starts in about two hours',
   'booking_suspension.started': () => 'Your unit cannot make new bookings for a while',
+  'facility_ban.started': (p) =>
+    `You may not book ${p.scope === 'all' ? 'any facility' : 'this facility'}${p.until ? ` until ${p.until}` : ''}`,
+  'facility_ban.lifted': () => 'You may book again',
   'club_membership.expiring': () => 'Your club membership ends within a week',
   // The asset register, plans and inspections (ADR 0064).
   'asset.warranty_expiring': (p) => `The warranty of asset ${p.assetRef} ends on ${p.endsOn}`,

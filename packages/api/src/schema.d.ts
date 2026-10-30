@@ -8188,6 +8188,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/facility-bans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My bans from booking that are in force */
+        get: operations["OwnFacilityBansController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/gate-requests": {
         parameters: {
             query?: never;
@@ -12118,6 +12135,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/facility-bans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the bans, latest first */
+        get: operations["FacilityBansController_list"];
+        put?: never;
+        /**
+         * Ban an account from booking one facility or all
+         * @description Cancels the account’s bookings in that scope that have not started, as the staff cancel one, and lists them. FACILITY_BAN_EXISTS when one in force covers it.
+         */
+        post: operations["FacilityBansController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/facility-bans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One ban, with the bookings it cancelled */
+        get: operations["FacilityBansController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/facility-bans/{id}/lift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lift a ban in force, with a reason code
+         * @description FACILITY_BAN_OVER once it has ended or was lifted.
+         */
+        post: operations["FacilityBansController_lift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/facility-closures/{id}/lift": {
         parameters: {
             query?: never;
@@ -12154,6 +12229,43 @@ export interface paths {
         head?: never;
         /** Update the facility settings */
         patch: operations["FacilitySettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/facility-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Each bookable facility’s bookings, slot use, no-shows and peak share over a period */
+        get: operations["FacilityUsageController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/facility-usage/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The same as CSV
+         * @description One row per bookable facility: its bookings by status, open and booked minutes, use, no-shows and peak share.
+         */
+        get: operations["FacilityUsageController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/finance/budget-settings": {
@@ -25771,6 +25883,39 @@ export interface components {
             /** @description Anything that is not a live link answers 404 ACTION_TOKEN_INVALID. */
             token: string;
         };
+        /** @enum {string} */
+        FacilityBanReason: "rules_violation" | "damage" | "safety" | "misconduct" | "other";
+        FacilityBanView: {
+            /** Format: uuid */
+            accountId: string;
+            /** @description The bookings it cancelled when it started. */
+            cancelledBookingIds: string[];
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date
+             * @description The last day it holds, inclusive; null until lifted.
+             */
+            endsOn: string | null;
+            /**
+             * Format: uuid
+             * @description Null: every facility.
+             */
+            facilityId: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description `facilityBanLift`, or the system’s `ended`. */
+            liftReasonCode: string | null;
+            /** Format: date-time */
+            liftedAt: string | null;
+            reasonCode: components["schemas"]["FacilityBanReason"];
+            /** @enum {string} */
+            state: "in_force" | "ended" | "lifted";
+        };
+        FacilityBanViewList: {
+            data: components["schemas"]["FacilityBanView"][];
+            nextCursor: string | null;
+        };
         FacilityBookingRulesView: {
             /** @description A confirmed booking is cancelled by the resident at least this many minutes before its start. */
             cancelCutoffMinutes: number;
@@ -25920,6 +26065,33 @@ export interface components {
             date: string;
             /** @description The slots of the day that may be booked now, in order. Too soon and too far are left out. */
             slots: components["schemas"]["FacilitySlotView"][];
+        };
+        FacilityUsageReportView: {
+            days: number;
+            facilities: components["schemas"]["FacilityUsageView"][];
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+        };
+        FacilityUsageView: {
+            /** @description Booked slot-time: a place held for a minute is one (a person, for one counted by people). */
+            bookedMinutes: number;
+            /** @description By status, by the day they start. */
+            bookings: components["schemas"]["UsageBookingsView"];
+            /** Format: uuid */
+            facilityId: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description No-shows over what was confirmed or a no-show, whole percent. */
+            noShowRate: number | null;
+            noShows: number;
+            /** @description Minutes its hours offered, minus closures in force. */
+            openMinutes: number;
+            /** @description Of what held a place, the share at peak times, whole percent. */
+            peakShare: number | null;
+            /** @description bookedMinutes over openMinutes × capacity, whole percent; null when never open. */
+            use: number | null;
         };
         FacilityView: {
             /** @description Closures not lifted and not over, soonest first. */
@@ -28402,6 +28574,10 @@ export interface components {
             data: components["schemas"]["LegalHoldResponse"][];
             nextCursor: string | null;
         };
+        LiftBanDto: {
+            /** @description From the closed list `facilityBanLift`. */
+            reasonCode: string;
+        };
         LiftBlocklistEntryDto: {
             /** @description From the closed list `blocklistLift`. */
             reasonCode: string;
@@ -29657,6 +29833,25 @@ export interface components {
          * @enum {string}
          */
         NeighbourThread: "complainant" | "target" | "internal";
+        NewBanDto: {
+            /**
+             * Format: uuid
+             * @description An active account that books: a resident or a family member.
+             */
+            accountId: string;
+            /**
+             * Format: date
+             * @description The compound’s last day it holds, inclusive, from today and within a year; left out, until lifted.
+             */
+            endsOn?: string;
+            /**
+             * Format: uuid
+             * @description One facility; left out, every facility.
+             */
+            facilityId?: string;
+            /** @description From the closed list `facilityBan`. */
+            reasonCode: string;
+        };
         NewCompoundDocumentVersionDto: {
             /**
              * Format: uuid
@@ -30268,6 +30463,18 @@ export interface components {
             asOf: string;
             rows: components["schemas"]["OutstandingRowView"][];
             totals: components["schemas"]["OutstandingRowView"];
+        };
+        OwnFacilityBanView: {
+            /** Format: date */
+            endsOn: string | null;
+            /** Format: uuid */
+            facilityId: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        OwnFacilityBanViewList: {
+            data: components["schemas"]["OwnFacilityBanView"][];
+            nextCursor: string | null;
         };
         /** @enum {string} */
         ParcelActorSide: "guard" | "resident" | "system";
@@ -38614,6 +38821,13 @@ export interface components {
             method: "PUT";
             /** @description Presigned; shown once. */
             url: string;
+        };
+        UsageBookingsView: {
+            cancelled: number;
+            confirmed: number;
+            no_show: number;
+            pending: number;
+            rejected: number;
         };
         UsePartView: {
             /** @description EGP at the tariffs in force; null where none was. */
@@ -51864,6 +52078,25 @@ export interface operations {
             };
         };
     };
+    OwnFacilityBansController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnFacilityBanViewList"];
+                };
+            };
+        };
+    };
     HostApprovalsController_mine: {
         parameters: {
             query?: never;
@@ -57857,6 +58090,105 @@ export interface operations {
             };
         };
     };
+    FacilityBansController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                accountId?: string;
+                facilityId?: string;
+                /** @description `true`: only those in force; `false`: only those over. */
+                inForce?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityBanViewList"];
+                };
+            };
+        };
+    };
+    FacilityBansController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewBanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityBanView"];
+                };
+            };
+        };
+    };
+    FacilityBansController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityBanView"];
+                };
+            };
+        };
+    };
+    FacilityBansController_lift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LiftBanDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityBanView"];
+                };
+            };
+        };
+    };
     ClosuresController_lift: {
         parameters: {
             query?: never;
@@ -57918,6 +58250,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacilitySettingsResponse"];
+                };
+            };
+        };
+    };
+    FacilityUsageController_report: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. A year and a day at most. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityUsageReportView"];
+                };
+            };
+        };
+    };
+    FacilityUsageController_export: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. A year and a day at most. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

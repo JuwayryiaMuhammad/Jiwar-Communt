@@ -1513,6 +1513,14 @@ export const ErrorCode = {
   READINESS_ITEM_PAST_DUE: 'READINESS_ITEM_PAST_DUE',
   /** Not called off while an inspection of it is open; params.open (409). */
   READINESS_CAMPAIGN_OPEN: 'READINESS_CAMPAIGN_OPEN',
+  // Facility bans (ADR 0067)
+  /** The booker may not book this facility, or any; params.facilityId?, params.until? (403). */
+  FACILITY_BANNED: 'FACILITY_BANNED',
+  FACILITY_BAN_NOT_FOUND: 'FACILITY_BAN_NOT_FOUND',
+  /** A ban in force already covers this account and scope; params.banId (409). */
+  FACILITY_BAN_EXISTS: 'FACILITY_BAN_EXISTS',
+  /** Lifted or ended already: it never changes again; params.state (409). */
+  FACILITY_BAN_OVER: 'FACILITY_BAN_OVER',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1770,6 +1778,8 @@ export const FieldErrorCode = {
   READINESS_ITEMS_DUE_LATER: 'READINESS_ITEMS_DUE_LATER',
   /** ADR 0067: a contract under review is in force and ends by the program's last day. */
   CONTRACT_NOT_DUE_FOR_REVIEW: 'CONTRACT_NOT_DUE_FOR_REVIEW',
+  /** ADR 0067: a ban is for an active account that books: a resident or a family member. */
+  BAN_ACCOUNT_NOT_ELIGIBLE: 'BAN_ACCOUNT_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

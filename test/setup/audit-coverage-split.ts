@@ -295,6 +295,8 @@ export const FACILITIES_COVERAGE: readonly string[] = [
   'booking.no_show',
   'booking_suspension.started',
   'booking_suspension.lifted',
+  'facility_ban.started',
+  'facility_ban.lifted',
   'club_plan.created',
   'club_plan.updated',
   'club_membership.created',

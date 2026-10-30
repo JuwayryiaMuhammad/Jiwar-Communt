@@ -9,6 +9,8 @@ import {
 } from '../../core/exports/export-sections';
 import { BookingsService } from '../bookings/bookings.service';
 import { BookingView } from '../bookings/views/booking.views';
+import { FacilityBansService } from '../bans/bans.service';
+import { dayOf } from '../bans/ban-reads';
 import { ClubService } from '../club/club.service';
 import { ClubPaymentView } from '../club/views/club.views';
 
@@ -17,6 +19,8 @@ import { ClubPaymentView } from '../club/views/club.views';
  * the account and reads through the account's own services and views:
  *
  * - `facilities/bookings.json`: every booking it made, whatever the unit;
+ * - `facilities/bans.json`: every ban from booking it was given (ADR 0067),
+ *   with its scope, reason, last day and state — never who gave it;
  * - `facilities/club/<unitCode>.json`: for each unit it has a place in now
  *   and whose household it sees, the membership's state, the last day it
  *   is active, and since when it covers the account (or not); its payments
@@ -33,6 +37,7 @@ export class FacilitiesExportSections implements OnModuleInit {
     private readonly community: CommunityFacilitiesPort,
     private readonly bookings: BookingsService,
     private readonly club: ClubService,
+    private readonly bans: FacilityBansService,
   ) {}
 
   onModuleInit(): void {
@@ -45,6 +50,18 @@ export class FacilitiesExportSections implements OnModuleInit {
       json: (await this.bookings.mine()).map((b) =>
         BookingView.from(b, s.accountId),
       ),
+    };
+    yield {
+      path: 'facilities/bans.json',
+      json: (await this.bans.everyOwn()).map(({ ban: b, state }) => ({
+        id: b.id,
+        facilityId: b.facilityId,
+        reasonCode: b.reasonCode,
+        endsOn: b.endsOn ? dayOf(b.endsOn) : null,
+        state,
+        startedAt: b.createdAt,
+        liftedAt: b.liftedAt,
+      })),
     };
     const units = await this.tenantTx.withTenantTx((tx) =>
       this.community.places(tx, s.accountId),

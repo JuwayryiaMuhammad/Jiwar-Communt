@@ -22,6 +22,7 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { FacilitiesAccess } from '../access';
+import { banInForce, dayOf } from '../bans/ban-reads';
 import { closedOver, closuresBetween } from '../closures/closure-reads';
 import { dbNow } from '../db-clock';
 import { rulesOf, type FacilityRules } from '../setup/facility-rules';
@@ -358,6 +359,29 @@ export class BookingsService implements OnModuleInit {
         input.facilityId,
         'share',
       );
+      // The booker's own ban (ADR 0067), after the unit's suspension and the
+      // facility: the booker's account is held FOR SHARE, which a ban takes
+      // FOR UPDATE, so a ban and a booking never cross.
+      const ban = await banInForce(
+        tx,
+        this.ctx.accountId,
+        facility.id,
+        localDate(
+          await dbNow(tx),
+          (await this.tenantSettings.inTx(tx, facility.tenantId)).timezone,
+        ),
+      );
+      if (ban)
+        throw appError.forbidden(
+          ErrorCode.FACILITY_BANNED,
+          'This person may not book this facility for now',
+          {
+            params: {
+              ...(ban.facilityId ? { facilityId: ban.facilityId } : {}),
+              ...(ban.endsOn ? { until: dayOf(ban.endsOn) } : {}),
+            },
+          },
+        );
       const rules = bookable(facility);
       const party = guests + 1;
       if (guests > rules.maxGuests)
@@ -647,6 +671,7 @@ export class BookingsService implements OnModuleInit {
       by: string | null;
       now: Date;
       closureId?: string;
+      banId?: string;
     },
   ): Promise<Booking> {
     const ended = await tx.booking.update({
@@ -658,6 +683,7 @@ export class BookingsService implements OnModuleInit {
         cancelledById: how.by,
         cancelledAt: how.now,
         closureId: how.closureId,
+        banId: how.banId,
       },
     });
     await this.audit.record(tx, {
@@ -670,6 +696,7 @@ export class BookingsService implements OnModuleInit {
         side: how.side,
         reasonCode: how.reason,
         ...(how.closureId ? { closureId: how.closureId } : {}),
+        ...(how.banId ? { banId: how.banId } : {}),
       },
     });
     return ended;

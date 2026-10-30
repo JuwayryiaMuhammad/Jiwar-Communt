@@ -315,21 +315,38 @@ export class StaffBookingsService implements OnModuleInit {
       assertCan(booking, 'cancel');
       const now = await dbNow(tx);
       if (booking.endsAt.getTime() <= now.getTime()) throw windowPassed();
-      await this.bookings.end(tx, booking, {
-        side: 'staff',
-        reason,
-        by: this.ctx.accountId,
-        now,
-      });
-      await this.notices.send(
-        tx,
-        [booking.bookedById],
-        'booking.cancelled_by_staff',
-        id,
-        { reason },
-        this.ctx.accountId,
-      );
+      await this.cancelByStaffInTx(tx, booking, reason, now);
     });
+  }
+
+  /**
+   * The staff's cancellation of a booking the caller has locked and judged
+   * cancellable, in its transaction: ended by the caller with `reason`, and
+   * its booker told. A facility ban (ADR 0067) cancels the account's
+   * bookings here, with `facility_ban` and the ban they point at.
+   */
+  async cancelByStaffInTx(
+    tx: TenantTxClient,
+    booking: Booking,
+    reason: string,
+    now: Date,
+    banId?: string,
+  ): Promise<void> {
+    await this.bookings.end(tx, booking, {
+      side: 'staff',
+      reason,
+      by: this.ctx.accountId,
+      now,
+      banId,
+    });
+    await this.notices.send(
+      tx,
+      [booking.bookedById],
+      'booking.cancelled_by_staff',
+      booking.id,
+      { reason },
+      this.ctx.accountId,
+    );
   }
 
   /**

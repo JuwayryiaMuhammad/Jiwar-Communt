@@ -363,6 +363,45 @@ describe('Audit coverage — facilities', () => {
     });
   });
 
+  describe('facility bans (ADR 0067)', () => {
+    it('facility_ban.started and .lifted — the account, the scope, the end, the codes and the bookings it cancelled, by id', async () => {
+      const court = await f.facility(s.c, s.manager, { weeklyQuota: 20 });
+      const home = await f.unit(s.c, 'A');
+      const who = await f.owner(s.c, home.id);
+      const booked = await f.book(who, home.id, court, at(day(2), 9));
+      const res = await f
+        .http('post', '/staff/facility-bans', s.handler.token, {
+          accountId: who.id,
+          facilityId: court,
+          reasonCode: 'misconduct',
+          endsOn: day(10),
+        })
+        .expect(201);
+      const id = (res.body as { id: string }).id;
+      const started = await single('facility_ban.started', id);
+      expect(started).toMatchObject(by(s.handler, 'facility_ban'));
+      expect(started.metadata).toEqual({
+        accountId: who.id,
+        facilityId: court,
+        reasonCode: 'misconduct',
+        endsOn: day(10),
+        cancelledBookingIds: [booked.id],
+      });
+      await f
+        .http('post', `/staff/facility-bans/${id}/lift`, s.handler.token, {
+          reasonCode: 'staff_error',
+        })
+        .expect(200);
+      const lifted = await single('facility_ban.lifted', id);
+      expect(lifted).toMatchObject(by(s.handler, 'facility_ban'));
+      expect(lifted.metadata).toEqual({
+        accountId: who.id,
+        facilityId: court,
+        reasonCode: 'staff_error',
+      });
+    });
+  });
+
   describe('the club', () => {
     it('club_plan.created and .updated — duration and price by value, names as changed', async () => {
       const res = await f

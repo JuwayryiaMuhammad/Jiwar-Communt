@@ -893,6 +893,10 @@ export const REASON_CODES = {
   contractReviewDecision: ['renew', 'replace', 'end'],
   facilityBan: ['rules_violation', 'damage', 'safety', 'misconduct', 'other'],
   facilityBanLift: ['staff_error', 'exception_granted', 'other'],
+  // The system's: a ban that had ended, closed when the next one starts.
+  facilityBanSystemLift: ['ended'],
+  // The staff's cancellation of a booking by a ban: only a ban gives it.
+  bookingBanCancel: ['facility_ban'],
   workPermitReject: [
     'precautions_insufficient',
     'not_qualified',

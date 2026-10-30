@@ -6026,6 +6026,8 @@ model Booking {
   remindedAt       DateTime?     @map("reminded_at") @db.Timestamptz(3)
   /// The closure that cancelled it.
   closureId        String?       @map("closure_id") @db.Uuid
+  /// The facility ban that cancelled it (ADR 0067).
+  banId            String?       @map("ban_id") @db.Uuid
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -10746,4 +10748,28 @@ model ReadinessCampaignInspection {
   @@unique([tenantId, id])
   @@unique([tenantId, inspectionId], map: "readiness_campaign_inspections_inspection_key")
   @@map("readiness_campaign_inspections")
+}
+
+/// An account kept from booking one facility or all (ADR 0067), by the
+/// staff, until a compound day (inclusive) or until lifted, once.
+model FacilityBan {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  accountId      String    @map("account_id") @db.Uuid
+  /// Null: every facility.
+  facilityId     String?   @map("facility_id") @db.Uuid
+  /// REASON_CODES.facilityBan.
+  reasonCode     String    @map("reason_code")
+  /// The last day it holds, inclusive; null until lifted.
+  endsOn         DateTime? @map("ends_on") @db.Date
+  createdById    String?   @map("created_by_account_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  liftedAt       DateTime? @map("lifted_at") @db.Timestamptz(3)
+  liftedById     String?   @map("lifted_by_account_id") @db.Uuid
+  /// REASON_CODES.facilityBanLift, or the system's `ended`.
+  liftReasonCode String?   @map("lift_reason_code")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "facility_bans_list_idx")
+  @@map("facility_bans")
 }

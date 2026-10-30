@@ -734,6 +734,11 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'booking_suspension',
   },
+  // ADR 0067. metadata: accountId, facilityId, reasonCode, endsOn,
+  // cancelledBookingIds (ids only), endedBanId when one had ended.
+  'facility_ban.started': { log: 'tenant', target: 'facility_ban' },
+  // metadata: accountId, facilityId, reasonCode (the lift's).
+  'facility_ban.lifted': { log: 'tenant', target: 'facility_ban' },
   // changes: the no-show rules by value.
   'facility.settings_changed': { log: 'tenant', target: 'tenant' },
   // changes: duration, price and state by value; names as changed only.

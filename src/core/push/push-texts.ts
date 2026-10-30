@@ -1241,6 +1241,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لا يمكن لوحدتك إجراء حجوزات جديدة لفترة. افتح التطبيق لمعرفة تاريخ الانتهاء.',
     },
   },
+  'facility_ban.started': {
+    en: {
+      title: 'Bookings stopped',
+      body: 'The management stopped you booking for a while. Open the app for which facilities and until when.',
+    },
+    ar: {
+      title: 'إيقاف الحجز',
+      body: 'أوقفت الإدارة حجوزاتك لفترة. افتح التطبيق لمعرفة المرافق وتاريخ الانتهاء.',
+    },
+  },
+  'facility_ban.lifted': {
+    en: {
+      title: 'Bookings open again',
+      body: 'The management lifted the stop on your bookings.',
+    },
+    ar: {
+      title: 'عودة الحجز',
+      body: 'رفعت الإدارة إيقاف حجوزاتك.',
+    },
+  },
   'booking.reminder': {
     en: {
       title: 'Booking soon',

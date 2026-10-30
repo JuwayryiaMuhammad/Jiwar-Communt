@@ -19151,6 +19151,109 @@
         ],
         "type": "object"
       },
+      "FacilityBanReason": {
+        "enum": [
+          "rules_violation",
+          "damage",
+          "safety",
+          "misconduct",
+          "other"
+        ],
+        "type": "string"
+      },
+      "FacilityBanView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "cancelledBookingIds": {
+            "description": "The bookings it cancelled when it started.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsOn": {
+            "description": "The last day it holds, inclusive; null until lifted.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "facilityId": {
+            "description": "Null: every facility.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "liftReasonCode": {
+            "description": "`facilityBanLift`, or the system’s `ended`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "liftedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityBanReason"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "in_force",
+              "ended",
+              "lifted"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "facilityId",
+          "reasonCode",
+          "endsOn",
+          "state",
+          "createdAt",
+          "liftedAt",
+          "liftReasonCode",
+          "cancelledBookingIds"
+        ],
+        "type": "object"
+      },
+      "FacilityBanViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FacilityBanView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "FacilityBookingRulesView": {
         "properties": {
           "cancelCutoffMinutes": {
@@ -19583,6 +19686,95 @@
         "required": [
           "date",
           "slots"
+        ],
+        "type": "object"
+      },
+      "FacilityUsageReportView": {
+        "properties": {
+          "days": {
+            "type": "number"
+          },
+          "facilities": {
+            "items": {
+              "$ref": "#/components/schemas/FacilityUsageView"
+            },
+            "type": "array"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "days",
+          "facilities"
+        ],
+        "type": "object"
+      },
+      "FacilityUsageView": {
+        "properties": {
+          "bookedMinutes": {
+            "description": "Booked slot-time: a place held for a minute is one (a person, for one counted by people).",
+            "type": "number"
+          },
+          "bookings": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsageBookingsView"
+              }
+            ],
+            "description": "By status, by the day they start."
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "noShowRate": {
+            "description": "No-shows over what was confirmed or a no-show, whole percent.",
+            "nullable": true,
+            "type": "number"
+          },
+          "noShows": {
+            "type": "number"
+          },
+          "openMinutes": {
+            "description": "Minutes its hours offered, minus closures in force.",
+            "type": "number"
+          },
+          "peakShare": {
+            "description": "Of what held a place, the share at peak times, whole percent.",
+            "nullable": true,
+            "type": "number"
+          },
+          "use": {
+            "description": "bookedMinutes over openMinutes × capacity, whole percent; null when never open.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "facilityId",
+          "nameEn",
+          "nameAr",
+          "bookings",
+          "openMinutes",
+          "bookedMinutes",
+          "use",
+          "noShows",
+          "noShowRate",
+          "peakShare"
         ],
         "type": "object"
       },
@@ -27798,6 +27990,18 @@
         ],
         "type": "object"
       },
+      "LiftBanDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `facilityBanLift`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "LiftBlocklistEntryDto": {
         "properties": {
           "reasonCode": {
@@ -31900,6 +32104,34 @@
         ],
         "type": "string"
       },
+      "NewBanDto": {
+        "properties": {
+          "accountId": {
+            "description": "An active account that books: a resident or a family member.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "endsOn": {
+            "description": "The compound’s last day it holds, inclusive, from today and within a year; left out, until lifted.",
+            "format": "date",
+            "type": "string"
+          },
+          "facilityId": {
+            "description": "One facility; left out, every facility.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `facilityBan`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "NewCompoundDocumentVersionDto": {
         "properties": {
           "boardPublicationId": {
@@ -33805,6 +34037,49 @@
           "asOf",
           "rows",
           "totals"
+        ],
+        "type": "object"
+      },
+      "OwnFacilityBanView": {
+        "properties": {
+          "endsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "facilityId",
+          "endsOn"
+        ],
+        "type": "object"
+      },
+      "OwnFacilityBanViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/OwnFacilityBanView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -61158,6 +61433,33 @@
         ],
         "type": "object"
       },
+      "UsageBookingsView": {
+        "properties": {
+          "cancelled": {
+            "type": "number"
+          },
+          "confirmed": {
+            "type": "number"
+          },
+          "no_show": {
+            "type": "number"
+          },
+          "pending": {
+            "type": "number"
+          },
+          "rejected": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "pending",
+          "confirmed",
+          "rejected",
+          "cancelled",
+          "no_show"
+        ],
+        "type": "object"
+      },
       "UsePartView": {
         "properties": {
           "cost": {
@@ -87341,6 +87643,34 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/facility-bans": {
+      "get": {
+        "operationId": "OwnFacilityBansController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnFacilityBanViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My bans from booking that are in force",
+        "tags": [
+          "bookings"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/gate-requests": {
       "get": {
         "operationId": "HostApprovalsController_mine",
@@ -98556,6 +98886,218 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/facility-bans": {
+      "get": {
+        "operationId": "FacilityBansController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accountId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "facilityId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: only those in force; `false`: only those over.",
+            "in": "query",
+            "name": "inForce",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityBanViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the bans, latest first",
+        "tags": [
+          "bookings"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Cancels the account’s bookings in that scope that have not started, as the staff cancel one, and lists them. FACILITY_BAN_EXISTS when one in force covers it.",
+        "operationId": "FacilityBansController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewBanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityBanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ban an account from booking one facility or all",
+        "tags": [
+          "bookings"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facility-bans/{id}": {
+      "get": {
+        "operationId": "FacilityBansController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityBanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One ban, with the bookings it cancelled",
+        "tags": [
+          "bookings"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facility-bans/{id}/lift": {
+      "post": {
+        "description": "FACILITY_BAN_OVER once it has ended or was lifted.",
+        "operationId": "FacilityBansController_lift",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiftBanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityBanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lift a ban in force, with a reason code",
+        "tags": [
+          "bookings"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/facility-closures/{id}/lift": {
       "post": {
         "description": "Once (FACILITY_CLOSURE_LIFTED). What it cancelled stays cancelled.",
@@ -98659,6 +99201,106 @@
         "summary": "Update the facility settings",
         "tags": [
           "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facility-usage": {
+      "get": {
+        "operationId": "FacilityUsageController_report",
+        "parameters": [
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out. A year and a day at most.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityUsageReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Each bookable facility’s bookings, slot use, no-shows and peak share over a period",
+        "tags": [
+          "bookings"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facility-usage/export": {
+      "get": {
+        "description": "One row per bookable facility: its bookings by status, open and booked minutes, use, no-shows and peak share.",
+        "operationId": "FacilityUsageController_export",
+        "parameters": [
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out. A year and a day at most.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The same as CSV",
+        "tags": [
+          "bookings"
         ],
         "x-no-store": true,
         "x-stability": "draft"

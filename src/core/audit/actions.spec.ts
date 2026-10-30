@@ -207,6 +207,7 @@ describe('audit catalog', () => {
         // ADR 0067
         'readiness_program',
         'readiness_item',
+        'facility_ban',
       ]).toContain(def.target);
     }
   });

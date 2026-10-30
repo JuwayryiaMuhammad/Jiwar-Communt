@@ -161,27 +161,68 @@ describe('Finance — payment plans residents ask for', () => {
     await ask(invoiceId, 3, member.token).expect(404);
   });
 
-  it('lapses when the invoice stops owing, whatever paid it; accepting it then is refused', async () => {
+  const payAll = (invoiceId: string) =>
+    f.http('post', `/staff/units/${s.home.id}/payments`, s.accountant.token, {
+      amount: '1000',
+      method: 'cash',
+      paidOn: day(0),
+      invoiceIds: [invoiceId],
+    });
+  const stored = (id: string) =>
+    f.inTx(s.c, (tx) =>
+      tx.instalmentPlanRequest.findUniqueOrThrow({ where: { id } }),
+    );
+
+  it('lapses when the invoice stops owing, whatever paid it; accepting it then is refused, and nothing changes', async () => {
     const { invoiceId } = await f.issue(s.accountant, s.home.id);
     const r = await asked(invoiceId);
-    await f
-      .http('post', `/staff/units/${s.home.id}/payments`, s.accountant.token, {
-        amount: '1000',
-        method: 'cash',
-        paidOn: day(0),
-        invoiceIds: [invoiceId],
-      })
-      .expect(201);
+    await payAll(invoiceId).expect(201);
     expect((await read(r.id)).status).toBe('lapsed');
+    const refused = err(await staff(`${r.id}/accept`, halves).expect(409));
+    expect(refused.code).toBe('PLAN_REQUEST_LAPSED');
+    expect(refused.params).toBeUndefined();
+    // Refused, not written: no plan, no decision, no notice.
     expect(
-      err(await staff(`${r.id}/accept`, halves).expect(409)),
-    ).toMatchObject({
-      code: 'INVOICE_NOT_CONVERTIBLE',
-      params: { reason: 'nothing_owed' },
+      await f.inTx(s.c, (tx) =>
+        tx.instalmentPlan.count({ where: { invoiceId } }),
+      ),
+    ).toBe(0);
+    expect(await stored(r.id)).toMatchObject({
+      status: 'pending',
+      decidedAt: null,
+      planId: null,
     });
+    expect(
+      await told(s.owner.id, 'instalment_plan_request.accepted', r.id),
+    ).toEqual([]);
     expect(err(await ask(invoiceId).expect(409)).params).toEqual({
       reason: 'nothing_owed',
     });
+  });
+
+  it('a lapsed request is not declined either: the invoice was split by the staff meanwhile', async () => {
+    const { invoiceId } = await f.issue(s.accountant, s.home.id);
+    const r = await asked(invoiceId);
+    await f
+      .http(
+        'post',
+        `/staff/invoices/${invoiceId}/instalment-plan`,
+        s.manager.token,
+        halves,
+      )
+      .expect(201);
+    expect((await read(r.id)).status).toBe('lapsed');
+    expect(
+      err(await staff(`${r.id}/decline`, { reasonCode: 'other' }).expect(409))
+        .code,
+    ).toBe('PLAN_REQUEST_LAPSED');
+    expect(await stored(r.id)).toMatchObject({
+      status: 'pending',
+      declineReason: null,
+    });
+    expect(
+      await told(s.owner.id, 'instalment_plan_request.declined', r.id),
+    ).toEqual([]);
   });
 
   it('offered once with the due-soon notice, above the compound’s floor only', async () => {
@@ -226,36 +267,36 @@ describe('Finance — payment plans residents ask for', () => {
       ).toBe(1);
     });
 
-    it('an acceptance and a payment of the whole invoice: one wins, never both', async () => {
-      const { invoiceId } = await f.issue(s.accountant, s.home.id);
-      const r = await asked(invoiceId);
-      const [accepted, paid] = await Promise.all([
-        staff(`${r.id}/accept`, halves),
-        f.http(
-          'post',
-          `/staff/units/${s.home.id}/payments`,
-          s.accountant.token,
-          {
-            amount: '1000',
-            method: 'cash',
-            paidOn: day(0),
-            invoiceIds: [invoiceId],
-          },
-        ),
-      ]);
-      const plans = await f.inTx(s.c, (tx) =>
-        tx.instalmentPlan.count({ where: { invoiceId } }),
-      );
-      if (accepted.status === 201) {
-        // The plan took the invoice: the payment paid instalments, or nothing.
-        expect(plans).toBe(1);
-      } else {
-        expect(accepted.status).toBe(409);
-        expect(paid.status).toBe(201);
-        expect(plans).toBe(0);
-        expect((await read(r.id)).status).toBe('lapsed');
-      }
-    });
+    it.each([1, 2, 3])(
+      'round %i: an acceptance and the payment that settles the invoice: one wins, never both',
+      async () => {
+        const { invoiceId } = await f.issue(s.accountant, s.home.id);
+        const r = await asked(invoiceId);
+        const [accepted, paid] = await Promise.all([
+          staff(`${r.id}/accept`, halves),
+          payAll(invoiceId),
+        ]);
+        const plans = await f.inTx(s.c, (tx) =>
+          tx.instalmentPlan.count({ where: { invoiceId } }),
+        );
+        if (accepted.status === 201) {
+          // The plan took the invoice first; the payment paid its instalments.
+          expect(plans).toBe(1);
+          expect((await read(r.id)).status).toBe('accepted');
+        } else {
+          // The payment settled it first: the acceptance found it lapsed.
+          expect(accepted.status).toBe(409);
+          expect(paid.status).toBe(201);
+          expect(err(accepted).code).toBe('PLAN_REQUEST_LAPSED');
+          expect(plans).toBe(0);
+          expect(await stored(r.id)).toMatchObject({
+            status: 'pending',
+            planId: null,
+          });
+          expect((await read(r.id)).status).toBe('lapsed');
+        }
+      },
+    );
 
     it('an acceptance and a withdrawal: one of the two', async () => {
       const r = await asked((await f.issue(s.accountant, s.home.id)).invoiceId);

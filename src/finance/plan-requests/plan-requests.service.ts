@@ -60,6 +60,11 @@ const notPending = (status: PlanRequestStatus) =>
   appError.conflict(ErrorCode.PLAN_REQUEST_NOT_PENDING, 'Not pending', {
     params: { status },
   });
+const lapsed = () =>
+  appError.conflict(
+    ErrorCode.PLAN_REQUEST_LAPSED,
+    'The invoice no longer owes, or was split, since it was asked',
+  );
 const notConvertible = (reason: 'instalment' | 'has_plan' | 'nothing_owed') =>
   appError.conflict(
     ErrorCode.INVOICE_NOT_CONVERTIBLE,
@@ -79,6 +84,10 @@ const notConvertible = (reason: 'instalment' | 'has_plan' | 'nothing_owed') =>
  * the unit's finance lock, then the request FOR UPDATE; the split itself
  * reads the invoice's balance under that unit lock, so a payment and an
  * acceptance never decide on the same balance at once.
+ *
+ * Lapsed is read, never written; so a decision re-reads the invoice under
+ * that lock, and a request whose invoice no longer owes or was split is
+ * neither accepted nor declined (`409 PLAN_REQUEST_LAPSED`).
  */
 @Injectable()
 export class PlanRequestsService implements OnModuleInit {
@@ -212,9 +221,7 @@ export class PlanRequestsService implements OnModuleInit {
     checkInstalmentShape(dto);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
-      const row = await this.locked(tx, id);
-      if (row.status !== 'pending')
-        throw notPending(row.status as PlanRequestStatus);
+      const row = await this.decidable(tx, id);
       const invoice = await tx.invoice.findUniqueOrThrow({
         where: { id: row.invoiceId },
       });
@@ -262,9 +269,7 @@ export class PlanRequestsService implements OnModuleInit {
     );
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
-      const row = await this.locked(tx, id);
-      if (row.status !== 'pending')
-        throw notPending(row.status as PlanRequestStatus);
+      const row = await this.decidable(tx, id);
       const now = await dbNow(tx);
       const after = await tx.instalmentPlanRequest.update({
         where: { id },
@@ -343,6 +348,23 @@ export class PlanRequestsService implements OnModuleInit {
     return tx.instalmentPlanRequest.findUniqueOrThrow({ where: { id } });
   }
 
+  /**
+   * A request the staff may still decide, locked: pending, on an invoice
+   * that still owes and was not split — read under the unit's finance
+   * lock, which every payment, credit and split of it takes too.
+   */
+  private async decidable(
+    tx: TenantTxClient,
+    id: string,
+  ): Promise<InstalmentPlanRequest> {
+    const row = await this.locked(tx, id);
+    if (row.status !== 'pending')
+      throw notPending(row.status as PlanRequestStatus);
+    if ((await doneWith(tx, [row.invoiceId])).has(row.invoiceId))
+      throw lapsed();
+    return row;
+  }
+
   /** As the API reads them: a waiting request on an invoice done with reads lapsed. */
   async reads(
     tx: TenantTxClient,
@@ -354,25 +376,13 @@ export class PlanRequestsService implements OnModuleInit {
       (
         await tx.invoice.findMany({
           where: { id: { in: invoiceIds } },
-          select: { id: true, number: true, instalmentPlanId: true },
+          select: { id: true, number: true },
         })
       ).map((i) => [i.id, i]),
     );
-    const split = new Set(
-      (
-        await tx.instalmentPlan.findMany({
-          where: { invoiceId: { in: invoiceIds } },
-          select: { invoiceId: true },
-        })
-      ).map((p) => p.invoiceId),
-    );
-    const balances = await balancesOf(tx, invoiceIds);
+    const done = await doneWith(tx, invoiceIds);
     return rows.map((r) => {
       const invoice = invoices.get(r.invoiceId)!;
-      const done =
-        invoice.instalmentPlanId !== null ||
-        split.has(r.invoiceId) ||
-        !balances.get(r.invoiceId)!.outstanding.gt(ZERO);
       return {
         id: r.id,
         invoiceId: r.invoiceId,
@@ -380,7 +390,7 @@ export class PlanRequestsService implements OnModuleInit {
         unitId: r.unitId,
         months: r.months,
         status:
-          r.status === 'pending' && done
+          r.status === 'pending' && done.has(r.invoiceId)
             ? 'lapsed'
             : (r.status as PlanRequestStatus),
         createdAt: r.createdAt,
@@ -390,6 +400,39 @@ export class PlanRequestsService implements OnModuleInit {
       };
     });
   }
+}
+
+/**
+ * The invoices a request no longer stands on: an instalment, split into
+ * instalments, or owing nothing (paid or credited), whatever did it.
+ */
+async function doneWith(
+  tx: TenantTxClient,
+  invoiceIds: string[],
+): Promise<Set<string>> {
+  const invoices = await tx.invoice.findMany({
+    where: { id: { in: invoiceIds } },
+    select: { id: true, instalmentPlanId: true },
+  });
+  const split = new Set(
+    (
+      await tx.instalmentPlan.findMany({
+        where: { invoiceId: { in: invoiceIds } },
+        select: { invoiceId: true },
+      })
+    ).map((p) => p.invoiceId),
+  );
+  const balances = await balancesOf(tx, invoiceIds);
+  return new Set(
+    invoices
+      .filter(
+        (i) =>
+          i.instalmentPlanId !== null ||
+          split.has(i.id) ||
+          !balances.get(i.id)!.outstanding.gt(ZERO),
+      )
+      .map((i) => i.id),
+  );
 }
 
 const pending = (requestId: string | null) =>

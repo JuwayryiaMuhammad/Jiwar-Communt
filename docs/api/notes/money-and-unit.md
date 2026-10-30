@@ -94,7 +94,7 @@ Saving tips are a compound document of kind `saving_tips` (`GET /compound-docume
 - An invoice's detail (`GET /invoices/{id}`) gains `planOffer`: `{ mayRequest, offered, maxMonths, pendingRequestId }`. Show "Ask for a plan" while `mayRequest`; highlight it while `offered`.
 - `POST /invoices/{id}/plan-requests { months }` (whoever pays the unit's money): `409 PLAN_REQUEST_PENDING {requestId}` when one waits; `409 INVOICE_NOT_CONVERTIBLE {reason}` (`instalment`, `has_plan`, `nothing_owed`); `409 INVOICE_DISPUTED`; `400 months INVALID_VALUE {max}`.
 - `GET /plan-requests/{id}`, `POST /plan-requests/{id}/withdraw` (its requester, while it waits; else `409 PLAN_REQUEST_NOT_PENDING {status}`).
-- Status: `pending`, `accepted` (with `planId`: open the instalment plan), `declined` (with `declineReason`), `withdrawn`, `lapsed` (the invoice was paid, credited or split meanwhile).
+- Status: `pending`, `accepted` (with `planId`: open the instalment plan), `declined` (with `declineReason`), `withdrawn`, `lapsed` (the invoice was paid, credited or split meanwhile; the staff can no longer accept or decline it: `409 PLAN_REQUEST_LAPSED`).
 - Pushes: `invoice.plan_available` (with a due-soon invoice), `instalment_plan_request.accepted`, `instalment_plan_request.declined` (`{ reasonCode }`). They appear in `GET /me/requests` as `instalment_plan_request`.
 
 ## Upcoming dues

@@ -50,7 +50,8 @@ The resident audit (2026-10-21) left R11c with the resident's own unit and its m
 
 - **`POST /invoices/{id}/plan-requests {months}`** (financePay): on an invoice it still owes, not an instalment, not split, not disputed; in at most the compound's `planMaxMonths` (6 by default, 2–24). **One waits on an invoice at a time** (a partial unique key; `409 PLAN_REQUEST_PENDING {requestId}`). The finance staff are told.
 - **Accepted** (`POST /staff/plan-requests/{id}/accept`) with the instalments the staff set, through `InstalmentsService.convertLocked` — the very split of their own plans (ADR 0048). **Declined** with a `planRequestDecline` reason; **withdrawn** by its requester. Decided once (a trigger, a state-shape CHECK); the requester is told.
-- **Lapsed is read, not written:** a waiting request on an invoice paid, credited or split meanwhile reads `lapsed`, whatever paid it, so no payment path needs to know; accepting it then is `INVOICE_NOT_CONVERTIBLE`.
+- **Lapsed is read, not written:** a waiting request on an invoice paid, credited or split meanwhile reads `lapsed`, whatever paid it, so no payment path needs to know.
+- **So a decision re-reads the invoice:** accept and decline re-check it under the unit's finance lock — the lock every payment, credit note and split of the invoice takes — and a request whose invoice no longer owes or was split is neither accepted nor declined: `409 PLAN_REQUEST_LAPSED`, nothing written. An acceptance and the payment that settles the invoice: one wins; the other finds the invoice split, or the request lapsed.
 - **The offer:** with an invoice's due-soon notice, one owing at least `planOfferMinAmount` (null: never) is offered a plan once (`invoice.plan_available`, the invoice notice row `plan_offer`). An invoice's detail says `planOffer`.
 - **Locks:** the account FOR SHARE, the unit's finance lock, then the request FOR UPDATE; the split reads the balance under that lock.
 

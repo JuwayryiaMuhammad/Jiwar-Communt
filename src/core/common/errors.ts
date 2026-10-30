@@ -1549,6 +1549,8 @@ export const ErrorCode = {
   PLAN_REQUEST_PENDING: 'PLAN_REQUEST_PENDING',
   /** Decided or withdrawn already (409, params.status). */
   PLAN_REQUEST_NOT_PENDING: 'PLAN_REQUEST_NOT_PENDING',
+  /** Its invoice no longer owes or was split meanwhile: it reads lapsed, and is neither accepted nor declined (409). */
+  PLAN_REQUEST_LAPSED: 'PLAN_REQUEST_LAPSED',
   COLLECTOR_VISIT_NOT_FOUND: 'COLLECTOR_VISIT_NOT_FOUND',
   /** A visit is open for this unit already: one at a time (409, params.visitId). */
   COLLECTOR_VISIT_OPEN: 'COLLECTOR_VISIT_OPEN',

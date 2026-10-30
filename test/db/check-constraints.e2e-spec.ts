@@ -2395,6 +2395,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   readiness_items_not_self: {
     guarded: 'copied_from_id IS NULL is tested first',
   },
+  readiness_campaign_inspections_target_one: {},
 };
 
 interface Check {

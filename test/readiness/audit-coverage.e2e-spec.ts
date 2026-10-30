@@ -175,6 +175,36 @@ describe('Audit coverage — readiness', () => {
     expect(JSON.stringify(rows)).not.toContain('AUDIT-secret');
   });
 
+  it('readiness_campaign.spawned — the program, the checklist, the inspector, the day and the inspections', async () => {
+    const p = await r.program(s);
+    const checklist = await r.checklist(s);
+    const item = await r.item(s, p.id, {
+      kind: 'inspection_campaign',
+      checklistId: checklist.id,
+      dueOn: day(4),
+    });
+    const area = await r.area(s);
+    const res = (
+      await r
+        .http(
+          'post',
+          `/maintenance/readiness/items/${item.id}/campaign`,
+          s.manager.token,
+          { inspectorId: s.techs[0].id, commonAreaIds: [area.id] },
+        )
+        .expect(200)
+    ).body as { spawned: string[] };
+    expect(
+      (await single(s.c, 'readiness_campaign.spawned', item.id)).metadata,
+    ).toEqual({
+      programId: p.id,
+      checklistId: checklist.id,
+      inspectorId: s.techs[0].id,
+      dueOn: day(4),
+      inspectionIds: res.spawned,
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every readiness entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

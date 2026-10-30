@@ -232,6 +232,37 @@ export const READINESS_ROUTES: Row[] = [
     },
     invalid: 'none',
   }),
+  keeper({
+    method: 'GET',
+    path: '/maintenance/readiness/items/{itemId}/campaign',
+    foreign: {
+      params: (w) => ({ itemId: w.bReadinessItemId }),
+      code: 'READINESS_ITEM_NOT_FOUND',
+    },
+    invalid: 'none',
+  }),
+  keeper({
+    method: 'POST',
+    path: '/maintenance/readiness/items/{itemId}/campaign',
+    // The inspector is checked first (accounts before the item): A's own
+    // technician, so the item is what is not found.
+    foreign: {
+      params: (w) => ({ itemId: w.bReadinessItemId }),
+      body: (w) => ({
+        inspectorId: w.a.ids.technician,
+        commonAreaIds: ['0192a5f0-1c2b-7d3e-8f40-000000006704'],
+      }),
+      code: 'READINESS_ITEM_NOT_FOUND',
+    },
+    invalid: {
+      body: { inspectorId: 'x', assetIds: ['x'], commonAreaIds: 'all' },
+      fields: [
+        { field: 'inspectorId', code: 'INVALID_UUID' },
+        { field: 'assetIds', code: 'INVALID_UUID' },
+        { field: 'commonAreaIds', code: 'INVALID_TYPE' },
+      ],
+    },
+  }),
   // An owner's own items: any staff member or the manager, no permission.
   {
     method: 'GET',

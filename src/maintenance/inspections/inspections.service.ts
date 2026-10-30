@@ -56,6 +56,12 @@ import {
 export const ROUND_RESOURCE = 'inspection_round';
 export const INSPECTION_RESOURCE = 'inspection';
 
+/** Runs in an inspection's submit or cancel transaction, after its status. */
+export type EndedHook = (
+  tx: TenantTxClient,
+  inspection: Inspection,
+) => Promise<void>;
+
 export interface Target {
   assetId?: string;
   commonAreaId?: string;
@@ -151,6 +157,8 @@ const encodeDue = (i: Inspection) =>
  */
 @Injectable()
 export class InspectionsService implements OnModuleInit {
+  private readonly endedHooks: EndedHook[] = [];
+
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
@@ -456,42 +464,71 @@ export class InspectionsService implements OnModuleInit {
       await this.idempotency.claim(tx, { type: INSPECTION_RESOURCE, id });
       await this.access.lockSelf(tx);
       await this.requireInspector(tx, input.assigneeId);
-      await this.requireTarget(tx, input);
-      await this.checklists.requireUsable(tx, input.checklistId, 'inspection');
-      const { today } = await this.calendar.now(tx);
-      if (!isRealDate(input.dueOn) || input.dueOn < today)
-        throw invalid([
-          {
-            field: 'dueOn',
-            code: isRealDate(input.dueOn)
-              ? FieldErrorCode.INVALID_VALUE
-              : FieldErrorCode.INVALID_FORMAT,
-          },
-        ]);
-      const inspection = await this.insert(tx, {
-        id,
-        tenantId: this.ctx.tenantId,
-        roundId: null,
+      return this.read(tx, await this.createInTx(tx, id, input));
+    });
+  }
+
+  /**
+   * One inspection scheduled in the caller's transaction (ADR 0067: a
+   * readiness campaign spawns its own): the target active and shared-locked,
+   * the checklist usable, the day from today; its inspector told. The
+   * caller has locked its account and the inspector's
+   * (`requireInspector`) before anything else.
+   */
+  async createInTx(
+    tx: TenantTxClient,
+    id: string,
+    input: InspectionInput,
+    readinessItemId?: string,
+  ): Promise<Inspection> {
+    await this.requireTarget(tx, input);
+    await this.checklists.requireUsable(tx, input.checklistId, 'inspection');
+    const { today } = await this.calendar.now(tx);
+    if (!isRealDate(input.dueOn) || input.dueOn < today)
+      throw invalid([
+        {
+          field: 'dueOn',
+          code: isRealDate(input.dueOn)
+            ? FieldErrorCode.INVALID_VALUE
+            : FieldErrorCode.INVALID_FORMAT,
+        },
+      ]);
+    const inspection = await this.insert(tx, {
+      id,
+      tenantId: this.ctx.tenantId,
+      roundId: null,
+      checklistId: input.checklistId,
+      assetId: input.assetId ?? null,
+      commonAreaId: input.commonAreaId ?? null,
+      assigneeId: input.assigneeId,
+      dueOn: input.dueOn,
+    });
+    await this.tell(tx, inspection, 'inspection.assigned');
+    await this.audit.record(tx, {
+      action: 'inspection.created',
+      targetId: inspection.id,
+      metadata: {
         checklistId: input.checklistId,
         assetId: input.assetId ?? null,
         commonAreaId: input.commonAreaId ?? null,
         assigneeId: input.assigneeId,
         dueOn: input.dueOn,
-      });
-      await this.tell(tx, inspection, 'inspection.assigned');
-      await this.audit.record(tx, {
-        action: 'inspection.created',
-        targetId: inspection.id,
-        metadata: {
-          checklistId: input.checklistId,
-          assetId: input.assetId ?? null,
-          commonAreaId: input.commonAreaId ?? null,
-          assigneeId: input.assigneeId,
-          dueOn: input.dueOn,
-        },
-      });
-      return this.read(tx, inspection);
+        ...(readinessItemId ? { readinessItemId } : {}),
+      },
     });
+    return inspection;
+  }
+
+  /**
+   * What runs in the transaction that submits or cancels an inspection,
+   * under its lock (ADR 0067: a readiness campaign is done by its last).
+   */
+  onEnded(hook: EndedHook): void {
+    this.endedHooks.push(hook);
+  }
+
+  private async ended(tx: TenantTxClient, inspection: Inspection) {
+    for (const hook of this.endedHooks) await hook(tx, inspection);
   }
 
   /** Called off before it is submitted, with a reason. */
@@ -517,6 +554,7 @@ export class InspectionsService implements OnModuleInit {
         targetId: id,
         metadata: { reasonCode: reason, fromStatus: inspection.status },
       });
+      await this.ended(tx, updated);
       return this.read(tx, updated);
     });
   }
@@ -632,6 +670,7 @@ export class InspectionsService implements OnModuleInit {
           attestationSha256: submitted.attestationSha256,
         },
       });
+      await this.ended(tx, updated);
       return { read: await this.read(tx, updated), opened };
     });
     await this.tickets.dispatchAfterCommit(opened.map((t) => t.id));
@@ -845,10 +884,11 @@ export class InspectionsService implements OnModuleInit {
     return this.findRound(tx, id);
   }
 
-  /** An inspector: an active account holding inspections.perform. */
-  private async requireInspector(
+  /** An inspector: an active account holding inspections.perform, shared-locked. */
+  async requireInspector(
     tx: TenantTxClient,
     id: string,
+    field = 'assigneeId',
   ): Promise<void> {
     await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${id}::uuid FOR SHARE`;
     const ok = await tx.account.count({
@@ -859,9 +899,7 @@ export class InspectionsService implements OnModuleInit {
       },
     });
     if (!ok)
-      throw invalid([
-        { field: 'assigneeId', code: FieldErrorCode.INSPECTOR_NOT_ELIGIBLE },
-      ]);
+      throw invalid([{ field, code: FieldErrorCode.INSPECTOR_NOT_ELIGIBLE }]);
   }
 
   /** One target, active, shared-locked; never an asset in a unit. */

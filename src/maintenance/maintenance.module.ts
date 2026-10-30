@@ -161,6 +161,7 @@ import {
   ReadinessProgramsController,
 } from './readiness/readiness.controller';
 import { ReadinessService } from './readiness/readiness.service';
+import { CampaignsService } from './readiness/campaigns.service';
 import { ReadinessSweep } from './readiness/readiness-sweep';
 import {
   EnergyController,
@@ -332,6 +333,7 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     OutageSweep,
     ReadinessService,
     ReadinessSweep,
+    CampaignsService,
     TechnicianStatsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).

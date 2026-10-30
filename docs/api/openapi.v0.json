@@ -5953,6 +5953,62 @@
         ],
         "type": "object"
       },
+      "CampaignInspectionView": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "inspectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "description": "scheduled, in_progress, submitted or cancelled.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inspectionId",
+          "assetId",
+          "commonAreaId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "CampaignView": {
+        "properties": {
+          "inspections": {
+            "items": {
+              "$ref": "#/components/schemas/CampaignInspectionView"
+            },
+            "type": "array"
+          },
+          "item": {
+            "$ref": "#/components/schemas/ReadinessItemView"
+          },
+          "spawned": {
+            "description": "The inspections this call scheduled: none when every target had one.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "item",
+          "inspections",
+          "spawned"
+        ],
+        "type": "object"
+      },
       "CancelAppointmentByResidentDto": {
         "properties": {
           "reasonCode": {
@@ -47591,6 +47647,36 @@
         ],
         "type": "object"
       },
+      "SpawnCampaignDto": {
+        "properties": {
+          "assetIds": {
+            "description": "Assets of the compound’s to inspect (never one in a unit). With `commonAreaIds`, at least one target.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "commonAreaIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "inspectorId": {
+            "description": "An active account holding inspections.perform. Told.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inspectorId"
+        ],
+        "type": "object"
+      },
       "SpecialtyIdsDto": {
         "properties": {
           "specialtyIds": {
@@ -81301,6 +81387,88 @@
           }
         ],
         "summary": "Change an open item’s title, owner, day or estimate",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/items/{itemId}/campaign": {
+      "get": {
+        "operationId": "ReadinessItemsController_campaign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A campaign’s inspections, with their status",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ReadinessItemsController_spawn",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpawnCampaignDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule a campaign’s inspections, one per target, due on its day",
         "tags": [
           "maintenance"
         ],

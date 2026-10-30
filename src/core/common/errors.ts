@@ -1507,6 +1507,12 @@ export const ErrorCode = {
   READINESS_ITEM_ENDED: 'READINESS_ITEM_ENDED',
   /** A campaign is done by its inspections, never by hand (409). */
   READINESS_CAMPAIGN_AUTOMATIC: 'READINESS_CAMPAIGN_AUTOMATIC',
+  /** Spawned and campaign routes are a campaign's only; params.kind (409). */
+  READINESS_ITEM_NOT_A_CAMPAIGN: 'READINESS_ITEM_NOT_A_CAMPAIGN',
+  /** Its day has passed: move it before spawning; params.dueOn (409). */
+  READINESS_ITEM_PAST_DUE: 'READINESS_ITEM_PAST_DUE',
+  /** Not called off while an inspection of it is open; params.open (409). */
+  READINESS_CAMPAIGN_OPEN: 'READINESS_CAMPAIGN_OPEN',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

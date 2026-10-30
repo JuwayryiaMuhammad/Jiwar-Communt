@@ -25465,6 +25465,81 @@
           }
         },
         {
+          "name": "A campaign’s inspections, with their status",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "items",
+                ":itemId",
+                "campaign"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/items/:itemId/campaign",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Schedule a campaign’s inspections, one per target, due on its day",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"inspectorId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetIds` | string (uuid)[] |  | Assets of the compound’s to inspect (never one in a unit). With `commonAreaIds`, at least one target. |\n| `commonAreaIds` | string (uuid)[] |  |  |\n| `inspectorId` | string (uuid) | yes | An active account holding inspections.perform. Told. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "items",
+                ":itemId",
+                "campaign"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/items/:itemId/campaign",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Call an item off",
           "request": {
             "body": {

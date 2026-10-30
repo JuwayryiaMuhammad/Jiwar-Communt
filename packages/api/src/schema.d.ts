@@ -6289,6 +6289,24 @@ export interface paths {
         patch: operations["ReadinessItemsController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/readiness/items/{itemId}/campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A campaign’s inspections, with their status */
+        get: operations["ReadinessItemsController_campaign"];
+        put?: never;
+        /** Schedule a campaign’s inspections, one per target, due on its day */
+        post: operations["ReadinessItemsController_spawn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/readiness/items/{itemId}/cancel": {
         parameters: {
             query?: never;
@@ -21347,6 +21365,22 @@ export interface components {
             /** Format: date-time */
             serverTime: string;
         };
+        CampaignInspectionView: {
+            /** Format: uuid */
+            assetId: string | null;
+            /** Format: uuid */
+            commonAreaId: string | null;
+            /** Format: uuid */
+            inspectionId: string;
+            /** @description scheduled, in_progress, submitted or cancelled. */
+            status: string;
+        };
+        CampaignView: {
+            inspections: components["schemas"]["CampaignInspectionView"][];
+            item: components["schemas"]["ReadinessItemView"];
+            /** @description The inspections this call scheduled: none when every target had one. */
+            spawned: string[];
+        };
         CancelAppointmentByResidentDto: {
             /** @description From the closed list `managementAppointmentCancelByResident`. */
             reasonCode: string;
@@ -34576,6 +34610,16 @@ export interface components {
             overtimeMinutes: number | null;
             /** Format: date-time */
             startedAt: string;
+        };
+        SpawnCampaignDto: {
+            /** @description Assets of the compound’s to inspect (never one in a unit). With `commonAreaIds`, at least one target. */
+            assetIds?: string[];
+            commonAreaIds?: string[];
+            /**
+             * Format: uuid
+             * @description An active account holding inspections.perform. Told.
+             */
+            inspectorId: string;
         };
         SpecialtyIdsDto: {
             /** @description The whole set, replacing the current one; empty clears it. Active specialties of the compound only. */
@@ -48691,6 +48735,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadinessItemView"];
+                };
+            };
+        };
+    };
+    ReadinessItemsController_campaign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignView"];
+                };
+            };
+        };
+    };
+    ReadinessItemsController_spawn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpawnCampaignDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignView"];
                 };
             };
         };

@@ -847,4 +847,5 @@ export const READINESS_COVERAGE: readonly string[] = [
   'readiness_item.updated',
   'readiness_item.done',
   'readiness_item.cancelled',
+  'readiness_campaign.spawned',
 ];

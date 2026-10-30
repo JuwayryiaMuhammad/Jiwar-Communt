@@ -18,6 +18,8 @@ export type ReadinessItemKind = (typeof READINESS_ITEM_KINDS)[number];
 /** A program's days: at most a year and a day, as the CHECK says. */
 export const MAX_PROGRAM_DAYS = 366;
 export const TITLE_MAX = 120;
+/** A campaign spawns at most this many inspections at once. */
+export const MAX_CAMPAIGN_TARGETS = 200;
 /** EGP, two places at most, more than 0: DECIMAL(12,2) in the database. */
 export const ESTIMATE = /^\d{1,10}(\.\d{1,2})?$/;
 

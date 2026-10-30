@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsIn,
   IsOptional,
   IsString,
@@ -14,6 +16,7 @@ import { withParams } from '../../../core/common/validation/validation-errors';
 import { IsLocalDate } from '../../schedules/local-dates';
 import {
   ESTIMATE,
+  MAX_CAMPAIGN_TARGETS,
   READINESS_ITEM_KINDS,
   READINESS_KINDS,
   TITLE_MAX,
@@ -206,4 +209,42 @@ export class ItemDoneDto {
   @IsOptional()
   @IsIn(DECISIONS, allowed(DECISIONS))
   decision?: (typeof DECISIONS)[number];
+}
+
+const TARGETS = { max: MAX_CAMPAIGN_TARGETS };
+
+export class SpawnCampaignDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'An active account holding inspections.perform. Told.',
+  })
+  @IsUUID()
+  inspectorId: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    isArray: true,
+    maxItems: MAX_CAMPAIGN_TARGETS,
+    description:
+      'Assets of the compound’s to inspect (never one in a unit). With `commonAreaIds`, at least one target.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(TARGETS.max, withParams(TARGETS))
+  @IsUUID('all', { each: true })
+  assetIds?: string[];
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    isArray: true,
+    maxItems: MAX_CAMPAIGN_TARGETS,
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(TARGETS.max, withParams(TARGETS))
+  @IsUUID('all', { each: true })
+  commonAreaIds?: string[];
 }

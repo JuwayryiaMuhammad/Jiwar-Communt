@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import type { MaintenanceContract, ReadinessItem } from '@prisma/client';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { ofDateColumn } from '../../schedules/local-dates';
+import type { CampaignRead } from '../campaigns.service';
 import {
   itemState,
   READINESS_ITEM_KINDS,
@@ -178,6 +179,43 @@ export class ContractDueView {
       kind: c.kind,
       endsOn: ofDateColumn(c.endsOn),
       itemId,
+    };
+  }
+}
+
+export class CampaignInspectionView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  inspectionId: string;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  assetId: string | null;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  commonAreaId: string | null;
+  @ApiProperty({
+    type: String,
+    description: 'scheduled, in_progress, submitted or cancelled.',
+  })
+  status: string;
+}
+
+export class CampaignView {
+  @ApiProperty({ type: ReadinessItemView })
+  item: ReadinessItemView;
+  @ApiProperty({ type: [CampaignInspectionView] })
+  inspections: CampaignInspectionView[];
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    isArray: true,
+    description:
+      'The inspections this call scheduled: none when every target had one.',
+  })
+  spawned: string[];
+
+  static from(c: CampaignRead): CampaignView {
+    return {
+      item: ReadinessItemView.from(c.item),
+      inspections: c.inspections.map((i) => ({ ...i })),
+      spawned: [...c.spawned],
     };
   }
 }

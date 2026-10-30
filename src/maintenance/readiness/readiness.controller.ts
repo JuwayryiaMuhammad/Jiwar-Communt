@@ -32,11 +32,14 @@ import {
   CreateProgramDto,
   ItemDoneDto,
   ProgramsQueryDto,
+  SpawnCampaignDto,
   UpdateItemDto,
   UpdateProgramDto,
 } from './dto/readiness.dto';
+import { CampaignsService } from './campaigns.service';
 import { ReadinessService } from './readiness.service';
 import {
+  CampaignView,
   ContractDueView,
   ReadinessCopyView,
   ReadinessItemView,
@@ -154,7 +157,10 @@ export class ReadinessProgramsController {
 @Controller('maintenance/readiness/items')
 @RequirePermissions('readiness.manage')
 export class ReadinessItemsController {
-  constructor(private readonly readiness: ReadinessService) {}
+  constructor(
+    private readonly readiness: ReadinessService,
+    private readonly campaigns: CampaignsService,
+  ) {}
 
   @Patch(':itemId')
   @ApiOperation({
@@ -193,6 +199,30 @@ export class ReadinessItemsController {
     return ReadinessItemView.from(
       await this.readiness.cancel(id, dto.reasonCode),
     );
+  }
+
+  @Get(':itemId/campaign')
+  @ApiOperation({ summary: 'A campaign’s inspections, with their status' })
+  @ApiOkResponse({ type: CampaignView })
+  async campaign(
+    @Param('itemId', parseId('itemId')) id: string,
+  ): Promise<CampaignView> {
+    return CampaignView.from(await this.campaigns.get(id));
+  }
+
+  /** One inspection per target the campaign does not hold yet. */
+  @Post(':itemId/campaign')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Schedule a campaign’s inspections, one per target, due on its day',
+  })
+  @ApiOkResponse({ type: CampaignView })
+  async spawn(
+    @Param('itemId', parseId('itemId')) id: string,
+    @Body() dto: SpawnCampaignDto,
+  ): Promise<CampaignView> {
+    return CampaignView.from(await this.campaigns.spawn(id, dto));
   }
 }
 

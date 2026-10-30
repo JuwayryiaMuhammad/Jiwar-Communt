@@ -24,6 +24,7 @@ import {
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { Notifier } from '../../core/notifications/notifier';
 import { ChecklistsService } from '../checklists/checklists.service';
+import { OPEN_INSPECTION } from '../inspections/inspection-rules';
 import { CompoundCalendar } from '../schedules/compound-calendar';
 import {
   dateColumn,
@@ -730,7 +731,7 @@ export class ReadinessService implements OnModuleInit {
     });
   }
 
-  /** Called off once, with a reason code. */
+  /** Called off once, with a reason code; a campaign not while an inspection of it is open. */
   cancel(id: string, reasonCode: string | undefined): Promise<ReadinessItem> {
     const reason = requireReasonCodeOnly(
       reasonCode,
@@ -740,6 +741,15 @@ export class ReadinessService implements OnModuleInit {
       await this.access.lockSelf(tx);
       const { program, item } = await this.lockItem(tx, id);
       this.requireItemOpen(item);
+      if (item.kind === 'inspection_campaign') {
+        const open = await this.openCampaignInspections(tx, id);
+        if (open > 0)
+          throw appError.conflict(
+            ErrorCode.READINESS_CAMPAIGN_OPEN,
+            'Its inspections are still open: cancel them, and the campaign is done',
+            { params: { open } },
+          );
+      }
       const { now } = await this.calendar.now(tx);
       const updated = await tx.readinessItem.update({
         where: { id },
@@ -806,6 +816,19 @@ export class ReadinessService implements OnModuleInit {
     });
     await this.tellOwner(tx, item, 'readiness_item.overdue', true);
     return 1;
+  }
+
+  /** A campaign's inspections still open (ADR 0067). */
+  async openCampaignInspections(
+    tx: TenantTxClient,
+    itemId: string,
+  ): Promise<number> {
+    const rows = await tx.$queryRaw<{ n: bigint }[]>`
+      SELECT count(*) AS n FROM readiness_campaign_inspections c
+        JOIN inspections i ON i.id = c.inspection_id
+       WHERE c.item_id = ${itemId}::uuid
+         AND i.status::text = ANY(${[...OPEN_INSPECTION]}::text[])`;
+    return Number(rows[0]?.n ?? 0);
   }
 
   // ------------------------------------------------------------ internals

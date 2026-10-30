@@ -10731,3 +10731,19 @@ model ReadinessItem {
   @@index([tenantId, programId, dueOn, id], map: "readiness_items_program_idx")
   @@map("readiness_items")
 }
+
+/// An inspection a readiness campaign spawned (ADR 0067): one per target
+/// and campaign item. Never changed.
+model ReadinessCampaignInspection {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  itemId       String   @map("item_id") @db.Uuid
+  inspectionId String   @map("inspection_id") @db.Uuid
+  assetId      String?  @map("asset_id") @db.Uuid
+  commonAreaId String?  @map("common_area_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, inspectionId], map: "readiness_campaign_inspections_inspection_key")
+  @@map("readiness_campaign_inspections")
+}

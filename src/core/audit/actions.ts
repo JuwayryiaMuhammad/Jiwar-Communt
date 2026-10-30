@@ -2008,6 +2008,7 @@ export const AUDIT_ACTIONS = {
   },
   'readiness_item.done': { log: 'tenant', target: 'readiness_item' },
   'readiness_item.cancelled': { log: 'tenant', target: 'readiness_item' },
+  'readiness_campaign.spawned': { log: 'tenant', target: 'readiness_item' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

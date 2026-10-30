@@ -1,6 +1,7 @@
 import { day } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityOpsHelpers, type Who } from '../setup/security-ops';
+import { whileShiftEnds } from '../setup/shift-end';
 
 const ROUNDS = 5;
 
@@ -8,6 +9,10 @@ const ROUNDS = 5;
  * ADR 0053, the violations' race: an appeal and a payment of the same
  * violation at once. Both take the violation's row FOR UPDATE: exactly one
  * wins, and the row agrees.
+ *
+ * A guard's violation while their shift ends: it takes the account, then
+ * the shift, FOR SHARE (ADR 0056's lock order), so it waits for the end
+ * and is refused.
  */
 describe('Violations — races', () => {
   let h: HttpHarness;
@@ -66,5 +71,26 @@ describe('Violations — races', () => {
         expect(payments).toBe(1);
       }
     }
+  });
+
+  it('a guard’s violation while their shift ends: it waits for the end, then is refused', async () => {
+    const leaving = await x.guardAt(s.c, (await x.g.gate(s.c)).id);
+    const res = await whileShiftEnds(leaving.shiftId, () =>
+      x.http('post', '/gate/violations', leaving.token, {
+        kind: 'noise',
+        unitCode: s.home.code,
+        amount: '120',
+        occurredOn: day(0),
+      }),
+    );
+    expect(res).toMatchObject({
+      status: 403,
+      body: { code: 'NO_OPEN_SHIFT' },
+    });
+    expect(
+      await x.inTx(s.c, (tx) =>
+        tx.unitViolation.count({ where: { issuedShiftId: leaving.shiftId } }),
+      ),
+    ).toBe(0);
   });
 });

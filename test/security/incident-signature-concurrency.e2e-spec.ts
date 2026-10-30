@@ -14,7 +14,8 @@ const ROUNDS = 5;
  *
  * The author's signature while their shift ends: it takes the account,
  * then the shift, FOR SHARE (ADR 0056's lock order), so it waits for the
- * end and is refused, never signed by a guard off duty.
+ * end and is refused, never signed by a guard off duty. So do a guard's
+ * report and their acknowledgement.
  */
 describe('Incident signatures — races', () => {
   let h: HttpHarness;
@@ -147,6 +148,58 @@ describe('Incident signatures — races', () => {
     expect(
       await x.inTx(s.c, (tx) =>
         tx.incidentSignature.count({ where: { incidentId: incident.id } }),
+      ),
+    ).toBe(0);
+  });
+
+  it('a guard’s report while their shift ends: it waits for the end, then is refused', async () => {
+    const leaving = await x.guardAt(s.c, guard.gateId);
+    const res = await whileShiftEnds(leaving.shiftId, () =>
+      x.http('post', '/gate/incidents', leaving.token, {
+        type: 'hazard',
+        severity: 'low',
+        unitCode: s.home.code,
+        occurredAt: new Date(dbClock().getTime() - 600_000).toISOString(),
+        description: 'Reported at the end of a shift',
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect((res.body as { code: string }).code).toBe('NO_OPEN_SHIFT');
+    expect(
+      await x.inTx(s.c, (tx) =>
+        tx.incident.count({ where: { shiftId: leaving.shiftId } }),
+      ),
+    ).toBe(0);
+  });
+
+  it('the author’s acknowledgement while their shift ends: it waits for the end, then is refused', async () => {
+    const leaving = await x.guardAt(s.c, guard.gateId);
+    const incident = (
+      await x
+        .http('post', '/gate/incidents', leaving.token, {
+          type: 'hazard',
+          severity: 'low',
+          unitCode: s.home.code,
+          occurredAt: new Date(dbClock().getTime() - 600_000).toISOString(),
+          description: 'Acknowledged at the end of a shift',
+        })
+        .expect(201)
+    ).body as { id: string };
+    const res = await whileShiftEnds(leaving.shiftId, () =>
+      x.http(
+        'post',
+        `/gate/incidents/${incident.id}/acknowledge`,
+        leaving.token,
+        {},
+      ),
+    );
+    expect(res.status).toBe(403);
+    expect((res.body as { code: string }).code).toBe('NO_OPEN_SHIFT');
+    expect(
+      await x.inTx(s.c, (tx) =>
+        tx.incidentAcknowledgement.count({
+          where: { incidentId: incident.id },
+        }),
       ),
     ).toBe(0);
   });

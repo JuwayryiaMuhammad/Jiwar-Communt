@@ -169,8 +169,10 @@ export class IncidentsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.safety.lockSelf(tx);
+      // A guard's shift FOR SHARE (ADR 0056's lock order): its end waits
+      // for the report, or came first and the guard is refused.
       const shift =
-        side === 'guard' ? await this.shifts.requireOnDuty(tx) : null;
+        side === 'guard' ? await this.shifts.requireOnDutyLocked(tx) : null;
       const now = await dbNow(tx);
       if (
         input.occurredAt.getTime() > now.getTime() + AHEAD_MS ||
@@ -507,7 +509,9 @@ export class IncidentsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.safety.lockSelf(tx);
-      if (side === 'guard') await this.shifts.requireOnDuty(tx);
+      // A guard's shift FOR SHARE (ADR 0056's lock order): its end waits
+      // for the acknowledgement, or came first and the guard is refused.
+      if (side === 'guard') await this.shifts.requireOnDutyLocked(tx);
       const incident = await this.lock(tx, id);
       const isAuthor = incident.reportedById === me;
       if (side === 'guard' && !isAuthor) throw incidentNotFound();

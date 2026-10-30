@@ -147,8 +147,10 @@ export class ViolationsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.safety.lockSelf(tx);
+      // A guard's shift FOR SHARE (ADR 0056's lock order): its end waits
+      // for the violation, or came first and the guard is refused.
       const shift =
-        side === 'guard' ? await this.shifts.requireOnDuty(tx) : null;
+        side === 'guard' ? await this.shifts.requireOnDutyLocked(tx) : null;
       const fields: FieldError[] = [];
       if (
         !(REASON_CODES.violationKind as readonly string[]).includes(input.kind)

@@ -65,7 +65,9 @@ export class GuardSosService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
-      const shift = await this.shifts.requireOnDuty(tx);
+      // A guard's shift FOR SHARE (ADR 0056's lock order): its end waits
+      // for the SOS, or came first and the guard is refused.
+      const shift = await this.shifts.requireOnDutyLocked(tx);
       const post = shift.gateId
         ? { originGateId: shift.gateId }
         : { originPlaceId: shift.placeId! };

@@ -15,7 +15,8 @@ const ROUNDS = 5;
  *   lockdown of a scope is ever live;
  * - a start while the guard's shift ends: the start takes the account, then
  *   the shift FOR SHARE, then the lockdown state (ADR 0056's lock order),
- *   so it waits for the end and is refused, never started by a shift over.
+ *   so it waits for the end and is refused, never started by a shift over;
+ *   an override likewise.
  */
 describe('Lockdown — races', () => {
   let h: HttpHarness;
@@ -132,6 +133,25 @@ describe('Lockdown — races', () => {
     expect(
       await x.inTx(s.c, (tx) =>
         tx.gateLockdown.count({ where: { startedShiftId: leaving.shiftId } }),
+      ),
+    ).toBe(0);
+  });
+
+  it('R5: an override while the guard’s shift ends: it waits for the end, then is refused', async () => {
+    const gate = await x.g.gate(s.c);
+    const starter = await x.guardAt(s.c, gate.id);
+    const l = await x.lockdown(starter, { scope: 'gate', gateId: gate.id });
+    const leaving = await x.guardAt(s.c, gate.id);
+    const res = await whileShiftEnds(leaving.shiftId, () =>
+      x.http('post', `/gate/lockdowns/${l.id}/overrides`, leaving.token, {
+        reasonCode: 'ambulance',
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect((res.body as { code: string }).code).toBe('NO_OPEN_SHIFT');
+    expect(
+      await x.inTx(s.c, (tx) =>
+        tx.gateLockdownOverride.count({ where: { lockdownId: l.id } }),
       ),
     ).toBe(0);
   });

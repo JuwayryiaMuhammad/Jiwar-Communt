@@ -26,8 +26,9 @@ export interface UnitLocation {
  * account lock, the unit's lock, the numbers, who responds, the phone a
  * responder gives, and the notifications.
  *
- * **One lock order, everywhere:** the caller's account row (FOR SHARE), the
- * unit's advisory lock (`emergency-unit` or `gate-service-unit`), the
+ * **One lock order, everywhere:** the caller's account row (FOR SHARE), a
+ * guard's shift (FOR SHARE, `actingLocked`; ADR 0056), the unit's advisory
+ * lock (`emergency-unit` or `gate-service-unit`), the
  * emergency's or request's row (FOR UPDATE), a place's row (FOR SHARE), and
  * last the counter row. No path here locks a unit's row (ADR 0044, 0045).
  */
@@ -48,16 +49,45 @@ export class SafetyCore {
    * gate). A guard without an open shift and nothing else is refused (403
    * NO_OPEN_SHIFT): the route let them in by `gate.operate` alone.
    */
-  async acting(
+  acting(
     tx: TenantTxClient,
     others: readonly Permission[],
   ): Promise<{ gateId: string | null; permissions: ReadonlySet<string> }> {
+    return this.actingAs(tx, others, false);
+  }
+
+  /**
+   * As `acting`, for a write: the guard's shift is read FOR SHARE, after
+   * the caller's account (ADR 0056's lock order). Its end waits for the
+   * write, or came first and the guard acts as their other permissions
+   * let them, or is refused.
+   */
+  actingLocked(
+    tx: TenantTxClient,
+    others: readonly Permission[],
+  ): Promise<{ gateId: string | null; permissions: ReadonlySet<string> }> {
+    return this.actingAs(tx, others, true);
+  }
+
+  private async actingAs(
+    tx: TenantTxClient,
+    others: readonly Permission[],
+    locked: boolean,
+  ): Promise<{ gateId: string | null; permissions: ReadonlySet<string> }> {
     const permissions = await this.permissions.current();
     if (permissions.has('gate.operate')) {
-      const shift = await tx.guardShift.findFirst({
-        where: { guardAccountId: this.ctx.accountId, endedAt: null },
-        select: { gateId: true },
-      });
+      const shift = locked
+        ? (
+            await tx.$queryRaw<{ gateId: string | null }[]>`
+              SELECT gate_id AS "gateId" FROM guard_shifts
+               WHERE guard_account_id = ${this.ctx.accountId}::uuid
+                 AND ended_at IS NULL
+                 FOR SHARE`
+          )[0]
+        : await tx.guardShift.findFirst({
+            where: { guardAccountId: this.ctx.accountId, endedAt: null },
+            select: { gateId: true },
+          });
       if (shift) return { gateId: shift.gateId, permissions };
     }
     if (others.some((p) => permissions.has(p)))

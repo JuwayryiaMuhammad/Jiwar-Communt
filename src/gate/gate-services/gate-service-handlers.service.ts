@@ -108,7 +108,7 @@ export class GateServiceHandlersService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
-      const { gateId } = await this.core.acting(tx, HANDLERS);
+      const { gateId } = await this.core.actingLocked(tx, HANDLERS);
       const r = await this.records.lock(tx, id);
       if (r.status !== 'open')
         throw appError.conflict(
@@ -160,7 +160,7 @@ export class GateServiceHandlersService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
-      await this.core.acting(tx, HANDLERS);
+      await this.core.actingLocked(tx, HANDLERS);
       const r = await this.records.lock(tx, id);
       if (r.status === 'closed' || r.status === 'cancelled') throw closed(r);
       if (r.status === 'open')
@@ -203,7 +203,7 @@ export class GateServiceHandlersService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
-      const { permissions } = await this.core.acting(tx, HANDLERS);
+      const { permissions } = await this.core.actingLocked(tx, HANDLERS);
       const r = await this.records.lock(tx, id);
       if (!LIVE_SERVICE.includes(r.status)) throw closed(r);
       if (

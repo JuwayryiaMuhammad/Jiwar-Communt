@@ -240,7 +240,10 @@ export class LockdownService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.safety.lockSelf(tx);
-      const shift = await this.shifts.requireOpen(tx);
+      // The shift FOR SHARE, before the lockdown's state (ADR 0056's lock
+      // order): its end waits for the override, or came first and the
+      // guard is refused.
+      const shift = await this.shifts.requireOpenLocked(tx);
       await this.core.lockState(tx, 'share');
       const lockdown = await tx.gateLockdown.findUnique({
         where: { id: lockdownId },

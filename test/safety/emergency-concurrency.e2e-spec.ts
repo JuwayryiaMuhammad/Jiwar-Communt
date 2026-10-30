@@ -1,10 +1,15 @@
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { safetyHelpers, type EmergencyBody, type Who } from '../setup/safety';
+import { whileShiftEnds } from '../setup/shift-end';
 
 /**
  * ADR 0047: what two people do at once. Reports of one type from one unit
  * make one emergency; responders racing to accept make one responder; a
  * cancel racing an accept leaves one consistent outcome.
+ *
+ * A guard's write while their shift ends (ADR 0056's lock order): their
+ * SOS, and a responder's accept, arrival and resolution, take the account,
+ * then the shift, FOR SHARE, so each waits for the end and is refused.
  */
 describe('Emergencies — concurrency', () => {
   let h: HttpHarness;
@@ -89,5 +94,83 @@ describe('Emergencies — concurrency', () => {
         expect(row.responderId).toBeNull();
       }
     }
+  });
+
+  describe('a guard’s write while their shift ends: it waits for the end, then is refused', () => {
+    const refused = (res: { status: number; body: unknown }) =>
+      expect(res).toMatchObject({
+        status: 403,
+        body: { code: 'NO_OPEN_SHIFT' },
+      });
+    const emergency = (id: string) =>
+      x.inTx(s.c, (tx) => tx.emergency.findUniqueOrThrow({ where: { id } }));
+    /** A medical emergency at a fresh home, accepted by `leaving` if asked. */
+    const reported = async (accepted?: Who) => {
+      const home = await x.unit(s.c);
+      const e = await x.report(await x.owner(s.c, home.id), home.id, 'medical');
+      if (accepted)
+        await x
+          .http('post', `/gate/emergencies/${e.id}/accept`, accepted.token, {
+            etaMinutes: 5,
+          })
+          .expect(200);
+      return e.id;
+    };
+
+    it('a guard’s SOS', async () => {
+      const leaving = await x.guardOnDuty(s.c);
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          x.http('post', '/gate/emergencies', leaving.token, {
+            type: 'security',
+          }),
+        ),
+      );
+      expect(
+        await x.inTx(s.c, (tx) =>
+          tx.emergency.count({ where: { originShiftId: leaving.shiftId } }),
+        ),
+      ).toBe(0);
+    });
+
+    it('an accept', async () => {
+      const leaving = await x.guardOnDuty(s.c);
+      const id = await reported();
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          x.http('post', `/gate/emergencies/${id}/accept`, leaving.token, {
+            etaMinutes: 5,
+          }),
+        ),
+      );
+      expect(await emergency(id)).toMatchObject({
+        status: 'reported',
+        responderId: null,
+      });
+    });
+
+    it('an arrival', async () => {
+      const leaving = await x.guardOnDuty(s.c);
+      const id = await reported(leaving);
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          x.http('post', `/gate/emergencies/${id}/arrived`, leaving.token),
+        ),
+      );
+      expect((await emergency(id)).status).toBe('on_the_way');
+    });
+
+    it('a resolution', async () => {
+      const leaving = await x.guardOnDuty(s.c);
+      const id = await reported(leaving);
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          x.http('post', `/gate/emergencies/${id}/resolve`, leaving.token, {
+            reasonCode: 'handled',
+          }),
+        ),
+      );
+      expect((await emergency(id)).status).toBe('on_the_way');
+    });
   });
 });

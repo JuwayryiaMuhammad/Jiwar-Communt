@@ -95,7 +95,7 @@ export class EmergencyRespondersService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
-      const { gateId } = await this.core.acting(tx, RESPONDERS);
+      const { gateId } = await this.core.actingLocked(tx, RESPONDERS);
       const e = await this.records.lock(tx, id, 'update');
       if (!OPEN_EMERGENCY.includes(e.status)) throw emergencyClosed(e.status);
       // A guard's own SOS (ADR 0053) is someone else's to answer.
@@ -145,7 +145,7 @@ export class EmergencyRespondersService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
-      await this.core.acting(tx, RESPONDERS);
+      await this.core.actingLocked(tx, RESPONDERS);
       const e = await this.records.lock(tx, id, 'update');
       if (!OPEN_EMERGENCY.includes(e.status)) throw emergencyClosed(e.status);
       if (!e.responderId)
@@ -188,7 +188,7 @@ export class EmergencyRespondersService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
-      const { permissions } = await this.core.acting(tx, RESPONDERS);
+      const { permissions } = await this.core.actingLocked(tx, RESPONDERS);
       const e = await this.records.lock(tx, id, 'update');
       if (!OPEN_EMERGENCY.includes(e.status)) throw emergencyClosed(e.status);
       const mine = e.responderId === me;

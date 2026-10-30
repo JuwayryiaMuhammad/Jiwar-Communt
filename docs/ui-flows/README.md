@@ -71,6 +71,9 @@
 | [05-visitor-public-page](05-gate/05-visitor-public-page.md) | صفحة الزائر اللي بتتفتح من اللينك |
 | [06-resident-entry-qr](05-gate/06-resident-entry-qr.md) | الـQR بتاع دخول الساكن، بيتغير كل 30 ثانية |
 | [07-parcels](05-gate/07-parcels.md) | الطرود: الاستلام، التسليم، التفويض، الإرجاع |
+| [08-face-checks-and-id-scans](05-gate/08-face-checks-and-id-scans.md) | فحص الوش ضد قايمة الحظر ومسح البطاقة، من غير ما حاجة تتخزن |
+| [09-gate-calls](05-gate/09-gate-calls.md) | مكالمة من البوابة جوه التطبيق، من غير أرقام |
+| [10-guard-alarms-and-control-room](05-gate/10-guard-alarms-and-control-room.md) | إنذار سقوط الحارس وغرفة التحكم |
 
 ### 06 — الصيانة
 | الملف | الفيتشر |

@@ -291,6 +291,11 @@ Then drop `PAYMENT_CREDENTIALS_PREVIOUS_KEYS` and deploy again.
 The other settings have safe defaults: `PAYMOB_BASE_URL`
 (`https://accept.paymob.com`), `PAYMOB_REQUEST_TIMEOUT_MS` (15000),
 `PAYMENT_SESSION_TTL_MINUTES` (30), `RECEIPT_PAGE_RATE_LIMIT_PER_IP` (30).
+
+The guard's vendors (ADR 0068): `GATE_FACE_DRIVER`, `GATE_ID_SCAN_DRIVER`,
+`GATE_CALL_DRIVER`, `GATE_ALARM_DRIVER`, `CONTROL_ROOM_DRIVER` are `off` in
+production when unset, and `fake` is refused there: leave them unset until
+a vendor's driver ships. `GATE_VENDOR_TIMEOUT_MS` (5000).
 The public receipt page is `<PUBLIC_APP_URL>/receipt#<code>` and the page
 Paymob's checkout returns to is `<PUBLIC_APP_URL>/paid`: both ship with the
 public web pages, nothing to install.

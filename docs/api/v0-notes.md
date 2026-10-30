@@ -277,6 +277,17 @@ The full notes for the apps are in [`notes/moving-and-closed-units.md`](notes/mo
 - **Works completion.** `POST /permits/{id}/completion-inspection`, `GET …/completion-inspections`, `GET …/completion-certificate` (PDF); `GET /staff/permit-inspections`, `…/{id}/decide`, `…/{id}/certificate` (`permits.manage`); public `POST /public/works-certificates/lookup` (`/w`). File purpose `works_inspection_photo`. A finishing-works deposit's view gains `worksCompletion`.
 - **Lists and export.** `/me/requests` and `/me/search` gain `inspection_request` (`IR-`) and `works_inspection` (`WC-`). The personal-data export gains the unit's papers: contracts, vault documents, registrations, moves, proxies, clearances, deposits, inspection requests.
 
+### The guard's vendors (ADR 0068)
+
+The full notes for the apps are in [`notes/guard-vendors.md`](notes/guard-vendors.md).
+
+- **Any vendor may be off:** `503 VENDOR_UNAVAILABLE {service, reason?}`. Off on staging for now.
+- **Face checks.** `POST /gate/face-checks`, `GET …/{id}` (a `gate_face_probe` file; `409 FACE_CHECKS_OFF`); advisory, never a score. Gate settings gain `faceChecks` (turned on with `faceChecksNoticePosted: true`).
+- **ID scans.** `POST /gate/id-scans` (a `gate_id_scan` file; no-store; `422 ID_SCAN_UNREADABLE`).
+- **Calls from the gate.** `POST /gate/calls`, `GET …/{id}`, `…/join`, `…/end`; `GET /me/gate-calls/{id}`, `…/answer|decline|end`; push `gate.call_incoming` (critical). Gate settings gain `callRingSeconds`, `callMaxSeconds`.
+- **Guard-down wearables.** `POST /gate/alarm-devices/pair`, `…/unpair`; `GET|POST /staff/gate/alarm-devices`, `PATCH …/{id}`, `POST …/{id}/retire`.
+- **The control room.** `control_room.watch` (the security supervisor's): `GET /staff/control-room/events`, `…/{id}`, `POST …/{id}/acknowledge`, `GET /staff/control-room/posts`; pushes `control_room.alert` (critical) and `control_room.event`.
+- **Lists.** File purposes `gate_face_probe`, `gate_id_scan`; reasons `alarmDeviceRetire`, `gateCallReason`; blocklist match sources `face`, `id_scan`.
 
 ### Money and the unit (ADR 0069)
 

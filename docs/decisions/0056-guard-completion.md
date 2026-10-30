@@ -421,7 +421,7 @@ The traffic report and the log search pages wait for M3.
 
 ## Open
 
-- **The control room (G8):** a live view of exits and field exceptions across posts.
+- ~~**The control room (G8):** a live view of exits and field exceptions across posts.~~ Done: ADR 0068's posts view and channel.
 - **A duty roster for the management**, so field exceptions go to whoever is on duty.
 - **Offline (O1):** field exceptions, service vehicles and recordings queued on the device.
 - **More media containers** (WebM, MP3), each with its own parser.

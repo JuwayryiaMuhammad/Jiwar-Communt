@@ -1562,6 +1562,9 @@ export const ErrorCode = {
   COLLECTOR_VISIT_NO_OFFER: 'COLLECTOR_VISIT_NO_OFFER',
   /** More than the unit owes plus the compound's margin (400, params.max). */
   AMOUNT_TOO_HIGH: 'AMOUNT_TOO_HIGH',
+  // Guard vendor adapters (ADR 0068)
+  /** The vendor did not answer, failed, or its driver is off (503, params.service, params.reason?). */
+  VENDOR_UNAVAILABLE: 'VENDOR_UNAVAILABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -72,6 +72,17 @@ export function applyTestEnv(): void {
   delete process.env.PAYMENT_CREDENTIALS_PREVIOUS_KEYS;
   process.env.PAYMENT_WEBHOOK_BASE_URL = 'https://api.jiwar.test';
   process.env.PAYMOB_BASE_URL = 'https://paymob.invalid';
+  // Guard vendors (ADR 0068): the fakes, whatever a developer's .env says;
+  // the suites script them through their tokens.
+  for (const name of [
+    'GATE_FACE_DRIVER',
+    'GATE_ID_SCAN_DRIVER',
+    'GATE_CALL_DRIVER',
+    'GATE_ALARM_DRIVER',
+    'CONTROL_ROOM_DRIVER',
+  ])
+    process.env[name] = 'fake';
+  process.env.GATE_VENDOR_TIMEOUT_MS = '5000';
   process.env.RECEIPT_PAGE_RATE_LIMIT_PER_IP = '100000';
   // The cooling-off the deletion suites count on (ADR 0036), whatever the
   // developer's .env still says.

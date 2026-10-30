@@ -4,12 +4,21 @@ import { FILE_PURPOSES, FILE_TYPES, mediaOf } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0064 recreated both, with every purpose). */
-const sizeCheck = readFileSync(
-  join(__dirname, migrations, '20261201090100_m1_file_purposes/migration.sql'),
+/** Both CHECKs as they stand now (ADR 0068 recreated both, with every purpose). */
+const both = readFileSync(
+  join(
+    __dirname,
+    migrations,
+    '20261229090100_gate_vendor_file_purposes/migration.sql',
+  ),
   'utf8',
 );
-const typeCheck = sizeCheck;
+/** The content type CHECK's statements, then the size CHECK's: each alone. */
+const typeCheck = both.slice(
+  both.indexOf('"files_content_type_for_purpose"'),
+  both.indexOf('"files_size_for_purpose"'),
+);
+const sizeCheck = both.slice(both.indexOf('"files_size_for_purpose"'));
 
 describe('file purposes', () => {
   it('match the CHECKs in the database', () => {
@@ -268,6 +277,16 @@ describe('file purposes', () => {
     expect(typeCheck).toContain(
       `("content_type" = 'text/csv' AND "purpose" = 'data_import')`,
     );
+    // Guard vendors (ADR 0068): a face probe and an ID scan are images, 5 MB.
+    for (const purpose of ['gate_face_probe', 'gate_id_scan'] as const) {
+      expect(FILE_PURPOSES[purpose].types).toEqual(
+        FILE_PURPOSES.worker_photo.types,
+      );
+      expect(sizeCheck).toContain(
+        `WHEN '${purpose}' THEN ${FILE_PURPOSES[purpose].maxBytes}`,
+      );
+      expect(typeCheck).not.toContain(`'${purpose}'`);
+    }
   });
 
   it('only the nine types', () => {
@@ -298,6 +317,11 @@ describe('file purposes', () => {
 
   it('nobody uploads an export', () => {
     expect(FILE_PURPOSES.data_export.uploaders).toEqual([]);
+  });
+
+  it('a face probe and an ID scan are the guard’s alone (ADR 0068)', () => {
+    expect(FILE_PURPOSES.gate_face_probe.uploaders).toEqual(['gate.operate']);
+    expect(FILE_PURPOSES.gate_id_scan.uploaders).toEqual(['gate.operate']);
   });
 
   it('a sheet to import is uploaded by whoever keeps the register or the meters (ADR 0064, 0066)', () => {

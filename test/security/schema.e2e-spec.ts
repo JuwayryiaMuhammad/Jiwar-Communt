@@ -648,6 +648,9 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'asset_document',
       'checklist_photo',
       'data_import',
+      // G8 (ADR 0068) recreated both after M1-1: a face probe, an ID scan.
+      'gate_face_probe',
+      'gate_id_scan',
     ])
       expect(purposes).toContain(purpose);
     for (const purpose of purposes) {

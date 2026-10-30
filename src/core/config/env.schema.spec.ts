@@ -600,3 +600,48 @@ describe('validateEnv', () => {
     });
   });
 });
+
+describe('guard vendor drivers (ADR 0068)', () => {
+  const vars = [
+    'GATE_FACE_DRIVER',
+    'GATE_ID_SCAN_DRIVER',
+    'GATE_CALL_DRIVER',
+    'GATE_ALARM_DRIVER',
+    'CONTROL_ROOM_DRIVER',
+  ] as const;
+
+  it('unset, empty or chosen: fake and off, a 5 s timeout by default', () => {
+    const env = validateEnv(base);
+    for (const name of vars) expect(env[name]).toBeUndefined();
+    expect(env.GATE_VENDOR_TIMEOUT_MS).toBe(5000);
+    for (const name of vars) {
+      expect(validateEnv({ ...base, [name]: '' })[name]).toBeUndefined();
+      expect(validateEnv({ ...base, [name]: 'fake' })[name]).toBe('fake');
+      expect(validateEnv({ ...base, [name]: 'off' })[name]).toBe('off');
+    }
+  });
+
+  it.each(vars)('%s: a fake is refused in production, off is not', (name) => {
+    expect(() =>
+      validateEnv({ ...base, NODE_ENV: 'production', [name]: 'fake' }),
+    ).toThrow(new RegExp(`must not be fake[\\s\\S]*${name}`));
+    expect(
+      validateEnv({ ...base, NODE_ENV: 'production', [name]: 'off' })[name],
+    ).toBe('off');
+  });
+
+  it.each(vars)('%s: nothing but fake or off', (name) => {
+    expect(() => validateEnv({ ...base, [name]: 'acme' })).toThrow(
+      new RegExp(name),
+    );
+  });
+
+  it('the timeout stays between half a second and 30 s', () => {
+    expect(() =>
+      validateEnv({ ...base, GATE_VENDOR_TIMEOUT_MS: '100' }),
+    ).toThrow(/GATE_VENDOR_TIMEOUT_MS/);
+    expect(() =>
+      validateEnv({ ...base, GATE_VENDOR_TIMEOUT_MS: '60000' }),
+    ).toThrow(/GATE_VENDOR_TIMEOUT_MS/);
+  });
+});

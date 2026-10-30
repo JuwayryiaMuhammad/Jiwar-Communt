@@ -70,6 +70,8 @@ export const FILES_ROUTES: Row[] = [
               'checklist_photo',
               'data_import',
               'works_inspection_photo',
+              'gate_face_probe',
+              'gate_id_scan',
             ],
           },
         },

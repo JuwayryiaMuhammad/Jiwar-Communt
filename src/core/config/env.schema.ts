@@ -14,6 +14,7 @@ import {
   PAYMENT_KEY_VERSION_MAX,
   parsePreviousPaymentKeys,
 } from './payment-key-ring';
+import { VENDOR_DRIVER_CHOICES, VENDOR_DRIVER_VARS } from './vendor-drivers';
 
 /** Unset and empty (`KEY=` in .env) mean the same thing: not configured. */
 const optional = <T extends z.ZodType>(schema: T) =>
@@ -318,6 +319,23 @@ export const envSchema = z
     PLATFORM_LOGIN_RATE_LIMIT_PER_IP: positiveInt.default(20),
     PLATFORM_LOGIN_RATE_LIMIT_PER_EMAIL: positiveInt.default(10),
 
+    // Guard vendor adapters (ADR 0068): which driver each one runs. Unset is
+    // the fake outside production and off in production; the fake is
+    // refused in production (below). A real vendor's driver comes with its
+    // contract, its credentials in the compound's vault, never here.
+    GATE_FACE_DRIVER: optional(z.enum(VENDOR_DRIVER_CHOICES)),
+    GATE_ID_SCAN_DRIVER: optional(z.enum(VENDOR_DRIVER_CHOICES)),
+    GATE_CALL_DRIVER: optional(z.enum(VENDOR_DRIVER_CHOICES)),
+    GATE_ALARM_DRIVER: optional(z.enum(VENDOR_DRIVER_CHOICES)),
+    CONTROL_ROOM_DRIVER: optional(z.enum(VENDOR_DRIVER_CHOICES)),
+    /** How long a vendor call may take before it is unavailable. */
+    GATE_VENDOR_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(500)
+      .max(30000)
+      .default(5000),
+
     /** Development only: every OTP becomes this code. See the refinement below. */
     OTP_FIXED_CODE: optional(
       z.string().regex(/^\d{6}$/, 'must be exactly 6 digits'),
@@ -583,6 +601,15 @@ export const envSchema = z
         message: 'must be https:// when NODE_ENV=production',
       });
     }
+    // A fake vendor answers whatever it is scripted to, and signs its events
+    // with a key in the code: never on a server with real residents.
+    for (const name of Object.values(VENDOR_DRIVER_VARS))
+      if (env.NODE_ENV === 'production' && env[name] === 'fake')
+        ctx.addIssue({
+          code: 'custom',
+          path: [name],
+          message: 'must not be fake when NODE_ENV=production',
+        });
     // A fixed code in production is a universal password. Refuse to boot
     // rather than trust that someone remembers to unset it.
     if (env.NODE_ENV === 'production' && env.OTP_FIXED_CODE !== undefined) {

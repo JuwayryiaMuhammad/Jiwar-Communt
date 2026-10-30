@@ -3368,6 +3368,10 @@ enum FilePurpose {
   data_import
   /// A works completion inspection's photo (ADR 0063).
   works_inspection_photo
+  /// A face a guard checks against the blocklist's (ADR 0068): purged after a day, or kept 30 with a match.
+  gate_face_probe
+  /// An identity document a guard scans (ADR 0068): deleted once read.
+  gate_id_scan
   @@map("file_purpose")
 }
 

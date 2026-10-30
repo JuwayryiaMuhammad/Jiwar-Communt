@@ -20890,7 +20890,9 @@
           "asset_document",
           "checklist_photo",
           "data_import",
-          "works_inspection_photo"
+          "works_inspection_photo",
+          "gate_face_probe",
+          "gate_id_scan"
         ],
         "type": "string"
       },

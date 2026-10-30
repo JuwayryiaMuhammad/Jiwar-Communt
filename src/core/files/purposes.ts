@@ -359,6 +359,21 @@ export const FILE_PURPOSES = {
     maxBytes: 1 * MB,
     uploaders: ['assets.manage', 'energy.manage'],
   },
+  // A face a guard checks against the blocklist's faces (ADR 0068): the
+  // guard's, purged after a day unless it matched (then kept 30 days with
+  // the match, as a visitor's photo).
+  gate_face_probe: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate'],
+  },
+  // An identity document a guard scans (ADR 0068): read by the vendor and
+  // deleted at once, whatever came of it; a sweep takes any left behind.
+  gate_id_scan: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

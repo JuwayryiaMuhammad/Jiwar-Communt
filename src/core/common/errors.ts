@@ -1568,6 +1568,8 @@ export const ErrorCode = {
   /** The compound has not turned face checks on (409). */
   FACE_CHECKS_OFF: 'FACE_CHECKS_OFF',
   FACE_CHECK_NOT_FOUND: 'FACE_CHECK_NOT_FOUND',
+  /** The vendor could not read the document's number: type it instead (422). */
+  ID_SCAN_UNREADABLE: 'ID_SCAN_UNREADABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

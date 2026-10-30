@@ -26109,6 +26109,105 @@
         ],
         "type": "object"
       },
+      "IdScanDocumentType": {
+        "enum": [
+          "national_id",
+          "passport",
+          "driving_licence",
+          "other"
+        ],
+        "type": "string"
+      },
+      "IdScanDto": {
+        "properties": {
+          "imageFileId": {
+            "description": "The guard’s finalized `gate_id_scan` file. Deleted once read, whatever came of it.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "imageFileId"
+        ],
+        "type": "object"
+      },
+      "IdScanNamesView": {
+        "properties": {
+          "ar": {
+            "nullable": true,
+            "type": "string"
+          },
+          "en": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "en",
+          "ar"
+        ],
+        "type": "object"
+      },
+      "IdScanView": {
+        "properties": {
+          "birthDate": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "documentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdScanDocumentType"
+              }
+            ]
+          },
+          "expired": {
+            "description": "Past its expiry by the compound’s today; null when it shows none.",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "expiresOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/GuardBlocklistEntryView"
+            },
+            "type": "array"
+          },
+          "names": {
+            "$ref": "#/components/schemas/IdScanNamesView"
+          },
+          "nationalId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NationalIdCheckView"
+              }
+            ],
+            "description": "A national ID’s own check; null for other documents.",
+            "nullable": true,
+            "type": "object"
+          },
+          "number": {
+            "description": "Normalized: what an ID lookup takes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentType",
+          "number",
+          "names",
+          "birthDate",
+          "expiresOn",
+          "expired",
+          "nationalId",
+          "matches"
+        ],
+        "type": "object"
+      },
       "IdView": {
         "properties": {
           "id": {
@@ -33097,6 +33196,24 @@
           "gateServiceQueue",
           "myGateServices",
           "parkingReports"
+        ],
+        "type": "object"
+      },
+      "NationalIdCheckView": {
+        "properties": {
+          "birthDate": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "valid": {
+            "description": "The number’s own structure holds: a real birth date, a known governorate.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "birthDate"
         ],
         "type": "object"
       },
@@ -73517,6 +73634,46 @@
           }
         ],
         "summary": "Look an ID number up on the blocklist",
+        "tags": [
+          "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/id-scans": {
+      "post": {
+        "description": "Inside an open shift at a gate, on the guard’s own rate limit. What the document says, for this device once: never stored, never logged, audited only by its outcome. The image is deleted whatever came of it. 422 ID_SCAN_UNREADABLE: type the number instead; 503 VENDOR_UNAVAILABLE: the vendor did not answer.",
+        "operationId": "GateIdScansController_scan",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdScanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdScanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a document",
         "tags": [
           "blocklist"
         ],

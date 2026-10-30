@@ -174,6 +174,9 @@ import { GateFaceChecksController } from './face/face-checks.controller';
 import { FaceChecksService } from './face/face-checks.service';
 import { faceDriverProvider } from './face/face-driver.provider';
 import { FaceEnrollments } from './face/face-enrollments';
+import { idScanDriverProvider } from './id-scan/id-scan-driver.provider';
+import { GateIdScansController } from './id-scan/id-scans.controller';
+import { IdScansService } from './id-scan/id-scans.service';
 import { StaffBlocklistController } from './blocklist/staff-blocklist.controller';
 import { GateIncidentsController } from './incidents/gate-incidents.controller';
 import { IncidentExportSections } from './incidents/incident-export-sections';
@@ -402,6 +405,8 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     GateIdLookupController,
     // Face checks (ADR 0068).
     GateFaceChecksController,
+    // ID scans (ADR 0068).
+    GateIdScansController,
     GateIncidentsController,
     TechnicianIncidentsController,
     StaffIncidentsController,
@@ -542,6 +547,9 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     faceDriverProvider,
     FaceEnrollments,
     FaceChecksService,
+    // ID scans (ADR 0068).
+    idScanDriverProvider,
+    IdScansService,
     IncidentsService,
     IncidentLifecycle,
     IncidentExportSections,

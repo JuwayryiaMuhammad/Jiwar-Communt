@@ -2924,6 +2924,41 @@
           }
         },
         {
+          "name": "Read a document",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"imageFileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `imageFileId` | string (uuid) | yes | The guard’s finalized `gate_id_scan` file. Deleted once read, whatever came of it. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "id-scans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/id-scans"
+            }
+          }
+        },
+        {
           "name": "List the blocklist",
           "request": {
             "description": "**Responses:** 200",

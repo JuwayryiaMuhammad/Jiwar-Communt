@@ -2952,6 +2952,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/id-scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Read a document
+         * @description Inside an open shift at a gate, on the guard’s own rate limit. What the document says, for this device once: never stored, never logged, audited only by its outcome. The image is deleted whatever came of it. 422 ID_SCAN_UNREADABLE: type the number instead; 503 VENDOR_UNAVAILABLE: the vendor did not answer.
+         */
+        post: operations["GateIdScansController_scan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/incidents": {
         parameters: {
             query?: never;
@@ -28805,6 +28825,34 @@ export interface components {
             /** @description The person’s live entries; empty for none. */
             matches: components["schemas"]["GuardBlocklistEntryView"][];
         };
+        /** @enum {string} */
+        IdScanDocumentType: "national_id" | "passport" | "driving_licence" | "other";
+        IdScanDto: {
+            /**
+             * Format: uuid
+             * @description The guard’s finalized `gate_id_scan` file. Deleted once read, whatever came of it.
+             */
+            imageFileId: string;
+        };
+        IdScanNamesView: {
+            ar: string | null;
+            en: string | null;
+        };
+        IdScanView: {
+            /** Format: date */
+            birthDate: string | null;
+            documentType: components["schemas"]["IdScanDocumentType"];
+            /** @description Past its expiry by the compound’s today; null when it shows none. */
+            expired: boolean | null;
+            /** Format: date */
+            expiresOn: string | null;
+            matches: components["schemas"]["GuardBlocklistEntryView"][];
+            names: components["schemas"]["IdScanNamesView"];
+            /** @description A national ID’s own check; null for other documents. */
+            nationalId: components["schemas"]["NationalIdCheckView"] | null;
+            /** @description Normalized: what an ID lookup takes. */
+            number: string;
+        };
         IdView: {
             /** Format: uuid */
             id: string;
@@ -31015,6 +31063,12 @@ export interface components {
             pendingInstructions: number;
             /** @description Mine, my post’s while on shift there, and those I took: open or in progress (`/gate/tasks/{id}`). */
             tasks: components["schemas"]["MyTasksSection"];
+        };
+        NationalIdCheckView: {
+            /** Format: date */
+            birthDate: string | null;
+            /** @description The number’s own structure holds: a real birth date, a known governorate. */
+            valid: boolean;
         };
         /** @enum {string} */
         NeighbourClaimStatus: "pending" | "handed_over" | "declined" | "withdrawn";
@@ -45164,6 +45218,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IdLookupView"];
+                };
+            };
+        };
+    };
+    GateIdScansController_scan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdScanDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdScanView"];
                 };
             };
         };

@@ -107,6 +107,25 @@ describe('Audit coverage — guard vendor adapters', () => {
     });
   });
 
+  describe('ID scans', () => {
+    it('gate.id_scanned — the outcome, the document’s type, whether it met an entry; never the number', async () => {
+      const file = await x.files.ready(guard.token, 'gate_id_scan');
+      await x
+        .http('post', '/gate/id-scans', guard.token, { imageFileId: file })
+        .expect(200);
+      const row = await single('gate.id_scanned', guard.shiftId);
+      expect(row).toMatchObject({
+        actorId: guard.id,
+        metadata: {
+          outcome: 'read',
+          documentType: 'national_id',
+          matched: false,
+        },
+      });
+      expect(leakText(row)).not.toMatch(/29001011234567|Sample Holder/);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every guard vendor entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

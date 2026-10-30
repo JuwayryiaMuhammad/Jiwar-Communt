@@ -46,7 +46,9 @@ export type FileDeleteReason =
   /** Its record's retention ended (a worker's photo, ADR 0029). */
   | 'retention'
   /** Its record took it back: a document removed from the register (ADR 0064). */
-  | 'withdrawn';
+  | 'withdrawn'
+  /** Read once and done with: an ID scan's image (ADR 0068). */
+  | 'read';
 
 export { objectKey };
 

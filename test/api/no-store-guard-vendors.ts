@@ -42,6 +42,12 @@ export function guardVendorCalls(
     return guard('POST', '/gate/face-checks', { photoFileId: id });
   };
   return {
+    'POST /gate/id-scans': async () => {
+      const files = fileHelpers(world().h);
+      const token = world().a.tokens.guard;
+      const id = await files.ready(token, 'gate_id_scan');
+      return guard('POST', '/gate/id-scans', { imageFileId: id });
+    },
     'POST /gate/face-checks': aFaceCheck,
     'GET /gate/face-checks/{id}': async () =>
       guard(

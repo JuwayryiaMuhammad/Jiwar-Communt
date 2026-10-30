@@ -2073,6 +2073,10 @@ export const AUDIT_ACTIONS = {
   // metadata: entryId (and enrolled, on removal: whether it ever was).
   'face_enrollment.enrolled': { log: 'tenant', target: 'face_enrollment' },
   'face_enrollment.removed': { log: 'tenant', target: 'face_enrollment' },
+  // A guard's ID scan, on their shift. metadata: outcome (read |
+  // unreadable), documentType, matched (a boolean). Never the number, a
+  // name or a date the document carries.
+  'gate.id_scanned': { log: 'tenant', target: 'guard_shift' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

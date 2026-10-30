@@ -317,6 +317,7 @@
   "test/operations/stock.e2e-spec.ts": 7,
   "test/operations/technician-stats.e2e-spec.ts": 7,
   "test/parcels/audit-coverage.e2e-spec.ts": 14,
+  "test/parcels/concurrency.e2e-spec.ts": 18,
   "test/parcels/handover.e2e-spec.ts": 25,
   "test/parcels/manager.e2e-spec.ts": 9,
   "test/parcels/privacy.e2e-spec.ts": 12,

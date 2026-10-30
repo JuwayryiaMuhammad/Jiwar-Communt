@@ -104,6 +104,10 @@ test('the security keepers enter; a guard on shift does not (ADR 0053)', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle', 'parking_reports.handle'] }), false);
 });
 
+test('who watches the control room enters (ADR 0068)', () => {
+  assert.equal(mayEnter({ type: 'staff', permissions: ['control_room.watch'] }), true);
+});
+
 test('who raises board matters or keeps the budget enters, and a sitting board member by the board’s grant (ADR 0055)', () => {
   for (const p of ['governance.approvals', 'finance.budget'])
     assert.equal(mayEnter({ type: 'staff', permissions: [p] }), true);

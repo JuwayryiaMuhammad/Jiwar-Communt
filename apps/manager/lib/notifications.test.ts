@@ -261,8 +261,6 @@ test('a field exception to answer, and a patrol out of its area, read as codes a
 
 test('the gate offline (ADR 0057): its kinds read as sentences and lead to its pages', () => {
   assert.equal(notificationText(n('gate_device.sync_overdue', { minutes: 15 })), 'A gate device on shift has not been seen for 15 minutes');
-  assert.equal(notificationText(n('control_room.alert', { eventKind: 'guard_alarm' })), 'Control room alert: guard alarm');
-  assert.equal(notificationText(n('control_room.event', { eventKind: 'device_sync_overdue' })), 'Control room: device sync overdue');
   assert.equal(notificationText(n('gate_offline.security_conflict', { flags: 2 })), 'A gate device synced 2 security conflict(s) from offline');
   assert.equal(notificationText(n('gate_device.upload_rejected', { reason: 'signature' })), 'A gate device’s offline upload was refused (signature)');
   assert.equal(
@@ -273,6 +271,14 @@ test('the gate offline (ADR 0057): its kinds read as sentences and lead to its p
   assert.equal(notificationHref(n('gate_device.enrolled', {}, 'gate_device', 'd1'), manages), '/security/gate-devices?device=d1');
   assert.equal(notificationHref(n('gate_offline.conflicts', { flags: 1 }, 'gate_offline_batch', 'b1'), manages), '/security/offline-flags?batch=b1');
   assert.equal(notificationHref(n('gate_offline.conflicts', { flags: 1 }, 'gate_offline_batch', 'b1'), () => false), null);
+});
+
+test('the control room (ADR 0068): the event in words, and to the control room for its watchers', () => {
+  assert.equal(notificationText(n('control_room.alert', { eventKind: 'guard_alarm' })), 'Control room alert: guard alarm');
+  assert.equal(notificationText(n('control_room.event', { eventKind: 'device_sync_overdue' })), 'Control room: device sync overdue');
+  const alert = n('control_room.alert', { eventKind: 'lockdown_started' }, 'control_room_event', 'e1');
+  assert.equal(notificationHref(alert, (p) => p === 'control_room.watch'), '/security/control-room?event=e1');
+  assert.equal(notificationHref(alert, () => false), null);
 });
 
 test('a request to relay says the category, never a name, and leads its keeper to it (ADR 0060)', () => {

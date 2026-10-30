@@ -78,6 +78,8 @@ import {
   Wallet,
   CloudOff,
   Smartphone,
+  MonitorDot,
+  Watch,
   Gauge,
   Zap,
   ZapOff,
@@ -550,6 +552,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/security/gate-settings', label: 'Gate settings', icon: <SlidersHorizontal aria-hidden />, show: can('gate.manage') },
         // The gate offline (ADR 0057).
         { href: '/security/gate-devices', label: 'Gate devices', icon: <Smartphone aria-hidden />, show: can('gate_devices.manage') },
+        // Guard vendors (ADR 0068): the control room and the guard-down wearables.
+        { href: '/security/control-room', label: 'Control room', icon: <MonitorDot aria-hidden />, show: can('control_room.watch') },
+        { href: '/security/alarm-devices', label: 'Alarm wearables', icon: <Watch aria-hidden />, show: can('gate_devices.manage') },
         {
           href: '/security/offline-flags',
           label: 'Offline flags',

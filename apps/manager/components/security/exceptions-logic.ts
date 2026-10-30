@@ -78,6 +78,9 @@ export const GATE_SETTINGS = [
   { name: 'audioMaxMb', label: 'Largest sound recording, in MB', min: 1, max: 20 },
   { name: 'videoMaxMb', label: 'Largest video recording, in MB', min: 1, max: 100 },
   { name: 'offlineSyncAlertMinutes', label: 'Minutes a gate device on shift may go unseen before you are told', min: 5, max: 240 },
+  // Calls from the gate (ADR 0068).
+  { name: 'callRingSeconds', label: 'Seconds a call from the gate rings before it is missed', min: 15, max: 120 },
+  { name: 'callMaxSeconds', label: 'Seconds an answered call from the gate lasts at most', min: 60, max: 900 },
 ] as const;
 
 export type GateSettingName = (typeof GATE_SETTINGS)[number]['name'];

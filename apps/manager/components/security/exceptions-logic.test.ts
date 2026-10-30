@@ -57,6 +57,8 @@ const values = {
   audioMaxMb: 20,
   videoMaxMb: 100,
   offlineSyncAlertMinutes: 15,
+  callRingSeconds: 45,
+  callMaxSeconds: 300,
 };
 
 test('the settings form: whole numbers within each bound; only the visit length may be off', () => {

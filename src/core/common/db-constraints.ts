@@ -836,4 +836,28 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   governance_approval_progress_tenant_id_id_key: null,
   governance_approval_progress_one_final: null,
   board_publications_request_key: null,
+  // Money and the unit (ADR 0069). A plan's amount change is immutable,
+  // keyed for its composite links.
+  billing_plan_amount_changes_tenant_id_id_key: null,
+  // One plan request waiting an invoice, checked first under the unit's
+  // finance lock (PLAN_REQUEST_PENDING); a violation is a race.
+  instalment_plan_requests_tenant_id_id_key: null,
+  instalment_plan_requests_one_pending: null,
+  // A budget's spending reports are one line: one first report, each
+  // superseded once, checked first (SPENDING_REPORT_EXISTS,
+  // SPENDING_REPORT_SUPERSEDED); the budget key backs the successor's
+  // composite key; an item's position is the report's own.
+  finance_spending_reports_tenant_id_id_key: null,
+  finance_spending_reports_budget_id_key: null,
+  finance_spending_reports_supersedes_key: null,
+  finance_spending_reports_first_key: null,
+  finance_spending_report_items_tenant_id_id_key: null,
+  finance_spending_report_items_position_key: null,
+  // One open collector visit a unit, checked first under the unit's
+  // finance lock (COLLECTOR_VISIT_OPEN); an offer taken once; a payment is
+  // one visit's.
+  collector_visits_tenant_id_id_key: null,
+  collector_visits_one_open: null,
+  collector_visits_follows_key: null,
+  collector_visits_payment_key: null,
 };

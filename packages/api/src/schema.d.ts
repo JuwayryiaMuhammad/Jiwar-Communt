@@ -21601,6 +21601,15 @@ export interface components {
             /** @description The item’s own status: a TicketStatus for a ticket, a ManagementRequestStatus for a request. */
             status: string;
         };
+        BriefOutageView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["OutageKind"];
+            /** Format: date-time */
+            startsAt: string;
+        };
         BriefPollView: {
             /** Format: date-time */
             closesAt: string;
@@ -24860,6 +24869,8 @@ export interface components {
             /** @description Today’s events that are not over, the soonest first. */
             events: components["schemas"]["EventListItemView"][];
             gates: components["schemas"]["BriefGateView"][];
+            /** @description Utility outages told to the caller, under way or starting within 48 hours, the soonest first. */
+            outages: components["schemas"]["BriefOutageView"][];
             /** @description Open polls closing within 48 hours in which the caller casts the vote of a unit that has not voted. */
             polls: components["schemas"]["BriefPollView"][];
             /** @description The caller’s requests to the management. Null when their role does not write to it. */

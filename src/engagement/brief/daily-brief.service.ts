@@ -9,7 +9,12 @@ import {
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { GateStatusPort, type GateStatus } from '../../gate';
-import { ResidentTicketSummary, type TicketSummary } from '../../maintenance';
+import {
+  ResidentOutageSummary,
+  ResidentTicketSummary,
+  type OutageBrief,
+  type TicketSummary,
+} from '../../maintenance';
 import { ResidentRequestSummary, type RequestSummary } from '../../management';
 import {
   AnnouncementsService,
@@ -39,6 +44,8 @@ export interface DailyBrief {
   /** Null when the caller's role does not write to the management. */
   requests: RequestSummary | null;
   gates: GateStatus[];
+  /** Utility outages told to the caller: under way or within 48 hours. */
+  outages: OutageBrief[];
 }
 
 /**
@@ -54,7 +61,9 @@ export interface DailyBrief {
  * - the caller's unfinished tickets and open requests to the management:
  *   a count and the latest one's status, each read through its own
  *   domain's port and only when the caller's role uses that feature;
- * - the gates and whether each is in service.
+ * - the gates and whether each is in service;
+ * - the utility outages told to the caller that are under way or start
+ *   within 48 hours (ADR 0069), read through maintenance's port.
  *
  * Everything the engagement domain owns is read by its own rules (the
  * audience, at this moment); everything else through the other domains'
@@ -73,6 +82,7 @@ export class DailyBriefService {
     private readonly tickets: ResidentTicketSummary,
     private readonly requests: ResidentRequestSummary,
     private readonly gates: GateStatusPort,
+    private readonly outages: ResidentOutageSummary,
   ) {}
 
   async get(): Promise<DailyBrief> {
@@ -112,6 +122,7 @@ export class DailyBriefService {
         tickets: mayReport ? await this.tickets.of(tx, me) : null,
         requests: mayAsk ? await this.requests.of(tx, me) : null,
         gates: await this.gates.statuses(tx),
+        outages: await this.outages.of(tx, me, now),
       };
     });
   }

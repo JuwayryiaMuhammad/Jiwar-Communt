@@ -23,7 +23,13 @@ interface Brief {
     latest: { id: string; number: string; status: string } | null;
   } | null;
   gates: { id: string; name: string; open: boolean }[];
+  outages: { id: string; kind: string; startsAt: string; endsAt: string }[];
 }
+
+const HOUR = 3_600_000;
+/** An instant `hours` from now, with its offset. */
+const inHours = (hours: number) =>
+  new Date(Date.now() + hours * HOUR).toISOString();
 
 /**
  * ADR 0040: the daily brief — computed when asked, for the caller, from
@@ -58,6 +64,7 @@ describe('Community life — the daily brief', () => {
       tickets: { open: 0, latest: null },
       requests: { open: 0, latest: null },
       gates: [],
+      outages: [],
     });
     expect(view.date).toBe(today());
   });
@@ -215,6 +222,61 @@ describe('Community life — the daily brief', () => {
       ].sort((a, b) => a.name.localeCompare(b.name)),
     );
     expect(JSON.stringify(view)).not.toContain(duty.guardId);
+  });
+
+  it('the utility outages told to the caller, under way or within 48 hours: the kind and the instants, never the note (ADR 0069)', async () => {
+    const outage = async (body: object) =>
+      (
+        await e
+          .http('post', '/maintenance/outages', s.manager.token, {
+            kind: 'water',
+            planned: true,
+            scope: 'buildings',
+            buildings: ['A'],
+            startsAt: inHours(2),
+            endsAt: inHours(5),
+            note: 'Call Hany on 0100 000 0000',
+            ...body,
+          })
+          .expect(201)
+      ).body as { id: string; startsAt: string; endsAt: string };
+    const soon = await outage({});
+    const now = await outage({
+      kind: 'electricity',
+      planned: false,
+      startsAt: inHours(-1),
+    });
+    // Planned three days ahead: not told yet, so not in the brief.
+    await outage({ startsAt: inHours(72), endsAt: inHours(74) });
+    const off = await outage({
+      kind: 'gas',
+      startsAt: inHours(3),
+      endsAt: inHours(4),
+    });
+    await e
+      .http('post', `/maintenance/outages/${off.id}/cancel`, s.manager.token, {
+        reasonCode: 'not_needed',
+      })
+      .expect(200);
+    const view = await brief(s.owner);
+    expect(view.outages).toEqual([
+      {
+        id: now.id,
+        kind: 'electricity',
+        startsAt: now.startsAt,
+        endsAt: now.endsAt,
+      },
+      {
+        id: soon.id,
+        kind: 'water',
+        startsAt: soon.startsAt,
+        endsAt: soon.endsAt,
+      },
+    ]);
+    expect(JSON.stringify(view)).not.toContain('Hany');
+    // Someone in another building was told nothing.
+    const away = await e.owner(s.c, (await e.unit(s.c, 'B')).id);
+    expect((await brief(away)).outages).toEqual([]);
   });
 
   it('nothing is stored: asking twice writes no row anywhere of the community life', async () => {

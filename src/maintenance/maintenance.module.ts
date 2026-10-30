@@ -157,6 +157,7 @@ import {
   OutagesController,
 } from './outages/outages.controller';
 import { OutagesService } from './outages/outages.service';
+import { ResidentOutageSummary } from './outages/resident-outage-summary';
 import {
   OwnReadinessItemsController,
   ReadinessItemsController,
@@ -356,9 +357,10 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     WorkPermitsService,
     SafetyInstructionsService,
     WorkHazardsService,
+    ResidentOutageSummary,
     TechnicianStatsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
-  exports: [ResidentTicketSummary],
+  exports: [ResidentTicketSummary, ResidentOutageSummary],
 })
 export class MaintenanceModule {}

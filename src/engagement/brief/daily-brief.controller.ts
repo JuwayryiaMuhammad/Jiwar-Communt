@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
+import { REASON_CODES } from '../../core/common/reasons';
 import { AnnouncementListItemView } from '../announcements/views/announcement.views';
 import { EventListItemView } from '../events/views/event.views';
 import type { PollRead } from '../polls/polls.service';
@@ -74,6 +75,18 @@ export class BriefGateView {
   open: boolean;
 }
 
+/** A utility outage told to the caller (ADR 0069): the kind and the instants. */
+export class BriefOutageView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: REASON_CODES.outageKind, enumName: 'OutageKind' })
+  kind: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  startsAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  endsAt: Date;
+}
+
 export class BriefAnnouncementsView {
   @ApiProperty({ type: [AnnouncementListItemView], description: 'Pinned now.' })
   pinned: AnnouncementListItemView[];
@@ -129,6 +142,12 @@ export class DailyBriefView {
   requests: BriefSummaryView | null;
   @ApiProperty({ type: [BriefGateView] })
   gates: BriefGateView[];
+  @ApiProperty({
+    type: [BriefOutageView],
+    description:
+      'Utility outages told to the caller, under way or starting within 48 hours, the soonest first.',
+  })
+  outages: BriefOutageView[];
 
   static from(b: DailyBrief): DailyBriefView {
     return {
@@ -144,6 +163,12 @@ export class DailyBriefView {
       tickets: b.tickets,
       requests: b.requests,
       gates: b.gates.map((g) => ({ id: g.id, name: g.name, open: g.open })),
+      outages: b.outages.map((o) => ({
+        id: o.id,
+        kind: o.kind,
+        startsAt: o.startsAt,
+        endsAt: o.endsAt,
+      })),
     };
   }
 }

@@ -5424,6 +5424,36 @@
         ],
         "type": "object"
       },
+      "BriefOutageView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutageKind"
+              }
+            ]
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
       "BriefPollView": {
         "properties": {
           "closesAt": {
@@ -14805,6 +14835,13 @@
             },
             "type": "array"
           },
+          "outages": {
+            "description": "Utility outages told to the caller, under way or starting within 48 hours, the soonest first.",
+            "items": {
+              "$ref": "#/components/schemas/BriefOutageView"
+            },
+            "type": "array"
+          },
           "polls": {
             "description": "Open polls closing within 48 hours in which the caller casts the vote of a unit that has not voted.",
             "items": {
@@ -14853,7 +14890,8 @@
           "polls",
           "tickets",
           "requests",
-          "gates"
+          "gates",
+          "outages"
         ],
         "type": "object"
       },

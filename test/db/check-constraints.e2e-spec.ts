@@ -1168,6 +1168,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'decline_reason IS NULL is tested first; the list runs only on a value',
   },
   instalment_plan_requests_state_shape: {},
+  finance_dues_notices_month: {},
   // excluded is NOT NULL; the amount only under IS NULL.
   billing_plan_overrides_shape: {},
   billing_plan_overrides_amount: {

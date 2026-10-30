@@ -6632,6 +6632,8 @@ model FinanceSettings {
   planMaxMonths        Int      @default(6) @map("plan_max_months") @db.SmallInt
   /// From what an invoice still owes its due-soon notice offers a plan; null: never.
   planOfferMinAmount   Decimal? @map("plan_offer_min_amount") @db.Decimal(12, 2)
+  /// Tell a unit when its next month's dues rise (ADR 0069); off by default.
+  duesNotice           Boolean  @default(false) @map("dues_notice")
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -6957,6 +6959,17 @@ model BillingPlan {
 
   @@unique([tenantId, id])
   @@map("billing_plans")
+}
+
+/// A unit told its next month's dues rise (ADR 0069): once a unit and month.
+model FinanceDuesNotice {
+  tenantId String   @map("tenant_id") @db.Uuid
+  unitId   String   @map("unit_id") @db.Uuid
+  month    String
+  toldAt   DateTime @default(now()) @map("told_at") @db.Timestamptz(3)
+
+  @@id([tenantId, unitId, month])
+  @@map("finance_dues_notices")
 }
 
 /// A payment plan a resident asked for on an invoice (ADR 0069): pending,

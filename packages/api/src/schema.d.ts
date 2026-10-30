@@ -19655,6 +19655,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/upcoming-dues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What my unit will owe, by the month it falls due */
+        get: operations["UpcomingDuesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/vehicle-fines": {
         parameters: {
             query?: never;
@@ -26072,6 +26089,15 @@ export interface components {
             copyFromId?: string;
             /** @description The fiscal year, named after the calendar year it starts in: the one under way, the one before or the next. */
             fiscalYear: number;
+        };
+        DuesMonthView: {
+            /** @description Issued and still owed, due in it. */
+            invoiced: string;
+            /** @description YYYY-MM. */
+            month: string;
+            /** @description What the unit’s plans will issue it, due in it. */
+            projected: string;
+            total: string;
         };
         EffectSideView: {
             /** Format: date */
@@ -32513,11 +32539,14 @@ export interface components {
             nextCursor: string | null;
         };
         PlanSettingsDto: {
+            /** @description Tell a unit when its next month’s dues rise. */
+            duesNotice?: boolean;
             planMaxMonths?: number;
             /** @description From what an invoice still owes its due-soon notice offers a plan, EGP; null: never. */
             planOfferMinAmount?: string | null;
         };
         PlanSettingsView: {
+            duesNotice: boolean;
             planMaxMonths: number;
             planOfferMinAmount: string | null;
         };
@@ -39089,6 +39118,18 @@ export interface components {
             /** @description Unread and critical. */
             critical: number;
             unread: number;
+        };
+        UpcomingDuesView: {
+            /** Format: date */
+            asOf: string;
+            credit: string;
+            months: components["schemas"]["DuesMonthView"][];
+            /** @description Overdue and the months, less the credit; never below zero. */
+            net: string;
+            /** @description Due before today and still owed. */
+            overdue: string;
+            /** Format: uuid */
+            unitId: string;
         };
         UpcomingWorkView: {
             assetCode: string;
@@ -70301,6 +70342,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatementView"];
+                };
+            };
+        };
+    };
+    UpcomingDuesController_get: {
+        parameters: {
+            query?: {
+                /** @description How many months, this one first. */
+                months?: number;
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpcomingDuesView"];
                 };
             };
         };

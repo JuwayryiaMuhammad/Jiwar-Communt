@@ -1595,6 +1595,7 @@ describe('API v0 — PII leak scan', () => {
       '/staff/billing-plans/{id}/amount-changes': piiPlan,
       '/finance/spending-reports/{id}': w.bSpendingReportId,
       '/plan-requests/{id}': w.bPlanRequestId,
+      '/units/{unitId}/upcoming-dues': unit.id,
       '/staff/plan-requests/{id}': w.bPlanRequestId,
       '/units/{unitId}/consumption': unit.id,
       '/units/{unitId}/consumption/benchmark': unit.id,

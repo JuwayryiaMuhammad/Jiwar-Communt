@@ -1,6 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { INSTALMENTS } from '../../instalments/dto/instalments.dto';
 import { PLAN_REQUEST_STATUSES } from '../plan-requests.service';
@@ -46,7 +54,7 @@ export class PlanRequestQueueDto {
   status?: (typeof PLAN_REQUEST_STATUSES)[number];
 }
 
-/** The compound's payment plan terms for residents (ADR 0069). */
+/** How the compound helps residents plan their payments (ADR 0069). */
 export class PlanSettingsDto {
   @ApiPropertyOptional({
     type: Number,
@@ -69,4 +77,12 @@ export class PlanSettingsDto {
   @IsOptional()
   @IsString()
   planOfferMinAmount?: string | null;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Tell a unit when its next month’s dues rise.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  duesNotice?: boolean;
 }

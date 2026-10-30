@@ -14,13 +14,15 @@ import { money, MONEY, show } from '../money';
 export type PlanSettings = {
   planMaxMonths: number;
   planOfferMinAmount: string | null;
+  /** Tell a unit when its next month's dues rise (off by default). */
+  duesNotice: boolean;
 };
 
 /**
- * The compound's payment plan terms for residents (ADR 0069): the most
- * months a request may ask, and from what an invoice still owes its
- * due-soon notice offers a plan (null: never). They apply to requests and
- * notices from then on.
+ * How the compound helps residents plan their payments (ADR 0069): the
+ * most months a plan request may ask, from what an invoice still owes its
+ * due-soon notice offers a plan (null: never), and whether a unit is told
+ * when its next month's dues rise. They apply from then on.
  */
 @Injectable()
 export class PlanSettingsService {
@@ -38,6 +40,7 @@ export class PlanSettingsService {
   set(input: {
     planMaxMonths?: number;
     planOfferMinAmount?: string | null;
+    duesNotice?: boolean;
   }): Promise<PlanSettings> {
     if (
       typeof input.planOfferMinAmount === 'string' &&
@@ -69,6 +72,7 @@ export class PlanSettingsService {
             : input.planOfferMinAmount === null
               ? null
               : show(input.planOfferMinAmount),
+        duesNotice: input.duesNotice ?? before.duesNotice,
       };
       const changes = diffChanges(
         before,
@@ -84,6 +88,7 @@ export class PlanSettingsService {
             after.planOfferMinAmount === null
               ? null
               : money(after.planOfferMinAmount),
+          duesNotice: after.duesNotice,
         },
       });
       await this.audit.record(tx, {
@@ -98,12 +103,17 @@ export class PlanSettingsService {
   private async read(tx: TenantTxClient): Promise<PlanSettings> {
     const s = await tx.financeSettings.findUniqueOrThrow({
       where: { tenantId: this.ctx.txTenantId },
-      select: { planMaxMonths: true, planOfferMinAmount: true },
+      select: {
+        planMaxMonths: true,
+        planOfferMinAmount: true,
+        duesNotice: true,
+      },
     });
     return {
       planMaxMonths: s.planMaxMonths,
       planOfferMinAmount:
         s.planOfferMinAmount === null ? null : show(s.planOfferMinAmount),
+      duesNotice: s.duesNotice,
     };
   }
 }

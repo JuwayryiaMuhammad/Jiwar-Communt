@@ -1420,6 +1420,14 @@ export const NOTIFICATION_KINDS = {
     target: 'invoice',
     params: {},
   },
+  /** A unit's next month asks far more than the months before (ADR 0069); opt-in. */
+  'finance.dues_rising': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'unit',
+    params: { month: {} },
+  },
   'finance.spending_report_published': {
     priority: 'normal',
     category: 'finance',

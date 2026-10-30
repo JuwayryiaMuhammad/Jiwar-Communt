@@ -1611,6 +1611,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'فاتورة يقترب موعدها يمكن سدادها بخطة. اطلبها من التطبيق.',
     },
   },
+  'finance.dues_rising': {
+    en: {
+      title: 'Next month asks more',
+      body: 'Your unit’s dues for {month} are well above the months before. See them in the app.',
+    },
+    ar: {
+      title: 'مستحقات الشهر القادم أعلى',
+      body: 'مستحقات وحدتك عن {month} أعلى بكثير من الأشهر السابقة. اطّلع عليها في التطبيق.',
+    },
+  },
   'finance.spending_report_published': {
     en: {
       title: 'Where the fees went',

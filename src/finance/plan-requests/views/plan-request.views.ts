@@ -45,4 +45,6 @@ export class PlanSettingsView {
   planMaxMonths: number;
   @ApiProperty({ type: String, nullable: true })
   planOfferMinAmount: string | null;
+  @ApiProperty({ type: Boolean })
+  duesNotice: boolean;
 }

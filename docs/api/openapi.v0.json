@@ -17912,6 +17912,32 @@
         ],
         "type": "object"
       },
+      "DuesMonthView": {
+        "properties": {
+          "invoiced": {
+            "description": "Issued and still owed, due in it.",
+            "type": "string"
+          },
+          "month": {
+            "description": "YYYY-MM.",
+            "type": "string"
+          },
+          "projected": {
+            "description": "What the unit’s plans will issue it, due in it.",
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "invoiced",
+          "projected",
+          "total"
+        ],
+        "type": "object"
+      },
       "EffectSideView": {
         "properties": {
           "from": {
@@ -38569,6 +38595,10 @@
       },
       "PlanSettingsDto": {
         "properties": {
+          "duesNotice": {
+            "description": "Tell a unit when its next month’s dues rise.",
+            "type": "boolean"
+          },
           "planMaxMonths": {
             "maximum": 24,
             "minimum": 2,
@@ -38584,6 +38614,9 @@
       },
       "PlanSettingsView": {
         "properties": {
+          "duesNotice": {
+            "type": "boolean"
+          },
           "planMaxMonths": {
             "type": "number"
           },
@@ -38594,7 +38627,8 @@
         },
         "required": [
           "planMaxMonths",
-          "planOfferMinAmount"
+          "planOfferMinAmount",
+          "duesNotice"
         ],
         "type": "object"
       },
@@ -60711,6 +60745,44 @@
         "required": [
           "unread",
           "critical"
+        ],
+        "type": "object"
+      },
+      "UpcomingDuesView": {
+        "properties": {
+          "asOf": {
+            "format": "date",
+            "type": "string"
+          },
+          "credit": {
+            "type": "string"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/DuesMonthView"
+            },
+            "type": "array"
+          },
+          "net": {
+            "description": "Overdue and the months, less the credit; never below zero.",
+            "type": "string"
+          },
+          "overdue": {
+            "description": "Due before today and still owed.",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "asOf",
+          "overdue",
+          "months",
+          "credit",
+          "net"
         ],
         "type": "object"
       },
@@ -123009,6 +123081,55 @@
           }
         ],
         "summary": "Where my unit stands: owed, credit, latest activity",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/upcoming-dues": {
+      "get": {
+        "operationId": "UpcomingDuesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "How many months, this one first.",
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "maximum": 6,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpcomingDuesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What my unit will owe, by the month it falls due",
         "tags": [
           "finance"
         ],

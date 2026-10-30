@@ -40,6 +40,7 @@ interface Table {
 /** Each report its own day, so "one a budget a day" is never in the way. */
 let reportDays = 0;
 let lineCategories = 0;
+let duesMonths = 0;
 
 async function spendingReport(tx: TenantTxClient, own: Side, link: Side) {
   const id = newId();
@@ -83,6 +84,18 @@ const TABLES: Table[] = [
     },
   },
   { table: 'finance_spending_reports', insert: spendingReport },
+  {
+    table: 'finance_dues_notices',
+    key: 'unit_id',
+    insert: async (tx, own, link) => {
+      // A month of its own each time (one a unit and month).
+      const month = `20${String(31 + duesMonths++).padStart(2, '0')}-01`;
+      await tx.financeDuesNotice.create({
+        data: { tenantId: own.tenantId, unitId: link.unitId, month },
+      });
+      return link.unitId;
+    },
+  },
   {
     table: 'instalment_plan_requests',
     insert: async (tx, own, link) => {

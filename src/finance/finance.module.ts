@@ -32,6 +32,9 @@ import { BillingPlansController } from './billing-plans/billing-plans.controller
 import { BillingPlansService } from './billing-plans/billing-plans.service';
 import { FeesController } from './fees/fees.controller';
 import { FeesService } from './fees/fees.service';
+import { UpcomingDuesController } from './forecast/upcoming-dues.controller';
+import { UpcomingDuesService } from './forecast/upcoming-dues.service';
+import { UpcomingDuesSweep } from './forecast/upcoming-dues.sweep';
 import {
   PlanRequestsController,
   StaffPlanRequestsController,
@@ -131,6 +134,7 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     ReportsController,
     BillingPlansController,
     FeesController,
+    UpcomingDuesController,
     PlanRequestsController,
     StaffPlanRequestsController,
     StaffSpendingReportsController,
@@ -152,6 +156,8 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     FinanceProvisioning,
     FinanceAccess,
     FeesService,
+    UpcomingDuesService,
+    UpcomingDuesSweep,
     PlanRequestsService,
     PlanSettingsService,
     ResidentPlanItems,

@@ -227,6 +227,28 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
     },
     invalid: 'none',
   },
+  // What a unit will owe (ADR 0069).
+  {
+    method: 'GET',
+    path: '/units/{unitId}/upcoming-dues',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { months: '9' },
+      fields: [
+        {
+          field: 'months',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 6 },
+        },
+      ],
+    },
+  },
   // Payment plans residents ask for (ADR 0069).
   {
     method: 'POST',

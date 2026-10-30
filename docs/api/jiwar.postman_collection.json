@@ -10633,9 +10633,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"planMaxMonths\": 2,\n  \"planOfferMinAmount\": \"\"\n}"
+              "raw": "{\n  \"duesNotice\": false,\n  \"planMaxMonths\": 2,\n  \"planOfferMinAmount\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `planMaxMonths` | number |  |  |\n| `planOfferMinAmount` | string |  | From what an invoice still owes its due-soon notice offers a plan, EGP; null: never. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `duesNotice` | boolean |  | Tell a unit when its next month’s dues rise. |\n| `planMaxMonths` | number |  |  |\n| `planOfferMinAmount` | string |  | From what an invoice still owes its due-soon notice offers a plan, EGP; null: never. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -12460,6 +12460,42 @@
                 "statement"
               ],
               "raw": "{{baseUrl}}/api/v1/units/:unitId/statement",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "What my unit will owe, by the month it falls due",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "upcoming-dues"
+              ],
+              "query": [
+                {
+                  "description": "How many months, this one first.",
+                  "disabled": true,
+                  "key": "months",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/upcoming-dues",
               "variable": [
                 {
                   "description": "",

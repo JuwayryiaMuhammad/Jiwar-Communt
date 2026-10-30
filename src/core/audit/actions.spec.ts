@@ -214,6 +214,9 @@ describe('audit catalog', () => {
         'spending_report',
         'plan_request',
         'collector_visit',
+        // ADR 0068
+        'face_check',
+        'face_enrollment',
       ]).toContain(def.target);
     }
   });

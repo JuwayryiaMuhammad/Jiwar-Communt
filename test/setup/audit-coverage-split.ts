@@ -887,3 +887,13 @@ export const R11C1A_COVERAGE: readonly string[] = [
   'collector_visit.cancelled',
   'finance.collector_settings_changed',
 ];
+
+/**
+ * The guard vendor adapters (ADR 0068): face checks, ID scans, the control
+ * room, guard alarms and gate calls. test/gate/guard-vendors-audit-coverage.
+ */
+export const GUARD_VENDORS_COVERAGE: readonly string[] = [
+  'face_check.made',
+  'face_enrollment.enrolled',
+  'face_enrollment.removed',
+];

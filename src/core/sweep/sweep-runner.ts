@@ -203,6 +203,64 @@ export class SweepRunner
     return done;
   }
 
+  /**
+   * For work that calls out between two transactions (ADR 0068: a vendor,
+   * which never runs inside one): `claim` runs once per compound in a
+   * transaction and names the items it leased; `call` runs for each
+   * outside any transaction (as the `system` actor, in no tenant
+   * transaction); `record` then runs in a transaction of its own with what
+   * the call answered, or why it failed. A compound or an item that fails
+   * is logged and skipped; its lease lets the next run take it again.
+   * Returns the sum of what `record` returned.
+   */
+  async forEachTenantCall<T, R>(
+    claim: (tx: TenantTxClient, tenantId: string) => Promise<T[]>,
+    call: (tenantId: string, one: T) => Promise<R>,
+    record: (
+      tx: TenantTxClient,
+      tenantId: string,
+      one: T,
+      result: { ok: true; value: R } | { ok: false; error: unknown },
+    ) => Promise<number>,
+  ): Promise<number> {
+    let done = 0;
+    for (const tenantId of await this.tenantIds()) {
+      let items: T[];
+      try {
+        items = await this.inTenant(tenantId, (tx) => claim(tx, tenantId));
+      } catch (error) {
+        this.logger.error(
+          `sweep failed in a compound (${error instanceof Error ? error.name : 'Error'})`,
+        );
+        continue;
+      }
+      for (const one of items) {
+        let result: { ok: true; value: R } | { ok: false; error: unknown };
+        try {
+          result = {
+            ok: true,
+            value: await this.cls.run({ ifNested: 'inherit' }, () => {
+              this.cls.set('auditActor', { type: 'system', id: null });
+              return call(tenantId, one);
+            }),
+          };
+        } catch (error) {
+          result = { ok: false, error };
+        }
+        try {
+          done += await this.inTenant(tenantId, (tx) =>
+            record(tx, tenantId, one, result),
+          );
+        } catch (error) {
+          this.logger.error(
+            `sweep item failed (${error instanceof Error ? error.name : 'Error'})`,
+          );
+        }
+      }
+    }
+    return done;
+  }
+
   private async tenantIds(): Promise<string[]> {
     const tenants = await this.globalDb.tenant.findMany({
       select: { id: true },

@@ -75,6 +75,13 @@ export class GateSettingsResponse {
   })
   offlineSyncAlertMinutes: number;
 
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Face checks against the blocklist’s faces (ADR 0068), advisory only.',
+  })
+  faceChecks: boolean;
+
   static from(s: GateSettingsValues): GateSettingsResponse {
     return {
       exceptionAnswerMinutes: s.exceptionAnswerMinutes,
@@ -86,6 +93,7 @@ export class GateSettingsResponse {
       audioMaxMb: s.audioMaxMb,
       videoMaxMb: s.videoMaxMb,
       offlineSyncAlertMinutes: s.offlineSyncAlertMinutes,
+      faceChecks: s.faceChecks,
     };
   }
 }

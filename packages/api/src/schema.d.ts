@@ -2552,6 +2552,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/face-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check a face against the blocklist’s
+         * @description Inside an open shift at a gate, on the guard’s own rate limit, where the compound turned face checks on (else 409 FACE_CHECKS_OFF). Advisory only: the live entries the face may be, never a score. A vendor that does not answer is `unavailable`; an off driver is 503 VENDOR_UNAVAILABLE.
+         */
+        post: operations["GateFaceChecksController_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/face-checks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a face check of yours */
+        get: operations["GateFaceChecksController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/field-exceptions": {
         parameters: {
             query?: never;
@@ -21595,10 +21632,10 @@ export interface components {
          */
         BlocklistMatchOutcome: "refused" | "flagged" | "noted";
         /**
-         * @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056).
+         * @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056); an offline entry met when its device synced (ADR 0057); a guard’s face check or ID scan (ADR 0068).
          * @enum {string}
          */
-        BlocklistMatchSource: "visitor_pass" | "move_permit" | "event_guest" | "gate_request" | "verify" | "entry" | "plate_lookup" | "id_lookup" | "field_exception" | "service_vehicle";
+        BlocklistMatchSource: "visitor_pass" | "move_permit" | "event_guest" | "gate_request" | "verify" | "entry" | "plate_lookup" | "id_lookup" | "field_exception" | "service_vehicle" | "offline_sync" | "face" | "id_scan";
         BlocklistMatchView: {
             /** @description Who recorded or looked it up. */
             actor: components["schemas"]["AccountRefView"];
@@ -21611,12 +21648,12 @@ export interface components {
             kind: components["schemas"]["BlocklistKind"];
             /** @description `refused`: kept out; `flagged`: let in and watched; `noted`: met on a record or a lookup. */
             outcome: components["schemas"]["BlocklistMatchOutcome"];
-            /** @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056). */
+            /** @description Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056); an offline entry met when its device synced (ADR 0057); a guard’s face check or ID scan (ADR 0068). */
             source: components["schemas"]["BlocklistMatchSource"];
             /** Format: uuid */
             subjectId: string | null;
             /** @enum {string|null} */
-            subjectType: "visitor_pass" | "gate_request" | "event_guest" | "move_permit" | "field_exception" | "service_vehicle" | null;
+            subjectType: "visitor_pass" | "gate_request" | "event_guest" | "move_permit" | "field_exception" | "service_vehicle" | "face_check" | null;
         };
         BlocklistMatchViewList: {
             data: components["schemas"]["BlocklistMatchView"][];
@@ -26914,6 +26951,28 @@ export interface components {
             /** @description Anything that is not a live link answers 404 ACTION_TOKEN_INVALID. */
             token: string;
         };
+        FaceCheckDto: {
+            /**
+             * Format: uuid
+             * @description The guard’s finalized `gate_face_probe` file: the photo of the face at the gate.
+             */
+            photoFileId: string;
+        };
+        /**
+         * @description `possible_match`: compare the face yourself; `unavailable`: the vendor did not answer — go on by hand; `pending`: not answered (the shift ended before).
+         * @enum {string}
+         */
+        FaceCheckOutcome: "pending" | "no_match" | "possible_match" | "unavailable";
+        FaceCheckView: {
+            /** Format: date-time */
+            checkedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The live entries the face may be: kind, name and face. */
+            matches: components["schemas"]["GuardBlocklistEntryView"][];
+            /** @description `possible_match`: compare the face yourself; `unavailable`: the vendor did not answer — go on by hand; `pending`: not answered (the shift ended before). */
+            outcome: components["schemas"]["FaceCheckOutcome"];
+        };
         /** @enum {string} */
         FacilityBanReason: "rules_violation" | "damage" | "safety" | "misconduct" | "other";
         FacilityBanView: {
@@ -27686,6 +27745,8 @@ export interface components {
              * @example 15
              */
             exceptionEntryMinutes: number;
+            /** @description Face checks against the blocklist’s faces (ADR 0068), advisory only. */
+            faceChecks: boolean;
             /**
              * @description Minutes outside a patrol route’s geofence that flag the exit to `patrols.manage`.
              * @example 3
@@ -39777,6 +39838,10 @@ export interface components {
             exceptionAnswerMinutes?: number;
             /** @description Minutes an approved field exception lets its one entry in, at its gate. */
             exceptionEntryMinutes?: number;
+            /** @description Face checks against the blocklist’s faces (ADR 0068). Turned on only with `faceChecksNoticePosted: true`; off, the vendor’s templates are removed. */
+            faceChecks?: boolean;
+            /** @description The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020). */
+            faceChecksNoticePosted?: boolean;
             /** @description Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. */
             geofenceExitMinutes?: number;
             /** @description Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. */
@@ -44598,6 +44663,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PresignedReadView"];
+                };
+            };
+        };
+    };
+    GateFaceChecksController_check: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaceCheckDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceCheckView"];
+                };
+            };
+        };
+    };
+    GateFaceChecksController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceCheckView"];
                 };
             };
         };

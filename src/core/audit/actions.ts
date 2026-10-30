@@ -2065,6 +2065,14 @@ export const AUDIT_ACTIONS = {
   // A technician asked for their SOS to be called off; it stays open.
   // metadata: status, reasonCode.
   'emergency.cancel_requested': { log: 'tenant', target: 'emergency' },
+  // Guard vendor adapters (ADR 0068). Ids, codes and counts only: never a
+  // face, a template, a score, a document's number or a name.
+  // A guard's face check, answered. metadata: shiftId, outcome, entryIds.
+  'face_check.made': { log: 'tenant', target: 'face_check' },
+  // A blocklist entry's face at the vendor (the sweep, as the system).
+  // metadata: entryId (and enrolled, on removal: whether it ever was).
+  'face_enrollment.enrolled': { log: 'tenant', target: 'face_enrollment' },
+  'face_enrollment.removed': { log: 'tenant', target: 'face_enrollment' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

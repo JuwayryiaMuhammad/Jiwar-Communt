@@ -48,6 +48,13 @@ export type BlocklistKind = 'ban' | 'watch';
 export type BlocklistSubject = 'plate' | 'person';
 export type BlocklistStatus = 'active' | 'expired' | 'lifted';
 
+/** What follows an entry (ADR 0068: the face gallery), in its write's transaction. */
+export type BlocklistEntryHandler = (
+  tx: TenantTxClient,
+  entryId: string,
+  photoChanged: boolean,
+) => Promise<void>;
+
 type Person = { id: string; fullName: string | null; status: string };
 
 /** An entry with what its views show, read in one transaction. */
@@ -111,9 +118,15 @@ const invalid = (fields: FieldError[]) =>
  * passed; 30 days after a person's entry was lifted, the person's data
  * goes. The guards on shift read the active list: kind, plate or name, and
  * the face. Every write runs under the compound's blocklist lock.
+ *
+ * What follows an entry runs in its write's transaction (`onEntryChanged`):
+ * the face gallery (ADR 0068) enrols a live person's photo and removes it
+ * when the entry is lifted, expires, is purged or its photo changes.
  */
 @Injectable()
 export class BlocklistService implements OnModuleInit {
+  private readonly changed: BlocklistEntryHandler[] = [];
+
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
@@ -132,6 +145,20 @@ export class BlocklistService implements OnModuleInit {
       StaffBlocklistEntryView.from(await this.get(id)),
     );
     this.sweep.register(BLOCKLIST_SWEEP, (now) => this.expireAndPurge(now));
+  }
+
+  /** Runs after every write to an entry, in its transaction, under the blocklist lock. */
+  onEntryChanged(handler: BlocklistEntryHandler): void {
+    this.changed.push(handler);
+  }
+
+  private async entryChanged(
+    tx: TenantTxClient,
+    entryId: string,
+    photoChanged = false,
+  ): Promise<void> {
+    for (const handler of this.changed)
+      await handler(tx, entryId, photoChanged);
   }
 
   // --------------------------------------------------------------------------
@@ -212,6 +239,7 @@ export class BlocklistService implements OnModuleInit {
           note: input.note !== undefined,
         },
       });
+      await this.entryChanged(tx, id);
       return this.record(tx, entry, now);
     });
   }
@@ -322,6 +350,7 @@ export class BlocklistService implements OnModuleInit {
           expiresAt: updated.expiresAt?.toISOString() ?? null,
         },
       });
+      await this.entryChanged(tx, id, changed.includes('photo'));
       return this.record(tx, updated, now);
     });
   }
@@ -352,6 +381,7 @@ export class BlocklistService implements OnModuleInit {
         targetId: id,
         metadata: { reasonCode },
       });
+      await this.entryChanged(tx, id);
       return this.record(tx, updated, now);
     });
   }
@@ -480,6 +510,7 @@ export class BlocklistService implements OnModuleInit {
           targetId: e.id,
           metadata: { photo: e.photoFileId !== null },
         });
+        await this.entryChanged(tx, e.id);
       }
       return due.length + old.length;
     });
@@ -502,6 +533,7 @@ export class BlocklistService implements OnModuleInit {
       action: 'blocklist_entry.expired',
       targetId: id,
     });
+    await this.entryChanged(tx, id);
   }
 
   /** What the entry is about, tidied, or 400 naming what does not fit. */

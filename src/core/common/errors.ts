@@ -1565,6 +1565,9 @@ export const ErrorCode = {
   // Guard vendor adapters (ADR 0068)
   /** The vendor did not answer, failed, or its driver is off (503, params.service, params.reason?). */
   VENDOR_UNAVAILABLE: 'VENDOR_UNAVAILABLE',
+  /** The compound has not turned face checks on (409). */
+  FACE_CHECKS_OFF: 'FACE_CHECKS_OFF',
+  FACE_CHECK_NOT_FOUND: 'FACE_CHECK_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

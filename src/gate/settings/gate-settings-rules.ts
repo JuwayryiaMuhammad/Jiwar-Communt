@@ -32,16 +32,26 @@ export const GATE_SETTING_LIMITS = {
   offlineSyncAlertMinutes: { min: 5, max: 240, default: 15 },
 } as const;
 
+/** The gate's switches, each with its default. */
+export const GATE_SETTING_FLAGS = {
+  /**
+   * Face checks against the blocklist's faces (ADR 0068): off until the
+   * management turns them on, having posted a visible notice at the gate.
+   */
+  faceChecks: { default: false },
+} as const;
+
 type Limits = typeof GATE_SETTING_LIMITS;
-export type GateSettingName = keyof Limits;
+export type GateSettingName = keyof Limits | keyof typeof GATE_SETTING_FLAGS;
 
 /** The values as the management reads and sets them: null where allowed. */
 export type GateSettingsValues = {
-  [K in GateSettingName]: Limits[K] extends { nullable: true }
+  [K in keyof Limits]: Limits[K] extends { nullable: true }
     ? number | null
     : number;
-};
+} & { [K in keyof typeof GATE_SETTING_FLAGS]: boolean };
 
-export const GATE_SETTING_NAMES = Object.keys(
-  GATE_SETTING_LIMITS,
-) as GateSettingName[];
+export const GATE_SETTING_NAMES = [
+  ...Object.keys(GATE_SETTING_LIMITS),
+  ...Object.keys(GATE_SETTING_FLAGS),
+] as GateSettingName[];

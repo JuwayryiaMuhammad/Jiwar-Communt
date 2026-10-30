@@ -25,7 +25,10 @@ export type MatchSource =
   | 'field_exception'
   | 'service_vehicle'
   // An offline entry's plate, met when its device synced (ADR 0057).
-  | 'offline_sync';
+  | 'offline_sync'
+  // A face check's possible match, an ID scan's number (ADR 0068).
+  | 'face'
+  | 'id_scan';
 
 /** The gate subject it met, when there is one. */
 export interface MatchSubject {
@@ -35,7 +38,9 @@ export interface MatchSubject {
     | 'event_guest'
     | 'move_permit'
     | 'field_exception'
-    | 'service_vehicle';
+    | 'service_vehicle'
+    // A face check (ADR 0068): it reads back what it met.
+    | 'face_check';
   id: string;
 }
 

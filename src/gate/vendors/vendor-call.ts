@@ -32,13 +32,10 @@ export const vendorUnavailable = (service: VendorService, off = false) =>
   );
 
 /**
- * A driver call, never inside a database transaction: bounded by
- * GATE_VENDOR_TIMEOUT_MS, and any driver failure answered as 503
- * VENDOR_UNAVAILABLE {service} (`reason: 'off'` for an off driver). What
- * the vendor said is never in the error.
+ * A driver call bounded by `timeoutMs`: past it, the call is aborted and
+ * fails as DriverError('timeout'). For a sweep, which keeps the kind.
  */
-export async function callVendor<T>(
-  service: VendorService,
+export async function boundedCall<T>(
   timeoutMs: number,
   call: (signal: AbortSignal) => Promise<T>,
 ): Promise<T> {
@@ -54,14 +51,34 @@ export async function callVendor<T>(
   });
   try {
     return await Promise.race([call(controller.signal), timeout]);
-  } catch (e) {
-    if (e instanceof DriverError)
-      throw vendorUnavailable(service, e.kind === 'off');
-    throw e;
   } finally {
     clearTimeout(timer);
   }
 }
+
+/**
+ * A driver call for a request, never inside a database transaction:
+ * bounded by GATE_VENDOR_TIMEOUT_MS, and any driver failure answered as
+ * 503 VENDOR_UNAVAILABLE {service} (`reason: 'off'` for an off driver).
+ * What the vendor said is never in the error.
+ */
+export async function callVendor<T>(
+  service: VendorService,
+  timeoutMs: number,
+  call: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  try {
+    return await boundedCall(timeoutMs, call);
+  } catch (e) {
+    if (e instanceof DriverError)
+      throw vendorUnavailable(service, e.kind === 'off');
+    throw e;
+  }
+}
+
+/** A driver failure's kind; anything else thrown is the vendor's too. */
+export const failureKind = (e: unknown): DriverErrorKind =>
+  e instanceof DriverError ? e.kind : 'unavailable';
 
 /** The driver a service runs in this deployment (ADR 0068). */
 export const driverChoice = (

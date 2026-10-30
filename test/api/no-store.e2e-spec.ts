@@ -41,6 +41,7 @@ import { securityOpsCalls } from './no-store-security-ops';
 import { childrenCalls } from './no-store-children';
 import { gateCompletionCalls } from './no-store-gate-completion';
 import { offlineCalls } from './no-store-offline';
+import { guardVendorCalls } from './no-store-guard-vendors';
 import { residentItemCalls } from './no-store-resident-items';
 import { partnerCalls } from './no-store-partners';
 import { registrationCalls } from './no-store-registration';
@@ -3173,6 +3174,7 @@ describe('API v0 — no-store', () => {
     ...facilityUsageCalls(() => w),
     ...technicianSafetyCalls(() => w),
     ...r11c1Calls(() => w),
+    ...guardVendorCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

@@ -3577,7 +3577,7 @@
         "type": "string"
       },
       "BlocklistMatchSource": {
-        "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056).",
+        "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056); an offline entry met when its device synced (ADR 0057); a guard’s face check or ID scan (ADR 0068).",
         "enum": [
           "visitor_pass",
           "move_permit",
@@ -3588,7 +3588,10 @@
           "plate_lookup",
           "id_lookup",
           "field_exception",
-          "service_vehicle"
+          "service_vehicle",
+          "offline_sync",
+          "face",
+          "id_scan"
         ],
         "type": "string"
       },
@@ -3641,7 +3644,7 @@
                 "$ref": "#/components/schemas/BlocklistMatchSource"
               }
             ],
-            "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056)."
+            "description": "Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056); an offline entry met when its device synced (ADR 0057); a guard’s face check or ID scan (ADR 0068)."
           },
           "subjectId": {
             "format": "uuid",
@@ -3655,7 +3658,8 @@
               "event_guest",
               "move_permit",
               "field_exception",
-              "service_vehicle"
+              "service_vehicle",
+              "face_check"
             ],
             "nullable": true,
             "type": "string"
@@ -19799,6 +19803,64 @@
         ],
         "type": "object"
       },
+      "FaceCheckDto": {
+        "properties": {
+          "photoFileId": {
+            "description": "The guard’s finalized `gate_face_probe` file: the photo of the face at the gate.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "photoFileId"
+        ],
+        "type": "object"
+      },
+      "FaceCheckOutcome": {
+        "description": "`possible_match`: compare the face yourself; `unavailable`: the vendor did not answer — go on by hand; `pending`: not answered (the shift ended before).",
+        "enum": [
+          "pending",
+          "no_match",
+          "possible_match",
+          "unavailable"
+        ],
+        "type": "string"
+      },
+      "FaceCheckView": {
+        "properties": {
+          "checkedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "matches": {
+            "description": "The live entries the face may be: kind, name and face.",
+            "items": {
+              "$ref": "#/components/schemas/GuardBlocklistEntryView"
+            },
+            "type": "array"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FaceCheckOutcome"
+              }
+            ],
+            "description": "`possible_match`: compare the face yourself; `unavailable`: the vendor did not answer — go on by hand; `pending`: not answered (the shift ended before)."
+          }
+        },
+        "required": [
+          "id",
+          "outcome",
+          "checkedAt",
+          "matches"
+        ],
+        "type": "object"
+      },
       "FacilityBanReason": {
         "enum": [
           "rules_violation",
@@ -22408,6 +22470,10 @@
             "example": 15,
             "type": "number"
           },
+          "faceChecks": {
+            "description": "Face checks against the blocklist’s faces (ADR 0068), advisory only.",
+            "type": "boolean"
+          },
           "geofenceExitMinutes": {
             "description": "Minutes outside a patrol route’s geofence that flag the exit to `patrols.manage`.",
             "example": 3,
@@ -22444,7 +22510,8 @@
           "videoMaxSeconds",
           "audioMaxMb",
           "videoMaxMb",
-          "offlineSyncAlertMinutes"
+          "offlineSyncAlertMinutes",
+          "faceChecks"
         ],
         "type": "object"
       },
@@ -62034,6 +62101,14 @@
             "minimum": 5,
             "type": "number"
           },
+          "faceChecks": {
+            "description": "Face checks against the blocklist’s faces (ADR 0068). Turned on only with `faceChecksNoticePosted: true`; off, the vendor’s templates are removed.",
+            "type": "boolean"
+          },
+          "faceChecksNoticePosted": {
+            "description": "The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020).",
+            "type": "boolean"
+          },
           "geofenceExitMinutes": {
             "description": "Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once.",
             "maximum": 60,
@@ -72463,6 +72538,94 @@
         "summary": "Read the photo the guard took of a visitor at an entry",
         "tags": [
           "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/face-checks": {
+      "post": {
+        "description": "Inside an open shift at a gate, on the guard’s own rate limit, where the compound turned face checks on (else 409 FACE_CHECKS_OFF). Advisory only: the live entries the face may be, never a score. A vendor that does not answer is `unavailable`; an off driver is 503 VENDOR_UNAVAILABLE.",
+        "operationId": "GateFaceChecksController_check",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaceCheckDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaceCheckView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check a face against the blocklist’s",
+        "tags": [
+          "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/face-checks/{id}": {
+      "get": {
+        "operationId": "GateFaceChecksController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaceCheckView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a face check of yours",
+        "tags": [
+          "blocklist"
         ],
         "x-no-store": true,
         "x-stability": "draft"

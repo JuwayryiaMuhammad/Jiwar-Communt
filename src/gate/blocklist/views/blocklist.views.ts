@@ -146,10 +146,13 @@ export class BlocklistMatchView {
       'id_lookup',
       'field_exception',
       'service_vehicle',
+      'offline_sync',
+      'face',
+      'id_scan',
     ],
     enumName: 'BlocklistMatchSource',
     description:
-      'Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056).',
+      'Where: a pass, a move or a guest recorded by a resident; a gate request, a verify or an entry at the gate; a guard’s plate or ID lookup; a field exception the guard raised, a service vehicle coming in (ADR 0056); an offline entry met when its device synced (ADR 0057); a guard’s face check or ID scan (ADR 0068).',
   })
   source: string;
   @ApiProperty({
@@ -167,6 +170,7 @@ export class BlocklistMatchView {
       'move_permit',
       'field_exception',
       'service_vehicle',
+      'face_check',
     ],
     nullable: true,
   })

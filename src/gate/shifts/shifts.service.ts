@@ -95,7 +95,7 @@ export type ShiftEndHandler = (
   shift: EndedShift,
 ) => Promise<void>;
 
-const noOpenShift = () =>
+export const noOpenShift = () =>
   appError.forbidden(
     ErrorCode.NO_OPEN_SHIFT,
     'Start a shift at a gate before acting at the gate',

@@ -2927,6 +2927,8 @@ model GateSettings {
   videoMaxMb             Int      @default(100) @map("video_max_mb") @db.SmallInt
   /// Minutes a device on shift may go unseen before the management is told (ADR 0057).
   offlineSyncAlertMinutes Int @default(15) @map("offline_sync_alert_minutes") @db.SmallInt
+  /// Face checks against the blocklist's faces (ADR 0068): off until the compound turns them on.
+  faceChecks             Boolean  @default(false) @map("face_checks")
 
   @@map("gate_settings")
 }
@@ -9284,6 +9286,55 @@ model BlocklistMatch {
   @@unique([tenantId, id])
   @@index([tenantId, entryId, createdAt, id], map: "blocklist_matches_entry_idx")
   @@map("blocklist_matches")
+}
+
+/// A blocklist entry's face at the face vendor (ADR 0068), as an outbox:
+/// pending → enrolled → removing → removed (or pending → removing). The
+/// sweep calls the vendor between two transactions, on a lease. One live
+/// (pending or enrolled) per entry: a partial unique index, migration-only.
+model GateFaceEnrollment {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  entryId       String    @map("entry_id") @db.Uuid
+  /// pending | enrolled | removing | removed.
+  status        String    @default("pending")
+  /// The vendor's opaque reference to the template it holds.
+  templateRef   String?   @map("template_ref")
+  attempts      Int       @default(0) @db.SmallInt
+  nextAttemptAt DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  leasedUntil   DateTime? @map("leased_until") @db.Timestamptz(3)
+  /// The last driver failure's kind.
+  lastError     String?   @map("last_error")
+  enrolledAt    DateTime? @map("enrolled_at") @db.Timestamptz(3)
+  removingAt    DateTime? @map("removing_at") @db.Timestamptz(3)
+  removedAt     DateTime? @map("removed_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@map("gate_face_enrollments")
+}
+
+/// A guard's face check at the gate (ADR 0068): the probe, then what the
+/// vendor answered — never its score. The probe goes after a day, or 30
+/// days after a possible match.
+model GateFaceCheck {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  shiftId        String    @map("shift_id") @db.Uuid
+  gateId         String    @map("gate_id") @db.Uuid
+  guardAccountId String    @map("guard_account_id") @db.Uuid
+  probeFileId    String?   @map("probe_file_id") @db.Uuid
+  /// no_match | possible_match | unavailable; null until answered.
+  outcome        String?
+  /// How many live entries it met.
+  matches        Int?      @db.SmallInt
+  checkedAt      DateTime? @map("checked_at") @db.Timestamptz(3)
+  probeDeletedAt DateTime? @map("probe_deleted_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, probeFileId], map: "gate_face_checks_probe_key")
+  @@map("gate_face_checks")
 }
 
 /// That a pass, a guest or a move was refused by security (ADR 0053): its

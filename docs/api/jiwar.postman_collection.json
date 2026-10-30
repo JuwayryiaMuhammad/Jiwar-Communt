@@ -2821,6 +2821,74 @@
           }
         },
         {
+          "name": "Check a face against the blocklist’s",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"photoFileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `photoFileId` | string (uuid) | yes | The guard’s finalized `gate_face_probe` file: the photo of the face at the gate. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "face-checks"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/face-checks"
+            }
+          }
+        },
+        {
+          "name": "Get a face check of yours",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "face-checks",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/face-checks/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Look an ID number up on the blocklist",
           "request": {
             "body": {
@@ -15066,9 +15134,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"audioMaxMb\": 1,\n  \"audioMaxSeconds\": 10,\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"geofenceExitMinutes\": 1,\n  \"offlineSyncAlertMinutes\": 5,\n  \"videoMaxMb\": 1,\n  \"videoMaxSeconds\": 10,\n  \"visitExpectedMinutes\": 15\n}"
+              "raw": "{\n  \"audioMaxMb\": 1,\n  \"audioMaxSeconds\": 10,\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"faceChecks\": false,\n  \"faceChecksNoticePosted\": false,\n  \"geofenceExitMinutes\": 1,\n  \"offlineSyncAlertMinutes\": 5,\n  \"videoMaxMb\": 1,\n  \"videoMaxSeconds\": 10,\n  \"visitExpectedMinutes\": 15\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audioMaxMb` | number |  | The largest sound, in megabytes; checked when attached. |\n| `audioMaxSeconds` | number |  | The longest sound a patrol note or an incident takes, in seconds; checked when attached. |\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `offlineSyncAlertMinutes` | number |  | Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. |\n| `videoMaxMb` | number |  | The largest video, in megabytes; checked when attached. |\n| `videoMaxSeconds` | number |  | The longest video, in seconds; checked when attached. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audioMaxMb` | number |  | The largest sound, in megabytes; checked when attached. |\n| `audioMaxSeconds` | number |  | The longest sound a patrol note or an incident takes, in seconds; checked when attached. |\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `faceChecks` | boolean |  | Face checks against the blocklist’s faces (ADR 0068). Turned on only with `faceChecksNoticePosted: true`; off, the vendor’s templates are removed. |\n| `faceChecksNoticePosted` | boolean |  | The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020). |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `offlineSyncAlertMinutes` | number |  | Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. |\n| `videoMaxMb` | number |  | The largest video, in megabytes; checked when attached. |\n| `videoMaxSeconds` | number |  | The longest video, in seconds; checked when attached. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",

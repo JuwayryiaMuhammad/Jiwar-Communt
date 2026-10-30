@@ -1694,6 +1694,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/security/patrols/runs/{id}/geofence-exits': w.bRunId,
       // ADR 0057: B's device, not found for everyone of A.
       '/staff/gate/devices/{id}': w.bGateDeviceId,
+      // ADR 0068: a face check (a foreign one: not found).
+      '/gate/face-checks/{id}': w.bFaceCheckId,
       '/staff/gate/offline/flags/{id}': w.bOfflineFlagId,
       '/staff/gate/offline/batches/{id}': w.bOfflineBatchId,
       // ADR 0064: the register's places, never a person's.

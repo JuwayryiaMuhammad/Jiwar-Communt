@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, Max, Min, ValidateIf } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { GATE_SETTING_LIMITS as L } from '../gate-settings-rules';
 
@@ -153,4 +160,24 @@ export class UpdateGateSettingsDto {
     withParams(bounds(L.offlineSyncAlertMinutes)),
   )
   offlineSyncAlertMinutes?: number;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'Face checks against the blocklist’s faces (ADR 0068). Turned on only with `faceChecksNoticePosted: true`; off, the vendor’s templates are removed.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  faceChecks?: boolean;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  faceChecksNoticePosted?: boolean;
 }

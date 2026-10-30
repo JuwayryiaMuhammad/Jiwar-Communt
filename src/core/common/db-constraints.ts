@@ -860,4 +860,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   collector_visits_one_open: null,
   collector_visits_follows_key: null,
   collector_visits_payment_key: null,
+  // Guard vendor adapters (ADR 0068). A face's live enrolment is one per
+  // entry, written under the blocklist lock; a probe is one check's,
+  // claimed under the file's lock (FILE_NOT_AVAILABLE for the second).
+  gate_face_enrollments_tenant_id_id_key: null,
+  gate_face_enrollments_live_key: null,
+  gate_face_checks_tenant_id_id_key: null,
+  gate_face_checks_probe_key: null,
 };

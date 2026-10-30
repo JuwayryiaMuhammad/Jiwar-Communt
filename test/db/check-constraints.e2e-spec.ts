@@ -2419,6 +2419,20 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   utility_outages_kind_known: {},
   utility_outages_scope_shape: {},
   utility_outages_window: {},
+  // Guard vendor adapters (ADR 0068).
+  gate_face_enrollments_status: {},
+  gate_face_enrollments_error: {
+    guarded: 'last_error IS NULL is tested first',
+  },
+  gate_face_enrollments_template: {
+    guarded: 'template_ref IS NULL is tested first',
+  },
+  gate_face_enrollments_shape: {},
+  gate_face_checks_outcome: { guarded: 'outcome IS NULL is tested first' },
+  gate_face_checks_shape: {
+    guarded:
+      'outcome and matches are tested IS NULL together first; outcome is compared with IS DISTINCT FROM, matches only once known',
+  },
   utility_outages_note_length: { guarded: 'note IS NULL is tested first' },
   utility_outages_state_shape: {
     guarded:

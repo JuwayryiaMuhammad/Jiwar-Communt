@@ -94,6 +94,16 @@
 |---|---|
 | [01-bans-and-usage](08-facilities/01-bans-and-usage.md) | منع حساب من الحجز (مرفق أو الكل) وإلغاء حجوزاته، وتقرير استخدام المرافق |
 
+### 09 — الفلوس والوحدة
+| الملف | الفيتشر |
+|---|---|
+| [01-fees-and-receipts](09-finance/01-fees-and-receipts.md) | الرسوم بتدفع إيه، الفاتورة قصاد اللي قبلها، الإيصال PDF |
+| [02-plans-and-dues](09-finance/02-plans-and-dues.md) | خطة السداد اللي الساكن بيطلبها، والمستحقات الجاية |
+| [03-collector-visits](09-finance/03-collector-visits.md) | زيارة المحصّل |
+| [04-spending-reports](09-finance/04-spending-reports.md) | الرسوم بتروح فين |
+
+استهلاك البيت في [06-maintenance/16-household-consumption](06-maintenance/16-household-consumption.md).
+
 ---
 
 ## كل تطبيق محتاج يقرا إيه

@@ -277,3 +277,17 @@ The full notes for the apps are in [`notes/moving-and-closed-units.md`](notes/mo
 - **Works completion.** `POST /permits/{id}/completion-inspection`, `GET …/completion-inspections`, `GET …/completion-certificate` (PDF); `GET /staff/permit-inspections`, `…/{id}/decide`, `…/{id}/certificate` (`permits.manage`); public `POST /public/works-certificates/lookup` (`/w`). File purpose `works_inspection_photo`. A finishing-works deposit's view gains `worksCompletion`.
 - **Lists and export.** `/me/requests` and `/me/search` gain `inspection_request` (`IR-`) and `works_inspection` (`WC-`). The personal-data export gains the unit's papers: contracts, vault documents, registrations, moves, proxies, clearances, deposits, inspection requests.
 
+
+### Money and the unit (ADR 0069)
+
+The full notes for the apps are in [`notes/money-and-unit.md`](notes/money-and-unit.md).
+
+- **Consumption.** `GET /units/{unitId}/consumption` and `…/consumption/benchmark` for whoever lives there (capabilities gain `consumptionView`; a landlord is `403 CONSUMPTION_NOT_ALLOWED`), over the household's own tenure; push `meter.unit_spike` (category `utilities`). A compound document kind `saving_tips`.
+- **Outages.** `GET /me/daily-brief` gains `outages`; `GET /me/outages` drops `note`.
+- **Fees.** `GET /units/{unitId}/fees`, `GET /invoices/{id}/comparison`; a billing plan's `descriptionEn/Ar`, `decisionPublicationId` on a new amount, `GET /staff/billing-plans/{id}/amount-changes`.
+- **Where the fees went.** `GET /finance/spending-reports`, `…/{id}` (every payer); `GET/POST /staff/finance/spending-reports`.
+- **Receipts.** `GET /payments/{id}/receipt`, `GET /staff/payments/{id}/receipt` (PDF, no-store).
+- **Plans.** `POST /invoices/{id}/plan-requests`, `GET /plan-requests/{id}`, `…/withdraw`; `GET /staff/plan-requests`, `…/{id}`, `…/accept`, `…/decline`; `GET/PATCH /staff/finance/plan-settings`. An invoice's detail gains `planOffer`.
+- **Upcoming dues.** `GET /units/{unitId}/upcoming-dues`; push `finance.dues_rising` when turned on.
+- **Collectors.** A staff role `collector` (`finance.collect`, `access:sync`); `POST/GET /units/{unitId}/collector-visits`, `/collector-visits/{id}/cancel|accept-offer`; `/staff/collector-visits`, `…/{id}/assign|cancel`, `GET /staff/collectors`, `GET/PATCH /staff/finance/collector-settings`; the collector's `GET /collector/visits`, `…/{id}/collected|failed` (`400 AMOUNT_TOO_HIGH {max}`).
+- **Lists.** `/me/requests` gains `instalment_plan_request` and `collector_visit`.

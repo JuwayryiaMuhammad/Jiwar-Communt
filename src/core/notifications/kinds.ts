@@ -1410,7 +1410,7 @@ export const NOTIFICATION_KINDS = {
     category: 'finance',
     critical: false,
     target: 'plan_request',
-    params: { reasonCode: {} },
+    params: { reason: {} },
   },
   /** With an invoice's due-soon notice, once: it may be paid by a plan (ADR 0069). */
   'invoice.plan_available': {
@@ -1466,7 +1466,7 @@ export const NOTIFICATION_KINDS = {
     category: 'finance',
     critical: false,
     target: 'collector_visit',
-    params: { reasonCode: {} },
+    params: { reason: {} },
   },
   'finance.spending_report_published': {
     priority: 'normal',

@@ -260,7 +260,7 @@ describe('Finance — collector visits', () => {
     ).body as Visit;
     expect(failed).toMatchObject({ status: 'failed', failReason: 'not_home' });
     const [notice] = await told(owner.id, 'collector_visit.failed', visit.id);
-    expect(notice.params).toEqual({ reasonCode: 'not_home' });
+    expect(notice.params).toEqual({ reason: 'not_home' });
     const take = () =>
       f.http('post', `/collector-visits/${visit.id}/accept-offer`, owner.token);
     const next = (await take().expect(201)).body as Visit;

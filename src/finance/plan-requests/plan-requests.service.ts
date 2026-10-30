@@ -290,7 +290,7 @@ export class PlanRequestsService implements OnModuleInit {
       if (holders.includes(row.requestedById))
         await this.notifier.notify(tx, [row.requestedById], {
           kind: 'instalment_plan_request.declined',
-          params: { reasonCode },
+          params: { reason: reasonCode },
           targetId: id,
         });
       return (await this.reads(tx, [after]))[0];

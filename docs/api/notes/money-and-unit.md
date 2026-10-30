@@ -97,7 +97,7 @@ A published report never changes: a newer one of the same budget supersedes it. 
 - `POST /invoices/{id}/plan-requests { months }` (whoever pays the unit's money): `409 PLAN_REQUEST_PENDING {requestId}` when one waits; `409 INVOICE_NOT_CONVERTIBLE {reason}` (`instalment`, `has_plan`, `nothing_owed`); `409 INVOICE_DISPUTED`; `400 months INVALID_VALUE {max}`.
 - `GET /plan-requests/{id}`, `POST /plan-requests/{id}/withdraw` (its requester, while it waits; else `409 PLAN_REQUEST_NOT_PENDING {status}`).
 - Status: `pending`, `accepted` (with `planId`: open the instalment plan), `declined` (with `declineReason`), `withdrawn`, `lapsed` (the invoice was paid, credited or split meanwhile; the staff can no longer accept or decline it: `409 PLAN_REQUEST_LAPSED`).
-- Pushes: `invoice.plan_available` (with a due-soon invoice), `instalment_plan_request.accepted`, `instalment_plan_request.declined` (`{ reasonCode }`). They appear in `GET /me/requests` as `instalment_plan_request`.
+- Pushes: `invoice.plan_available` (with a due-soon invoice), `instalment_plan_request.accepted`, `instalment_plan_request.declined` (`{ reason }`, a `planRequestDecline` code). They appear in `GET /me/requests` as `instalment_plan_request`.
 
 ## Upcoming dues
 
@@ -108,5 +108,5 @@ A published report never changes: a newer one of the same budget supersedes it. 
 - `POST /units/{unitId}/collector-visits { windowStartsAt, windowEndsAt, expectedAmount? }` (whoever pays the unit's money): from tomorrow, within 14 days (`400 windowStartsAt INVALID_VALUE {maxDaysAhead}`), one to four hours (`400 windowEndsAt INVALID_VALUE {minHours, maxHours}`); one open a unit (`409 COLLECTOR_VISIT_OPEN {visitId}`).
 - `GET /units/{unitId}/collector-visits`, `POST /collector-visits/{id}/cancel`, and `POST /collector-visits/{id}/accept-offer` (a failed visit's offered window, as a new visit; once).
 - Status: `requested`, `assigned` (`assigned: true`, never who), `collected` (`paymentId`: its receipt), `failed` (`failReason`, maybe `offeredStartsAt/EndsAt`), `cancelled`.
-- Pushes: `collector_visit.scheduled` (`{ windowStartsAt, windowEndsAt }`), `collector_visit.failed` (`{ reasonCode }`), and the payment's own `payment.received`.
+- Pushes: `collector_visit.scheduled` (`{ windowStartsAt, windowEndsAt }`), `collector_visit.failed` (`{ reason }`, a `collectorVisitFail` code), and the payment's own `payment.received`.
 - **The collector's app** (`finance.collect`): `GET /collector/visits`, `POST /collector/visits/{id}/collected { amount }` (at most what the unit owes plus the compound's margin: `400 AMOUNT_TOO_HIGH {max}`), `POST /collector/visits/{id}/failed { reasonCode, offeredStartsAt?, offeredEndsAt? }`. Pushes `collector_visit.assigned` and `collector_visit.cancelled`.

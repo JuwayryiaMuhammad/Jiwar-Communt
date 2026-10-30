@@ -1664,11 +1664,11 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
   'collector_visit.failed': {
     en: {
       title: 'The collector could not collect',
-      body: 'The collection visit did not take place ({reasonCode}). See the app for another time.',
+      body: 'The collection visit did not take place ({reason}). See the app for another time.',
     },
     ar: {
       title: 'تعذّر التحصيل',
-      body: 'لم تتم زيارة التحصيل ({reasonCode}). اطّلع على التطبيق لموعد آخر.',
+      body: 'لم تتم زيارة التحصيل ({reason}). اطّلع على التطبيق لموعد آخر.',
     },
   },
   'finance.spending_report_published': {

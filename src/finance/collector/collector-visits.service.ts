@@ -575,7 +575,7 @@ export class CollectorVisitsService implements OnModuleInit {
         },
       });
       await this.tellResident(tx, row, 'collector_visit.failed', {
-        reasonCode: change.failReason,
+        reason: change.failReason,
       });
     } else {
       await this.audit.record(tx, {

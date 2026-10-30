@@ -132,7 +132,7 @@ describe('Finance — payment plans residents ask for', () => {
       'instalment_plan_request.declined',
       one.id,
     );
-    expect(notice.params).toEqual({ reasonCode: 'payment_history' });
+    expect(notice.params).toEqual({ reason: 'payment_history' });
 
     const two = await asked((await f.issue(s.accountant, s.home.id)).invoiceId);
     const member = await f.family(s.c, s.home.id, s.owner);

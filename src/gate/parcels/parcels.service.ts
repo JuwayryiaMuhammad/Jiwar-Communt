@@ -15,6 +15,7 @@ import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { Notifier } from '../../core/notifications/notifier';
 import { ShiftsService } from '../shifts/shifts.service';
+import { SafetyCore } from '../safety/safety-core';
 import {
   PARCEL_RESOURCE,
   ParcelCore,
@@ -67,6 +68,7 @@ export class ParcelsService implements OnModuleInit {
     private readonly notifier: Notifier,
     private readonly staff: StaffRecipients,
     private readonly shifts: ShiftsService,
+    private readonly safety: SafetyCore,
     private readonly files: FilesService,
     private readonly community: CommunityGatePort,
     private readonly tokens: ParcelTokens,
@@ -136,7 +138,10 @@ export class ParcelsService implements OnModuleInit {
     const id = newId();
     const labelName = input.labelName?.trim() || null;
     return this.tenantTx.withTenantTx(async (tx) => {
-      const shift = await this.shifts.requireOpen(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the receipt, or came first and it is refused.
+      await this.safety.lockSelf(tx);
+      const shift = await this.shifts.requireOpenLocked(tx);
       await this.idempotency.claim(tx, { type: PARCEL_RESOURCE, id });
       const unit = await this.community.unitByCode(tx, input.unitCode);
       if (!unit)
@@ -327,7 +332,10 @@ export class ParcelsService implements OnModuleInit {
   markReturned(id: string): Promise<GateParcel> {
     const guardId = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.shifts.requireOpen(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the return, or came first and it is refused.
+      await this.safety.lockSelf(tx);
+      await this.shifts.requireOpenLocked(tx);
       await this.idempotency.claim(tx, { type: PARCEL_RESOURCE, id });
       const parcel = await this.core.lockedOrThrow(tx, id);
       let reason: 'rejected' | 'unclaimed';

@@ -25,6 +25,7 @@ import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { GateSubjects } from '../entries/subjects';
 import { ShiftsService } from '../shifts/shifts.service';
+import { SafetyCore } from '../safety/safety-core';
 import { InstructionsService } from '../visitors/instructions.service';
 import {
   StandingInstructionsService,
@@ -125,6 +126,7 @@ export class ApprovalsService implements OnModuleInit {
     private readonly ctx: RequestContext,
     private readonly cls: ClsService<AppClsStore>,
     private readonly shifts: ShiftsService,
+    private readonly safety: SafetyCore,
     private readonly community: CommunityGatePort,
     private readonly subjects: GateSubjects,
     private readonly instructions: InstructionsService,
@@ -206,7 +208,10 @@ export class ApprovalsService implements OnModuleInit {
         },
       );
     const made = await this.tenantTx.withTenantTx(async (tx) => {
-      const shift = await this.shifts.requireOpen(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the request, or came first and it is refused.
+      await this.safety.lockSelf(tx);
+      const shift = await this.shifts.requireOpenLocked(tx);
       // A lockdown (ADR 0053): nobody is asked about someone who may not
       // come in. Then the blocklist: a ban refuses them before the household
       // is asked (the refusal recorded, the keepers told, and this
@@ -371,7 +376,10 @@ export class ApprovalsService implements OnModuleInit {
 
   withdraw(id: string): Promise<GuardRequestView> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.shifts.requireOpen(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the withdrawal, or came first and it is refused.
+      await this.safety.lockSelf(tx);
+      await this.shifts.requireOpenLocked(tx);
       const found = await tx.gateApprovalRequest.findUnique({ where: { id } });
       if (!found) throw requestNotFound();
       await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });
@@ -406,7 +414,10 @@ export class ApprovalsService implements OnModuleInit {
     instructionId: string,
   ): Promise<GuardRequestView> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.shifts.requireOpen(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the instruction applied, or came first and it is refused.
+      await this.safety.lockSelf(tx);
+      await this.shifts.requireOpenLocked(tx);
       const found = await tx.gateApprovalRequest.findUnique({ where: { id } });
       if (!found) throw requestNotFound();
       await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });

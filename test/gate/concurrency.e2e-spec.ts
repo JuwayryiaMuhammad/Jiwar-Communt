@@ -1,5 +1,6 @@
 import type { GateSubjectType } from '@prisma/client';
 import { Client } from 'pg';
+import type { Response } from 'supertest';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { EntriesService } from '../../src/gate/entries/entries.service';
 import { gateHelpers } from '../setup/gate';
@@ -8,10 +9,15 @@ import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { call, err } from '../api/request';
 import { passBody } from '../api/routes/visitors';
 import { buildWorld, type World } from '../api/world';
+import { whileShiftEnds } from '../setup/shift-end';
 
 /**
  * The gate's races (ADR 0028), each run for real with Promise.all: every
  * outcome is one of the allowed ones, and the database agrees.
+ *
+ * A guard's write while their shift ends (ADR 0056's lock order): it takes
+ * the account, then the shift, FOR SHARE, so it waits for the end and is
+ * refused, never written by a guard off duty.
  */
 describe('Gate concurrency', () => {
   let h: HttpHarness;
@@ -308,6 +314,93 @@ describe('Gate concurrency', () => {
       expect(await free('gate_approval_requests', w.bRequestId, 'UPDATE')).toBe(
         true,
       );
+    });
+  });
+
+  describe('a guard’s write while their shift ends: it waits for the end, then is refused', () => {
+    /** A guard of A on a shift of their own, at a gate of their own. */
+    const leavingGuard = async () => {
+      const duty = await gateHelpers(h).onDuty(w.a);
+      const token = await h.tokenFor({
+        sub: duty.guardId,
+        tid: w.a.tenantId,
+        typ: 'staff',
+      });
+      return { ...duty, token };
+    };
+    const refused = (res: Response) => {
+      expect(res.status).toBe(403);
+      expect(err(res).code).toBe('NO_OPEN_SHIFT');
+    };
+    const request = (id: string) =>
+      w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.gateApprovalRequest.findUniqueOrThrow({
+          where: { id },
+        }),
+      );
+    const askAs = async (token: string) =>
+      (
+        (
+          await call(w, 'POST', '/gate/approval-requests', {
+            token,
+            body: { kind: 'uninvited_visitor', unitCode: homeCode },
+          }).expect(201)
+        ).body as { id: string }
+      ).id;
+
+    it('a gate request', async () => {
+      const leaving = await leavingGuard();
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          call(w, 'POST', '/gate/approval-requests', {
+            token: leaving.token,
+            body: { kind: 'uninvited_visitor', unitCode: homeCode },
+          }),
+        ),
+      );
+      expect(
+        await w.helpers.asManager(w.a, () =>
+          w.helpers.prisma.tenant.gateApprovalRequest.count({
+            where: { shiftId: leaving.shiftId },
+          }),
+        ),
+      ).toBe(0);
+    });
+
+    it('a request’s withdrawal', async () => {
+      const leaving = await leavingGuard();
+      const id = await askAs(leaving.token);
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          call(w, 'POST', `/gate/approval-requests/${id}/withdraw`, {
+            token: leaving.token,
+          }),
+        ),
+      );
+      expect((await request(id)).status).toBe('pending');
+    });
+
+    it('a standing instruction applied', async () => {
+      const leaving = await leavingGuard();
+      const made = await call(
+        w,
+        'POST',
+        `/units/${w.a.homeUnitId}/standing-instructions`,
+        {
+          token: w.a.tokens.owner,
+          body: { description: 'Shift-end race', action: 'never_allow' },
+        },
+      ).expect(201);
+      const id = await askAs(leaving.token);
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          call(w, 'POST', `/gate/approval-requests/${id}/apply-instruction`, {
+            token: leaving.token,
+            body: { instructionId: (made.body as { id: string }).id },
+          }),
+        ),
+      );
+      expect((await request(id)).status).toBe('pending');
     });
   });
 });

@@ -22,6 +22,7 @@ import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { parseEntryQr } from '../entry/entry-secrets';
 import { ResidentVerifier } from '../entry/resident-verifier';
 import { ShiftsService } from '../shifts/shifts.service';
+import { SafetyCore } from '../safety/safety-core';
 import {
   ParcelCore,
   parcelNotFound,
@@ -132,6 +133,7 @@ export class ParcelHandover implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly notifier: Notifier,
     private readonly shifts: ShiftsService,
+    private readonly safety: SafetyCore,
     private readonly files: FilesService,
     private readonly rateLimit: RateLimitService,
     private readonly tokens: ParcelTokens,
@@ -202,7 +204,11 @@ export class ParcelHandover implements OnModuleInit {
     const guardId = this.ctx.accountId;
     try {
       return await this.tenantTx.withTenantTx(async (tx) => {
-        await this.shifts.requireOpen(tx);
+        // The account, then the shift, FOR SHARE (ADR 0056's lock order):
+        // the shift's end waits for the hand-over, or came first and it is
+        // refused.
+        await this.safety.lockSelf(tx);
+        await this.shifts.requireOpenLocked(tx);
         await this.idempotency.claim(tx, {
           type: PARCEL_HANDOVER_RESOURCE,
           id,

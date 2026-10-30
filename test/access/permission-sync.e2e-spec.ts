@@ -1015,6 +1015,8 @@ describe('Permission sync', () => {
       'energy.read',
       'inspections.manage',
       'meters.record',
+      'readiness.manage',
+      'safety.manage',
       'stock.manage',
       'tickets.dispatch',
     ]);
@@ -2060,6 +2062,57 @@ describe('Permission sync', () => {
         'family_member',
         'guard',
         'security_supervisor',
+        'accountant',
+      ])
+        expect(await has(key)).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M1-3b (ADR 0067)', () => {
+    const m13b = ['readiness.manage', 'safety.manage'];
+    /** The catalog before M1-3b: none of its permissions anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m13b.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m13b.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: the supervisor and the manager keep readiness and field safety, nobody else', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M1-3b ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual(m13b);
+      expect(report.rolesCreated).toEqual([]);
+      const has = async (key: string) =>
+        (await role(t, key)).permissions.filter((p) => m13b.includes(p));
+      expect(await has('maintenance_supervisor')).toEqual(m13b);
+      expect(await has('manager')).toEqual(m13b);
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'security_supervisor',
+        'technician',
         'accountant',
       ])
         expect(await has(key)).toEqual([]);

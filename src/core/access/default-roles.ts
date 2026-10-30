@@ -58,6 +58,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'stock.manage',
       'energy.read',
       'energy.manage',
+      'readiness.manage',
+      'safety.manage',
       'parcels.manage',
       'requests.handle',
       'requests.manage',
@@ -208,7 +210,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     // manager dispatches too, so a compound without one still works. The
     // asset register, the plans and the inspection rounds (ADR 0064); the
     // maintenance store (ADR 0065); the meters, consumption and utility
-    // outages (ADR 0066).
+    // outages (ADR 0066); readiness and field safety (ADR 0067).
     key: 'maintenance_supervisor',
     kind: 'staff',
     kindDefault: false,
@@ -221,6 +223,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'energy.read',
       'energy.manage',
       'meters.record',
+      'readiness.manage',
+      'safety.manage',
     ],
   },
   {

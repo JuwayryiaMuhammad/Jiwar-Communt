@@ -46,6 +46,8 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'energy.read': 'See meters, readings and consumption, which show when a unit is empty',
   'energy.manage': 'Keep the meters, readings, tariffs, saving measures and utility outages',
   'meters.record': 'Record the readings of the meters they read',
+  'readiness.manage': 'Prepare the compound for seasons, events and emergencies: programs, their items, inspection campaigns and contract reviews',
+  'safety.manage': 'Decide technicians’ work permits, and keep the hazards that need one and the safety instructions',
   'inspections.perform': 'Perform the inspections given to them',
   'inspections.manage': 'Schedule inspections and rounds, and read their report',
   'parcels.handle': 'Receive and hand over parcels',

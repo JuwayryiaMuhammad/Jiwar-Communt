@@ -879,4 +879,38 @@ export const REASON_CODES = {
   readingCorrect: ['misread', 'wrong_meter', 'wrong_day', 'other'],
   outageKind: ['water', 'electricity', 'gas', 'other'],
   outageCancel: ['not_needed', 'rescheduled', 'entered_in_error', 'other'],
+  // Readiness, facility bans and field safety (ADR 0067): why a program's
+  // item is called off, what a contract's review decided, why an account is
+  // banned from a facility and why the ban is lifted, why a work permit is
+  // rejected or revoked, and the hazards a permit covers; the migrations'
+  // CHECKs repeat them.
+  readinessItemCancel: [
+    'not_needed',
+    'covered_elsewhere',
+    'out_of_budget',
+    'other',
+  ],
+  contractReviewDecision: ['renew', 'replace', 'end'],
+  facilityBan: ['rules_violation', 'damage', 'safety', 'misconduct', 'other'],
+  facilityBanLift: ['staff_error', 'exception_granted', 'other'],
+  workPermitReject: [
+    'precautions_insufficient',
+    'not_qualified',
+    'wrong_hazard',
+    'not_needed',
+    'other',
+  ],
+  workPermitRevoke: [
+    'unsafe_conditions',
+    'precautions_not_followed',
+    'scope_changed',
+    'other',
+  ],
+  workHazard: [
+    'hot_work',
+    'height',
+    'live_electrical',
+    'confined_space',
+    'pool_chemicals',
+  ],
 } as const;

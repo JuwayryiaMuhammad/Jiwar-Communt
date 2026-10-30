@@ -113,6 +113,15 @@ export const PERMISSIONS = {
   'energy.read': { kinds: ['staff', 'manager'] },
   'energy.manage': { kinds: ['staff', 'manager'] },
   'meters.record': { kinds: ['staff'] },
+  // Readiness (ADR 0067): the compound's programs for a season, an event or
+  // an emergency, their items, the inspection campaigns they spawn and the
+  // contracts they review. An item's owner marks their own item done with
+  // no permission.
+  'readiness.manage': { kinds: ['staff', 'manager'] },
+  // Field safety (ADR 0067): the hazards a category or an asset type needs a
+  // permit for, the permits' decisions and the safety instructions a
+  // technician acknowledges before starting.
+  'safety.manage': { kinds: ['staff', 'manager'] },
   // Parcels (ADR 0035). Guards receive and hand over inside a shift; the
   // manager reads every parcel (no names) and sets the holding periods.
   // Residents act through the capability `parcels`, with no permission.

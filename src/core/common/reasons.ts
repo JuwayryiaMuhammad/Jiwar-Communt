@@ -917,4 +917,20 @@ export const REASON_CODES = {
     'confined_space',
     'pool_chemicals',
   ],
+  // Money and the unit (ADR 0069): why the finance staff decline a plan a
+  // resident asked for, why a collector's visit failed and why the staff
+  // call a visit off; the migrations' CHECKs repeat them.
+  planRequestDecline: [
+    'amount_too_small',
+    'too_many_months',
+    'payment_history',
+    'other',
+  ],
+  collectorVisitFail: ['not_home', 'refused', 'no_cash', 'no_access', 'other'],
+  collectorVisitCancel: [
+    'resident_asked',
+    'no_collector',
+    'paid_otherwise',
+    'other',
+  ],
 } as const;

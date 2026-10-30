@@ -227,6 +227,10 @@ export const REASON_CODES = {
   workPermitReject: ['precautions_insufficient', 'not_qualified', 'wrong_hazard', 'not_needed', 'other'],
   workPermitRevoke: ['unsafe_conditions', 'precautions_not_followed', 'scope_changed', 'other'],
   workHazard: ['hot_work', 'height', 'live_electrical', 'confined_space', 'pool_chemicals'],
+  // Money and the unit (ADR 0069).
+  planRequestDecline: ['amount_too_small', 'too_many_months', 'payment_history', 'other'],
+  collectorVisitFail: ['not_home', 'refused', 'no_cash', 'no_access', 'other'],
+  collectorVisitCancel: ['resident_asked', 'no_collector', 'paid_otherwise', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

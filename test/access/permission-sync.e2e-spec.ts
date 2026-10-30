@@ -408,6 +408,7 @@ describe('Permission sync', () => {
       'technician',
       'maintenance_supervisor',
       'accountant',
+      'collector',
     ]);
     expect((await role(t, 'guard')).permissions).toEqual(GUARD);
     expect((await role(t, 'manager')).permissions).toEqual(
@@ -2267,6 +2268,59 @@ describe('Permission sync', () => {
       expect(report.rolesCreated).toEqual(['unit_proxy']);
       const proxy = await role(t, 'unit_proxy');
       expect([...proxy.permissions].sort()).toEqual([...offered].sort());
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase R11c-1a (ADR 0069)', () => {
+    /** The catalog before R11c-1a: no finance.collect, no collector role. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(
+          ([p]) => p !== 'finance.collect',
+        ),
+      ),
+      defaultRoles: base.defaultRoles.filter((r) => r.key !== 'collector'),
+    };
+
+    it('reaches an existing compound: the collector role with finance.collect alone; no other role gains it, the manager neither', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync R11c-1a ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect(report.added).toEqual(['finance.collect']);
+      expect(report.rolesCreated).toEqual(['collector']);
+      expect((await role(t, 'collector')).permissions).toEqual([
+        'finance.collect',
+      ]);
+      for (const key of [
+        'manager',
+        'accountant',
+        'guard',
+        'security_supervisor',
+        'technician',
+        'maintenance_supervisor',
+        'resident',
+        'family_member',
+        'unit_proxy',
+      ])
+        expect((await role(t, key)).permissions).not.toContain(
+          'finance.collect',
+        );
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

@@ -17,7 +17,8 @@ export interface DefaultRole {
  * Copied into every new compound (ADR 0010). A new account gets the
  * `kindDefault` role of its kind; a staff account may name another
  * staff-kind role of its compound instead (`roleKey`): a technician or a
- * maintenance supervisor (ADR 0032), an accountant (ADR 0044).
+ * maintenance supervisor (ADR 0032), an accountant (ADR 0044), a collector
+ * (ADR 0069).
  */
 export const DEFAULT_ROLES: readonly DefaultRole[] = [
   {
@@ -248,6 +249,15 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'governance.approvals',
       'finance.budget',
     ],
+  },
+  {
+    // The field collector (ADR 0069): the collector visits assigned to them,
+    // cash taken on a visit or why it failed. Nothing else of the compound:
+    // no balance, no phone, no invoice.
+    key: 'collector',
+    kind: 'staff',
+    kindDefault: false,
+    permissions: ['finance.collect'],
   },
   {
     // A unit proxy (ADR 0063): an outside person an owner trusts with a

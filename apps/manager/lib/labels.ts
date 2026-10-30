@@ -48,6 +48,7 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'meters.record': 'Record the readings of the meters they read',
   'readiness.manage': 'Prepare the compound for seasons, events and emergencies: programs, their items, inspection campaigns and contract reviews',
   'safety.manage': 'Decide technicians’ work permits, and keep the hazards that need one and the safety instructions',
+  'finance.collect': 'Collect cash on the collector visits given to them',
   'inspections.perform': 'Perform the inspections given to them',
   'inspections.manage': 'Schedule inspections and rounds, and read their report',
   'parcels.handle': 'Receive and hand over parcels',

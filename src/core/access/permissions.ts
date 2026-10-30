@@ -205,6 +205,12 @@ export const PERMISSIONS = {
   // and exports them. Instalment plans and disputes are `finance.invoice`.
   'finance.refund': { kinds: ['manager'] },
   'finance.reports': { kinds: ['staff', 'manager'] },
+  // Collector visits (ADR 0069). `finance.collect` is the field collector's:
+  // the visits assigned to them, the cash they took on one (recorded as an
+  // office payment, at most the unit's open balance and a small margin) or
+  // why the visit failed. It never reads a balance, a phone or an invoice;
+  // the accountant assigns visits with `finance.payments`.
+  'finance.collect': { kinds: ['staff'] },
   // The annual budget and expenses (ADR 0055). `finance.budget` drafts a
   // fiscal year's budget, records expenses against its lines and voids
   // them, and sets the month the fiscal year starts. The board approves

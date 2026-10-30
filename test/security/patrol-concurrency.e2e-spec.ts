@@ -2,6 +2,7 @@ import { newId } from '../../src/core/common/uuid';
 import { PATROL_WATCH_SWEEP } from '../../src/gate/patrols/patrol-sweeps';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { patrolHelpers, type RouteBody, type Who } from '../setup/patrols';
+import { whileShiftEnds } from '../setup/shift-end';
 
 const codeOf = (res: { body: unknown }) => (res.body as { code?: string }).code;
 
@@ -9,7 +10,8 @@ const codeOf = (res: { body: unknown }) => (res.body as { code?: string }).code;
  * ADR 0052, patrols decided one at a time: a run is started once whoever
  * asks together; a guard has one run under way; the watch and a start,
  * and a new version and a start, each see the other's commit; never a
- * deadlock.
+ * deadlock. A start while the guard's shift ends takes the account, then
+ * the shift, FOR SHARE (ADR 0056's lock order): it waits and is refused.
  */
 describe('Patrols under concurrency', () => {
   let h: HttpHarness;
@@ -240,5 +242,38 @@ describe('Patrols under concurrency', () => {
         scannedCount: 1,
       });
     }
+  });
+
+  describe('a start while the guard’s shift ends: it waits for the end, then is refused', () => {
+    const leavingGuard = async () => {
+      const guard = await x.guard(s.c);
+      const shift = await x.start(guard, { gateId });
+      return { guard, shiftId: shift.id };
+    };
+
+    it('a scheduled run', async () => {
+      const { guard, shiftId } = await leavingGuard();
+      const run = await x.runRow(s.c, route, 0);
+      const res = await whileShiftEnds(shiftId, () =>
+        x.startRunRaw(guard, run.id),
+      );
+      expect(res.status).toBe(403);
+      expect(codeOf(res)).toBe('NO_OPEN_SHIFT');
+      expect((await x.runOf(s.c, run.id)).guardAccountId).toBeNull();
+    });
+
+    it('an ad-hoc run', async () => {
+      const { guard, shiftId } = await leavingGuard();
+      const res = await whileShiftEnds(shiftId, () =>
+        x.adhocRaw(guard, route.id),
+      );
+      expect(res.status).toBe(403);
+      expect(codeOf(res)).toBe('NO_OPEN_SHIFT');
+      expect(
+        await x.inTx(s.c, (tx) =>
+          tx.patrolRun.count({ where: { guardAccountId: guard.id } }),
+        ),
+      ).toBe(0);
+    });
   });
 });

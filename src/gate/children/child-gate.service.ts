@@ -206,7 +206,8 @@ export class ChildGateService implements OnModuleInit {
       const id = newId();
       await this.idempotency.claim(tx, { type: CHILD_EXIT_RESOURCE, id });
       await this.safety.lockSelf(tx);
-      const shift = await this.lockShift(tx);
+      // The shift FOR SHARE: its end waits for the exit.
+      const shift = await this.shifts.requireOnDutyLocked(tx);
       // The compound's lockdown row, FOR SHARE (ADR 0053's order: the
       // account, the shift, this row, then the subject's): a lockdown start
       // waits for this exit, or this exit sees it.
@@ -441,16 +442,6 @@ export class ChildGateService implements OnModuleInit {
     return this.rateLimit
       .consume(`gate-verify:account:${this.ctx.accountId}`, this.perMinute, 60)
       .then(() => undefined);
-  }
-
-  /** The caller's open shift, FOR SHARE: its end waits for the exit. */
-  private async lockShift(tx: TenantTxClient): Promise<DutyShift> {
-    const shift = await this.shifts.requireOnDuty(tx);
-    const [row] = await tx.$queryRaw<{ id: string }[]>`
-      SELECT id FROM guard_shifts
-       WHERE id = ${shift.id}::uuid AND ended_at IS NULL FOR SHARE`;
-    if (!row) return this.shifts.requireOnDuty(tx);
-    return shift;
   }
 
   /**

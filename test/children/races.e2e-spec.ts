@@ -1,6 +1,7 @@
 import { Client } from 'pg';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { childrenHelpers, type ExitBody, type Who } from '../setup/children';
+import { whileShiftEnds } from '../setup/shift-end';
 import { required } from '../setup/test-env';
 
 const codeOf = (res: { body: unknown }) => (res.body as { code?: string }).code;
@@ -11,6 +12,8 @@ const codeOf = (res: { body: unknown }) => (res.body as { code?: string }).code;
  * flight (both orders), a card reissued or a control turned off under a
  * scan, a refused attempt then a valid one, two turn-ons. Never a deadlock,
  * never a pickup by someone who was no longer allowed when it was decided.
+ * An exit while the guard's shift ends takes the account, then the shift,
+ * FOR SHARE (ADR 0056's lock order): it waits and is refused.
  */
 describe('Children under concurrency', () => {
   let h: HttpHarness;
@@ -290,5 +293,15 @@ describe('Children under concurrency', () => {
         ),
       ).toBe(1);
     }
+  });
+
+  it('an exit while the guard’s shift ends: it waits for the end, then is refused', async () => {
+    const t = await scene();
+    const res = await whileShiftEnds(t.guard.shiftId, () =>
+      x.exitRaw(t.guard, t.card, { code: t.a.pickup!.code }),
+    );
+    expect(res.status).toBe(403);
+    expect(codeOf(res)).toBe('NO_OPEN_SHIFT');
+    expect(await pickups(t.control.id)).toHaveLength(0);
   });
 });

@@ -402,5 +402,31 @@ describe('Gate concurrency', () => {
       );
       expect((await request(id)).status).toBe('pending');
     });
+
+    // The lookups read the shift before their rate limit, then take it
+    // again, locked, in the transaction that records what they found.
+    it('a verify', async () => {
+      const leaving = await leavingGuard();
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          call(w, 'POST', '/gate/verify', {
+            token: leaving.token,
+            body: { code: '000000' },
+          }),
+        ),
+      );
+    });
+
+    it('a plate lookup', async () => {
+      const leaving = await leavingGuard();
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          call(w, 'POST', '/gate/plate-lookup', {
+            token: leaving.token,
+            body: { plate: 'SE 1234' },
+          }),
+        ),
+      );
+    });
   });
 });

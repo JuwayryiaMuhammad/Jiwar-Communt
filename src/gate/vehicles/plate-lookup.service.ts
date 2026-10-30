@@ -22,6 +22,7 @@ import {
   type GuardParking,
 } from '../parking/visitor-parking.service';
 import { ShiftsService } from '../shifts/shifts.service';
+import { SafetyCore } from '../safety/safety-core';
 import { VehicleCore } from './vehicle-core';
 import { dayOf, permitStatus, type PermitStatus } from './vehicle-rules';
 import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
@@ -98,6 +99,7 @@ export class PlateLookupService {
     private readonly ctx: RequestContext,
     private readonly audit: AuditService,
     private readonly shifts: ShiftsService,
+    private readonly safety: SafetyCore,
     private readonly subjects: GateSubjects,
     private readonly settings: TenantSettingsService,
     private readonly rateLimit: RateLimitService,
@@ -126,15 +128,18 @@ export class PlateLookupService {
       });
     const key = plateKey(plate);
     // The shift first: a guard off duty learns nothing about any plate.
-    const shift = await this.tenantTx.withTenantTx((tx) =>
-      this.shifts.requireOpen(tx),
-    );
+    await this.tenantTx.withTenantTx((tx) => this.shifts.requireOpen(tx));
     await this.rateLimit.consume(
       `gate-plate:account:${this.ctx.accountId}`,
       this.perMinute,
       60,
     );
     return this.tenantTx.withTenantTx(async (tx) => {
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order):
+      // what this records is stamped with a shift still open; its end
+      // waits, or came first and the guard is refused.
+      await this.safety.lockSelf(tx);
+      const shift = await this.shifts.requireOpenLocked(tx);
       const now = await dbNow(tx);
       const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
       const today = localDate(now, timezone);

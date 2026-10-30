@@ -326,12 +326,7 @@ export class GuardPatrolsService implements OnModuleInit {
   /** My account FOR SHARE, then my open shift FOR SHARE: 403 NO_OPEN_SHIFT. */
   private async lockDuty(tx: TenantTxClient): Promise<DutyShift> {
     await this.safety.lockSelf(tx);
-    const duty = await this.shifts.requireOnDuty(tx);
-    const [open] = await tx.$queryRaw<{ id: string }[]>`
-      SELECT id FROM guard_shifts
-       WHERE id = ${duty.id}::uuid AND ended_at IS NULL FOR SHARE`;
-    if (!open) return this.shifts.requireOnDuty(tx);
-    return duty;
+    return this.shifts.requireOnDutyLocked(tx);
   }
 
   private async requireNoLiveRun(tx: TenantTxClient): Promise<void> {

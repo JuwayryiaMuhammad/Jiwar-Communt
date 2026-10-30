@@ -22,6 +22,7 @@ import {
   type GuardParking,
 } from '../parking/visitor-parking.service';
 import { ShiftsService } from '../shifts/shifts.service';
+import { SafetyCore } from '../safety/safety-core';
 import { capacityOf, EntriesService } from './entries.service';
 import { GateSubjects, type GateSubject, type Refusal } from './subjects';
 
@@ -110,6 +111,7 @@ export class VerifyService {
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
     private readonly shifts: ShiftsService,
+    private readonly safety: SafetyCore,
     private readonly subjects: GateSubjects,
     private readonly entries: EntriesService,
     private readonly community: CommunityGatePort,
@@ -133,9 +135,7 @@ export class VerifyService {
   async verify(input: { code?: string; qr?: string }): Promise<VerifyResult> {
     const tenantId = this.ctx.tenantId;
     // The shift first: a guard off duty learns nothing about any code.
-    const shift = await this.tenantTx.withTenantTx((tx) =>
-      this.shifts.requireOpen(tx),
-    );
+    await this.tenantTx.withTenantTx((tx) => this.shifts.requireOpen(tx));
     // One budget for both inputs: a QR is no way around the code's limit.
     await this.rateLimit.consume(
       `gate-verify:account:${this.ctx.accountId}`,
@@ -143,6 +143,11 @@ export class VerifyService {
       60,
     );
     return this.tenantTx.withTenantTx(async (tx) => {
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order):
+      // what this records is stamped with a shift still open; its end
+      // waits, or came first and the guard is refused.
+      await this.safety.lockSelf(tx);
+      const shift = await this.shifts.requireOpenLocked(tx);
       const entry = input.qr !== undefined ? parseEntryQr(input.qr) : null;
       if (entry) {
         return (

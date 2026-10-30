@@ -9,6 +9,7 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { dbNow } from '../db-clock';
 import { ShiftsService } from '../shifts/shifts.service';
+import { SafetyCore } from '../safety/safety-core';
 import { BlocklistMatcher } from './blocklist-matcher';
 import { BlocklistService, type BlocklistRecord } from './blocklist.service';
 
@@ -29,6 +30,7 @@ export class IdLookupService {
     private readonly ctx: RequestContext,
     private readonly audit: AuditService,
     private readonly shifts: ShiftsService,
+    private readonly safety: SafetyCore,
     private readonly rateLimit: RateLimitService,
     private readonly matcher: BlocklistMatcher,
     private readonly blocklist: BlocklistService,
@@ -50,15 +52,18 @@ export class IdLookupService {
         },
       );
     // The shift first: a guard off duty learns nothing about anyone.
-    const shift = await this.tenantTx.withTenantTx((tx) =>
-      this.shifts.requireOpen(tx),
-    );
+    await this.tenantTx.withTenantTx((tx) => this.shifts.requireOpen(tx));
     await this.rateLimit.consume(
       `gate-id:account:${this.ctx.accountId}`,
       this.perMinute,
       60,
     );
     return this.tenantTx.withTenantTx(async (tx) => {
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order):
+      // what this records is stamped with a shift still open; its end
+      // waits, or came first and the guard is refused.
+      await this.safety.lockSelf(tx);
+      const shift = await this.shifts.requireOpenLocked(tx);
       const met = await this.matcher.check(tx, { idNumbers: [idNumber] });
       await this.matcher.record(tx, met, {
         source: 'id_lookup',

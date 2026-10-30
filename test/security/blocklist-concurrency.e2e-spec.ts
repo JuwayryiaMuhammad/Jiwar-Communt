@@ -1,5 +1,6 @@
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityOpsHelpers, type BlocklistBody } from '../setup/security-ops';
+import { whileShiftEnds } from '../setup/shift-end';
 
 const ROUNDS = 5;
 
@@ -9,6 +10,10 @@ const ROUNDS = 5;
  * and holds it to its commit. So a ban added while a visitor comes in
  * either committed first and refuses them, or waits for their entry: an
  * entry recorded always committed before the ban was made.
+ *
+ * An ID lookup while the guard's shift ends: the match it records takes
+ * the account, then the shift, FOR SHARE (ADR 0056's lock order), so it
+ * waits for the end and is refused, nothing recorded.
  */
 describe('Blocklist — races', () => {
   let h: HttpHarness;
@@ -94,5 +99,25 @@ describe('Blocklist — races', () => {
         expect(noted).toBe(1);
       }
     }
+  });
+
+  it('R6: an ID lookup while the guard’s shift ends: it waits for the end, then is refused', async () => {
+    const idNumber = `H1${Date.now() % 100_000_000}`;
+    await x.block(s.manager, {
+      subject: 'person',
+      fullName: 'Shift End Person',
+      idNumber,
+    });
+    const leaving = await x.guardAt(s.c, (await x.g.gate(s.c)).id);
+    const res = await whileShiftEnds(leaving.shiftId, () =>
+      x.http('post', '/gate/id-lookup', leaving.token, { idNumber }),
+    );
+    expect(res.status).toBe(403);
+    expect((res.body as { code: string }).code).toBe('NO_OPEN_SHIFT');
+    expect(
+      await x.inTx(s.c, (tx) =>
+        tx.blocklistMatch.count({ where: { shiftId: leaving.shiftId } }),
+      ),
+    ).toBe(0);
   });
 });

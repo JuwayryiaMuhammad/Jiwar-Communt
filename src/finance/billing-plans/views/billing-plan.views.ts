@@ -35,6 +35,14 @@ export class BillingPlanView {
   dueDaysAfterIssue: number;
   @ApiProperty({ type: Boolean })
   active: boolean;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'What the fee pays for, as its residents read it (ADR 0069).',
+  })
+  descriptionEn: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  descriptionAr: string | null;
   @ApiProperty({ type: Number, description: 'Units with their own terms.' })
   overrideCount: number;
   @ApiProperty({
@@ -48,6 +56,31 @@ export class BillingPlanView {
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
+}
+
+/** A plan's amount changed (ADR 0069). */
+export class BillingAmountChangeView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String })
+  fromAmount: string;
+  @ApiProperty({ type: String })
+  toAmount: string;
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'The first period billed at the new amount.',
+  })
+  effectiveOn: string;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The board’s published decision that set it.',
+  })
+  decisionPublicationId: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  changedAt: Date;
 }
 
 export class BillingOverrideView {

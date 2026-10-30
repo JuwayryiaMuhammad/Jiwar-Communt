@@ -9109,6 +9109,34 @@
           }
         },
         {
+          "name": "Compare one of my units’ invoices with the one before it",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "comparison"
+              ],
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/comparison",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List an invoice’s disputes, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -9290,7 +9318,7 @@
               },
               "raw": "{\n  \"nameEn\": \"\",\n  \"nameAr\": \"\",\n  \"kind\": \"service_charge\",\n  \"frequency\": \"monthly\",\n  \"amount\": \"\",\n  \"startsOn\": \"\",\n  \"issueDaysBefore\": 0,\n  \"dueDaysAfterIssue\": 0\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | Every unit, each period, unless overridden. |\n| `dueDaysAfterIssue` | number | yes | An invoice is due this many days after it is issued. |\n| `frequency` | `monthly` \\| `quarterly` \\| `annual` | yes | Never changes. |\n| `issueDaysBefore` | number | yes | Issue a period’s invoices this many days before it starts. |\n| `kind` | `service_charge` \\| `maintenance` \\| `other` | yes | Never changes. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `startsOn` | string | yes | The first day of the first period: the first of a month, from this month to a year ahead. Never changes. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | Every unit, each period, unless overridden. |\n| `descriptionAr` | string |  |  |\n| `descriptionEn` | string |  | What the fee pays for, as the residents it bills read it (ADR 0069). With `descriptionAr`, or neither. |\n| `dueDaysAfterIssue` | number | yes | An invoice is due this many days after it is issued. |\n| `frequency` | `monthly` \\| `quarterly` \\| `annual` | yes | Never changes. |\n| `issueDaysBefore` | number | yes | Issue a period’s invoices this many days before it starts. |\n| `kind` | `service_charge` \\| `maintenance` \\| `other` | yes | Never changes. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `startsOn` | string | yes | The first day of the first period: the first of a month, from this month to a year ahead. Never changes. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -9347,7 +9375,7 @@
           }
         },
         {
-          "name": "Change a plan’s names, amount, days, or retire it",
+          "name": "Change a plan’s names, amount, days, what it pays for, or retire it",
           "request": {
             "body": {
               "mode": "raw",
@@ -9356,9 +9384,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"active\": false,\n  \"amount\": \"\",\n  \"dueDaysAfterIssue\": 0,\n  \"issueDaysBefore\": 0,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+              "raw": "{\n  \"active\": false,\n  \"amount\": \"\",\n  \"decisionPublicationId\": \"\",\n  \"descriptionAr\": \"\",\n  \"descriptionEn\": \"\",\n  \"dueDaysAfterIssue\": 0,\n  \"issueDaysBefore\": 0,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the plan. |\n| `amount` | string |  |  |\n| `dueDaysAfterIssue` | number |  |  |\n| `issueDaysBefore` | number |  |  |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the plan. |\n| `amount` | string |  |  |\n| `decisionPublicationId` | string (uuid) |  | With a new `amount` only: the board’s published decision that set it (ADR 0069), shown to the residents beside the change. |\n| `descriptionAr` | string |  |  |\n| `descriptionEn` | string |  | What the fee pays for (ADR 0069). Both languages or neither: null clears both. |\n| `dueDaysAfterIssue` | number |  |  |\n| `issueDaysBefore` | number |  |  |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -9379,6 +9407,35 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/billing-plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List a plan’s amount changes, the latest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "billing-plans",
+                ":id",
+                "amount-changes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/billing-plans/:id/amount-changes",
               "variable": [
                 {
                   "description": "",
@@ -11738,6 +11795,34 @@
                 "clearances"
               ],
               "raw": "{{baseUrl}}/api/v1/units/:unitId/clearances",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List a unit’s recurring fees: what each pays for and its changes",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "fees"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/fees",
               "variable": [
                 {
                   "description": "",

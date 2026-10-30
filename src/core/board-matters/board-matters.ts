@@ -167,12 +167,23 @@ export type ThresholdReader = (
   type: ThresholdType,
 ) => Promise<string | null>;
 
+/**
+ * A decision the board published and has not archived (ADR 0069): the day
+ * it was decided, or null. A domain that cites one (a fee's change) asks
+ * governance through here.
+ */
+export type DecisionReader = (
+  tx: TenantTxClient,
+  publicationId: string,
+) => Promise<{ decidedOn: string } | null>;
+
 @Injectable()
 export class BoardMatters {
   private readonly approvals = new Map<ApprovalType, ApprovalKindHandler>();
   private readonly appeals = new Map<BoardAppealKind, AppealKindHandler>();
   private readonly sections = new Map<string, OverviewSection>();
   private thresholds: ThresholdReader | null = null;
+  private decisions: DecisionReader | null = null;
 
   registerApproval(type: ApprovalType, handler: ApprovalKindHandler): void {
     if (this.approvals.has(type))
@@ -196,6 +207,20 @@ export class BoardMatters {
   registerThresholds(reader: ThresholdReader): void {
     if (this.thresholds) throw new Error('Thresholds are registered twice');
     this.thresholds = reader;
+  }
+
+  /** Governance's published decisions (one reader, ADR 0069). */
+  registerDecisions(reader: DecisionReader): void {
+    if (this.decisions) throw new Error('Decisions are registered twice');
+    this.decisions = reader;
+  }
+
+  publishedDecision(
+    tx: TenantTxClient,
+    publicationId: string,
+  ): Promise<{ decidedOn: string } | null> {
+    if (!this.decisions) throw new Error('No decision reader is registered');
+    return this.decisions(tx, publicationId);
   }
 
   /** The type's handler, or null for a type whose decision does nothing itself. */

@@ -6,6 +6,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   Max,
@@ -15,6 +16,8 @@ import { withParams } from '../../../core/common/validation/validation-errors';
 import { MONEY } from '../../money';
 
 const NAME = { min: 1, max: 80 } as const;
+/** What a fee pays for, to the residents it bills (ADR 0069). */
+const DESCRIPTION = { min: 1, max: 1000 } as const;
 const LEAD = { min: 0, max: 28 } as const;
 const DUE = { min: 0, max: 90 } as const;
 /** The first of a month, `YYYY-MM-01`. */
@@ -87,6 +90,30 @@ export class CreateBillingPlanDto {
   @Min(DUE.min, withParams(DUE))
   @Max(DUE.max, withParams(DUE))
   dueDaysAfterIssue: number;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: DESCRIPTION.min,
+    maxLength: DESCRIPTION.max,
+    description:
+      'What the fee pays for, as the residents it bills read it (ADR 0069). With `descriptionAr`, or neither.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(DESCRIPTION.min, DESCRIPTION.max, withParams(DESCRIPTION))
+  descriptionEn?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: DESCRIPTION.min,
+    maxLength: DESCRIPTION.max,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(DESCRIPTION.min, DESCRIPTION.max, withParams(DESCRIPTION))
+  descriptionAr?: string;
 }
 
 /** What may change: applies to periods issued afterwards. */
@@ -151,6 +178,43 @@ export class UpdateBillingPlanDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    minLength: DESCRIPTION.min,
+    maxLength: DESCRIPTION.max,
+    description:
+      'What the fee pays for (ADR 0069). Both languages or neither: null clears both.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(DESCRIPTION.min, DESCRIPTION.max, withParams(DESCRIPTION))
+  descriptionEn?: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    minLength: DESCRIPTION.min,
+    maxLength: DESCRIPTION.max,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(DESCRIPTION.min, DESCRIPTION.max, withParams(DESCRIPTION))
+  descriptionAr?: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'With a new `amount` only: the board’s published decision that set it (ADR 0069), shown to the residents beside the change.',
+  })
+  @IsOptional()
+  @IsUUID()
+  decisionPublicationId?: string;
 }
 
 /** A unit's own terms in a plan: another amount, or excluded (exactly one). */

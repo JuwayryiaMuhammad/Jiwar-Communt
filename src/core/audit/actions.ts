@@ -917,12 +917,13 @@ export const AUDIT_ACTIONS = {
   'billing_plan.created': {
     log: 'tenant',
     target: 'billing_plan',
-    sensitive: ['nameEn', 'nameAr'],
+    sensitive: ['nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'],
   },
+  // metadata on a new amount (ADR 0069): effectiveOn, decisionPublicationId.
   'billing_plan.updated': {
     log: 'tenant',
     target: 'billing_plan',
-    sensitive: ['nameEn', 'nameAr'],
+    sensitive: ['nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'],
   },
   // metadata: unitId, amount or excluded (and the previous terms).
   'billing_plan.override_set': { log: 'tenant', target: 'billing_plan' },

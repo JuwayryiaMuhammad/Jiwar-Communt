@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { BillingPlan, BillingPlanOverride } from '@prisma/client';
 import { CommunityFinancePort, type FinanceUnit } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
+import { BoardMatters } from '../../core/board-matters/board-matters';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
 import {
@@ -37,6 +38,7 @@ import {
   type PlanTerms,
 } from './periods';
 import type {
+  BillingAmountChangeView,
   BillingOverrideView,
   BillingPlanView,
 } from './views/billing-plan.views';
@@ -73,6 +75,7 @@ export class BillingPlansService implements OnModuleInit {
     private readonly community: CommunityFinancePort,
     private readonly access: FinanceAccess,
     private readonly invoices: InvoicesService,
+    private readonly matters: BoardMatters,
   ) {}
 
   onModuleInit(): void {
@@ -81,6 +84,10 @@ export class BillingPlansService implements OnModuleInit {
   }
 
   create(dto: CreateBillingPlanDto): Promise<BillingPlanView> {
+    const description = bothOrNeither(
+      dto.descriptionEn ?? null,
+      dto.descriptionAr ?? null,
+    );
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: BILLING_PLAN_RESOURCE, id });
@@ -109,6 +116,8 @@ export class BillingPlansService implements OnModuleInit {
           issueDaysBefore: dto.issueDaysBefore,
           dueDaysAfterIssue: dto.dueDaysAfterIssue,
           createdById: this.ctx.accountId,
+          descriptionEn: description.en,
+          descriptionAr: description.ar,
         },
       });
       await this.audit.record(tx, {
@@ -120,25 +129,91 @@ export class BillingPlansService implements OnModuleInit {
     });
   }
 
-  /** Names, amount, days, active: for periods issued afterwards. */
+  /**
+   * Names, amount, days, active, what it pays for: for periods issued
+   * afterwards. A new amount is kept as a change (ADR 0069) — from, to,
+   * the first period billed at it, and the board's decision when one set
+   * it — decided under the compound's exclusive finance lock, which the
+   * billing sweep holds too, so a change and a period's issue never cross.
+   */
   update(id: string, dto: UpdateBillingPlanDto): Promise<BillingPlanView> {
+    if (dto.decisionPublicationId !== undefined && dto.amount === undefined)
+      throw invalid([
+        {
+          field: 'decisionPublicationId',
+          code: FieldErrorCode.FIELD_NOT_ALLOWED,
+        },
+      ]);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      if (dto.amount !== undefined) await this.access.lockCompound(tx);
       const locked = await tx.$queryRaw<{ id: string }[]>`
         SELECT id FROM billing_plans WHERE id = ${id}::uuid FOR UPDATE`;
       if (!locked.length) throw planNotFound();
       const before = await tx.billingPlan.findUniqueOrThrow({ where: { id } });
+      const description = bothOrNeither(
+        dto.descriptionEn === undefined
+          ? before.descriptionEn
+          : dto.descriptionEn,
+        dto.descriptionAr === undefined
+          ? before.descriptionAr
+          : dto.descriptionAr,
+      );
+      const amount =
+        dto.amount === undefined ? before.amount : money(dto.amount);
+      const amountChanged = !amount.equals(before.amount);
+      if (dto.decisionPublicationId !== undefined && !amountChanged)
+        throw invalid([
+          {
+            field: 'decisionPublicationId',
+            code: FieldErrorCode.FIELD_NOT_ALLOWED,
+          },
+        ]);
+      if (
+        dto.decisionPublicationId !== undefined &&
+        !(await this.matters.publishedDecision(tx, dto.decisionPublicationId))
+      )
+        throw appError.notFound(
+          ErrorCode.BOARD_PUBLICATION_NOT_FOUND,
+          'No published board decision has this id',
+        );
       const after = await tx.billingPlan.update({
         where: { id },
         data: {
           nameEn: dto.nameEn,
           nameAr: dto.nameAr,
-          amount: dto.amount === undefined ? undefined : money(dto.amount),
+          amount,
           issueDaysBefore: dto.issueDaysBefore,
           dueDaysAfterIssue: dto.dueDaysAfterIssue,
           active: dto.active,
+          descriptionEn: description.en,
+          descriptionAr: description.ar,
         },
       });
+      let effectiveOn: LocalDate | null = null;
+      if (amountChanged) {
+        // The first period not yet issued: the end of the latest issued.
+        const latest = await tx.invoice.findFirst({
+          where: { planId: id, periodEndsOn: { not: null } },
+          orderBy: { periodStartsOn: 'desc' },
+          select: { periodEndsOn: true },
+        });
+        effectiveOn = latest
+          ? fromDate(latest.periodEndsOn!)
+          : fromDate(before.startsOn);
+        await tx.billingPlanAmountChange.create({
+          data: {
+            id: newId(),
+            tenantId: this.ctx.txTenantId,
+            planId: id,
+            fromAmount: before.amount,
+            toAmount: amount,
+            effectiveOn: asDate(effectiveOn),
+            decisionPublicationId: dto.decisionPublicationId ?? null,
+            changedById: this.ctx.accountId,
+          },
+        });
+      }
       const changes = diffChanges(
         auditable(before),
         auditable(after),
@@ -149,6 +224,14 @@ export class BillingPlansService implements OnModuleInit {
           action: 'billing_plan.updated',
           targetId: id,
           changes,
+          ...(effectiveOn
+            ? {
+                metadata: {
+                  effectiveOn,
+                  decisionPublicationId: dto.decisionPublicationId ?? null,
+                },
+              }
+            : {}),
         });
       return planView(
         after,
@@ -187,6 +270,26 @@ export class BillingPlansService implements OnModuleInit {
         await this.overrideCount(tx, id),
         await this.today(tx),
       );
+    });
+  }
+
+  /** A plan's amount changes, the latest first (ADR 0069). */
+  amountChanges(planId: string): Promise<BillingAmountChangeView[]> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      if (!(await tx.billingPlan.findUnique({ where: { id: planId } })))
+        throw planNotFound();
+      const rows = await tx.billingPlanAmountChange.findMany({
+        where: { planId },
+        orderBy: [{ changedAt: 'desc' }, { id: 'desc' }],
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        fromAmount: show(r.fromAmount),
+        toAmount: show(r.toAmount),
+        effectiveOn: fromDate(r.effectiveOn),
+        decisionPublicationId: r.decisionPublicationId,
+        changedAt: r.changedAt,
+      }));
     });
   }
 
@@ -400,7 +503,7 @@ function terms(plan: BillingPlan): PlanTerms {
 }
 
 /** The next period to issue after today's. */
-function nextPeriod(plan: BillingPlan, today: LocalDate): Period {
+export function nextPeriod(plan: BillingPlan, today: LocalDate): Period {
   const t = terms(plan);
   const current = periodHolding(t, today);
   const start = current ? current.end : t.startsOn;
@@ -418,7 +521,24 @@ function auditable(p: BillingPlan) {
     issueDaysBefore: p.issueDaysBefore,
     dueDaysAfterIssue: p.dueDaysAfterIssue,
     active: p.active,
+    descriptionEn: p.descriptionEn,
+    descriptionAr: p.descriptionAr,
   };
+}
+
+/** A fee's description: both languages or neither (ADR 0069). */
+function bothOrNeither(
+  en: string | null,
+  ar: string | null,
+): { en: string | null; ar: string | null } {
+  if ((en === null) !== (ar === null))
+    throw invalid([
+      {
+        field: en === null ? 'descriptionEn' : 'descriptionAr',
+        code: FieldErrorCode.FIELD_REQUIRED,
+      },
+    ]);
+  return { en, ar };
 }
 
 function planView(
@@ -438,6 +558,8 @@ function planView(
     issueDaysBefore: p.issueDaysBefore,
     dueDaysAfterIssue: p.dueDaysAfterIssue,
     active: p.active,
+    descriptionEn: p.descriptionEn,
+    descriptionAr: p.descriptionAr,
     overrideCount,
     nextPeriod: next
       ? {

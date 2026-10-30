@@ -1142,6 +1142,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   billing_plans_amount: {},
   billing_plans_starts_on: {},
   billing_plans_days: {},
+  // Fee transparency (ADR 0069): each description only under IS NULL.
+  billing_plans_description: {
+    guarded:
+      'each description is tested IS NULL first; its length runs only on a value',
+  },
+  billing_plan_amount_changes_amounts: {},
   // excluded is NOT NULL; the amount only under IS NULL.
   billing_plan_overrides_shape: {},
   billing_plan_overrides_amount: {

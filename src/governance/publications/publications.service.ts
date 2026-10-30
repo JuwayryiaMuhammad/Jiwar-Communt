@@ -1,6 +1,7 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { BoardPublication } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
+import { BoardMatters } from '../../core/board-matters/board-matters';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
@@ -69,9 +70,19 @@ export class BoardPublicationsService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly governanceSettings: GovernanceSettingsService,
+    private readonly matters: BoardMatters,
   ) {}
 
   onModuleInit(): void {
+    // What a domain citing a decision reads of it (ADR 0069): published,
+    // not archived, and its day.
+    this.matters.registerDecisions(async (tx, id) => {
+      const p = await tx.boardPublication.findFirst({
+        where: { id, kind: 'decision', archivedAt: null },
+        select: { decidedOn: true },
+      });
+      return p ? { decidedOn: p.decidedOn.toISOString().slice(0, 10) } : null;
+    });
     this.idempotency.renderer(BOARD_PUBLICATION_RESOURCE, (id) =>
       this.tenantTx.withTenantTx(async (tx) =>
         this.load(

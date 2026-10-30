@@ -3180,6 +3180,63 @@
         ],
         "type": "object"
       },
+      "BillingAmountChangeView": {
+        "properties": {
+          "changedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decisionPublicationId": {
+            "description": "The board’s published decision that set it.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "effectiveOn": {
+            "description": "The first period billed at the new amount.",
+            "format": "date",
+            "type": "string"
+          },
+          "fromAmount": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "toAmount": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fromAmount",
+          "toAmount",
+          "effectiveOn",
+          "decisionPublicationId",
+          "changedAt"
+        ],
+        "type": "object"
+      },
+      "BillingAmountChangeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BillingAmountChangeView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BillingFrequency": {
         "enum": [
           "monthly",
@@ -3273,6 +3330,15 @@
             "format": "date-time",
             "type": "string"
           },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "description": "What the fee pays for, as its residents read it (ADR 0069).",
+            "nullable": true,
+            "type": "string"
+          },
           "dueDaysAfterIssue": {
             "type": "number"
           },
@@ -3337,6 +3403,8 @@
           "issueDaysBefore",
           "dueDaysAfterIssue",
           "active",
+          "descriptionEn",
+          "descriptionAr",
           "overrideCount",
           "nextPeriod",
           "createdAt",
@@ -9374,6 +9442,87 @@
         ],
         "type": "object"
       },
+      "ComparedInvoiceView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "number": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "issuedOn",
+          "total"
+        ],
+        "type": "object"
+      },
+      "ComparedLineView": {
+        "properties": {
+          "amount": {
+            "description": "Null: removed.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cause": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceLineChangeCause"
+              }
+            ],
+            "description": "On a changed line, from the records: the plan’s amount changed, the unit’s own terms, or nothing recorded (`other`).",
+            "nullable": true
+          },
+          "change": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceLineChange"
+              }
+            ]
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FeeDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "descriptionAr": {
+            "type": "string"
+          },
+          "descriptionEn": {
+            "type": "string"
+          },
+          "previousAmount": {
+            "description": "Null: added.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "descriptionEn",
+          "descriptionAr",
+          "amount",
+          "previousAmount",
+          "change",
+          "cause",
+          "decision"
+        ],
+        "type": "object"
+      },
       "ComplainPartnerRequestDto": {
         "properties": {
           "compensationAsk": {
@@ -11618,6 +11767,17 @@
           "amount": {
             "description": "Every unit, each period, unless overridden.",
             "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "description": "What the fee pays for, as the residents it bills read it (ADR 0069). With `descriptionAr`, or neither.",
+            "maxLength": 1000,
+            "minLength": 1,
             "type": "string"
           },
           "dueDaysAfterIssue": {
@@ -20125,6 +20285,76 @@
         ],
         "type": "object"
       },
+      "FeeChangeView": {
+        "properties": {
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FeeDecisionView"
+              }
+            ],
+            "description": "The board’s decision that set it, when one did.",
+            "nullable": true,
+            "type": "object"
+          },
+          "effectiveOn": {
+            "description": "The first period billed at it.",
+            "format": "date",
+            "type": "string"
+          },
+          "fromAmount": {
+            "description": "The plan’s amount before.",
+            "type": "string"
+          },
+          "toAmount": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromAmount",
+          "toAmount",
+          "effectiveOn",
+          "decision"
+        ],
+        "type": "object"
+      },
+      "FeeDecisionView": {
+        "properties": {
+          "decidedOn": {
+            "description": "Null once the board archived it.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "publicationId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "publicationId",
+          "decidedOn"
+        ],
+        "type": "object"
+      },
+      "FeePeriodView": {
+        "properties": {
+          "endsOn": {
+            "description": "Excluded.",
+            "format": "date",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsOn",
+          "endsOn"
+        ],
+        "type": "object"
+      },
       "FeedbackView": {
         "properties": {
           "author": {
@@ -27244,6 +27474,45 @@
         ],
         "type": "object"
       },
+      "InvoiceComparisonView": {
+        "properties": {
+          "delta": {
+            "nullable": true,
+            "type": "string"
+          },
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ComparedLineView"
+            },
+            "type": "array"
+          },
+          "previous": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComparedInvoiceView"
+              }
+            ],
+            "description": "The unit’s previous invoice of the same kind and plan; none for the first, or for an instalment.",
+            "nullable": true,
+            "type": "object"
+          },
+          "total": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "total",
+          "previous",
+          "delta",
+          "lines"
+        ],
+        "type": "object"
+      },
       "InvoiceDetailView": {
         "properties": {
           "allocations": {
@@ -27460,6 +27729,24 @@
         "enum": [
           "service_charge",
           "maintenance",
+          "other"
+        ],
+        "type": "string"
+      },
+      "InvoiceLineChange": {
+        "enum": [
+          "same",
+          "added",
+          "removed",
+          "changed"
+        ],
+        "type": "string"
+      },
+      "InvoiceLineChangeCause": {
+        "description": "On a changed line, from the records: the plan’s amount changed, the unit’s own terms, or nothing recorded (`other`).",
+        "enum": [
+          "plan_amount_changed",
+          "unit_terms",
           "other"
         ],
         "type": "string"
@@ -59414,6 +59701,94 @@
         ],
         "type": "object"
       },
+      "UnitFeeView": {
+        "properties": {
+          "amount": {
+            "description": "What this unit pays each period, EGP.",
+            "type": "string"
+          },
+          "changes": {
+            "description": "The plan’s amount changes, the latest first (at most 12).",
+            "items": {
+              "$ref": "#/components/schemas/FeeChangeView"
+            },
+            "type": "array"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "description": "What it pays for, as the management wrote it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "frequency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BillingFrequency"
+              }
+            ]
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceKind"
+              }
+            ]
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nextPeriod": {
+            "$ref": "#/components/schemas/FeePeriodView"
+          },
+          "ownTerms": {
+            "description": "The unit has terms of its own in this plan.",
+            "type": "boolean"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "planId",
+          "nameEn",
+          "nameAr",
+          "descriptionEn",
+          "descriptionAr",
+          "kind",
+          "frequency",
+          "amount",
+          "ownTerms",
+          "nextPeriod",
+          "changes"
+        ],
+        "type": "object"
+      },
+      "UnitFeeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UnitFeeView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "UnitInspectionReportView": {
         "properties": {
           "doneAt": {
@@ -60207,6 +60582,24 @@
           },
           "amount": {
             "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "decisionPublicationId": {
+            "description": "With a new `amount` only: the board’s published decision that set it (ADR 0069), shown to the residents beside the change.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "description": "What the fee pays for (ADR 0069). Both languages or neither: null clears both.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
             "type": "string"
           },
           "dueDaysAfterIssue": {
@@ -76995,6 +77388,43 @@
           }
         ],
         "summary": "Get one of my units’ invoices",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/invoices/{id}/comparison": {
+      "get": {
+        "operationId": "FeesController_comparison",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceComparisonView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Compare one of my units’ invoices with the one before it",
         "tags": [
           "finance"
         ],
@@ -98110,7 +98540,7 @@
         "x-stability": "draft"
       },
       "patch": {
-        "description": "Applies to periods issued afterwards.",
+        "description": "Applies to periods issued afterwards. A new amount is kept as a change, with the board’s decision when one set it (ADR 0069).",
         "operationId": "BillingPlansController_update",
         "parameters": [
           {
@@ -98149,7 +98579,44 @@
             "bearer": []
           }
         ],
-        "summary": "Change a plan’s names, amount, days, or retire it",
+        "summary": "Change a plan’s names, amount, days, what it pays for, or retire it",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/billing-plans/{id}/amount-changes": {
+      "get": {
+        "operationId": "BillingPlansController_amountChanges",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingAmountChangeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a plan’s amount changes, the latest first",
         "tags": [
           "finance"
         ],
@@ -119994,6 +120461,43 @@
           "emergencies"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/fees": {
+      "get": {
+        "operationId": "FeesController_forUnit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitFeeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a unit’s recurring fees: what each pays for and its changes",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },

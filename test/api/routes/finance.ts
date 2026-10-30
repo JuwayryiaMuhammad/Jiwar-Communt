@@ -227,6 +227,31 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
     },
     invalid: 'none',
   },
+  // Fee transparency (ADR 0069).
+  {
+    method: 'GET',
+    path: '/units/{unitId}/fees',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/invoices/{id}/comparison',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceId }),
+      code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
 ];
 
 /** Instalment plans (ADR 0048). */
@@ -645,6 +670,18 @@ export const FINANCE_BILLING_ROUTES: Row[] = [
         },
       ],
     },
+  },
+  {
+    method: 'GET',
+    path: '/staff/billing-plans/{id}/amount-changes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBillingPlanId }),
+      code: 'BILLING_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
   },
   {
     method: 'GET',

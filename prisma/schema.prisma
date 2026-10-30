@@ -6940,15 +6940,39 @@ model BillingPlan {
   createdById       String           @map("created_by_account_id") @db.Uuid
   createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// What the fee pays for, to the residents it bills (ADR 0069): both or neither.
+  descriptionEn     String?          @map("description_en")
+  descriptionAr     String?          @map("description_ar")
 
-  tenant    Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  createdBy Account               @relation("BillingPlanCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "billing_plans_tenant_id_created_by_fkey")
-  overrides BillingPlanOverride[]
-  batches   InvoiceBatch[]
-  invoices  Invoice[]
+  tenant        Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy     Account                   @relation("BillingPlanCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "billing_plans_tenant_id_created_by_fkey")
+  overrides     BillingPlanOverride[]
+  batches       InvoiceBatch[]
+  invoices      Invoice[]
+  amountChanges BillingPlanAmountChange[]
 
   @@unique([tenantId, id])
   @@map("billing_plans")
+}
+
+/// A plan's amount changed (ADR 0069): from, to, the first period billed at
+/// it, and the board's published decision when it decided it. Immutable.
+model BillingPlanAmountChange {
+  id                    String   @id @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  planId                String   @map("plan_id") @db.Uuid
+  fromAmount            Decimal  @map("from_amount") @db.Decimal(12, 2)
+  toAmount              Decimal  @map("to_amount") @db.Decimal(12, 2)
+  effectiveOn           DateTime @map("effective_on") @db.Date
+  decisionPublicationId String?  @map("decision_publication_id") @db.Uuid
+  changedById           String   @map("changed_by") @db.Uuid
+  changedAt             DateTime @default(now()) @map("changed_at") @db.Timestamptz(3)
+
+  plan BillingPlan @relation(fields: [tenantId, planId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "billing_plan_amount_changes_plan_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, planId, changedAt], map: "billing_plan_amount_changes_plan_idx")
+  @@map("billing_plan_amount_changes")
 }
 
 /// A unit's own terms in a plan (ADR 0046): another amount, or excluded.

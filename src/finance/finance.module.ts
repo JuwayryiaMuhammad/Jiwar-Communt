@@ -30,6 +30,8 @@ import { FinanceOverview } from './budgets/finance-overview';
 import { DisputeBoardAppeals } from './disputes/dispute-board-appeals';
 import { BillingPlansController } from './billing-plans/billing-plans.controller';
 import { BillingPlansService } from './billing-plans/billing-plans.service';
+import { FeesController } from './fees/fees.controller';
+import { FeesService } from './fees/fees.service';
 import { CredentialVault } from './gateway/credential-vault';
 import { GatewayController } from './gateway/gateway.controller';
 import { GatewayKeys } from './gateway/gateway-keys';
@@ -115,6 +117,7 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     RefundsController,
     ReportsController,
     BillingPlansController,
+    FeesController,
     StaffPaymentsController,
     UnitPaymentsController,
     PaymentSessionsController,
@@ -131,6 +134,7 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     FinanceMoveSteps,
     FinanceProvisioning,
     FinanceAccess,
+    FeesService,
     BudgetsService,
     BudgetMatters,
     ExpensesService,

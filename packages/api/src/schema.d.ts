@@ -4769,6 +4769,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invoices/{id}/comparison": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compare one of my units’ invoices with the one before it */
+        get: operations["FeesController_comparison"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invoices/{id}/disputes": {
         parameters: {
             query?: never;
@@ -11618,10 +11635,27 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Change a plan’s names, amount, days, or retire it
-         * @description Applies to periods issued afterwards.
+         * Change a plan’s names, amount, days, what it pays for, or retire it
+         * @description Applies to periods issued afterwards. A new amount is kept as a change, with the board’s decision when one set it (ADR 0069).
          */
         patch: operations["BillingPlansController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/billing-plans/{id}/amount-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a plan’s amount changes, the latest first */
+        get: operations["BillingPlansController_amountChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/billing-plans/{id}/overrides": {
@@ -18888,6 +18922,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/fees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a unit’s recurring fees: what each pays for and its changes */
+        get: operations["FeesController_forUnit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/gate-instructions": {
         parameters: {
             query?: never;
@@ -20936,6 +20987,28 @@ export interface components {
             /** @description A technician who never set it is `unavailable`. */
             state: components["schemas"]["TechnicianAvailabilityState"];
         };
+        BillingAmountChangeView: {
+            /** Format: date-time */
+            changedAt: string;
+            /**
+             * Format: uuid
+             * @description The board’s published decision that set it.
+             */
+            decisionPublicationId: string | null;
+            /**
+             * Format: date
+             * @description The first period billed at the new amount.
+             */
+            effectiveOn: string;
+            fromAmount: string;
+            /** Format: uuid */
+            id: string;
+            toAmount: string;
+        };
+        BillingAmountChangeViewList: {
+            data: components["schemas"]["BillingAmountChangeView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         BillingFrequency: "monthly" | "quarterly" | "annual";
         BillingOverrideView: {
@@ -20970,6 +21043,9 @@ export interface components {
             amount: string;
             /** Format: date-time */
             createdAt: string;
+            descriptionAr: string | null;
+            /** @description What the fee pays for, as its residents read it (ADR 0069). */
+            descriptionEn: string | null;
             dueDaysAfterIssue: number;
             frequency: components["schemas"]["BillingFrequency"];
             /** Format: uuid */
@@ -22831,6 +22907,27 @@ export interface components {
             /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
             url: string | null;
         };
+        ComparedInvoiceView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            issuedOn: string;
+            /** @example INV-000123 */
+            number: string;
+            total: string;
+        };
+        ComparedLineView: {
+            /** @description Null: removed. */
+            amount: string | null;
+            /** @description On a changed line, from the records: the plan’s amount changed, the unit’s own terms, or nothing recorded (`other`). */
+            cause: components["schemas"]["InvoiceLineChangeCause"] | null;
+            change: components["schemas"]["InvoiceLineChange"];
+            decision: components["schemas"]["FeeDecisionView"] | null;
+            descriptionAr: string;
+            descriptionEn: string;
+            /** @description Null: added. */
+            previousAmount: string | null;
+        };
         ComplainPartnerRequestDto: {
             /** @description From the closed list `partnerCompensationAsk`. */
             compensationAsk: string;
@@ -23551,6 +23648,9 @@ export interface components {
         CreateBillingPlanDto: {
             /** @description Every unit, each period, unless overridden. */
             amount: string;
+            descriptionAr?: string;
+            /** @description What the fee pays for, as the residents it bills read it (ADR 0069). With `descriptionAr`, or neither. */
+            descriptionEn?: string;
             /** @description An invoice is due this many days after it is issued. */
             dueDaysAfterIssue: number;
             /** @description Never changes. */
@@ -26494,6 +26594,36 @@ export interface components {
              */
             id: string;
         };
+        FeeChangeView: {
+            /** @description The board’s decision that set it, when one did. */
+            decision: components["schemas"]["FeeDecisionView"] | null;
+            /**
+             * Format: date
+             * @description The first period billed at it.
+             */
+            effectiveOn: string;
+            /** @description The plan’s amount before. */
+            fromAmount: string;
+            toAmount: string;
+        };
+        FeeDecisionView: {
+            /**
+             * Format: date
+             * @description Null once the board archived it.
+             */
+            decidedOn: string | null;
+            /** Format: uuid */
+            publicationId: string;
+        };
+        FeePeriodView: {
+            /**
+             * Format: date
+             * @description Excluded.
+             */
+            endsOn: string;
+            /** Format: date */
+            startsOn: string;
+        };
         FeedbackView: {
             author: components["schemas"]["AccountRefView"];
             /** @description The confirmation's comment; null once its author is erased. */
@@ -28593,6 +28723,15 @@ export interface components {
             /** Format: uuid */
             unitId: string | null;
         };
+        InvoiceComparisonView: {
+            delta: string | null;
+            /** Format: uuid */
+            invoiceId: string;
+            lines: components["schemas"]["ComparedLineView"][];
+            /** @description The unit’s previous invoice of the same kind and plan; none for the first, or for an instalment. */
+            previous: components["schemas"]["ComparedInvoiceView"] | null;
+            total: string;
+        };
         InvoiceDetailView: {
             allocations: components["schemas"]["InvoiceAllocationView"][];
             /** Format: uuid */
@@ -28659,6 +28798,13 @@ export interface components {
         };
         /** @enum {string} */
         InvoiceKind: "service_charge" | "maintenance" | "other";
+        /** @enum {string} */
+        InvoiceLineChange: "same" | "added" | "removed" | "changed";
+        /**
+         * @description On a changed line, from the records: the plan’s amount changed, the unit’s own terms, or nothing recorded (`other`).
+         * @enum {string}
+         */
+        InvoiceLineChangeCause: "plan_amount_changed" | "unit_terms" | "other";
         InvoiceLineDto: {
             /** @description EGP, e.g. `1500` or `1500.50`. */
             amount: string;
@@ -38416,6 +38562,28 @@ export interface components {
             validUntil: string | null;
             workerName: string;
         };
+        UnitFeeView: {
+            /** @description What this unit pays each period, EGP. */
+            amount: string;
+            /** @description The plan’s amount changes, the latest first (at most 12). */
+            changes: components["schemas"]["FeeChangeView"][];
+            descriptionAr: string | null;
+            /** @description What it pays for, as the management wrote it. */
+            descriptionEn: string | null;
+            frequency: components["schemas"]["BillingFrequency"];
+            kind: components["schemas"]["InvoiceKind"];
+            nameAr: string;
+            nameEn: string;
+            nextPeriod: components["schemas"]["FeePeriodView"];
+            /** @description The unit has terms of its own in this plan. */
+            ownTerms: boolean;
+            /** Format: uuid */
+            planId: string;
+        };
+        UnitFeeViewList: {
+            data: components["schemas"]["UnitFeeView"][];
+            nextCursor: string | null;
+        };
         UnitInspectionReportView: {
             /** Format: date-time */
             doneAt: string;
@@ -38652,6 +38820,14 @@ export interface components {
             /** @description False retires the plan. */
             active?: boolean;
             amount?: string;
+            /**
+             * Format: uuid
+             * @description With a new `amount` only: the board’s published decision that set it (ADR 0069), shown to the residents beside the change.
+             */
+            decisionPublicationId?: string;
+            descriptionAr?: string | null;
+            /** @description What the fee pays for (ADR 0069). Both languages or neither: null clears both. */
+            descriptionEn?: string | null;
             dueDaysAfterIssue?: number;
             issueDaysBefore?: number;
             nameAr?: string;
@@ -46694,6 +46870,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceDetailView"];
+                };
+            };
+        };
+    };
+    FeesController_comparison: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceComparisonView"];
                 };
             };
         };
@@ -57834,6 +58031,27 @@ export interface operations {
             };
         };
     };
+    BillingPlansController_amountChanges: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingAmountChangeViewList"];
+                };
+            };
+        };
+    };
     BillingPlansController_overrides: {
         parameters: {
             query?: never;
@@ -68613,6 +68831,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EmergencyContactsView"];
+                };
+            };
+        };
+    };
+    FeesController_forUnit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitFeeViewList"];
                 };
             };
         };

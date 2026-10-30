@@ -34,6 +34,7 @@ import {
   UpdateBillingPlanDto,
 } from './dto/billing-plans.dto';
 import {
+  BillingAmountChangeView,
   BillingOverrideView,
   BillingPlanView,
 } from './views/billing-plan.views';
@@ -77,8 +78,10 @@ export class BillingPlansController {
   @Patch(':id')
   @RequirePermissions('finance.billing')
   @ApiOperation({
-    summary: 'Change a plan’s names, amount, days, or retire it',
-    description: 'Applies to periods issued afterwards.',
+    summary:
+      'Change a plan’s names, amount, days, what it pays for, or retire it',
+    description:
+      'Applies to periods issued afterwards. A new amount is kept as a change, with the board’s decision when one set it (ADR 0069).',
   })
   @ApiOkResponse({ type: BillingPlanView })
   update(
@@ -86,6 +89,16 @@ export class BillingPlansController {
     @Body() dto: UpdateBillingPlanDto,
   ): Promise<BillingPlanView> {
     return this.plans.update(id, dto);
+  }
+
+  @Get(':id/amount-changes')
+  @RequireAnyPermission('finance.billing', 'finance.invoice')
+  @ApiOperation({ summary: 'List a plan’s amount changes, the latest first' })
+  @ApiOkResponse({ type: ListOf(BillingAmountChangeView) })
+  async amountChanges(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<BillingAmountChangeView>> {
+    return bounded(await this.plans.amountChanges(id), (c) => c);
   }
 
   @Get(':id/overrides')

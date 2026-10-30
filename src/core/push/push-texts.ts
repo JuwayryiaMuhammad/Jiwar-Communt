@@ -2522,6 +2522,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لديك تفتيش على {targetRef} مستحق يوم {dueOn}.',
     },
   },
+  'work_permit.requested': {
+    en: {
+      title: 'Work permit to decide',
+      body: 'Ticket {ticketNumber} asks for a {hazard} permit.',
+    },
+    ar: {
+      title: 'تصريح عمل بانتظار القرار',
+      body: 'البلاغ {ticketNumber} يطلب تصريح عمل ({hazard}).',
+    },
+  },
+  'work_permit.approved': {
+    en: {
+      title: 'Work permit approved',
+      body: 'Your {hazard} permit for ticket {ticketNumber} is approved.',
+    },
+    ar: {
+      title: 'تمت الموافقة على التصريح',
+      body: 'تمت الموافقة على تصريح ({hazard}) للبلاغ {ticketNumber}.',
+    },
+  },
+  'work_permit.rejected': {
+    en: {
+      title: 'Work permit rejected',
+      body: 'Your {hazard} permit for ticket {ticketNumber} was rejected.',
+    },
+    ar: {
+      title: 'رُفض التصريح',
+      body: 'رُفض تصريح ({hazard}) للبلاغ {ticketNumber}.',
+    },
+  },
+  'work_permit.revoked': {
+    en: {
+      title: 'Work permit revoked',
+      body: 'Your {hazard} permit for ticket {ticketNumber} was revoked: stop that work safely.',
+    },
+    ar: {
+      title: 'أُلغي التصريح',
+      body: 'أُلغي تصريح ({hazard}) للبلاغ {ticketNumber}: أوقف هذا العمل بأمان.',
+    },
+  },
   'readiness_item.assigned': {
     en: {
       title: 'Readiness item',

@@ -21,6 +21,13 @@ export class AssetTypeView {
   expectedLifeYears: number | null;
   @ApiProperty({ type: Boolean })
   active: boolean;
+  @ApiProperty({
+    type: String,
+    isArray: true,
+    description:
+      'The hazards work on it needs a permit for (ADR 0067; `workHazard`).',
+  })
+  requiresPermit: string[];
 
   static from(t: AssetType): AssetTypeView {
     return {
@@ -31,6 +38,7 @@ export class AssetTypeView {
       categoryId: t.categoryId,
       expectedLifeYears: t.expectedLifeYears,
       active: t.active,
+      requiresPermit: [...t.requiresPermit],
     };
   }
 }

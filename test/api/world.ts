@@ -298,6 +298,8 @@ export interface World
   bSuspensionId: string;
   /** ADR 0067: B's tenant banned from every facility, until lifted. */
   bBanId: string;
+  /** ADR 0067: a work permit B's technician asked for on B's ticket. */
+  bWorkPermitId: string;
   /** B's club: a plan, a membership of B's home and a payment for it. */
   bClubPlanId: string;
   bMembershipId: string;
@@ -1200,6 +1202,20 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     }),
   );
+  const bWorkPermit = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.workPermit.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        ticketId: bTicket.id,
+        cycle: 1,
+        hazard: 'height',
+        precautions: 'World harness',
+        expiresAt: new Date(Date.now() + 2 * 3_600_000),
+        requestedById: b.ids.technician,
+      },
+    }),
+  );
   const clubOf = (c: typeof a) =>
     helpers.asManager(c, () =>
       h.moduleRef.get(ClubService).createPlan({
@@ -1605,6 +1621,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPaymentId: bClub.paymentId,
     bSuspensionId,
     bBanId: bBan.id,
+    bWorkPermitId: bWorkPermit.id,
     bClosureId: bClosure.closure.id,
     bFacilityId: bFacility.id,
     bBookingId: bBooking.id,

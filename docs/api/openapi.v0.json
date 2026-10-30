@@ -281,6 +281,19 @@
         ],
         "type": "string"
       },
+      "AcknowledgeDto": {
+        "properties": {
+          "instructionId": {
+            "description": "The current version’s id, as the technician was shown it.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instructionId"
+        ],
+        "type": "object"
+      },
       "AcknowledgeIncidentDto": {
         "properties": {
           "role": {
@@ -2309,6 +2322,13 @@
           },
           "nameEn": {
             "type": "string"
+          },
+          "requiresPermit": {
+            "description": "The hazards work on it needs a permit for (ADR 0067; `workHazard`).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -2318,7 +2338,8 @@
           "nameEn",
           "categoryId",
           "expectedLifeYears",
-          "active"
+          "active",
+          "requiresPermit"
         ],
         "type": "object"
       },
@@ -6885,6 +6906,13 @@
             "description": "Written by the compound.",
             "type": "string"
           },
+          "requiresPermit": {
+            "description": "The hazards its work needs a permit for (ADR 0067; `workHazard`).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "slaTargets": {
             "allOf": [
               {
@@ -6916,6 +6944,7 @@
           "active",
           "specialtyIds",
           "slaTargets",
+          "requiresPermit",
           "createdAt",
           "updatedAt"
         ],
@@ -24783,6 +24812,35 @@
         ],
         "type": "object"
       },
+      "HazardsDto": {
+        "properties": {
+          "hazards": {
+            "description": "The whole list; empty: no permit needed.",
+            "items": {
+              "$ref": "#/components/schemas/WorkHazard"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "hazards"
+        ],
+        "type": "object"
+      },
+      "HazardsView": {
+        "properties": {
+          "hazards": {
+            "items": {
+              "$ref": "#/components/schemas/WorkHazard"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "hazards"
+        ],
+        "type": "object"
+      },
       "HeartbeatResponse": {
         "properties": {
           "ackedThroughSeq": {
@@ -39465,6 +39523,25 @@
         ],
         "type": "object"
       },
+      "PublishInstructionDto": {
+        "properties": {
+          "textAr": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "textEn": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "textEn",
+          "textAr"
+        ],
+        "type": "object"
+      },
       "PublishSuggestionDto": {
         "properties": {
           "textAr": {
@@ -42789,6 +42866,34 @@
           "nameEn",
           "nameAr",
           "businessPhone"
+        ],
+        "type": "object"
+      },
+      "RequestPermitDto": {
+        "properties": {
+          "expiresAt": {
+            "description": "With its offset; after now and within 24 hours.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "hazard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkHazard"
+              }
+            ]
+          },
+          "precautions": {
+            "description": "What the technician will do to work safely. Their words: never in a notice.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "hazard",
+          "precautions",
+          "expiresAt"
         ],
         "type": "object"
       },
@@ -46601,6 +46706,71 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SafetyAcknowledgementView": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "contentSha256": {
+            "description": "SHA-256 of what was shown, with who, the ticket and the cycle.",
+            "type": "string"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "instructionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instructionId",
+          "ticketId",
+          "cycle",
+          "contentSha256",
+          "acknowledgedAt"
+        ],
+        "type": "object"
+      },
+      "SafetyInstructionView": {
+        "properties": {
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "textAr": {
+            "type": "string"
+          },
+          "textEn": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "categoryId",
+          "version",
+          "textEn",
+          "textAr",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -57674,6 +57844,38 @@
         ],
         "type": "object"
       },
+      "TicketPermitsView": {
+        "properties": {
+          "cycle": {
+            "type": "number"
+          },
+          "hazards": {
+            "description": "What its work needs a permit for: its category’s and its asset type’s.",
+            "items": {
+              "$ref": "#/components/schemas/WorkHazard"
+            },
+            "type": "array"
+          },
+          "permits": {
+            "description": "This cycle’s.",
+            "items": {
+              "$ref": "#/components/schemas/WorkPermitView"
+            },
+            "type": "array"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketId",
+          "cycle",
+          "hazards",
+          "permits"
+        ],
+        "type": "object"
+      },
       "TicketPhotoDto": {
         "properties": {
           "fileId": {
@@ -57737,6 +57939,33 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TicketSafetyView": {
+        "properties": {
+          "acknowledgement": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SafetyAcknowledgementView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "instruction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SafetyInstructionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "instruction",
+          "acknowledgement"
         ],
         "type": "object"
       },
@@ -63150,6 +63379,156 @@
           "officeHoursAr",
           "emergencyAr",
           "available"
+        ],
+        "type": "object"
+      },
+      "WorkHazard": {
+        "enum": [
+          "hot_work",
+          "height",
+          "live_electrical",
+          "confined_space",
+          "pool_chemicals"
+        ],
+        "type": "string"
+      },
+      "WorkPermitRejectReason": {
+        "enum": [
+          "precautions_insufficient",
+          "not_qualified",
+          "wrong_hazard",
+          "not_needed",
+          "other"
+        ],
+        "type": "string"
+      },
+      "WorkPermitRevokeReason": {
+        "enum": [
+          "unsafe_conditions",
+          "precautions_not_followed",
+          "scope_changed",
+          "other"
+        ],
+        "type": "string"
+      },
+      "WorkPermitStatus": {
+        "enum": [
+          "requested",
+          "approved",
+          "rejected",
+          "revoked",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "WorkPermitView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "hazard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkHazard"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "precautions": {
+            "type": "string"
+          },
+          "rejectReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkPermitRejectReason"
+              }
+            ],
+            "nullable": true
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "requestedById": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "revokeReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkPermitRevokeReason"
+              }
+            ],
+            "nullable": true
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkPermitStatus"
+              }
+            ]
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ticketId",
+          "cycle",
+          "hazard",
+          "precautions",
+          "expiresAt",
+          "status",
+          "requestedById",
+          "requestedAt",
+          "decidedAt",
+          "rejectReason",
+          "revokedAt",
+          "revokeReason",
+          "closedAt"
+        ],
+        "type": "object"
+      },
+      "WorkPermitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WorkPermitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -76968,6 +77347,53 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/asset-types/{id}/permit-hazards": {
+      "put": {
+        "operationId": "AssetTypeHazardsController_setHazards",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HazardsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HazardsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the hazards an asset type’s work needs a permit for",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/assets": {
       "get": {
         "operationId": "AssetsController_list",
@@ -77661,6 +78087,138 @@
           }
         ],
         "summary": "Update a ticket category",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/categories/{id}/permit-hazards": {
+      "put": {
+        "operationId": "CategorySafetyController_setHazards",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HazardsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HazardsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the hazards a category’s work needs a permit for",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/categories/{id}/safety-instructions": {
+      "get": {
+        "operationId": "CategorySafetyController_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SafetyInstructionView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A category’s safety instructions, the latest version first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "CategorySafetyController_publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishInstructionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafetyInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish the next version of a category’s safety instructions",
         "tags": [
           "maintenance"
         ],
@@ -84421,6 +84979,43 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/tickets/{id}/permits": {
+      "get": {
+        "operationId": "TicketPermitsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketPermitsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A ticket’s hazards and its cycle’s permits",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/tickets/{id}/priority": {
       "post": {
         "operationId": "DispatchTicketsController_priority",
@@ -85091,6 +85686,240 @@
           }
         ],
         "summary": "List who a ticket may be opened for in a unit",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/work-permits": {
+      "get": {
+        "operationId": "WorkPermitsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/WorkPermitStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ticketId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkPermitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the work permits, the latest asked first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/work-permits/{id}": {
+      "get": {
+        "operationId": "WorkPermitsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One work permit",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/work-permits/{id}/approve": {
+      "post": {
+        "operationId": "WorkPermitsController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a requested permit before it expires",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/work-permits/{id}/reject": {
+      "post": {
+        "operationId": "WorkPermitsController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a requested permit",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/work-permits/{id}/revoke": {
+      "post": {
+        "operationId": "WorkPermitsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke an approved permit",
         "tags": [
           "maintenance"
         ],
@@ -114438,6 +115267,97 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/technician/tickets/{id}/permits": {
+      "get": {
+        "operationId": "TechnicianSafetyController_permitsOf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketPermitsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My ticket’s hazards and this cycle’s permits",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "TechnicianSafetyController_request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPermitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a work permit for a hazard",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/technician/tickets/{id}/photos": {
       "post": {
         "operationId": "TechnicianTicketsController_addPhoto",
@@ -114602,6 +115522,90 @@
         "summary": "Resume the work",
         "tags": [
           "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/safety": {
+      "get": {
+        "operationId": "TechnicianSafetyController_safety",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketSafetyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The category’s current safety instructions, and my acknowledgement",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/safety/acknowledge": {
+      "post": {
+        "operationId": "TechnicianSafetyController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafetyAcknowledgementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge the current safety instructions",
+        "tags": [
+          "maintenance"
         ],
         "x-stability": "draft"
       }

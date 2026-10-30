@@ -27,6 +27,8 @@ const CATEGORY = [
   'createdAt',
   'specialtyIds',
   'updatedAt',
+  // ADR 0067: the hazards its work needs a permit for.
+  'requiresPermit',
   // ADR 0034: the targets per priority.
   'slaTargets',
   ...['emergency', 'urgent', 'normal'].flatMap((p) => [

@@ -13,6 +13,7 @@ import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { TicketAccess } from './ticket-access';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
+import { assertSafeToStart } from '../field-safety/safety-rules';
 import { assertQuoteAllowsStart } from '../quotes/quote-rules';
 import { assertCan, NOT_STARTED, type TicketAction } from './ticket-rules';
 
@@ -196,6 +197,14 @@ export class WorkService {
     // The work starts only on an approved quote, if it has one (ADR 0058).
     if (to === 'in_progress' && NOT_STARTED.includes(ticket.status))
       await assertQuoteAllowsStart(tx, ticket.id);
+    // It starts, or resumes after a hold, only with a permit in force for
+    // every hazard it needs and the safety instructions acknowledged
+    // (ADR 0067): a revoked or expired permit stops it coming back.
+    if (
+      to === 'in_progress' &&
+      (NOT_STARTED.includes(ticket.status) || ticket.status === 'on_hold')
+    )
+      await assertSafeToStart(tx, ticket, me);
     await tx.ticket.update({
       where: { id: ticket.id },
       data: {

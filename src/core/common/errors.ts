@@ -1521,6 +1521,23 @@ export const ErrorCode = {
   FACILITY_BAN_EXISTS: 'FACILITY_BAN_EXISTS',
   /** Lifted or ended already: it never changes again; params.state (409). */
   FACILITY_BAN_OVER: 'FACILITY_BAN_OVER',
+  // Field safety (ADR 0067)
+  /** The work needs an approved permit in force for each of params.hazards (409). */
+  WORK_PERMIT_REQUIRED: 'WORK_PERMIT_REQUIRED',
+  /** Acknowledge the category's current safety instructions; params.instructionId, params.version (409). */
+  SAFETY_ACK_REQUIRED: 'SAFETY_ACK_REQUIRED',
+  WORK_PERMIT_NOT_FOUND: 'WORK_PERMIT_NOT_FOUND',
+  /** One is open for this hazard on this ticket's cycle; params.permitId (409). */
+  WORK_PERMIT_OPEN: 'WORK_PERMIT_OPEN',
+  /** Decided, or over, already; params.status (409). */
+  WORK_PERMIT_DECIDED: 'WORK_PERMIT_DECIDED',
+  /** Its time is past: it is not approved (409). */
+  WORK_PERMIT_EXPIRED: 'WORK_PERMIT_EXPIRED',
+  /** A ticket that ended, or not yet in a technician's hands, takes no permit; params.status (409). */
+  WORK_PERMIT_TICKET_STATUS: 'WORK_PERMIT_TICKET_STATUS',
+  SAFETY_INSTRUCTION_NOT_FOUND: 'SAFETY_INSTRUCTION_NOT_FOUND',
+  /** A newer version is the one to acknowledge; params.instructionId, params.version (409). */
+  SAFETY_INSTRUCTION_NOT_CURRENT: 'SAFETY_INSTRUCTION_NOT_CURRENT',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

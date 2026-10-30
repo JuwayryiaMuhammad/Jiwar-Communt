@@ -17,6 +17,7 @@ import {
 } from './energy';
 import { READINESS_ROUTES } from './readiness';
 import { FACILITY_BAN_ROUTES } from './facility-bans';
+import { FIELD_SAFETY_ROUTES } from './field-safety';
 import {
   ASSET_ROUTES,
   CHECKLIST_ROUTES,
@@ -395,4 +396,5 @@ export const ROUTES: Row[] = [
   // ADR 0067.
   ...READINESS_ROUTES,
   ...FACILITY_BAN_ROUTES,
+  ...FIELD_SAFETY_ROUTES,
 ];

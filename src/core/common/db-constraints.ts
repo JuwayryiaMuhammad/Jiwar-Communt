@@ -479,6 +479,16 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // is a race and names nothing.
   facility_bans_tenant_id_id_key: null,
   facility_bans_open_key: null,
+  // Field safety (ADR 0067): one open permit per ticket, cycle and hazard
+  // (WORK_PERMIT_OPEN first, under the ticket's lock); a version of a
+  // category's instructions is the next one under the category's lock; an
+  // acknowledgement once (ON CONFLICT DO NOTHING).
+  work_permits_tenant_id_id_key: null,
+  work_permits_open_key: null,
+  safety_instructions_tenant_id_id_key: null,
+  safety_instructions_version_key: null,
+  safety_acknowledgements_tenant_id_id_key: null,
+  safety_acknowledgements_once_key: null,
   // A no-show is marked once (its row lock): a race.
   booking_suspensions_trigger_booking_id_key: null,
   club_plans_tenant_id_id_key: null,

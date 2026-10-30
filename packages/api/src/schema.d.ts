@@ -4967,6 +4967,23 @@ export interface paths {
         patch: operations["AssetTypesController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/asset-types/{id}/permit-hazards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the hazards an asset type’s work needs a permit for */
+        put: operations["AssetTypeHazardsController_setHazards"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/assets": {
         parameters: {
             query?: never;
@@ -5172,6 +5189,41 @@ export interface paths {
         head?: never;
         /** Update a ticket category */
         patch: operations["CategoriesController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/categories/{id}/permit-hazards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the hazards a category’s work needs a permit for */
+        put: operations["CategorySafetyController_setHazards"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/categories/{id}/safety-instructions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A category’s safety instructions, the latest version first */
+        get: operations["CategorySafetyController_versions"];
+        put?: never;
+        /** Publish the next version of a category’s safety instructions */
+        post: operations["CategorySafetyController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/maintenance/categories/{id}/sla-targets": {
@@ -7051,6 +7103,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/permits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A ticket’s hazards and its cycle’s permits */
+        get: operations["TicketPermitsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/priority": {
         parameters: {
             query?: never;
@@ -7285,6 +7354,91 @@ export interface paths {
         get: operations["DispatchUnitsController_reporters"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/work-permits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the work permits, the latest asked first */
+        get: operations["WorkPermitsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/work-permits/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One work permit */
+        get: operations["WorkPermitsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/work-permits/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a requested permit before it expires */
+        post: operations["WorkPermitsController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/work-permits/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a requested permit */
+        post: operations["WorkPermitsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/work-permits/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke an approved permit */
+        post: operations["WorkPermitsController_revoke"];
         delete?: never;
         options?: never;
         head?: never;
@@ -17308,6 +17462,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/tickets/{id}/permits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My ticket’s hazards and this cycle’s permits */
+        get: operations["TechnicianSafetyController_permitsOf"];
+        put?: never;
+        /** Ask for a work permit for a hazard */
+        post: operations["TechnicianSafetyController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/tickets/{id}/photos": {
         parameters: {
             query?: never;
@@ -17354,6 +17526,40 @@ export interface paths {
         put?: never;
         /** Resume the work */
         post: operations["TechnicianTicketsController_resume"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/safety": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The category’s current safety instructions, and my acknowledgement */
+        get: operations["TechnicianSafetyController_safety"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/safety/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Acknowledge the current safety instructions */
+        post: operations["TechnicianSafetyController_acknowledge"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19769,6 +19975,13 @@ export interface components {
         AccountStatus: "active" | "inactive" | "frozen" | "erased";
         /** @enum {string} */
         AccountType: "resident" | "staff" | "manager" | "family" | "proxy";
+        AcknowledgeDto: {
+            /**
+             * Format: uuid
+             * @description The current version’s id, as the technician was shown it.
+             */
+            instructionId: string;
+        };
         AcknowledgeIncidentDto: {
             /**
              * @description `author`: the one who reported it; `reviewer`: a keeper who did not (INCIDENT_OWN otherwise).
@@ -20392,6 +20605,8 @@ export interface components {
             key: string;
             nameAr: string;
             nameEn: string;
+            /** @description The hazards work on it needs a permit for (ADR 0067; `workHazard`). */
+            requiresPermit: string[];
         };
         AssetTypeViewList: {
             data: components["schemas"]["AssetTypeView"][];
@@ -21757,6 +21972,8 @@ export interface components {
             nameAr: string;
             /** @description Written by the compound. */
             nameEn: string;
+            /** @description The hazards its work needs a permit for (ADR 0067; `workHazard`). */
+            requiresPermit: string[];
             /** @description Response and resolution targets per priority (ADR 0034). */
             slaTargets: components["schemas"]["SlaTargetsView"];
             /** @description The specialties that can handle it; none means any technician (ADR 0033). */
@@ -27530,6 +27747,13 @@ export interface components {
             handedBy: components["schemas"]["AccountRefView"];
             recipient: components["schemas"]["AccountRefView"];
         };
+        HazardsDto: {
+            /** @description The whole list; empty: no permit needed. */
+            hazards: components["schemas"]["WorkHazard"][];
+        };
+        HazardsView: {
+            hazards: components["schemas"]["WorkHazard"][];
+        };
         HeartbeatResponse: {
             /** @description Every action of the device up to this one was received. */
             ackedThroughSeq: number;
@@ -32192,6 +32416,10 @@ export interface components {
             /** @description English, Arabic or both, each with its body. */
             titleEn?: string | null;
         };
+        PublishInstructionDto: {
+            textAr: string;
+            textEn: string;
+        };
         PublishSuggestionDto: {
             textAr?: string | null;
             textEn?: string | null;
@@ -33257,6 +33485,16 @@ export interface components {
             id: string;
             nameAr: string;
             nameEn: string;
+        };
+        RequestPermitDto: {
+            /**
+             * Format: date-time
+             * @description With its offset; after now and within 24 hours.
+             */
+            expiresAt: string;
+            hazard: components["schemas"]["WorkHazard"];
+            /** @description What the technician will do to work safely. Their words: never in a notice. */
+            precautions: string;
         };
         RequestPersonView: {
             fullName: string | null;
@@ -34399,6 +34637,28 @@ export interface components {
         RunViewList: {
             data: components["schemas"]["RunView"][];
             nextCursor: string | null;
+        };
+        SafetyAcknowledgementView: {
+            /** Format: date-time */
+            acknowledgedAt: string;
+            /** @description SHA-256 of what was shown, with who, the ticket and the cycle. */
+            contentSha256: string;
+            cycle: number;
+            /** Format: uuid */
+            instructionId: string;
+            /** Format: uuid */
+            ticketId: string;
+        };
+        SafetyInstructionView: {
+            /** Format: uuid */
+            categoryId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            textAr: string;
+            textEn: string;
+            version: number;
         };
         ScanDto: {
             /** @description Metres, as the device reports it; with a position only. */
@@ -37594,6 +37854,15 @@ export interface components {
             parts: components["schemas"]["TicketPartView"][];
             requests: components["schemas"]["PartRequestView"][];
         };
+        TicketPermitsView: {
+            cycle: number;
+            /** @description What its work needs a permit for: its category’s and its asset type’s. */
+            hazards: components["schemas"]["WorkHazard"][];
+            /** @description This cycle’s. */
+            permits: components["schemas"]["WorkPermitView"][];
+            /** Format: uuid */
+            ticketId: string;
+        };
         TicketPhotoDto: {
             /**
              * Format: uuid
@@ -37613,6 +37882,10 @@ export interface components {
         TicketReporterViewList: {
             data: components["schemas"]["TicketReporterView"][];
             nextCursor: string | null;
+        };
+        TicketSafetyView: {
+            acknowledgement: components["schemas"]["SafetyAcknowledgementView"] | null;
+            instruction: components["schemas"]["SafetyInstructionView"] | null;
         };
         TicketSlaView: {
             /** @description ADR 0038: a commitment of this SLA cycle is late (breached, or past its due time now) and still unmet: the response until the ticket is responded to, the resolution until the work is reported done. */
@@ -39361,6 +39634,42 @@ export interface components {
             officeHoursEn: string | null;
             rulesAr: string | null;
             rulesEn: string | null;
+        };
+        /** @enum {string} */
+        WorkHazard: "hot_work" | "height" | "live_electrical" | "confined_space" | "pool_chemicals";
+        /** @enum {string} */
+        WorkPermitRejectReason: "precautions_insufficient" | "not_qualified" | "wrong_hazard" | "not_needed" | "other";
+        /** @enum {string} */
+        WorkPermitRevokeReason: "unsafe_conditions" | "precautions_not_followed" | "scope_changed" | "other";
+        /** @enum {string} */
+        WorkPermitStatus: "requested" | "approved" | "rejected" | "revoked" | "closed";
+        WorkPermitView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            cycle: number;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: date-time */
+            expiresAt: string;
+            hazard: components["schemas"]["WorkHazard"];
+            /** Format: uuid */
+            id: string;
+            precautions: string;
+            rejectReason: components["schemas"]["WorkPermitRejectReason"] | null;
+            /** Format: date-time */
+            requestedAt: string;
+            /** Format: uuid */
+            requestedById: string;
+            revokeReason: components["schemas"]["WorkPermitRevokeReason"] | null;
+            /** Format: date-time */
+            revokedAt: string | null;
+            status: components["schemas"]["WorkPermitStatus"];
+            /** Format: uuid */
+            ticketId: string;
+        };
+        WorkPermitViewList: {
+            data: components["schemas"]["WorkPermitView"][];
+            nextCursor: string | null;
         };
         WorkPhotoDto: {
             /**
@@ -46562,6 +46871,31 @@ export interface operations {
             };
         };
     };
+    AssetTypeHazardsController_setHazards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HazardsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HazardsView"];
+                };
+            };
+        };
+    };
     AssetsController_list: {
         parameters: {
             query?: {
@@ -46911,6 +47245,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CategoryView"];
+                };
+            };
+        };
+    };
+    CategorySafetyController_setHazards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HazardsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HazardsView"];
+                };
+            };
+        };
+    };
+    CategorySafetyController_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SafetyInstructionView"][];
+                };
+            };
+        };
+    };
+    CategorySafetyController_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishInstructionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SafetyInstructionView"];
                 };
             };
         };
@@ -50341,6 +50746,27 @@ export interface operations {
             };
         };
     };
+    TicketPermitsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketPermitsView"];
+                };
+            };
+        };
+    };
     DispatchTicketsController_priority: {
         parameters: {
             query?: never;
@@ -50701,6 +51127,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketReporterViewList"];
+                };
+            };
+        };
+    };
+    WorkPermitsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["WorkPermitStatus"];
+                ticketId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkPermitViewList"];
+                };
+            };
+        };
+    };
+    WorkPermitsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkPermitView"];
+                };
+            };
+        };
+    };
+    WorkPermitsController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkPermitView"];
+                };
+            };
+        };
+    };
+    WorkPermitsController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkPermitView"];
+                };
+            };
+        };
+    };
+    WorkPermitsController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkPermitView"];
                 };
             };
         };
@@ -65647,6 +66190,55 @@ export interface operations {
             };
         };
     };
+    TechnicianSafetyController_permitsOf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketPermitsView"];
+                };
+            };
+        };
+    };
+    TechnicianSafetyController_request: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestPermitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkPermitView"];
+                };
+            };
+        };
+    };
     TechnicianTicketsController_addPhoto: {
         parameters: {
             query?: never;
@@ -65737,6 +66329,52 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    TechnicianSafetyController_safety: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketSafetyView"];
+                };
+            };
+        };
+    };
+    TechnicianSafetyController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcknowledgeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SafetyAcknowledgementView"];
+                };
             };
         };
     };

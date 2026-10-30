@@ -851,3 +851,18 @@ export const READINESS_COVERAGE: readonly string[] = [
   'readiness_item.cancelled',
   'readiness_campaign.spawned',
 ];
+
+/**
+ * Field safety (ADR 0067): work permits, the hazards that need one and the
+ * safety instructions. test/field-safety/audit-coverage.
+ */
+export const FIELD_SAFETY_COVERAGE: readonly string[] = [
+  'work_permit.requested',
+  'work_permit.approved',
+  'work_permit.rejected',
+  'work_permit.revoked',
+  'safety_instruction.published',
+  'safety_instruction.acknowledged',
+  'ticket_category.permit_hazards_changed',
+  'asset_type.permit_hazards_changed',
+];

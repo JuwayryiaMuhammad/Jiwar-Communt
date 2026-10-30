@@ -208,6 +208,8 @@ describe('audit catalog', () => {
         'readiness_program',
         'readiness_item',
         'facility_ban',
+        'work_permit',
+        'safety_instruction',
       ]).toContain(def.target);
     }
   });

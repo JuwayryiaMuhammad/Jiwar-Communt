@@ -49,6 +49,13 @@ export class CategoryView extends CategoryOptionView {
     description: 'Response and resolution targets per priority (ADR 0034).',
   })
   slaTargets: SlaTargetsView;
+  @ApiProperty({
+    type: String,
+    isArray: true,
+    description:
+      'The hazards its work needs a permit for (ADR 0067; `workHazard`).',
+  })
+  requiresPermit: string[];
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -79,6 +86,7 @@ export class CategoryView extends CategoryOptionView {
         urgent: target('urgent'),
         normal: target('normal'),
       },
+      requiresPermit: [...c.requiresPermit],
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     };

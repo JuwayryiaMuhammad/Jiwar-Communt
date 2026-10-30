@@ -2311,6 +2311,39 @@ export const NOTIFICATION_KINDS = {
     target: 'readiness_program',
     params: { dueOn: {} },
   },
+  /**
+   * A work permit asked for (to who decides them), and its decision or
+   * revocation (to the technician who asked; ADR 0067): the hazard and the
+   * ticket's number, never the precautions.
+   */
+  'work_permit.requested': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { hazard: {}, ticketNumber: {} },
+  },
+  'work_permit.approved': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { hazard: {}, ticketNumber: {} },
+  },
+  'work_permit.rejected': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { hazard: {}, ticketNumber: {} },
+  },
+  'work_permit.revoked': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { hazard: {}, ticketNumber: {} },
+  },
   /** A meter's latest period used far more than its mean (ADR 0066). */
   'meter.anomaly': {
     priority: 'normal',

@@ -162,6 +162,16 @@ import {
 } from './readiness/readiness.controller';
 import { ReadinessService } from './readiness/readiness.service';
 import { CampaignsService } from './readiness/campaigns.service';
+import {
+  AssetTypeHazardsController,
+  CategorySafetyController,
+  TechnicianSafetyController,
+  TicketPermitsController,
+  WorkPermitsController,
+} from './field-safety/field-safety.controller';
+import { WorkHazardsService } from './field-safety/hazards.service';
+import { SafetyInstructionsService } from './field-safety/safety-instructions.service';
+import { WorkPermitsService } from './field-safety/work-permits.service';
 import { ReadinessSweep } from './readiness/readiness-sweep';
 import {
   EnergyController,
@@ -253,6 +263,11 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     ReadinessProgramsController,
     ReadinessItemsController,
     OwnReadinessItemsController,
+    WorkPermitsController,
+    TicketPermitsController,
+    TechnicianSafetyController,
+    CategorySafetyController,
+    AssetTypeHazardsController,
     MyTechnicianStatsController,
     TechnicianStatsController,
   ],
@@ -334,6 +349,9 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     ReadinessService,
     ReadinessSweep,
     CampaignsService,
+    WorkPermitsService,
+    SafetyInstructionsService,
+    WorkHazardsService,
     TechnicianStatsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).

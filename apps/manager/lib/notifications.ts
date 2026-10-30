@@ -311,6 +311,10 @@ const TEXT: Record<string, (p: P) => string> = {
   'asset.replacement_recommended': (p) => `A technician recommends replacing asset ${p.assetRef}`,
   'readiness_item.assigned': (p) => `An item of a readiness program is yours, due ${p.dueOn}`,
   'readiness_item.overdue': (p) => `Your readiness item, due ${p.dueOn}, is overdue`,
+  'work_permit.requested': (p) => `${ticket(p)} asks for a ${words(p.hazard)} permit`,
+  'work_permit.approved': (p) => `The ${words(p.hazard)} permit for ${aTicket(p)} is approved`,
+  'work_permit.rejected': (p) => `The ${words(p.hazard)} permit for ${aTicket(p)} was rejected`,
+  'work_permit.revoked': (p) => `The ${words(p.hazard)} permit for ${aTicket(p)} was revoked`,
 };
 
 export function notificationText(n: NotificationLike): string {

@@ -2014,6 +2014,29 @@ export const AUDIT_ACTIONS = {
   'readiness_item.done': { log: 'tenant', target: 'readiness_item' },
   'readiness_item.cancelled': { log: 'tenant', target: 'readiness_item' },
   'readiness_campaign.spawned': { log: 'tenant', target: 'readiness_item' },
+  // Field safety (ADR 0067): hazards, ids, versions and codes. The
+  // precautions are the technician's words: recorded as changed only.
+  'work_permit.requested': {
+    log: 'tenant',
+    target: 'work_permit',
+    sensitive: ['precautions'],
+  },
+  'work_permit.approved': { log: 'tenant', target: 'work_permit' },
+  'work_permit.rejected': { log: 'tenant', target: 'work_permit' },
+  'work_permit.revoked': { log: 'tenant', target: 'work_permit' },
+  'safety_instruction.published': {
+    log: 'tenant',
+    target: 'safety_instruction',
+  },
+  'safety_instruction.acknowledged': {
+    log: 'tenant',
+    target: 'safety_instruction',
+  },
+  'ticket_category.permit_hazards_changed': {
+    log: 'tenant',
+    target: 'ticket_category',
+  },
+  'asset_type.permit_hazards_changed': { log: 'tenant', target: 'asset_type' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

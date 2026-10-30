@@ -2408,6 +2408,29 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'copied_from_id IS NULL is tested first',
   },
   readiness_campaign_inspections_target_one: {},
+  ticket_categories_requires_permit_known: {},
+  asset_types_requires_permit_known: {},
+  work_permits_hazard_known: {},
+  work_permits_precautions_length: {},
+  work_permits_cycle_range: {},
+  work_permits_window: {},
+  work_permits_status_known: {},
+  work_permits_reject_reason_known: {
+    guarded:
+      'reject_reason IS NULL is tested first; the list runs only on a value',
+  },
+  work_permits_revoke_reason_known: {
+    guarded:
+      'revoke_reason IS NULL is tested first; the list runs only on a value',
+  },
+  work_permits_state_shape: {
+    guarded:
+      'a CASE on the NOT NULL status; each branch tests the nullable columns with IS [NOT] NULL only, and ELSE is false',
+  },
+  safety_instructions_version_range: {},
+  safety_instructions_text_length: {},
+  safety_acknowledgements_sha_shape: {},
+  safety_acknowledgements_cycle_range: {},
 };
 
 interface Check {

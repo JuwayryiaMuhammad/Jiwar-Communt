@@ -352,3 +352,17 @@ test('a readiness item (ADR 0067) reads as its day, never its title, and opens i
   assert.equal(notificationHref(late, (p) => p === 'readiness.manage'), '/readiness/p1');
   assert.equal(notificationHref(late, () => false), null);
 });
+
+test('a work permit (ADR 0067) reads as its hazard and ticket, never its precautions, and opens the ticket for who dispatches', () => {
+  const asked = n('work_permit.requested', { hazard: 'live_electrical', ticketNumber: 'MT-000007' }, 'ticket', 't1');
+  assert.equal(notificationText(asked), 'Ticket MT-000007 asks for a live electrical permit');
+  assert.equal(
+    notificationText({ ...asked, kind: 'work_permit.approved' }),
+    'The live electrical permit for ticket MT-000007 is approved',
+  );
+  assert.equal(
+    notificationText({ ...asked, kind: 'work_permit.revoked' }),
+    'The live electrical permit for ticket MT-000007 was revoked',
+  );
+  assert.equal(notificationHref(asked, (p) => p === 'tickets.dispatch'), '/maintenance/t1');
+});

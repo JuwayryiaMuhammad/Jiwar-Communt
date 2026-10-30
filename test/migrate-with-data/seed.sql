@@ -17,7 +17,10 @@
 -- maintenance categories (the second compound has no `general`) and two
 -- open tickets, one in a unit and one in a common area; a pending move
 -- permit and a pending works permit, an open inspection task of a unit, and
--- (the first compound) a `utilities` topic of the management's own.
+-- (the first compound) a `utilities` topic of the management's own; a
+-- bookable court with a confirmed booking and one the staff cancelled, an
+-- emergency from a unit and an incident at it (ADR 0067 widens their
+-- CHECKs and recreates their triggers).
 -- ============================================================================
 
 DO $$
@@ -34,6 +37,7 @@ DECLARE
   lp text;
   cat uuid;
   area uuid; doc uuid;
+  fac uuid;
 BEGIN
   FOR c IN 1..2 LOOP
     s := substr(md5(random()::text || clock_timestamp()::text), 1, 10);
@@ -209,6 +213,30 @@ BEGIN
        date_trunc('day', now()) + interval '10 days', 'finishing', 540, 1020, 'Seed Builders', 'Tiling the kitchen', now());
     INSERT INTO guard_tasks (id, tenant_id, kind, unit_id, gate_id, created_by_account_id, updated_at) VALUES
       (gen_random_uuid(), t, 'closed_unit_inspection', u1, gate, mgr, now());
+    -- The bookings, emergencies and incidents as M1-3b finds them (ADR 0067):
+    -- a ban's cancel reason and its link join the bookings' CHECKs, a ticket
+    -- origin the emergencies' and incidents'.
+    fac := gen_random_uuid();
+    INSERT INTO facilities (id, tenant_id, mode, name_en, name_ar, slot_minutes, capacity, capacity_unit,
+                            max_days_ahead, min_minutes_before, cancel_cutoff_minutes, max_guests,
+                            weekly_quota, peak_quota, updated_at) VALUES
+      (fac, t, 'bookable', 'Court', 'ملعب', 60, 1, 'bookings', 14, 60, 120, 0, 2, 1, now());
+    INSERT INTO bookings (id, tenant_id, facility_id, unit_id, booked_by_account_id, starts_at, ends_at,
+                          guests, party_size, peak, status, updated_at) VALUES
+      (gen_random_uuid(), t, fac, u1, res1, date_trunc('hour', now()) + interval '2 days',
+       date_trunc('hour', now()) + interval '2 days 1 hour', 0, 1, false, 'confirmed', now());
+    INSERT INTO bookings (id, tenant_id, facility_id, unit_id, booked_by_account_id, starts_at, ends_at,
+                          guests, party_size, peak, status, cancelled_side, cancel_reason,
+                          cancelled_by_account_id, cancelled_at, updated_at) VALUES
+      (gen_random_uuid(), t, fac, u2, res2, date_trunc('hour', now()) + interval '3 days',
+       date_trunc('hour', now()) + interval '3 days 1 hour', 0, 1, false, 'cancelled', 'staff',
+       'rules_violation', mgr, now(), now());
+    INSERT INTO emergencies (id, tenant_id, number, unit_id, type, reported_by_account_id,
+                             responders_notified, updated_at) VALUES
+      (gen_random_uuid(), t, 1, u1, 'medical', res1, 0, now());
+    INSERT INTO incidents (id, tenant_id, number, type, severity, unit_id, occurred_at, description,
+                           reported_by_account_id, updated_at) VALUES
+      (gen_random_uuid(), t, 1, 'hazard', 'low', u1, now() - interval '1 hour', 'A loose tile', mgr, now());
     IF c = 1 THEN
       INSERT INTO management_request_topics (id, tenant_id, key, name_ar, name_en, target_response_hours, updated_at)
       VALUES (gen_random_uuid(), t, 'utilities', 'المرافق', 'Utilities (ours)', 48, now());

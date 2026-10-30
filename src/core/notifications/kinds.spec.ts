@@ -24,6 +24,8 @@ const CRITICAL_KINDS = [
   // ADR 0054.
   'child.exit_alone',
   'child.unauthorized_pickup',
+  // ADR 0068.
+  'control_room.alert',
   // ADR 0047.
   'emergency.cancelled',
   // ADR 0067.

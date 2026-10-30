@@ -1696,6 +1696,7 @@ describe('API v0 — PII leak scan', () => {
       '/staff/gate/devices/{id}': w.bGateDeviceId,
       // ADR 0068: a face check (a foreign one: not found).
       '/gate/face-checks/{id}': w.bFaceCheckId,
+      '/staff/control-room/events/{id}': w.bControlRoomEventId,
       '/staff/gate/offline/flags/{id}': w.bOfflineFlagId,
       '/staff/gate/offline/batches/{id}': w.bOfflineBatchId,
       // ADR 0064: the register's places, never a person's.

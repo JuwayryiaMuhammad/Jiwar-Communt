@@ -126,6 +126,34 @@ describe('Audit coverage — guard vendor adapters', () => {
     });
   });
 
+  describe('the control room', () => {
+    it('control_room_event.acknowledged — the event’s kind and severity', async () => {
+      const watcher = await x.supervisor(s.c);
+      const l = await x.lockdown(guard, {
+        scope: 'gate',
+        gateId: guard.gateId,
+        reasonCode: 'intruder',
+      });
+      const e = await x.inTx(s.c, (tx) =>
+        tx.controlRoomEvent.findFirstOrThrow({ where: { sourceId: l.id } }),
+      );
+      await x
+        .http(
+          'post',
+          `/staff/control-room/events/${e.id}/acknowledge`,
+          watcher.token,
+        )
+        .expect(200);
+      expect(
+        await single('control_room_event.acknowledged', e.id),
+      ).toMatchObject({
+        actorId: watcher.id,
+        metadata: { kind: 'lockdown_started', severity: 'high' },
+      });
+      await x.endLockdownRaw(s.manager, l.id).expect(200);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every guard vendor entry has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

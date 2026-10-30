@@ -92,6 +92,7 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'patrols.manage': 'Keep the patrol checkpoints and their QR codes, the routes and their schedules, and cancel patrol runs',
   'incidents.manage': 'Investigate the incidents guards report: assign, write internal notes, review and close them',
   'blocklist.manage': 'Keep the banned and watched plates and people the gate checks',
+  'control_room.watch': 'Watch the control room: the guards’ alarms, lockdowns and the gate’s alerts, and the posts at a glance',
   'violations.manage': 'Decide the appeals of residents’ violations and cancel violations',
   'violations.issue': 'Issue violations to units from the office',
   'lockdown.end': 'End a lockdown of the gates',

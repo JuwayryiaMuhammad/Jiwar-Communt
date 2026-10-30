@@ -1,4 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { ControlRoom } from '../control-room/control-room';
 import { Prisma, type GateFieldException } from '@prisma/client';
 import { ClsService } from 'nestjs-cls';
 import { CommunityGatePort } from '../../community';
@@ -134,6 +135,7 @@ export class FieldExceptionsService implements OnModuleInit {
     private readonly sweep: SweepRunner,
     private readonly lockdown: LockdownCore,
     private readonly matcher: BlocklistMatcher,
+    private readonly controlRoom: ControlRoom,
   ) {}
 
   onModuleInit(): void {
@@ -286,6 +288,12 @@ export class FieldExceptionsService implements OnModuleInit {
           raisedAt: now,
           answerBy: new Date(now.getTime() + exceptionAnswerMinutes * MINUTE),
         },
+      });
+      await this.controlRoom.publish(tx, {
+        kind: 'field_exception_raised',
+        source: { type: 'gate_field_exception', id },
+        gateId: shift.gateId,
+        shiftId: shift.id,
       });
       await this.audit.record(tx, {
         action: 'gate_exception.raised',

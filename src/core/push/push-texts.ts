@@ -2732,6 +2732,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'يوصي فني باستبدال الأصل {assetRef}.',
     },
   },
+  'control_room.alert': {
+    en: {
+      title: 'Control room alert',
+      body: 'A guard or a gate needs you now. Open the control room.',
+    },
+    ar: {
+      title: 'تنبيه غرفة التحكم',
+      body: 'حارس أو بوابة يحتاجك الآن. افتح غرفة التحكم.',
+    },
+  },
+  'control_room.event': {
+    en: {
+      title: 'Control room',
+      body: 'Something happened at the gates. Open the control room.',
+    },
+    ar: {
+      title: 'غرفة التحكم',
+      body: 'حدث شيء عند البوابات. افتح غرفة التحكم.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

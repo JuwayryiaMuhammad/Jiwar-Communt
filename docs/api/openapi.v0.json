@@ -11338,6 +11338,222 @@
         ],
         "type": "object"
       },
+      "ControlRoomEventKind": {
+        "enum": [
+          "guard_sos_raised",
+          "guard_sos_escalated",
+          "guard_alarm",
+          "guard_alarm_unpaired",
+          "lockdown_started",
+          "lockdown_ended",
+          "blocklist_match",
+          "field_exception_raised",
+          "patrol_geofence_exit",
+          "device_sync_overdue",
+          "gate_call_missed"
+        ],
+        "type": "string"
+      },
+      "ControlRoomEventView": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "acknowledgedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "gateId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ControlRoomEventKind"
+              }
+            ]
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "placeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ControlRoomSeverity"
+              }
+            ],
+            "description": "`high`: told critically (an SOS, an alarm, a lockdown)."
+          },
+          "shiftId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "sourceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sourceType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ControlRoomSourceType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "severity",
+          "sourceType",
+          "sourceId",
+          "gateId",
+          "placeId",
+          "shiftId",
+          "occurredAt",
+          "acknowledgedAt",
+          "acknowledgedBy"
+        ],
+        "type": "object"
+      },
+      "ControlRoomEventViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ControlRoomEventView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ControlRoomPostKind": {
+        "enum": [
+          "gate",
+          "zone"
+        ],
+        "type": "string"
+      },
+      "ControlRoomPostView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ControlRoomPostKind"
+              }
+            ]
+          },
+          "lockedDown": {
+            "type": "boolean"
+          },
+          "nameAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "openEmergencies": {
+            "description": "Staff SOS still open there.",
+            "type": "number"
+          },
+          "openExceptions": {
+            "description": "Field exceptions waiting for the management.",
+            "type": "number"
+          },
+          "shift": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostShiftView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "nameEn",
+          "nameAr",
+          "shift",
+          "lockedDown",
+          "openExceptions",
+          "openEmergencies"
+        ],
+        "type": "object"
+      },
+      "ControlRoomPostViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ControlRoomPostView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ControlRoomSeverity": {
+        "description": "`high`: told critically (an SOS, an alarm, a lockdown).",
+        "enum": [
+          "high",
+          "normal"
+        ],
+        "type": "string"
+      },
+      "ControlRoomSourceType": {
+        "enum": [
+          "emergency",
+          "guard_alarm_event",
+          "lockdown",
+          "blocklist_match",
+          "gate_field_exception",
+          "patrol_geofence_exit",
+          "gate_device",
+          "gate_call"
+        ],
+        "type": "string"
+      },
       "ConversationCreatedView": {
         "properties": {
           "createdAt": {
@@ -39996,6 +40212,27 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "PostShiftView": {
+        "properties": {
+          "guard": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "guard",
+          "startedAt"
         ],
         "type": "object"
       },
@@ -101637,6 +101874,173 @@
         "summary": "Void a contract recorded by mistake",
         "tags": [
           "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/control-room/events": {
+      "get": {
+        "description": "A guard’s SOS or alarm, a lockdown, the blocklist met at the gate, a field exception, a geofence exit, a device out of sync, a missed gate call. Ids and codes only.",
+        "operationId": "ControlRoomController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`open`: still to acknowledge. Every event when left out.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "acknowledged"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlRoomEventViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The control room’s events, newest first",
+        "tags": [
+          "control-room"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/control-room/events/{id}": {
+      "get": {
+        "operationId": "ControlRoomController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlRoomEventView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a control room event",
+        "tags": [
+          "control-room"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/control-room/events/{id}/acknowledge": {
+      "post": {
+        "description": "Once: the first acknowledgement wins; another is 409 CONTROL_ROOM_EVENT_ACKNOWLEDGED.",
+        "operationId": "ControlRoomController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlRoomEventView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge an event",
+        "tags": [
+          "control-room"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/control-room/posts": {
+      "get": {
+        "description": "Each active gate and each zone with a guard on duty: its open shift, whether it is locked down, its waiting field exceptions and open staff SOS.",
+        "operationId": "ControlRoomController_posts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlRoomPostViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The posts at a glance",
+        "tags": [
+          "control-room"
         ],
         "x-stability": "draft"
       }

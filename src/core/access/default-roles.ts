@@ -190,6 +190,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'violations.manage',
       'gate_devices.manage',
       'units.directory',
+      // The control room's channel (ADR 0068).
+      'control_room.watch',
     ],
   },
   {

@@ -2077,6 +2077,11 @@ export const AUDIT_ACTIONS = {
   // unreadable), documentType, matched (a boolean). Never the number, a
   // name or a date the document carries.
   'gate.id_scanned': { log: 'tenant', target: 'guard_shift' },
+  // A control room event acknowledged, once. metadata: kind, severity.
+  'control_room_event.acknowledged': {
+    log: 'tenant',
+    target: 'control_room_event',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

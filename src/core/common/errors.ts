@@ -1570,6 +1570,9 @@ export const ErrorCode = {
   FACE_CHECK_NOT_FOUND: 'FACE_CHECK_NOT_FOUND',
   /** The vendor could not read the document's number: type it instead (422). */
   ID_SCAN_UNREADABLE: 'ID_SCAN_UNREADABLE',
+  CONTROL_ROOM_EVENT_NOT_FOUND: 'CONTROL_ROOM_EVENT_NOT_FOUND',
+  /** Acknowledged once: the first wins (409, params.acknowledgedAt). */
+  CONTROL_ROOM_EVENT_ACKNOWLEDGED: 'CONTROL_ROOM_EVENT_ACKNOWLEDGED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

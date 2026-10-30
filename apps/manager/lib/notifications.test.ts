@@ -261,6 +261,8 @@ test('a field exception to answer, and a patrol out of its area, read as codes a
 
 test('the gate offline (ADR 0057): its kinds read as sentences and lead to its pages', () => {
   assert.equal(notificationText(n('gate_device.sync_overdue', { minutes: 15 })), 'A gate device on shift has not been seen for 15 minutes');
+  assert.equal(notificationText(n('control_room.alert', { eventKind: 'guard_alarm' })), 'Control room alert: guard alarm');
+  assert.equal(notificationText(n('control_room.event', { eventKind: 'device_sync_overdue' })), 'Control room: device sync overdue');
   assert.equal(notificationText(n('gate_offline.security_conflict', { flags: 2 })), 'A gate device synced 2 security conflict(s) from offline');
   assert.equal(notificationText(n('gate_device.upload_rejected', { reason: 'signature' })), 'A gate device’s offline upload was refused (signature)');
   assert.equal(

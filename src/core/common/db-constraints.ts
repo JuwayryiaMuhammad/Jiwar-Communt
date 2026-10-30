@@ -867,4 +867,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_face_enrollments_live_key: null,
   gate_face_checks_tenant_id_id_key: null,
   gate_face_checks_probe_key: null,
+  // The control room's events (ADR 0068): keyed for composite links.
+  control_room_events_tenant_id_id_key: null,
 };

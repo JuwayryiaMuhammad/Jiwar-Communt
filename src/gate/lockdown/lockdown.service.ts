@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable, type OnModuleInit } from '@nestjs/common';
+import { ControlRoom } from '../control-room/control-room';
 import type {
   GateLockdown,
   GateLockdownOverride,
@@ -85,6 +86,7 @@ export class LockdownService implements OnModuleInit {
     private readonly safety: SafetyCore,
     private readonly community: CommunityGatePort,
     private readonly core: LockdownCore,
+    private readonly controlRoom: ControlRoom,
   ) {}
 
   onModuleInit(): void {
@@ -202,6 +204,12 @@ export class LockdownService implements OnModuleInit {
           recipients: told,
           residents: residentsTold,
         },
+      });
+      await this.controlRoom.publish(tx, {
+        kind: 'lockdown_started',
+        source: { type: 'lockdown', id },
+        gateId,
+        shiftId: shift.id,
       });
       return { record: await this.record(tx, lockdown), created: true };
     });
@@ -407,6 +415,11 @@ export class LockdownService implements OnModuleInit {
           recipients: told,
           residents: residentsTold,
         },
+      });
+      await this.controlRoom.publish(tx, {
+        kind: 'lockdown_ended',
+        source: { type: 'lockdown', id },
+        gateId: ended.gateId,
       });
       return this.record(tx, ended);
     });

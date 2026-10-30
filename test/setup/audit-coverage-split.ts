@@ -897,4 +897,5 @@ export const GUARD_VENDORS_COVERAGE: readonly string[] = [
   'face_enrollment.enrolled',
   'face_enrollment.removed',
   'gate.id_scanned',
+  'control_room_event.acknowledged',
 ];

@@ -206,4 +206,69 @@ describe('The guard vendors’ tables — CHECKs, triggers and privileges', () =
       ).rejects.toThrow(/gate_face_checks_shape|answered once/);
     });
   });
+
+  describe('a control room event', () => {
+    const id = newId();
+    const insert = () =>
+      `INSERT INTO control_room_events (id, tenant_id, kind, severity, source_type, source_id, gate_id, shift_id)
+       VALUES ('${id}', '${tenantId}', 'lockdown_started', 'high', 'lockdown', '${newId()}', '${gateId}', '${shiftId}')`;
+    const set = (sql: string) =>
+      `UPDATE control_room_events SET ${sql} WHERE id = '${id}'`;
+    const ack = () =>
+      set(`acknowledged_at = now(), acknowledged_by_account_id = '${guardId}'`);
+
+    it('the app reads, writes, acknowledges and delivers it; never deletes', async () => {
+      expect(await privileges('control_room_events')).toEqual(
+        SELECT_INSERT_UPDATE,
+      );
+    });
+
+    it('never changes what it says; acknowledged once; delivered or skipped once', async () => {
+      await expect(
+        asApp(
+          insert(),
+          ack(),
+          set(`delivery = 'delivered', delivered_at = now()`),
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      for (const sql of [
+        set(`kind = 'lockdown_ended'`),
+        set(`severity = 'normal'`),
+        set(`source_id = '${newId()}'`),
+        set(`occurred_at = now() - interval '1 hour'`),
+      ])
+        await expect(asApp(insert(), sql)).rejects.toThrow(
+          /acknowledged and delivered once/,
+        );
+      await expect(
+        asApp(
+          insert(),
+          ack(),
+          set(`acknowledged_at = now() + interval '1 minute'`),
+        ),
+      ).rejects.toThrow(/acknowledged and delivered once/);
+      await expect(
+        asApp(
+          insert(),
+          set(`delivery = 'skipped'`),
+          set(`delivery = 'pending'`),
+        ),
+      ).rejects.toThrow(/acknowledged and delivered once/);
+    });
+
+    it('its shapes: an acknowledgement has its author; a delivery its instant', async () => {
+      for (const [sql, check] of [
+        [set(`acknowledged_at = now()`), 'shape'],
+        [set(`delivery = 'delivered'`), 'shape'],
+        [set(`delivery_attempts = -1`), 'shape'],
+        [set(`last_error = 'vendor said no'`), 'error'],
+      ])
+        await expect(asApp(insert(), sql)).rejects.toThrow(
+          new RegExp(`control_room_events_${check}`),
+        );
+      await expect(
+        asApp(insert().replace(`'lockdown_started'`, `'coffee_break'`)),
+      ).rejects.toThrow(/control_room_events_kind/);
+    });
+  });
 });

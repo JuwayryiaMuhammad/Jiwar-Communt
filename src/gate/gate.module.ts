@@ -174,6 +174,10 @@ import { GateFaceChecksController } from './face/face-checks.controller';
 import { FaceChecksService } from './face/face-checks.service';
 import { faceDriverProvider } from './face/face-driver.provider';
 import { FaceEnrollments } from './face/face-enrollments';
+import { ControlRoom } from './control-room/control-room';
+import { ControlRoomController } from './control-room/control-room.controller';
+import { controlRoomDriverProvider } from './control-room/control-room-driver.provider';
+import { ControlRoomService } from './control-room/control-room.service';
 import { idScanDriverProvider } from './id-scan/id-scan-driver.provider';
 import { GateIdScansController } from './id-scan/id-scans.controller';
 import { IdScansService } from './id-scan/id-scans.service';
@@ -407,6 +411,8 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     GateFaceChecksController,
     // ID scans (ADR 0068).
     GateIdScansController,
+    // The control room (ADR 0068).
+    ControlRoomController,
     GateIncidentsController,
     TechnicianIncidentsController,
     StaffIncidentsController,
@@ -550,6 +556,10 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     // ID scans (ADR 0068).
     idScanDriverProvider,
     IdScansService,
+    // The control room (ADR 0068).
+    controlRoomDriverProvider,
+    ControlRoom,
+    ControlRoomService,
     IncidentsService,
     IncidentLifecycle,
     IncidentExportSections,

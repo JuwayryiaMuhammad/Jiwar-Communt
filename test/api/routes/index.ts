@@ -97,7 +97,11 @@ import {
   GATE_DEVICE_ROUTES,
   OFFLINE_UPLOAD_ROUTES,
 } from './offline';
-import { FACE_CHECK_ROUTES, ID_SCAN_ROUTES } from './guard-vendors';
+import {
+  CONTROL_ROOM_ROUTES,
+  FACE_CHECK_ROUTES,
+  ID_SCAN_ROUTES,
+} from './guard-vendors';
 import {
   DAILY_REPORT_ROUTES,
   FOUND_ITEM_ROUTES,
@@ -371,6 +375,7 @@ export const ROUTES: Row[] = [
   ...OFFLINE_UPLOAD_ROUTES,
   ...FACE_CHECK_ROUTES,
   ...ID_SCAN_ROUTES,
+  ...CONTROL_ROOM_ROUTES,
   ...PARTNER_CATALOGUE_ROUTES,
   ...PARTNER_REQUEST_ROUTES,
   ...PARTNER_DESK_ROUTES,

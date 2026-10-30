@@ -2429,6 +2429,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   gate_face_enrollments_shape: {},
   gate_face_checks_outcome: { guarded: 'outcome IS NULL is tested first' },
+  control_room_events_kind: {},
+  control_room_events_severity: {},
+  control_room_events_source_type: {},
+  control_room_events_delivery: {},
+  control_room_events_error: { guarded: 'last_error IS NULL is tested first' },
+  control_room_events_shape: {},
   gate_face_checks_shape: {
     guarded:
       'outcome and matches are tested IS NULL together first; outcome is compared with IS DISTINCT FROM, matches only once known',

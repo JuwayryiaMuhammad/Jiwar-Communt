@@ -2513,6 +2513,26 @@ export const NOTIFICATION_KINDS = {
     target: 'asset_replacement_recommendation',
     params: { assetRef: {} },
   },
+  /**
+   * The control room (ADR 0068), to the `control_room.watch` holders in the
+   * transaction of what caused it: an alert (a guard's SOS or alarm, a
+   * lockdown started, a ban met at the gate) critically, anything else as
+   * an event. `eventKind` is the event's code; the target is the event.
+   */
+  'control_room.alert': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'control_room_event',
+    params: { eventKind: {} },
+  },
+  'control_room.event': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'control_room_event',
+    params: { eventKind: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

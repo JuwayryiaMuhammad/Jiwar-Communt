@@ -12439,6 +12439,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/control-room/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The control room’s events, newest first
+         * @description A guard’s SOS or alarm, a lockdown, the blocklist met at the gate, a field exception, a geofence exit, a device out of sync, a missed gate call. Ids and codes only.
+         */
+        get: operations["ControlRoomController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/control-room/events/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a control room event */
+        get: operations["ControlRoomController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/control-room/events/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acknowledge an event
+         * @description Once: the first acknowledgement wins; another is 409 CONTROL_ROOM_EVENT_ACKNOWLEDGED.
+         */
+        post: operations["ControlRoomController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/control-room/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The posts at a glance
+         * @description Each active gate and each zone with a guard on duty: its open shift, whether it is locked down, its waiting field exceptions and open staff SOS.
+         */
+        get: operations["ControlRoomController_posts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/decision-appeals": {
         parameters: {
             query?: never;
@@ -24016,6 +24093,59 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
+        /** @enum {string} */
+        ControlRoomEventKind: "guard_sos_raised" | "guard_sos_escalated" | "guard_alarm" | "guard_alarm_unpaired" | "lockdown_started" | "lockdown_ended" | "blocklist_match" | "field_exception_raised" | "patrol_geofence_exit" | "device_sync_overdue" | "gate_call_missed";
+        ControlRoomEventView: {
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            acknowledgedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            gateId: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ControlRoomEventKind"];
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: uuid */
+            placeId: string | null;
+            /** @description `high`: told critically (an SOS, an alarm, a lockdown). */
+            severity: components["schemas"]["ControlRoomSeverity"];
+            /** Format: uuid */
+            shiftId: string | null;
+            /** Format: uuid */
+            sourceId: string;
+            sourceType: components["schemas"]["ControlRoomSourceType"];
+        };
+        ControlRoomEventViewList: {
+            data: components["schemas"]["ControlRoomEventView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        ControlRoomPostKind: "gate" | "zone";
+        ControlRoomPostView: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ControlRoomPostKind"];
+            lockedDown: boolean;
+            nameAr: string | null;
+            nameEn: string;
+            /** @description Staff SOS still open there. */
+            openEmergencies: number;
+            /** @description Field exceptions waiting for the management. */
+            openExceptions: number;
+            shift: components["schemas"]["PostShiftView"] | null;
+        };
+        ControlRoomPostViewList: {
+            data: components["schemas"]["ControlRoomPostView"][];
+            nextCursor: string | null;
+        };
+        /**
+         * @description `high`: told critically (an SOS, an alarm, a lockdown).
+         * @enum {string}
+         */
+        ControlRoomSeverity: "high" | "normal";
+        /** @enum {string} */
+        ControlRoomSourceType: "emergency" | "guard_alarm_event" | "lockdown" | "blocklist_match" | "gate_field_exception" | "patrol_geofence_exit" | "gate_device" | "gate_call";
         ConversationCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -33254,6 +33384,13 @@ export interface components {
             /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
             attachmentFileIds?: string[];
             body: string;
+        };
+        PostShiftView: {
+            guard: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            startedAt: string;
         };
         PostStaffRequestMessageDto: {
             /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
@@ -59993,6 +60130,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContractView"];
+                };
+            };
+        };
+    };
+    ControlRoomController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `open`: still to acknowledge. Every event when left out. */
+                status?: "open" | "acknowledged";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlRoomEventViewList"];
+                };
+            };
+        };
+    };
+    ControlRoomController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlRoomEventView"];
+                };
+            };
+        };
+    };
+    ControlRoomController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlRoomEventView"];
+                };
+            };
+        };
+    };
+    ControlRoomController_posts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlRoomPostViewList"];
                 };
             };
         };

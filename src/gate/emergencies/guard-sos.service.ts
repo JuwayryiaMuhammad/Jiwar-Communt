@@ -4,6 +4,7 @@ import { RequestContext } from '../../core/common/cls/request-context';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import { ControlRoom } from '../control-room/control-room';
 import { SafetyCore } from '../safety/safety-core';
 import { ShiftsService } from '../shifts/shifts.service';
 import {
@@ -23,7 +24,8 @@ export const GUARD_SOS_RESOURCE = 'guard_sos';
  * staff's SOS core (SosCore, shared with the technician's; ADR 0067). One
  * open per post and type, decided under the post's emergency lock (a
  * repeat answers 200 with the open one). The guard who raised it may
- * cancel it, and never accepts it.
+ * cancel it, and never accepts it. A new one is the control room's alert
+ * too (ADR 0068), in the same transaction; a repeat is not.
  */
 @Injectable()
 export class GuardSosService implements OnModuleInit {
@@ -35,6 +37,7 @@ export class GuardSosService implements OnModuleInit {
     private readonly core: SafetyCore,
     private readonly records: EmergencyRecords,
     private readonly sos: SosCore,
+    private readonly controlRoom: ControlRoom,
   ) {}
 
   onModuleInit(): void {
@@ -64,7 +67,7 @@ export class GuardSosService implements OnModuleInit {
         'emergency-post',
         shift.gateId ?? shift.placeId!,
       );
-      return this.sos.raiseLocked(
+      const raised = await this.sos.raiseLocked(
         tx,
         {
           kind: 'post',
@@ -75,6 +78,15 @@ export class GuardSosService implements OnModuleInit {
         type,
         GUARD_SOS_RESOURCE,
       );
+      if (raised.created)
+        await this.controlRoom.publish(tx, {
+          kind: 'guard_sos_raised',
+          source: { type: 'emergency', id: raised.record.emergency.id },
+          gateId: shift.gateId,
+          placeId: shift.placeId,
+          shiftId: shift.id,
+        });
+      return raised;
     });
   }
 

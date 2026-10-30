@@ -1,4 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { ControlRoom } from '../control-room/control-room';
 import type { PatrolGeofenceExit, PatrolRun } from '@prisma/client';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
@@ -50,6 +51,7 @@ export class PatrolGeofence implements OnModuleInit {
     private readonly sweep: SweepRunner,
     private readonly settings: GateSettingsService,
     private readonly safety: SafetyCore,
+    private readonly controlRoom: ControlRoom,
   ) {}
 
   onModuleInit(): void {
@@ -179,6 +181,13 @@ export class PatrolGeofence implements OnModuleInit {
       { minutes },
       run.guardAccountId,
     );
+    await this.controlRoom.publish(tx, {
+      kind: 'patrol_geofence_exit',
+      source: { type: 'patrol_geofence_exit', id: exitId },
+      gateId: run.gateId,
+      placeId: run.placeId,
+      shiftId: run.shiftId,
+    });
     return true;
   }
 }

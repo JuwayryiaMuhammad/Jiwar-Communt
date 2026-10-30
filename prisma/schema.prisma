@@ -9314,6 +9314,36 @@ model GateFaceEnrollment {
   @@map("gate_face_enrollments")
 }
 
+/// The control room's channel (ADR 0068): what the guards' supervisors
+/// watch, written in the transaction of what caused it, delivered to the
+/// control-room vendor at least once by a sweep. Ids and codes only.
+model ControlRoomEvent {
+  id                      String    @id @db.Uuid
+  tenantId                String    @map("tenant_id") @db.Uuid
+  kind                    String
+  /// high | normal.
+  severity                String
+  sourceType              String    @map("source_type")
+  sourceId                String    @map("source_id") @db.Uuid
+  gateId                  String?   @map("gate_id") @db.Uuid
+  placeId                 String?   @map("place_id") @db.Uuid
+  shiftId                 String?   @map("shift_id") @db.Uuid
+  occurredAt              DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  acknowledgedAt          DateTime? @map("acknowledged_at") @db.Timestamptz(3)
+  acknowledgedByAccountId String?   @map("acknowledged_by_account_id") @db.Uuid
+  /// pending | delivered | skipped.
+  delivery                String    @default("pending")
+  deliveryAttempts        Int       @default(0) @map("delivery_attempts") @db.SmallInt
+  nextDeliveryAt          DateTime  @default(now()) @map("next_delivery_at") @db.Timestamptz(3)
+  leasedUntil             DateTime? @map("leased_until") @db.Timestamptz(3)
+  lastError               String?   @map("last_error")
+  deliveredAt             DateTime? @map("delivered_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, occurredAt, id], map: "control_room_events_feed_idx")
+  @@map("control_room_events")
+}
+
 /// A guard's face check at the gate (ADR 0068): the probe, then what the
 /// vendor answered — never its score. The probe goes after a day, or 30
 /// days after a possible match.

@@ -35,6 +35,27 @@ interface Table {
  */
 const TABLES: Table[] = [
   {
+    table: 'control_room_events',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.controlRoomEvent.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          kind: 'lockdown_started',
+          severity: 'high',
+          sourceType: 'lockdown',
+          sourceId: newId(),
+          gateId: link.gateId,
+          shiftId: link.shiftId,
+          acknowledgedAt: new Date(),
+          acknowledgedByAccountId: link.accountId,
+        },
+      });
+      return id;
+    },
+  },
+  {
     table: 'gate_face_enrollments',
     insert: async (tx, own, link) => {
       const id = newId();

@@ -1,4 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { ControlRoom } from '../control-room/control-room';
 import type { Emergency } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
@@ -27,6 +28,7 @@ export class EmergencyEscalation implements OnModuleInit {
     private readonly core: SafetyCore,
     private readonly audit: AuditService,
     private readonly sweep: SweepRunner,
+    private readonly controlRoom: ControlRoom,
   ) {}
 
   onModuleInit(): void {
@@ -100,6 +102,15 @@ export class EmergencyEscalation implements OnModuleInit {
       targetId: e.id,
       metadata: { reason, recipients },
     });
+    // A guard's SOS from their post (ADR 0068): the control room too.
+    if (e.originGateId || e.originPlaceId)
+      await this.controlRoom.publish(tx, {
+        kind: 'guard_sos_escalated',
+        source: { type: 'emergency', id: e.id },
+        gateId: e.originGateId,
+        placeId: e.originPlaceId,
+        shiftId: e.originShiftId,
+      });
     return escalated;
   }
 }

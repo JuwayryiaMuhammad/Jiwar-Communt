@@ -1,4 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { ControlRoom } from '../control-room/control-room';
 import type { GateDevice } from '@prisma/client';
 import { appError, ErrorCode } from '../../core/common/errors';
 import {
@@ -57,6 +58,7 @@ export class OfflineHealth implements OnModuleInit {
     private readonly settings: GateSettingsService,
     private readonly flags: OfflineFlags,
     private readonly sweep: SweepRunner,
+    private readonly controlRoom: ControlRoom,
   ) {}
 
   onModuleInit(): void {
@@ -144,7 +146,7 @@ export class OfflineHealth implements OnModuleInit {
         continue;
       const bundle = await tx.gateOfflineBundle.findFirst({
         where: { deviceId: d.id, version: d.bundleVersion },
-        select: { shiftId: true, validUntil: true },
+        select: { shiftId: true, gateId: true, validUntil: true },
       });
       if (!bundle || bundle.validUntil <= now) continue;
       const shift = await tx.guardShift.findUnique({
@@ -162,6 +164,12 @@ export class OfflineHealth implements OnModuleInit {
       await tx.gateDevice.update({
         where: { id: d.id },
         data: { overdueAlertedAt: now },
+      });
+      await this.controlRoom.publish(tx, {
+        kind: 'device_sync_overdue',
+        source: { type: 'gate_device', id: d.id },
+        gateId: bundle.gateId,
+        shiftId: bundle.shiftId,
       });
       told++;
     }

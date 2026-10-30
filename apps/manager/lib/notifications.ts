@@ -181,6 +181,9 @@ const TEXT: Record<string, (p: P) => string> = {
   'gate_device.upload_rejected': (p) => `A gate device’s offline upload was refused (${words(p.reason)})`,
   'gate_offline.security_conflict': (p) => `A gate device synced ${p.flags} security conflict(s) from offline`,
   'gate_offline.conflicts': (p) => `A gate device synced ${p.flags} entry conflict(s) to review`,
+  // The control room (ADR 0068): the event's code only.
+  'control_room.alert': (p) => `Control room alert: ${words(p.eventKind)}`,
+  'control_room.event': (p) => `Control room: ${words(p.eventKind)}`,
   // Security (ADR 0053): codes only, never a plate, a name, a unit or a word.
   'gate_lockdown.started': (p) => (p.scope === 'all' ? 'Every gate is locked down' : 'A gate is locked down'),
   'gate_lockdown.resident_notice': () => 'The compound’s gates are locked down for now',
@@ -420,6 +423,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('gate_devices.manage') ? `/security/gate-devices?device=${n.targetId}` : null;
   if (n.targetType === 'gate_offline_batch' && n.targetId)
     return can('gate_devices.manage') ? `/security/offline-flags?batch=${n.targetId}` : null;
+  // The control room's channel (ADR 0068).
+  if (n.targetType === 'control_room_event' && n.targetId)
+    return can('control_room.watch') ? `/security/control-room?event=${n.targetId}` : null;
   // A field exception to answer (ADR 0056), for the on-duty management.
   if (n.targetType === 'gate_field_exception' && n.targetId)
     return can('gate_exceptions.decide') ? `/security/field-exceptions?exception=${n.targetId}` : null;

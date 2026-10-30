@@ -275,6 +275,12 @@ export const PERMISSIONS = {
   // on-duty management answers the guards' field exceptions (every holder
   // is asked, the first answer wins).
   'gate_exceptions.decide': { kinds: ['manager'] },
+  // The control room (ADR 0068). `control_room.watch` reads the channel —
+  // the guards' SOS and alarms, lockdowns, the blocklist met at the gate,
+  // field exceptions, geofence exits, devices out of sync, missed gate
+  // calls — acknowledges its events, and reads the posts at a glance. The
+  // security supervisor's by default; a control room's own role later.
+  'control_room.watch': { kinds: ['staff', 'manager'] },
   // The gate log searched by a visitor's full name, exactly (ADR 0056):
   // the manager only, audited, rate-limited.
   'gate_log.search': { kinds: ['manager'] },

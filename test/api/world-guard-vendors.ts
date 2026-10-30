@@ -8,6 +8,8 @@ import type { Side } from './world';
 export interface GuardVendorsWorld {
   /** A face check B's guard made (its probe gone; rows written directly). */
   bFaceCheckId: string;
+  /** A control room event of B's (a lockdown's, written directly). */
+  bControlRoomEventId: string;
 }
 
 export async function guardVendorsWorld(
@@ -16,6 +18,7 @@ export async function guardVendorsWorld(
   b: Side,
 ): Promise<GuardVendorsWorld> {
   const bFaceCheckId = newId();
+  const bControlRoomEventId = newId();
   await helpers.asManager(b, () =>
     h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
       await tx.gateFaceCheck.create({
@@ -28,7 +31,18 @@ export async function guardVendorsWorld(
           probeDeletedAt: new Date(),
         },
       });
+      await tx.controlRoomEvent.create({
+        data: {
+          id: bControlRoomEventId,
+          tenantId: b.tenantId,
+          kind: 'device_sync_overdue',
+          severity: 'normal',
+          sourceType: 'gate_device',
+          sourceId: newId(),
+          gateId: b.gateId,
+        },
+      });
     }),
   );
-  return { bFaceCheckId };
+  return { bFaceCheckId, bControlRoomEventId };
 }

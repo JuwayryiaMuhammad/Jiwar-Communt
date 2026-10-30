@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ControlRoom } from '../control-room/control-room';
 import type { BlocklistEntry, Prisma } from '@prisma/client';
 import { IdentifierHasher } from '../../core/auth/identifier';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -84,6 +85,7 @@ export class BlocklistMatcher {
     private readonly core: BlocklistCore,
     private readonly hasher: IdentifierHasher,
     private readonly safety: SafetyCore,
+    private readonly controlRoom: ControlRoom,
   ) {}
 
   /**
@@ -136,7 +138,8 @@ export class BlocklistMatcher {
 
   /**
    * Records each entry met, and tells the keepers, in the caller's
-   * transaction. The one who acted is never told.
+   * transaction. The one who acted is never told. Met at the gate (a
+   * shift's), the control room hears of each (ADR 0068): a ban as an alert.
    */
   async record(
     tx: TenantTxClient,
@@ -146,9 +149,10 @@ export class BlocklistMatcher {
     if (!hit.entries.length) return;
     const tenantId = this.ctx.txTenantId;
     const actor = this.ctx.accountId;
+    const met = hit.entries.map((e) => ({ entry: e, id: newId() }));
     await tx.blocklistMatch.createMany({
-      data: hit.entries.map((e) => ({
-        id: newId(),
+      data: met.map(({ entry: e, id }) => ({
+        id,
         tenantId,
         entryId: e.id,
         kind: e.kind,
@@ -171,6 +175,15 @@ export class BlocklistMatcher {
         { source: at.source },
         actor,
       );
+    if (at.shiftId)
+      for (const { entry, id } of met)
+        await this.controlRoom.publish(tx, {
+          kind: 'blocklist_match',
+          source: { type: 'blocklist_match', id },
+          gateId: at.gateId ?? null,
+          shiftId: at.shiftId,
+          severity: entry.kind === 'ban' ? 'high' : 'normal',
+        });
   }
 
   /**

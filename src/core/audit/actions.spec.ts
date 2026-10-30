@@ -217,6 +217,7 @@ describe('audit catalog', () => {
         // ADR 0068
         'face_check',
         'face_enrollment',
+        'control_room_event',
       ]).toContain(def.target);
     }
   });

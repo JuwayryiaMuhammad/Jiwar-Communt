@@ -321,6 +321,7 @@ export const COMPOUND_DOCUMENT_ROUTES: Row[] = [
               'occupant_rights',
               'conduct_guide',
               'moving_guide',
+              'saving_tips',
             ],
           },
         },

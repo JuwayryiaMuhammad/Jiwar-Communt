@@ -20,7 +20,7 @@ import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 
 type Summary = Schema<'CompoundDocumentSummaryView'>;
-type Kind = 'bylaws' | 'occupant_rights' | 'conduct_guide' | 'moving_guide';
+type Kind = 'bylaws' | 'occupant_rights' | 'conduct_guide' | 'moving_guide' | 'saving_tips';
 const KEY = ['compound-documents'] as const;
 
 const KINDS: { value: Kind; label: string; hint: string }[] = [
@@ -43,6 +43,11 @@ const KINDS: { value: Kind; label: string; hint: string }[] = [
     value: 'moving_guide',
     label: 'Moving guide',
     hint: 'Renewing a lease or moving out: what each means, the dates, the fees.',
+  },
+  {
+    value: 'saving_tips',
+    label: 'Saving tips',
+    hint: 'How a household uses less water, power and gas.',
   },
 ];
 

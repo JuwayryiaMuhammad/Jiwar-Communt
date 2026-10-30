@@ -18696,6 +18696,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/consumption": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read my household’s consumption by kind and month */
+        get: operations["HouseholdConsumptionController_read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/consumption/benchmark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compare a month of my household with other homes of its building */
+        get: operations["HouseholdConsumptionController_benchmark"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/contracts/{id}": {
         parameters: {
             query?: never;
@@ -21835,6 +21869,7 @@ export interface components {
             bookings: boolean;
             closedUnitCard: boolean;
             conductGuide: boolean;
+            consumptionView: boolean;
             contactPrimary: boolean;
             documentsUpload: boolean;
             emergency: boolean;
@@ -23022,7 +23057,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips";
             /** Format: date-time */
             publishedAt: string;
             titleAr: string;
@@ -23051,7 +23086,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips";
             /** Format: date-time */
             publishedAt: string;
             titleAr: string;
@@ -23106,6 +23141,24 @@ export interface components {
             id: string;
             /** @description The reader granted it. */
             mine: boolean;
+        };
+        ConsumptionBenchmarkView: {
+            available: boolean;
+            kind: components["schemas"]["MeterKind"];
+            meanPerSqmDay: string | null;
+            /** @description Use a square metre a day, the other homes’ median. */
+            medianPerSqmDay: string | null;
+            /** @description The household’s own, when it lived there all month, its meters read it all and its unit has a floor area. */
+            mine: string | null;
+            /** @description YYYY-MM. */
+            month: string;
+            /**
+             * @description Why there is none: fewer than five other homes of the building were read all month, or the unit is in no building.
+             * @enum {string|null}
+             */
+            reason: "TOO_FEW_UNITS" | "NO_BUILDING" | null;
+            unit: string;
+            units: number | null;
         };
         /** @enum {string} */
         ConsumptionGroup: "meter" | "building" | "area";
@@ -27860,6 +27913,35 @@ export interface components {
             data: components["schemas"]["HostRequestResponse"][];
             nextCursor: string | null;
         };
+        HouseholdCompareView: {
+            /** @description The latest complete month. */
+            month: string;
+            /** @description The month before, when complete and in the household’s time. */
+            previousMonth: components["schemas"]["MonthUseView"] | null;
+            /** @description The same month a year before, when complete and in the household’s time. */
+            sameMonthLastYear: components["schemas"]["MonthUseView"] | null;
+            use: string;
+        };
+        HouseholdConsumptionView: {
+            kinds: components["schemas"]["HouseholdKindView"][];
+            period: components["schemas"]["PeriodView"];
+            /**
+             * Format: date
+             * @description The household’s first day there: nothing before it is read.
+             */
+            since: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        HouseholdKindView: {
+            compare: components["schemas"]["HouseholdCompareView"] | null;
+            estimatedCost: string | null;
+            kind: components["schemas"]["MeterKind"];
+            meters: number;
+            months: components["schemas"]["HouseholdMonthView"][];
+            unit: string;
+            use: string;
+        };
         HouseholdMemberItemView: {
             fullName: string | null;
             /** @description The management only (a manager account holding `residents.read`): the codes of the permissions the member holds, so a revocation names one they have. Never the finance cap. */
@@ -27891,6 +27973,16 @@ export interface components {
          * @enum {string}
          */
         HouseholdMemberStatus: "pending_approval" | "active" | "removed";
+        HouseholdMonthView: {
+            /** @description Every day of the month is read, all of it in the household’s time: only complete months are compared. */
+            complete: boolean;
+            /** @description EGP at the compound’s tariffs: an estimate, never a bill; null where none was in force. */
+            estimatedCost: string | null;
+            /** @description YYYY-MM. */
+            month: string;
+            /** @description In the kind’s unit, four decimals. */
+            use: string;
+        };
         /** @enum {string} */
         HouseholdRelation: "spouse" | "child" | "parent" | "sibling" | "other";
         HouseholdResponse: {
@@ -29657,6 +29749,11 @@ export interface components {
             /** @example 2026-10 */
             month: string;
         };
+        MonthUseView: {
+            /** @description YYYY-MM. */
+            month: string;
+            use: string;
+        };
         MoveAssetDto: {
             /** Format: uuid */
             commonAreaId?: string;
@@ -30166,7 +30263,7 @@ export interface components {
              */
             fileId?: string;
             /** @enum {string} */
-            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips";
             titleAr: string;
             titleEn: string;
         };
@@ -42157,7 +42254,7 @@ export interface operations {
     CompoundDocumentsController_versions: {
         parameters: {
             query: {
-                kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide";
+                kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips";
             };
             header?: never;
             path?: never;
@@ -68210,6 +68307,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyClubView"];
+                };
+            };
+        };
+    };
+    HouseholdConsumptionController_read: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. */
+                to?: string;
+                /** @description One kind; every kind the unit has a meter of when left out. */
+                kind?: components["schemas"]["MeterKind"];
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseholdConsumptionView"];
+                };
+            };
+        };
+    };
+    HouseholdConsumptionController_benchmark: {
+        parameters: {
+            query: {
+                kind: components["schemas"]["MeterKind"];
+                /** @description `YYYY-MM`, a month that has ended. */
+                month: string;
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsumptionBenchmarkView"];
                 };
             };
         };

@@ -363,6 +363,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'استهلك العداد {meterRef} أكثر من المعتاد بكثير حتى {readOn}.',
     },
   },
+  'meter.unit_spike': {
+    en: {
+      title: 'Your use ran high',
+      body: 'Your home used far more {meterKind} than usual up to {readOn}.',
+    },
+    ar: {
+      title: 'استهلاكك مرتفع',
+      body: 'استهلك بيتك من {meterKind} أكثر من المعتاد بكثير حتى {readOn}.',
+    },
+  },
   'maintenance_contract.expiring': {
     en: {
       title: 'A contract ends soon',

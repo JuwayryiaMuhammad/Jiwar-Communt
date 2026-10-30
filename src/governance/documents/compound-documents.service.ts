@@ -24,6 +24,8 @@ export const COMPOUND_DOCUMENT_KINDS = [
   'occupant_rights',
   'conduct_guide',
   'moving_guide',
+  // How to use less water, power and gas at home (ADR 0069): a guide.
+  'saving_tips',
 ] as const;
 export type CompoundDocumentKind = (typeof COMPOUND_DOCUMENT_KINDS)[number];
 /** Publishing these tells everyone in the compound; the guides do not. */

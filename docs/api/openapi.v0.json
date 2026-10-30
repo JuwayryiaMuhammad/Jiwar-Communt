@@ -6234,6 +6234,9 @@
           "conductGuide": {
             "type": "boolean"
           },
+          "consumptionView": {
+            "type": "boolean"
+          },
           "contactPrimary": {
             "type": "boolean"
           },
@@ -6341,6 +6344,7 @@
           "financePay",
           "financeCapPerOperation",
           "landlordTenantFinance",
+          "consumptionView",
           "governanceVote",
           "governanceBudget",
           "governanceCandidacy",
@@ -10114,7 +10118,8 @@
               "bylaws",
               "occupant_rights",
               "conduct_guide",
-              "moving_guide"
+              "moving_guide",
+              "saving_tips"
             ],
             "type": "string"
           },
@@ -10191,7 +10196,8 @@
               "bylaws",
               "occupant_rights",
               "conduct_guide",
-              "moving_guide"
+              "moving_guide",
+              "saving_tips"
             ],
             "type": "string"
           },
@@ -10402,6 +10408,66 @@
         },
         "required": [
           "id",
+          "mine"
+        ],
+        "type": "object"
+      },
+      "ConsumptionBenchmarkView": {
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "meanPerSqmDay": {
+            "nullable": true,
+            "type": "string"
+          },
+          "medianPerSqmDay": {
+            "description": "Use a square metre a day, the other homes’ median.",
+            "nullable": true,
+            "type": "string"
+          },
+          "mine": {
+            "description": "The household’s own, when it lived there all month, its meters read it all and its unit has a floor area.",
+            "nullable": true,
+            "type": "string"
+          },
+          "month": {
+            "description": "YYYY-MM.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why there is none: fewer than five other homes of the building were read all month, or the unit is in no building.",
+            "enum": [
+              "TOO_FEW_UNITS",
+              "NO_BUILDING"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "units": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "unit",
+          "month",
+          "available",
+          "reason",
+          "units",
+          "medianPerSqmDay",
+          "meanPerSqmDay",
           "mine"
         ],
         "type": "object"
@@ -24992,6 +25058,122 @@
         ],
         "type": "object"
       },
+      "HouseholdCompareView": {
+        "properties": {
+          "month": {
+            "description": "The latest complete month.",
+            "type": "string"
+          },
+          "previousMonth": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MonthUseView"
+              }
+            ],
+            "description": "The month before, when complete and in the household’s time.",
+            "nullable": true,
+            "type": "object"
+          },
+          "sameMonthLastYear": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MonthUseView"
+              }
+            ],
+            "description": "The same month a year before, when complete and in the household’s time.",
+            "nullable": true,
+            "type": "object"
+          },
+          "use": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "use",
+          "previousMonth",
+          "sameMonthLastYear"
+        ],
+        "type": "object"
+      },
+      "HouseholdConsumptionView": {
+        "properties": {
+          "kinds": {
+            "items": {
+              "$ref": "#/components/schemas/HouseholdKindView"
+            },
+            "type": "array"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodView"
+          },
+          "since": {
+            "description": "The household’s first day there: nothing before it is read.",
+            "format": "date",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "since",
+          "period",
+          "kinds"
+        ],
+        "type": "object"
+      },
+      "HouseholdKindView": {
+        "properties": {
+          "compare": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdCompareView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "estimatedCost": {
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeterKind"
+              }
+            ]
+          },
+          "meters": {
+            "type": "number"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/HouseholdMonthView"
+            },
+            "type": "array"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "use": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "unit",
+          "meters",
+          "use",
+          "estimatedCost",
+          "months",
+          "compare"
+        ],
+        "type": "object"
+      },
       "HouseholdMemberItemView": {
         "properties": {
           "fullName": {
@@ -25120,6 +25302,34 @@
           "removed"
         ],
         "type": "string"
+      },
+      "HouseholdMonthView": {
+        "properties": {
+          "complete": {
+            "description": "Every day of the month is read, all of it in the household’s time: only complete months are compared.",
+            "type": "boolean"
+          },
+          "estimatedCost": {
+            "description": "EGP at the compound’s tariffs: an estimate, never a bill; null where none was in force.",
+            "nullable": true,
+            "type": "string"
+          },
+          "month": {
+            "description": "YYYY-MM.",
+            "type": "string"
+          },
+          "use": {
+            "description": "In the kind’s unit, four decimals.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "use",
+          "estimatedCost",
+          "complete"
+        ],
+        "type": "object"
       },
       "HouseholdRelation": {
         "enum": [
@@ -30715,6 +30925,22 @@
         ],
         "type": "object"
       },
+      "MonthUseView": {
+        "properties": {
+          "month": {
+            "description": "YYYY-MM.",
+            "type": "string"
+          },
+          "use": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "use"
+        ],
+        "type": "object"
+      },
       "MoveAssetDto": {
         "properties": {
           "commonAreaId": {
@@ -32248,7 +32474,8 @@
               "bylaws",
               "occupant_rights",
               "conduct_guide",
-              "moving_guide"
+              "moving_guide",
+              "saving_tips"
             ],
             "type": "string"
           },
@@ -68348,7 +68575,8 @@
                 "bylaws",
                 "occupant_rights",
                 "conduct_guide",
-                "moving_guide"
+                "moving_guide",
+                "saving_tips"
               ],
               "type": "string"
             }
@@ -119142,6 +119370,129 @@
           "club"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/consumption": {
+      "get": {
+        "operationId": "HouseholdConsumptionController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One kind; every kind the unit has a meter of when left out.",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MeterKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdConsumptionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my household’s consumption by kind and month",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/consumption/benchmark": {
+      "get": {
+        "operationId": "HouseholdConsumptionController_benchmark",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/MeterKind"
+            }
+          },
+          {
+            "description": "`YYYY-MM`, a month that has ended.",
+            "in": "query",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "example": "2027-01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumptionBenchmarkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Compare a month of my household with other homes of its building",
+        "tags": [
+          "maintenance"
+        ],
         "x-stability": "draft"
       }
     },

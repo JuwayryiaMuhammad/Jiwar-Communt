@@ -415,6 +415,52 @@ export const CONSUMPTION_ROUTES: Row[] = [
   }),
 ];
 
+/**
+ * A household's own consumption (ADR 0069), read through its unit by who
+ * lives there; a guard has no place in any unit.
+ */
+export const HOUSEHOLD_CONSUMPTION_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/units/{unitId}/consumption',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { kind: 'steam', from: NO_SUCH_DAY },
+      // The query's own fields first, then the period's it extends.
+      fields: [KIND_INVALID, { field: 'from', code: 'INVALID_FORMAT' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/consumption/benchmark',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      query: { kind: 'water', month: '2026-01' },
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { kind: 'steam', month: '2027-13' },
+      fields: [
+        KIND_INVALID,
+        {
+          field: 'month',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM' },
+        },
+      ],
+    },
+  },
+];
+
 const IN_A_WEEK = '2099-01-05T08:00:00+02:00';
 const LATER = '2099-01-05T12:00:00+02:00';
 

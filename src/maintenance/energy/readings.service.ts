@@ -23,6 +23,7 @@ import { dbNow } from '../db-clock';
 import { CompoundCalendar } from '../schedules/compound-calendar';
 import {
   addDays,
+  compoundDay,
   dateColumn,
   ofDateColumn,
   type LocalDate,
@@ -420,7 +421,10 @@ export class ReadingsService implements OnModuleInit {
    * — a backdated reading raises nothing: the period up to it against the
    * mean of the compound's number of periods before, times its factor.
    * Once per meter and day (the unique key, ON CONFLICT DO NOTHING), told
-   * to who keeps the meters.
+   * to who keeps the meters — and, on a unit's meter, to the household
+   * living there (ADR 0069) when every period its mean was taken over
+   * began in its own time: a household is never compared with the one
+   * before it.
    */
   private async alertOnSpike(
     tx: TenantTxClient,
@@ -450,11 +454,8 @@ export class ReadingsService implements OnModuleInit {
     )
       .reverse()
       .map(point);
-    const found = spike(
-      periods(meter.mode as MeterMode, meter.multiplier, recent),
-      rules.anomalyPeriods,
-      rules.anomalyFactor,
-    );
+    const ps = periods(meter.mode as MeterMode, meter.multiplier, recent);
+    const found = spike(ps, rules.anomalyPeriods, rules.anomalyFactor);
     if (!found) return;
     const inserted = await tx.$executeRaw`
       INSERT INTO meter_alerts (id, tenant_id, meter_id, reading_id, read_on, kind, daily_rate, baseline_rate)
@@ -474,6 +475,37 @@ export class ReadingsService implements OnModuleInit {
         targetId: meter.id,
       },
     );
+    if (meter.unitId)
+      await this.tellHousehold(
+        tx,
+        meter,
+        row,
+        ps.slice(0, -1).slice(-rules.anomalyPeriods)[0].from,
+      );
+  }
+
+  /**
+   * The spike to the household of the meter's unit (ADR 0069): only when
+   * its mean began on or after the day the household came, and only to
+   * who reads its consumption. The kind and the day, never a figure.
+   */
+  private async tellHousehold(
+    tx: TenantTxClient,
+    meter: Meter,
+    row: MeterReading,
+    meanFrom: LocalDate,
+  ): Promise<void> {
+    const since = await this.community.householdSince(tx, meter.unitId!);
+    if (!since) return;
+    const { timeZone } = await this.calendar.now(tx);
+    if (meanFrom < compoundDay(since, timeZone)) return;
+    const readers = await this.community.consumptionReaders(tx, meter.unitId!);
+    if (!readers.length) return;
+    await this.notifier.notify(tx, readers, {
+      kind: 'meter.unit_spike',
+      params: { meterKind: meter.kind, readOn: ofDateColumn(row.readOn) },
+      targetId: meter.unitId!,
+    });
   }
 }
 

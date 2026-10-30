@@ -1538,6 +1538,9 @@ export const ErrorCode = {
   SAFETY_INSTRUCTION_NOT_FOUND: 'SAFETY_INSTRUCTION_NOT_FOUND',
   /** A newer version is the one to acknowledge; params.instructionId, params.version (409). */
   SAFETY_INSTRUCTION_NOT_CURRENT: 'SAFETY_INSTRUCTION_NOT_CURRENT',
+  // Money and the unit (ADR 0069)
+  /** Only the household living there reads its consumption: never a landlord (403). */
+  CONSUMPTION_NOT_ALLOWED: 'CONSUMPTION_NOT_ALLOWED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

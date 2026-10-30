@@ -147,6 +147,8 @@ import { MaintenanceContractsService } from './contracts/contracts.service';
 import { ContractSweep } from './contracts/contract-sweep';
 import { MeterAlertsService } from './energy/alerts.service';
 import { ConsumptionService } from './energy/consumption.service';
+import { HouseholdConsumptionController } from './energy/household-consumption.controller';
+import { HouseholdConsumptionService } from './energy/household-consumption.service';
 import { MeasuresService } from './energy/measures.service';
 import { TariffsService } from './energy/tariffs.service';
 import { OutageSweep } from './outages/outage-sweep';
@@ -258,6 +260,7 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     TechnicianMetersController,
     MeterReadingImportsController,
     EnergyController,
+    HouseholdConsumptionController,
     OutagesController,
     MyOutagesController,
     ReadinessProgramsController,
@@ -342,6 +345,7 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     EnergySettingsService,
     MeterReadingImportsService,
     ConsumptionService,
+    HouseholdConsumptionService,
     TariffsService,
     MeasuresService,
     OutagesService,

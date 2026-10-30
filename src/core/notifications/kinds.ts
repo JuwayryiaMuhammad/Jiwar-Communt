@@ -2363,6 +2363,18 @@ export const NOTIFICATION_KINDS = {
     target: 'meter',
     params: { meterRef: {}, readOn: {} },
   },
+  /**
+   * The same spike on a unit's meter, to the household living there (ADR
+   * 0069) when the mean it beat was all its own: the kind and the day,
+   * never a figure.
+   */
+  'meter.unit_spike': {
+    priority: 'normal',
+    category: 'utilities',
+    critical: false,
+    target: 'unit',
+    params: { meterKind: {}, readOn: {} },
+  },
   /** A maintenance contract ends within its notice days (ADR 0065). */
   'maintenance_contract.expiring': {
     priority: 'normal',

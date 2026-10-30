@@ -121,11 +121,12 @@ describe('API matrix', () => {
     for (const name of paramNames(r.path)) {
       it(`400 INVALID_UUID on a malformed {${name}}`, async () => {
         // One param at a time (params are validated concurrently), with a
-        // valid body so the id is the only error.
+        // valid body and query so the id is the only error.
         const params = { ...randomParams(r.path), [name]: 'not-a-uuid' };
         const res = await call(w, r.method, fill(r.path, params), {
           token: allowed(r),
           body: r.foreign !== 'none' ? r.foreign.body?.(w) : undefined,
+          query: r.foreign !== 'none' ? r.foreign.query : undefined,
         });
         expect({ status: res.status, fields: err(res).fields }).toEqual({
           status: 400,

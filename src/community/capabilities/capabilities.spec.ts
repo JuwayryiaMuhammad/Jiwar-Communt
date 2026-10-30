@@ -316,6 +316,46 @@ describe('capabilitiesFor', () => {
     }
   });
 
+  it('consumptionView (ADR 0069): who lives there, or a member given finance — never a landlord, a minor, a proxy or someone who left; no review takes it', () => {
+    const reads = (s: Subject, state: UnitState = OPEN) =>
+      capabilitiesFor(s, state).consumptionView;
+    const finance = { permission: 'finance' as const, capPerOperation: '1.00' };
+    expect(reads(occ({ isPrimary: true }))).toBe(true);
+    expect(reads(occ())).toBe(true);
+    expect(reads(occ({ occupancyType: 'tenant' }))).toBe(true);
+    expect(reads(member({ grants: [finance] }))).toBe(true);
+    // A landlord reads money, never use: it shows when the home is empty.
+    expect(reads(occ({ resides: false }))).toBe(false);
+    expect(capabilitiesFor(occ({ resides: false }), OPEN).financeView).toBe(
+      true,
+    );
+    expect(reads(member())).toBe(false);
+    expect(
+      reads(member({ isMinor: true, hasAccount: false, grants: [finance] })),
+    ).toBe(false);
+    expect(
+      reads(member({ status: 'pending_approval', grants: [finance] })),
+    ).toBe(false);
+    expect(reads(occ({ status: 'ended' }))).toBe(false);
+    expect(reads({ kind: 'registration', status: 'pending' })).toBe(false);
+    expect(
+      reads(
+        { kind: 'proxy', scopes: ['tickets', 'inspections'], live: true },
+        { closed: true, vacant: true, reviewReasons: [] },
+      ),
+    ).toBe(false);
+    for (const reason of [
+      'primary_deceased',
+      'separation',
+      'primary_left',
+      'primary_frozen',
+    ] as const) {
+      const state: UnitState = { closed: false, reviewReasons: [reason] };
+      expect(reads(occ(), state)).toBe(true);
+      expect(reads(occ({ resides: false }), state)).toBe(false);
+    }
+  });
+
   it('visitConsent (ADR 0034): an adult who lives there — never a landlord, a minor or someone who left', () => {
     const consent = (s: Subject, state: UnitState = OPEN) =>
       capabilitiesFor(s, state).visitConsent;

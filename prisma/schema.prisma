@@ -1233,6 +1233,10 @@ model UnitOccupancy {
   primarySince    DateTime?           @map("primary_since") @db.Timestamptz(3)
   /// After leaving: emergency stays visible until the unit is handed over.
   handedOverAt    DateTime?           @map("handed_over_at") @db.Timestamptz(3)
+  /// Since when it has lived there (ADR 0069), kept by a trigger: set when
+  /// `resides` turns true, cleared when false; a household's consumption
+  /// is read from the earliest of its residing occupancies' on.
+  residesSince    DateTime?           @map("resides_since") @db.Timestamptz(3)
 
   unit          Unit                   @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
   account       Account                @relation("OccupancyAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)

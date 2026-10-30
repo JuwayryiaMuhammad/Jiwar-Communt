@@ -356,6 +356,65 @@ export class CommunityMaintenancePort {
     ].sort();
   }
 
+  /**
+   * Since when the unit's household has lived there (ADR 0069): the
+   * earliest `resides_since` among its residing occupancies now, or null
+   * while nobody lives there. A household reads its consumption from then
+   * on, never a household's before it.
+   */
+  async householdSince(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<Date | null> {
+    const row = await tx.unitOccupancy.aggregate({
+      where: { unitId, status: 'active', resides: true },
+      _min: { residesSince: true },
+    });
+    return row._min.residesSince ?? null;
+  }
+
+  /** Who reads the unit's consumption now (`consumptionView`, ADR 0069). */
+  consumptionReaders(tx: TenantTxClient, unitId: string): Promise<string[]> {
+    return this.capabilities.holders(tx, unitId, 'consumptionView');
+  }
+
+  /**
+   * The units of a building a consumption benchmark compares (ADR 0069):
+   * those someone lives in and with a floor area, each with since when its
+   * household has lived there. Ids for the meters only; never a code or a
+   * person.
+   */
+  async benchmarkUnits(
+    tx: TenantTxClient,
+    building: string,
+  ): Promise<{ id: string; areaSqm: Prisma.Decimal; since: Date }[]> {
+    const lived = await tx.unitOccupancy.groupBy({
+      by: ['unitId'],
+      where: {
+        status: 'active',
+        resides: true,
+        unit: { building, areaSqm: { not: null } },
+      },
+      _min: { residesSince: true },
+    });
+    if (!lived.length) return [];
+    const areas = new Map(
+      (
+        await tx.unit.findMany({
+          where: { id: { in: lived.map((l) => l.unitId) } },
+          select: { id: true, areaSqm: true },
+        })
+      ).map((u) => [u.id, u.areaSqm]),
+    );
+    return lived
+      .flatMap((l) => {
+        const areaSqm = areas.get(l.unitId);
+        const since = l._min.residesSince;
+        return areaSqm && since ? [{ id: l.unitId, areaSqm, since }] : [];
+      })
+      .sort((a, b) => (a.id < b.id ? -1 : 1));
+  }
+
   /** Whether someone lives in the unit now (ADR 0064). */
   async unitOccupied(tx: TenantTxClient, unitId: string): Promise<boolean> {
     return (

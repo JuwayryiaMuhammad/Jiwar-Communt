@@ -53,6 +53,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   unit_occupancies_handover_after_end: {},
   unit_occupancies_primary_resides: {},
   unit_occupancies_primary_since_matches: {},
+  unit_occupancies_resides_since_matches: {},
   unit_occupancies_tenant_resides: {},
   unit_review_flags_clear_is_complete: {},
   unit_review_flags_manager_reason: {},

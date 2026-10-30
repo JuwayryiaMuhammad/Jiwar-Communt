@@ -129,6 +129,14 @@ export interface Capabilities {
   financeCapPerOperation: string | null;
   /** An owner-landlord sees their tenant's financial matters — only those. */
   landlordTenantFinance: boolean;
+  /**
+   * Reads the unit's own consumption over its household's tenure (ADR
+   * 0069): a residing occupant, or an active adult member the primary gave
+   * `finance`. Never a landlord — a tenant's use shows when their home
+   * stands empty — a pending or removed member, a minor, a proxy or
+   * someone who left. No review takes it away: it is the home's own use.
+   */
+  consumptionView: boolean;
 
   governanceVote: boolean;
   governanceBudget: boolean;
@@ -187,6 +195,7 @@ export const NONE: Capabilities = Object.freeze({
   financePay: false,
   financeCapPerOperation: null,
   landlordTenantFinance: false,
+  consumptionView: false,
   governanceVote: false,
   governanceBudget: false,
   governanceCandidacy: false,
@@ -285,6 +294,7 @@ function occupancy(
     financeView: true,
     financePay: true,
     landlordTenantFinance: landlord,
+    consumptionView: daily,
     governanceVote: owner,
     governanceBudget: owner,
     governanceCandidacy: owner,
@@ -326,6 +336,7 @@ function member(m: Extract<Subject, { kind: 'member' }>): Capabilities {
     financeView: finance !== undefined,
     financePay: finance !== undefined,
     financeCapPerOperation: finance?.capPerOperation ?? null,
+    consumptionView: finance !== undefined,
     pollsVote: has('polls_vote'),
     activityVisibleToPrimary: true,
   };

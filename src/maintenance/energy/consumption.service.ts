@@ -168,14 +168,9 @@ export class ConsumptionService {
     );
   }
 
-  private async build(
-    tx: TenantTxClient,
-    kind: MeterKind,
-    groupBy: ConsumptionGroup,
-    period: Period,
-    meters: Meter[],
-  ): Promise<ConsumptionReport> {
-    const tariffs = (
+  /** A kind's tariffs, oldest first. */
+  async tariffsOf(tx: TenantTxClient, kind: MeterKind): Promise<TariffPoint[]> {
+    return (
       await tx.energyTariff.findMany({
         where: { kind },
         orderBy: { effectiveOn: 'asc' },
@@ -184,6 +179,32 @@ export class ConsumptionService {
       effectiveOn: ofDateColumn(t.effectiveOn),
       pricePerUnit: t.pricePerUnit,
     }));
+  }
+
+  /**
+   * A household's periods (ADR 0069): only those between two readings on
+   * or after the day its household came (`sinceOf`, per meter's unit) —
+   * nothing spread back across a move-in, so no part of an earlier
+   * household's use is read.
+   */
+  householdSegments(
+    tx: TenantTxClient,
+    meters: readonly Meter[],
+    window: { from: LocalDate; to: LocalDate },
+    tariffs: readonly TariffPoint[],
+    sinceOf: (meter: Meter) => LocalDate,
+  ): Promise<{ meterId: string; segment: Segment }[]> {
+    return this.segments(tx, meters, window, tariffs, sinceOf);
+  }
+
+  private async build(
+    tx: TenantTxClient,
+    kind: MeterKind,
+    groupBy: ConsumptionGroup,
+    period: Period,
+    meters: Meter[],
+  ): Promise<ConsumptionReport> {
+    const tariffs = await this.tariffsOf(tx, kind);
     const units = await this.community.energyUnits(
       tx,
       meters.flatMap((m) => (m.unitId ? [m.unitId] : [])),
@@ -293,6 +314,7 @@ export class ConsumptionService {
     meters: readonly Meter[],
     window: { from: LocalDate; to: LocalDate },
     tariffs: readonly TariffPoint[],
+    sinceOf?: (meter: Meter) => LocalDate,
   ): Promise<{ meterId: string; segment: Segment }[]> {
     if (!meters.length) return [];
     const ids = meters.map((m) => m.id);
@@ -309,6 +331,7 @@ export class ConsumptionService {
     const byId = new Map(meters.map((m) => [m.id, m]));
     return rows.flatMap((r) => {
       const m = byId.get(r.meter_id)!;
+      if (sinceOf && r.prev_on < sinceOf(m)) return [];
       const use = periodUse(
         m.mode as MeterMode,
         m.multiplier,

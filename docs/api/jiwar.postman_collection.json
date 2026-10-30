@@ -16950,7 +16950,7 @@
               },
               "raw": "{\n  \"kind\": \"bylaws\",\n  \"titleEn\": \"\",\n  \"titleAr\": \"\",\n  \"bodyEn\": \"\",\n  \"bodyAr\": \"\",\n  \"effectiveOn\": \"2026-01-01\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `boardPublicationId` | string (uuid) |  | The bylaws only, and required there: the board’s published decision that adopted this version. |\n| `bodyAr` | string | yes | Markdown. |\n| `bodyEn` | string | yes | Markdown. |\n| `changesAr` | string |  |  |\n| `changesEn` | string |  | What this version changes: required from the second version on, refused on the first. |\n| `effectiveOn` | string (date) | yes |  |\n| `fileId` | string (uuid) |  | A finalized `compound_document` PDF of the caller’s: the signed copy. |\n| `kind` | `bylaws` \\| `occupant_rights` \\| `conduct_guide` \\| `moving_guide` | yes |  |\n| `titleAr` | string | yes |  |\n| `titleEn` | string | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `boardPublicationId` | string (uuid) |  | The bylaws only, and required there: the board’s published decision that adopted this version. |\n| `bodyAr` | string | yes | Markdown. |\n| `bodyEn` | string | yes | Markdown. |\n| `changesAr` | string |  |  |\n| `changesEn` | string |  | What this version changes: required from the second version on, refused on the first. |\n| `effectiveOn` | string (date) | yes |  |\n| `fileId` | string (uuid) |  | A finalized `compound_document` PDF of the caller’s: the signed copy. |\n| `kind` | `bylaws` \\| `occupant_rights` \\| `conduct_guide` \\| `moving_guide` \\| `saving_tips` | yes |  |\n| `titleAr` | string | yes |  |\n| `titleEn` | string | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -30277,6 +30277,95 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read my household’s consumption by kind and month",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "consumption"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "One kind; every kind the unit has a meter of when left out.",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/consumption",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Compare a month of my household with other homes of its building",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "consumption",
+                "benchmark"
+              ],
+              "query": [
+                {
+                  "description": "(required)",
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "(required) `YYYY-MM`, a month that has ended.",
+                  "key": "month",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/consumption/benchmark?kind=&month=",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
                   "value": ""
                 }
               ]

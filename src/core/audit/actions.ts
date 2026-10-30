@@ -2102,6 +2102,13 @@ export const AUDIT_ACTIONS = {
   'guard_alarm.unpaired': { log: 'tenant', target: 'guard_alarm_pairing' },
   // A vendor's event, as the system. metadata: kind, outcome, emergencyId.
   'guard_alarm.received': { log: 'tenant', target: 'guard_alarm_event' },
+  // A call from the gate. metadata: unitId, reasonCode, shiftId, rung (a
+  // count) on start; unitId on answer; unitId, reason, answered on its end
+  // or when missed. Never who answered.
+  'gate_call.started': { log: 'tenant', target: 'gate_call' },
+  'gate_call.answered': { log: 'tenant', target: 'gate_call' },
+  'gate_call.ended': { log: 'tenant', target: 'gate_call' },
+  'gate_call.missed': { log: 'tenant', target: 'gate_call' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;
@@ -2155,6 +2162,8 @@ export const SECURITY_EVENTS = [
   // A guard-down vendor's call whose signature does not hold (ADR 0068).
   // The compound only.
   'guard_alarm.webhook_rejected',
+  // A call vendor's call whose signature does not hold (ADR 0068).
+  'gate_call.webhook_rejected',
 ] as const;
 
 export type SecurityEventName = (typeof SECURITY_EVENTS)[number];

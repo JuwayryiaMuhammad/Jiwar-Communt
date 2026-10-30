@@ -1153,6 +1153,21 @@
         ],
         "type": "object"
       },
+      "AnsweredGateCallView": {
+        "properties": {
+          "call": {
+            "$ref": "#/components/schemas/ResidentGateCallView"
+          },
+          "join": {
+            "$ref": "#/components/schemas/GateCallJoinView"
+          }
+        },
+        "required": [
+          "call",
+          "join"
+        ],
+        "type": "object"
+      },
       "AppealFineDto": {
         "properties": {
           "photoFileId": {
@@ -21739,6 +21754,45 @@
         ],
         "type": "object"
       },
+      "GateCallEndReason": {
+        "enum": [
+          "guard",
+          "resident",
+          "declined",
+          "missed",
+          "max_duration",
+          "shift_ended",
+          "vendor",
+          "unavailable"
+        ],
+        "type": "string"
+      },
+      "GateCallJoinView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "GateCallStatus": {
+        "enum": [
+          "ringing",
+          "answered",
+          "declined",
+          "missed",
+          "ended"
+        ],
+        "type": "string"
+      },
       "GateChildView": {
         "properties": {
           "firstName": {
@@ -22773,6 +22827,16 @@
             "example": 300,
             "type": "number"
           },
+          "callMaxSeconds": {
+            "description": "Seconds an answered gate call lasts at most (ADR 0068).",
+            "example": 300,
+            "type": "number"
+          },
+          "callRingSeconds": {
+            "description": "Seconds a gate call rings before it is missed (ADR 0068).",
+            "example": 45,
+            "type": "number"
+          },
           "exceptionAnswerMinutes": {
             "description": "Minutes the management has to answer a field exception.",
             "example": 10,
@@ -22824,7 +22888,9 @@
           "audioMaxMb",
           "videoMaxMb",
           "offlineSyncAlertMinutes",
-          "faceChecks"
+          "faceChecks",
+          "callRingSeconds",
+          "callMaxSeconds"
         ],
         "type": "object"
       },
@@ -24368,6 +24434,70 @@
           "entryUntil",
           "usedAt",
           "worker"
+        ],
+        "type": "object"
+      },
+      "GuardGateCallView": {
+        "properties": {
+          "answered": {
+            "description": "The household answered.",
+            "type": "boolean"
+          },
+          "answeredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateCallEndReason"
+              }
+            ],
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateCallStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "reasonCode",
+          "status",
+          "answered",
+          "startedAt",
+          "answeredAt",
+          "endedAt",
+          "endReason"
         ],
         "type": "object"
       },
@@ -45260,6 +45390,56 @@
         ],
         "type": "object"
       },
+      "ResidentGateCallView": {
+        "properties": {
+          "answeredByMe": {
+            "description": "You took it.",
+            "type": "boolean"
+          },
+          "approvalRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "gateName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateCallStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "gateName",
+          "reasonCode",
+          "approvalRequestId",
+          "status",
+          "answeredByMe",
+          "startedAt",
+          "endedAt"
+        ],
+        "type": "object"
+      },
       "ResidentItemType": {
         "enum": [
           "maintenance",
@@ -57821,6 +58001,28 @@
         ],
         "type": "object"
       },
+      "StartGateCallDto": {
+        "properties": {
+          "approvalRequestId": {
+            "description": "The gate request for this unit the call is about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `gateCallReason`.",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "StartInspectionDto": {
         "properties": {
           "code": {
@@ -62626,6 +62828,18 @@
             "description": "The longest sound a patrol note or an incident takes, in seconds; checked when attached.",
             "maximum": 600,
             "minimum": 10,
+            "type": "number"
+          },
+          "callMaxSeconds": {
+            "description": "Seconds an answered gate call lasts at most (ADR 0068).",
+            "maximum": 900,
+            "minimum": 60,
+            "type": "number"
+          },
+          "callRingSeconds": {
+            "description": "Seconds a gate call rings before it is missed (ADR 0068); a call ringing keeps its start.",
+            "maximum": 120,
+            "minimum": 15,
             "type": "number"
           },
           "exceptionAnswerMinutes": {
@@ -72435,6 +72649,167 @@
         "summary": "The active blocklist",
         "tags": [
           "blocklist"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/calls": {
+      "post": {
+        "description": "Inside an open shift at a gate. In the app, no number anywhere: the household members a gate request goes to are rung; the first to answer takes it. One live call a guard and a unit (409 GATE_CALL_LIVE). Then join its room (`…/join`).",
+        "operationId": "GateCallsController_start",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartGateCallDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardGateCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call a unit’s household from the gate",
+        "tags": [
+          "gate-calls"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/calls/{id}": {
+      "get": {
+        "operationId": "GateCallsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardGateCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a call of yours: whether the household answered",
+        "tags": [
+          "gate-calls"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/calls/{id}/end": {
+      "post": {
+        "operationId": "GateCallsController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardGateCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End your call",
+        "tags": [
+          "gate-calls"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/calls/{id}/join": {
+      "post": {
+        "operationId": "GateCallsController_join",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateCallJoinView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A token to join your live call’s room",
+        "tags": [
+          "gate-calls"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -91244,6 +91619,157 @@
         "summary": "My bans from booking that are in force",
         "tags": [
           "bookings"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/gate-calls/{id}": {
+      "get": {
+        "description": "For whoever in the unit takes gate requests now.",
+        "operationId": "MyGateCallsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentGateCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a call from the gate",
+        "tags": [
+          "gate-calls"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/gate-calls/{id}/answer": {
+      "post": {
+        "description": "The first answer takes it (another is 409 GATE_CALL_ANSWERED); the one who answered may ask again for a token. The guard learns only that the household answered.",
+        "operationId": "MyGateCallsController_answer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnsweredGateCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a call from the gate",
+        "tags": [
+          "gate-calls"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/gate-calls/{id}/decline": {
+      "post": {
+        "operationId": "MyGateCallsController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentGateCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a ringing call: it ends for everyone",
+        "tags": [
+          "gate-calls"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/gate-calls/{id}/end": {
+      "post": {
+        "operationId": "MyGateCallsController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentGateCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End the call you answered",
+        "tags": [
+          "gate-calls"
         ],
         "x-stability": "draft"
       }

@@ -184,6 +184,13 @@ import { AlarmDevicesService } from './alarms/alarm-devices.service';
 import { GuardAlarmsWebhookController } from './alarms/guard-alarms.controller';
 import { GuardAlarmsService } from './alarms/guard-alarms.service';
 import { VendorWebhooks } from './vendors/vendor-webhook';
+import { callDriverProvider } from './calls/call-driver.provider';
+import {
+  GateCallsController,
+  GateCallsWebhookController,
+  MyGateCallsController,
+} from './calls/gate-calls.controller';
+import { GateCallsService } from './calls/gate-calls.service';
 import { ControlRoomController } from './control-room/control-room.controller';
 import { controlRoomDriverProvider } from './control-room/control-room-driver.provider';
 import { ControlRoomService } from './control-room/control-room.service';
@@ -426,6 +433,10 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     StaffAlarmDevicesController,
     GateAlarmDevicesController,
     GuardAlarmsWebhookController,
+    // Gate calls (ADR 0068).
+    GateCallsController,
+    MyGateCallsController,
+    GateCallsWebhookController,
     GateIncidentsController,
     TechnicianIncidentsController,
     StaffIncidentsController,
@@ -578,6 +589,9 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     alarmDriverProvider,
     AlarmDevicesService,
     GuardAlarmsService,
+    // Gate calls (ADR 0068).
+    callDriverProvider,
+    GateCallsService,
     IncidentsService,
     IncidentLifecycle,
     IncidentExportSections,

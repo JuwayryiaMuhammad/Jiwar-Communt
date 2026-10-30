@@ -167,7 +167,7 @@ export class FaceChecksService implements OnModuleInit {
         ({ templateRefs } = await boundedCall(this.timeoutMs, (signal) =>
           this.driver.search(
             {
-              tenantId: this.ctx.txTenantId,
+              tenantId: this.ctx.tenantId,
               image: { bytes, contentType: pending.file.contentType },
             },
             signal,

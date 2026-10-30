@@ -2350,6 +2350,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call a unit’s household from the gate
+         * @description Inside an open shift at a gate. In the app, no number anywhere: the household members a gate request goes to are rung; the first to answer takes it. One live call a guard and a unit (409 GATE_CALL_LIVE). Then join its room (`…/join`).
+         */
+        post: operations["GateCallsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/calls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a call of yours: whether the household answered */
+        get: operations["GateCallsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/calls/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End your call */
+        post: operations["GateCallsController_end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/calls/{id}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A token to join your live call’s room */
+        post: operations["GateCallsController_join"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/children/exits": {
         parameters: {
             query?: never;
@@ -8603,6 +8674,80 @@ export interface paths {
         get: operations["OwnFacilityBansController_mine"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/gate-calls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a call from the gate
+         * @description For whoever in the unit takes gate requests now.
+         */
+        get: operations["MyGateCallsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/gate-calls/{id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer a call from the gate
+         * @description The first answer takes it (another is 409 GATE_CALL_ANSWERED); the one who answered may ask again for a token. The guard learns only that the household answered.
+         */
+        post: operations["MyGateCallsController_answer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/gate-calls/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a ringing call: it ends for everyone */
+        post: operations["MyGateCallsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/gate-calls/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End the call you answered */
+        post: operations["MyGateCallsController_end"];
         delete?: never;
         options?: never;
         head?: never;
@@ -21103,6 +21248,10 @@ export interface components {
             /** @description The board’s reasoned answer, to every objector. Write no one’s name. */
             body: string;
         };
+        AnsweredGateCallView: {
+            call: components["schemas"]["ResidentGateCallView"];
+            join: components["schemas"]["GateCallJoinView"];
+        };
         AppealFineDto: {
             /**
              * Format: uuid
@@ -27730,6 +27879,15 @@ export interface components {
             /** @description Ed25519 over `jiwar:gate-bundle:v1\n<body>`, base64url. */
             signature: string;
         };
+        /** @enum {string} */
+        GateCallEndReason: "guard" | "resident" | "declined" | "missed" | "max_duration" | "shift_ended" | "vendor" | "unavailable";
+        GateCallJoinView: {
+            /** Format: date-time */
+            expiresAt: string;
+            token: string;
+        };
+        /** @enum {string} */
+        GateCallStatus: "ringing" | "answered" | "declined" | "missed" | "ended";
         GateChildView: {
             /** @example Omar */
             firstName: string;
@@ -28005,6 +28163,16 @@ export interface components {
              * @example 300
              */
             audioMaxSeconds: number;
+            /**
+             * @description Seconds an answered gate call lasts at most (ADR 0068).
+             * @example 300
+             */
+            callMaxSeconds: number;
+            /**
+             * @description Seconds a gate call rings before it is missed (ADR 0068).
+             * @example 45
+             */
+            callRingSeconds: number;
             /**
              * @description Minutes the management has to answer a field exception.
              * @example 10
@@ -28483,6 +28651,24 @@ export interface components {
             usedAt: string | null;
             /** @description A worker’s: they come in as themselves, on this exception. */
             worker: components["schemas"]["ExceptionWorkerView"] | null;
+        };
+        GuardGateCallView: {
+            /** @description The household answered. */
+            answered: boolean;
+            /** Format: date-time */
+            answeredAt: string | null;
+            endReason: components["schemas"]["GateCallEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            reasonCode: string;
+            /** Format: date-time */
+            startedAt: string;
+            status: components["schemas"]["GateCallStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
         };
         GuardGateView: {
             /** Format: uuid */
@@ -35091,6 +35277,21 @@ export interface components {
             data: components["schemas"]["ResidentFineView"][];
             nextCursor: string | null;
         };
+        ResidentGateCallView: {
+            /** @description You took it. */
+            answeredByMe: boolean;
+            /** Format: uuid */
+            approvalRequestId: string | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            gateName: string;
+            /** Format: uuid */
+            id: string;
+            reasonCode: string;
+            /** Format: date-time */
+            startedAt: string;
+            status: components["schemas"]["GateCallStatus"];
+        };
         /** @enum {string} */
         ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "inspection_request" | "works_inspection" | "instalment_plan_request" | "collector_visit" | "vehicle_fine" | "unit_violation" | "board_appeal" | "decision_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
         ResidentItemView: {
@@ -38726,6 +38927,17 @@ export interface components {
             data: components["schemas"]["StandingInstructionView"][];
             nextCursor: string | null;
         };
+        StartGateCallDto: {
+            /**
+             * Format: uuid
+             * @description The gate request for this unit the call is about.
+             */
+            approvalRequestId?: string;
+            /** @description From the closed list `gateCallReason`. */
+            reasonCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
         StartInspectionDto: {
             /** @description The scanned tag of the target (`JWA1.…` or `JWL1.…`); required by a checklist that asks. */
             code?: string;
@@ -40172,6 +40384,10 @@ export interface components {
             audioMaxMb?: number;
             /** @description The longest sound a patrol note or an incident takes, in seconds; checked when attached. */
             audioMaxSeconds?: number;
+            /** @description Seconds an answered gate call lasts at most (ADR 0068). */
+            callMaxSeconds?: number;
+            /** @description Seconds a gate call rings before it is missed (ADR 0068); a call ringing keeps its start. */
+            callRingSeconds?: number;
             /** @description Minutes the management has to answer a field exception before it expires. */
             exceptionAnswerMinutes?: number;
             /** @description Minutes an approved field exception lets its one entry in, at its gate. */
@@ -44688,6 +44904,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardBlocklistEntryView"][];
+                };
+            };
+        };
+    };
+    GateCallsController_start: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartGateCallDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardGateCallView"];
+                };
+            };
+        };
+    };
+    GateCallsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardGateCallView"];
+                };
+            };
+        };
+    };
+    GateCallsController_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardGateCallView"];
+                };
+            };
+        };
+    };
+    GateCallsController_join: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateCallJoinView"];
                 };
             };
         };
@@ -54485,6 +54790,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OwnFacilityBanViewList"];
+                };
+            };
+        };
+    };
+    MyGateCallsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentGateCallView"];
+                };
+            };
+        };
+    };
+    MyGateCallsController_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnsweredGateCallView"];
+                };
+            };
+        };
+    };
+    MyGateCallsController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentGateCallView"];
+                };
+            };
+        };
+    };
+    MyGateCallsController_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentGateCallView"];
                 };
             };
         };

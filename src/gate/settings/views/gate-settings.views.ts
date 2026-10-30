@@ -82,6 +82,20 @@ export class GateSettingsResponse {
   })
   faceChecks: boolean;
 
+  @ApiProperty({
+    type: Number,
+    example: L.callRingSeconds.default,
+    description: 'Seconds a gate call rings before it is missed (ADR 0068).',
+  })
+  callRingSeconds: number;
+
+  @ApiProperty({
+    type: Number,
+    example: L.callMaxSeconds.default,
+    description: 'Seconds an answered gate call lasts at most (ADR 0068).',
+  })
+  callMaxSeconds: number;
+
   static from(s: GateSettingsValues): GateSettingsResponse {
     return {
       exceptionAnswerMinutes: s.exceptionAnswerMinutes,
@@ -94,6 +108,8 @@ export class GateSettingsResponse {
       videoMaxMb: s.videoMaxMb,
       offlineSyncAlertMinutes: s.offlineSyncAlertMinutes,
       faceChecks: s.faceChecks,
+      callRingSeconds: s.callRingSeconds,
+      callMaxSeconds: s.callMaxSeconds,
     };
   }
 }

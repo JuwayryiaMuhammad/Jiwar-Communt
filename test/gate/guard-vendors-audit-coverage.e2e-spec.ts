@@ -4,6 +4,11 @@ import {
   FAKE_ALARM_SIGNATURE_HEADER,
   signFakeAlarm,
 } from '../../src/gate/alarms/fake-alarm-driver';
+import {
+  FAKE_CALL_SIGNATURE_HEADER,
+  signFakeCallEvent,
+} from '../../src/gate/calls/fake-call-driver';
+import { GATE_CALL_TIMEOUT_SWEEP } from '../../src/gate/calls/gate-calls.service';
 import { FACE_ENROLLMENT_SWEEP } from '../../src/gate/face/face-enrollments';
 import { auditReaders } from '../setup/audit';
 import { GUARD_VENDORS_COVERAGE } from '../setup/audit-coverage-split';
@@ -249,6 +254,71 @@ describe('Audit coverage — guard vendor adapters', () => {
       ).filter((e) => e.tenantId === s.c.tenantId);
       expect(rejected).toHaveLength(1);
       covered.add('guard_alarm.webhook_rejected');
+    });
+  });
+
+  describe('gate calls', () => {
+    it('gate_call.started, .answered, .ended, .missed; gate_call.webhook_rejected — the unit, the reason, how it ended; never who answered', async () => {
+      const call = async () =>
+        (
+          await x
+            .http('post', '/gate/calls', guard.token, {
+              unitId: s.home.id,
+              reasonCode: 'visitor_at_gate',
+            })
+            .expect(201)
+        ).body as { id: string };
+      const one = await call();
+      expect(await single('gate_call.started', one.id)).toMatchObject({
+        actorId: guard.id,
+        metadata: {
+          unitId: s.home.id,
+          reasonCode: 'visitor_at_gate',
+          shiftId: guard.shiftId,
+          rung: 1,
+        },
+      });
+      await x
+        .http('post', `/me/gate-calls/${one.id}/answer`, s.alice.token)
+        .expect(200);
+      const answered = await single('gate_call.answered', one.id);
+      expect(answered).toMatchObject({
+        actorId: s.alice.id,
+        metadata: { unitId: s.home.id },
+      });
+      await x
+        .http('post', `/gate/calls/${one.id}/end`, guard.token)
+        .expect(200);
+      expect((await single('gate_call.ended', one.id)).metadata).toEqual({
+        unitId: s.home.id,
+        reason: 'guard',
+        answered: true,
+      });
+      const two = await call();
+      await x.sweep(GATE_CALL_TIMEOUT_SWEEP, new Date(Date.now() + 120_000));
+      expect(await single('gate_call.missed', two.id)).toMatchObject({
+        actorType: 'system',
+        metadata: { unitId: s.home.id, reason: 'missed', answered: false },
+      });
+      const body = {
+        eventId: randomUUID(),
+        roomRef: 'nowhere',
+        kind: 'room_closed',
+        at: new Date().toISOString(),
+      };
+      await h
+        .http()
+        .post(`${API}/public/gate/calls/${s.c.tenantId}/events`)
+        .set(FAKE_CALL_SIGNATURE_HEADER, '0'.repeat(64))
+        .send(body)
+        .expect(401);
+      expect(signFakeCallEvent(body)).toMatch(/^[0-9a-f]{64}$/);
+      expect(
+        (await read.security({ event: 'gate_call.webhook_rejected' })).filter(
+          (e) => e.tenantId === s.c.tenantId,
+        ),
+      ).toHaveLength(1);
+      covered.add('gate_call.webhook_rejected');
     });
   });
 

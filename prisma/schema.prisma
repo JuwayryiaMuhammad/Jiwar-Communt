@@ -2929,6 +2929,9 @@ model GateSettings {
   offlineSyncAlertMinutes Int @default(15) @map("offline_sync_alert_minutes") @db.SmallInt
   /// Face checks against the blocklist's faces (ADR 0068): off until the compound turns them on.
   faceChecks             Boolean  @default(false) @map("face_checks")
+  /// A gate call rings this long, then is missed; answered, it lasts at most the other (ADR 0068).
+  callRingSeconds        Int      @default(45) @map("call_ring_seconds") @db.SmallInt
+  callMaxSeconds         Int      @default(300) @map("call_max_seconds") @db.SmallInt
 
   @@map("gate_settings")
 }
@@ -9400,6 +9403,51 @@ model GuardAlarmEvent {
   @@unique([tenantId, id])
   @@unique([tenantId, deviceRef, vendorEventId], map: "guard_alarm_events_vendor_key")
   @@map("guard_alarm_events")
+}
+
+/// A masked call from the gate (ADR 0068): a guard rings a unit's
+/// household in the app; no number anywhere, and the guard never learns who
+/// answered. One live a guard and a unit (partial unique indexes,
+/// migration-only); moves forward, ends once; its room closed once after.
+model GateCall {
+  id                  String    @id @db.Uuid
+  tenantId            String    @map("tenant_id") @db.Uuid
+  unitId              String    @map("unit_id") @db.Uuid
+  guardAccountId      String    @map("guard_account_id") @db.Uuid
+  shiftId             String    @map("shift_id") @db.Uuid
+  gateId              String    @map("gate_id") @db.Uuid
+  reasonCode          String    @map("reason_code")
+  approvalRequestId   String?   @map("approval_request_id") @db.Uuid
+  /// ringing | answered | declined | missed | ended.
+  status              String    @default("ringing")
+  roomRef             String?   @map("room_ref")
+  /// Kept for the household's own view and the audit; never the guard's.
+  answeredByAccountId String?   @map("answered_by_account_id") @db.Uuid
+  startedAt           DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  answeredAt          DateTime? @map("answered_at") @db.Timestamptz(3)
+  endedAt             DateTime? @map("ended_at") @db.Timestamptz(3)
+  endReason           String?   @map("end_reason")
+  roomClosedAt        DateTime? @map("room_closed_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@map("gate_calls")
+}
+
+/// The call vendor's events about a room (ADR 0068), once each. Immutable.
+model GateCallVendorEvent {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  callId        String?  @map("call_id") @db.Uuid
+  roomRef       String   @map("room_ref")
+  vendorEventId String   @map("vendor_event_id")
+  /// participant_joined | participant_left | room_closed.
+  kind          String
+  occurredAt    DateTime @map("occurred_at") @db.Timestamptz(3)
+  receivedAt    DateTime @default(now()) @map("received_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, vendorEventId], map: "gate_call_vendor_events_vendor_key")
+  @@map("gate_call_vendor_events")
 }
 
 /// A guard's face check at the gate (ADR 0068): the probe, then what the

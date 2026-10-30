@@ -880,4 +880,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_alarm_pairings_guard_open: null,
   guard_alarm_events_tenant_id_id_key: null,
   guard_alarm_events_vendor_key: null,
+  // Gate calls (ADR 0068): one live a guard and a unit, checked first under
+  // the unit's call lock (GATE_CALL_LIVE); a room is one call's; a vendor's
+  // event is taken once under a lock of its own.
+  gate_calls_tenant_id_id_key: null,
+  gate_calls_guard_live: null,
+  gate_calls_unit_live: null,
+  gate_calls_room_key: null,
+  gate_call_vendor_events_tenant_id_id_key: null,
+  gate_call_vendor_events_vendor_key: null,
 };

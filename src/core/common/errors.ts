@@ -1576,6 +1576,17 @@ export const ErrorCode = {
   ALARM_DEVICE_NOT_FOUND: 'ALARM_DEVICE_NOT_FOUND',
   /** Retired: it is neither renamed, paired nor retired again (409). */
   ALARM_DEVICE_RETIRED: 'ALARM_DEVICE_RETIRED',
+  GATE_CALL_NOT_FOUND: 'GATE_CALL_NOT_FOUND',
+  /** A call is live for the guard or the unit already: one at a time (409, params.callId). */
+  GATE_CALL_LIVE: 'GATE_CALL_LIVE',
+  /** Nobody in the unit takes gate requests (409). */
+  GATE_CALL_NO_HOUSEHOLD: 'GATE_CALL_NO_HOUSEHOLD',
+  /** Someone in the household answered first (409). */
+  GATE_CALL_ANSWERED: 'GATE_CALL_ANSWERED',
+  /** Declined, missed or ended (409, params.status). */
+  GATE_CALL_ENDED: 'GATE_CALL_ENDED',
+  /** Its room is not open yet: ask again in a moment (409). */
+  GATE_CALL_NOT_READY: 'GATE_CALL_NOT_READY',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

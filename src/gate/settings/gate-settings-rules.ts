@@ -30,6 +30,12 @@ export const GATE_SETTING_LIMITS = {
    * the management is told (ADR 0057), once per outage.
    */
   offlineSyncAlertMinutes: { min: 5, max: 240, default: 15 },
+  /**
+   * A gate call (ADR 0068): seconds it rings before it is missed, and
+   * seconds an answered call lasts at most.
+   */
+  callRingSeconds: { min: 15, max: 120, default: 45 },
+  callMaxSeconds: { min: 60, max: 900, default: 300 },
 } as const;
 
 /** The gate's switches, each with its default. */

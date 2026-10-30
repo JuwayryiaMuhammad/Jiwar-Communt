@@ -12,6 +12,8 @@ export interface GuardVendorsWorld {
   bControlRoomEventId: string;
   /** A guard-down wearable B's supervisor registered (written directly). */
   bAlarmDeviceId: string;
+  /** A call B's guard made to B's home, missed (written directly). */
+  bGateCallId: string;
 }
 
 export async function guardVendorsWorld(
@@ -22,6 +24,7 @@ export async function guardVendorsWorld(
   const bFaceCheckId = newId();
   const bControlRoomEventId = newId();
   const bAlarmDeviceId = newId();
+  const bGateCallId = newId();
   await helpers.asManager(b, () =>
     h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
       await tx.gateFaceCheck.create({
@@ -54,7 +57,21 @@ export async function guardVendorsWorld(
           registeredByAccountId: b.ids.supervisor,
         },
       });
+      await tx.gateCall.create({
+        data: {
+          id: bGateCallId,
+          tenantId: b.tenantId,
+          unitId: b.homeUnitId,
+          guardAccountId: b.ids.guard,
+          shiftId: b.shiftId,
+          gateId: b.gateId,
+          reasonCode: 'other',
+          status: 'missed',
+          endedAt: new Date(),
+          endReason: 'missed',
+        },
+      });
     }),
   );
-  return { bFaceCheckId, bControlRoomEventId, bAlarmDeviceId };
+  return { bFaceCheckId, bControlRoomEventId, bAlarmDeviceId, bGateCallId };
 }

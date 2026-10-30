@@ -184,6 +184,7 @@ const TEXT: Record<string, (p: P) => string> = {
   // The control room (ADR 0068): the event's code only.
   'control_room.alert': (p) => `Control room alert: ${words(p.eventKind)}`,
   'control_room.event': (p) => `Control room: ${words(p.eventKind)}`,
+  'gate.call_incoming': (p) => `${p.gateName} is calling you`,
   // Security (ADR 0053): codes only, never a plate, a name, a unit or a word.
   'gate_lockdown.started': (p) => (p.scope === 'all' ? 'Every gate is locked down' : 'A gate is locked down'),
   'gate_lockdown.resident_notice': () => 'The compound’s gates are locked down for now',

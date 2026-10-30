@@ -126,7 +126,9 @@ export class SafetyCore {
       | 'emergency-unit'
       | 'gate-service-unit'
       | 'emergency-post'
-      | 'emergency-ticket',
+      | 'emergency-ticket'
+      // A unit's gate call (ADR 0068): one live at a time.
+      | 'gate-call-unit',
     unitId: string,
   ): Promise<void> {
     await tx.$executeRaw`

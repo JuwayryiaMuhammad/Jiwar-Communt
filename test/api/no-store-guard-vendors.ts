@@ -12,7 +12,7 @@ export function guardVendorCalls(
   world: () => World,
 ): Record<string, () => Promise<Response>> {
   const as =
-    (who: 'manager' | 'guard') =>
+    (who: 'manager' | 'guard' | 'owner') =>
     (method: 'GET' | 'POST' | 'PATCH', path: string, payload?: object) =>
       call(world(), method, path, {
         token: world().a.tokens[who],
@@ -41,7 +41,30 @@ export function guardVendorCalls(
     await files.finalize(token, id);
     return guard('POST', '/gate/face-checks', { photoFileId: id });
   };
+  const owner = as('owner');
+  /** A call A's guard made to A's home: ringing, its room open. */
+  const aCall = async () =>
+    (
+      (
+        await guard('POST', '/gate/calls', {
+          unitId: world().a.homeUnitId,
+          reasonCode: 'other',
+        })
+      ).body as { id: string }
+    ).id;
   return {
+    'POST /gate/calls/{id}/join': async () => {
+      const id = await aCall();
+      const res = await guard('POST', `/gate/calls/${id}/join`);
+      await guard('POST', `/gate/calls/${id}/end`);
+      return res;
+    },
+    'POST /me/gate-calls/{id}/answer': async () => {
+      const id = await aCall();
+      const res = await owner('POST', `/me/gate-calls/${id}/answer`);
+      await guard('POST', `/gate/calls/${id}/end`);
+      return res;
+    },
     'POST /gate/id-scans': async () => {
       const files = fileHelpers(world().h);
       const token = world().a.tokens.guard;

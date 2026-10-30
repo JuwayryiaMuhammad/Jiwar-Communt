@@ -162,6 +162,35 @@ export class UpdateGateSettingsDto {
   offlineSyncAlertMinutes?: number;
 
   @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.callRingSeconds.min,
+    maximum: L.callRingSeconds.max,
+    description:
+      'Seconds a gate call rings before it is missed (ADR 0068); a call ringing keeps its start.',
+  })
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.callRingSeconds)))
+  @Min(L.callRingSeconds.min, withParams(bounds(L.callRingSeconds)))
+  @Max(L.callRingSeconds.max, withParams(bounds(L.callRingSeconds)))
+  callRingSeconds?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.callMaxSeconds.min,
+    maximum: L.callMaxSeconds.max,
+    description: 'Seconds an answered gate call lasts at most (ADR 0068).',
+  })
+  // Never null: left out, it stays.
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.callMaxSeconds)))
+  @Min(L.callMaxSeconds.min, withParams(bounds(L.callMaxSeconds)))
+  @Max(L.callMaxSeconds.max, withParams(bounds(L.callMaxSeconds)))
+  callMaxSeconds?: number;
+
+  @ApiProperty({
     type: Boolean,
     required: false,
     description:

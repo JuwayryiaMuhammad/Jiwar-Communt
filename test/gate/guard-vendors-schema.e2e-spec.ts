@@ -2,7 +2,7 @@ import { Client } from 'pg';
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
-import { createAccountRow, createTenant } from '../setup/fixtures';
+import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import { gateRow, shiftRow } from '../setup/security-rows';
 import { personRow } from '../setup/security-ops-rows';
 
@@ -379,6 +379,85 @@ describe('The guard vendors’ tables — CHECKs, triggers and privileges', () =
           `UPDATE guard_alarm_events SET outcome = 'raised'`,
         ),
       ).rejects.toThrow(/permission denied|immutable/);
+    });
+  });
+
+  describe('a gate call', () => {
+    let unitId: string;
+    beforeAll(async () => {
+      unitId = (await createUnit(h, tenantId)).id;
+    });
+    const id = newId();
+    const insert = () =>
+      `INSERT INTO gate_calls (id, tenant_id, unit_id, guard_account_id, shift_id, gate_id, reason_code)
+       VALUES ('${id}', '${tenantId}', '${unitId}', '${guardId}', '${shiftId}', '${gateId}', 'other')`;
+    const set = (sql: string) =>
+      `UPDATE gate_calls SET ${sql} WHERE id = '${id}'`;
+    const answer = () =>
+      set(
+        `status = 'answered', answered_at = now(), answered_by_account_id = '${guardId}'`,
+      );
+    const end = (status: string, reason: string) =>
+      set(`status = '${status}', ended_at = now(), end_reason = '${reason}'`);
+
+    it('the app writes and moves a call; a vendor event is only inserted', async () => {
+      expect(await privileges('gate_calls')).toEqual(SELECT_INSERT_UPDATE);
+      expect(await privileges('gate_call_vendor_events')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: false,
+        truncate: false,
+      });
+    });
+
+    it('moves forward and ends once: ringing → answered → ended, or missed, declined', async () => {
+      await expect(
+        asApp(insert(), answer(), end('ended', 'guard')),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        asApp(insert(), end('missed', 'missed')),
+      ).resolves.toMatchObject({
+        rowCount: 1,
+      });
+      for (const steps of [
+        [
+          answer(),
+          set(
+            `status = 'ringing', answered_at = NULL, answered_by_account_id = NULL`,
+          ),
+        ],
+        [end('missed', 'missed'), answer()],
+        [end('ended', 'guard'), set(`end_reason = 'resident'`)],
+        [set(`unit_id = '${newId()}'`)],
+        [set(`room_ref = 'r1'`), set(`room_ref = 'r2'`)],
+      ])
+        await expect(asApp(insert(), ...steps)).rejects.toThrow(
+          /only moves forward and ends once/,
+        );
+    });
+
+    it('its shapes and lists', async () => {
+      for (const [sql, check] of [
+        [set(`status = 'answered'`), 'shape'],
+        [set(`status = 'ended'`), 'shape'],
+        [set(`room_closed_at = now()`), 'shape'],
+        [set(`room_ref = ''`), 'room_ref'],
+        [end('ended', 'tired'), 'end_reason'],
+      ])
+        await expect(asApp(insert(), sql)).rejects.toThrow(
+          new RegExp(`gate_calls_${check}`),
+        );
+      await expect(
+        asApp(insert().replace(`'other')`, `'gossip')`)),
+      ).rejects.toThrow(/gate_calls_reason/);
+      await expect(
+        asApp(
+          insert(),
+          `INSERT INTO gate_calls (id, tenant_id, unit_id, guard_account_id, shift_id, gate_id, reason_code)
+           VALUES ('${newId()}', '${tenantId}', '${unitId}', '${guardId}', '${shiftId}', '${gateId}', 'other')`,
+        ),
+      ).rejects.toThrow(/gate_calls_guard_live|gate_calls_unit_live/);
     });
   });
 });

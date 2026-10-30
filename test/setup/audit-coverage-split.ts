@@ -905,4 +905,9 @@ export const GUARD_VENDORS_COVERAGE: readonly string[] = [
   'guard_alarm.unpaired',
   'guard_alarm.received',
   'guard_alarm.webhook_rejected',
+  'gate_call.started',
+  'gate_call.answered',
+  'gate_call.ended',
+  'gate_call.missed',
+  'gate_call.webhook_rejected',
 ];

@@ -15295,9 +15295,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"audioMaxMb\": 1,\n  \"audioMaxSeconds\": 10,\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"faceChecks\": false,\n  \"faceChecksNoticePosted\": false,\n  \"geofenceExitMinutes\": 1,\n  \"offlineSyncAlertMinutes\": 5,\n  \"videoMaxMb\": 1,\n  \"videoMaxSeconds\": 10,\n  \"visitExpectedMinutes\": 15\n}"
+              "raw": "{\n  \"audioMaxMb\": 1,\n  \"audioMaxSeconds\": 10,\n  \"callMaxSeconds\": 60,\n  \"callRingSeconds\": 15,\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"faceChecks\": false,\n  \"faceChecksNoticePosted\": false,\n  \"geofenceExitMinutes\": 1,\n  \"offlineSyncAlertMinutes\": 5,\n  \"videoMaxMb\": 1,\n  \"videoMaxSeconds\": 10,\n  \"visitExpectedMinutes\": 15\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audioMaxMb` | number |  | The largest sound, in megabytes; checked when attached. |\n| `audioMaxSeconds` | number |  | The longest sound a patrol note or an incident takes, in seconds; checked when attached. |\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `faceChecks` | boolean |  | Face checks against the blocklist’s faces (ADR 0068). Turned on only with `faceChecksNoticePosted: true`; off, the vendor’s templates are removed. |\n| `faceChecksNoticePosted` | boolean |  | The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020). |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `offlineSyncAlertMinutes` | number |  | Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. |\n| `videoMaxMb` | number |  | The largest video, in megabytes; checked when attached. |\n| `videoMaxSeconds` | number |  | The longest video, in seconds; checked when attached. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audioMaxMb` | number |  | The largest sound, in megabytes; checked when attached. |\n| `audioMaxSeconds` | number |  | The longest sound a patrol note or an incident takes, in seconds; checked when attached. |\n| `callMaxSeconds` | number |  | Seconds an answered gate call lasts at most (ADR 0068). |\n| `callRingSeconds` | number |  | Seconds a gate call rings before it is missed (ADR 0068); a call ringing keeps its start. |\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `faceChecks` | boolean |  | Face checks against the blocklist’s faces (ADR 0068). Turned on only with `faceChecksNoticePosted: true`; off, the vendor’s templates are removed. |\n| `faceChecksNoticePosted` | boolean |  | The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020). |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `offlineSyncAlertMinutes` | number |  | Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. |\n| `videoMaxMb` | number |  | The largest video, in megabytes; checked when attached. |\n| `videoMaxSeconds` | number |  | The longest video, in seconds; checked when attached. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -15323,6 +15323,252 @@
         }
       ],
       "name": "gate"
+    },
+    {
+      "item": [
+        {
+          "name": "Call a unit’s household from the gate",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `approvalRequestId` | string (uuid) |  | The gate request for this unit the call is about. |\n| `reasonCode` | string | yes | From the closed list `gateCallReason`. |\n| `unitId` | string (uuid) | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "calls"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/calls"
+            }
+          }
+        },
+        {
+          "name": "Get a call of yours: whether the household answered",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "calls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/calls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End your call",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "calls",
+                ":id",
+                "end"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/calls/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A token to join your live call’s room",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "calls",
+                ":id",
+                "join"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/calls/:id/join",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get a call from the gate",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "gate-calls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/gate-calls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Answer a call from the gate",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "gate-calls",
+                ":id",
+                "answer"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/gate-calls/:id/answer",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decline a ringing call: it ends for everyone",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "gate-calls",
+                ":id",
+                "decline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/gate-calls/:id/decline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End the call you answered",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "gate-calls",
+                ":id",
+                "end"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/gate-calls/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "gate-calls"
     },
     {
       "item": [

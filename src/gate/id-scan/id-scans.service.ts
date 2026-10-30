@@ -142,7 +142,7 @@ export class IdScansService implements OnModuleInit {
       const reading = await callVendor('id_scan', this.timeoutMs, (signal) =>
         this.driver.read(
           {
-            tenantId: this.ctx.txTenantId,
+            tenantId: this.ctx.tenantId,
             image: { bytes, contentType: file.contentType },
           },
           signal,

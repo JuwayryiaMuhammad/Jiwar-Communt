@@ -2742,6 +2742,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'حارس أو بوابة يحتاجك الآن. افتح غرفة التحكم.',
     },
   },
+  'gate.call_incoming': {
+    en: {
+      title: 'The gate is calling',
+      body: '{gateName} is calling you in the app. Answer to talk.',
+    },
+    ar: {
+      title: 'البوابة تتصل بك',
+      body: 'البوابة {gateName} تتصل بك في التطبيق. أجب للتحدث.',
+    },
+  },
   'control_room.event': {
     en: {
       title: 'Control room',

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
-import { createAccountRow, createTenant } from '../setup/fixtures';
+import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import { gateRow, shiftRow } from '../setup/security-rows';
 import { personRow } from '../setup/security-ops-rows';
 
@@ -15,6 +15,8 @@ interface Side {
   shiftId: string;
   entryId: string;
   deviceId: string;
+  unitId: string;
+  callId: string;
 }
 
 /**
@@ -51,7 +53,46 @@ async function alarmDevice(tx: TenantTxClient, own: Side, link: Side) {
   return id;
 }
 
+/** An ended call: one live a guard and a unit is never in the way. */
+async function gateCall(tx: TenantTxClient, own: Side, link: Side) {
+  const id = newId();
+  await tx.gateCall.create({
+    data: {
+      id,
+      tenantId: own.tenantId,
+      unitId: link.unitId,
+      guardAccountId: link.accountId,
+      shiftId: link.shiftId,
+      gateId: link.gateId,
+      reasonCode: 'other',
+      status: 'missed',
+      endedAt: new Date(),
+      endReason: 'missed',
+    },
+  });
+  return id;
+}
+
 const TABLES: Table[] = [
+  { table: 'gate_calls', insert: gateCall },
+  {
+    table: 'gate_call_vendor_events',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.gateCallVendorEvent.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          callId: link.callId,
+          roomRef: `room-${id}`,
+          vendorEventId: id,
+          kind: 'room_closed',
+          occurredAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
   { table: 'guard_alarm_devices', insert: alarmDevice },
   {
     table: 'guard_alarm_pairings',
@@ -169,6 +210,8 @@ describe('RLS isolation — the guard vendor adapters (ADR 0068)', () => {
       shiftId: '',
       entryId: '',
       deviceId: '',
+      unitId: (await createUnit(h, tenantId)).id,
+      callId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -182,6 +225,7 @@ describe('RLS isolation — the guard vendor adapters (ADR 0068)', () => {
         createdById: s.accountId,
       });
       s.deviceId = await alarmDevice(tx, s, s);
+      s.callId = await gateCall(tx, s, s);
     });
     return s;
   };

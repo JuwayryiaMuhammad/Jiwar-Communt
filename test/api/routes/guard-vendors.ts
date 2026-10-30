@@ -152,6 +152,112 @@ export const ALARM_DEVICE_ROUTES: Row[] = [
   },
 ];
 
+/** A call from the gate (ADR 0068): the guard's side and the household's. */
+export const GATE_CALL_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/calls',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({ unitId: w.b.homeUnitId, reasonCode: 'other' }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { unitId: 'nope', reasonCode: 'other' },
+      fields: [{ field: 'unitId', code: 'INVALID_UUID' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/gate/calls/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bGateCallId }),
+      code: 'GATE_CALL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/gate/calls/{id}/join',
+    auth: 'tenant',
+    noStore: true,
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bGateCallId }),
+      code: 'GATE_CALL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/gate/calls/{id}/end',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bGateCallId }),
+      code: 'GATE_CALL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/me/gate-calls/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'none',
+    foreign: {
+      params: (w) => ({ id: w.bGateCallId }),
+      code: 'GATE_CALL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/me/gate-calls/{id}/answer',
+    auth: 'tenant',
+    noStore: true,
+    as: 'owner',
+    denied: 'none',
+    foreign: {
+      params: (w) => ({ id: w.bGateCallId }),
+      code: 'GATE_CALL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/me/gate-calls/{id}/decline',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'none',
+    foreign: {
+      params: (w) => ({ id: w.bGateCallId }),
+      code: 'GATE_CALL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/me/gate-calls/{id}/end',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'none',
+    foreign: {
+      params: (w) => ({ id: w.bGateCallId }),
+      code: 'GATE_CALL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];
+
 /** A guard's ID scan (ADR 0068): read once, never kept. */
 export const ID_SCAN_ROUTES: Row[] = [
   {

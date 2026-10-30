@@ -38,6 +38,8 @@ const CRITICAL_KINDS = [
   'gate_service.requested',
   'gate.approval_requested',
   'gate.approval_reversed',
+  // ADR 0068.
+  'gate.call_incoming',
   // ADR 0056.
   'gate_exception.decided',
   'gate_exception.expired',

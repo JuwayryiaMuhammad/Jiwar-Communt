@@ -221,6 +221,7 @@ describe('audit catalog', () => {
         'guard_alarm_device',
         'guard_alarm_pairing',
         'guard_alarm_event',
+        'gate_call',
       ]).toContain(def.target);
     }
   });

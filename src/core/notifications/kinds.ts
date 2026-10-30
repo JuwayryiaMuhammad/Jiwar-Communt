@@ -2533,6 +2533,17 @@ export const NOTIFICATION_KINDS = {
     target: 'control_room_event',
     params: { eventKind: {} },
   },
+  /**
+   * A guard calls the household from the gate (ADR 0068), critically, to
+   * whoever takes gate requests in the unit: the gate and why, a code.
+   */
+  'gate.call_incoming': {
+    priority: 'critical',
+    category: 'gate_visitors',
+    critical: true,
+    target: 'gate_call',
+    params: { gateName: {}, reason: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

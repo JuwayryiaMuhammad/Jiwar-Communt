@@ -1169,6 +1169,24 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   instalment_plan_requests_state_shape: {},
   finance_dues_notices_month: {},
+  // Collector visits (ADR 0069).
+  finance_settings_collector_margin: {},
+  collector_visits_window: {},
+  collector_visits_expected_amount: {
+    guarded: 'expected_amount IS NULL is tested first',
+  },
+  collector_visits_reasons: {
+    guarded:
+      'each reason and the side are tested IS NULL first; their lists run only on a value',
+  },
+  collector_visits_offer: {
+    guarded:
+      'the offered instants are tested IS NULL first; their order and length run only when both are set',
+  },
+  collector_visits_state_shape: {
+    guarded:
+      'every nullable column is tested IS [NOT] NULL; cancel_side is compared only where the status says it is set',
+  },
   // excluded is NOT NULL; the amount only under IS NULL.
   billing_plan_overrides_shape: {},
   billing_plan_overrides_amount: {

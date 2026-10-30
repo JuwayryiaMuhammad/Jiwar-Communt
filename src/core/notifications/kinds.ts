@@ -1428,6 +1428,46 @@ export const NOTIFICATION_KINDS = {
     target: 'unit',
     params: { month: {} },
   },
+  /** Collector visits (ADR 0069): one asked for, to who keeps payments. */
+  'collector_visit.requested': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'collector_visit',
+    params: {},
+  },
+  /** To the collector given it: the window only. */
+  'collector_visit.assigned': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'collector_visit',
+    params: { windowStartsAt: {}, windowEndsAt: {} },
+  },
+  /** To the collector: a visit of theirs was called off. */
+  'collector_visit.cancelled': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'collector_visit',
+    params: {},
+  },
+  /** To the requester: a collector will come in the window. */
+  'collector_visit.scheduled': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'collector_visit',
+    params: { windowStartsAt: {}, windowEndsAt: {} },
+  },
+  /** To the requester: why the visit failed; an offered window is in the app. */
+  'collector_visit.failed': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'collector_visit',
+    params: { reasonCode: {} },
+  },
   'finance.spending_report_published': {
     priority: 'normal',
     category: 'finance',

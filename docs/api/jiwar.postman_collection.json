@@ -8971,6 +8971,175 @@
           }
         },
         {
+          "name": "Take the window a collector offered as a new visit, once",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "collector-visits",
+                ":id",
+                "accept-offer"
+              ],
+              "raw": "{{baseUrl}}/api/v1/collector-visits/:id/accept-offer",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off a collector visit of my unit",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "collector-visits",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/collector-visits/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My visits: the open ones, and those closed in the last day",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "collector",
+                "visits"
+              ],
+              "raw": "{{baseUrl}}/api/v1/collector/visits"
+            }
+          }
+        },
+        {
+          "name": "Record the cash taken on my visit: an office payment and its receipt",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | The cash taken, EGP: at most what the unit owes plus the compound’s margin (400 AMOUNT_TOO_HIGH with `max`). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "collector",
+                "visits",
+                ":id",
+                "collected"
+              ],
+              "raw": "{{baseUrl}}/api/v1/collector/visits/:id/collected",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record why my visit failed; offer another window",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `offeredEndsAt` | string (date-time) |  |  |\n| `offeredStartsAt` | string (date-time) |  | Another window offered: with `offeredEndsAt`, or neither. |\n| `reasonCode` | string | yes | From the closed list `collectorVisitFail`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "collector",
+                "visits",
+                ":id",
+                "failed"
+              ],
+              "raw": "{{baseUrl}}/api/v1/collector/visits/:id/failed",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Ask for my deposit back",
           "request": {
             "description": "**Responses:** 200",
@@ -9769,6 +9938,170 @@
           }
         },
         {
+          "name": "List collector visits, the soonest window first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "collector-visits"
+              ],
+              "query": [
+                {
+                  "description": "The open ones when left out.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/collector-visits"
+            }
+          }
+        },
+        {
+          "name": "Get a collector visit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "collector-visits",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/collector-visits/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Give a collector visit to a collector",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"collectorId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `collectorId` | string (uuid) | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "collector-visits",
+                ":id",
+                "assign"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/collector-visits/:id/assign",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off a collector visit, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `collectorVisitCancel`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "collector-visits",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/collector-visits/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List who may be given a collector visit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "collectors"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/collectors"
+            }
+          }
+        },
+        {
           "name": "Record a deposit received",
           "request": {
             "body": {
@@ -10063,6 +10396,63 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "What a collector may take above what a unit owes",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "collector-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/collector-settings"
+            }
+          }
+        },
+        {
+          "name": "Change the collector’s margin",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"collectorMargin\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `collectorMargin` | string | yes | What a collector may take above what a unit owes, EGP: 0 to 1000. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "collector-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/collector-settings"
             }
           }
         },
@@ -12266,6 +12656,82 @@
                 "clearances"
               ],
               "raw": "{{baseUrl}}/api/v1/units/:unitId/clearances",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List my unit’s collector visits, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "collector-visits"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/collector-visits",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask for a collector to take cash at my unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"windowStartsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"windowEndsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `expectedAmount` | string |  | What the resident means to hand over, EGP. |\n| `windowEndsAt` | string (date-time) | yes | With an offset; one to four hours after the start. |\n| `windowStartsAt` | string (date-time) | yes | With an offset; from tomorrow, within 14 days. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "collector-visits"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/collector-visits",
               "variable": [
                 {
                   "description": "",

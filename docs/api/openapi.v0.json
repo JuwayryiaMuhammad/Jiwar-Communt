@@ -1739,6 +1739,30 @@
         ],
         "type": "object"
       },
+      "AskCollectorVisitDto": {
+        "properties": {
+          "expectedAmount": {
+            "description": "What the resident means to hand over, EGP.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "description": "With an offset; one to four hours after the start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "windowStartsAt": {
+            "description": "With an offset; from tomorrow, within 14 days.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "windowStartsAt",
+          "windowEndsAt"
+        ],
+        "type": "object"
+      },
       "AskPlanDto": {
         "properties": {
           "months": {
@@ -2595,6 +2619,18 @@
           "childCount",
           "health",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "AssignCollectorDto": {
+        "properties": {
+          "collectorId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "collectorId"
         ],
         "type": "object"
       },
@@ -6178,6 +6214,18 @@
         ],
         "type": "object"
       },
+      "CancelCollectorVisitDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `collectorVisitCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CancelEmergencyDto": {
         "properties": {
           "reasonCode": {
@@ -9250,6 +9298,19 @@
         ],
         "type": "object"
       },
+      "CollectedDto": {
+        "properties": {
+          "amount": {
+            "description": "The cash taken, EGP: at most what the unit owes plus the compound’s margin (400 AMOUNT_TOO_HIGH with `max`).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "type": "object"
+      },
       "CollectionRowView": {
         "properties": {
           "channel": {
@@ -9330,6 +9391,232 @@
           "gross",
           "reversed",
           "net"
+        ],
+        "type": "object"
+      },
+      "CollectorSettingsDto": {
+        "properties": {
+          "collectorMargin": {
+            "description": "What a collector may take above what a unit owes, EGP: 0 to 1000.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "collectorMargin"
+        ],
+        "type": "object"
+      },
+      "CollectorSettingsView": {
+        "properties": {
+          "collectorMargin": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "collectorMargin"
+        ],
+        "type": "object"
+      },
+      "CollectorView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "CollectorViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CollectorView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CollectorVisitCancelReason": {
+        "enum": [
+          "resident_asked",
+          "no_collector",
+          "paid_otherwise",
+          "other"
+        ],
+        "type": "string"
+      },
+      "CollectorVisitFailReason": {
+        "enum": [
+          "not_home",
+          "refused",
+          "no_cash",
+          "no_access",
+          "other"
+        ],
+        "type": "string"
+      },
+      "CollectorVisitStatus": {
+        "enum": [
+          "requested",
+          "assigned",
+          "collected",
+          "failed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "CollectorVisitView": {
+        "properties": {
+          "assigned": {
+            "description": "A collector is assigned; never who, to the resident.",
+            "type": "boolean"
+          },
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CollectorVisitCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelSide": {
+            "enum": [
+              "resident",
+              "staff"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expectedAmount": {
+            "nullable": true,
+            "type": "string"
+          },
+          "failReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CollectorVisitFailReason"
+              }
+            ],
+            "nullable": true
+          },
+          "followsId": {
+            "description": "The failed visit whose offer it took.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "offeredEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "offeredStartsAt": {
+            "description": "Another window the collector offered: take it as a new visit.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "paymentId": {
+            "description": "The payment it took: its receipt.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CollectorVisitStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "windowStartsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "building",
+          "windowStartsAt",
+          "windowEndsAt",
+          "expectedAmount",
+          "status",
+          "assigned",
+          "paymentId",
+          "failReason",
+          "offeredStartsAt",
+          "offeredEndsAt",
+          "followsId",
+          "cancelSide",
+          "cancelReason",
+          "createdAt",
+          "closedAt"
+        ],
+        "type": "object"
+      },
+      "CollectorVisitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CollectorVisitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -20284,6 +20571,27 @@
           "weekday",
           "startMinute",
           "endMinute"
+        ],
+        "type": "object"
+      },
+      "FailedVisitDto": {
+        "properties": {
+          "offeredEndsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "offeredStartsAt": {
+            "description": "Another window offered: with `offeredEndsAt`, or neither.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `collectorVisitFail`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -44362,6 +44670,7 @@
           "inspection_request",
           "works_inspection",
           "instalment_plan_request",
+          "collector_visit",
           "vehicle_fine",
           "unit_violation",
           "board_appeal",
@@ -67804,6 +68113,211 @@
           "club"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/collector-visits/{id}/accept-offer": {
+      "post": {
+        "operationId": "CollectorVisitsController_acceptOffer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take the window a collector offered as a new visit, once",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/collector-visits/{id}/cancel": {
+      "post": {
+        "operationId": "CollectorVisitsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a collector visit of my unit",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/collector/visits": {
+      "get": {
+        "operationId": "CollectorController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My visits: the open ones, and those closed in the last day",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/collector/visits/{id}/collected": {
+      "post": {
+        "operationId": "CollectorController_collected",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectedDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record the cash taken on my visit: an office payment and its receipt",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/collector/visits/{id}/failed": {
+      "post": {
+        "operationId": "CollectorController_failed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FailedVisitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record why my visit failed; offer another window",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },
@@ -100394,6 +100908,203 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/collector-visits": {
+      "get": {
+        "operationId": "StaffCollectorVisitsController_queue",
+        "parameters": [
+          {
+            "description": "The open ones when left out.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CollectorVisitStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List collector visits, the soonest window first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/collector-visits/{id}": {
+      "get": {
+        "operationId": "StaffCollectorVisitsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a collector visit",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/collector-visits/{id}/assign": {
+      "post": {
+        "operationId": "StaffCollectorVisitsController_assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignCollectorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Give a collector visit to a collector",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/collector-visits/{id}/cancel": {
+      "post": {
+        "operationId": "StaffCollectorVisitsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelCollectorVisitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a collector visit, with a reason code",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/collectors": {
+      "get": {
+        "operationId": "StaffCollectorVisitsController_collectors",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List who may be given a collector visit",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/compound-documents": {
       "get": {
         "operationId": "StaffCompoundDocumentsController_current",
@@ -101963,6 +102674,70 @@
           "finance"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/collector-settings": {
+      "get": {
+        "operationId": "StaffCollectorVisitsController_getSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What a collector may take above what a unit owes",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StaffCollectorVisitsController_setSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectorSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the collector’s margin",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },
@@ -120954,6 +121729,97 @@
           "club"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/collector-visits": {
+      "get": {
+        "operationId": "CollectorVisitsController_forUnit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my unit’s collector visits, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "CollectorVisitsController_ask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskCollectorVisitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectorVisitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a collector to take cash at my unit",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },

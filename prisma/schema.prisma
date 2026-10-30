@@ -6634,6 +6634,8 @@ model FinanceSettings {
   planOfferMinAmount   Decimal? @map("plan_offer_min_amount") @db.Decimal(12, 2)
   /// Tell a unit when its next month's dues rise (ADR 0069); off by default.
   duesNotice           Boolean  @default(false) @map("dues_notice")
+  /// What a collector may take above what a unit owes (ADR 0069): 0–1000.
+  collectorMargin      Decimal  @default(50.00) @map("collector_margin") @db.Decimal(12, 2)
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -6959,6 +6961,36 @@ model BillingPlan {
 
   @@unique([tenantId, id])
   @@map("billing_plans")
+}
+
+/// A field collector's visit to take cash at a unit (ADR 0069).
+model CollectorVisit {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  unitId          String    @map("unit_id") @db.Uuid
+  requestedById   String    @map("requested_by") @db.Uuid
+  windowStartsAt  DateTime  @map("window_starts_at") @db.Timestamptz(3)
+  windowEndsAt    DateTime  @map("window_ends_at") @db.Timestamptz(3)
+  expectedAmount  Decimal?  @map("expected_amount") @db.Decimal(12, 2)
+  status          String    @default("requested")
+  collectorId     String?   @map("collector_id") @db.Uuid
+  assignedAt      DateTime? @map("assigned_at") @db.Timestamptz(3)
+  paymentId       String?   @map("payment_id") @db.Uuid
+  failReason      String?   @map("fail_reason")
+  offeredStartsAt DateTime? @map("offered_starts_at") @db.Timestamptz(3)
+  offeredEndsAt   DateTime? @map("offered_ends_at") @db.Timestamptz(3)
+  followsId       String?   @map("follows_id") @db.Uuid
+  cancelSide      String?   @map("cancel_side")
+  cancelReason    String?   @map("cancel_reason")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastActivityAt  DateTime  @default(now()) @map("last_activity_at") @db.Timestamptz(3)
+  closedAt        DateTime? @map("closed_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, unitId, createdAt, id], map: "collector_visits_unit_idx")
+  @@index([tenantId, collectorId, windowStartsAt, id], map: "collector_visits_collector_idx")
+  @@index([tenantId, status, windowStartsAt, id], map: "collector_visits_queue_idx")
+  @@map("collector_visits")
 }
 
 /// A unit told its next month's dues rise (ADR 0069): once a unit and month.

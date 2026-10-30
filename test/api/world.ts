@@ -119,7 +119,8 @@ export type Persona =
   | 'landlord'
   | 'family'
   | 'guard'
-  | 'technician';
+  | 'technician'
+  | 'collector';
 
 const TYPES: Record<Persona, AccountType> = {
   manager: 'manager',
@@ -129,6 +130,7 @@ const TYPES: Record<Persona, AccountType> = {
   family: 'family',
   guard: 'staff',
   technician: 'staff',
+  collector: 'staff',
 };
 
 /** One compound as the API suites see it. */
@@ -409,6 +411,8 @@ async function side(
   const duty = await gateHelpers(h).onDuty(compound);
   // A maintenance technician (ADR 0032): a staff account by roleKey.
   const technician = await gateHelpers(h).guard(compound, 'technician');
+  // A field collector (ADR 0069): a staff account by roleKey.
+  const collector = await gateHelpers(h).guard(compound, 'collector');
   const ids: Record<Persona, string> = {
     manager: compound.managerId,
     owner: owner.id,
@@ -417,6 +421,7 @@ async function side(
     family: family.id,
     guard: duty.guardId,
     technician: technician.id,
+    collector: collector.id,
   };
   const tokens = {} as Record<Persona, string>;
   for (const persona of Object.keys(ids) as Persona[]) {

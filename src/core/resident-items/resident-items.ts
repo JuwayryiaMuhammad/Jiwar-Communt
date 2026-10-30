@@ -19,6 +19,8 @@ export const RESIDENT_ITEM_TYPES = [
   'works_inspection',
   // A payment plan asked for on an invoice (ADR 0069).
   'instalment_plan_request',
+  // A field collector's visit asked for (ADR 0069).
+  'collector_visit',
   // Appeals (`GET /me/appeals`).
   'vehicle_fine',
   'unit_violation',

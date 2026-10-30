@@ -1621,6 +1621,56 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'مستحقات وحدتك عن {month} أعلى بكثير من الأشهر السابقة. اطّلع عليها في التطبيق.',
     },
   },
+  'collector_visit.requested': {
+    en: {
+      title: 'A collector visit was asked for',
+      body: 'A resident asked for a collector to take cash at their unit.',
+    },
+    ar: {
+      title: 'طلب زيارة محصّل',
+      body: 'طلب ساكن زيارة محصّل لتحصيل مبلغ نقدي من وحدته.',
+    },
+  },
+  'collector_visit.assigned': {
+    en: {
+      title: 'A visit is yours',
+      body: 'A collection visit from {windowStartsAt} to {windowEndsAt} was given to you.',
+    },
+    ar: {
+      title: 'زيارة جديدة لك',
+      body: 'أُسندت إليك زيارة تحصيل من {windowStartsAt} حتى {windowEndsAt}.',
+    },
+  },
+  'collector_visit.cancelled': {
+    en: {
+      title: 'A visit was called off',
+      body: 'One of your collection visits was called off.',
+    },
+    ar: {
+      title: 'أُلغيت زيارة',
+      body: 'أُلغيت إحدى زيارات التحصيل الخاصة بك.',
+    },
+  },
+  'collector_visit.scheduled': {
+    en: {
+      title: 'A collector will come',
+      body: 'A collector will come between {windowStartsAt} and {windowEndsAt}.',
+    },
+    ar: {
+      title: 'سيحضر المحصّل',
+      body: 'سيحضر المحصّل بين {windowStartsAt} و{windowEndsAt}.',
+    },
+  },
+  'collector_visit.failed': {
+    en: {
+      title: 'The collector could not collect',
+      body: 'The collection visit did not take place ({reasonCode}). See the app for another time.',
+    },
+    ar: {
+      title: 'تعذّر التحصيل',
+      body: 'لم تتم زيارة التحصيل ({reasonCode}). اطّلع على التطبيق لموعد آخر.',
+    },
+  },
   'finance.spending_report_published': {
     en: {
       title: 'Where the fees went',

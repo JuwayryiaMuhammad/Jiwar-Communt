@@ -940,6 +940,16 @@ export const AUDIT_ACTIONS = {
   'plan_request.declined': { log: 'tenant', target: 'plan_request' },
   // The plan terms for residents: the most months, the offer's floor.
   'finance.plan_settings_changed': { log: 'tenant', target: 'tenant' },
+  // Collector visits (ADR 0069). metadata: unitId; the window (asked,
+  // followsId when an offer was taken) | collectorId | paymentId and
+  // amount (collected) | reasonCode, offered (failed) | side, reasonCode.
+  'collector_visit.requested': { log: 'tenant', target: 'collector_visit' },
+  'collector_visit.assigned': { log: 'tenant', target: 'collector_visit' },
+  'collector_visit.collected': { log: 'tenant', target: 'collector_visit' },
+  'collector_visit.failed': { log: 'tenant', target: 'collector_visit' },
+  'collector_visit.cancelled': { log: 'tenant', target: 'collector_visit' },
+  // What a collector may take above what a unit owes.
+  'finance.collector_settings_changed': { log: 'tenant', target: 'tenant' },
   // metadata: unitId, channel, method, amount, paidOn, receiptNumber, the
   // invoices named; never the transfer's or cheque's reference.
   'payment.recorded': { log: 'tenant', target: 'payment' },

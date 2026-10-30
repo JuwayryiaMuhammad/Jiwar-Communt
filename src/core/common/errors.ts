@@ -1549,6 +1549,15 @@ export const ErrorCode = {
   PLAN_REQUEST_PENDING: 'PLAN_REQUEST_PENDING',
   /** Decided or withdrawn already (409, params.status). */
   PLAN_REQUEST_NOT_PENDING: 'PLAN_REQUEST_NOT_PENDING',
+  COLLECTOR_VISIT_NOT_FOUND: 'COLLECTOR_VISIT_NOT_FOUND',
+  /** A visit is open for this unit already: one at a time (409, params.visitId). */
+  COLLECTOR_VISIT_OPEN: 'COLLECTOR_VISIT_OPEN',
+  /** Collected, failed or cancelled already (409, params.status). */
+  COLLECTOR_VISIT_CLOSED: 'COLLECTOR_VISIT_CLOSED',
+  /** The visit offers no window, or its window has passed (409). */
+  COLLECTOR_VISIT_NO_OFFER: 'COLLECTOR_VISIT_NO_OFFER',
+  /** More than the unit owes plus the compound's margin (400, params.max). */
+  AMOUNT_TOO_HIGH: 'AMOUNT_TOO_HIGH',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

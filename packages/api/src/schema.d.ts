@@ -968,6 +968,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/collector-visits/{id}/accept-offer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take the window a collector offered as a new visit, once */
+        post: operations["CollectorVisitsController_acceptOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/collector-visits/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call off a collector visit of my unit */
+        post: operations["CollectorVisitsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/collector/visits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My visits: the open ones, and those closed in the last day */
+        get: operations["CollectorController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/collector/visits/{id}/collected": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the cash taken on my visit: an office payment and its receipt */
+        post: operations["CollectorController_collected"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/collector/visits/{id}/failed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record why my visit failed; offer another window */
+        post: operations["CollectorController_failed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/community/announcements": {
         parameters: {
             query?: never;
@@ -12124,6 +12209,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/collector-visits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List collector visits, the soonest window first */
+        get: operations["StaffCollectorVisitsController_queue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/collector-visits/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a collector visit */
+        get: operations["StaffCollectorVisitsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/collector-visits/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Give a collector visit to a collector */
+        post: operations["StaffCollectorVisitsController_assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/collector-visits/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call off a collector visit, with a reason code */
+        post: operations["StaffCollectorVisitsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/collectors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List who may be given a collector visit */
+        get: operations["StaffCollectorVisitsController_collectors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/compound-documents": {
         parameters: {
             query?: never;
@@ -12644,6 +12814,24 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/collector-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a collector may take above what a unit owes */
+        get: operations["StaffCollectorVisitsController_getSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change the collector’s margin */
+        patch: operations["StaffCollectorVisitsController_setSettings"];
         trace?: never;
     };
     "/api/v1/staff/finance/expense-authorizations": {
@@ -18962,6 +19150,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/collector-visits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my unit’s collector visits, newest first */
+        get: operations["CollectorVisitsController_forUnit"];
+        put?: never;
+        /** Ask for a collector to take cash at my unit */
+        post: operations["CollectorVisitsController_ask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/consumption": {
         parameters: {
             query?: never;
@@ -20834,6 +21040,20 @@ export interface components {
             /** Format: uuid */
             occupancyId: string;
         };
+        AskCollectorVisitDto: {
+            /** @description What the resident means to hand over, EGP. */
+            expectedAmount?: string;
+            /**
+             * Format: date-time
+             * @description With an offset; one to four hours after the start.
+             */
+            windowEndsAt: string;
+            /**
+             * Format: date-time
+             * @description With an offset; from tomorrow, within 14 days.
+             */
+            windowStartsAt: string;
+        };
         AskPlanDto: {
             /** @description Over how many months; at most the compound’s most (`INVALID_VALUE` with `max`). */
             months: number;
@@ -21070,6 +21290,10 @@ export interface components {
             vendorPhone: string | null;
             /** Format: date */
             warrantyEndsOn: string | null;
+        };
+        AssignCollectorDto: {
+            /** Format: uuid */
+            collectorId: string;
         };
         AssignDto: {
             /** Format: uuid */
@@ -22152,6 +22376,10 @@ export interface components {
             /** @description From the closed list `bookingResidentCancel`. */
             reasonCode: string;
         };
+        CancelCollectorVisitDto: {
+            /** @description From the closed list `collectorVisitCancel`. */
+            reasonCode: string;
+        };
         CancelEmergencyDto: {
             /** @description From the closed list `emergencyCancel`; optional. */
             reasonCode?: string;
@@ -23097,6 +23325,10 @@ export interface components {
             /** @description A code (REASON_CODES.depositDeduction). */
             reasonCode: string;
         };
+        CollectedDto: {
+            /** @description The cash taken, EGP: at most what the unit owes plus the compound’s margin (400 AMOUNT_TOO_HIGH with `max`). */
+            amount: string;
+        };
         CollectionRowView: {
             /** @enum {string} */
             channel: "office" | "online";
@@ -23121,6 +23353,73 @@ export interface components {
             rows: components["schemas"]["CollectionRowView"][];
             /** Format: date */
             to: string;
+        };
+        CollectorSettingsDto: {
+            /** @description What a collector may take above what a unit owes, EGP: 0 to 1000. */
+            collectorMargin: string;
+        };
+        CollectorSettingsView: {
+            collectorMargin: string;
+        };
+        CollectorView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        CollectorViewList: {
+            data: components["schemas"]["CollectorView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        CollectorVisitCancelReason: "resident_asked" | "no_collector" | "paid_otherwise" | "other";
+        /** @enum {string} */
+        CollectorVisitFailReason: "not_home" | "refused" | "no_cash" | "no_access" | "other";
+        /** @enum {string} */
+        CollectorVisitStatus: "requested" | "assigned" | "collected" | "failed" | "cancelled";
+        CollectorVisitView: {
+            /** @description A collector is assigned; never who, to the resident. */
+            assigned: boolean;
+            building: string | null;
+            cancelReason: components["schemas"]["CollectorVisitCancelReason"] | null;
+            /** @enum {string|null} */
+            cancelSide: "resident" | "staff" | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            expectedAmount: string | null;
+            failReason: components["schemas"]["CollectorVisitFailReason"] | null;
+            /**
+             * Format: uuid
+             * @description The failed visit whose offer it took.
+             */
+            followsId: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            offeredEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description Another window the collector offered: take it as a new visit.
+             */
+            offeredStartsAt: string | null;
+            /**
+             * Format: uuid
+             * @description The payment it took: its receipt.
+             */
+            paymentId: string | null;
+            status: components["schemas"]["CollectorVisitStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** Format: date-time */
+            windowEndsAt: string;
+            /** Format: date-time */
+            windowStartsAt: string;
+        };
+        CollectorVisitViewList: {
+            data: components["schemas"]["CollectorVisitView"][];
+            nextCursor: string | null;
         };
         CommonAreaView: {
             active: boolean;
@@ -26841,6 +27140,17 @@ export interface components {
             startMinute: number;
             /** @description 0 is Sunday. */
             weekday: number;
+        };
+        FailedVisitDto: {
+            /** Format: date-time */
+            offeredEndsAt?: string;
+            /**
+             * Format: date-time
+             * @description Another window offered: with `offeredEndsAt`, or neither.
+             */
+            offeredStartsAt?: string;
+            /** @description From the closed list `collectorVisitFail`. */
+            reasonCode: string;
         };
         FamilyContactView: {
             /** Format: uuid */
@@ -34362,7 +34672,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "inspection_request" | "works_inspection" | "instalment_plan_request" | "vehicle_fine" | "unit_violation" | "board_appeal" | "decision_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
+        ResidentItemType: "maintenance" | "management" | "invoice_dispute" | "unit_permit" | "neighbour_complaint" | "partner_request" | "inspection_request" | "works_inspection" | "instalment_plan_request" | "collector_visit" | "vehicle_fine" | "unit_violation" | "board_appeal" | "decision_appeal" | "invoice" | "booking" | "parcel" | "formal_notice";
         ResidentItemView: {
             /** @description Where its appeal stands (the appeals list); null elsewhere. */
             appeal: components["schemas"]["ItemAppealView"] | null;
@@ -41954,6 +42264,120 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClubPlanOptionViewList"];
+                };
+            };
+        };
+    };
+    CollectorVisitsController_acceptOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitView"];
+                };
+            };
+        };
+    };
+    CollectorVisitsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitView"];
+                };
+            };
+        };
+    };
+    CollectorController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitViewList"];
+                };
+            };
+        };
+    };
+    CollectorController_collected: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectedDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitView"];
+                };
+            };
+        };
+    };
+    CollectorController_failed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FailedVisitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitView"];
                 };
             };
         };
@@ -59126,6 +59550,118 @@ export interface operations {
             };
         };
     };
+    StaffCollectorVisitsController_queue: {
+        parameters: {
+            query?: {
+                /** @description The open ones when left out. */
+                status?: components["schemas"]["CollectorVisitStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitViewList"];
+                };
+            };
+        };
+    };
+    StaffCollectorVisitsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitView"];
+                };
+            };
+        };
+    };
+    StaffCollectorVisitsController_assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignCollectorDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitView"];
+                };
+            };
+        };
+    };
+    StaffCollectorVisitsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelCollectorVisitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitView"];
+                };
+            };
+        };
+    };
+    StaffCollectorVisitsController_collectors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorViewList"];
+                };
+            };
+        };
+    };
     StaffCompoundDocumentsController_current: {
         parameters: {
             query?: never;
@@ -59941,6 +60477,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BudgetView"];
+                };
+            };
+        };
+    };
+    StaffCollectorVisitsController_getSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorSettingsView"];
+                };
+            };
+        };
+    };
+    StaffCollectorVisitsController_setSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectorSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorSettingsView"];
                 };
             };
         };
@@ -69277,6 +69855,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyClubView"];
+                };
+            };
+        };
+    };
+    CollectorVisitsController_forUnit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitViewList"];
+                };
+            };
+        };
+    };
+    CollectorVisitsController_ask: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskCollectorVisitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectorVisitView"];
                 };
             };
         };

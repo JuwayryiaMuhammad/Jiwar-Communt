@@ -4,12 +4,13 @@ import { auditReaders } from '../setup/audit';
 import { R11C1A_COVERAGE } from '../setup/audit-coverage-split';
 import type { Compound } from '../setup/community';
 import { financeHelpers, type FinanceSetUp } from '../setup/finance';
-import { day } from '../setup/compound-clock';
+import { at, day } from '../setup/compound-clock';
 import {
   activateBudget,
   budgetLineRow,
   budgetRow,
 } from '../setup/finance-rows';
+import { gateHelpers } from '../setup/gate';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 const MARKER = 'AUDIT-r11c1-secret';
@@ -169,6 +170,140 @@ describe('Audit coverage — money and the unit', () => {
         planMaxMonths: { from: 6, to: 12 },
         planOfferMinAmount: { from: null, to: '2500.00' },
       });
+    });
+  });
+
+  describe('collector visits', () => {
+    const window = (d: number) => ({
+      windowStartsAt: at(day(d), 10).toISOString(),
+      windowEndsAt: at(day(d), 12).toISOString(),
+    });
+
+    it('collector_visit.requested, .assigned, .collected, .failed and .cancelled — the unit, the window, the collector, the payment and amount, the codes; never a name', async () => {
+      const collector = await f.who(
+        s.c,
+        (await gateHelpers(h).guard(s.c, 'collector')).id,
+        'staff',
+      );
+      const home = await f.unit(s.c, 'A');
+      const owner = await f.owner(s.c, home.id);
+      await f.issue(s.accountant, home.id);
+      const ask = async (d: number) =>
+        (
+          (
+            await f
+              .http(
+                'post',
+                `/units/${home.id}/collector-visits`,
+                owner.token,
+                window(d),
+              )
+              .expect(201)
+          ).body as { id: string }
+        ).id;
+      const assign = (id: string) =>
+        f
+          .http(
+            'post',
+            `/staff/collector-visits/${id}/assign`,
+            s.accountant.token,
+            {
+              collectorId: collector.id,
+            },
+          )
+          .expect(201);
+
+      const one = await ask(1);
+      expect(await single(s.c, 'collector_visit.requested', one)).toMatchObject(
+        {
+          actorId: owner.id,
+          metadata: {
+            unitId: home.id,
+            windowStartsAt: window(1).windowStartsAt,
+            windowEndsAt: window(1).windowEndsAt,
+          },
+        },
+      );
+      await assign(one);
+      expect(
+        (await single(s.c, 'collector_visit.assigned', one)).metadata,
+      ).toEqual({
+        unitId: home.id,
+        collectorId: collector.id,
+      });
+      const done = (
+        await f
+          .http('post', `/collector/visits/${one}/collected`, collector.token, {
+            amount: '400',
+          })
+          .expect(201)
+      ).body as { paymentId: string };
+      expect(await single(s.c, 'collector_visit.collected', one)).toMatchObject(
+        {
+          actorId: collector.id,
+          metadata: {
+            unitId: home.id,
+            paymentId: done.paymentId,
+            amount: '400.00',
+          },
+        },
+      );
+
+      const two = await ask(2);
+      await assign(two);
+      await f
+        .http('post', `/collector/visits/${two}/failed`, collector.token, {
+          reasonCode: 'no_cash',
+        })
+        .expect(201);
+      expect(
+        (await single(s.c, 'collector_visit.failed', two)).metadata,
+      ).toEqual({
+        unitId: home.id,
+        reasonCode: 'no_cash',
+        offered: false,
+      });
+
+      const three = await ask(3);
+      await f
+        .http(
+          'post',
+          `/staff/collector-visits/${three}/cancel`,
+          s.accountant.token,
+          {
+            reasonCode: 'no_collector',
+          },
+        )
+        .expect(201);
+      expect(
+        (await single(s.c, 'collector_visit.cancelled', three)).metadata,
+      ).toEqual({
+        unitId: home.id,
+        side: 'staff',
+        reasonCode: 'no_collector',
+      });
+      const rows = await read.tenant(s.c.tenantId, { targetId: one });
+      const person = await f.inTx(s.c, (tx) =>
+        tx.account.findUniqueOrThrow({ where: { id: owner.id } }),
+      );
+      expect(JSON.stringify(rows)).not.toContain(person.fullName!);
+    });
+
+    it('finance.collector_settings_changed — the margin, from and to', async () => {
+      await f
+        .http(
+          'patch',
+          '/staff/finance/collector-settings',
+          s.accountant.token,
+          {
+            collectorMargin: '25',
+          },
+        )
+        .expect(200);
+      expect(
+        (await single(s.c, 'finance.collector_settings_changed', s.c.tenantId))
+          .changes,
+      ).toEqual({ collectorMargin: { from: '50.00', to: '25.00' } });
     });
   });
 

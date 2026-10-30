@@ -193,6 +193,47 @@ export class PaymentsService implements OnModuleInit {
   }
 
   /**
+   * Cash a collector took on a visit (ADR 0069), under the unit's finance
+   * lock the caller holds: at most what the unit owes (disputed invoices
+   * aside) plus the compound's margin, so a mistyped figure never makes a
+   * large credit — 400 AMOUNT_TOO_HIGH with the most. What goes beyond the
+   * owed is the unit's credit. A payment as an office one, with its
+   * receipt and notice; the payment's id.
+   */
+  async collectLocked(
+    tx: TenantTxClient,
+    unitId: string,
+    amount: Prisma.Decimal,
+    paidOn: LocalDate,
+  ): Promise<string> {
+    const owed = await this.owed(tx, unitId, []);
+    const { collectorMargin } = await tx.financeSettings.findUniqueOrThrow({
+      where: { tenantId: this.ctx.txTenantId },
+      select: { collectorMargin: true },
+    });
+    const max = owed.add(collectorMargin);
+    if (amount.gt(max))
+      throw appError.badRequest(
+        ErrorCode.AMOUNT_TOO_HIGH,
+        'More than the unit owes and the margin',
+        { params: { max: show(max) } },
+      );
+    const id = newId();
+    await supersedeLive(tx, [unitId]);
+    await this.create(tx, id, {
+      unitId,
+      channel: 'office',
+      method: 'cash',
+      amount,
+      paidOn,
+      reference: null,
+      recordedById: this.ctx.accountId,
+      named: [],
+    });
+    return id;
+  }
+
+  /**
    * Writes a payment, its receipt and its allocations, audits it and tells
    * the unit. Under the unit's finance lock, which the caller holds. Shared
    * with the webhook.

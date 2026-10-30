@@ -20,6 +20,8 @@ export interface R11c1World {
   bSpendingReportId: string;
   /** A plan request B's owner made on an invoice of B's home (withdrawn). */
   bPlanRequestId: string;
+  /** A collector visit B's owner asked for (cancelled by them). */
+  bCollectorVisitId: string;
 }
 
 export async function r11c1World(
@@ -74,7 +76,21 @@ export async function r11c1World(
           decidedAt: new Date(),
         },
       });
-      return { bSpendingReportId, bPlanRequestId };
+      const bCollectorVisitId = newId();
+      await tx.collectorVisit.create({
+        data: {
+          id: bCollectorVisitId,
+          tenantId: b.tenantId,
+          unitId: b.homeUnitId,
+          requestedById: b.ids.owner,
+          windowStartsAt: new Date('2099-01-05T08:00:00+02:00'),
+          windowEndsAt: new Date('2099-01-05T10:00:00+02:00'),
+          status: 'cancelled',
+          cancelSide: 'resident',
+          closedAt: new Date(),
+        },
+      });
+      return { bSpendingReportId, bPlanRequestId, bCollectorVisitId };
     }),
   );
 }

@@ -879,4 +879,10 @@ export const R11C1A_COVERAGE: readonly string[] = [
   'plan_request.accepted',
   'plan_request.declined',
   'finance.plan_settings_changed',
+  'collector_visit.requested',
+  'collector_visit.assigned',
+  'collector_visit.collected',
+  'collector_visit.failed',
+  'collector_visit.cancelled',
+  'finance.collector_settings_changed',
 ];

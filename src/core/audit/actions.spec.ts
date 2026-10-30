@@ -213,6 +213,7 @@ describe('audit catalog', () => {
         // ADR 0069.
         'spending_report',
         'plan_request',
+        'collector_visit',
       ]).toContain(def.target);
     }
   });

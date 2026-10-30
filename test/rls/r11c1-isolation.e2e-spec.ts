@@ -85,6 +85,27 @@ const TABLES: Table[] = [
   },
   { table: 'finance_spending_reports', insert: spendingReport },
   {
+    table: 'collector_visits',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      // Closed: one open a unit is never in the way.
+      await tx.collectorVisit.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          unitId: link.unitId,
+          requestedById: link.staffId,
+          windowStartsAt: new Date('2031-01-05T08:00:00Z'),
+          windowEndsAt: new Date('2031-01-05T10:00:00Z'),
+          status: 'cancelled',
+          cancelSide: 'resident',
+          closedAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
+  {
     table: 'finance_dues_notices',
     key: 'unit_id',
     insert: async (tx, own, link) => {

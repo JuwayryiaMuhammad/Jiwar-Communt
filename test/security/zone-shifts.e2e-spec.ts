@@ -167,10 +167,8 @@ describe('Zone shifts', () => {
       ],
     );
     expect(retired.status).toBe(200);
-    expect([
-      { status: 403, code: 'NO_OPEN_SHIFT' },
-      { status: 404, code: 'PLACE_NOT_FOUND' },
-    ]).toContainEqual(code(registered));
+    // The item took the shift: the retirement ended it first.
+    expect(code(registered)).toEqual({ status: 403, code: 'NO_OPEN_SHIFT' });
     expect(
       await x.inTx(s.c, (tx) =>
         tx.foundItem.count({ where: { placeId: zoneId } }),

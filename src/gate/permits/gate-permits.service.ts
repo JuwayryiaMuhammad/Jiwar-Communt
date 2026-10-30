@@ -199,7 +199,10 @@ export class GatePermitsService {
    */
   async use(id: string): Promise<GatePermitRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      const shift = await this.shifts.requireOpen(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the use, or came first and it is refused.
+      await this.core.lockSelf(tx);
+      const shift = await this.shifts.requireOpenLocked(tx);
       const p = await this.records.lock(tx, id);
       if (p.kind !== 'material_exit') throw permitNotFound();
       const now = await dbNow(tx);

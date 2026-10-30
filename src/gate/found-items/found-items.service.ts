@@ -17,7 +17,8 @@ import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { dbNow } from '../db-clock';
 import { PlacesService } from '../places/places.service';
 import { DutyNamesReader } from '../roster/duty-names';
-import { ShiftsService } from '../shifts/shifts.service';
+import { ShiftsService, type DutyShift } from '../shifts/shifts.service';
+import { SafetyCore } from '../safety/safety-core';
 import {
   FoundItemView,
   StaffFoundItemView,
@@ -68,6 +69,7 @@ export class FoundItemsService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly places: PlacesService,
     private readonly shifts: ShiftsService,
+    private readonly safety: SafetyCore,
     private readonly community: CommunityGatePort,
     private readonly names: DutyNamesReader,
     private readonly sweep: SweepRunner,
@@ -135,7 +137,15 @@ export class FoundItemsService implements OnModuleInit {
       });
     if (fields.length) throw invalid(fields);
     return this.tenantTx.withTenantTx(async (tx) => {
-      const duty = atGate ? await this.shifts.requireOnDuty(tx) : null;
+      // At the gate, the account, then the shift, FOR SHARE (ADR 0056's
+      // lock order): the shift's end waits for the item, or came first and
+      // it is refused. The place comes after the shift; a zone's
+      // retirement takes the zone's shifts first too.
+      let duty: DutyShift | null = null;
+      if (atGate) {
+        await this.safety.lockSelf(tx);
+        duty = await this.shifts.requireOnDutyLocked(tx);
+      }
       const placeId = await this.places.requireActive(
         tx,
         input.placeId,

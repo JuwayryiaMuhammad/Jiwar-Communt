@@ -311,7 +311,11 @@ export class TasksService implements OnModuleInit {
    */
   take(id: string): Promise<GuardTaskView> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      const duty = await this.shifts.requireOnDuty(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the take (its carry then sees the task taken),
+      // or came first and it is refused.
+      await this.safety.lockSelf(tx);
+      const duty = await this.shifts.requireOnDutyLocked(tx);
       const task = await this.lock(tx, id);
       if (!task || !this.sees(task, duty)) throw taskNotFound();
       if (task.status === 'in_progress')
@@ -363,7 +367,11 @@ export class TasksService implements OnModuleInit {
       });
     if (fields.length) throw invalid(fields);
     return this.tenantTx.withTenantTx(async (tx) => {
-      const duty = await this.shifts.onDuty(tx, this.ctx.accountId);
+      // The account, then the shift if the taker has one, FOR SHARE (ADR
+      // 0056's lock order): an end in flight waits for the completion; one
+      // that came first leaves the taker completing it off shift.
+      await this.safety.lockSelf(tx);
+      const duty = await this.shifts.onDutyLocked(tx);
       const task = await this.lock(tx, id);
       if (!task || !this.sees(task, duty)) throw taskNotFound();
       if (task.status !== 'in_progress') throw closed(task);

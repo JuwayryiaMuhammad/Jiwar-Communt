@@ -13,6 +13,7 @@ import {
 import { dbNow } from '../db-clock';
 import { DutyNamesReader } from '../roster/duty-names';
 import { RosterCore } from '../roster/roster-core';
+import { SafetyCore } from '../safety/safety-core';
 import {
   PENDING_HANDOVER_MS,
   ShiftsService,
@@ -57,6 +58,7 @@ export class HandoverService implements OnModuleInit {
     private readonly shifts: ShiftsService,
     private readonly names: DutyNamesReader,
     private readonly roster: RosterCore,
+    private readonly safety: SafetyCore,
   ) {}
 
   onModuleInit(): void {
@@ -149,7 +151,10 @@ export class HandoverService implements OnModuleInit {
    */
   acknowledge(id: string): Promise<GuardHandoverView> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      const duty = await this.shifts.requireOnDuty(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the acknowledgement, or came first and it is refused.
+      await this.safety.lockSelf(tx);
+      const duty = await this.shifts.requireOnDutyLocked(tx);
       const [row] = await tx.$queryRaw<{ id: string }[]>`
         SELECT id FROM guard_handovers WHERE id = ${id}::uuid FOR UPDATE`;
       if (!row) throw handoverNotFound();

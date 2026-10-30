@@ -13,6 +13,7 @@ import {
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { ShiftsService } from '../shifts/shifts.service';
+import { SafetyCore } from '../safety/safety-core';
 import { permitReference } from './permit-core';
 import { permitNotFound } from './permit-records';
 import { clean } from './permits.service';
@@ -44,6 +45,7 @@ export class MaterialEntriesService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly shifts: ShiftsService,
+    private readonly safety: SafetyCore,
     private readonly community: CommunityGatePort,
     private readonly lockdown: LockdownCore,
   ) {}
@@ -68,7 +70,10 @@ export class MaterialEntriesService implements OnModuleInit {
     description: string;
   }): Promise<MaterialEntryRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      const shift = await this.shifts.requireOpen(tx);
+      // The account, then the shift, FOR SHARE (ADR 0056's lock order): the
+      // shift's end waits for the entry, or came first and it is refused.
+      await this.safety.lockSelf(tx);
+      const shift = await this.shifts.requireOpenLocked(tx);
       // A lockdown (ADR 0053): nothing comes in.
       await this.lockdown.refuseIn(tx, shift.gateId, new Date());
       const unit = await this.community.unitByCode(tx, input.unitCode);

@@ -13,6 +13,7 @@ import {
   permitRow,
   permitWorkerRow,
 } from '../setup/permits-rows';
+import { whileShiftEnds } from '../setup/shift-end';
 
 const ROUNDS = 5;
 // eslint-disable-next-line no-restricted-syntax -- past instants only: the purge compares ends_at with now − 30 × 24 h
@@ -21,6 +22,10 @@ const DAY = 86_400_000;
 /**
  * The permits' races (ADR 0049), each run for real with Promise.all: every
  * outcome is one of the allowed ones, and the database agrees.
+ *
+ * A guard's write while their shift ends (ADR 0056's lock order): a
+ * material exit used, materials logged in, works stopped take the account,
+ * then the shift, FOR SHARE, so each waits for the end and is refused.
  */
 describe('Permits concurrency', () => {
   let h: HttpHarness;
@@ -349,5 +354,72 @@ describe('Permits concurrency', () => {
         'work_stopped',
       );
     }
+  });
+
+  describe('a guard’s write while their shift ends: it waits for the end, then is refused', () => {
+    const refused = (res: { status: number; body: unknown }) =>
+      expect(res).toMatchObject({
+        status: 403,
+        body: { code: 'NO_OPEN_SHIFT' },
+      });
+
+    it('a material exit used', async () => {
+      const { unit, owner } = await home();
+      const exit = await p.exit(owner, unit.id, {
+        validFrom: day(0),
+        validUntil: day(0),
+      });
+      await p.approve(c.manager, exit.id);
+      const leaving = await p.guardOnDuty(c.c);
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          p.http(
+            'post',
+            `/gate/unit-permits/${exit.id}/use`,
+            leaving.token,
+            {},
+          ),
+        ),
+      );
+      expect((await p.row(c.c, exit.id)).status).toBe('approved');
+    });
+
+    it('materials logged in', async () => {
+      const { unit } = await home();
+      const leaving = await p.guardOnDuty(c.c);
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          p.http('post', '/gate/material-entries', leaving.token, {
+            unitCode: unit.code,
+            description: 'Cement at the end of a shift',
+          }),
+        ),
+      );
+      expect(
+        await p.v.inTx(c.c, (tx) =>
+          tx.materialEntry.count({ where: { shiftId: leaving.shiftId } }),
+        ),
+      ).toBe(0);
+    });
+
+    it('works stopped', async () => {
+      const { permit } = await approvedWorker();
+      const leaving = await p.guardOnDuty(c.c);
+      refused(
+        await whileShiftEnds(leaving.shiftId, () =>
+          p.http(
+            'post',
+            `/gate/unit-permits/${permit.id}/stop-work`,
+            leaving.token,
+            { reasonCode: 'safety_hazard' },
+          ),
+        ),
+      );
+      expect(
+        await p.v.inTx(c.c, (tx) =>
+          tx.permitWorkStop.count({ where: { permitId: permit.id } }),
+        ),
+      ).toBe(0);
+    });
   });
 });

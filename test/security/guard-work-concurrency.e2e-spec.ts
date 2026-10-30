@@ -1,10 +1,16 @@
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityHelpers, type Who } from '../setup/security';
+import { whileShiftEnds } from '../setup/shift-end';
 
 /**
  * ADR 0050, the guards' work decided one at a time: a handover is
  * acknowledged once whoever asks together; an end racing a new checklist
  * item either saw it (and asks for it) or did not (and records without it).
+ *
+ * A guard's write while their shift ends (ADR 0056's lock order): a task
+ * taken, a handover acknowledged, a found item registered take the account,
+ * then the shift, FOR SHARE, so each waits for the end and is refused. A
+ * task's completion needs no shift: it waits for the end, then completes.
  */
 describe('Guard work under concurrency', () => {
   let h: HttpHarness;
@@ -184,5 +190,115 @@ describe('Guard work under concurrency', () => {
       expect(reached).toBe(1);
       expect((await end(guard)).status).toBe(200);
     }
+  });
+
+  describe('a guard’s write while their shift ends', () => {
+    const refused = (res: { status: number; body: unknown }) =>
+      expect(res).toMatchObject({
+        status: 403,
+        body: { code: 'NO_OPEN_SHIFT' },
+      });
+    /** A custom task at the gate, made by the supervisor. */
+    const task = async (gateId: string, title: string) =>
+      (
+        (
+          await x
+            .http(
+              'post',
+              '/staff/security/tasks',
+              (await x.supervisor(s.c)).token,
+              {
+                kind: 'custom',
+                title,
+                gateId,
+              },
+            )
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+    const taskRow = (id: string) =>
+      x.inTx(s.c, (tx) => tx.guardTask.findUniqueOrThrow({ where: { id } }));
+
+    it('a task taken: it waits for the end, then is refused', async () => {
+      const gateId = (await x.g.gate(s.c)).id;
+      const leaving = await x.guard(s.c);
+      const shift = await x.start(leaving, { gateId });
+      const id = await task(gateId, 'Taken at the end');
+      refused(
+        await whileShiftEnds(shift.id, () =>
+          x.http('post', `/gate/tasks/${id}/take`, leaving.token),
+        ),
+      );
+      expect(await taskRow(id)).toMatchObject({
+        status: 'open',
+        takenById: null,
+      });
+    });
+
+    it('a task completed: it waits for the end, then completes off shift', async () => {
+      const gateId = (await x.g.gate(s.c)).id;
+      const leaving = await x.guard(s.c);
+      const shift = await x.start(leaving, { gateId });
+      const id = await task(gateId, 'Completed at the end');
+      await x.http('post', `/gate/tasks/${id}/take`, leaving.token).expect(200);
+      const res = await whileShiftEnds(shift.id, () =>
+        x.http('post', `/gate/tasks/${id}/complete`, leaving.token, {
+          outcome: 'done',
+        }),
+      );
+      expect(res.status).toBe(200);
+      expect(await taskRow(id)).toMatchObject({
+        status: 'done',
+        takenById: leaving.id,
+      });
+    });
+
+    it('a handover acknowledged: it waits for the end, then is refused', async () => {
+      const gateId = (await x.g.gate(s.c)).id;
+      const author = await x.guard(s.c);
+      await x.start(author, { gateId });
+      // The whole checklist ticked: an earlier test here adds items.
+      expect((await end(author)).status).toBe(200);
+      const leaving = await x.guard(s.c);
+      const shift = await x.start(leaving, { gateId });
+      const handover = await x.inTx(s.c, (tx) =>
+        tx.guardHandover.findFirstOrThrow({
+          where: { guardAccountId: author.id },
+        }),
+      );
+      refused(
+        await whileShiftEnds(shift.id, () =>
+          x.http(
+            'post',
+            `/gate/handovers/${handover.id}/acknowledge`,
+            leaving.token,
+          ),
+        ),
+      );
+      expect(
+        await x.inTx(s.c, (tx) =>
+          tx.guardHandover.findUniqueOrThrow({ where: { id: handover.id } }),
+        ),
+      ).toMatchObject({ acknowledgedAt: null, acknowledgedById: null });
+    });
+
+    it('a found item registered: it waits for the end, then is refused', async () => {
+      const leaving = await x.guard(s.c);
+      const shift = await x.start(leaving, {
+        gateId: (await x.g.gate(s.c)).id,
+      });
+      refused(
+        await whileShiftEnds(shift.id, () =>
+          x.http('post', '/gate/found-items', leaving.token, {
+            description: 'A wallet found at the end of a shift',
+          }),
+        ),
+      );
+      expect(
+        await x.inTx(s.c, (tx) =>
+          tx.foundItem.count({ where: { shiftId: shift.id } }),
+        ),
+      ).toBe(0);
+    });
   });
 });

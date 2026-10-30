@@ -51,8 +51,10 @@ export class PermitWorkStopsService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
       await this.core.lockSelf(tx);
+      // A guard's shift FOR SHARE (ADR 0056's lock order): its end waits
+      // for the stop, or came first and the guard is refused.
       const shift =
-        side === 'guard' ? await this.shifts.requireOnDuty(tx) : null;
+        side === 'guard' ? await this.shifts.requireOnDutyLocked(tx) : null;
       const p = await this.records.lock(tx, id);
       const now = await dbNow(tx);
       if (

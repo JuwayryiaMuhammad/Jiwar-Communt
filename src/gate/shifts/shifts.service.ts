@@ -234,6 +234,20 @@ export class ShiftsService implements OnModuleInit {
   }
 
   /**
+   * The caller's open shift, if any, with its row FOR SHARE (ADR 0056's
+   * lock order), for a write a guard may also make off shift: an end in
+   * flight is waited for, and one that came first leaves them off shift.
+   */
+  async onDutyLocked(tx: TenantTxClient): Promise<DutyShift | null> {
+    const shift = await this.onDuty(tx, this.ctx.accountId);
+    if (!shift) return null;
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM guard_shifts
+       WHERE id = ${shift.id}::uuid AND ended_at IS NULL FOR SHARE`;
+    return rows.length ? shift : null;
+  }
+
+  /**
    * A zone's open shifts, locked as their end locks them, before the zone
    * itself is retired (ADR 0056's lock order: the shift, then the place).
    * A guard write in flight holds its shift FOR SHARE: the retirement

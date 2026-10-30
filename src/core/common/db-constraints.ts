@@ -869,4 +869,15 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_face_checks_probe_key: null,
   // The control room's events (ADR 0068): keyed for composite links.
   control_room_events_tenant_id_id_key: null,
+  // Guard-down alarms (ADR 0068). A device's reference is one live device
+  // (checked first: DUPLICATE_RESOURCE on deviceRef); a pairing is one open
+  // a device and a guard, under the device's row lock; a vendor's event is
+  // taken once under a lock of its own (a replay is a no-op).
+  guard_alarm_devices_tenant_id_id_key: null,
+  guard_alarm_devices_ref_key: ['deviceRef'],
+  guard_alarm_pairings_tenant_id_id_key: null,
+  guard_alarm_pairings_device_open: null,
+  guard_alarm_pairings_guard_open: null,
+  guard_alarm_events_tenant_id_id_key: null,
+  guard_alarm_events_vendor_key: null,
 };

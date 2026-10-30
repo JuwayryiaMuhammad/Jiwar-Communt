@@ -704,6 +704,103 @@
         ],
         "type": "object"
       },
+      "AlarmDeviceStatus": {
+        "enum": [
+          "active",
+          "retired"
+        ],
+        "type": "string"
+      },
+      "AlarmDeviceView": {
+        "properties": {
+          "deviceRef": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "pairing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlarmPairingView"
+              }
+            ],
+            "description": "The guard on shift wearing it; null when nobody is.",
+            "nullable": true,
+            "type": "object"
+          },
+          "retireReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlarmDeviceStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "deviceRef",
+          "label",
+          "status",
+          "retiredAt",
+          "retireReason",
+          "pairing"
+        ],
+        "type": "object"
+      },
+      "AlarmDeviceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AlarmDeviceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AlarmPairingView": {
+        "properties": {
+          "guard": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "pairedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "shiftId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "guard",
+          "shiftId",
+          "pairedAt"
+        ],
+        "type": "object"
+      },
       "AnnouncementCreatedView": {
         "properties": {
           "createdAt": {
@@ -35506,6 +35603,44 @@
         ],
         "type": "object"
       },
+      "PairAlarmDeviceDto": {
+        "properties": {
+          "deviceId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "PairedAlarmDeviceView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "pairedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "shiftId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "shiftId",
+          "pairedAt"
+        ],
+        "type": "object"
+      },
       "ParcelActorSide": {
         "enum": [
           "guard",
@@ -40217,6 +40352,10 @@
       },
       "PostShiftView": {
         "properties": {
+          "alarmPaired": {
+            "description": "The guard wears a guard-down device paired for the shift.",
+            "type": "boolean"
+          },
           "guard": {
             "$ref": "#/components/schemas/AccountRefView"
           },
@@ -40232,7 +40371,8 @@
         "required": [
           "id",
           "guard",
-          "startedAt"
+          "startedAt",
+          "alarmPaired"
         ],
         "type": "object"
       },
@@ -42625,6 +42765,26 @@
         ],
         "type": "object"
       },
+      "RegisterAlarmDeviceDto": {
+        "properties": {
+          "deviceRef": {
+            "description": "The vendor’s own id of the device. One live device each.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "deviceRef",
+          "label"
+        ],
+        "type": "object"
+      },
       "RegisterFoundItemDto": {
         "properties": {
           "description": {
@@ -43195,6 +43355,19 @@
         "required": [
           "version",
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "RenameAlarmDeviceDto": {
+        "properties": {
+          "label": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
         ],
         "type": "object"
       },
@@ -46910,6 +47083,18 @@
         "required": [
           "firstName",
           "phone"
+        ],
+        "type": "object"
+      },
+      "RetireAlarmDeviceDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `alarmDeviceRetire`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -71968,6 +72153,66 @@
           "gate-services"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/alarm-devices/pair": {
+      "post": {
+        "description": "On shift, at a gate or in a zone. Ends what the guard or the device had; ends with the shift. Its alarms raise the guard’s SOS from the post.",
+        "operationId": "GateAlarmDevicesController_pair",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairAlarmDeviceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairedAlarmDeviceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Pair a wearable for this shift",
+        "tags": [
+          "gate-devices"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/alarm-devices/unpair": {
+      "post": {
+        "operationId": "GateAlarmDevicesController_unpair",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unpair your wearable",
+        "tags": [
+          "gate-devices"
+        ],
         "x-stability": "draft"
       }
     },
@@ -104907,6 +105152,180 @@
         "summary": "Get a spending report, superseded or not",
         "tags": [
           "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/alarm-devices": {
+      "get": {
+        "operationId": "StaffAlarmDevicesController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "retired",
+                "all"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmDeviceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The wearables, and who wears each on shift",
+        "tags": [
+          "gate-devices"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "By the vendor’s own id: one live device each (409 DUPLICATE_RESOURCE on `deviceRef`).",
+        "operationId": "StaffAlarmDevicesController_register",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAlarmDeviceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmDeviceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a guard-down wearable",
+        "tags": [
+          "gate-devices"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/alarm-devices/{id}": {
+      "patch": {
+        "operationId": "StaffAlarmDevicesController_rename",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameAlarmDeviceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmDeviceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename a wearable",
+        "tags": [
+          "gate-devices"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/gate/alarm-devices/{id}/retire": {
+      "post": {
+        "description": "Once, with an `alarmDeviceRetire` code; its pairing ends. An alarm from it then reaches the control room only.",
+        "operationId": "StaffAlarmDevicesController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetireAlarmDeviceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmDeviceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retire a wearable",
+        "tags": [
+          "gate-devices"
         ],
         "x-stability": "draft"
       }

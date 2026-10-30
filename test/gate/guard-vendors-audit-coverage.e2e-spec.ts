@@ -1,9 +1,14 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { randomUUID } from 'node:crypto';
+import {
+  FAKE_ALARM_SIGNATURE_HEADER,
+  signFakeAlarm,
+} from '../../src/gate/alarms/fake-alarm-driver';
 import { FACE_ENROLLMENT_SWEEP } from '../../src/gate/face/face-enrollments';
 import { auditReaders } from '../setup/audit';
 import { GUARD_VENDORS_COVERAGE } from '../setup/audit-coverage-split';
 import { SAMPLE } from '../setup/files';
-import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { leakText } from '../setup/leak-text';
 import { securityOpsHelpers, type Who } from '../setup/security-ops';
 
@@ -151,6 +156,99 @@ describe('Audit coverage — guard vendor adapters', () => {
         metadata: { kind: 'lockdown_started', severity: 'high' },
       });
       await x.endLockdownRaw(s.manager, l.id).expect(200);
+    });
+  });
+
+  describe('guard-down alarms', () => {
+    it('guard_alarm_device.registered, .renamed, .retired; guard_alarm.paired, .unpaired, .received; guard_alarm.webhook_rejected — ids, codes, never a label', async () => {
+      const keeper = await x.supervisor(s.c);
+      const device = (
+        await x
+          .http('post', '/staff/gate/alarm-devices', keeper.token, {
+            deviceRef: `audit-${randomUUID()}`,
+            label: NAME,
+          })
+          .expect(201)
+      ).body as { id: string; deviceRef: string };
+      expect(
+        await single('guard_alarm_device.registered', device.id),
+      ).toMatchObject({ actorId: keeper.id });
+      await x
+        .http('patch', `/staff/gate/alarm-devices/${device.id}`, keeper.token, {
+          label: `${NAME} 2`,
+        })
+        .expect(200);
+      await single('guard_alarm_device.renamed', device.id);
+
+      await x
+        .http('post', '/gate/alarm-devices/pair', guard.token, {
+          deviceId: device.id,
+        })
+        .expect(200);
+      const pairing = await x.inTx(s.c, (tx) =>
+        tx.guardAlarmPairing.findFirstOrThrow({
+          where: { deviceId: device.id, endedAt: null },
+        }),
+      );
+      expect(await single('guard_alarm.paired', pairing.id)).toMatchObject({
+        actorId: guard.id,
+        metadata: { deviceId: device.id, shiftId: guard.shiftId },
+      });
+      const body = {
+        eventId: randomUUID(),
+        deviceRef: device.deviceRef,
+        kind: 'fall',
+        at: new Date().toISOString(),
+      };
+      await h
+        .http()
+        .post(`${API}/public/gate/alarms/${s.c.tenantId}`)
+        .set(FAKE_ALARM_SIGNATURE_HEADER, signFakeAlarm(body))
+        .send(body)
+        .expect(200);
+      const event = await x.inTx(s.c, (tx) =>
+        tx.guardAlarmEvent.findFirstOrThrow({
+          where: { vendorEventId: body.eventId },
+        }),
+      );
+      expect(await single('guard_alarm.received', event.id)).toMatchObject({
+        actorType: 'system',
+        metadata: {
+          kind: 'fall',
+          outcome: 'raised',
+          emergencyId: event.emergencyId,
+        },
+      });
+      await x
+        .http(
+          'post',
+          `/staff/gate/alarm-devices/${device.id}/retire`,
+          keeper.token,
+          {
+            reasonCode: 'lost',
+          },
+        )
+        .expect(200);
+      expect(
+        await single('guard_alarm_device.retired', device.id),
+      ).toMatchObject({ metadata: { reasonCode: 'lost', wasPaired: true } });
+      expect(
+        (await single('guard_alarm.unpaired', pairing.id)).metadata,
+      ).toEqual({ deviceId: device.id, reason: 'device_retired' });
+      const rows = await read.tenant(s.c.tenantId, { targetId: device.id });
+      expect(leakText(rows)).not.toContain(NAME);
+
+      await h
+        .http()
+        .post(`${API}/public/gate/alarms/${s.c.tenantId}`)
+        .set(FAKE_ALARM_SIGNATURE_HEADER, '0'.repeat(64))
+        .send(body)
+        .expect(401);
+      const rejected = (
+        await read.security({ event: 'guard_alarm.webhook_rejected' })
+      ).filter((e) => e.tenantId === s.c.tenantId);
+      expect(rejected).toHaveLength(1);
+      covered.add('guard_alarm.webhook_rejected');
     });
   });
 

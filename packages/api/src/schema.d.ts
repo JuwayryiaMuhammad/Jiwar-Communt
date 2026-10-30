@@ -2225,6 +2225,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/alarm-devices/pair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pair a wearable for this shift
+         * @description On shift, at a gate or in a zone. Ends what the guard or the device had; ends with the shift. Its alarms raise the guard’s SOS from the post.
+         */
+        post: operations["GateAlarmDevicesController_pair"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/alarm-devices/unpair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unpair your wearable */
+        post: operations["GateAlarmDevicesController_unpair"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/approval-requests": {
         parameters: {
             query?: never;
@@ -13404,6 +13441,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/gate/alarm-devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The wearables, and who wears each on shift */
+        get: operations["StaffAlarmDevicesController_list"];
+        put?: never;
+        /**
+         * Register a guard-down wearable
+         * @description By the vendor’s own id: one live device each (409 DUPLICATE_RESOURCE on `deviceRef`).
+         */
+        post: operations["StaffAlarmDevicesController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/gate/alarm-devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a wearable */
+        patch: operations["StaffAlarmDevicesController_rename"];
+        trace?: never;
+    };
+    "/api/v1/staff/gate/alarm-devices/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retire a wearable
+         * @description Once, with an `alarmDeviceRetire` code; its pairing ends. An alarm from it then reaches the control room only.
+         */
+        post: operations["StaffAlarmDevicesController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/gate/devices": {
         parameters: {
             query?: never;
@@ -20879,6 +20974,31 @@ export interface components {
             rows: components["schemas"]["AgingRowView"][];
             /** @description Every row added up. */
             totals: components["schemas"]["AgingRowView"];
+        };
+        /** @enum {string} */
+        AlarmDeviceStatus: "active" | "retired";
+        AlarmDeviceView: {
+            deviceRef: string;
+            /** Format: uuid */
+            id: string;
+            label: string;
+            /** @description The guard on shift wearing it; null when nobody is. */
+            pairing: components["schemas"]["AlarmPairingView"] | null;
+            retireReason: string | null;
+            /** Format: date-time */
+            retiredAt: string | null;
+            status: components["schemas"]["AlarmDeviceStatus"];
+        };
+        AlarmDeviceViewList: {
+            data: components["schemas"]["AlarmDeviceView"][];
+            nextCursor: string | null;
+        };
+        AlarmPairingView: {
+            guard: components["schemas"]["AccountRefView"];
+            /** Format: date-time */
+            pairedAt: string;
+            /** Format: uuid */
+            shiftId: string;
         };
         AnnouncementCreatedView: {
             /** Format: date-time */
@@ -31878,6 +31998,19 @@ export interface components {
             data: components["schemas"]["OwnFacilityBanView"][];
             nextCursor: string | null;
         };
+        PairAlarmDeviceDto: {
+            /** Format: uuid */
+            deviceId: string;
+        };
+        PairedAlarmDeviceView: {
+            /** Format: uuid */
+            id: string;
+            label: string;
+            /** Format: date-time */
+            pairedAt: string;
+            /** Format: uuid */
+            shiftId: string;
+        };
         /** @enum {string} */
         ParcelActorSide: "guard" | "resident" | "system";
         /** @enum {string} */
@@ -33386,6 +33519,8 @@ export interface components {
             body: string;
         };
         PostShiftView: {
+            /** @description The guard wears a guard-down device paired for the shift. */
+            alarmPaired: boolean;
             guard: components["schemas"]["AccountRefView"];
             /** Format: uuid */
             id: string;
@@ -34184,6 +34319,11 @@ export interface components {
             data: components["schemas"]["RefundView"][];
             nextCursor: string | null;
         };
+        RegisterAlarmDeviceDto: {
+            /** @description The vendor’s own id of the device. One live device each. */
+            deviceRef: string;
+            label: string;
+        };
         RegisterFoundItemDto: {
             description: string;
             /**
@@ -34355,6 +34495,9 @@ export interface components {
             reasonCode: string;
             /** @description The `version` the staff read (VEHICLE_CHANGED otherwise). */
             version: number;
+        };
+        RenameAlarmDeviceDto: {
+            label: string;
         };
         RenameRouteDto: {
             nameAr?: string;
@@ -35475,6 +35618,10 @@ export interface components {
              * @example +20225550100
              */
             phone: string | null;
+        };
+        RetireAlarmDeviceDto: {
+            /** @description From the closed list `alarmDeviceRetire`. */
+            reasonCode: string;
         };
         RetireAssetDto: {
             /** @enum {string} */
@@ -44384,6 +44531,46 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GateServiceView"];
                 };
+            };
+        };
+    };
+    GateAlarmDevicesController_pair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PairAlarmDeviceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairedAlarmDeviceView"];
+                };
+            };
+        };
+    };
+    GateAlarmDevicesController_unpair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -61639,6 +61826,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpendingReportView"];
+                };
+            };
+        };
+    };
+    StaffAlarmDevicesController_list: {
+        parameters: {
+            query?: {
+                status?: "active" | "retired" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlarmDeviceViewList"];
+                };
+            };
+        };
+    };
+    StaffAlarmDevicesController_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterAlarmDeviceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlarmDeviceView"];
+                };
+            };
+        };
+    };
+    StaffAlarmDevicesController_rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameAlarmDeviceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlarmDeviceView"];
+                };
+            };
+        };
+    };
+    StaffAlarmDevicesController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetireAlarmDeviceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlarmDeviceView"];
                 };
             };
         };

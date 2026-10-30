@@ -55,6 +55,103 @@ export const CONTROL_ROOM_ROUTES: Row[] = [
   },
 ];
 
+/** Guard-down wearables (ADR 0068): the management's, and a guard's pairing. */
+export const ALARM_DEVICE_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/gate/alarm-devices',
+    auth: 'tenant',
+    as: 'supervisor',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { deviceRef: '', label: '' },
+      fields: [
+        {
+          field: 'deviceRef',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+        { field: 'label', code: 'INVALID_LENGTH', params: { min: 1, max: 60 } },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/gate/alarm-devices',
+    auth: 'tenant',
+    as: 'supervisor',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'lost' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['active', 'retired', 'all'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/gate/alarm-devices/{id}',
+    auth: 'tenant',
+    as: 'supervisor',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bAlarmDeviceId }),
+      body: () => ({ label: 'Theirs' }),
+      code: 'ALARM_DEVICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { label: '' },
+      fields: [
+        { field: 'label', code: 'INVALID_LENGTH', params: { min: 1, max: 60 } },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/staff/gate/alarm-devices/{id}/retire',
+    auth: 'tenant',
+    as: 'supervisor',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bAlarmDeviceId }),
+      body: () => ({ reasonCode: 'lost' }),
+      code: 'ALARM_DEVICE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/gate/alarm-devices/pair',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({ deviceId: w.bAlarmDeviceId }),
+      code: 'ALARM_DEVICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { deviceId: 'nope' },
+      fields: [{ field: 'deviceId', code: 'INVALID_UUID' }],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/gate/alarm-devices/unpair',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: 'none',
+  },
+];
+
 /** A guard's ID scan (ADR 0068): read once, never kept. */
 export const ID_SCAN_ROUTES: Row[] = [
   {

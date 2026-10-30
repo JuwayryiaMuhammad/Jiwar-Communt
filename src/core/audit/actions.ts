@@ -2082,6 +2082,26 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'control_room_event',
   },
+  // Guard-down wearables (ADR 0068). Registered and renamed: ids only (a
+  // label is the management's words); retired: reasonCode, wasPaired.
+  'guard_alarm_device.registered': {
+    log: 'tenant',
+    target: 'guard_alarm_device',
+  },
+  'guard_alarm_device.renamed': {
+    log: 'tenant',
+    target: 'guard_alarm_device',
+  },
+  'guard_alarm_device.retired': {
+    log: 'tenant',
+    target: 'guard_alarm_device',
+  },
+  // A pairing for a shift. metadata: deviceId, shiftId (paired); deviceId,
+  // reason (unpaired: unpaired | shift_ended | repaired | device_retired).
+  'guard_alarm.paired': { log: 'tenant', target: 'guard_alarm_pairing' },
+  'guard_alarm.unpaired': { log: 'tenant', target: 'guard_alarm_pairing' },
+  // A vendor's event, as the system. metadata: kind, outcome, emergencyId.
+  'guard_alarm.received': { log: 'tenant', target: 'guard_alarm_event' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;
@@ -2132,6 +2152,9 @@ export const SECURITY_EVENTS = [
   'login.new_device',
   // The account said "not me" about it: frozen, every session ended.
   'account.not_me',
+  // A guard-down vendor's call whose signature does not hold (ADR 0068).
+  // The compound only.
+  'guard_alarm.webhook_rejected',
 ] as const;
 
 export type SecurityEventName = (typeof SECURITY_EVENTS)[number];

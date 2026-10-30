@@ -271,4 +271,114 @@ describe('The guard vendors’ tables — CHECKs, triggers and privileges', () =
       ).rejects.toThrow(/control_room_events_kind/);
     });
   });
+
+  describe('guard-down alarms', () => {
+    const deviceId = newId();
+    const device = () =>
+      `INSERT INTO guard_alarm_devices (id, tenant_id, device_ref, label, registered_by_account_id)
+       VALUES ('${deviceId}', '${tenantId}', 'schema-${deviceId}', 'Vest', '${guardId}')`;
+    const pairingId = newId();
+    const pairing = () =>
+      `INSERT INTO guard_alarm_pairings (id, tenant_id, device_id, guard_account_id, shift_id)
+       VALUES ('${pairingId}', '${tenantId}', '${deviceId}', '${guardId}', '${shiftId}')`;
+    const event = (outcome: string, extra = '') =>
+      `INSERT INTO guard_alarm_events (id, tenant_id, device_ref, vendor_event_id, kind, occurred_at, outcome${extra ? ', pairing_id, guard_account_id' : ''})
+       VALUES ('${newId()}', '${tenantId}', 'schema-${deviceId}', '${newId()}', 'panic', now(), '${outcome}'${extra})`;
+
+    it('devices and pairings are written and moved; events only inserted', async () => {
+      for (const table of ['guard_alarm_devices', 'guard_alarm_pairings'])
+        expect({ table, ...(await privileges(table)) }).toEqual({
+          table,
+          ...SELECT_INSERT_UPDATE,
+        });
+      expect(await privileges('guard_alarm_events')).toEqual({
+        select: true,
+        insert: true,
+        update: false,
+        delete: false,
+        truncate: false,
+      });
+    });
+
+    it('a device keeps its reference and is retired once, with its reason and author', async () => {
+      const retire = `UPDATE guard_alarm_devices SET retired_at = now(),
+         retired_by_account_id = '${guardId}', retire_reason = 'lost' WHERE id = '${deviceId}'`;
+      await expect(asApp(device(), retire)).resolves.toMatchObject({
+        rowCount: 1,
+      });
+      for (const sql of [
+        `UPDATE guard_alarm_devices SET device_ref = 'other' WHERE id = '${deviceId}'`,
+      ])
+        await expect(asApp(device(), sql)).rejects.toThrow(
+          /keeps its reference and is retired once/,
+        );
+      await expect(
+        asApp(
+          device(),
+          retire,
+          `UPDATE guard_alarm_devices SET retire_reason = 'broken' WHERE id = '${deviceId}'`,
+        ),
+      ).rejects.toThrow(/keeps its reference and is retired once/);
+      await expect(
+        asApp(
+          device(),
+          `UPDATE guard_alarm_devices SET retired_at = now() WHERE id = '${deviceId}'`,
+        ),
+      ).rejects.toThrow(/guard_alarm_devices_retired/);
+    });
+
+    it('one open pairing a device; it ends once, with a reason from the list', async () => {
+      await expect(
+        asApp(
+          device(),
+          pairing(),
+          `INSERT INTO guard_alarm_pairings (id, tenant_id, device_id, guard_account_id, shift_id)
+           VALUES ('${newId()}', '${tenantId}', '${deviceId}', '${guardId}', '${shiftId}')`,
+        ),
+      ).rejects.toThrow(
+        /guard_alarm_pairings_device_open|guard_alarm_pairings_guard_open/,
+      );
+      const end = (reason: string) =>
+        `UPDATE guard_alarm_pairings SET ended_at = now(), end_reason = '${reason}' WHERE id = '${pairingId}'`;
+      await expect(
+        asApp(device(), pairing(), end('unpaired')),
+      ).resolves.toMatchObject({
+        rowCount: 1,
+      });
+      await expect(
+        asApp(device(), pairing(), end('unpaired'), end('repaired')),
+      ).rejects.toThrow(/ends once/);
+      await expect(asApp(device(), pairing(), end('lost'))).rejects.toThrow(
+        /guard_alarm_pairings_end/,
+      );
+    });
+
+    it('an event says what came of it in the shape that fits, and never changes', async () => {
+      await expect(asApp(device(), event('unpaired'))).resolves.toMatchObject({
+        rowCount: 1,
+      });
+      // Raised: its pairing, guard and emergency.
+      await expect(
+        asApp(
+          device(),
+          pairing(),
+          event('raised', `, '${pairingId}', '${guardId}'`),
+        ),
+      ).rejects.toThrow(/guard_alarm_events_outcome/);
+      await expect(
+        asApp(
+          device(),
+          pairing(),
+          event('unpaired', `, '${pairingId}', '${guardId}'`),
+        ),
+      ).rejects.toThrow(/guard_alarm_events_outcome/);
+      await expect(
+        asApp(
+          device(),
+          event('unpaired'),
+          `UPDATE guard_alarm_events SET outcome = 'raised'`,
+        ),
+      ).rejects.toThrow(/permission denied|immutable/);
+    });
+  });
 });

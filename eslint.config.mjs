@@ -97,7 +97,8 @@ export default tseslint.config(
   // Finance (ADR 0046): the platform changes a compound's gateway, the
   // Paymob webhook resolves the compound from its URL, the public receipt
   // page from the code's global pointer, and the boot check and the
-  // re-encryption CLI walk every compound.
+  // re-encryption CLI walk every compound. Guard vendors (ADR 0068): a
+  // vendor's webhook resolves the compound from its URL.
   {
     files: ['**/*.ts'],
     rules: {
@@ -131,6 +132,7 @@ export default tseslint.config(
       'src/finance/gateway/platform-gateway.service.ts',
       'src/finance/gateway/gateway-keys.ts',
       'src/finance/online/paymob-webhook.service.ts',
+      'src/gate/vendors/vendor-webhook.ts',
       'src/finance/receipts-public/receipt-page.service.ts',
       'src/finance/clearances/clearance-page.service.ts',
       'src/gate/permits/works-certificate-page.service.ts',

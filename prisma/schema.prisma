@@ -9344,6 +9344,64 @@ model ControlRoomEvent {
   @@map("control_room_events")
 }
 
+/// A guard-down wearable the management registered (ADR 0068): the
+/// vendor's reference (one live per compound, a partial unique index,
+/// migration-only), a label; retired once.
+model GuardAlarmDevice {
+  id                    String    @id @db.Uuid
+  tenantId              String    @map("tenant_id") @db.Uuid
+  deviceRef             String    @map("device_ref")
+  label                 String
+  registeredByAccountId String    @map("registered_by_account_id") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  retiredAt             DateTime? @map("retired_at") @db.Timestamptz(3)
+  retiredByAccountId    String?   @map("retired_by_account_id") @db.Uuid
+  retireReason          String?   @map("retire_reason")
+
+  @@unique([tenantId, id])
+  @@map("guard_alarm_devices")
+}
+
+/// A device paired to a guard for a shift (ADR 0068): one open a device
+/// and one a guard (partial unique indexes, migration-only); ends once.
+model GuardAlarmPairing {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  deviceId       String    @map("device_id") @db.Uuid
+  guardAccountId String    @map("guard_account_id") @db.Uuid
+  shiftId        String    @map("shift_id") @db.Uuid
+  pairedAt       DateTime  @default(now()) @map("paired_at") @db.Timestamptz(3)
+  endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
+  /// unpaired | shift_ended | repaired | device_retired.
+  endReason      String?   @map("end_reason")
+
+  @@unique([tenantId, id])
+  @@map("guard_alarm_pairings")
+}
+
+/// An event a vendor's device sent (ADR 0068), once per (device, vendor
+/// event), with what came of it. Immutable.
+model GuardAlarmEvent {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  deviceRef      String   @map("device_ref")
+  vendorEventId  String   @map("vendor_event_id")
+  /// fall | no_motion | panic | cancelled.
+  kind           String
+  occurredAt     DateTime @map("occurred_at") @db.Timestamptz(3)
+  receivedAt     DateTime @default(now()) @map("received_at") @db.Timestamptz(3)
+  deviceId       String?  @map("device_id") @db.Uuid
+  pairingId      String?  @map("pairing_id") @db.Uuid
+  guardAccountId String?  @map("guard_account_id") @db.Uuid
+  emergencyId    String?  @map("emergency_id") @db.Uuid
+  /// raised | joined | cancel_requested | cancel_unmatched | unpaired.
+  outcome        String
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, deviceRef, vendorEventId], map: "guard_alarm_events_vendor_key")
+  @@map("guard_alarm_events")
+}
+
 /// A guard's face check at the gate (ADR 0068): the probe, then what the
 /// vendor answered — never its score. The probe goes after a day, or 30
 /// days after a possible match.

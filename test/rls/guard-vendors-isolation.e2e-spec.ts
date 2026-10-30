@@ -14,6 +14,7 @@ interface Side {
   gateId: string;
   shiftId: string;
   entryId: string;
+  deviceId: string;
 }
 
 /**
@@ -33,7 +34,63 @@ interface Table {
  * other tenant table, linked with composite keys. The RLS coverage test
  * checks the policies exist; this suite checks they hold, table by table.
  */
+let devices = 0;
+
+/** A wearable of a reference of its own: one live device a reference is never in the way. */
+async function alarmDevice(tx: TenantTxClient, own: Side, link: Side) {
+  const id = newId();
+  await tx.guardAlarmDevice.create({
+    data: {
+      id,
+      tenantId: own.tenantId,
+      deviceRef: `iso-${++devices}`,
+      label: 'Vest',
+      registeredByAccountId: link.accountId,
+    },
+  });
+  return id;
+}
+
 const TABLES: Table[] = [
+  { table: 'guard_alarm_devices', insert: alarmDevice },
+  {
+    table: 'guard_alarm_pairings',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      // Ended: one open a device and a guard is never in the way.
+      await tx.guardAlarmPairing.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          deviceId: link.deviceId,
+          guardAccountId: link.accountId,
+          shiftId: link.shiftId,
+          endedAt: new Date(),
+          endReason: 'unpaired',
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'guard_alarm_events',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.guardAlarmEvent.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          deviceRef: `iso-event-${id}`,
+          vendorEventId: id,
+          kind: 'panic',
+          occurredAt: new Date(),
+          deviceId: link.deviceId,
+          outcome: 'unpaired',
+        },
+      });
+      return id;
+    },
+  },
   {
     table: 'control_room_events',
     insert: async (tx, own, link) => {
@@ -111,6 +168,7 @@ describe('RLS isolation — the guard vendor adapters (ADR 0068)', () => {
       gateId: '',
       shiftId: '',
       entryId: '',
+      deviceId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -123,6 +181,7 @@ describe('RLS isolation — the guard vendor adapters (ADR 0068)', () => {
         tenantId,
         createdById: s.accountId,
       });
+      s.deviceId = await alarmDevice(tx, s, s);
     });
     return s;
   };

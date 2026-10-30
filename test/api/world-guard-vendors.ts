@@ -10,6 +10,8 @@ export interface GuardVendorsWorld {
   bFaceCheckId: string;
   /** A control room event of B's (a lockdown's, written directly). */
   bControlRoomEventId: string;
+  /** A guard-down wearable B's supervisor registered (written directly). */
+  bAlarmDeviceId: string;
 }
 
 export async function guardVendorsWorld(
@@ -19,6 +21,7 @@ export async function guardVendorsWorld(
 ): Promise<GuardVendorsWorld> {
   const bFaceCheckId = newId();
   const bControlRoomEventId = newId();
+  const bAlarmDeviceId = newId();
   await helpers.asManager(b, () =>
     h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
       await tx.gateFaceCheck.create({
@@ -42,7 +45,16 @@ export async function guardVendorsWorld(
           gateId: b.gateId,
         },
       });
+      await tx.guardAlarmDevice.create({
+        data: {
+          id: bAlarmDeviceId,
+          tenantId: b.tenantId,
+          deviceRef: `b-${bAlarmDeviceId}`,
+          label: 'B vest',
+          registeredByAccountId: b.ids.supervisor,
+        },
+      });
     }),
   );
-  return { bFaceCheckId, bControlRoomEventId };
+  return { bFaceCheckId, bControlRoomEventId, bAlarmDeviceId };
 }

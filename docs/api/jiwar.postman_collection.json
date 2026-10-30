@@ -15327,6 +15327,222 @@
     {
       "item": [
         {
+          "name": "Pair a wearable for this shift",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"deviceId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `deviceId` | string (uuid) | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "alarm-devices",
+                "pair"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/alarm-devices/pair"
+            }
+          }
+        },
+        {
+          "name": "Unpair your wearable",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "alarm-devices",
+                "unpair"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/alarm-devices/unpair"
+            }
+          }
+        },
+        {
+          "name": "The wearables, and who wears each on shift",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "alarm-devices"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/alarm-devices"
+            }
+          }
+        },
+        {
+          "name": "Register a guard-down wearable",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"deviceRef\": \"\",\n  \"label\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `deviceRef` | string | yes | The vendor’s own id of the device. One live device each. |\n| `label` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "alarm-devices"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/alarm-devices"
+            }
+          }
+        },
+        {
+          "name": "Rename a wearable",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"label\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `label` | string | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "alarm-devices",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/alarm-devices/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retire a wearable",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `alarmDeviceRetire`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "gate",
+                "alarm-devices",
+                ":id",
+                "retire"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/gate/alarm-devices/:id/retire",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "gate-devices"
+    },
+    {
+      "item": [
+        {
           "name": "Answer the gate's request",
           "request": {
             "body": {

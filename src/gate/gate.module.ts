@@ -175,6 +175,15 @@ import { FaceChecksService } from './face/face-checks.service';
 import { faceDriverProvider } from './face/face-driver.provider';
 import { FaceEnrollments } from './face/face-enrollments';
 import { ControlRoom } from './control-room/control-room';
+import { alarmDriverProvider } from './alarms/alarm-driver.provider';
+import {
+  GateAlarmDevicesController,
+  StaffAlarmDevicesController,
+} from './alarms/alarm-devices.controller';
+import { AlarmDevicesService } from './alarms/alarm-devices.service';
+import { GuardAlarmsWebhookController } from './alarms/guard-alarms.controller';
+import { GuardAlarmsService } from './alarms/guard-alarms.service';
+import { VendorWebhooks } from './vendors/vendor-webhook';
 import { ControlRoomController } from './control-room/control-room.controller';
 import { controlRoomDriverProvider } from './control-room/control-room-driver.provider';
 import { ControlRoomService } from './control-room/control-room.service';
@@ -413,6 +422,10 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     GateIdScansController,
     // The control room (ADR 0068).
     ControlRoomController,
+    // Guard-down alarms (ADR 0068).
+    StaffAlarmDevicesController,
+    GateAlarmDevicesController,
+    GuardAlarmsWebhookController,
     GateIncidentsController,
     TechnicianIncidentsController,
     StaffIncidentsController,
@@ -560,6 +573,11 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     controlRoomDriverProvider,
     ControlRoom,
     ControlRoomService,
+    // Guard-down alarms (ADR 0068), and the vendors' webhooks.
+    VendorWebhooks,
+    alarmDriverProvider,
+    AlarmDevicesService,
+    GuardAlarmsService,
     IncidentsService,
     IncidentLifecycle,
     IncidentExportSections,

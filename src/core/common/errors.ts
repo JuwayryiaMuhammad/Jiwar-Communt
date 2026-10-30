@@ -1573,6 +1573,9 @@ export const ErrorCode = {
   CONTROL_ROOM_EVENT_NOT_FOUND: 'CONTROL_ROOM_EVENT_NOT_FOUND',
   /** Acknowledged once: the first wins (409, params.acknowledgedAt). */
   CONTROL_ROOM_EVENT_ACKNOWLEDGED: 'CONTROL_ROOM_EVENT_ACKNOWLEDGED',
+  ALARM_DEVICE_NOT_FOUND: 'ALARM_DEVICE_NOT_FOUND',
+  /** Retired: it is neither renamed, paired nor retired again (409). */
+  ALARM_DEVICE_RETIRED: 'ALARM_DEVICE_RETIRED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

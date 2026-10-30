@@ -218,6 +218,9 @@ describe('audit catalog', () => {
         'face_check',
         'face_enrollment',
         'control_room_event',
+        'guard_alarm_device',
+        'guard_alarm_pairing',
+        'guard_alarm_event',
       ]).toContain(def.target);
     }
   });

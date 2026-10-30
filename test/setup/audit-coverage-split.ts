@@ -898,4 +898,11 @@ export const GUARD_VENDORS_COVERAGE: readonly string[] = [
   'face_enrollment.removed',
   'gate.id_scanned',
   'control_room_event.acknowledged',
+  'guard_alarm_device.registered',
+  'guard_alarm_device.renamed',
+  'guard_alarm_device.retired',
+  'guard_alarm.paired',
+  'guard_alarm.unpaired',
+  'guard_alarm.received',
+  'guard_alarm.webhook_rejected',
 ];

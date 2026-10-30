@@ -933,4 +933,14 @@ export const REASON_CODES = {
     'paid_otherwise',
     'other',
   ],
+  // Guard vendor adapters (ADR 0068): why a guard-down wearable is retired,
+  // and why a guard calls a household from the gate.
+  alarmDeviceRetire: ['lost', 'broken', 'replaced', 'returned', 'other'],
+  gateCallReason: [
+    'visitor_at_gate',
+    'delivery_at_gate',
+    'worker_at_gate',
+    'request_unanswered',
+    'other',
+  ],
 } as const;

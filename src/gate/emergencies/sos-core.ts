@@ -55,14 +55,21 @@ export class SosCore {
     private readonly escalation: EmergencyEscalation,
   ) {}
 
-  /** The open one at `origin`, or a new one: under the caller's locks. */
+  /**
+   * The open one at `origin`, or a new one: under the caller's locks.
+   * `reporterId` is who raised it — the caller's account, or, for a
+   * guard-down wearable's alarm (ADR 0068, no account in the request), the
+   * paired guard's: they are recorded as its reporter, never told of it,
+   * and its notices go out in their name.
+   */
   async raiseLocked(
     tx: TenantTxClient,
     origin: SosOrigin,
     type: EmergencyType,
     resource: string,
+    reporterId: string = this.ctx.accountId,
   ): Promise<{ record: EmergencyRecord; created: boolean }> {
-    const me = this.ctx.accountId;
+    const me = reporterId;
     const where =
       origin.kind === 'post'
         ? origin.gateId
@@ -147,12 +154,15 @@ export class SosCore {
    * yet to everyone who was. It stays open: a responder or the management
    * resolves it (`POST /gate/emergencies/:id/resolve`). Asked again, it is
    * the same request, told once. The caller holds its account's lock and
-   * the emergency's (FOR UPDATE).
+   * the emergency's (FOR UPDATE). `reporterId` sends the notices: the
+   * caller, or, for a guard-down wearable's `cancelled` (ADR 0068, no
+   * account in the request), the paired guard.
    */
   async requestCancelLocked(
     tx: TenantTxClient,
     e: Emergency,
     reason: string | null,
+    reporterId: string = this.ctx.accountId,
   ): Promise<EmergencyRecord> {
     if (!OPEN_EMERGENCY.includes(e.status)) throw emergencyClosed(e.status);
     if (e.cancelRequestedAt) return this.records.load(tx, e);
@@ -178,7 +188,7 @@ export class SosCore {
       'emergency.cancel_requested',
       e.id,
       {},
-      this.ctx.accountId,
+      reporterId,
     );
     return this.records.load(tx, asked);
   }

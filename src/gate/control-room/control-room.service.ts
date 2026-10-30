@@ -27,7 +27,13 @@ export interface PostRead {
   id: string;
   nameEn: string;
   nameAr: string | null;
-  shift: { id: string; guard: Person; startedAt: Date } | null;
+  shift: {
+    id: string;
+    guard: Person;
+    startedAt: Date;
+    /** Wearing a guard-down device paired for the shift. */
+    alarmPaired: boolean;
+  } | null;
   lockedDown: boolean;
   openExceptions: number;
   openEmergencies: number;
@@ -150,6 +156,14 @@ export class ControlRoomService {
         },
         select: { originGateId: true, originPlaceId: true },
       });
+      const paired = new Set(
+        (
+          await tx.guardAlarmPairing.findMany({
+            where: { endedAt: null, shiftId: { in: shifts.map((s) => s.id) } },
+            select: { shiftId: true },
+          })
+        ).map((p) => p.shiftId),
+      );
       const zoneIds = [
         ...new Set(shifts.flatMap((s) => (s.placeId ? [s.placeId] : []))),
       ];
@@ -176,6 +190,7 @@ export class ControlRoomService {
               id: s.id,
               guard: people.get(s.guardAccountId)!,
               startedAt: s.startedAt,
+              alarmPaired: paired.has(s.id),
             }
           : null;
       };

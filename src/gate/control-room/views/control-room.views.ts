@@ -73,6 +73,11 @@ class PostShiftView {
   guard: AccountRefView;
   @ApiProperty({ type: String, format: 'date-time' })
   startedAt: Date;
+  @ApiProperty({
+    type: Boolean,
+    description: 'The guard wears a guard-down device paired for the shift.',
+  })
+  alarmPaired: boolean;
 }
 
 /** A post at a glance (ADR 0068): a gate, or a zone with a guard on duty. */
@@ -108,6 +113,7 @@ export class ControlRoomPostView {
             id: p.shift.id,
             guard: accountRef(p.shift.guard),
             startedAt: p.shift.startedAt,
+            alarmPaired: p.shift.alarmPaired,
           }
         : null,
       lockedDown: p.lockedDown,

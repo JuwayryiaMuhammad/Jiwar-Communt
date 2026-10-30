@@ -231,6 +231,9 @@ export const REASON_CODES = {
   planRequestDecline: ['amount_too_small', 'too_many_months', 'payment_history', 'other'],
   collectorVisitFail: ['not_home', 'refused', 'no_cash', 'no_access', 'other'],
   collectorVisitCancel: ['resident_asked', 'no_collector', 'paid_otherwise', 'other'],
+  // Guard vendor adapters (ADR 0068).
+  alarmDeviceRetire: ['lost', 'broken', 'replaced', 'returned', 'other'],
+  gateCallReason: ['visitor_at_gate', 'delivery_at_gate', 'worker_at_gate', 'request_unanswered', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

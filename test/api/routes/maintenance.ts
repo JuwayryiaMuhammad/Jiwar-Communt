@@ -1037,7 +1037,7 @@ const visitWindow = () => ({
 });
 
 const WINDOW_INVALID: Row['invalid'] = {
-  body: { startsAt: 'tomorrow' },
+  body: { startsAt: '2099-02-30T08:00:00Z' },
   fields: [
     { field: 'startsAt', code: 'INVALID_FORMAT' },
     { field: 'endsAt', code: 'FIELD_REQUIRED' },

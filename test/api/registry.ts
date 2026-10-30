@@ -38,8 +38,11 @@ export interface Row {
    * Input that fails validation, and the exact field errors. A day the
    * route takes is sent as one shaped right that does not exist (2026-02-30,
    * 2026-04-31, 2027-02-29, 2026-13-01): INVALID_FORMAT, never a 500 and
-   * never stored rolled over to the next month. `fields` come in the DTO's
-   * order: its own fields, then the ones it inherits.
+   * never stored rolled over to the next month. Each module that takes an
+   * instant has a row sending one whose day does not exist
+   * (2099-02-30T08:00:00Z, 2099-04-31T10:00:00+03:00, 2027-02-29T09:00:00Z),
+   * refused the same way. `fields` come in the DTO's order: its own fields,
+   * then the ones it inherits.
    */
   invalid:
     | {

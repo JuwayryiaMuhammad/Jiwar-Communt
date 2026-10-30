@@ -63,11 +63,12 @@ export const STAFF_BOARD_ROUTES: Row[] = [
     invalid: {
       body: {
         seats: 99,
-        endsAt: '2099-01-01T00:00:00.000Z',
+        endsAt: '2027-02-29T09:00:00Z',
         members: [{ accountId: 'x', role: 'king' }],
       },
       fields: [
         { field: 'seats', code: 'INVALID_NUMBER', params: { min: 3, max: 15 } },
+        { field: 'endsAt', code: 'INVALID_FORMAT' },
         { field: 'members.0.accountId', code: 'INVALID_UUID' },
         { field: 'members.0.role', code: 'INVALID_VALUE' },
       ],
@@ -223,13 +224,18 @@ export const GOVERNANCE_POLL_ROUTES: Row[] = [
     denied: 'owner',
     foreign: 'none',
     invalid: {
-      body: { ...pollBody, quorumPct: 0 },
+      body: {
+        ...pollBody,
+        quorumPct: 0,
+        closesAt: '2099-04-31T10:00:00+03:00',
+      },
       fields: [
         {
           field: 'quorumPct',
           code: 'INVALID_NUMBER',
           params: { min: 1, max: 100 },
         },
+        { field: 'closesAt', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -427,13 +433,18 @@ export const GOVERNANCE_ELECTION_ROUTES: Row[] = [
     denied: 'owner',
     foreign: 'none',
     invalid: {
-      body: { ...electionBody, termMonths: 99 },
+      body: {
+        ...electionBody,
+        termMonths: 99,
+        votingClosesAt: '2099-02-30T08:00:00Z',
+      },
       fields: [
         {
           field: 'termMonths',
           code: 'INVALID_NUMBER',
           params: { min: 6, max: 60 },
         },
+        { field: 'votingClosesAt', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,

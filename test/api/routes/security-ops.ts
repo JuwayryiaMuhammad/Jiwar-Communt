@@ -135,13 +135,19 @@ export const BLOCKLIST_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      body: { kind: 'ban', subject: 'car', reasonCode: 'other' },
+      body: {
+        kind: 'ban',
+        subject: 'car',
+        reasonCode: 'other',
+        expiresAt: '2027-02-29T09:00:00Z',
+      },
       fields: [
         {
           field: 'subject',
           code: 'INVALID_VALUE',
           params: { allowed: ['plate', 'person'] },
         },
+        { field: 'expiresAt', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -311,7 +317,7 @@ export const INCIDENT_ROUTES: Row[] = [
         type: 'riot',
         severity: 'low',
         unitCode: 'A1',
-        occurredAt: '2026-10-01T10:00:00Z',
+        occurredAt: '2027-02-29T09:00:00Z',
         description: 'x',
       },
       fields: [
@@ -330,6 +336,7 @@ export const INCIDENT_ROUTES: Row[] = [
             ],
           },
         },
+        { field: 'occurredAt', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,

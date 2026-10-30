@@ -318,8 +318,8 @@ export const PARKING_ROUTES: Row[] = [
       body: {
         areaId: 'x',
         visitorName: 'Guest',
-        startsAt: 'now',
-        endsAt: 'later',
+        startsAt: '2027-02-29T09:00:00Z',
+        endsAt: '2099-02-30T08:00:00Z',
       },
       fields: [
         { field: 'areaId', code: 'INVALID_UUID' },

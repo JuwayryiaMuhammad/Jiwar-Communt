@@ -85,7 +85,7 @@ export const ROSTER_ROUTES: Row[] = [
     invalid: {
       body: {
         guardId: 'guard-1',
-        startsAt: 'soon',
+        startsAt: '2027-02-29T09:00:00Z',
         endsAt: '2026-11-01T10:00:00Z',
       },
       fields: [
@@ -309,10 +309,15 @@ export const TASK_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      body: { kind: 'patrol', gateId: 'gate-1' },
+      body: {
+        kind: 'patrol',
+        gateId: 'gate-1',
+        dueAt: '2099-04-31T10:00:00+03:00',
+      },
       fields: [
         { field: 'kind', code: 'INVALID_VALUE' },
         { field: 'gateId', code: 'INVALID_UUID' },
+        { field: 'dueAt', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -675,7 +680,11 @@ export const FOUND_ITEM_ROUTES: Row[] = [
     denied: 'manager',
     foreign: 'none',
     invalid: {
-      body: { description: '', placeId: 'place-1' },
+      body: {
+        description: '',
+        placeId: 'place-1',
+        foundAt: '2099-04-31T10:00:00+03:00',
+      },
       fields: [
         {
           field: 'description',
@@ -683,6 +692,7 @@ export const FOUND_ITEM_ROUTES: Row[] = [
           params: { min: 1, max: 500 },
         },
         { field: 'placeId', code: 'INVALID_UUID' },
+        { field: 'foundAt', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,
@@ -738,7 +748,11 @@ export const FOUND_ITEM_ROUTES: Row[] = [
     denied: 'guard',
     foreign: 'none',
     invalid: {
-      body: { description: '', placeId: 'place-1' },
+      body: {
+        description: '',
+        placeId: 'place-1',
+        foundAt: '2099-04-31T10:00:00+03:00',
+      },
       fields: [
         {
           field: 'description',
@@ -746,6 +760,7 @@ export const FOUND_ITEM_ROUTES: Row[] = [
           params: { min: 1, max: 500 },
         },
         { field: 'placeId', code: 'INVALID_UUID' },
+        { field: 'foundAt', code: 'INVALID_FORMAT' },
       ],
     },
     noStore: true,

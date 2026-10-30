@@ -484,7 +484,13 @@ export const OUTAGE_ROUTES: Row[] = [
       code: 'UTILITY_OUTAGE_NOT_FOUND',
     },
     invalid: {
-      body: { scope: 'street', startsAt: IN_A_WEEK.slice(0, 19), note: '' },
+      body: {
+        scope: 'street',
+        startsAt: IN_A_WEEK.slice(0, 19),
+        // A day that does not exist, offset and all.
+        endsAt: '2027-02-29T09:00:00Z',
+        note: '',
+      },
       fields: [
         {
           field: 'scope',
@@ -492,6 +498,7 @@ export const OUTAGE_ROUTES: Row[] = [
           params: { allowed: ['compound', 'buildings'] },
         },
         { field: 'startsAt', code: 'INVALID_FORMAT' },
+        { field: 'endsAt', code: 'INVALID_FORMAT' },
         { field: 'note', code: 'INVALID_LENGTH', params: { min: 1, max: 500 } },
       ],
     },

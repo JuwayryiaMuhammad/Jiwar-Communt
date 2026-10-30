@@ -34,7 +34,11 @@ export const DELEGATIONS_ROUTES: Row[] = [
       code: 'UNIT_NOT_FOUND',
     },
     invalid: {
-      body: { delegateAccountId: 'x', scopes: [], expiresAt: 'soon' },
+      body: {
+        delegateAccountId: 'x',
+        scopes: [],
+        expiresAt: '2099-02-30T08:00:00Z',
+      },
       fields: [
         { field: 'delegateAccountId', code: 'INVALID_UUID' },
         { field: 'scopes', code: 'INVALID_LENGTH', params: { min: 1 } },

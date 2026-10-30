@@ -239,7 +239,7 @@ export const ANNOUNCEMENT_ROUTES: Row[] = [
       code: 'ANNOUNCEMENT_NOT_FOUND',
     },
     invalid: {
-      body: { publishAt: 'soon' },
+      body: { publishAt: '2099-02-30T08:00:00Z' },
       fields: [{ field: 'publishAt', code: 'INVALID_FORMAT' }],
     },
     noStore: true,
@@ -363,7 +363,7 @@ export const EVENT_ROUTES: Row[] = [
         titleEn: 'World',
         descriptionEn: 'An event of the world.',
         place: '',
-        startsAt: 'tomorrow',
+        startsAt: '2099-04-31T10:00:00+03:00',
         endsAt: '2027-01-01T10:00:00.000Z',
         capacity: 0,
       },
@@ -568,7 +568,7 @@ export const POLL_ROUTES: Row[] = [
       body: {
         questionEn: 'World?',
         options: [{ labelEn: 'Only one' }],
-        closesAt: 'later',
+        closesAt: '2027-02-29T09:00:00Z',
       },
       fields: [
         {

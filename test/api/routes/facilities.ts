@@ -185,8 +185,11 @@ export const BOOKING_ROUTES: Row[] = [
       body: (w) => bookingBody(w.aFacilityId),
     },
     invalid: {
-      body: { facilityId: 'x', startsAt: '2031-01-01T10:00:00Z' },
-      fields: [{ field: 'facilityId', code: 'INVALID_UUID' }],
+      body: { facilityId: 'x', startsAt: '2099-02-30T08:00:00Z' },
+      fields: [
+        { field: 'facilityId', code: 'INVALID_UUID' },
+        { field: 'startsAt', code: 'INVALID_FORMAT' },
+      ],
     },
     noStore: true,
   },
@@ -372,7 +375,7 @@ export const CLOSURE_ROUTES: Row[] = [
     },
     invalid: {
       body: {
-        startsAt: 'soon',
+        startsAt: '2099-04-31T10:00:00+03:00',
         endsAt: at(day(30), 11).toISOString(),
         reasonCode: 'other',
       },

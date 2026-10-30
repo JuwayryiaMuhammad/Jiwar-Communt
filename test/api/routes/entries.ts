@@ -35,7 +35,12 @@ export const ENTRIES_ROUTES: Row[] = [
       code: 'GATE_SUBJECT_NOT_FOUND',
     },
     invalid: {
-      body: { subjectType: 'car', subjectId: 'x', direction: 'up' },
+      body: {
+        subjectType: 'car',
+        subjectId: 'x',
+        direction: 'up',
+        occurredAt: '2099-02-30T08:00:00Z',
+      },
       fields: [
         {
           field: 'subjectType',
@@ -58,6 +63,7 @@ export const ENTRIES_ROUTES: Row[] = [
           code: 'INVALID_VALUE',
           params: { allowed: ['in', 'out'] },
         },
+        { field: 'occurredAt', code: 'INVALID_FORMAT' },
       ],
     },
   },

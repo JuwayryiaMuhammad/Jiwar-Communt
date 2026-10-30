@@ -27,8 +27,8 @@ export const VISITORS_ROUTES: Row[] = [
       body: {
         kind: 'daily',
         partySize: 0,
-        validFrom: 'soon',
-        validUntil: 'later',
+        validFrom: '2099-02-30T08:00:00Z',
+        validUntil: '2099-04-31T10:00:00+03:00',
       },
       fields: [
         {

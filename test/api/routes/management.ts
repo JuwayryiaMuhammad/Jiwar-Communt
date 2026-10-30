@@ -325,7 +325,7 @@ export const MANAGEMENT_RESIDENT_ROUTES: Row[] = [
     denied: 'manager',
     foreign: foreignRequest(SLOT),
     invalid: {
-      body: { startsAt: 'soon', mode: 'video' },
+      body: { startsAt: '2027-02-29T09:00:00Z', mode: 'video' },
       fields: [
         { field: 'startsAt', code: 'INVALID_FORMAT' },
         { field: 'mode', code: 'INVALID_VALUE', params: { allowed: MODES } },
@@ -567,7 +567,7 @@ export const MANAGEMENT_STAFF_ROUTES: Row[] = [
     denied: 'guard',
     foreign: foreignRequest(SLOT),
     invalid: {
-      body: { startsAt: 'soon', mode: 'video' },
+      body: { startsAt: '2027-02-29T09:00:00Z', mode: 'video' },
       fields: [
         { field: 'startsAt', code: 'INVALID_FORMAT' },
         { field: 'mode', code: 'INVALID_VALUE', params: { allowed: MODES } },

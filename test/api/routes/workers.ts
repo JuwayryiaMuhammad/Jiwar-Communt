@@ -175,7 +175,11 @@ export const WORKERS_ROUTES: Row[] = [
       code: 'UNIT_NOT_FOUND',
     },
     invalid: {
-      body: { ...workerBody(), capacity: 'gardener', validUntil: 'later' },
+      body: {
+        ...workerBody(),
+        capacity: 'gardener',
+        validUntil: '2099-04-31T10:00:00+03:00',
+      },
       fields: [
         {
           field: 'capacity',

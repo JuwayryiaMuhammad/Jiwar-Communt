@@ -184,7 +184,7 @@ export const PERMIT_ROUTES: Row[] = [
     },
     invalid: {
       body: {
-        startsAt: 'tonight',
+        startsAt: '2099-02-30T08:00:00Z',
         endsAt: '2099-01-05T20:00:00.000Z',
         guests: [],
       },

@@ -80,7 +80,7 @@ export const ADMIN_ROUTES: Row[] = [
     denied: 'owner',
     foreign: 'none',
     invalid: {
-      query: { targetId: 'x', to: 'soon' },
+      query: { targetId: 'x', to: '2027-02-29T09:00:00Z' },
       fields: [
         { field: 'targetId', code: 'INVALID_UUID' },
         { field: 'to', code: 'INVALID_FORMAT' },

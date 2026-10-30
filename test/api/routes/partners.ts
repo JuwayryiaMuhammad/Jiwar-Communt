@@ -534,7 +534,10 @@ export const PARTNER_REQUEST_ROUTES: Row[] = [
       body: () => WINDOW(),
     },
     invalid: {
-      body: { windowStartsAt: 'soon', windowEndsAt: WINDOW().windowEndsAt },
+      body: {
+        windowStartsAt: '2099-04-31T10:00:00+03:00',
+        windowEndsAt: WINDOW().windowEndsAt,
+      },
       fields: [{ field: 'windowStartsAt', code: 'INVALID_FORMAT' }],
     },
     noStore: true,

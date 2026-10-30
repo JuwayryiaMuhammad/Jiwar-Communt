@@ -1161,14 +1161,16 @@ export const FIELD_ROUTES: Row[] = [
       code: 'ASSET_NOT_FOUND',
     },
     invalid: {
-      body: { readings: [] },
-      fields: [
-        {
-          field: 'readings',
-          code: 'INVALID_LENGTH',
-          params: { min: 1, max: 20 },
-        },
-      ],
+      body: {
+        readings: [
+          {
+            metricKey: 'pressure',
+            value: '2.5',
+            occurredAt: '2099-02-30T08:00:00Z',
+          },
+        ],
+      },
+      fields: [{ field: 'readings.0.occurredAt', code: 'INVALID_FORMAT' }],
     },
   },
   {

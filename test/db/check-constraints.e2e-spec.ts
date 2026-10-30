@@ -2372,6 +2372,29 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'retire_reason is tested IS NULL first, and its IS NULL is paired with retired_at; active is NOT NULL',
   },
+  readiness_programs_kind_known: {},
+  readiness_programs_title_length: {},
+  readiness_programs_window: {},
+  readiness_programs_closed_shape: {},
+  readiness_programs_not_self: {
+    guarded: 'copied_from_id IS NULL is tested first',
+  },
+  readiness_items_kind_known: {},
+  readiness_items_title_length: {},
+  readiness_items_kind_shape: {},
+  readiness_items_estimate_range: {
+    guarded: 'estimate_amount IS NULL is tested first',
+  },
+  readiness_items_state_shape: {},
+  readiness_items_decision_known: {
+    guarded: 'decision IS NULL is tested first',
+  },
+  readiness_items_cancel_reason_known: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  readiness_items_not_self: {
+    guarded: 'copied_from_id IS NULL is tested first',
+  },
 };
 
 interface Check {

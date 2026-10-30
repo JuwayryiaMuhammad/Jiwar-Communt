@@ -1982,6 +1982,32 @@ export const AUDIT_ACTIONS = {
   },
   'utility_outage.ended': { log: 'tenant', target: 'utility_outage' },
   'utility_outage.cancelled': { log: 'tenant', target: 'utility_outage' },
+  // Readiness (ADR 0067): kinds, days, ids, amounts and codes. A title is
+  // the compound's own words: recorded as changed only.
+  'readiness_program.created': {
+    log: 'tenant',
+    target: 'readiness_program',
+    sensitive: ['title'],
+  },
+  'readiness_program.updated': {
+    log: 'tenant',
+    target: 'readiness_program',
+    sensitive: ['title'],
+  },
+  'readiness_program.closed': { log: 'tenant', target: 'readiness_program' },
+  'readiness_program.copied': { log: 'tenant', target: 'readiness_program' },
+  'readiness_item.created': {
+    log: 'tenant',
+    target: 'readiness_item',
+    sensitive: ['title'],
+  },
+  'readiness_item.updated': {
+    log: 'tenant',
+    target: 'readiness_item',
+    sensitive: ['title'],
+  },
+  'readiness_item.done': { log: 'tenant', target: 'readiness_item' },
+  'readiness_item.cancelled': { log: 'tenant', target: 'readiness_item' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

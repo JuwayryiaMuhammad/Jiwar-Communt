@@ -6272,6 +6272,162 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/readiness/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change an open item’s title, owner, day or estimate */
+        patch: operations["ReadinessItemsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/readiness/items/{itemId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call an item off */
+        post: operations["ReadinessItemsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/readiness/items/{itemId}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark an item done; a contract review with its decision */
+        post: operations["ReadinessItemsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/readiness/programs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the readiness programs, latest start first */
+        get: operations["ReadinessProgramsController_list"];
+        put?: never;
+        /** Start a readiness program */
+        post: operations["ReadinessProgramsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/readiness/programs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A readiness program, with its readiness */
+        get: operations["ReadinessProgramsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change an open program’s title or days */
+        patch: operations["ReadinessProgramsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/readiness/programs/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a program for good */
+        post: operations["ReadinessProgramsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/readiness/programs/{id}/contracts-due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The maintenance contracts that end by the program’s last day, with their reviews */
+        get: operations["ReadinessProgramsController_contractsDue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/readiness/programs/{id}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy a program to a new start, every day moved alike */
+        post: operations["ReadinessProgramsController_copy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/readiness/programs/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A program’s items, by due day */
+        get: operations["ReadinessProgramsController_items"];
+        put?: never;
+        /** Add an item to an open program */
+        post: operations["ReadinessProgramsController_createItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/replacement-recommendations": {
         parameters: {
             query?: never;
@@ -14168,6 +14324,40 @@ export interface paths {
          * @description The guard applies the new rules from the next entry; permits already approved keep their own dates and hours.
          */
         patch: operations["PermitSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/readiness-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My open readiness items, by due day */
+        get: operations["OwnReadinessItemsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/readiness-items/{itemId}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark my item done; a contract review with its decision */
+        post: operations["OwnReadinessItemsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/refunds": {
@@ -22527,6 +22717,23 @@ export interface components {
             /** @description Every asset it covers from now on. */
             assetIds: string[];
         };
+        ContractDueView: {
+            code: string;
+            /** Format: uuid */
+            contractId: string;
+            /** Format: date */
+            endsOn: string;
+            /**
+             * Format: uuid
+             * @description The program’s review of it, when there is one.
+             */
+            itemId: string | null;
+            kind: string;
+        };
+        ContractDueViewList: {
+            data: components["schemas"]["ContractDueView"][];
+            nextCursor: string | null;
+        };
         ContractReadView: {
             /** Format: date-time */
             createdAt: string;
@@ -22562,6 +22769,8 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
+        /** @enum {string} */
+        ContractReviewDecision: "renew" | "replace" | "end";
         ContractView: {
             /** Format: date-time */
             createdAt: string;
@@ -22660,6 +22869,13 @@ export interface components {
         ConvertToOwnerDto: {
             /** @description False: they let the unit (a landlord). */
             resides?: boolean;
+        };
+        CopyProgramDto: {
+            /**
+             * Format: date
+             * @description The copy’s first day, from today. Its end and every item’s day move by as many days.
+             */
+            startsOn: string;
         };
         CorrectReadingDto: {
             /**
@@ -23311,6 +23527,35 @@ export interface components {
              */
             dueOn: string;
         };
+        CreateItemDto: {
+            /**
+             * Format: uuid
+             * @description An inspection campaign’s checklist, for inspections.
+             */
+            checklistId?: string;
+            /**
+             * Format: uuid
+             * @description A contract review’s maintenance contract: in force, ending by the program’s last day.
+             */
+            contractId?: string;
+            /**
+             * Format: date
+             * @description From today, by the program’s last day.
+             */
+            dueOn: string;
+            /**
+             * @description EGP, more than 0: an estimate’s (required), or a task’s; never another kind’s.
+             * @example 12500.00
+             */
+            estimateAmount?: string;
+            kind: components["schemas"]["ReadinessItemKind"];
+            /**
+             * Format: uuid
+             * @description An active staff member or the manager. Told.
+             */
+            ownerId: string;
+            title: string;
+        };
         CreateLaneRequestDto: {
             /**
              * Format: uuid
@@ -23663,6 +23908,20 @@ export interface components {
             nameEn: string;
             /** @description The order the residents see, lowest first; after the others when absent. */
             position?: number;
+        };
+        CreateProgramDto: {
+            /**
+             * Format: date
+             * @description Its last day, inclusive; a year and a day at most.
+             */
+            endsOn: string;
+            kind: components["schemas"]["ReadinessKind"];
+            /**
+             * Format: date
+             * @description The compound’s first day of the season or event: Ramadan and Eid move, so it is stated.
+             */
+            startsOn: string;
+            title: string;
         };
         CreateRequestDto: {
             /** @description A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf. */
@@ -28013,6 +28272,10 @@ export interface components {
             key: string;
             name: string | null;
         };
+        ItemDoneDto: {
+            /** @description A contract review’s, required; no other kind’s. */
+            decision?: components["schemas"]["ContractReviewDecision"];
+        };
         KeptCountsView: {
             /** @description They stay, pointing at a deleted user. */
             auditEntries: number;
@@ -31835,6 +32098,94 @@ export interface components {
         };
         ReadAllView: {
             read: number;
+        };
+        ReadinessCopyView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            copiedFromId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            endsOn: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ReadinessKind"];
+            readiness: components["schemas"]["ReadinessView"];
+            /** @description Copied items whose owner may no longer own one: they are now the copier’s. */
+            reassignedItemIds: string[];
+            /** Format: date */
+            startsOn: string;
+            title: string;
+        };
+        /** @enum {string} */
+        ReadinessItemCancelReason: "not_needed" | "covered_elsewhere" | "out_of_budget" | "other";
+        /** @enum {string} */
+        ReadinessItemKind: "task" | "inspection_campaign" | "contract_review" | "estimate";
+        ReadinessItemView: {
+            cancelReason: components["schemas"]["ReadinessItemCancelReason"] | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: uuid */
+            checklistId: string | null;
+            /** Format: uuid */
+            contractId: string | null;
+            /** Format: uuid */
+            copiedFromId: string | null;
+            decision: components["schemas"]["ContractReviewDecision"] | null;
+            /** Format: date-time */
+            doneAt: string | null;
+            /** Format: date */
+            dueOn: string;
+            /** @description EGP, two places. */
+            estimateAmount: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ReadinessItemKind"];
+            /** Format: uuid */
+            ownerId: string;
+            /** Format: uuid */
+            programId: string;
+            /** @enum {string} */
+            state: "open" | "done" | "cancelled";
+            title: string;
+        };
+        ReadinessItemViewList: {
+            data: components["schemas"]["ReadinessItemView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        ReadinessKind: "season" | "event" | "emergency";
+        ReadinessProgramView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            copiedFromId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            endsOn: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ReadinessKind"];
+            readiness: components["schemas"]["ReadinessView"];
+            /** Format: date */
+            startsOn: string;
+            title: string;
+        };
+        ReadinessProgramViewList: {
+            data: components["schemas"]["ReadinessProgramView"][];
+            nextCursor: string | null;
+        };
+        ReadinessView: {
+            /** @description EGP: the estimates of the items not called off. */
+            budget: string;
+            cancelled: number;
+            done: number;
+            items: number;
+            open: number;
+            /** @description Done over everything not called off, in whole percent; null with nothing to do. */
+            percent: number | null;
         };
         /** @enum {string} */
         ReadingCorrectReason: "misread" | "wrong_meter" | "wrong_day" | "other";
@@ -37827,6 +38178,15 @@ export interface components {
             label?: string;
             position?: number;
         };
+        UpdateItemDto: {
+            /** Format: date */
+            dueOn?: string;
+            /** @description EGP; null takes a task’s away. */
+            estimateAmount?: string | null;
+            /** Format: uuid */
+            ownerId?: string;
+            title?: string;
+        };
         UpdateLocaleDto: {
             locale: components["schemas"]["Locale"];
         };
@@ -38028,6 +38388,16 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
             position?: number;
+        };
+        UpdateProgramDto: {
+            /**
+             * Format: date
+             * @description On or after every item’s day.
+             */
+            endsOn?: string;
+            /** Format: date */
+            startsOn?: string;
+            title?: string;
         };
         UpdateRequestSettingsDto: {
             /** @description Appointments one slot takes. */
@@ -48296,6 +48666,302 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuoteSuggestionView"];
+                };
+            };
+        };
+    };
+    ReadinessItemsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateItemDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessItemView"];
+                };
+            };
+        };
+    };
+    ReadinessItemsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessItemView"];
+                };
+            };
+        };
+    };
+    ReadinessItemsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemDoneDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessItemView"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: components["schemas"]["ReadinessKind"];
+                /** @description `true`: not closed; `false`: closed. */
+                open?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessProgramViewList"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProgramDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessProgramView"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessProgramView"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProgramDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessProgramView"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessProgramView"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_contractsDue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractDueViewList"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_copy: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopyProgramDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessCopyView"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_items: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessItemViewList"];
+                };
+            };
+        };
+    };
+    ReadinessProgramsController_createItem: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateItemDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessItemView"];
                 };
             };
         };
@@ -60360,6 +61026,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PermitSettingsResponse"];
+                };
+            };
+        };
+    };
+    OwnReadinessItemsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessItemViewList"];
+                };
+            };
+        };
+    };
+    OwnReadinessItemsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemDoneDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessItemView"];
                 };
             };
         };

@@ -264,6 +264,9 @@ export interface World
   bMeasureId: string;
   /** ADR 0066: an outage of B's, told to no one yet. */
   bOutageId: string;
+  /** ADR 0067: compound B's readiness program and one task of it. */
+  bProgramId: string;
+  bReadinessItemId: string;
   /** One of B's inspection rounds, and an inspection of B's (ADR 0064). */
   bRoundId: string;
   bInspectionId: string;
@@ -1084,6 +1087,31 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     }),
   );
+  const bProgram = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.readinessProgram.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        kind: 'season',
+        title: 'World summer',
+        startsOn: new Date('2099-06-01T00:00:00.000Z'),
+        endsOn: new Date('2099-08-31T00:00:00.000Z'),
+      },
+    }),
+  );
+  const bReadinessItem = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.readinessItem.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        programId: bProgram.id,
+        kind: 'task',
+        title: 'World task',
+        ownerId: b.ids.manager,
+        dueOn: new Date('2099-05-20T00:00:00.000Z'),
+      },
+    }),
+  );
   const bReadingImport = await helpers.asManager(b, async () => {
     const files = fileHelpers(h);
     const fileId = await files.uploaded(
@@ -1595,6 +1623,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bReadingImportId: bReadingImport.id,
     bMeasureId: bMeasure.id,
     bOutageId: bOutage.id,
+    bProgramId: bProgram.id,
+    bReadinessItemId: bReadinessItem.id,
     bRoundId: bRound.id,
     bInspectionId: bInspection.inspection.id,
     bRecommendationId: bRecommendation.id,

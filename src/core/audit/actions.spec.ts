@@ -204,6 +204,9 @@ describe('audit catalog', () => {
         'energy_tariff',
         'energy_measure',
         'utility_outage',
+        // ADR 0067
+        'readiness_program',
+        'readiness_item',
       ]).toContain(def.target);
     }
   });

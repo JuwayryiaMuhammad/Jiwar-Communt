@@ -833,3 +833,18 @@ export const ENERGY_COVERAGE: readonly string[] = [
   'utility_outage.ended',
   'utility_outage.cancelled',
 ];
+
+/**
+ * Readiness (ADR 0067): programs for a season, an event or an emergency,
+ * and their items. test/readiness/audit-coverage.
+ */
+export const READINESS_COVERAGE: readonly string[] = [
+  'readiness_program.created',
+  'readiness_program.updated',
+  'readiness_program.closed',
+  'readiness_program.copied',
+  'readiness_item.created',
+  'readiness_item.updated',
+  'readiness_item.done',
+  'readiness_item.cancelled',
+];

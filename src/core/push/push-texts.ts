@@ -2502,6 +2502,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لديك تفتيش على {targetRef} مستحق يوم {dueOn}.',
     },
   },
+  'readiness_item.assigned': {
+    en: {
+      title: 'Readiness item',
+      body: 'An item of a readiness program is yours, due {dueOn}.',
+    },
+    ar: {
+      title: 'مهمة استعداد',
+      body: 'أُسندت إليك مهمة في برنامج استعداد، مستحقة يوم {dueOn}.',
+    },
+  },
+  'readiness_item.overdue': {
+    en: {
+      title: 'Readiness item overdue',
+      body: 'Your readiness item, due {dueOn}, is overdue.',
+    },
+    ar: {
+      title: 'مهمة استعداد متأخرة',
+      body: 'تأخرت مهمة الاستعداد المسندة إليك والمستحقة يوم {dueOn}.',
+    },
+  },
   'inspection.overdue': {
     en: {
       title: 'Inspection overdue',

@@ -15,6 +15,7 @@ import {
   READING_ROUTES,
   TECHNICIAN_METER_ROUTES,
 } from './energy';
+import { READINESS_ROUTES } from './readiness';
 import {
   ASSET_ROUTES,
   CHECKLIST_ROUTES,
@@ -390,4 +391,6 @@ export const ROUTES: Row[] = [
   ...READING_IMPORT_ROUTES,
   ...CONSUMPTION_ROUTES,
   ...OUTAGE_ROUTES,
+  // ADR 0067.
+  ...READINESS_ROUTES,
 ];

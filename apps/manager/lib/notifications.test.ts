@@ -344,3 +344,11 @@ test('a meter’s spike (ADR 0066) reads as its code and day, and opens the mete
   assert.equal(notificationHref(high, (p) => p === 'energy.read'), '/meters/m1');
   assert.equal(notificationHref(high, (p) => p === 'assets.read'), null);
 });
+
+test('a readiness item (ADR 0067) reads as its day, never its title, and opens its program for who keeps readiness', () => {
+  const late = { kind: 'readiness_item.overdue', params: { dueOn: '2027-02-20' }, targetType: 'readiness_program', targetId: 'p1' };
+  assert.equal(notificationText(late), 'Your readiness item, due 2027-02-20, is overdue');
+  assert.equal(notificationText({ ...late, kind: 'readiness_item.assigned' }), 'An item of a readiness program is yours, due 2027-02-20');
+  assert.equal(notificationHref(late, (p) => p === 'readiness.manage'), '/readiness/p1');
+  assert.equal(notificationHref(late, () => false), null);
+});

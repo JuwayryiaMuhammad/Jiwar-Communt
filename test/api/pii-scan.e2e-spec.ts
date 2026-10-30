@@ -1357,6 +1357,10 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/meter-reading-imports/{id}': w.bReadingImportId,
       '/maintenance/energy/measures/{id}': w.bMeasureId,
       '/maintenance/outages/{id}': w.bOutageId,
+      // ADR 0067: B's readiness program and its item.
+      '/maintenance/readiness/programs/{id}': w.bProgramId,
+      '/maintenance/readiness/programs/{id}/items': w.bProgramId,
+      '/maintenance/readiness/programs/{id}/contracts-due': w.bProgramId,
       '/maintenance/assets/{id}/contracts': w.bAssetId,
       '/maintenance/assets/{id}/economics': w.bAssetId,
       '/maintenance/technicians/{id}/stats': w.b.ids.technician,

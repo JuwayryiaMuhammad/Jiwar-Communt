@@ -2274,6 +2274,24 @@ export const NOTIFICATION_KINDS = {
     target: 'utility_outage',
     params: { outageKind: {}, startsAt: {}, endsAt: {} },
   },
+  /**
+   * A readiness item given to its owner, and one past its day, told once
+   * (ADR 0067): the day only, never the title. It leads to the program.
+   */
+  'readiness_item.assigned': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'readiness_program',
+    params: { dueOn: {} },
+  },
+  'readiness_item.overdue': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'readiness_program',
+    params: { dueOn: {} },
+  },
   /** A meter's latest period used far more than its mean (ADR 0066). */
   'meter.anomaly': {
     priority: 'normal',

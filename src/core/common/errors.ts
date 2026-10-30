@@ -1498,6 +1498,15 @@ export const ErrorCode = {
   UTILITY_OUTAGE_STARTED: 'UTILITY_OUTAGE_STARTED',
   /** It has not started: it is cancelled, not ended (409). */
   UTILITY_OUTAGE_NOT_STARTED: 'UTILITY_OUTAGE_NOT_STARTED',
+  // Readiness (ADR 0067)
+  READINESS_PROGRAM_NOT_FOUND: 'READINESS_PROGRAM_NOT_FOUND',
+  /** Closed once: neither it nor its items change again (409). */
+  READINESS_PROGRAM_CLOSED: 'READINESS_PROGRAM_CLOSED',
+  READINESS_ITEM_NOT_FOUND: 'READINESS_ITEM_NOT_FOUND',
+  /** Done or called off once: it never changes again; params.state (409). */
+  READINESS_ITEM_ENDED: 'READINESS_ITEM_ENDED',
+  /** A campaign is done by its inspections, never by hand (409). */
+  READINESS_CAMPAIGN_AUTOMATIC: 'READINESS_CAMPAIGN_AUTOMATIC',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -1747,6 +1756,14 @@ export const FieldErrorCode = {
   METER_NOT_AVAILABLE: 'METER_NOT_AVAILABLE',
   /** ADR 0066: an imported row's meter has a live reading that day. */
   READING_EXISTS: 'READING_EXISTS',
+  /** ADR 0067: an item's owner is an active staff member or the manager. */
+  READINESS_OWNER_NOT_ELIGIBLE: 'READINESS_OWNER_NOT_ELIGIBLE',
+  /** ADR 0067: an item is due by its program's last day; params.endsOn. */
+  READINESS_DUE_AFTER_END: 'READINESS_DUE_AFTER_END',
+  /** ADR 0067: a program ends on or after its items' days; params.dueOn, the latest. */
+  READINESS_ITEMS_DUE_LATER: 'READINESS_ITEMS_DUE_LATER',
+  /** ADR 0067: a contract under review is in force and ends by the program's last day. */
+  CONTRACT_NOT_DUE_FOR_REVIEW: 'CONTRACT_NOT_DUE_FOR_REVIEW',
 } as const;
 
 export type FieldErrorCode =

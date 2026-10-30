@@ -25421,6 +25421,505 @@
           }
         },
         {
+          "name": "Change an open item’s title, owner, day or estimate",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"dueOn\": \"2026-01-01\",\n  \"estimateAmount\": \"\",\n  \"ownerId\": \"\",\n  \"title\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `dueOn` | string (date) |  |  |\n| `estimateAmount` | string |  | EGP; null takes a task’s away. |\n| `ownerId` | string (uuid) |  |  |\n| `title` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "items",
+                ":itemId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/items/:itemId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call an item off",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "items",
+                ":itemId",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/items/:itemId/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark an item done; a contract review with its decision",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"decision\": \"renew\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `renew` \\| `replace` \\| `end` |  | A contract review’s, required; no other kind’s. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "items",
+                ":itemId",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/items/:itemId/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the readiness programs, latest start first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: not closed; `false`: closed.",
+                  "disabled": true,
+                  "key": "open",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs"
+            }
+          }
+        },
+        {
+          "name": "Start a readiness program",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"season\",\n  \"title\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"endsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsOn` | string (date) | yes | Its last day, inclusive; a year and a day at most. |\n| `kind` | `season` \\| `event` \\| `emergency` | yes |  |\n| `startsOn` | string (date) | yes | The compound’s first day of the season or event: Ramadan and Eid move, so it is stated. |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs"
+            }
+          }
+        },
+        {
+          "name": "A readiness program, with its readiness",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change an open program’s title or days",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"endsOn\": \"2026-01-01\",\n  \"startsOn\": \"2026-01-01\",\n  \"title\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsOn` | string (date) |  | On or after every item’s day. |\n| `startsOn` | string (date) |  |  |\n| `title` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close a program for good",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs",
+                ":id",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The maintenance contracts that end by the program’s last day, with their reviews",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs",
+                ":id",
+                "contracts-due"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs/:id/contracts-due",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Copy a program to a new start, every day moved alike",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"startsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `startsOn` | string (date) | yes | The copy’s first day, from today. Its end and every item’s day move by as many days. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs",
+                ":id",
+                "copy"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs/:id/copy",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A program’s items, by due day",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs",
+                ":id",
+                "items"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs/:id/items",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add an item to an open program",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"task\",\n  \"title\": \"\",\n  \"ownerId\": \"\",\n  \"dueOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `checklistId` | string (uuid) |  | An inspection campaign’s checklist, for inspections. |\n| `contractId` | string (uuid) |  | A contract review’s maintenance contract: in force, ending by the program’s last day. |\n| `dueOn` | string (date) | yes | From today, by the program’s last day. |\n| `estimateAmount` | string |  | EGP, more than 0: an estimate’s (required), or a task’s; never another kind’s. |\n| `kind` | `task` \\| `inspection_campaign` \\| `contract_review` \\| `estimate` | yes |  |\n| `ownerId` | string (uuid) | yes | An active staff member or the manager. Told. |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "readiness",
+                "programs",
+                ":id",
+                "items"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/readiness/programs/:id/items",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List recommendations to replace, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -27777,6 +28276,70 @@
                 {
                   "description": "",
                   "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My open readiness items, by due day",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "readiness-items"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/readiness-items"
+            }
+          }
+        },
+        {
+          "name": "Mark my item done; a contract review with its decision",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"decision\": \"renew\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `renew` \\| `replace` \\| `end` |  | A contract review’s, required; no other kind’s. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "readiness-items",
+                ":itemId",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/readiness-items/:itemId/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "itemId",
                   "value": ""
                 }
               ]

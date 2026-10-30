@@ -370,6 +370,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   energy_measures_tenant_id_id_key: null,
   // Outages (ADR 0066); who was told is added ON CONFLICT DO NOTHING.
   utility_outages_tenant_id_id_key: null,
+  // Readiness (ADR 0067): a program is copied to a start once; a contract is
+  // reviewed once per program unless that review was called off.
+  readiness_programs_tenant_id_id_key: null,
+  readiness_programs_copy_key: ['startsOn'],
+  readiness_items_tenant_id_id_key: null,
+  readiness_items_contract_key: ['contractId'],
   // Push (ADR 0041): a token is registered under the account's lock and a
   // lock on the token, and a delivery is queued once with its notification,
   // so a violation is a race; nothing here names a field, least of all a

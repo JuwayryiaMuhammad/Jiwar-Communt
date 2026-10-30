@@ -306,6 +306,8 @@ const TEXT: Record<string, (p: P) => string> = {
   'inspection.assigned': (p) => `An inspection of ${p.targetRef} is yours, due ${p.dueOn}`,
   'inspection.overdue': (p) => `The inspection of ${p.targetRef}, due ${p.dueOn}, is overdue`,
   'asset.replacement_recommended': (p) => `A technician recommends replacing asset ${p.assetRef}`,
+  'readiness_item.assigned': (p) => `An item of a readiness program is yours, due ${p.dueOn}`,
+  'readiness_item.overdue': (p) => `Your readiness item, due ${p.dueOn}, is overdue`,
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -328,6 +330,8 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'maintenance_contract' && n.targetId) return can('assets.manage') ? `/contracts/${n.targetId}` : null;
   // Energy (ADR 0066).
   if (n.targetType === 'meter' && n.targetId) return can('energy.read') ? `/meters/${n.targetId}` : null;
+  // Readiness (ADR 0067): the program, for who keeps readiness.
+  if (n.targetType === 'readiness_program' && n.targetId) return can('readiness.manage') ? `/readiness/${n.targetId}` : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

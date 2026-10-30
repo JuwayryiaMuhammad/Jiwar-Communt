@@ -10455,6 +10455,57 @@
         ],
         "type": "object"
       },
+      "ContractDueView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "The program’s review of it, when there is one.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "contractId",
+          "code",
+          "kind",
+          "endsOn",
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "ContractDueViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ContractDueView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ContractReadView": {
         "properties": {
           "createdAt": {
@@ -10551,6 +10602,14 @@
           "fileUrl"
         ],
         "type": "object"
+      },
+      "ContractReviewDecision": {
+        "enum": [
+          "renew",
+          "replace",
+          "end"
+        ],
+        "type": "string"
       },
       "ContractView": {
         "properties": {
@@ -10855,6 +10914,19 @@
             "type": "boolean"
           }
         },
+        "type": "object"
+      },
+      "CopyProgramDto": {
+        "properties": {
+          "startsOn": {
+            "description": "The copy’s first day, from today. Its end and every item’s day move by as many days.",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsOn"
+        ],
         "type": "object"
       },
       "CorrectReadingDto": {
@@ -12533,6 +12605,55 @@
         ],
         "type": "object"
       },
+      "CreateItemDto": {
+        "properties": {
+          "checklistId": {
+            "description": "An inspection campaign’s checklist, for inspections.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "contractId": {
+            "description": "A contract review’s maintenance contract: in force, ending by the program’s last day.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "From today, by the program’s last day.",
+            "format": "date",
+            "type": "string"
+          },
+          "estimateAmount": {
+            "description": "EGP, more than 0: an estimate’s (required), or a task’s; never another kind’s.",
+            "example": "12500.00",
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReadinessItemKind"
+              }
+            ]
+          },
+          "ownerId": {
+            "description": "An active staff member or the manager. Told.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "title",
+          "ownerId",
+          "dueOn"
+        ],
+        "type": "object"
+      },
       "CreateLaneRequestDto": {
         "properties": {
           "gateId": {
@@ -13336,6 +13457,39 @@
           "nameAr",
           "nameEn",
           "categoryId"
+        ],
+        "type": "object"
+      },
+      "CreateProgramDto": {
+        "properties": {
+          "endsOn": {
+            "description": "Its last day, inclusive; a year and a day at most.",
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReadinessKind"
+              }
+            ]
+          },
+          "startsOn": {
+            "description": "The compound’s first day of the season or event: Ramadan and Eid move, so it is stated.",
+            "format": "date",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "title",
+          "startsOn",
+          "endsOn"
         ],
         "type": "object"
       },
@@ -27296,6 +27450,19 @@
         ],
         "type": "object"
       },
+      "ItemDoneDto": {
+        "properties": {
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContractReviewDecision"
+              }
+            ],
+            "description": "A contract review’s, required; no other kind’s."
+          }
+        },
+        "type": "object"
+      },
       "KeptCountsView": {
         "properties": {
           "auditEntries": {
@@ -39400,6 +39567,325 @@
         },
         "required": [
           "read"
+        ],
+        "type": "object"
+      },
+      "ReadinessCopyView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "copiedFromId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReadinessKind"
+              }
+            ]
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/ReadinessView"
+          },
+          "reassignedItemIds": {
+            "description": "Copied items whose owner may no longer own one: they are now the copier’s.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "startsOn",
+          "endsOn",
+          "copiedFromId",
+          "closedAt",
+          "createdAt",
+          "readiness",
+          "reassignedItemIds"
+        ],
+        "type": "object"
+      },
+      "ReadinessItemCancelReason": {
+        "enum": [
+          "not_needed",
+          "covered_elsewhere",
+          "out_of_budget",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ReadinessItemKind": {
+        "enum": [
+          "task",
+          "inspection_campaign",
+          "contract_review",
+          "estimate"
+        ],
+        "type": "string"
+      },
+      "ReadinessItemView": {
+        "properties": {
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReadinessItemCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "checklistId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "copiedFromId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContractReviewDecision"
+              }
+            ],
+            "nullable": true
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "estimateAmount": {
+            "description": "EGP, two places.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReadinessItemKind"
+              }
+            ]
+          },
+          "ownerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "programId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "open",
+              "done",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "programId",
+          "kind",
+          "title",
+          "ownerId",
+          "dueOn",
+          "estimateAmount",
+          "contractId",
+          "checklistId",
+          "state",
+          "decision",
+          "doneAt",
+          "cancelledAt",
+          "cancelReason",
+          "copiedFromId"
+        ],
+        "type": "object"
+      },
+      "ReadinessItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReadinessKind": {
+        "enum": [
+          "season",
+          "event",
+          "emergency"
+        ],
+        "type": "string"
+      },
+      "ReadinessProgramView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "copiedFromId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReadinessKind"
+              }
+            ]
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/ReadinessView"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "startsOn",
+          "endsOn",
+          "copiedFromId",
+          "closedAt",
+          "createdAt",
+          "readiness"
+        ],
+        "type": "object"
+      },
+      "ReadinessProgramViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessProgramView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReadinessView": {
+        "properties": {
+          "budget": {
+            "description": "EGP: the estimates of the items not called off.",
+            "type": "string"
+          },
+          "cancelled": {
+            "type": "number"
+          },
+          "done": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "percent": {
+            "description": "Done over everything not called off, in whole percent; null with nothing to do.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "done",
+          "cancelled",
+          "open",
+          "percent",
+          "budget"
         ],
         "type": "object"
       },
@@ -59561,6 +60047,30 @@
         },
         "type": "object"
       },
+      "UpdateItemDto": {
+        "properties": {
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "estimateAmount": {
+            "description": "EGP; null takes a task’s away.",
+            "nullable": true,
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "ownerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateLocaleDto": {
         "properties": {
           "locale": {
@@ -60093,6 +60603,25 @@
             "maximum": 1000,
             "minimum": 0,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateProgramDto": {
+        "properties": {
+          "endsOn": {
+            "description": "On or after every item’s day.",
+            "format": "date",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
           }
         },
         "type": "object"
@@ -80725,6 +81254,586 @@
           }
         ],
         "summary": "Send a suggested quote to the residents",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/items/{itemId}": {
+      "patch": {
+        "operationId": "ReadinessItemsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change an open item’s title, owner, day or estimate",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/items/{itemId}/cancel": {
+      "post": {
+        "operationId": "ReadinessItemsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call an item off",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/items/{itemId}/done": {
+      "post": {
+        "operationId": "ReadinessItemsController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemDoneDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark an item done; a contract review with its decision",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/programs": {
+      "get": {
+        "operationId": "ReadinessProgramsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReadinessKind"
+            }
+          },
+          {
+            "description": "`true`: not closed; `false`: closed.",
+            "in": "query",
+            "name": "open",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessProgramViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the readiness programs, latest start first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ReadinessProgramsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProgramDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessProgramView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a readiness program",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/programs/{id}": {
+      "get": {
+        "operationId": "ReadinessProgramsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessProgramView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A readiness program, with its readiness",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "ReadinessProgramsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProgramDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessProgramView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change an open program’s title or days",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/programs/{id}/close": {
+      "post": {
+        "operationId": "ReadinessProgramsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessProgramView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a program for good",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/programs/{id}/contracts-due": {
+      "get": {
+        "operationId": "ReadinessProgramsController_contractsDue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractDueViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The maintenance contracts that end by the program’s last day, with their reviews",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/programs/{id}/copy": {
+      "post": {
+        "operationId": "ReadinessProgramsController_copy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyProgramDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessCopyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Copy a program to a new start, every day moved alike",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/readiness/programs/{id}/items": {
+      "get": {
+        "operationId": "ReadinessProgramsController_items",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A program’s items, by due day",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ReadinessProgramsController_createItem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an item to an open program",
         "tags": [
           "maintenance"
         ],
@@ -104027,6 +105136,81 @@
           "permits"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/readiness-items": {
+      "get": {
+        "operationId": "OwnReadinessItemsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My open readiness items, by due day",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/readiness-items/{itemId}/done": {
+      "post": {
+        "operationId": "OwnReadinessItemsController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemDoneDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark my item done; a contract review with its decision",
+        "tags": [
+          "maintenance"
+        ],
         "x-stability": "draft"
       }
     },

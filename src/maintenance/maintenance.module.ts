@@ -156,6 +156,13 @@ import {
 } from './outages/outages.controller';
 import { OutagesService } from './outages/outages.service';
 import {
+  OwnReadinessItemsController,
+  ReadinessItemsController,
+  ReadinessProgramsController,
+} from './readiness/readiness.controller';
+import { ReadinessService } from './readiness/readiness.service';
+import { ReadinessSweep } from './readiness/readiness-sweep';
+import {
   EnergyController,
   EnergySettingsController,
   MeterAlertsController,
@@ -242,6 +249,9 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     EnergyController,
     OutagesController,
     MyOutagesController,
+    ReadinessProgramsController,
+    ReadinessItemsController,
+    OwnReadinessItemsController,
     MyTechnicianStatsController,
     TechnicianStatsController,
   ],
@@ -320,6 +330,8 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     MeasuresService,
     OutagesService,
     OutageSweep,
+    ReadinessService,
+    ReadinessSweep,
     TechnicianStatsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).

@@ -10672,3 +10672,62 @@ model UtilityOutageRecipient {
   @@index([tenantId, accountId], map: "utility_outage_recipients_account_idx")
   @@map("utility_outage_recipients")
 }
+
+/// A readiness program (ADR 0067): a season, an event or an emergency over
+/// days the compound states, with the items it prepares. Closed once.
+model ReadinessProgram {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  /// READINESS_KINDS.
+  kind         String
+  title        String
+  startsOn     DateTime  @map("starts_on") @db.Date
+  endsOn       DateTime  @map("ends_on") @db.Date
+  /// The program this one was copied from, to a new start.
+  copiedFromId String?   @map("copied_from_id") @db.Uuid
+  closedAt     DateTime? @map("closed_at") @db.Timestamptz(3)
+  closedById   String?   @map("closed_by_account_id") @db.Uuid
+  createdById  String?   @map("created_by_account_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, startsOn, id], map: "readiness_programs_list_idx")
+  @@map("readiness_programs")
+}
+
+/// An item of a readiness program (ADR 0067): a task, an estimate, a
+/// contract to review or an inspection campaign; done or called off once.
+model ReadinessItem {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  programId         String    @map("program_id") @db.Uuid
+  /// READINESS_ITEM_KINDS.
+  kind              String
+  title             String
+  ownerId           String    @map("owner_account_id") @db.Uuid
+  dueOn             DateTime  @map("due_on") @db.Date
+  /// EGP; an estimate's, or a task's when it has one.
+  estimateAmount    Decimal?  @map("estimate_amount") @db.Decimal(12, 2)
+  /// A contract review's maintenance contract.
+  contractId        String?   @map("contract_id") @db.Uuid
+  /// An inspection campaign's checklist.
+  checklistId       String?   @map("checklist_id") @db.Uuid
+  /// REASON_CODES.contractReviewDecision, once a review is done.
+  decision          String?
+  doneAt            DateTime? @map("done_at") @db.Timestamptz(3)
+  doneById          String?   @map("done_by_account_id") @db.Uuid
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById     String?   @map("cancelled_by_account_id") @db.Uuid
+  /// REASON_CODES.readinessItemCancel.
+  cancelReason      String?   @map("cancel_reason")
+  overdueNotifiedAt DateTime? @map("overdue_notified_at") @db.Timestamptz(3)
+  copiedFromId      String?   @map("copied_from_id") @db.Uuid
+  createdById       String?   @map("created_by_account_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, programId, dueOn, id], map: "readiness_items_program_idx")
+  @@map("readiness_items")
+}

@@ -316,6 +316,9 @@ const TEXT: Record<string, (p: P) => string> = {
   'work_permit.approved': (p) => `The ${words(p.hazard)} permit for ${aTicket(p)} is approved`,
   'work_permit.rejected': (p) => `The ${words(p.hazard)} permit for ${aTicket(p)} was rejected`,
   'work_permit.revoked': (p) => `The ${words(p.hazard)} permit for ${aTicket(p)} was revoked`,
+  // Money and the unit (ADR 0069): what the finance staff are asked for.
+  'instalment_plan_request.submitted': () => 'A resident asked for a payment plan on an invoice',
+  'collector_visit.requested': () => 'A resident asked for a collector to take cash at their unit',
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -340,6 +343,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'meter' && n.targetId) return can('energy.read') ? `/meters/${n.targetId}` : null;
   // Readiness (ADR 0067): the program, for who keeps readiness.
   if (n.targetType === 'readiness_program' && n.targetId) return can('readiness.manage') ? `/readiness/${n.targetId}` : null;
+  // Money and the unit (ADR 0069): the finance staff's queues.
+  if (n.targetType === 'plan_request') return can('finance.invoice') ? '/finance/plan-requests' : null;
+  if (n.targetType === 'collector_visit') return can('finance.payments') ? '/finance/collector-visits' : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

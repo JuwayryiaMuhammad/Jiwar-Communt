@@ -596,14 +596,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       items: [
         { href: '/finance/invoices', label: 'Invoices', icon: <FileText aria-hidden />, show: can('finance.invoice') },
         { href: '/finance/instalments', label: 'Instalment plans', icon: <CalendarRange aria-hidden />, show: can('finance.invoice') },
+        // Payment plans residents ask for, and the terms for them (ADR 0069).
+        { href: '/finance/plan-requests', label: 'Plan requests', icon: <CalendarRange aria-hidden />, show: can('finance.invoice') },
         { href: '/finance/disputes', label: 'Disputes', icon: <MessageSquareWarning aria-hidden />, show: can('finance.invoice') },
         // The formal late-payment notices and their proofs (ADR 0058).
         { href: '/finance/late-notices', label: 'Late notices', icon: <Scale aria-hidden />, show: can('finance.invoice') },
         { href: '/finance/payments', label: 'Payments', icon: <Banknote aria-hidden />, show: can('finance.payments') },
+        // Field collectors' visits and their margin (ADR 0069).
+        { href: '/finance/collector-visits', label: 'Collector visits', icon: <Banknote aria-hidden />, show: can('finance.payments') },
         { href: '/finance/plans', label: 'Billing plans', icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
         { href: '/finance/refunds', label: 'Refunds', icon: <Undo2 aria-hidden />, show: can('finance.refund') },
         { href: '/finance/ledger', label: 'Ledger', icon: <BookOpen aria-hidden />, show: can('finance.reports') },
         { href: '/finance/reports', label: 'Reports', icon: <ChartColumn aria-hidden />, show: can('finance.reports') },
+        // Where the fees went, published to every payer (ADR 0069).
+        { href: '/finance/spending-reports', label: 'Where the fees went', icon: <PiggyBank aria-hidden />, show: can('finance.reports') || can('finance.budget') },
         { href: '/finance/budgets', label: 'Budgets', icon: <PiggyBank aria-hidden />, show: can('finance.budget') },
         { href: '/finance/expenses', label: 'Expenses', icon: <Wallet aria-hidden />, show: can('finance.budget') },
         { href: '/finance/gateway', label: 'Online payments', icon: <CreditCard aria-hidden />, show: can('finance.gateway') },

@@ -372,3 +372,11 @@ test('a request to call off an SOS (ADR 0067) says to check on who raised it, an
   assert.equal(notificationText(asked), 'Who raised an SOS asked to call it off: check on them, then resolve it');
   assert.equal(notificationHref(asked, (p) => p === 'emergencies.respond'), '/emergencies');
 });
+
+test('money and the unit (ADR 0069): a plan request and a collector visit open the finance queues', () => {
+  const all = () => true;
+  assert.equal(notificationText(n('instalment_plan_request.submitted', {}, 'plan_request', 'x')), 'A resident asked for a payment plan on an invoice');
+  assert.equal(notificationHref(n('instalment_plan_request.submitted', {}, 'plan_request', 'x'), all), '/finance/plan-requests');
+  assert.equal(notificationHref(n('collector_visit.requested', {}, 'collector_visit', 'x'), all), '/finance/collector-visits');
+  assert.equal(notificationHref(n('collector_visit.requested', {}, 'collector_visit', 'x'), () => false), null);
+});

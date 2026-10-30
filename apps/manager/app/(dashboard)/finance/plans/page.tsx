@@ -1,8 +1,8 @@
 'use client';
 
-import { fieldError, unwrap } from '@jiwar/api';
+import { fieldError, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useToast } from '@jiwar/ui';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Textarea, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -15,9 +15,25 @@ import { fetchers, keys, type BillingOverride, type BillingPlan, type InvoiceKin
 
 const today = () => new Date().toLocaleDateString('en-CA');
 type Frequency = BillingPlan['frequency'];
+type AmountChange = Schema<'BillingAmountChangeView'>;
+type Publication = Schema<'BoardPublicationView'>;
+
+/** The board's published decisions a new amount may cite (ADR 0069): the manager's list. */
+function useDecisions(enabled: boolean) {
+  return useQuery({
+    queryKey: ['governance', 'publications', 'decisions'],
+    queryFn: () => unwrap(api.GET('/api/v1/staff/governance/publications', { params: { query: { limit: 100 } } })),
+    enabled,
+  });
+}
 
 function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () => void }) {
   const toast = useToast();
+  const { can } = usePermissions();
+  const decisions = useDecisions(plan !== null && can('governance.manage'));
+  const [descriptionEn, setDescriptionEn] = useState(plan?.descriptionEn ?? '');
+  const [descriptionAr, setDescriptionAr] = useState(plan?.descriptionAr ?? '');
+  const [decisionId, setDecisionId] = useState('');
   const [nameEn, setNameEn] = useState(plan?.nameEn ?? '');
   const [nameAr, setNameAr] = useState(plan?.nameAr ?? '');
   const [kind, setKind] = useState<InvoiceKind>(plan?.kind ?? 'service_charge');
@@ -33,7 +49,16 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
         ? unwrap(
             api.PATCH('/api/v1/staff/billing-plans/{id}', {
               params: { path: { id: plan.id } },
-              body: { nameEn: nameEn.trim(), nameAr: nameAr.trim(), amount: amount.trim(), issueDaysBefore: Number(lead), dueDaysAfterIssue: Number(due) },
+              body: {
+                nameEn: nameEn.trim(),
+                nameAr: nameAr.trim(),
+                amount: amount.trim(),
+                issueDaysBefore: Number(lead),
+                dueDaysAfterIssue: Number(due),
+                descriptionEn: descriptionEn.trim() || null,
+                descriptionAr: descriptionAr.trim() || null,
+                ...(decisionId && amountChanged ? { decisionPublicationId: decisionId } : {}),
+              },
             }),
           )
         : unwrap(
@@ -47,6 +72,7 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
                 startsOn,
                 issueDaysBefore: Number(lead),
                 dueDaysAfterIssue: Number(due),
+                ...(descriptionEn.trim() ? { descriptionEn: descriptionEn.trim(), descriptionAr: descriptionAr.trim() } : {}),
               },
             }),
           ),
@@ -59,7 +85,9 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
     },
   );
   const int = (v: string, max: number) => /^\d+$/.test(v) && Number(v) <= max;
-  const ready = nameEn.trim() !== '' && nameAr.trim() !== '' && validMoney(amount) && int(lead, 28) && int(due, 90);
+  const amountChanged = plan !== null && validMoney(amount) && Number(amount) !== Number(plan.amount);
+  const described = (descriptionEn.trim() === '') === (descriptionAr.trim() === '');
+  const ready = nameEn.trim() !== '' && nameAr.trim() !== '' && validMoney(amount) && int(lead, 28) && int(due, 90) && described;
   return (
     <Dialog
       open
@@ -122,6 +150,36 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
         )}
         <Field label="Amount per unit, EGP" error={fieldError(save.error, 'amount') ?? (amount && !validMoney(amount) ? 'Up to two decimals, more than zero.' : undefined)}>
           {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
+        </Field>
+        {amountChanged && decisions.data ? (
+          <Field
+            label="The board’s decision"
+            hint="When the board set the new amount, the residents see its decision beside the change."
+            error={fieldError(save.error, 'decisionPublicationId')}
+          >
+            {(p) => (
+              <Select {...p} value={decisionId} onChange={(e) => setDecisionId(e.target.value)}>
+                <option value="">None</option>
+                {decisions.data.data
+                  .filter((d: Publication) => d.kind === 'decision' && !d.archivedAt)
+                  .map((d: Publication) => (
+                    <option key={d.id} value={d.id}>
+                      {d.decidedOn} · {d.titleEn}
+                    </option>
+                  ))}
+              </Select>
+            )}
+          </Field>
+        ) : null}
+        <Field
+          label="What it pays for, in English"
+          hint="The residents it bills read it beside the fee. Both languages, or neither."
+          error={fieldError(save.error, 'descriptionEn') ?? (!described ? 'Write it in both languages, or neither.' : undefined)}
+        >
+          {(p) => <Textarea {...p} maxLength={1000} rows={2} value={descriptionEn} onChange={(e) => setDescriptionEn(e.target.value)} />}
+        </Field>
+        <Field label="What it pays for, in Arabic" error={fieldError(save.error, 'descriptionAr')}>
+          {(p) => <Textarea {...p} maxLength={1000} rows={2} dir="rtl" lang="ar" value={descriptionAr} onChange={(e) => setDescriptionAr(e.target.value)} />}
         </Field>
         <Field label="Issue, days before a period" hint="0 to 28." error={fieldError(save.error, 'issueDaysBefore')}>
           {(p) => <Input {...p} type="number" min={0} max={28} value={lead} onChange={(e) => setLead(e.target.value)} />}
@@ -212,6 +270,33 @@ function Overrides({ plan, canEdit, onClose }: { plan: BillingPlan; canEdit: boo
   );
 }
 
+/** A plan's amount changes, the latest first (ADR 0069). */
+function AmountChanges({ plan, onClose }: { plan: BillingPlan; onClose: () => void }) {
+  const list = useQuery({
+    queryKey: [...keys.billingPlans, plan.id, 'amount-changes'],
+    queryFn: () => unwrap(api.GET('/api/v1/staff/billing-plans/{id}/amount-changes', { params: { path: { id: plan.id } } })),
+  });
+  return (
+    <Dialog open onClose={onClose} title={`${plan.nameEn}: amount changes`} description="Each new amount, the first period billed at it, and the board’s decision when one set it.">
+      <Card flush>
+        <QueryState query={list}>
+          <DataTable<AmountChange>
+            rows={list.data?.data}
+            rowKey={(c) => c.id}
+            empty="Its amount never changed"
+            columns={[
+              { key: 'from', header: 'From', cell: (c) => egp(c.fromAmount) },
+              { key: 'to', header: 'To', cell: (c) => egp(c.toAmount) },
+              { key: 'on', header: 'From the period of', cell: (c) => c.effectiveOn },
+              { key: 'd', header: 'Decision', cell: (c) => (c.decisionPublicationId ? <Badge tone="green">Board</Badge> : '—') },
+            ]}
+          />
+        </QueryState>
+      </Card>
+    </Dialog>
+  );
+}
+
 /**
  * Recurring billing (ADR 0046): each plan bills every unit each period,
  * issued automatically; units may have their own amount or be left out.
@@ -225,6 +310,7 @@ export default function BillingPlansPage() {
   const plans = useQuery({ queryKey: keys.billingPlans, queryFn: fetchers.billingPlans, enabled: allowed });
   const [open, setOpen] = useState<{ plan: BillingPlan | null } | null>(null);
   const [terms, setTerms] = useState<BillingPlan | null>(null);
+  const [history, setHistory] = useState<BillingPlan | null>(null);
   const setActive = useAction(
     (p: BillingPlan) => unwrap(api.PATCH('/api/v1/staff/billing-plans/{id}', { params: { path: { id: p.id } }, body: { active: !p.active } })),
     { invalidate: [keys.billingPlans], onDone: (p) => toast.show(p.active ? `${p.nameEn} bills again.` : `${p.nameEn} is retired: it bills nothing more.`) },
@@ -272,7 +358,15 @@ export default function BillingPlansPage() {
               },
               { key: 'kind', header: 'Kind', cell: (p) => KIND_TEXT[p.kind] ?? p.kind },
               { key: 'every', header: 'Every', cell: (p) => FREQUENCY_TEXT[p.frequency] ?? p.frequency },
-              { key: 'amount', header: 'Per unit', cell: (p) => egp(p.amount) },
+              {
+                key: 'amount',
+                header: 'Per unit',
+                cell: (p) => (
+                  <Button variant="text" className="table__link" onClick={() => setHistory(p)}>
+                    {egp(p.amount)}
+                  </Button>
+                ),
+              },
               { key: 'next', header: 'Next period', cell: (p) => (p.nextPeriod ? `${p.nextPeriod.startsOn} · issued ${p.nextPeriod.issueOn}` : '—') },
               {
                 key: 'own',
@@ -305,6 +399,7 @@ export default function BillingPlansPage() {
       </Card>
       {open ? <PlanDialog key={open.plan?.id ?? 'new'} plan={open.plan} onClose={() => setOpen(null)} /> : null}
       {terms ? <Overrides plan={terms} canEdit={canEdit} onClose={() => setTerms(null)} /> : null}
+      {history ? <AmountChanges plan={history} onClose={() => setHistory(null)} /> : null}
     </>
   );
 }

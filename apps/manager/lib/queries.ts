@@ -83,6 +83,16 @@ export type Tariff = Schema<'TariffView'>;
 export type Measure = Schema<'MeasureView'>;
 export type MeasureCard = Schema<'MeasureCardView'>;
 export type Outage = Schema<'OutageView'>;
+// Readiness, facility bans and usage, field safety (ADR 0067).
+export type ReadinessProgram = Schema<'ReadinessProgramView'>;
+export type ReadinessItem = Schema<'ReadinessItemView'>;
+export type ContractDue = Schema<'ContractDueView'>;
+export type Campaign = Schema<'CampaignView'>;
+export type FacilityBan = Schema<'FacilityBanView'>;
+export type FacilityUsageReport = Schema<'FacilityUsageReportView'>;
+export type WorkPermit = Schema<'WorkPermitView'>;
+export type TicketPermits = Schema<'TicketPermitsView'>;
+export type SafetyInstruction = Schema<'SafetyInstructionView'>;
 export interface AssetFilters {
   status?: AssetSummary['status'] | '';
   commonAreaId?: string;
@@ -573,6 +583,17 @@ export const keys = {
   measures: ['energy', 'measures'] as const,
   measure: (id: string, weeks: number) => ['energy', 'measures', id, weeks] as const,
   outages: ['outages'] as const,
+  readinessAll: ['readiness'] as const,
+  readinessPrograms: (filters: object) => ['readiness', 'programs', filters] as const,
+  readinessProgram: (id: string) => ['readiness', 'programs', 'detail', id] as const,
+  readinessItems: (id: string) => ['readiness', 'programs', 'detail', id, 'items'] as const,
+  contractsDue: (id: string) => ['readiness', 'programs', 'detail', id, 'contracts-due'] as const,
+  campaign: (itemId: string) => ['readiness', 'items', itemId, 'campaign'] as const,
+  facilityBans: (filters: object) => ['facility-bans', filters] as const,
+  facilityUsage: (from: string, to: string) => ['facility-usage', from, to] as const,
+  workPermits: (filters: object) => ['work-permits', filters] as const,
+  ticketPermits: (id: string) => ['tickets', 'detail', id, 'permits'] as const,
+  safetyInstructions: (categoryId: string) => ['safety-instructions', categoryId] as const,
   dispatchSettings: ['dispatch-settings'] as const,
   slaSettings: ['sla-settings'] as const,
   account: (id: string) => ['accounts', 'detail', id] as const,
@@ -989,6 +1010,39 @@ export const fetchers = {
     unwrap(api.GET('/api/v1/maintenance/energy/measures/{id}', { params: { path: { id }, query: { weeks } } })),
   outages: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/maintenance/outages', { params: { query: { cursor, limit } } })),
+  // Readiness, facility bans and usage, field safety (ADR 0067).
+  readinessPrograms: (filters: { kind?: ReadinessProgram['kind'] | ''; open?: 'true' | 'false' | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/readiness/programs', {
+        params: { query: { ...(clean(filters) as { kind?: ReadinessProgram['kind']; open?: 'true' | 'false' }), cursor, limit } },
+      }),
+    ),
+  readinessProgram: (id: string) =>
+    unwrap(api.GET('/api/v1/maintenance/readiness/programs/{id}', { params: { path: { id } } })),
+  readinessItems: (id: string, cursor?: string, limit = 100) =>
+    unwrap(api.GET('/api/v1/maintenance/readiness/programs/{id}/items', { params: { path: { id }, query: { cursor, limit } } })),
+  contractsDue: (id: string) =>
+    unwrap(api.GET('/api/v1/maintenance/readiness/programs/{id}/contracts-due', { params: { path: { id } } })),
+  campaign: (itemId: string) =>
+    unwrap(api.GET('/api/v1/maintenance/readiness/items/{itemId}/campaign', { params: { path: { itemId } } })),
+  facilityBans: (filters: { inForce?: 'true' | 'false' | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/facility-bans', {
+        params: { query: { ...(clean(filters) as { inForce?: 'true' | 'false' }), cursor, limit } },
+      }),
+    ),
+  facilityUsage: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/staff/facility-usage', { params: { query: { from, to } } })),
+  workPermits: (filters: { status?: WorkPermit['status'] | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/work-permits', {
+        params: { query: { ...(clean(filters) as { status?: WorkPermit['status'] }), cursor, limit } },
+      }),
+    ),
+  ticketPermits: (id: string) =>
+    unwrap(api.GET('/api/v1/maintenance/tickets/{id}/permits', { params: { path: { id } } })),
+  safetyInstructions: (categoryId: string) =>
+    unwrap(api.GET('/api/v1/maintenance/categories/{id}/safety-instructions', { params: { path: { id: categoryId } } })),
   dispatchSettings: () => unwrap(api.GET('/api/v1/maintenance/dispatch-settings')),
   slaSettings: () => unwrap(api.GET('/api/v1/maintenance/sla-settings')),
   account: (id: string) => unwrap(api.GET('/api/v1/accounts/{id}', { params: { path: { id } } })),

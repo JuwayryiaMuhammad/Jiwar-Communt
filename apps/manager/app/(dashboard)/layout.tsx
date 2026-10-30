@@ -326,6 +326,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/meters', label: 'Meters', icon: <Gauge aria-hidden />, show: can('energy.read') },
         { href: '/energy', label: 'Energy', icon: <Zap aria-hidden />, show: can('energy.read') },
         { href: '/outages', label: 'Outages', icon: <ZapOff aria-hidden />, show: can('energy.read') },
+        // Readiness and field safety (ADR 0067).
+        { href: '/readiness', label: 'Readiness', icon: <CalendarCheck aria-hidden />, show: can('readiness.manage') },
+        { href: '/work-permits', label: 'Work permits', icon: <HardHat aria-hidden />, show: can('safety.manage') },
       ],
     },
     {
@@ -388,6 +391,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           show: can('bookings.handle'),
         },
         { href: '/booking-suspensions', label: 'Suspensions', icon: <Ban aria-hidden />, show: can('bookings.handle') },
+        // Facility bans and use (ADR 0067).
+        { href: '/facility-bans', label: 'Facility bans', icon: <UserX aria-hidden />, show: can('bookings.handle') },
+        {
+          href: '/facility-usage',
+          label: 'Facility use',
+          icon: <ChartColumn aria-hidden />,
+          show: can('facilities.manage') || can('bookings.handle'),
+        },
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },

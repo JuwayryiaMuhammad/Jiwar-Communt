@@ -10,6 +10,7 @@ import { useParams } from 'next/navigation';
 import { personName, PriorityBadge, SlaBadges, ticketPlace } from '@/components/maintenance/sla';
 import { TicketActions } from '@/components/maintenance/ticket-actions';
 import { TicketQuotes } from '@/components/maintenance/ticket-quotes';
+import { TicketPermits } from '@/components/maintenance/ticket-permits';
 import { TicketThread } from '@/components/maintenance/ticket-thread';
 import { TicketTrail } from '@/components/maintenance/ticket-trail';
 import { TicketVisits } from '@/components/maintenance/ticket-visits';
@@ -262,6 +263,7 @@ export default function TicketPage() {
               <TicketCompletion ticket={t} />
               <TicketThread ticketId={t.id} status={t.status} />
               <TicketQuoteSuggestions ticket={t} />
+              <TicketPermits ticket={t} />
               <TicketQuotes ticket={t} />
               <TicketCosts ticket={t} />
               <TicketParts ticket={t} />

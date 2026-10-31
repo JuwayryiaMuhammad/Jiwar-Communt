@@ -108,6 +108,15 @@
 
 استهلاك البيت في [06-maintenance/16-household-consumption](06-maintenance/16-household-consumption.md).
 
+### 10 — المجتمع
+| الملف | الفيتشر |
+|---|---|
+| [01-market](10-community/01-market.md) | السوق: الإعلانات، وحدة للبيع أو للإيجار، الكلام مع البيّاع، المحلات، البلاغات |
+| [02-offers](10-community/02-offers.md) | عروض الشركاء والشراء الجماعي |
+| [03-daily-life](10-community/03-daily-life.md) | مواعيد الصلاة، الباصات، الجاليري، الزحمة |
+| [04-visitors](10-community/04-visitors.md) | إشعارات دخول الزائر، إعادة الدعوة، الطريق قبل الوصول |
+| [05-health](10-community/05-health.md) | أدلة الطوارئ، والطوارئ من مكان عام |
+
 ---
 
 ## كل تطبيق محتاج يقرا إيه

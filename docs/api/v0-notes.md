@@ -316,3 +316,18 @@ The full notes for the apps are in [`notes/booking-extras-charges.md`](notes/boo
 - **Rebook.** Bookings gain `rebookUntil`, `rebookOfId`; `POST /units/{unitId}/bookings` takes `rebookOf`.
 - **Club and fines.** `/units/{unitId}/club-membership/requests`, `/club-membership-requests/{id}/cancel`, `GET /staff/club/requests`; fines gain `payable` and `charge`.
 - **Notifications** `booking.companion_invited`, `booking.companion_cancelled`, `booking_waitlist.offered`, `booking_waitlist.closed`, `club_membership_request.paid`.
+
+### Community life (ADR 0071)
+
+The full notes for the apps are in [`notes/community-life.md`](notes/community-life.md).
+
+- **Market.** `POST/GET /market/listings`, `GET/PATCH /market/listings/{id}`, `…/withdraw`, `…/sold`, `GET /me/market/listings` (permission `market.post`); a word search, a price range and a price sort; a unit for sale or to let by its owner (`409 MARKET_UNIT_LISTED`, `403 MARKET_UNIT_NOT_OWNED`), its code never shown. Handlers: `GET /market/review`, `…/{id}`, `…/approve|reject|remove`, `GET/PATCH /market/settings` (`market.handle`). A new notification category `market`.
+- **Masked contact.** `POST /market/listings/{id}/conversations`; then `/neighbour-conversations` as for a post, reachable with `market.post`; a conversation's view has `listing` or `post`.
+- **Shops.** `POST/GET /market/shops`, `GET …/{id}`, `GET /me/market/shop`, `POST /me/market/shop/close`; handlers `GET /market/shop-review`, `…/{id}/approve|reject|suspend`.
+- **Reports.** `POST /market/listings/{id}/report`; handlers `GET /market/reports`, `POST …/{id}/close`. Reports from enough households hide a live listing for review.
+- **Partner offers.** `GET /market/offers`; staff `POST /staff/partners/{id}/offers`, `GET /staff/partner-offers`, `…/{id}/withdraw`.
+- **Group offers.** `GET /market/group-offers`, `…/{id}`, `…/interest|join|leave`; staff `POST/GET /staff/group-offers`, `…/{id}/open|cancel`. No money passes through Jiwar.
+- **Daily life.** `GET /prayer-times`, `GET/PATCH /community/prayer-settings`; `GET /buses`, `/community/bus-routes…`, `DELETE /community/bus-departures/{id}`; `GET /gallery/albums`, `…/{id}`, `POST /gallery/photos/{id}/report`, `/community/gallery/…`. `GET /me/daily-brief` gains `prayer` and `buses`.
+- **Busy levels.** `quiet | normal | busy`, never a count: a slot's `busy`, a facility's `busyNow` and `usuallyBusy`, a gate's `busy` on `GET /gates/status` and in the brief.
+- **Visitors.** A pass's `notifyOnEntry` (in its detail; pushes `visitor_pass.entered|exited`) and `expectedGateId`; a standing instruction's `notify` (`gate.let_in_by_instruction`); `POST /visitor-passes/{id}/reinvite` (`409 VISITOR_DETAILS_PURGED`); a gate's `directionsEn/Ar`; the visitor's page gains `expectedGate` and `parkingArea`.
+- **Health.** `GET /emergency-guides` (no-store: a guide's `fileUrl`); compound document kinds `emergency_medical|fire|security|facilities`; `POST /emergencies` gains `commonAreaId`.

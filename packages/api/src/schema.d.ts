@@ -1566,6 +1566,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/prayer-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get where the compound is and how prayer times are computed */
+        get: operations["PrayerSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set where the compound is and how prayer times are computed */
+        patch: operations["PrayerSettingsController_update"];
+        trace?: never;
+    };
     "/api/v1/community/settings": {
         parameters: {
             query?: never;
@@ -12057,6 +12075,23 @@ export interface paths {
         put?: never;
         /** Cast or change my unit’s vote */
         post: operations["PollsController_vote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/prayer-times": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a day’s prayer times at the compound */
+        get: operations["PrayerTimesController_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -27183,6 +27218,8 @@ export interface components {
             outages: components["schemas"]["BriefOutageView"][];
             /** @description Open polls closing within 48 hours in which the caller casts the vote of a unit that has not voted. */
             polls: components["schemas"]["BriefPollView"][];
+            /** @description Today’s prayer times; null until the compound sets its place. */
+            prayer: components["schemas"]["PrayerTimesView"] | null;
             /** @description The caller’s requests to the management. Null when their role does not write to it. */
             requests: components["schemas"]["BriefSummaryView"] | null;
             /** @description The caller’s maintenance tickets. Null when their role does not open tickets. */
@@ -35235,6 +35272,32 @@ export interface components {
             gateName: string | null;
             zone: components["schemas"]["PlaceView"] | null;
         };
+        PrayerSettingsView: {
+            /** @enum {string} */
+            asrMadhab: "shafi" | "hanafi";
+            latitude: string | null;
+            longitude: string | null;
+            /** @enum {string} */
+            prayerMethod: "egyptian" | "muslim_world_league" | "umm_al_qura" | "karachi" | "dubai" | "qatar" | "kuwait";
+        };
+        PrayerTimesView: {
+            /** Format: date-time */
+            asr: string;
+            /** Format: date-time */
+            dhuhr: string;
+            /** Format: date-time */
+            fajr: string;
+            /** Format: date-time */
+            isha: string;
+            /** Format: date-time */
+            maghrib: string;
+            /** Format: date */
+            on: string;
+            /** Format: date-time */
+            sunrise: string;
+            /** @example Africa/Cairo */
+            timeZone: string;
+        };
         PreferencesView: {
             categories: components["schemas"]["CategoryPreferenceView"][];
             pause: components["schemas"]["PauseView"] | null;
@@ -42362,6 +42425,19 @@ export interface components {
             /** @description English, Arabic or both; at least one. */
             questionEn?: string | null;
         };
+        UpdatePrayerSettingsDto: {
+            /** @enum {string} */
+            asrMadhab?: "shafi" | "hanafi";
+            /**
+             * @description With `longitude`, or both null to clear the place.
+             * @example 30.044420
+             */
+            latitude?: string | null;
+            /** @example 31.235712 */
+            longitude?: string | null;
+            /** @enum {string} */
+            prayerMethod?: "egyptian" | "muslim_world_league" | "umm_al_qura" | "karachi" | "dubai" | "qatar" | "kuwait";
+        };
         UpdatePreferencesDto: {
             /** @description Each category at most once; absent switches keep their value. */
             categories?: components["schemas"]["CategorySwitchDto"][];
@@ -45569,6 +45645,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    PrayerSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrayerSettingsView"];
+                };
+            };
+        };
+    };
+    PrayerSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePrayerSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrayerSettingsView"];
+                };
             };
         };
     };
@@ -61616,6 +61734,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VoteCastView"];
+                };
+            };
+        };
+    };
+    PrayerTimesController_get: {
+        parameters: {
+            query?: {
+                /** @description The compound’s day; today when left out. */
+                on?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrayerTimesView"];
                 };
             };
         };

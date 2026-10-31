@@ -704,4 +704,47 @@ export const MARKET_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  {
+    method: 'GET',
+    path: '/prayer-times',
+    auth: 'tenant',
+    as: 'family',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { on: '2026-02-30' },
+      fields: [{ field: 'on', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/community/prayer-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/community/prayer-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { latitude: '95', asrMadhab: 'maliki' },
+      fields: [
+        { field: 'latitude', code: 'INVALID_FORMAT' },
+        {
+          field: 'asrMadhab',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['shafi', 'hanafi'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
 ];

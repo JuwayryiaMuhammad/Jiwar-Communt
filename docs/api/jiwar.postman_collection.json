@@ -6855,6 +6855,61 @@
           }
         },
         {
+          "name": "Get where the compound is and how prayer times are computed",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "prayer-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/prayer-settings"
+            }
+          }
+        },
+        {
+          "name": "Set where the compound is and how prayer times are computed",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"asrMadhab\": \"shafi\",\n  \"latitude\": \"30.044420\",\n  \"longitude\": \"31.235712\",\n  \"prayerMethod\": \"egyptian\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `asrMadhab` | `shafi` \\| `hanafi` |  |  |\n| `latitude` | string |  | With `longitude`, or both null to clear the place. |\n| `longitude` | string |  |  |\n| `prayerMethod` | `egyptian` \\| `muslim_world_league` \\| `umm_al_qura` \\| `karachi` \\| `dubai` \\| `qatar` \\| `kuwait` |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "prayer-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/prayer-settings"
+            }
+          }
+        },
+        {
           "name": "Get the community settings",
           "request": {
             "description": "**Responses:** 200",
@@ -7603,6 +7658,33 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Get a day’s prayer times at the compound",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prayer-times"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s day; today when left out.",
+                  "disabled": true,
+                  "key": "on",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/prayer-times"
             }
           }
         },

@@ -52,6 +52,7 @@
     "@nestjs/swagger": "^11.4.7",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "adhan": "4.4.3",
     "argon2": "^0.44.0",
     "bidi-js": "^1.1.0",
     "class-transformer": "^0.5.1",

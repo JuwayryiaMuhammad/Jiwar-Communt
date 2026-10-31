@@ -16348,6 +16348,16 @@
             },
             "type": "array"
           },
+          "prayer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrayerTimesView"
+              }
+            ],
+            "description": "Today’s prayer times; null until the compound sets its place.",
+            "nullable": true,
+            "type": "object"
+          },
           "requests": {
             "allOf": [
               {
@@ -16390,7 +16400,8 @@
           "tickets",
           "requests",
           "gates",
-          "outages"
+          "outages",
+          "prayer"
         ],
         "type": "object"
       },
@@ -42331,6 +42342,91 @@
         ],
         "type": "object"
       },
+      "PrayerSettingsView": {
+        "properties": {
+          "asrMadhab": {
+            "enum": [
+              "shafi",
+              "hanafi"
+            ],
+            "type": "string"
+          },
+          "latitude": {
+            "nullable": true,
+            "type": "string"
+          },
+          "longitude": {
+            "nullable": true,
+            "type": "string"
+          },
+          "prayerMethod": {
+            "enum": [
+              "egyptian",
+              "muslim_world_league",
+              "umm_al_qura",
+              "karachi",
+              "dubai",
+              "qatar",
+              "kuwait"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude",
+          "prayerMethod",
+          "asrMadhab"
+        ],
+        "type": "object"
+      },
+      "PrayerTimesView": {
+        "properties": {
+          "asr": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dhuhr": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fajr": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "isha": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maghrib": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "on": {
+            "format": "date",
+            "type": "string"
+          },
+          "sunrise": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "timeZone": {
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "timeZone",
+          "fajr",
+          "sunrise",
+          "dhuhr",
+          "asr",
+          "maghrib",
+          "isha"
+        ],
+        "type": "object"
+      },
       "PreferencesView": {
         "properties": {
           "categories": {
@@ -66066,6 +66162,41 @@
         },
         "type": "object"
       },
+      "UpdatePrayerSettingsDto": {
+        "properties": {
+          "asrMadhab": {
+            "enum": [
+              "shafi",
+              "hanafi"
+            ],
+            "type": "string"
+          },
+          "latitude": {
+            "description": "With `longitude`, or both null to clear the place.",
+            "example": "30.044420",
+            "nullable": true,
+            "type": "string"
+          },
+          "longitude": {
+            "example": "31.235712",
+            "nullable": true,
+            "type": "string"
+          },
+          "prayerMethod": {
+            "enum": [
+              "egyptian",
+              "muslim_world_league",
+              "umm_al_qura",
+              "karachi",
+              "dubai",
+              "qatar",
+              "kuwait"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdatePreferencesDto": {
         "properties": {
           "categories": {
@@ -73288,6 +73419,72 @@
           }
         ],
         "summary": "Close an open poll now",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/prayer-settings": {
+      "get": {
+        "operationId": "PrayerSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrayerSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get where the compound is and how prayer times are computed",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "PrayerSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePrayerSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrayerSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set where the compound is and how prayer times are computed",
         "tags": [
           "community"
         ],
@@ -103966,6 +104163,46 @@
           }
         ],
         "summary": "Cast or change my unit’s vote",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/prayer-times": {
+      "get": {
+        "operationId": "PrayerTimesController_get",
+        "parameters": [
+          {
+            "description": "The compound’s day; today when left out.",
+            "in": "query",
+            "name": "on",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrayerTimesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a day’s prayer times at the compound",
         "tags": [
           "community"
         ],

@@ -2212,6 +2212,8 @@ export const AUDIT_ACTIONS = {
   'group_offer.confirmed': { log: 'tenant', target: 'group_offer' },
   'group_offer.failed': { log: 'tenant', target: 'group_offer' },
   'group_offer.cancelled': { log: 'tenant', target: 'group_offer' },
+  // Where the compound is and how its prayer times are computed (ADR 0071).
+  'engagement.prayer_settings_changed': { log: 'tenant', target: 'tenant' },
   // A listing reported (target: the listing). metadata: reportId,
   // reasonCode; never the note.
   'market_listing.reported': { log: 'tenant', target: 'market_listing' },

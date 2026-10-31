@@ -6,6 +6,7 @@ import { REASON_CODES } from '../../core/common/reasons';
 import { AnnouncementListItemView } from '../announcements/views/announcement.views';
 import { EventListItemView } from '../events/views/event.views';
 import type { PollRead } from '../polls/polls.service';
+import { PrayerTimesView } from '../prayer/prayer.controller';
 import { DailyBriefService, type DailyBrief } from './daily-brief.service';
 
 /** A poll that is about to close and still waits for the caller's vote. */
@@ -148,6 +149,13 @@ export class DailyBriefView {
       'Utility outages told to the caller, under way or starting within 48 hours, the soonest first.',
   })
   outages: BriefOutageView[];
+  @ApiProperty({
+    type: PrayerTimesView,
+    nullable: true,
+    description:
+      'Today’s prayer times; null until the compound sets its place.',
+  })
+  prayer: PrayerTimesView | null;
 
   static from(b: DailyBrief): DailyBriefView {
     return {
@@ -169,6 +177,7 @@ export class DailyBriefView {
         startsAt: o.startsAt,
         endsAt: o.endsAt,
       })),
+      prayer: b.prayer && PrayerTimesView.from(b.prayer),
     };
   }
 }

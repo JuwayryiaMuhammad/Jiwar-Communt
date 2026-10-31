@@ -346,6 +346,26 @@ describe('Audit coverage — community', () => {
       });
     });
 
+    it('engagement.prayer_settings_changed — the place and the method, from and to', async () => {
+      await m
+        .http('patch', '/community/prayer-settings', s.manager.token, {
+          latitude: '30.044420',
+          longitude: '31.235712',
+          prayerMethod: 'umm_al_qura',
+        })
+        .expect(200);
+      expect(
+        await single('engagement.prayer_settings_changed', s.c.tenantId),
+      ).toMatchObject({
+        actorId: s.manager.id,
+        changes: {
+          latitude: { from: null, to: '30.044420' },
+          longitude: { from: null, to: '31.235712' },
+          prayerMethod: { from: 'egyptian', to: 'umm_al_qura' },
+        },
+      });
+    });
+
     it('market.settings_changed — the settings, from and to', async () => {
       const before = (
         await read.tenant(s.c.tenantId, {

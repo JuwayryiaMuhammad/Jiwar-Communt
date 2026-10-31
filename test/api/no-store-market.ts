@@ -274,6 +274,20 @@ export function marketCalls(
         token: owner(),
       });
     },
+    'GET /prayer-times': async () => {
+      await call(world(), 'PATCH', '/community/prayer-settings', {
+        token: manager(),
+        body: { latitude: '30.044420', longitude: '31.235712' },
+      }).expect(200);
+      return call(world(), 'GET', '/prayer-times', { token: owner() });
+    },
+    'GET /community/prayer-settings': () =>
+      call(world(), 'GET', '/community/prayer-settings', { token: manager() }),
+    'PATCH /community/prayer-settings': () =>
+      call(world(), 'PATCH', '/community/prayer-settings', {
+        token: manager(),
+        body: { latitude: '30.044420', longitude: '31.235712' },
+      }),
     'GET /market/settings': () =>
       call(world(), 'GET', '/market/settings', { token: manager() }),
     'PATCH /market/settings': () =>

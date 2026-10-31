@@ -4967,6 +4967,13 @@ model EngagementSettings {
   tenantId       String   @id @map("tenant_id") @db.Uuid
   /// Guests one "going" answer to an event may bring, at most.
   eventMaxGuests Int      @default(2) @map("event_max_guests")
+  /// Where the compound is, for its prayer times (ADR 0071); both or neither.
+  latitude       Decimal? @db.Decimal(9, 6)
+  longitude      Decimal? @db.Decimal(9, 6)
+  /// PRAYER_METHODS
+  prayerMethod   String   @default("egyptian") @map("prayer_method")
+  /// shafi | hanafi
+  asrMadhab      String   @default("shafi") @map("asr_madhab")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 

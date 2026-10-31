@@ -16,6 +16,11 @@ import { AudienceCheck } from './audience/audience-check';
 import { AudienceController } from './audience/audience.controller';
 import { DailyBriefController } from './brief/daily-brief.controller';
 import { DailyBriefService } from './brief/daily-brief.service';
+import {
+  PrayerSettingsController,
+  PrayerTimesController,
+} from './prayer/prayer.controller';
+import { PrayerService } from './prayer/prayer.service';
 import { CommunityAttachments } from './content/attachments';
 import { EngagementExportSections } from './export/export-sections';
 import { EngagementProvisioning } from './provisioning';
@@ -74,6 +79,8 @@ import { SuggestionTopicsService } from './topics/topics.service';
     SuggestionBoardController,
     StaffSuggestionsController,
     DailyBriefController,
+    PrayerTimesController,
+    PrayerSettingsController,
   ],
   providers: [
     EngagementProvisioning,
@@ -88,6 +95,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     PollsService,
     SuggestionsService,
     DailyBriefService,
+    PrayerService,
     EngagementExportSections,
     BoardNotices,
   ],

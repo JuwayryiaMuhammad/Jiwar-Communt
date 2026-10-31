@@ -971,4 +971,5 @@ export const R11C2_COVERAGE: readonly string[] = [
   'group_offer.confirmed',
   'group_offer.failed',
   'group_offer.cancelled',
+  'engagement.prayer_settings_changed',
 ];

@@ -1677,6 +1677,8 @@ export const ErrorCode = {
   GROUP_OFFER_JOINED: 'GROUP_OFFER_JOINED',
   /** The caller does not take part (409). */
   GROUP_OFFER_NOT_JOINED: 'GROUP_OFFER_NOT_JOINED',
+  /** The compound has not set where it is: no prayer times yet (409). */
+  PRAYER_PLACE_NOT_SET: 'PRAYER_PLACE_NOT_SET',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

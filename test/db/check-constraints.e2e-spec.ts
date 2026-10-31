@@ -2589,6 +2589,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; outcome IS NULL is tested first and its list runs only on a value',
   },
+  partner_offers_text_length: {},
+  partner_offers_window: {},
+  partner_offers_status_shape: {},
   market_shops_state_shape: {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',

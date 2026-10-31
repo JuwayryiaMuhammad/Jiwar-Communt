@@ -2197,6 +2197,10 @@ export const AUDIT_ACTIONS = {
   // Its day passed (the sweep, or a new listing of its unit). metadata: kind.
   'market_listing.expired': { log: 'tenant', target: 'market_listing' },
   'market.settings_changed': { log: 'tenant', target: 'tenant' },
+  // A partner's offer (ADR 0071). metadata: partnerId, and its days when
+  // published.
+  'partner_offer.published': { log: 'tenant', target: 'partner_offer' },
+  'partner_offer.withdrawn': { log: 'tenant', target: 'partner_offer' },
   // A listing reported (target: the listing). metadata: reportId,
   // reasonCode; never the note.
   'market_listing.reported': { log: 'tenant', target: 'market_listing' },

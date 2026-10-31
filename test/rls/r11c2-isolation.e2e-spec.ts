@@ -8,8 +8,10 @@ import {
   listingRow,
   marketFileRow,
   marketReportRow,
+  partnerOfferRow,
   shopRow,
 } from '../setup/market-rows';
+import { partnerRow } from '../setup/partners-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -19,6 +21,7 @@ interface Side {
   listingId: string;
   /** An account with no shop, for the shop row (one open an account). */
   shopOwnerId: string;
+  partnerId: string;
 }
 
 /**
@@ -95,6 +98,15 @@ const TABLES: Table[] = [
       }),
   },
   {
+    table: 'partner_offers',
+    insert: (tx, own, link) =>
+      partnerOfferRow(tx, {
+        tenantId: own.tenantId,
+        partnerId: link.partnerId,
+        createdById: link.accountId,
+      }),
+  },
+  {
     table: 'market_listing_photos',
     insert: async (tx, own, link) => {
       const id = newId();
@@ -129,8 +141,13 @@ describe('RLS isolation — community (ADR 0071)', () => {
       accountId: (await createAccountRow(h, tenantId)).id,
       listingId: '',
       shopOwnerId: (await createAccountRow(h, tenantId)).id,
+      partnerId: '',
     };
     await inTenant(s, async (tx) => {
+      s.partnerId = await partnerRow(tx, {
+        tenantId,
+        createdById: s.accountId,
+      });
       s.listingId = await listingRow(tx, {
         tenantId,
         sellerId: s.accountId,

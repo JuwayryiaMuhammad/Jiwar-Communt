@@ -10175,6 +10175,7 @@ model Partner {
   hours      PartnerHours[]
   priceItems PartnerPriceItem[]
   favourites PartnerFavourite[]
+  offers     PartnerOffer[]
 
   @@unique([tenantId, id])
   @@index([tenantId, listedAt(sort: Desc), id], map: "partners_listed_idx")
@@ -11641,4 +11642,31 @@ model MarketListingReport {
   @@unique([tenantId, listingId, reporterId], map: "market_listing_reports_one_per_reporter")
   @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "market_listing_reports_queue_idx")
   @@map("market_listing_reports")
+}
+
+/// What a partner offers residents for a while (ADR 0071); withdrawn once.
+model PartnerOffer {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  partnerId   String    @map("partner_id") @db.Uuid
+  titleEn     String    @map("title_en")
+  titleAr     String    @map("title_ar")
+  bodyEn      String    @map("body_en")
+  bodyAr      String    @map("body_ar")
+  validFromOn DateTime  @map("valid_from_on") @db.Date
+  validToOn   DateTime  @map("valid_to_on") @db.Date
+  /// active | withdrawn
+  status      String    @default("active")
+  createdById String    @map("created_by") @db.Uuid
+  withdrawnById String? @map("withdrawn_by") @db.Uuid
+  withdrawnAt DateTime? @map("withdrawn_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  partner Partner @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "partner_offers_tenant_id_partner_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, validToOn], map: "partner_offers_in_force_idx")
+  @@index([tenantId, partnerId, createdAt(sort: Desc)], map: "partner_offers_partner_idx")
+  @@map("partner_offers")
 }

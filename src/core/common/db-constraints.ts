@@ -937,4 +937,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // lock (MARKET_REPORT_EXISTS); a violation is a race.
   market_listing_reports_tenant_id_id_key: null,
   market_listing_reports_one_per_reporter: null,
+  // A partner offer is immutable but for its withdrawal, keyed for links.
+  partner_offers_tenant_id_id_key: null,
 };

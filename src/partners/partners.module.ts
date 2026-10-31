@@ -37,6 +37,11 @@ import { PartnerSettingsService } from './settings/partner-settings.service';
 import { StaffPartnersController } from './setup/partners.controller';
 import { PartnersService } from './setup/partners.service';
 import {
+  MarketOffersController,
+  StaffPartnerOffersController,
+} from './offers/offers.controller';
+import { PartnerOffersService } from './offers/offers.service';
+import {
   PartnerCategoriesController,
   StaffPartnerSubcategoriesController,
 } from './setup/subcategories.controller';
@@ -68,6 +73,8 @@ import { SuspensionService } from './setup/suspension.service';
     RequestFeedbackController,
     StaffPartnerComplaintsController,
     StaffRatingsController,
+    StaffPartnerOffersController,
+    MarketOffersController,
   ],
   providers: [
     PartnersAccess,
@@ -93,6 +100,7 @@ import { SuspensionService } from './setup/suspension.service';
     SuspensionService,
     PartnersLifecycle,
     PartnersExportSections,
+    PartnerOffersService,
   ],
 })
 export class PartnersModule {}

@@ -34845,6 +34845,26 @@
           }
         },
         {
+          "name": "List the partners’ offers in force today",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "offers"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/offers"
+            }
+          }
+        },
+        {
           "name": "List the reports of listings",
           "request": {
             "description": "**Responses:** 200",
@@ -40182,6 +40202,75 @@
           }
         },
         {
+          "name": "List the partners’ offers",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-offers"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "partnerId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-offers"
+            }
+          }
+        },
+        {
+          "name": "Withdraw an offer",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partner-offers",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partner-offers/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the ratings, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -40882,6 +40971,50 @@
                 "hours"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/partners/:id/hours",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Publish an offer of a partner",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"titleEn\": \"\",\n  \"titleAr\": \"\",\n  \"bodyEn\": \"\",\n  \"bodyAr\": \"\",\n  \"validFromOn\": \"2026-11-01\",\n  \"validToOn\": \"2026-11-30\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string | yes |  |\n| `bodyEn` | string | yes |  |\n| `titleAr` | string | yes |  |\n| `titleEn` | string | yes |  |\n| `validFromOn` | string (date) | yes | The compound’s day it starts. |\n| `validToOn` | string (date) | yes | Its last day: not before the start, not past, within a year (INVALID_VALUE). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "partners",
+                ":id",
+                "offers"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/partners/:id/offers",
               "variable": [
                 {
                   "description": "",

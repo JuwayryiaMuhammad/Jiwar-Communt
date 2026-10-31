@@ -37753,6 +37753,84 @@
         ],
         "type": "object"
       },
+      "PartnerOfferView": {
+        "properties": {
+          "bodyAr": {
+            "type": "string"
+          },
+          "bodyEn": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "partnerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "partnerNameAr": {
+            "type": "string"
+          },
+          "partnerNameEn": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "withdrawn"
+            ],
+            "type": "string"
+          },
+          "titleAr": {
+            "type": "string"
+          },
+          "titleEn": {
+            "type": "string"
+          },
+          "validFromOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "validToOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "partnerId",
+          "partnerNameEn",
+          "partnerNameAr",
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "validFromOn",
+          "validToOn",
+          "status"
+        ],
+        "type": "object"
+      },
+      "PartnerOfferViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerOfferView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PartnerPriceItemDto": {
         "properties": {
           "nameAr": {
@@ -42753,6 +42831,51 @@
         "required": [
           "textEn",
           "textAr"
+        ],
+        "type": "object"
+      },
+      "PublishOfferDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 80,
+            "minLength": 2,
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 80,
+            "minLength": 2,
+            "type": "string"
+          },
+          "validFromOn": {
+            "description": "The compound’s day it starts.",
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "validToOn": {
+            "description": "Its last day: not before the start, not past, within a year (INVALID_VALUE).",
+            "example": "2026-11-30",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "validFromOn",
+          "validToOn"
         ],
         "type": "object"
       },
@@ -93933,6 +94056,35 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/market/offers": {
+      "get": {
+        "operationId": "MarketOffersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerOfferViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the partners’ offers in force today",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/market/reports": {
       "get": {
         "operationId": "MarketReportsController_list",
@@ -113702,6 +113854,96 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/partner-offers": {
+      "get": {
+        "operationId": "StaffPartnerOffersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partnerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerOfferViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the partners’ offers",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partner-offers/{id}/withdraw": {
+      "post": {
+        "operationId": "StaffPartnerOffersController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw an offer",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/partner-ratings": {
       "get": {
         "operationId": "StaffRatingsController_list",
@@ -114555,6 +114797,54 @@
           }
         ],
         "summary": "Replace a partner’s weekly hours",
+        "tags": [
+          "partners"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/partners/{id}/offers": {
+      "post": {
+        "operationId": "StaffPartnerOffersController_publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishOfferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerOfferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish an offer of a partner",
         "tags": [
           "partners"
         ],

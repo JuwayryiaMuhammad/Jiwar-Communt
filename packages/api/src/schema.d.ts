@@ -8602,6 +8602,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market/offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the partners’ offers in force today */
+        get: operations["MarketOffersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market/reports": {
         parameters: {
             query?: never;
@@ -15584,6 +15601,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/partner-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the partners’ offers */
+        get: operations["StaffPartnerOffersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partner-offers/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw an offer */
+        post: operations["StaffPartnerOffersController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/partner-ratings": {
         parameters: {
             query?: never;
@@ -15854,6 +15905,23 @@ export interface paths {
         /** Replace a partner’s weekly hours */
         put: operations["StaffPartnersController_replaceHours"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/partners/{id}/offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish an offer of a partner */
+        post: operations["StaffPartnerOffersController_publish"];
         delete?: never;
         options?: never;
         head?: never;
@@ -33548,6 +33616,28 @@ export interface components {
              */
             timeZone: string;
         };
+        PartnerOfferView: {
+            bodyAr: string;
+            bodyEn: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerNameAr: string;
+            partnerNameEn: string;
+            /** @enum {string} */
+            status: "active" | "withdrawn";
+            titleAr: string;
+            titleEn: string;
+            /** Format: date */
+            validFromOn: string;
+            /** Format: date */
+            validToOn: string;
+        };
+        PartnerOfferViewList: {
+            data: components["schemas"]["PartnerOfferView"][];
+            nextCursor: string | null;
+        };
         PartnerPriceItemDto: {
             /** @description Both languages are required; surrounding spaces are trimmed. */
             nameAr: string;
@@ -35152,6 +35242,24 @@ export interface components {
         PublishInstructionDto: {
             textAr: string;
             textEn: string;
+        };
+        PublishOfferDto: {
+            bodyAr: string;
+            bodyEn: string;
+            titleAr: string;
+            titleEn: string;
+            /**
+             * Format: date
+             * @description The compound’s day it starts.
+             * @example 2026-11-01
+             */
+            validFromOn: string;
+            /**
+             * Format: date
+             * @description Its last day: not before the start, not past, within a year (INVALID_VALUE).
+             * @example 2026-11-30
+             */
+            validToOn: string;
         };
         PublishSpendingReportDto: {
             /**
@@ -56152,6 +56260,25 @@ export interface operations {
             };
         };
     };
+    MarketOffersController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerOfferViewList"];
+                };
+            };
+        };
+    };
     MarketReportsController_list: {
         parameters: {
             query?: {
@@ -66453,6 +66580,49 @@ export interface operations {
             };
         };
     };
+    StaffPartnerOffersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerOfferViewList"];
+                };
+            };
+        };
+    };
+    StaffPartnerOffersController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     StaffRatingsController_list: {
         parameters: {
             query?: {
@@ -66908,6 +67078,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffPartnerView"];
+                };
+            };
+        };
+    };
+    StaffPartnerOffersController_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishOfferDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerOfferView"];
                 };
             };
         };

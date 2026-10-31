@@ -1665,6 +1665,9 @@ export const ErrorCode = {
   MARKET_REPORT_OWN_LISTING: 'MARKET_REPORT_OWN_LISTING',
   /** Closed already (409). */
   MARKET_REPORT_CLOSED: 'MARKET_REPORT_CLOSED',
+  PARTNER_OFFER_NOT_FOUND: 'PARTNER_OFFER_NOT_FOUND',
+  /** Withdrawn already (409). */
+  PARTNER_OFFER_WITHDRAWN: 'PARTNER_OFFER_WITHDRAWN',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

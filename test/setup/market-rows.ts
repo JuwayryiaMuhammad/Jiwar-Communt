@@ -121,3 +121,29 @@ export async function marketReportRow(
   });
   return id;
 }
+
+/** An offer of a partner, in force today. */
+export async function partnerOfferRow(
+  tx: TenantTxClient,
+  row: { tenantId: string; partnerId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  const now = dbClock();
+  const today = new Date(`${now.toISOString().slice(0, 10)}T00:00:00.000Z`);
+  await tx.partnerOffer.create({
+    data: {
+      id,
+      tenantId: row.tenantId,
+      partnerId: row.partnerId,
+      titleEn: 'An offer',
+      titleAr: 'عرض',
+      bodyEn: 'Ten percent off.',
+      bodyAr: 'خصم عشرة بالمئة.',
+      validFromOn: today,
+      validToOn: today,
+      createdById: row.createdById,
+      createdAt: now,
+    },
+  });
+  return id;
+}

@@ -231,6 +231,7 @@ describe('audit catalog', () => {
         'market_listing',
         'market_shop',
         'market_report',
+        'partner_offer',
       ]).toContain(def.target);
     }
   });

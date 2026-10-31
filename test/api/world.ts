@@ -1646,7 +1646,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const offline = await offlineWorld(h, helpers, b);
   const r11c1 = await r11c1World(h, helpers, b);
   const guardVendors = await guardVendorsWorld(h, helpers, b);
-  const r11c2 = await r11c2World(h, helpers, b);
+  const r11c2 = await r11c2World(h, helpers, b, bPartner.id);
   return {
     ...gateCompletion,
     ...offline,

@@ -1,3 +1,4 @@
+import { day } from '../../setup/compound-clock';
 import type { Row } from '../registry';
 
 const LISTING_404 = 'MARKET_LISTING_NOT_FOUND';
@@ -469,6 +470,80 @@ export const MARKET_ROUTES: Row[] = [
       body: { reasonCode: 5 },
       fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
     },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/partners/{id}/offers',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPartnerId }),
+      body: () => ({
+        titleEn: 'Offer',
+        titleAr: 'عرض',
+        bodyEn: 'Words',
+        bodyAr: 'كلمات',
+        validFromOn: day(0),
+        validToOn: day(5),
+      }),
+      code: 'PARTNER_NOT_FOUND',
+    },
+    invalid: {
+      body: {
+        titleEn: 'O',
+        titleAr: 'عرض',
+        bodyEn: 'Words',
+        bodyAr: 'كلمات',
+        validFromOn: '2026-02-30',
+        validToOn: day(5),
+      },
+      fields: [
+        {
+          field: 'titleEn',
+          code: 'INVALID_LENGTH',
+          params: { min: 2, max: 80 },
+        },
+        { field: 'validFromOn', code: 'INVALID_FORMAT' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/partner-offers',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'tenant',
+    foreign: 'none',
+    invalid: {
+      query: { partnerId: 'cleaner' },
+      fields: [{ field: 'partnerId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/partner-offers/{id}/withdraw',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'family',
+    foreign: {
+      params: (w) => ({ id: w.bPartnerOfferId }),
+      code: 'PARTNER_OFFER_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/market/offers',
+    auth: 'tenant',
+    as: 'tenant',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
     noStore: true,
   },
 ];

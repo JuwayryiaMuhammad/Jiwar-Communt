@@ -962,4 +962,6 @@ export const R11C2_COVERAGE: readonly string[] = [
   'market_listing.reported',
   'market_listing.under_review',
   'market_report.closed',
+  'partner_offer.published',
+  'partner_offer.withdrawn',
 ];

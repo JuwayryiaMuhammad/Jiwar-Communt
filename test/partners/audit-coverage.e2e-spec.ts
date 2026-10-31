@@ -4,7 +4,10 @@ import {
   PARTNER_EXPIRE_SWEEP,
   PARTNER_LAPSE_SWEEP,
 } from '../../src/partners/requests/request-sweeps';
-import { PARTNERS_COVERAGE } from '../setup/audit-coverage-split';
+import {
+  PARTNERS_COVERAGE,
+  R11C2_COVERAGE,
+} from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import {
   asSuperuser,
@@ -521,9 +524,12 @@ describe('Audit coverage — partners', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
       for (const key of PARTNERS_COVERAGE) expect(all).toContain(key);
       expect([...covered].sort()).toEqual([...PARTNERS_COVERAGE].sort());
-      expect(all.filter((k) => /^partner[._]/.test(k)).sort()).toEqual(
-        [...PARTNERS_COVERAGE].sort(),
-      );
+      // A partner's offers are R11c-2's, covered with the community (ADR 0071).
+      expect(
+        all
+          .filter((k) => /^partner[._]/.test(k) && !R11C2_COVERAGE.includes(k))
+          .sort(),
+      ).toEqual([...PARTNERS_COVERAGE].sort());
     });
   });
 });

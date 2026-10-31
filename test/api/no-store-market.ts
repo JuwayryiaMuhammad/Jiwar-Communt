@@ -1,4 +1,5 @@
 import type { Response } from 'supertest';
+import { day } from '../setup/compound-clock';
 import { call } from './request';
 import type { World } from './world';
 
@@ -28,6 +29,14 @@ export function marketCalls(
         }).expect(201)
       ).body as { id: string }
     ).id;
+  const offer = () => ({
+    titleEn: `Offer ${++n}`,
+    titleAr: 'عرض',
+    bodyEn: 'Words.',
+    bodyAr: 'كلمات.',
+    validFromOn: day(0),
+    validToOn: day(5),
+  });
   /** A's landlord runs the shops these calls open, one at a time. */
   const shopOwner = () => world().a.tokens.landlord;
   const shop = () => ({
@@ -177,6 +186,29 @@ export function marketCalls(
         { token: manager(), body: { reasonCode: 'no_action' } },
       );
     },
+    'POST /staff/partners/{id}/offers': () =>
+      call(world(), 'POST', `/staff/partners/${world().aPartnerId}/offers`, {
+        token: manager(),
+        body: offer(),
+      }),
+    'GET /staff/partner-offers': () =>
+      call(world(), 'GET', '/staff/partner-offers', { token: manager() }),
+    'POST /staff/partner-offers/{id}/withdraw': async () => {
+      const res = await call(
+        world(),
+        'POST',
+        `/staff/partners/${world().aPartnerId}/offers`,
+        { token: manager(), body: offer() },
+      ).expect(201);
+      return call(
+        world(),
+        'POST',
+        `/staff/partner-offers/${(res.body as { id: string }).id}/withdraw`,
+        { token: manager() },
+      );
+    },
+    'GET /market/offers': () =>
+      call(world(), 'GET', '/market/offers', { token: owner() }),
     'GET /market/settings': () =>
       call(world(), 'GET', '/market/settings', { token: manager() }),
     'PATCH /market/settings': () =>

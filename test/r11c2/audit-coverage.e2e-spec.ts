@@ -1,5 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
+import { day } from '../setup/compound-clock';
 import { R11C2_COVERAGE } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { marketHelpers, type MarketSetUp } from '../setup/market';
@@ -216,6 +217,44 @@ describe('Audit coverage — community', () => {
       } finally {
         await m.marketSettings(s.manager, { reportHideThreshold: 3 });
       }
+    });
+
+    it('partner_offer.published and .withdrawn — the partner and the days', async () => {
+      const partnerId = await m.partner(s.c);
+      const offer = (
+        (
+          await m
+            .http(
+              'post',
+              `/staff/partners/${partnerId}/offers`,
+              s.manager.token,
+              {
+                titleEn: 'Spring offer',
+                titleAr: 'عرض الربيع',
+                bodyEn: MARKER,
+                bodyAr: MARKER,
+                validFromOn: day(0),
+                validToOn: day(7),
+              },
+            )
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      expect(await single('partner_offer.published', offer)).toMatchObject({
+        actorId: s.manager.id,
+        metadata: { partnerId, validFromOn: day(0), validToOn: day(7) },
+      });
+      await m
+        .http(
+          'post',
+          `/staff/partner-offers/${offer}/withdraw`,
+          s.manager.token,
+        )
+        .expect(204);
+      expect(await single('partner_offer.withdrawn', offer)).toMatchObject({
+        actorId: s.manager.id,
+        metadata: { partnerId },
+      });
     });
 
     it('market.settings_changed — the settings, from and to', async () => {

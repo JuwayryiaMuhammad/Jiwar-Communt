@@ -1,7 +1,12 @@
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
-import { listingRow, marketReportRow, shopRow } from '../setup/market-rows';
+import {
+  listingRow,
+  marketReportRow,
+  partnerOfferRow,
+  shopRow,
+} from '../setup/market-rows';
 import type { Side } from './world';
 
 /**
@@ -15,12 +20,15 @@ export interface R11c2World {
   bShopId: string;
   /** B's tenant's report of B's listing. */
   bMarketReportId: string;
+  /** An offer of B's partner, in force. */
+  bPartnerOfferId: string;
 }
 
 export async function r11c2World(
   h: HttpHarness,
   helpers: ReturnType<typeof communityHelpers>,
   b: Side,
+  bPartnerId: string,
 ): Promise<R11c2World> {
   const tenantTx = h.moduleRef.get(TenantTx);
   return helpers.asManager(b, () =>
@@ -42,6 +50,11 @@ export async function r11c2World(
           tenantId: b.tenantId,
           ownerId: b.ids.owner,
           ownerUnitId: b.homeUnitId,
+        }),
+        bPartnerOfferId: await partnerOfferRow(tx, {
+          tenantId: b.tenantId,
+          partnerId: bPartnerId,
+          createdById: b.ids.manager,
         }),
       };
     }),

@@ -1,5 +1,6 @@
 import { Client } from 'pg';
 import { MARKET_LISTINGS_SWEEP } from '../../src/neighbours/market/market-lifecycle';
+import { partnerRow } from './partners-rows';
 import type { Compound } from './community';
 import { dbClock } from './compound-clock';
 import { buildExports, readArchive, stepUp } from './exports';
@@ -152,6 +153,12 @@ export function marketHelpers(h: HttpHarness) {
   /** The market's hourly sweep, at the database's clock. */
   const sweep = () => n.sweep(MARKET_LISTINGS_SWEEP, dbClock());
 
+  /** A partner of the compound, listed by its manager (a row, as the schema suites write it). */
+  const partner = (c: Compound) =>
+    n.inTx(c, (tx) =>
+      partnerRow(tx, { tenantId: c.tenantId, createdById: c.managerId }),
+    );
+
   /** A listing's row, as the database holds it. */
   const row = (c: Compound, id: string) =>
     x.asManager(c, () =>
@@ -205,6 +212,7 @@ export function marketHelpers(h: HttpHarness) {
     nearExpiry,
     sweep,
     row,
+    partner,
   };
 }
 

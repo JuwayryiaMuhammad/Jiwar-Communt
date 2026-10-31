@@ -26,7 +26,12 @@
 -- `resides_since` and widens their columns and CHECKs);
 -- the gate's settings, and a banned person with a photo met at the gate
 -- twice (ADR 0068 adds the settings' face-check switch and call times,
--- widens the matches' CHECKs and recreates the files').
+-- widens the matches' CHECKs and recreates the files');
+-- a staff credit note, a vehicle fine paid at the office and a club plan
+-- with a membership paid at the office (ADR 0070 lets a credit note's author
+-- and a club payment's recorder be null, rewrites their CHECKs, links a fine
+-- payment to finance's, and recreates the facilities' and bookings' shape
+-- and window CHECKs and the bookings' trigger).
 -- ============================================================================
 
 DO $$
@@ -46,6 +51,7 @@ DECLARE
   fac uuid;
   occ_t uuid;
   ph uuid; bl uuid; vp uuid;
+  fine uuid; plan uuid; mem uuid;
 BEGIN
   FOR c IN 1..2 LOOP
     s := substr(md5(random()::text || clock_timestamp()::text), 1, 10);
@@ -239,6 +245,28 @@ BEGIN
       (gen_random_uuid(), t, fac, u2, res2, date_trunc('hour', now()) + interval '3 days',
        date_trunc('hour', now()) + interval '3 days 1 hour', 0, 1, false, 'cancelled', 'staff',
        'rules_violation', mgr, now(), now());
+    -- What ADR 0070's migrations reach: a staff credit note on the invoice,
+    -- a fine paid at the office, a club membership paid at the office.
+    INSERT INTO credit_notes (id, tenant_id, number, invoice_id, amount, reason_code,
+                              created_by_account_id) VALUES
+      (gen_random_uuid(), t, 1, inv, 100.00, 'goodwill', mgr);
+    fine := gen_random_uuid();
+    INSERT INTO vehicle_fines (id, tenant_id, number, unit_id, plate, reason, amount, occurred_on,
+                               issued_by_account_id, status, updated_at) VALUES
+      (fine, t, 1, u1, 'ABC123', 'blocking', 300.00, current_date - 5, guard, 'paid', now());
+    INSERT INTO vehicle_fine_payments (id, tenant_id, fine_id, kind, amount, currency, receipt_number,
+                                       paid_on, recorded_by_account_id) VALUES
+      (gen_random_uuid(), t, fine, 'payment', 300.00, 'EGP', 'F-' || s, current_date - 2, mgr);
+    plan := gen_random_uuid(); mem := gen_random_uuid();
+    INSERT INTO club_plans (id, tenant_id, name_en, name_ar, duration_kind, price, updated_at) VALUES
+      (plan, t, 'Monthly', 'شهري', 'monthly', 500.00, now());
+    INSERT INTO club_memberships (id, tenant_id, unit_id, created_by_account_id) VALUES
+      (mem, t, u1, mgr);
+    INSERT INTO club_payment_records (id, tenant_id, membership_id, kind, plan_id, amount, currency,
+                                      receipt_number, paid_on, period_starts_on, period_ends_on,
+                                      recorded_by_account_id) VALUES
+      (gen_random_uuid(), t, mem, 'payment', plan, 500.00, 'EGP', 'C-' || s, current_date - 3,
+       current_date - 3, current_date + 27, mgr);
     INSERT INTO emergencies (id, tenant_id, number, unit_id, type, reported_by_account_id,
                              responders_notified, updated_at) VALUES
       (gen_random_uuid(), t, 1, u1, 'medical', res1, 0, now());

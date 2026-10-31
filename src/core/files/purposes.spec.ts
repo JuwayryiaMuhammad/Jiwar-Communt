@@ -4,12 +4,12 @@ import { FILE_PURPOSES, FILE_TYPES, mediaOf } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0068 recreated both, with every purpose). */
+/** Both CHECKs as they stand now (ADR 0071 recreated both, with every purpose). */
 const both = readFileSync(
   join(
     __dirname,
     migrations,
-    '20261229090100_gate_vendor_file_purposes/migration.sql',
+    '20270119090100_community_file_purposes/migration.sql',
   ),
   'utf8',
 );
@@ -287,6 +287,21 @@ describe('file purposes', () => {
       );
       expect(typeCheck).not.toContain(`'${purpose}'`);
     }
+    // Community (ADR 0071): a listing's photo is a 5 MB image, a gallery
+    // photo a 10 MB one (the ELSE).
+    expect(FILE_PURPOSES.market_listing_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'market_listing_photo' THEN ${FILE_PURPOSES.market_listing_photo.maxBytes}`,
+    );
+    expect(FILE_PURPOSES.gallery_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(sizeCheck).not.toContain(`WHEN 'gallery_photo'`);
+    expect(FILE_PURPOSES.gallery_photo.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
   });
 
   it('only the nine types', () => {
@@ -322,6 +337,13 @@ describe('file purposes', () => {
   it('a face probe and an ID scan are the guard’s alone (ADR 0068)', () => {
     expect(FILE_PURPOSES.gate_face_probe.uploaders).toEqual(['gate.operate']);
     expect(FILE_PURPOSES.gate_id_scan.uploaders).toEqual(['gate.operate']);
+  });
+
+  it('a listing’s photo is the seller’s, a gallery photo the staff’s (ADR 0071)', () => {
+    expect(FILE_PURPOSES.market_listing_photo.uploaders).toEqual([
+      'market.post',
+    ]);
+    expect(FILE_PURPOSES.gallery_photo.uploaders).toEqual(['content.manage']);
   });
 
   it('a sheet to import is uploaded by whoever keeps the register or the meters (ADR 0064, 0066)', () => {

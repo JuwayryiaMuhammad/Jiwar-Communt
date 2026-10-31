@@ -961,4 +961,46 @@ export const REASON_CODES = {
     'fine_cancelled',
     'request_cancelled',
   ],
+  // Community (ADR 0071): why the market's handlers turn a listing down
+  // before it goes live or take a live one off, what a resident reports a
+  // listing for and how the report closes; why a shop is turned down or
+  // suspended; why the staff call a group offer off; what a resident
+  // reports a gallery photo for and why the staff keep one hidden. The
+  // migrations' CHECKs repeat them.
+  marketListingReject: [
+    'prohibited_item',
+    'misleading',
+    'wrong_category',
+    'duplicate',
+    'incomplete',
+    'other',
+  ],
+  marketListingRemove: [
+    'prohibited_item',
+    'scam',
+    'misleading',
+    'harassment',
+    'privacy',
+    'duplicate',
+    'other',
+  ],
+  marketReport: [
+    'scam',
+    'prohibited',
+    'misleading',
+    'harassment',
+    'privacy',
+    'other',
+  ],
+  marketReportOutcome: ['no_action', 'removed', 'warned'],
+  marketShopReject: ['not_allowed', 'incomplete', 'duplicate', 'other'],
+  marketShopSuspend: ['complaints', 'prohibited_goods', 'inactive', 'other'],
+  groupOfferCancel: [
+    'partner_withdrew',
+    'price_changed',
+    'not_enough_interest',
+    'other',
+  ],
+  galleryPhotoReport: ['privacy', 'other'],
+  galleryPhotoHide: ['privacy', 'inappropriate', 'other'],
 } as const;

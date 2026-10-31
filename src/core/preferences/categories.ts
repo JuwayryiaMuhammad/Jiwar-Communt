@@ -37,6 +37,8 @@ export const NOTIFICATION_CATEGORIES = [
   'partners',
   // Water, electricity and gas cut off in their buildings (ADR 0066).
   'utilities',
+  // The market: listings, shops and group offers (ADR 0071).
+  'market',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

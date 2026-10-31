@@ -21890,7 +21890,9 @@
           "data_import",
           "works_inspection_photo",
           "gate_face_probe",
-          "gate_id_scan"
+          "gate_id_scan",
+          "market_listing_photo",
+          "gallery_photo"
         ],
         "type": "string"
       },
@@ -35313,7 +35315,8 @@
           "guard_duty",
           "governance",
           "partners",
-          "utilities"
+          "utilities",
+          "market"
         ],
         "type": "string"
       },

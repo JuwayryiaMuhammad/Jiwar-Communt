@@ -346,6 +346,7 @@ describe('Audit coverage', () => {
             'governance.read',
             'household.delegate',
             'household.manage',
+            'market.post',
             'neighbours.board',
             'neighbours.complain',
             'parking.report',

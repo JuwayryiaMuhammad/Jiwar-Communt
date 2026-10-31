@@ -2374,6 +2374,8 @@ enum NotificationCategory {
   partners
   /// Water, electricity and gas cut off in their buildings (ADR 0066).
   utilities
+  /// The market: listings, shops and group offers (ADR 0071).
+  market
 
   @@map("notification_category")
 }
@@ -3390,6 +3392,10 @@ enum FilePurpose {
   gate_face_probe
   /// An identity document a guard scans (ADR 0068): deleted once read.
   gate_id_scan
+  /// A market listing's photo (ADR 0071): an image, 5 MB, the seller's.
+  market_listing_photo
+  /// A compound album's photo (ADR 0071): an image, 10 MB, the staff's.
+  gallery_photo
   @@map("file_purpose")
 }
 

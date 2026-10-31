@@ -234,6 +234,16 @@ export const REASON_CODES = {
   // Guard vendor adapters (ADR 0068).
   alarmDeviceRetire: ['lost', 'broken', 'replaced', 'returned', 'other'],
   gateCallReason: ['visitor_at_gate', 'delivery_at_gate', 'worker_at_gate', 'request_unanswered', 'other'],
+  // Community (ADR 0071).
+  marketListingReject: ['prohibited_item', 'misleading', 'wrong_category', 'duplicate', 'incomplete', 'other'],
+  marketListingRemove: ['prohibited_item', 'scam', 'misleading', 'harassment', 'privacy', 'duplicate', 'other'],
+  marketReport: ['scam', 'prohibited', 'misleading', 'harassment', 'privacy', 'other'],
+  marketReportOutcome: ['no_action', 'removed', 'warned'],
+  marketShopReject: ['not_allowed', 'incomplete', 'duplicate', 'other'],
+  marketShopSuspend: ['complaints', 'prohibited_goods', 'inactive', 'other'],
+  groupOfferCancel: ['partner_withdrew', 'price_changed', 'not_enough_interest', 'other'],
+  galleryPhotoReport: ['privacy', 'other'],
+  galleryPhotoHide: ['privacy', 'inappropriate', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

@@ -84,6 +84,7 @@ export const NOTIFICATION_CATEGORY_TEXT: Record<string, string> = {
   governance: 'The owners’ board: its polls, elections and results',
   partners: 'Requests to the compound’s service partners',
   utilities: 'Water, electricity and gas cut off in their building',
+  market: 'The market: their listings, their shop and group offers',
 };
 
 /** Personal fields an erasure blanks, as the scope lists them. */

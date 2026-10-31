@@ -374,6 +374,20 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['gate.operate'],
   },
+  // A market listing's photo (ADR 0071), the seller's: at most six on a
+  // listing, shown to every resident while it is live.
+  market_listing_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['market.post'],
+  },
+  // A compound album's photo (ADR 0071): the staff upload them, residents
+  // read them; a privacy report hides one at once.
+  gallery_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 10 * MB,
+    uploaders: ['content.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

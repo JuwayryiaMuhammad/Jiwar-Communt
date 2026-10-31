@@ -118,3 +118,8 @@ test('who raises board matters or keeps the budget enters, and a sitting board m
 test('a role that decides residents’ appeals of staff decisions enters (ADR 0059)', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['appeals.decide'] }), true);
 });
+
+test('a role that handles the market enters; a resident who posts on it does not (ADR 0071)', () => {
+  assert.equal(mayEnter({ type: 'staff', permissions: ['market.handle'] }), true);
+  assert.equal(mayEnter({ type: 'resident', permissions: ['market.post'] }), false);
+});

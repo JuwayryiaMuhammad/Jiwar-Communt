@@ -96,6 +96,7 @@ describe('Roles', () => {
         'governance.read',
         'household.delegate',
         'household.manage',
+        'market.post',
         'neighbours.board',
         'neighbours.complain',
         'parking.report',
@@ -289,6 +290,7 @@ describe('Roles', () => {
         'permits.request',
         'governance.read',
         'partners.request',
+        'market.post',
       ]),
     );
     expect(await version()).toBe(before);

@@ -72,6 +72,8 @@ export const FILES_ROUTES: Row[] = [
               'works_inspection_photo',
               'gate_face_probe',
               'gate_id_scan',
+              'market_listing_photo',
+              'gallery_photo',
             ],
           },
         },

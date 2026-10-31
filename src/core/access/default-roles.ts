@@ -103,6 +103,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate_devices.manage',
       'partners.manage',
       'appeals.decide',
+      'market.handle',
     ],
   },
   {
@@ -131,6 +132,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'permits.request',
       'governance.read',
       'partners.request',
+      'market.post',
     ],
   },
   {
@@ -158,6 +160,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate_services.request',
       'permits.request',
       'partners.request',
+      'market.post',
     ],
   },
   {

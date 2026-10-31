@@ -301,6 +301,13 @@ export const PERMISSIONS = {
   // notice), decided by a manager who did not take it, with a rationale;
   // an overturn left to the management is followed up here too.
   'appeals.decide': { kinds: ['manager'] },
+  // The market (ADR 0071). Residents and family list things to sell, give,
+  // want or offer, a unit an owner sells or lets, and run a small shop;
+  // they write to a seller through the neighbours' masked conversation.
+  // `market.handle` reviews listings and shops, works the reports and
+  // runs the group offers.
+  'market.post': { kinds: ['resident', 'family'] },
+  'market.handle': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

@@ -593,6 +593,8 @@ model Tenant {
   bookingCompanions            BookingCompanion[]
   bookingWaitlistEntries       BookingWaitlistEntry[]
   facilityNightLocks           FacilityNightLock[]
+  marketSettings         MarketSettings?
+  marketListings         MarketListing[]
 
   @@map("tenants")
 }
@@ -1093,6 +1095,9 @@ model Account {
   bookingCompanions              BookingCompanion[]                  @relation("BookingCompanionAccount")
   bookingWaitlistEntries         BookingWaitlistEntry[]              @relation("BookingWaitlistAccount")
 
+  marketListingsSold    MarketListing[] @relation("MarketListingSeller")
+  marketListingsDecided MarketListing[] @relation("MarketListingDecider")
+
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
   @@unique([tenantId, id])
@@ -1213,6 +1218,8 @@ model Unit {
   clearances FinanceClearance[]
   deposits FinanceDeposit[]
   bookingWaitlistEntries     BookingWaitlistEntry[]
+  marketListingsFrom MarketListing[] @relation("MarketListingSellerUnit")
+  marketListingsOf   MarketListing[] @relation("MarketListingUnit")
   @@unique([tenantId, code])
   @@unique([tenantId, id])
   @@map("units")
@@ -3443,6 +3450,7 @@ model StoredFile {
   compoundDocumentVersions      CompoundDocumentVersion[]      @relation("CompoundDocumentFile")
   contracts                     UnitContract[]                 @relation("ContractFile")
   permitInspectionPhotos        PermitInspectionPhoto[]
+  marketListingPhotos           MarketListingPhoto[]           @relation("MarketListingPhotoFile")
   owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   /// A recording's length, read from its container at finalize (ADR 0056).
   mediaDurationMs Int?        @map("media_duration_ms")
@@ -11413,4 +11421,128 @@ model SafetyAcknowledgement {
 
   @@unique([tenantId, id])
   @@map("safety_acknowledgements")
+}
+
+/// What a listing is (ADR 0071).
+enum MarketListingKind {
+  sell
+  give
+  wanted
+  service
+  unit_sale
+  unit_rent
+
+  @@map("market_listing_kind")
+}
+
+/// The market's closed list of categories (ADR 0071); a unit is `real_estate`.
+enum MarketListingCategory {
+  furniture
+  electronics
+  appliances
+  clothing
+  kids
+  books
+  sports
+  vehicles
+  home_garden
+  services
+  food
+  real_estate
+  other
+
+  @@map("market_listing_category")
+}
+
+enum MarketListingStatus {
+  pending_review
+  live
+  under_review
+  rejected
+  removed
+  withdrawn
+  sold
+  expired
+
+  @@map("market_listing_status")
+}
+
+/// A compound's market settings (ADR 0071): one row, created with it.
+model MarketSettings {
+  tenantId            String   @id @map("tenant_id") @db.Uuid
+  /// A new or edited listing waits for a handler first.
+  requiresReview      Boolean  @default(true) @map("requires_review")
+  /// Listings an account may have pending, live or under review at once.
+  maxLivePerAccount   Int      @default(10) @map("max_live_per_account")
+  /// Days a listing stays live.
+  expiryDays          Int      @default(30) @map("expiry_days")
+  /// Distinct units whose reports take a live listing off for review.
+  reportHideThreshold Int      @default(3) @map("report_hide_threshold")
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("market_settings")
+}
+
+/// A listing on the market (ADR 0071). Names no seller: a building only.
+model MarketListing {
+  id               String                @id @db.Uuid
+  tenantId         String                @map("tenant_id") @db.Uuid
+  kind             MarketListingKind
+  category         MarketListingCategory
+  sellerId         String                @map("seller_account_id") @db.Uuid
+  /// The unit the seller listed from: only its building is ever shown.
+  sellerUnitId     String                @map("seller_unit_id") @db.Uuid
+  /// The unit for sale or to let (its owner's); never its code in a view.
+  unitId           String?               @map("unit_id") @db.Uuid
+  /// The seller's words; null once erased.
+  title            String?
+  body             String?
+  price            Decimal?              @db.Decimal(12, 2)
+  negotiable       Boolean               @default(false)
+  status           MarketListingStatus
+  expiresAt        DateTime              @map("expires_at") @db.Timestamptz(3)
+  /// When the seller was told it ends soon (once).
+  expiryNotifiedAt DateTime?             @map("expiry_notified_at") @db.Timestamptz(3)
+  /// The handler's last decision.
+  decidedAt        DateTime?             @map("decided_at") @db.Timestamptz(3)
+  decidedById      String?               @map("decided_by") @db.Uuid
+  /// The end's code: a rejection's, a removal's or the system's withdrawal.
+  reasonCode       String?               @map("reason_code")
+  endedAt          DateTime?             @map("ended_at") @db.Timestamptz(3)
+  erasedAt         DateTime?             @map("erased_at") @db.Timestamptz(3)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Generated from title and body ('simple'); searched, never written.
+  search           Unsupported("tsvector")?
+
+  tenant     Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  seller     Account              @relation("MarketListingSeller", fields: [tenantId, sellerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_seller_fkey")
+  sellerUnit Unit                 @relation("MarketListingSellerUnit", fields: [tenantId, sellerUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_seller_unit_fkey")
+  unit       Unit?                @relation("MarketListingUnit", fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_unit_fkey")
+  decidedBy  Account?             @relation("MarketListingDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_decided_by_fkey")
+  photos     MarketListingPhoto[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "market_listings_market_idx")
+  @@index([tenantId, sellerId, createdAt(sort: Desc), id(sort: Desc)], map: "market_listings_seller_idx")
+  @@index([tenantId, status, expiresAt], map: "market_listings_expiry_idx")
+  @@map("market_listings")
+}
+
+/// A listing's photo (ADR 0071): at most six, in order. Goes only with its file.
+model MarketListingPhoto {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  fileId    String   @unique @map("file_id") @db.Uuid
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  listing MarketListing @relation(fields: [tenantId, listingId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file    StoredFile    @relation("MarketListingPhotoFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, listingId, position], map: "market_listing_photos_position_key")
+  @@map("market_listing_photos")
 }

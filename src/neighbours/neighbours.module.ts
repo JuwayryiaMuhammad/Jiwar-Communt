@@ -37,6 +37,15 @@ import { ConversationsService } from './conversations/conversations.service';
 import { ReportsService } from './conversations/reports.service';
 import { StaffReportsController } from './conversations/staff-reports.controller';
 import { NeighboursExportSections } from './export/export-sections';
+import { ListingsService } from './market/listings.service';
+import {
+  MarketController,
+  MarketReviewController,
+  MarketSettingsController,
+  MyListingsController,
+} from './market/market.controller';
+import { MarketLifecycle } from './market/market-lifecycle';
+import { MarketSettingsService } from './market/market-settings.service';
 import { NeighboursLifecycle } from './privacy/neighbours-lifecycle';
 import { NeighboursProvisioning } from './provisioning';
 import {
@@ -50,7 +59,9 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
 
 /**
  * What happens between units (ADR 0042): complaints against a unit, lost
- * and found, the lending board, masked contact and the welcome.
+ * and found, the lending board, masked contact and the welcome; and the
+ * market (ADR 0071), whose sellers are written to through the same masked
+ * contact.
  */
 @Module({
   imports: [AccountsModule, CommunityNeighboursPortModule, FilesModule],
@@ -70,6 +81,10 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ComplaintCategoriesController,
     ComplaintCategoryOptionsController,
     NeighbourSettingsController,
+    MarketController,
+    MyListingsController,
+    MarketReviewController,
+    MarketSettingsController,
   ],
   providers: [
     ResidentComplaintItems,
@@ -97,6 +112,9 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     WelcomeService,
     NeighboursLifecycle,
     NeighboursExportSections,
+    MarketSettingsService,
+    ListingsService,
+    MarketLifecycle,
   ],
 })
 export class NeighboursModule {}

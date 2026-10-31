@@ -34513,6 +34513,525 @@
     {
       "item": [
         {
+          "name": "Search the market",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "listings"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "Words to find in the title or the body. 30 searches a minute.",
+                  "disabled": true,
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "minPrice",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "maxPrice",
+                  "value": ""
+                },
+                {
+                  "description": "A price sort reads only listings with a price.",
+                  "disabled": true,
+                  "key": "sort",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/listings"
+            }
+          }
+        },
+        {
+          "name": "List something on the market",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"sell\",\n  \"category\": \"furniture\",\n  \"title\": \"\",\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string | yes | What it is, its condition, where to see it. |\n| `category` | `furniture` \\| `electronics` \\| `appliances` \\| `clothing` \\| `kids` \\| `books` \\| `sports` \\| `vehicles` \\| `home_garden` \\| `services` \\| `food` \\| `real_estate` \\| `other` | yes | A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE). |\n| `fromUnitId` | string (uuid) |  | One of the caller’s units to list from, when they have several: only its building shows. Not for a unit listing. |\n| `kind` | `sell` \\| `give` \\| `wanted` \\| `service` \\| `unit_sale` \\| `unit_rent` | yes | `sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner). |\n| `negotiable` | boolean |  | Open to offers. Ignored without a price. |\n| `photoFileIds` | string[] |  | Up to 6 uploaded files of purpose `market_listing_photo`, in the order shown. |\n| `price` | string |  | EGP. Required to sell and for a unit (FIELD_REQUIRED); refused on a gift (FIELD_NOT_ALLOWED). |\n| `title` | string | yes |  |\n| `unitId` | string (uuid) |  | The unit for sale or to let: one the caller owns now (MARKET_UNIT_NOT_OWNED). Only for `unit_sale` and `unit_rent`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "listings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/listings"
+            }
+          }
+        },
+        {
+          "name": "Get a listing on the market, or one of my own",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "listings",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/listings/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change my listing while it waits or is live (back to review where the compound reviews)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"body\": \"\",\n  \"category\": \"furniture\",\n  \"negotiable\": false,\n  \"price\": \"\",\n  \"title\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string |  |  |\n| `category` | `furniture` \\| `electronics` \\| `appliances` \\| `clothing` \\| `kids` \\| `books` \\| `sports` \\| `vehicles` \\| `home_garden` \\| `services` \\| `food` \\| `real_estate` \\| `other` |  | A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE). |\n| `negotiable` | boolean |  |  |\n| `price` | string |  | `null` takes the price off, where the kind allows none (FIELD_REQUIRED otherwise). |\n| `title` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "listings",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/listings/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark my listing sold (or given, or let)",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "listings",
+                ":id",
+                "sold"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/listings/:id/sold",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take my listing off the market",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "listings",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/listings/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List listings waiting for review or reported",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "review"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "Both when left out.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/review"
+            }
+          }
+        },
+        {
+          "name": "Get any listing of the compound",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "review",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/review/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Let a waiting listing on the market, or a reported one back",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "review",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/review/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn a waiting listing down",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code of the action’s list: `marketListingReject` to turn a listing down, `marketListingRemove` to take one off (INVALID_REASON_CODE names the allowed ones). |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "review",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/review/:id/reject",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a live or reported listing off the market",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code of the action’s list: `marketListingReject` to turn a listing down, `marketListingRemove` to take one off (INVALID_REASON_CODE names the allowed ones). |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "review",
+                ":id",
+                "remove"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/review/:id/remove",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the market’s settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/settings"
+            }
+          }
+        },
+        {
+          "name": "Change the market’s settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"expiryDays\": 1,\n  \"maxLivePerAccount\": 1,\n  \"reportHideThreshold\": 1,\n  \"requiresReview\": false\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `expiryDays` | number |  | Days a listing stays on the market. |\n| `maxLivePerAccount` | number |  | Listings one account may have waiting, live or reported at once. |\n| `reportHideThreshold` | number |  | Units whose reports take a live listing off for review. |\n| `requiresReview` | boolean |  | A new or changed listing waits for a handler first. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/settings"
+            }
+          }
+        },
+        {
+          "name": "List my listings and how each ended",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "market",
+                "listings"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/market/listings"
+            }
+          }
+        }
+      ],
+      "name": "market"
+    },
+    {
+      "item": [
+        {
           "name": "Approve or refuse a member's request",
           "request": {
             "body": {

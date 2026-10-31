@@ -919,4 +919,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_calls_room_key: null,
   gate_call_vendor_events_tenant_id_id_key: null,
   gate_call_vendor_events_vendor_key: null,
+  // The market (ADR 0071). One live listing a unit and a kind, checked first
+  // under the unit's lock (MARKET_UNIT_LISTED); a photo is one listing's,
+  // at its own position.
+  market_listings_tenant_id_id_key: null,
+  market_listings_one_per_unit: null,
+  market_listing_photos_file_id_key: null,
+  market_listing_photos_position_key: null,
 };

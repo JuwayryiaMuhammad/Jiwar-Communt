@@ -2558,6 +2558,23 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'cancel_request_reason IS NULL is tested first; the list runs only on a value',
   },
+  // The market (ADR 0071).
+  market_settings_ranges: {},
+  market_listings_erased_shape: {},
+  market_listings_text_length: {
+    guarded:
+      'title and body are each tested IS NULL first; the length runs only on a value',
+  },
+  market_listings_kind_shape: {
+    guarded:
+      'kind and category are NOT NULL; unit_id only under IS [NOT] NULL; price compared only after price IS NULL is tested',
+  },
+  market_listings_expires_after_creation: {},
+  market_listings_state_shape: {
+    guarded:
+      'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',
+  },
+  market_listing_photos_position_range: {},
 };
 
 interface Check {

@@ -11,6 +11,15 @@ export interface NeighbourUnit {
   building: string | null;
 }
 
+/** A unit for sale or to let, as a listing shows it: never its code. */
+export interface ListedUnitFacts {
+  building: string | null;
+  floor: number | null;
+  type: string | null;
+  /** Square metres, two decimals; null when the unit has none. */
+  areaSqm: string | null;
+}
+
 /** Who a notice to a unit goes to: the household living in it, or its owners. */
 export type NoticeRecipientKind = 'household' | 'owners';
 
@@ -112,6 +121,60 @@ export class CommunityNeighboursPort {
 
   lockUnit(tx: TenantTxClient, unitId: string): Promise<void> {
     return lockUnits(tx, [unitId]);
+  }
+
+  /**
+   * Whether the account owns the unit now: an active owner occupancy,
+   * living there or not (ADR 0071: only an owner lists a unit for sale or
+   * to let). Call under the unit's lock when a listing is written.
+   */
+  async ownsLive(
+    tx: TenantTxClient,
+    accountId: string,
+    unitId: string,
+  ): Promise<boolean> {
+    return (
+      (await tx.unitOccupancy.count({
+        where: {
+          accountId,
+          unitId,
+          status: 'active',
+          occupancyType: 'owner',
+        },
+      })) > 0
+    );
+  }
+
+  /**
+   * What a unit listing shows of its unit (ADR 0071): its type, area,
+   * building and floor. Never its code.
+   */
+  async unitFacts(
+    tx: TenantTxClient,
+    unitIds: readonly string[],
+  ): Promise<Map<string, ListedUnitFacts>> {
+    if (!unitIds.length) return new Map();
+    const units = await tx.unit.findMany({
+      where: { id: { in: [...new Set(unitIds)] } },
+      select: {
+        id: true,
+        building: true,
+        floor: true,
+        unitType: true,
+        areaSqm: true,
+      },
+    });
+    return new Map(
+      units.map((u) => [
+        u.id,
+        {
+          building: u.building,
+          floor: u.floor,
+          type: u.unitType,
+          areaSqm: u.areaSqm === null ? null : u.areaSqm.toFixed(2),
+        },
+      ]),
+    );
   }
 
   /**

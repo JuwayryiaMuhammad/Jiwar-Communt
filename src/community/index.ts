@@ -35,6 +35,7 @@ export {
 export { CommunityNeighboursPortModule } from './neighbours-port.module';
 export {
   CommunityNeighboursPort,
+  type ListedUnitFacts,
   type NeighbourUnit,
   type NoticeRecipientKind,
   type NoticeRecipients,

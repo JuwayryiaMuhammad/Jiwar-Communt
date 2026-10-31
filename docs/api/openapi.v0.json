@@ -14135,6 +14135,72 @@
         ],
         "type": "object"
       },
+      "CreateListingDto": {
+        "properties": {
+          "body": {
+            "description": "What it is, its condition, where to see it.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingCategory"
+              }
+            ],
+            "description": "A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE)."
+          },
+          "fromUnitId": {
+            "description": "One of the caller’s units to list from, when they have several: only its building shows. Not for a unit listing.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingKind"
+              }
+            ],
+            "description": "`sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner)."
+          },
+          "negotiable": {
+            "description": "Open to offers. Ignored without a price.",
+            "type": "boolean"
+          },
+          "photoFileIds": {
+            "description": "Up to 6 uploaded files of purpose `market_listing_photo`, in the order shown.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "price": {
+            "description": "EGP. Required to sell and for a unit (FIELD_REQUIRED); refused on a gift (FIELD_NOT_ALLOWED).",
+            "example": "1500.00",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 80,
+            "minLength": 3,
+            "type": "string"
+          },
+          "unitId": {
+            "description": "The unit for sale or to let: one the caller owns now (MARKET_UNIT_NOT_OWNED). Only for `unit_sale` and `unit_rent`.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "category",
+          "title",
+          "body"
+        ],
+        "type": "object"
+      },
       "CreateMaterialExitDto": {
         "properties": {
           "items": {
@@ -30364,6 +30430,242 @@
         ],
         "type": "object"
       },
+      "ListedUnitView": {
+        "properties": {
+          "areaSqm": {
+            "description": "Square metres, two decimals.",
+            "nullable": true,
+            "type": "string"
+          },
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "floor": {
+            "nullable": true,
+            "type": "number"
+          },
+          "type": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "areaSqm",
+          "building",
+          "floor"
+        ],
+        "type": "object"
+      },
+      "ListingCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingKind"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingStatus"
+              }
+            ],
+            "description": "`pending_review` where the compound reviews, else `live`."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "expiresAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ListingPhotoView": {
+        "properties": {
+          "contentType": {
+            "description": "image/jpeg, image/png or image/webp.",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET, valid until `expiresAt`. Null when gone.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contentType",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "ListingReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code of the action’s list: `marketListingReject` to turn a listing down, `marketListingRemove` to take one off (INVALID_REASON_CODE names the allowed ones).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ListingSellerView": {
+        "properties": {
+          "building": {
+            "description": "The building the seller listed from; null when none.",
+            "nullable": true,
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller listed it.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "building",
+          "mine"
+        ],
+        "type": "object"
+      },
+      "ListingView": {
+        "properties": {
+          "body": {
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingCategory"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingKind"
+              }
+            ]
+          },
+          "negotiable": {
+            "type": "boolean"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/ListingPhotoView"
+            },
+            "type": "array"
+          },
+          "price": {
+            "description": "EGP, two decimals; null for a gift and where none is asked.",
+            "example": "1500.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "seller": {
+            "$ref": "#/components/schemas/ListingSellerView"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingStatus"
+              }
+            ],
+            "description": "By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings."
+          },
+          "title": {
+            "description": "Null once its seller was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListedUnitView"
+              }
+            ],
+            "description": "The unit for sale or to let.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "category",
+          "title",
+          "body",
+          "price",
+          "negotiable",
+          "state",
+          "seller",
+          "unit",
+          "photos",
+          "expiresAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ListingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ListingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "Locale": {
         "enum": [
           "ar",
@@ -31765,6 +32067,74 @@
         },
         "required": [
           "id"
+        ],
+        "type": "object"
+      },
+      "MarketListingCategory": {
+        "description": "A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE).",
+        "enum": [
+          "furniture",
+          "electronics",
+          "appliances",
+          "clothing",
+          "kids",
+          "books",
+          "sports",
+          "vehicles",
+          "home_garden",
+          "services",
+          "food",
+          "real_estate",
+          "other"
+        ],
+        "type": "string"
+      },
+      "MarketListingKind": {
+        "description": "`sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner).",
+        "enum": [
+          "sell",
+          "give",
+          "wanted",
+          "service",
+          "unit_sale",
+          "unit_rent"
+        ],
+        "type": "string"
+      },
+      "MarketListingStatus": {
+        "description": "`pending_review` where the compound reviews, else `live`.",
+        "enum": [
+          "pending_review",
+          "live",
+          "under_review",
+          "rejected",
+          "removed",
+          "withdrawn",
+          "sold",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "MarketSettingsView": {
+        "properties": {
+          "expiryDays": {
+            "type": "number"
+          },
+          "maxLivePerAccount": {
+            "type": "number"
+          },
+          "reportHideThreshold": {
+            "type": "number"
+          },
+          "requiresReview": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "requiresReview",
+          "maxLivePerAccount",
+          "expiryDays",
+          "reportHideThreshold"
         ],
         "type": "object"
       },
@@ -33509,6 +33879,128 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/MyGuardInstructionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MyListingView": {
+        "properties": {
+          "body": {
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingCategory"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingKind"
+              }
+            ]
+          },
+          "negotiable": {
+            "type": "boolean"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/ListingPhotoView"
+            },
+            "type": "array"
+          },
+          "price": {
+            "description": "EGP, two decimals; null for a gift and where none is asked.",
+            "example": "1500.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "Why it ended: a `marketListingReject` or `marketListingRemove` code, or `seller_left`, `seller_erased`, `owner_left` for the system’s withdrawals.",
+            "nullable": true,
+            "type": "string"
+          },
+          "seller": {
+            "$ref": "#/components/schemas/ListingSellerView"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingStatus"
+              }
+            ],
+            "description": "By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings."
+          },
+          "title": {
+            "description": "Null once its seller was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListedUnitView"
+              }
+            ],
+            "description": "The unit for sale or to let.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "category",
+          "title",
+          "body",
+          "price",
+          "negotiable",
+          "state",
+          "seller",
+          "unit",
+          "photos",
+          "expiresAt",
+          "createdAt",
+          "reasonCode",
+          "endedAt"
+        ],
+        "type": "object"
+      },
+      "MyListingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyListingView"
             },
             "type": "array"
           },
@@ -55670,6 +56162,147 @@
         ],
         "type": "object"
       },
+      "StaffListingView": {
+        "properties": {
+          "body": {
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingCategory"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingKind"
+              }
+            ]
+          },
+          "negotiable": {
+            "type": "boolean"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/ListingPhotoView"
+            },
+            "type": "array"
+          },
+          "price": {
+            "description": "EGP, two decimals; null for a gift and where none is asked.",
+            "example": "1500.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "seller": {
+            "$ref": "#/components/schemas/ListingSellerView"
+          },
+          "sellerAccount": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "sellerUnitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingStatus"
+              }
+            ],
+            "description": "By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings."
+          },
+          "title": {
+            "description": "Null once its seller was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListedUnitView"
+              }
+            ],
+            "description": "The unit for sale or to let.",
+            "nullable": true,
+            "type": "object"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "category",
+          "title",
+          "body",
+          "price",
+          "negotiable",
+          "state",
+          "seller",
+          "unit",
+          "photos",
+          "expiresAt",
+          "createdAt",
+          "sellerAccount",
+          "sellerUnitCode",
+          "unitCode",
+          "reasonCode",
+          "decidedAt",
+          "endedAt"
+        ],
+        "type": "object"
+      },
+      "StaffListingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffListingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffLockdownView": {
         "properties": {
           "endNote": {
@@ -64001,6 +64634,37 @@
         },
         "type": "object"
       },
+      "UpdateListingDto": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingCategory"
+              }
+            ]
+          },
+          "negotiable": {
+            "type": "boolean"
+          },
+          "price": {
+            "description": "`null` takes the price off, where the kind allows none (FIELD_REQUIRED otherwise).",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 80,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateLocaleDto": {
         "properties": {
           "locale": {
@@ -64059,6 +64723,33 @@
             "maximum": 240,
             "minimum": 15,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateMarketSettingsDto": {
+        "properties": {
+          "expiryDays": {
+            "description": "Days a listing stays on the market.",
+            "maximum": 180,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxLivePerAccount": {
+            "description": "Listings one account may have waiting, live or reported at once.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "number"
+          },
+          "reportHideThreshold": {
+            "description": "Units whose reports take a live listing off for review.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          },
+          "requiresReview": {
+            "description": "A new or changed listing waits for a handler first.",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -92314,6 +93005,588 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/market/listings": {
+      "get": {
+        "operationId": "MarketController_search",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Words to find in the title or the body. 30 searches a minute.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MarketListingKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MarketListingCategory"
+            }
+          },
+          {
+            "in": "query",
+            "name": "minPrice",
+            "required": false,
+            "schema": {
+              "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "maxPrice",
+            "required": false,
+            "schema": {
+              "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A price sort reads only listings with a price.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "newest",
+              "enum": [
+                "newest",
+                "price_asc",
+                "price_desc"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search the market",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "MarketController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateListingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List something on the market",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/listings/{id}": {
+      "get": {
+        "operationId": "MarketController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a listing on the market, or one of my own",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "MarketController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateListingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyListingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change my listing while it waits or is live (back to review where the compound reviews)",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/listings/{id}/sold": {
+      "post": {
+        "operationId": "MarketController_sold",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark my listing sold (or given, or let)",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/listings/{id}/withdraw": {
+      "post": {
+        "operationId": "MarketController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take my listing off the market",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/review": {
+      "get": {
+        "operationId": "MarketReviewController_queue",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Both when left out.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending_review",
+                "under_review"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffListingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List listings waiting for review or reported",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/review/{id}": {
+      "get": {
+        "operationId": "MarketReviewController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffListingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get any listing of the compound",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/review/{id}/approve": {
+      "post": {
+        "operationId": "MarketReviewController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Let a waiting listing on the market, or a reported one back",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/review/{id}/reject": {
+      "post": {
+        "operationId": "MarketReviewController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn a waiting listing down",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/review/{id}/remove": {
+      "post": {
+        "operationId": "MarketReviewController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a live or reported listing off the market",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/settings": {
+      "get": {
+        "operationId": "MarketSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the market’s settings",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "MarketSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarketSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the market’s settings",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "MeController_me",
@@ -93701,6 +94974,56 @@
         "tags": [
           "me"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/market/listings": {
+      "get": {
+        "operationId": "MyListingsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyListingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my listings and how each ended",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

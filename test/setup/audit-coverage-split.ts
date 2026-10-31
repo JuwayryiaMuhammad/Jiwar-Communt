@@ -939,3 +939,18 @@ export const R11C1B_COVERAGE: readonly string[] = [
   'booking_waitlist.claimed',
   'booking_waitlist.lapsed',
 ];
+
+/**
+ * Community (ADR 0071), covered by test/r11c2/audit-coverage.e2e-spec.ts.
+ */
+export const R11C2_COVERAGE: readonly string[] = [
+  'market_listing.created',
+  'market_listing.updated',
+  'market_listing.withdrawn',
+  'market_listing.sold',
+  'market_listing.approved',
+  'market_listing.rejected',
+  'market_listing.removed',
+  'market_listing.expired',
+  'market.settings_changed',
+];

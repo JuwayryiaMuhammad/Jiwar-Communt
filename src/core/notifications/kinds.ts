@@ -2593,6 +2593,38 @@ export const NOTIFICATION_KINDS = {
     target: 'gate_call',
     params: { gateName: {}, reason: {} },
   },
+  // The market (ADR 0071): the seller's own listing, by its kind; never
+  // its words. A rejection or removal carries its code as `reason`.
+  /** A handler let the listing on the market, or a reported one back. */
+  'market_listing.approved': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_listing',
+    params: { listingKind: {} },
+  },
+  'market_listing.rejected': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_listing',
+    params: { listingKind: {}, reason: {} },
+  },
+  'market_listing.removed': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_listing',
+    params: { listingKind: {}, reason: {} },
+  },
+  /** Its day is within two days: renew by listing it again. */
+  'market_listing.expiring': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_listing',
+    params: { listingKind: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

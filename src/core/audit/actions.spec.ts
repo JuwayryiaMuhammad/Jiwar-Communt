@@ -227,6 +227,8 @@ describe('audit catalog', () => {
         'guard_alarm_pairing',
         'guard_alarm_event',
         'gate_call',
+        // ADR 0071.
+        'market_listing',
       ]).toContain(def.target);
     }
   });

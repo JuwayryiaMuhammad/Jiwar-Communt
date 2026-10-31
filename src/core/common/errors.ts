@@ -1639,6 +1639,18 @@ export const ErrorCode = {
   GATE_CALL_ENDED: 'GATE_CALL_ENDED',
   /** Its room is not open yet: ask again in a moment (409). */
   GATE_CALL_NOT_READY: 'GATE_CALL_NOT_READY',
+  // The market (ADR 0071).
+  MARKET_LISTING_NOT_FOUND: 'MARKET_LISTING_NOT_FOUND',
+  /** The seller has as many listings open as the compound allows (409, params.max). */
+  MARKET_LISTING_LIMIT_REACHED: 'MARKET_LISTING_LIMIT_REACHED',
+  /** Ended already: rejected, removed, withdrawn, sold or expired (409, params.status). */
+  MARKET_LISTING_ENDED: 'MARKET_LISTING_ENDED',
+  /** Not waiting for a decision, or not live for a removal (409, params.status). */
+  MARKET_LISTING_NOT_PENDING: 'MARKET_LISTING_NOT_PENDING',
+  /** Only the unit's owner, while they own it, lists it for sale or to let (403). */
+  MARKET_UNIT_NOT_OWNED: 'MARKET_UNIT_NOT_OWNED',
+  /** The unit is listed for this already (409, params.listingId). */
+  MARKET_UNIT_LISTED: 'MARKET_UNIT_LISTED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -20,6 +20,8 @@ import {
   ConversationMessageView,
   ConversationView,
 } from '../conversations/views/conversation.views';
+import { ListingsService } from '../market/listings.service';
+import { MyListingView } from '../market/views/market.views';
 import { PostsService } from '../posts/posts.service';
 import { BoardPostView, MyClaimView } from '../posts/views/post.views';
 
@@ -40,7 +42,10 @@ const PAGE = 100;
  * - `neighbours/claims.json`: its claims on found items;
  * - `neighbours/conversations/<id>.json`: its side of each masked
  *   conversation: its own messages, and the other side's only as a count;
- * - `neighbours/blocks.json`: its blocks, each a building and a date.
+ * - `neighbours/blocks.json`: its blocks, each a building and a date;
+ * - `market/listings.json`: every listing it put on the market (ADR
+ *   0071), in every state, as its own list shows them, the photos as a
+ *   count. A conversation about one is among its conversations above.
  *
  * Nothing here is another person's identity. A sender is `mine` or not,
  * never a name; the other side of a conversation is the building the
@@ -61,6 +66,7 @@ export class NeighboursExportSections implements OnModuleInit {
     private readonly claims: ClaimsService,
     private readonly conversations: ConversationsService,
     private readonly blocks: BlocksService,
+    private readonly listings: ListingsService,
   ) {}
 
   onModuleInit(): void {
@@ -117,6 +123,18 @@ export class NeighboursExportSections implements OnModuleInit {
       path: 'neighbours/blocks.json',
       json: (await this.blocks.listMine()).map((b) => BlockView.from(b)),
     };
+
+    const listings: object[] = [];
+    for await (const read of this.pages((cursor) =>
+      this.listings.listMine({ cursor, limit: PAGE }),
+    )) {
+      // Its own listing: the photos as a count, never a link.
+      const view: Partial<MyListingView> = MyListingView.fromMine(read);
+      const photoCount = view.photos?.length ?? 0;
+      delete view.photos;
+      listings.push({ ...view, photoCount });
+    }
+    yield { path: 'market/listings.json', json: listings };
   }
 
   /** The complaints the account filed, each with its own thread. */

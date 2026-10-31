@@ -2812,6 +2812,47 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'حدث شيء عند البوابات. افتح غرفة التحكم.',
     },
   },
+  // The market: the seller's own listing; never its words.
+  'market_listing.approved': {
+    en: {
+      title: 'Your listing is live',
+      body: 'Your listing is on the market now.',
+    },
+    ar: {
+      title: 'إعلانك منشور',
+      body: 'إعلانك معروض في السوق الآن.',
+    },
+  },
+  'market_listing.rejected': {
+    en: {
+      title: 'Your listing was not approved',
+      body: 'The management did not approve your listing. Open it to see why.',
+    },
+    ar: {
+      title: 'لم يُقبل إعلانك',
+      body: 'لم توافق الإدارة على إعلانك. افتحه لمعرفة السبب.',
+    },
+  },
+  'market_listing.removed': {
+    en: {
+      title: 'Your listing was taken down',
+      body: 'The management took your listing off the market. Open it to see why.',
+    },
+    ar: {
+      title: 'أُزيل إعلانك',
+      body: 'أزالت الإدارة إعلانك من السوق. افتحه لمعرفة السبب.',
+    },
+  },
+  'market_listing.expiring': {
+    en: {
+      title: 'Your listing ends soon',
+      body: 'Your listing leaves the market in two days.',
+    },
+    ar: {
+      title: 'إعلانك ينتهي قريبًا',
+      body: 'سيُزال إعلانك من السوق بعد يومين.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -2175,6 +2175,28 @@ export const AUDIT_ACTIONS = {
   'gate_call.answered': { log: 'tenant', target: 'gate_call' },
   'gate_call.ended': { log: 'tenant', target: 'gate_call' },
   'gate_call.missed': { log: 'tenant', target: 'gate_call' },
+  // The market (ADR 0071): kinds, categories, codes and ids; the seller's
+  // words are recorded as changed only.
+  // metadata: kind, category, status, unitId, photos (a count).
+  'market_listing.created': { log: 'tenant', target: 'market_listing' },
+  // metadata: backToReview; changes: category, price, negotiable, and
+  // title and body as { changed: true }.
+  'market_listing.updated': {
+    log: 'tenant',
+    target: 'market_listing',
+    sensitive: ['title', 'body'],
+  },
+  // metadata: kind, by (seller | system); reasonCode for the system's.
+  'market_listing.withdrawn': { log: 'tenant', target: 'market_listing' },
+  'market_listing.sold': { log: 'tenant', target: 'market_listing' },
+  // metadata: from (pending_review | under_review).
+  'market_listing.approved': { log: 'tenant', target: 'market_listing' },
+  // metadata: reasonCode.
+  'market_listing.rejected': { log: 'tenant', target: 'market_listing' },
+  'market_listing.removed': { log: 'tenant', target: 'market_listing' },
+  // Its day passed (the sweep, or a new listing of its unit). metadata: kind.
+  'market_listing.expired': { log: 'tenant', target: 'market_listing' },
+  'market.settings_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

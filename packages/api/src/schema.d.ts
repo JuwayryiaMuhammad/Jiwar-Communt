@@ -8498,6 +8498,179 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market/listings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search the market */
+        get: operations["MarketController_search"];
+        put?: never;
+        /** List something on the market */
+        post: operations["MarketController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/listings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a listing on the market, or one of my own */
+        get: operations["MarketController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change my listing while it waits or is live (back to review where the compound reviews) */
+        patch: operations["MarketController_update"];
+        trace?: never;
+    };
+    "/api/v1/market/listings/{id}/sold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark my listing sold (or given, or let) */
+        post: operations["MarketController_sold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/listings/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take my listing off the market */
+        post: operations["MarketController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List listings waiting for review or reported */
+        get: operations["MarketReviewController_queue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/review/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get any listing of the compound */
+        get: operations["MarketReviewController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/review/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Let a waiting listing on the market, or a reported one back */
+        post: operations["MarketReviewController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/review/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a waiting listing down */
+        post: operations["MarketReviewController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/review/{id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take a live or reported listing off the market */
+        post: operations["MarketReviewController_remove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the market’s settings */
+        get: operations["MarketSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change the market’s settings */
+        patch: operations["MarketSettingsController_update"];
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -9104,6 +9277,23 @@ export interface paths {
         };
         /** List my logins of the last 90 days */
         get: operations["MeController_logins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/market/listings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my listings and how each ended */
+        get: operations["MyListingsController_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -25678,6 +25868,34 @@ export interface components {
              */
             unitId: string;
         };
+        CreateListingDto: {
+            /** @description What it is, its condition, where to see it. */
+            body: string;
+            /** @description A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE). */
+            category: components["schemas"]["MarketListingCategory"];
+            /**
+             * Format: uuid
+             * @description One of the caller’s units to list from, when they have several: only its building shows. Not for a unit listing.
+             */
+            fromUnitId?: string;
+            /** @description `sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner). */
+            kind: components["schemas"]["MarketListingKind"];
+            /** @description Open to offers. Ignored without a price. */
+            negotiable?: boolean;
+            /** @description Up to 6 uploaded files of purpose `market_listing_photo`, in the order shown. */
+            photoFileIds?: string[];
+            /**
+             * @description EGP. Required to sell and for a unit (FIELD_REQUIRED); refused on a gift (FIELD_NOT_ALLOWED).
+             * @example 1500.00
+             */
+            price?: string;
+            title: string;
+            /**
+             * Format: uuid
+             * @description The unit for sale or to let: one the caller owns now (MARKET_UNIT_NOT_OWNED). Only for `unit_sale` and `unit_rent`.
+             */
+            unitId?: string;
+        };
         CreateMaterialExitDto: {
             /** @description What goes out: 1 to 30 lines. */
             items: components["schemas"]["MaterialItemDto"][];
@@ -30871,6 +31089,73 @@ export interface components {
              */
             runId?: string;
         };
+        ListedUnitView: {
+            /** @description Square metres, two decimals. */
+            areaSqm: string | null;
+            building: string | null;
+            floor: number | null;
+            type: string | null;
+        };
+        ListingCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MarketListingKind"];
+            /** @description `pending_review` where the compound reviews, else `live`. */
+            status: components["schemas"]["MarketListingStatus"];
+        };
+        ListingPhotoView: {
+            /** @description image/jpeg, image/png or image/webp. */
+            contentType: string;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
+            url: string | null;
+        };
+        ListingReasonDto: {
+            /** @description A code of the action’s list: `marketListingReject` to turn a listing down, `marketListingRemove` to take one off (INVALID_REASON_CODE names the allowed ones). */
+            reasonCode: string;
+        };
+        ListingSellerView: {
+            /** @description The building the seller listed from; null when none. */
+            building: string | null;
+            /** @description The caller listed it. */
+            mine: boolean;
+        };
+        ListingView: {
+            body: string | null;
+            category: components["schemas"]["MarketListingCategory"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MarketListingKind"];
+            negotiable: boolean;
+            photos: components["schemas"]["ListingPhotoView"][];
+            /**
+             * @description EGP, two decimals; null for a gift and where none is asked.
+             * @example 1500.00
+             */
+            price: string | null;
+            seller: components["schemas"]["ListingSellerView"];
+            /** @description By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings. */
+            state: components["schemas"]["MarketListingStatus"];
+            /** @description Null once its seller was erased. */
+            title: string | null;
+            /** @description The unit for sale or to let. */
+            unit: components["schemas"]["ListedUnitView"] | null;
+        };
+        ListingViewList: {
+            data: components["schemas"]["ListingView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         Locale: "ar" | "en";
         LocaleView: {
@@ -31303,6 +31588,27 @@ export interface components {
             /** @description Null while frozen. */
             phone?: string | null;
             status?: components["schemas"]["AccountStatus"];
+        };
+        /**
+         * @description A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE).
+         * @enum {string}
+         */
+        MarketListingCategory: "furniture" | "electronics" | "appliances" | "clothing" | "kids" | "books" | "sports" | "vehicles" | "home_garden" | "services" | "food" | "real_estate" | "other";
+        /**
+         * @description `sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner).
+         * @enum {string}
+         */
+        MarketListingKind: "sell" | "give" | "wanted" | "service" | "unit_sale" | "unit_rent";
+        /**
+         * @description `pending_review` where the compound reviews, else `live`.
+         * @enum {string}
+         */
+        MarketListingStatus: "pending_review" | "live" | "under_review" | "rejected" | "removed" | "withdrawn" | "sold" | "expired";
+        MarketSettingsView: {
+            expiryDays: number;
+            maxLivePerAccount: number;
+            reportHideThreshold: number;
+            requiresReview: boolean;
         };
         MaskedPartyView: {
             /** @description The building they wrote from. Null when their unit names none. */
@@ -31823,6 +32129,39 @@ export interface components {
         };
         MyGuardInstructionViewList: {
             data: components["schemas"]["MyGuardInstructionView"][];
+            nextCursor: string | null;
+        };
+        MyListingView: {
+            body: string | null;
+            category: components["schemas"]["MarketListingCategory"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MarketListingKind"];
+            negotiable: boolean;
+            photos: components["schemas"]["ListingPhotoView"][];
+            /**
+             * @description EGP, two decimals; null for a gift and where none is asked.
+             * @example 1500.00
+             */
+            price: string | null;
+            /** @description Why it ended: a `marketListingReject` or `marketListingRemove` code, or `seller_left`, `seller_erased`, `owner_left` for the system’s withdrawals. */
+            reasonCode: string | null;
+            seller: components["schemas"]["ListingSellerView"];
+            /** @description By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings. */
+            state: components["schemas"]["MarketListingStatus"];
+            /** @description Null once its seller was erased. */
+            title: string | null;
+            /** @description The unit for sale or to let. */
+            unit: components["schemas"]["ListedUnitView"] | null;
+        };
+        MyListingViewList: {
+            data: components["schemas"]["MyListingView"][];
             nextCursor: string | null;
         };
         MyNoticeView: {
@@ -38633,6 +38972,43 @@ export interface components {
             data: components["schemas"]["StaffLateNoticeView"][];
             nextCursor: string | null;
         };
+        StaffListingView: {
+            body: string | null;
+            category: components["schemas"]["MarketListingCategory"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MarketListingKind"];
+            negotiable: boolean;
+            photos: components["schemas"]["ListingPhotoView"][];
+            /**
+             * @description EGP, two decimals; null for a gift and where none is asked.
+             * @example 1500.00
+             */
+            price: string | null;
+            reasonCode: string | null;
+            seller: components["schemas"]["ListingSellerView"];
+            sellerAccount: components["schemas"]["AccountRefView"];
+            sellerUnitCode: string | null;
+            /** @description By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings. */
+            state: components["schemas"]["MarketListingStatus"];
+            /** @description Null once its seller was erased. */
+            title: string | null;
+            /** @description The unit for sale or to let. */
+            unit: components["schemas"]["ListedUnitView"] | null;
+            unitCode: string | null;
+        };
+        StaffListingViewList: {
+            data: components["schemas"]["StaffListingView"][];
+            nextCursor: string | null;
+        };
         StaffLockdownView: {
             endNote: string | null;
             endReason: components["schemas"]["GateLockdownEnd"] | null;
@@ -41103,6 +41479,14 @@ export interface components {
             ownerId?: string;
             title?: string;
         };
+        UpdateListingDto: {
+            body?: string;
+            category?: components["schemas"]["MarketListingCategory"];
+            negotiable?: boolean;
+            /** @description `null` takes the price off, where the kind allows none (FIELD_REQUIRED otherwise). */
+            price?: string | null;
+            title?: string;
+        };
         UpdateLocaleDto: {
             locale: components["schemas"]["Locale"];
         };
@@ -41121,6 +41505,16 @@ export interface components {
             visitHoursStart?: number;
             /** @description The length of a slot residents may pick. */
             visitSlotMinutes?: number;
+        };
+        UpdateMarketSettingsDto: {
+            /** @description Days a listing stays on the market. */
+            expiryDays?: number;
+            /** @description Listings one account may have waiting, live or reported at once. */
+            maxLivePerAccount?: number;
+            /** @description Units whose reports take a live listing off for review. */
+            reportHideThreshold?: number;
+            /** @description A new or changed listing waits for a handler first. */
+            requiresReview?: boolean;
         };
         UpdateMeterDto: {
             /** Format: date */
@@ -55216,6 +55610,300 @@ export interface operations {
             };
         };
     };
+    MarketController_search: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Words to find in the title or the body. 30 searches a minute. */
+                q?: string;
+                kind?: components["schemas"]["MarketListingKind"];
+                category?: components["schemas"]["MarketListingCategory"];
+                minPrice?: string;
+                maxPrice?: string;
+                /** @description A price sort reads only listings with a price. */
+                sort?: "newest" | "price_asc" | "price_desc";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListingViewList"];
+                };
+            };
+        };
+    };
+    MarketController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateListingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListingCreatedView"];
+                };
+            };
+        };
+    };
+    MarketController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListingView"];
+                };
+            };
+        };
+    };
+    MarketController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateListingDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyListingView"];
+                };
+            };
+        };
+    };
+    MarketController_sold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MarketController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MarketReviewController_queue: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Both when left out. */
+                status?: "pending_review" | "under_review";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffListingViewList"];
+                };
+            };
+        };
+    };
+    MarketReviewController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffListingView"];
+                };
+            };
+        };
+    };
+    MarketReviewController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MarketReviewController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MarketReviewController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MarketSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketSettingsView"];
+                };
+            };
+        };
+    };
+    MarketSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMarketSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketSettingsView"];
+                };
+            };
+        };
+    };
     MeController_me: {
         parameters: {
             query?: never;
@@ -56022,6 +56710,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LoginViewList"];
+                };
+            };
+        };
+    };
+    MyListingsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyListingViewList"];
                 };
             };
         };

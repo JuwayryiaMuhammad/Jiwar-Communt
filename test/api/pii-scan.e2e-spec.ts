@@ -1155,6 +1155,18 @@ describe('API v0 — PII leak scan', () => {
         body: { amount: '900' },
       },
     ).expect(200);
+    // The market (ADR 0071): the primary's listing, let on by the manager;
+    // every reader sees its building, never the seller's name.
+    const piiListing = await idOf('POST', '/market/listings', primaryToken, {
+      kind: 'sell',
+      category: 'furniture',
+      title: 'Oak bookcase',
+      body: 'Five shelves.',
+      price: '700',
+    });
+    await call(w, 'POST', `/market/review/${piiListing}/approve`, {
+      token: a.tokens.manager,
+    }).expect(204);
     // Facilities (ADR 0044): the primary's booking of A's roomy facility.
     const piiBooking = await idOf(
       'POST',
@@ -1605,6 +1617,9 @@ describe('API v0 — PII leak scan', () => {
       '/staff/plan-requests/{id}': w.bPlanRequestId,
       '/units/{unitId}/consumption': unit.id,
       '/units/{unitId}/consumption/benchmark': unit.id,
+      // ADR 0071: a listing of the primary's, on A's market.
+      '/market/listings/{id}': piiListing,
+      '/market/review/{id}': piiListing,
       '/units/{unitId}/payments': unit.id,
       '/units/{unitId}/statement': unit.id,
       '/staff/units/{unitId}/statement': unit.id,

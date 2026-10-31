@@ -7,8 +7,9 @@ import { DEFAULT_COMPLAINT_CATEGORIES } from './settings/defaults';
 /**
  * What a new compound gets from the neighbours domain (ADR 0042), in the
  * creation's transaction: its settings row, its complaint counter, an empty
- * welcome template and the eight default complaint categories. Existing
- * compounds got the same from the migrations.
+ * welcome template and the eight default complaint categories; and the
+ * market's settings row (ADR 0071). Existing compounds got the same from
+ * the migrations.
  */
 @Injectable()
 export class NeighboursProvisioning implements OnModuleInit {
@@ -22,6 +23,7 @@ export class NeighboursProvisioning implements OnModuleInit {
     await tx.neighbourSettings.create({ data: { tenantId } });
     await tx.neighbourComplaintCounter.create({ data: { tenantId } });
     await tx.neighbourWelcomeTemplate.create({ data: { tenantId } });
+    await tx.marketSettings.create({ data: { tenantId } });
     await tx.neighbourComplaintCategory.createMany({
       data: DEFAULT_COMPLAINT_CATEGORIES.map((c) => ({
         id: newId(),

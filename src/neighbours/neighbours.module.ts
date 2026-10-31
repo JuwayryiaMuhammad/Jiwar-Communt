@@ -41,6 +41,7 @@ import { ListingsService } from './market/listings.service';
 import {
   ListingContactController,
   MarketController,
+  MarketReportsController,
   MarketReviewController,
   MarketSettingsController,
   MyListingsController,
@@ -49,6 +50,7 @@ import {
   ShopsController,
 } from './market/market.controller';
 import { MarketLifecycle } from './market/market-lifecycle';
+import { MarketReportsService } from './market/market-reports.service';
 import { MarketSettingsService } from './market/market-settings.service';
 import { ShopsService } from './market/shops.service';
 import { NeighboursLifecycle } from './privacy/neighbours-lifecycle';
@@ -94,6 +96,7 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ShopsController,
     MyShopController,
     ShopReviewController,
+    MarketReportsController,
   ],
   providers: [
     ResidentComplaintItems,
@@ -124,6 +127,7 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     MarketSettingsService,
     ShopsService,
     ListingsService,
+    MarketReportsService,
     MarketLifecycle,
   ],
 })

@@ -596,6 +596,7 @@ model Tenant {
   marketSettings         MarketSettings?
   marketListings         MarketListing[]
   marketShops            MarketShop[]
+  marketListingReports   MarketListingReport[]
 
   @@map("tenants")
 }
@@ -1100,6 +1101,8 @@ model Account {
   marketListingsDecided MarketListing[] @relation("MarketListingDecider")
   marketShopsOwned      MarketShop[]    @relation("MarketShopOwner")
   marketShopsDecided    MarketShop[]    @relation("MarketShopDecider")
+  marketReportsMade     MarketListingReport[] @relation("MarketReportReporter")
+  marketReportsClosed   MarketListingReport[] @relation("MarketReportCloser")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1224,6 +1227,7 @@ model Unit {
   marketListingsFrom MarketListing[] @relation("MarketListingSellerUnit")
   marketListingsOf   MarketListing[] @relation("MarketListingUnit")
   marketShops        MarketShop[]
+  marketReports      MarketListingReport[]
   @@unique([tenantId, code])
   @@unique([tenantId, id])
   @@map("units")
@@ -11534,6 +11538,7 @@ model MarketListing {
   shop       MarketShop?          @relation(fields: [tenantId, shopId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_shop_fkey")
   photos     MarketListingPhoto[]
   conversations NeighbourConversation[]
+  reports       MarketListingReport[]
 
   @@unique([tenantId, id])
   @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "market_listings_market_idx")
@@ -11599,4 +11604,41 @@ model MarketShop {
   @@unique([tenantId, id])
   @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "market_shops_status_idx")
   @@map("market_shops")
+}
+
+enum MarketReportStatus {
+  open
+  closed
+
+  @@map("market_report_status")
+}
+
+/// A resident's report of a listing (ADR 0071): once each; the note is for the staff.
+model MarketListingReport {
+  id             String             @id @db.Uuid
+  tenantId       String             @map("tenant_id") @db.Uuid
+  listingId      String             @map("listing_id") @db.Uuid
+  reporterId     String             @map("reporter_account_id") @db.Uuid
+  /// Reports count by distinct units toward hiding a listing.
+  reporterUnitId String             @map("reporter_unit_id") @db.Uuid
+  reasonCode     String             @map("reason_code")
+  /// The reporter's words, for the staff; null once erased.
+  note           String?
+  status         MarketReportStatus @default(open)
+  outcome        String?
+  closedById     String?            @map("closed_by") @db.Uuid
+  closedAt       DateTime?          @map("closed_at") @db.Timestamptz(3)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  listing      MarketListing @relation(fields: [tenantId, listingId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listing_reports_tenant_id_listing_fkey")
+  reporter     Account       @relation("MarketReportReporter", fields: [tenantId, reporterId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listing_reports_tenant_id_reporter_fkey")
+  reporterUnit Unit          @relation(fields: [tenantId, reporterUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listing_reports_tenant_id_reporter_unit_fkey")
+  closedBy     Account?      @relation("MarketReportCloser", fields: [tenantId, closedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listing_reports_tenant_id_closed_by_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, listingId, reporterId], map: "market_listing_reports_one_per_reporter")
+  @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "market_listing_reports_queue_idx")
+  @@map("market_listing_reports")
 }

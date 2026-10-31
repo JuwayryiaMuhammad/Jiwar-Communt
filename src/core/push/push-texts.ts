@@ -2843,6 +2843,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أزالت الإدارة إعلانك من السوق. افتحه لمعرفة السبب.',
     },
   },
+  'market_listing.under_review': {
+    en: {
+      title: 'A listing was reported',
+      body: 'A listing was reported by several homes and is waiting for review.',
+    },
+    ar: {
+      title: 'إبلاغ عن إعلان',
+      body: 'أبلغت عدة وحدات عن إعلان، وهو بانتظار المراجعة.',
+    },
+  },
+  'market_report.closed': {
+    en: {
+      title: 'Your report was reviewed',
+      body: 'The management reviewed a listing you reported.',
+    },
+    ar: {
+      title: 'تمت مراجعة بلاغك',
+      body: 'راجعت الإدارة إعلانًا أبلغت عنه.',
+    },
+  },
   'market_shop.approved': {
     en: {
       title: 'Your shop is open',

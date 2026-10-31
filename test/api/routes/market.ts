@@ -418,4 +418,57 @@ export const MARKET_ROUTES: Row[] = [
     },
     noStore: true,
   },
+  {
+    method: 'POST',
+    path: '/market/listings/{id}/report',
+    auth: 'tenant',
+    as: 'family',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bListingId }),
+      body: () => ({ reasonCode: 'scam' }),
+      code: LISTING_404,
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/market/reports',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'pending' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'closed'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/market/reports/{id}/close',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'tenant',
+    foreign: {
+      params: (w) => ({ id: w.bMarketReportId }),
+      body: () => ({ reasonCode: 'no_action' }),
+      code: 'MARKET_REPORT_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
 ];

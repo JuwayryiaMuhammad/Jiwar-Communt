@@ -230,6 +230,7 @@ describe('audit catalog', () => {
         // ADR 0071.
         'market_listing',
         'market_shop',
+        'market_report',
       ]).toContain(def.target);
     }
   });

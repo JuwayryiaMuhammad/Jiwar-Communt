@@ -959,4 +959,7 @@ export const R11C2_COVERAGE: readonly string[] = [
   'market_shop.suspended',
   'market_shop.reinstated',
   'market_shop.closed',
+  'market_listing.reported',
+  'market_listing.under_review',
+  'market_report.closed',
 ];

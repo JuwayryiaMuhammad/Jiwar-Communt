@@ -9016,6 +9016,18 @@
         ],
         "type": "object"
       },
+      "CloseMarketReportDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code of `marketReportOutcome`: `removed` takes the listing off the market.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CloseParkingReportDto": {
         "properties": {
           "reasonCode": {
@@ -32171,6 +32183,124 @@
         ],
         "type": "string"
       },
+      "MarketReportCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MarketReportStatus": {
+        "enum": [
+          "open",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "MarketReportView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "listingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "listingStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingStatus"
+              }
+            ]
+          },
+          "listingTitle": {
+            "nullable": true,
+            "type": "string"
+          },
+          "note": {
+            "description": "What the reporter told the staff.",
+            "nullable": true,
+            "type": "string"
+          },
+          "outcome": {
+            "description": "A code of `marketReportOutcome`, once closed.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code of `marketReport`.",
+            "type": "string"
+          },
+          "reporter": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "reporterUnitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketReportStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "reasonCode",
+          "note",
+          "reporter",
+          "reporterUnitCode",
+          "listingId",
+          "listingTitle",
+          "listingStatus",
+          "outcome",
+          "closedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MarketReportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MarketReportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MarketSettingsView": {
         "properties": {
           "expiryDays": {
@@ -45274,6 +45404,24 @@
           "severity",
           "occurredAt",
           "description"
+        ],
+        "type": "object"
+      },
+      "ReportListingDto": {
+        "properties": {
+          "note": {
+            "description": "For the staff alone; the seller never reads it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code of `marketReport` (INVALID_REASON_CODE names the allowed ones).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -93675,6 +93823,54 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/market/listings/{id}/report": {
+      "post": {
+        "operationId": "ListingContactController_report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportListingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketReportCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report a listing to the management",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/market/listings/{id}/sold": {
       "post": {
         "operationId": "MarketController_sold",
@@ -93730,6 +93926,110 @@
           }
         ],
         "summary": "Take my listing off the market",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/reports": {
+      "get": {
+        "operationId": "MarketReportsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "open",
+              "enum": [
+                "open",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketReportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the reports of listings",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/reports/{id}/close": {
+      "post": {
+        "operationId": "MarketReportsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseMarketReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a report with an outcome",
         "tags": [
           "market"
         ],

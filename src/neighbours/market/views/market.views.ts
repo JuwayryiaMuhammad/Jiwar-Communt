@@ -3,8 +3,10 @@ import {
   MarketListingCategory,
   MarketListingKind,
   MarketListingStatus,
+  MarketReportStatus,
   MarketShopStatus,
   type MarketListing,
+  type MarketListingReport,
 } from '@prisma/client';
 import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import type {
@@ -13,6 +15,7 @@ import type {
   StaffListingRead,
 } from '../listings.service';
 import type { MarketSettingsView as Settings } from '../market-settings.service';
+import type { MarketReportRead } from '../market-reports.service';
 import type { ShopRead, StaffShopRead } from '../shops.service';
 
 /** The answer to listing: enough to show and fetch it. No words. */
@@ -310,6 +313,71 @@ export class StaffShopView extends ShopView {
       owner: accountRef(r.owner),
       ownerUnitCode: r.ownerUnitCode,
       decidedAt: r.shop.decidedAt,
+    };
+  }
+}
+
+/** The answer to reporting a listing: no words. */
+export class MarketReportCreatedView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(r: MarketListingReport): MarketReportCreatedView {
+    return { id: r.id, createdAt: r.createdAt };
+  }
+}
+
+/** A report as the handlers read it. */
+export class MarketReportView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: MarketReportStatus, enumName: 'MarketReportStatus' })
+  status: MarketReportStatus;
+  @ApiProperty({ type: String, description: 'A code of `marketReport`.' })
+  reasonCode: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'What the reporter told the staff.',
+  })
+  note: string | null;
+  @ApiProperty({ type: AccountRefView })
+  reporter: AccountRefView;
+  @ApiProperty({ type: String, nullable: true })
+  reporterUnitCode: string | null;
+  @ApiProperty({ type: String, format: 'uuid' })
+  listingId: string;
+  @ApiProperty({ type: String, nullable: true })
+  listingTitle: string | null;
+  @ApiProperty({ enum: MarketListingStatus, enumName: 'MarketListingStatus' })
+  listingStatus: MarketListingStatus;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'A code of `marketReportOutcome`, once closed.',
+  })
+  outcome: string | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  closedAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(r: MarketReportRead): MarketReportView {
+    return {
+      id: r.report.id,
+      status: r.report.status,
+      reasonCode: r.report.reasonCode,
+      note: r.report.note,
+      reporter: accountRef(r.reporter),
+      reporterUnitCode: r.reporterUnitCode,
+      listingId: r.listing.id,
+      listingTitle: r.listing.title,
+      listingStatus: r.listing.status,
+      outcome: r.report.outcome,
+      closedAt: r.report.closedAt,
+      createdAt: r.report.createdAt,
     };
   }
 }

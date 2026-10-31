@@ -177,6 +177,9 @@ export class MarketLifecycle implements OnModuleInit {
     for (const l of await this.openOf(tx, accountId))
       await this.withdraw(tx, l.id, 'seller_erased', now);
     await tx.$executeRaw`
+      UPDATE market_listing_reports SET note = NULL, updated_at = ${now}
+       WHERE reporter_account_id = ${accountId}::uuid AND note IS NOT NULL`;
+    await tx.$executeRaw`
       UPDATE market_shops
          SET name_en = NULL, name_ar = NULL, description = NULL,
              erased_at = ${now}, updated_at = ${now}

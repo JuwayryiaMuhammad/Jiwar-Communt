@@ -8551,6 +8551,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market/listings/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report a listing to the management */
+        post: operations["ListingContactController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market/listings/{id}/sold": {
         parameters: {
             query?: never;
@@ -8579,6 +8596,40 @@ export interface paths {
         put?: never;
         /** Take my listing off the market */
         post: operations["MarketController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the reports of listings */
+        get: operations["MarketReportsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/reports/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a report with an outcome */
+        post: operations["MarketReportsController_close"];
         delete?: never;
         options?: never;
         head?: never;
@@ -24303,6 +24354,10 @@ export interface components {
             /** @description The outcome, from the closed list `incidentOutcome`. */
             reasonCode: string;
         };
+        CloseMarketReportDto: {
+            /** @description A code of `marketReportOutcome`: `removed` takes the listing off the market. */
+            reasonCode: string;
+        };
         CloseParkingReportDto: {
             /** @description From the closed list `parkingReportClose`. */
             reasonCode: string;
@@ -31771,6 +31826,39 @@ export interface components {
         MarketListingKind: "sell" | "give" | "wanted" | "service" | "unit_sale" | "unit_rent";
         /** @enum {string} */
         MarketListingStatus: "pending_review" | "live" | "under_review" | "rejected" | "removed" | "withdrawn" | "sold" | "expired";
+        MarketReportCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        /** @enum {string} */
+        MarketReportStatus: "open" | "closed";
+        MarketReportView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            listingId: string;
+            listingStatus: components["schemas"]["MarketListingStatus"];
+            listingTitle: string | null;
+            /** @description What the reporter told the staff. */
+            note: string | null;
+            /** @description A code of `marketReportOutcome`, once closed. */
+            outcome: string | null;
+            /** @description A code of `marketReport`. */
+            reasonCode: string;
+            reporter: components["schemas"]["AccountRefView"];
+            reporterUnitCode: string | null;
+            status: components["schemas"]["MarketReportStatus"];
+        };
+        MarketReportViewList: {
+            data: components["schemas"]["MarketReportView"][];
+            nextCursor: string | null;
+        };
         MarketSettingsView: {
             expiryDays: number;
             maxLivePerAccount: number;
@@ -35922,6 +36010,12 @@ export interface components {
             type: components["schemas"]["IncidentType"];
             /** @description A unit’s code; and/or a place. */
             unitCode?: string;
+        };
+        ReportListingDto: {
+            /** @description For the staff alone; the seller never reads it. */
+            note?: string;
+            /** @description A code of `marketReport` (INVALID_REASON_CODE names the allowed ones). */
+            reasonCode: string;
         };
         ReportListingView: {
             /** Format: uuid */
@@ -55995,6 +56089,31 @@ export interface operations {
             };
         };
     };
+    ListingContactController_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportListingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketReportCreatedView"];
+                };
+            };
+        };
+    };
     MarketController_sold: {
         parameters: {
             query?: never;
@@ -56024,6 +56143,53 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MarketReportsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "open" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketReportViewList"];
+                };
+            };
+        };
+    };
+    MarketReportsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseMarketReportDto"];
+            };
+        };
         responses: {
             204: {
                 headers: {

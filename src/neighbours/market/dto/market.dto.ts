@@ -18,6 +18,7 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { MARKET_REPORT_NOTE_LENGTH } from '../market-reports.service';
 import { SHOP_DESCRIPTION_LENGTH, SHOP_NAME_LENGTH } from '../shops.service';
 import {
   LISTING_BODY_LENGTH,
@@ -405,6 +406,51 @@ export class ShopReasonDto {
     type: String,
     description:
       'A code of the action’s list: `marketShopReject` to turn a shop down, `marketShopSuspend` to suspend one (INVALID_REASON_CODE names the allowed ones).',
+  })
+  @IsString()
+  reasonCode: string;
+}
+
+const REPORT_STATUSES = ['open', 'closed'] as const;
+
+export class ReportListingDto {
+  @ApiProperty({
+    type: String,
+    description:
+      'A code of `marketReport` (INVALID_REASON_CODE names the allowed ones).',
+  })
+  @IsString()
+  reasonCode: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: MARKET_REPORT_NOTE_LENGTH.min,
+    maxLength: MARKET_REPORT_NOTE_LENGTH.max,
+    description: 'For the staff alone; the seller never reads it.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(
+    MARKET_REPORT_NOTE_LENGTH.min,
+    MARKET_REPORT_NOTE_LENGTH.max,
+    withParams({ ...MARKET_REPORT_NOTE_LENGTH }),
+  )
+  note?: string;
+}
+
+export class MarketReportsQueryDto extends PageQueryDto {
+  @ApiProperty({ enum: REPORT_STATUSES, required: false, default: 'open' })
+  @IsOptional()
+  @IsIn(REPORT_STATUSES, withParams({ allowed: [...REPORT_STATUSES] }))
+  status?: (typeof REPORT_STATUSES)[number];
+}
+
+export class CloseMarketReportDto {
+  @ApiProperty({
+    type: String,
+    description:
+      'A code of `marketReportOutcome`: `removed` takes the listing off the market.',
   })
   @IsString()
   reasonCode: string;

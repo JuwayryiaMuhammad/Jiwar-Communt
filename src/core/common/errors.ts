@@ -1658,6 +1658,13 @@ export const ErrorCode = {
   MARKET_SHOP_EXISTS: 'MARKET_SHOP_EXISTS',
   /** Not in a state this move starts from (409, params.status). */
   MARKET_SHOP_STATE: 'MARKET_SHOP_STATE',
+  MARKET_REPORT_NOT_FOUND: 'MARKET_REPORT_NOT_FOUND',
+  /** The caller reported this listing already (409). */
+  MARKET_REPORT_EXISTS: 'MARKET_REPORT_EXISTS',
+  /** The caller's own listing (409). */
+  MARKET_REPORT_OWN_LISTING: 'MARKET_REPORT_OWN_LISTING',
+  /** Closed already (409). */
+  MARKET_REPORT_CLOSED: 'MARKET_REPORT_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

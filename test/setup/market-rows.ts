@@ -96,3 +96,28 @@ export async function shopRow(
   });
   return id;
 }
+
+/** An open report of a listing. */
+export async function marketReportRow(
+  tx: TenantTxClient,
+  row: {
+    tenantId: string;
+    listingId: string;
+    reporterId: string;
+    reporterUnitId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.marketListingReport.create({
+    data: {
+      id,
+      tenantId: row.tenantId,
+      listingId: row.listingId,
+      reporterId: row.reporterId,
+      reporterUnitId: row.reporterUnitId,
+      reasonCode: 'other',
+      createdAt: dbClock(),
+    },
+  });
+  return id;
+}

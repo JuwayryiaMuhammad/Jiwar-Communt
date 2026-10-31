@@ -933,4 +933,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // (MARKET_SHOP_EXISTS); a violation is a race.
   market_shops_tenant_id_id_key: null,
   market_shops_one_open: null,
+  // One report a listing and reporter, checked first under the listing's
+  // lock (MARKET_REPORT_EXISTS); a violation is a race.
+  market_listing_reports_tenant_id_id_key: null,
+  market_listing_reports_one_per_reporter: null,
 };

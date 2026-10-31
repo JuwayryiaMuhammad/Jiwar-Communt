@@ -28,8 +28,11 @@ import { ConversationsService } from '../conversations/conversations.service';
 import { ConversationMessageDto } from '../conversations/dto/conversations.dto';
 import { ConversationCreatedView } from '../conversations/views/conversation.views';
 import {
+  CloseMarketReportDto,
   CreateListingDto,
   ListingReasonDto,
+  MarketReportsQueryDto,
+  ReportListingDto,
   MarketQueryDto,
   MarketQueueQueryDto,
   OpenShopDto,
@@ -39,11 +42,14 @@ import {
   UpdateMarketSettingsDto,
 } from './dto/market.dto';
 import { ListingsService } from './listings.service';
+import { MarketReportsService } from './market-reports.service';
 import { MarketSettingsService } from './market-settings.service';
 import { ShopsService } from './shops.service';
 import {
   ListingCreatedView,
   ListingView,
+  MarketReportCreatedView,
+  MarketReportView,
   MarketSettingsView,
   MyListingView,
   ShopView,
@@ -128,7 +134,22 @@ export class MarketController {
 @RequirePermissions('market.post')
 @Controller('market/listings')
 export class ListingContactController {
-  constructor(private readonly conversations: ConversationsService) {}
+  constructor(
+    private readonly conversations: ConversationsService,
+    private readonly reports: MarketReportsService,
+  ) {}
+
+  /** Once a listing; enough units reporting take it off for review. */
+  @Post(':id/report')
+  @NoStore()
+  @ApiOperation({ summary: 'Report a listing to the management' })
+  @ApiCreatedResponse({ type: MarketReportCreatedView })
+  async report(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReportListingDto,
+  ): Promise<MarketReportCreatedView> {
+    return MarketReportCreatedView.from(await this.reports.report(id, dto));
+  }
 
   @Post(':id/conversations')
   @NoStore()
@@ -362,5 +383,35 @@ export class ShopReviewController {
     @Body() dto: ShopReasonDto,
   ): Promise<void> {
     await this.shops.suspend(id, dto.reasonCode);
+  }
+}
+
+/** The handlers' queue of reported listings (ADR 0071). */
+@ApiArea('market')
+@RequirePermissions('market.handle')
+@Controller('market/reports')
+export class MarketReportsController {
+  constructor(private readonly reports: MarketReportsService) {}
+
+  @Get()
+  @NoStore()
+  @ApiOperation({ summary: 'List the reports of listings' })
+  @ApiOkResponse({ type: ListOf(MarketReportView) })
+  async list(
+    @Query() q: MarketReportsQueryDto,
+  ): Promise<ListResponse<MarketReportView>> {
+    return toList(await this.reports.list(q), (r) => MarketReportView.from(r));
+  }
+
+  @Post(':id/close')
+  @HttpCode(204)
+  @NoStore()
+  @ApiOperation({ summary: 'Close a report with an outcome' })
+  @ApiNoContentResponse()
+  async close(
+    @Param('id', parseId()) id: string,
+    @Body() dto: CloseMarketReportDto,
+  ): Promise<void> {
+    await this.reports.close(id, dto.reasonCode);
   }
 }

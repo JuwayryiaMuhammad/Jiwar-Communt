@@ -2197,6 +2197,13 @@ export const AUDIT_ACTIONS = {
   // Its day passed (the sweep, or a new listing of its unit). metadata: kind.
   'market_listing.expired': { log: 'tenant', target: 'market_listing' },
   'market.settings_changed': { log: 'tenant', target: 'tenant' },
+  // A listing reported (target: the listing). metadata: reportId,
+  // reasonCode; never the note.
+  'market_listing.reported': { log: 'tenant', target: 'market_listing' },
+  // Enough units reported it: off the market for review. metadata: units.
+  'market_listing.under_review': { log: 'tenant', target: 'market_listing' },
+  // metadata: listingId, outcome, removed.
+  'market_report.closed': { log: 'tenant', target: 'market_report' },
   // A resident's shop. metadata: category; reasonCode where a code was
   // given; by (owner | system) when it closed. Never its words.
   'market_shop.opened': { log: 'tenant', target: 'market_shop' },

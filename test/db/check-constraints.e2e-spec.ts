@@ -2581,6 +2581,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'each of the three words is tested IS NULL first; the length runs only on a value',
   },
+  market_listing_reports_reason: {},
+  market_listing_reports_note_length: {
+    guarded: 'note IS NULL is tested first; the length runs only on a value',
+  },
+  market_listing_reports_closed_shape: {
+    guarded:
+      'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; outcome IS NULL is tested first and its list runs only on a value',
+  },
   market_shops_state_shape: {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',

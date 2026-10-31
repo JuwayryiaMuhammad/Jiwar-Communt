@@ -2617,6 +2617,22 @@ export const NOTIFICATION_KINDS = {
     target: 'market_listing',
     params: { listingKind: {}, reason: {} },
   },
+  /** Enough units reported a live listing: to who handles the market. */
+  'market_listing.under_review': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_listing',
+    params: { listingKind: {} },
+  },
+  /** The staff looked at the reporter's report; never its outcome. */
+  'market_report.closed': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_report',
+    params: {},
+  },
   /** A handler opened the owner's shop, or reinstated it. */
   'market_shop.approved': {
     priority: 'normal',

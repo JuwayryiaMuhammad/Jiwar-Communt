@@ -172,11 +172,67 @@ describe('Audit coverage — community', () => {
       });
     });
 
+    it('market_listing.reported, .under_review and market_report.closed — the codes, the count of units, the outcome; never the note', async () => {
+      const listing = await m.live(s.alice, s.marketHandler, {
+        title: 'Reported thing',
+      });
+      await m.marketSettings(s.manager, { reportHideThreshold: 1 });
+      try {
+        const report = (
+          (
+            await m
+              .http('post', `/market/listings/${listing}/report`, s.bob.token, {
+                reasonCode: 'scam',
+                note: MARKER,
+              })
+              .expect(201)
+          ).body as { id: string }
+        ).id;
+        expect(await single('market_listing.reported', listing)).toMatchObject({
+          actorId: s.bob.id,
+          metadata: { reportId: report, reasonCode: 'scam' },
+        });
+        expect(
+          await single('market_listing.under_review', listing),
+        ).toMatchObject({ metadata: { units: 1 } });
+        await m
+          .http(
+            'post',
+            `/market/reports/${report}/close`,
+            s.marketHandler.token,
+            {
+              reasonCode: 'no_action',
+            },
+          )
+          .expect(204);
+        expect(await single('market_report.closed', report)).toMatchObject({
+          actorId: s.marketHandler.id,
+          metadata: {
+            listingId: listing,
+            outcome: 'no_action',
+            removed: false,
+          },
+        });
+      } finally {
+        await m.marketSettings(s.manager, { reportHideThreshold: 3 });
+      }
+    });
+
     it('market.settings_changed — the settings, from and to', async () => {
+      const before = (
+        await read.tenant(s.c.tenantId, {
+          action: 'market.settings_changed',
+          targetId: s.c.tenantId,
+        })
+      ).length;
       await m.marketSettings(s.manager, { expiryDays: 21 });
-      expect(
-        await single('market.settings_changed', s.c.tenantId),
-      ).toMatchObject({
+      const rows = await read.tenant(s.c.tenantId, {
+        action: 'market.settings_changed',
+        targetId: s.c.tenantId,
+      });
+      expect(rows).toHaveLength(before + 1);
+      covered.add('market.settings_changed');
+      expect(rows[rows.length - 1]).toMatchObject({
         actorId: s.manager.id,
         changes: { expiryDays: { from: 30, to: 21 } },
       });

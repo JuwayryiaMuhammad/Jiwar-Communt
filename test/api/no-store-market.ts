@@ -156,6 +156,27 @@ export function marketCalls(
         body: { reasonCode: 'inactive' },
       });
     },
+    'POST /market/listings/{id}/report': async () =>
+      call(world(), 'POST', `/market/listings/${await live()}/report`, {
+        token: world().a.tokens.tenant,
+        body: { reasonCode: 'other' },
+      }),
+    'GET /market/reports': () =>
+      call(world(), 'GET', '/market/reports', { token: manager() }),
+    'POST /market/reports/{id}/close': async () => {
+      const res = await call(
+        world(),
+        'POST',
+        `/market/listings/${await live()}/report`,
+        { token: world().a.tokens.tenant, body: { reasonCode: 'other' } },
+      ).expect(201);
+      return call(
+        world(),
+        'POST',
+        `/market/reports/${(res.body as { id: string }).id}/close`,
+        { token: manager(), body: { reasonCode: 'no_action' } },
+      );
+    },
     'GET /market/settings': () =>
       call(world(), 'GET', '/market/settings', { token: manager() }),
     'PATCH /market/settings': () =>

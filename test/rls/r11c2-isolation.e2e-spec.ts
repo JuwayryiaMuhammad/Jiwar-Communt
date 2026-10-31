@@ -4,7 +4,12 @@ import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { listingRow, marketFileRow, shopRow } from '../setup/market-rows';
+import {
+  listingRow,
+  marketFileRow,
+  marketReportRow,
+  shopRow,
+} from '../setup/market-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -69,6 +74,24 @@ const TABLES: Table[] = [
         tenantId: own.tenantId,
         ownerId: link.shopOwnerId,
         ownerUnitId: link.unitId,
+      }),
+  },
+  {
+    table: 'market_listing_reports',
+    // A listing of the link's own each time: one report a reporter there.
+    insert: async (tx, own, link) =>
+      marketReportRow(tx, {
+        tenantId: own.tenantId,
+        listingId:
+          own === link
+            ? await listingRow(tx, {
+                tenantId: own.tenantId,
+                sellerId: own.accountId,
+                sellerUnitId: own.unitId,
+              })
+            : link.listingId,
+        reporterId: link.accountId,
+        reporterUnitId: link.unitId,
       }),
   },
   {

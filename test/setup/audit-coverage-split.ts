@@ -982,4 +982,5 @@ export const R11C2_COVERAGE: readonly string[] = [
   'gallery_photo.hidden',
   'gallery_photo.restored',
   'gallery_photo.reported',
+  'visitor_pass.reinvited',
 ];

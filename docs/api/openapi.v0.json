@@ -45711,6 +45711,32 @@
         ],
         "type": "object"
       },
+      "ReinviteVisitorDto": {
+        "properties": {
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorScheduleDto"
+              }
+            ],
+            "description": "Recurring passes only, as on a new pass."
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "description": "At most 7 days after `validFrom` (one-time), 180 (recurring).",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "validFrom",
+          "validUntil"
+        ],
+        "type": "object"
+      },
       "ReissueCodeDto": {
         "properties": {
           "reasonCode": {
@@ -133406,6 +133432,54 @@
         "tags": [
           "visitors"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/visitor-passes/{id}/reinvite": {
+      "post": {
+        "operationId": "VisitorsController_reinvite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReinviteVisitorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedPassView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite the visitor of an earlier pass again",
+        "tags": [
+          "visitors"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

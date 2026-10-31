@@ -42,6 +42,7 @@ import {
   CancelVisitorPassDto,
   CreateStandingInstructionDto,
   CreateVisitorPassDto,
+  ReinviteVisitorDto,
   GateInstructionsDto,
 } from './dto/visitors.dto';
 import { InstructionsService } from './instructions.service';
@@ -120,6 +121,22 @@ export class VisitorsController {
     @Param('id', parseId()) id: string,
   ): Promise<IssuedPassView> {
     return IssuedPassView.from(await this.passes.reissueLink(id));
+  }
+
+  /**
+   * A new pass for the visitor of an earlier one (ADR 0071), while their
+   * details are kept; 409 VISITOR_DETAILS_PURGED after.
+   */
+  @RequirePermissions('visitors.invite')
+  @Post('visitor-passes/:id/reinvite')
+  @ApiOperation({ summary: 'Invite the visitor of an earlier pass again' })
+  @NoStore()
+  @ApiCreatedResponse({ type: IssuedPassView })
+  async reinvite(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReinviteVisitorDto,
+  ): Promise<IssuedPassView> {
+    return IssuedPassView.from(await this.passes.reinvite(id, dto));
   }
 
   @RequirePermissions('visitors.invite')

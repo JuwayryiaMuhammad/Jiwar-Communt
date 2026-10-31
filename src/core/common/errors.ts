@@ -1687,6 +1687,8 @@ export const ErrorCode = {
   GALLERY_ALBUM_PUBLISHED: 'GALLERY_ALBUM_PUBLISHED',
   /** The caller reported this photo already (409). */
   GALLERY_REPORT_EXISTS: 'GALLERY_REPORT_EXISTS',
+  /** The visitor's details are no longer kept: invite them as new (409). */
+  VISITOR_DETAILS_PURGED: 'VISITOR_DETAILS_PURGED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

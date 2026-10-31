@@ -232,3 +232,36 @@ export class CreateStandingInstructionDto {
   )
   action: StandingInstructionAction;
 }
+
+/**
+ * A new pass for a visitor of an earlier one (ADR 0071): their details are
+ * copied while the compound still keeps them; the kind and party come from
+ * the earlier pass.
+ */
+export class ReinviteVisitorDto {
+  @ApiProperty({ type: String, format: 'date-time' })
+  @ToInstant()
+  @IsDate()
+  validFrom: Date;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description:
+      'At most 7 days after `validFrom` (one-time), 180 (recurring).',
+  })
+  @ToInstant()
+  @IsDate()
+  validUntil: Date;
+
+  @ApiProperty({
+    type: VisitorScheduleDto,
+    required: false,
+    description: 'Recurring passes only, as on a new pass.',
+  })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => VisitorScheduleDto)
+  schedule?: VisitorScheduleDto;
+}

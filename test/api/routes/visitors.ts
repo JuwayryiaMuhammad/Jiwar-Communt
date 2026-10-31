@@ -86,6 +86,29 @@ export const VISITORS_ROUTES: Row[] = [
   },
   {
     method: 'POST',
+    path: '/visitor-passes/{id}/reinvite',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPassId }),
+      body: () => ({
+        validFrom: '2099-01-02T08:00:00Z',
+        validUntil: '2099-01-02T12:00:00Z',
+      }),
+      code: 'VISITOR_PASS_NOT_FOUND',
+    },
+    invalid: {
+      body: {
+        validFrom: '2099-02-30T08:00:00Z',
+        validUntil: '2099-03-01T12:00:00Z',
+      },
+      fields: [{ field: 'validFrom', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
     path: '/visitor-passes/{id}/cancel',
     auth: 'tenant',
     as: 'owner',

@@ -52073,6 +52073,49 @@
           }
         },
         {
+          "name": "Invite the visitor of an earlier pass again",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"validFrom\": \"2026-01-01T09:00:00.000Z\",\n  \"validUntil\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `schedule` | object |  | Recurring passes only, as on a new pass. |\n| `validFrom` | string (date-time) | yes |  |\n| `validUntil` | string (date-time) | yes | At most 7 days after `validFrom` (one-time), 180 (recurring). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visitor-passes",
+                ":id",
+                "reinvite"
+              ],
+              "raw": "{{baseUrl}}/api/v1/visitor-passes/:id/reinvite",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Reissue a visitor pass's link, QR and code",
           "request": {
             "description": "**Responses:** 200",

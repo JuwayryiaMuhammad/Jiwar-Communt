@@ -280,6 +280,9 @@ export const AUDIT_ACTIONS = {
   'visitor_pass.created': { log: 'tenant', target: 'visitor_pass' },
   'visitor_pass.cancelled': { log: 'tenant', target: 'visitor_pass' },
   'visitor_pass.code_reissued': { log: 'tenant', target: 'visitor_pass' },
+  // A new pass for the visitor of an earlier one (ADR 0071). metadata:
+  // fromPassId, unitId; never the visitor's details.
+  'visitor_pass.reinvited': { log: 'tenant', target: 'visitor_pass' },
   // The resident's entry QR (ADR 0031). Ids and a reason code only: never the
   // secret, never the device name. A resident's scan is not audited at all.
   'entry_credential.issued': { log: 'tenant', target: 'entry_credential' },

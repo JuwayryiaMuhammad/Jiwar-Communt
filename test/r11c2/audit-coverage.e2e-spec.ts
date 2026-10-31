@@ -484,6 +484,41 @@ describe('Audit coverage — community', () => {
       });
     });
 
+    it('visitor_pass.reinvited — the earlier pass and the unit; never the visitor', async () => {
+      const first = (
+        (
+          await m
+            .http(
+              'post',
+              `/units/${s.homeA.id}/visitor-passes`,
+              s.alice.token,
+              {
+                kind: 'one_time',
+                partySize: 1,
+                validFrom: at(day(1), 10).toISOString(),
+                validUntil: at(day(1), 12).toISOString(),
+                visitorName: MARKER,
+              },
+            )
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      const next = (
+        (
+          await m
+            .http('post', `/visitor-passes/${first}/reinvite`, s.alice.token, {
+              validFrom: at(day(2), 10).toISOString(),
+              validUntil: at(day(2), 12).toISOString(),
+            })
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      expect(await single('visitor_pass.reinvited', next)).toMatchObject({
+        actorId: s.alice.id,
+        metadata: { fromPassId: first, unitId: s.homeA.id },
+      });
+    });
+
     it('market.settings_changed — the settings, from and to', async () => {
       const before = (
         await read.tenant(s.c.tenantId, {

@@ -21754,6 +21754,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/visitor-passes/{id}/reinvite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invite the visitor of an earlier pass again */
+        post: operations["VisitorsController_reinvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/visitor-passes/{id}/reissue-link": {
         parameters: {
             query?: never;
@@ -36604,6 +36621,17 @@ export interface components {
         RegistrationUploadView: {
             document: components["schemas"]["RegistrationDocumentView"];
             upload: components["schemas"]["UploadTargetView"];
+        };
+        ReinviteVisitorDto: {
+            /** @description Recurring passes only, as on a new pass. */
+            schedule?: components["schemas"]["VisitorScheduleDto"];
+            /** Format: date-time */
+            validFrom: string;
+            /**
+             * Format: date-time
+             * @description At most 7 days after `validFrom` (one-time), 180 (recurring).
+             */
+            validUntil: string;
         };
         ReissueCodeDto: {
             /** @description From the closed list `cardReissue`. */
@@ -76613,6 +76641,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    VisitorsController_reinvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReinviteVisitorDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedPassView"];
+                };
             };
         };
     };

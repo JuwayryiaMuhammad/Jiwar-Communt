@@ -430,6 +430,35 @@ export function marketCalls(
         { token: manager() },
       );
     },
+    'POST /visitor-passes/{id}/reinvite': async () => {
+      const first = await call(
+        world(),
+        'POST',
+        `/units/${world().a.homeUnitId}/visitor-passes`,
+        {
+          token: owner(),
+          body: {
+            kind: 'one_time',
+            partySize: 1,
+            validFrom: at(day(1), 10).toISOString(),
+            validUntil: at(day(1), 12).toISOString(),
+            visitorName: 'Again Visitor',
+          },
+        },
+      ).expect(201);
+      return call(
+        world(),
+        'POST',
+        `/visitor-passes/${(first.body as { id: string }).id}/reinvite`,
+        {
+          token: owner(),
+          body: {
+            validFrom: at(day(2), 10).toISOString(),
+            validUntil: at(day(2), 12).toISOString(),
+          },
+        },
+      );
+    },
     'GET /market/settings': () =>
       call(world(), 'GET', '/market/settings', { token: manager() }),
     'PATCH /market/settings': () =>

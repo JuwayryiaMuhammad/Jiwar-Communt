@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type VisitorPass, type VisitorPassKind } from '@prisma/client';
 import { CommunityGatePort, type GateSchedule } from '../../community';
+import { dbNow } from '../db-clock';
 import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
 import { AuditService } from '../../core/audit/audit.service';
 import { AccessTokens } from '../../core/auth/access-token';
@@ -682,6 +683,64 @@ export class VisitorPassesService implements OnModuleInit {
   }
 
   /** The host, or the unit's primary. Anyone else: not found. */
+  /**
+   * The host invites a visitor of an earlier pass again (ADR 0071): the
+   * visitor's details are copied into a new pass with the same kind and
+   * party, through every check a new pass runs (the inviter, the unit's
+   * quota). The details are read under a shared lock, so the retention
+   * sweep that deletes them and a re-invite are decided one at a time:
+   * gone, or past their day, they answer 409 VISITOR_DETAILS_PURGED.
+   */
+  async reinvite(
+    id: string,
+    input: { validFrom: Date; validUntil: Date; schedule?: GateSchedule },
+  ): Promise<IssuedPass> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const source = await tx.visitorPass.findUnique({ where: { id } });
+      if (!source || source.hostAccountId !== this.ctx.accountId)
+        throw passNotFound();
+      const purged = () =>
+        appError.conflict(
+          ErrorCode.VISITOR_DETAILS_PURGED,
+          'The visitor’s details are no longer kept: invite them as new',
+        );
+      if (!source.visitorDetailsId) throw purged();
+      const held = await tx.$queryRaw<{ id: string }[]>`
+        SELECT id FROM visitor_details
+         WHERE id = ${source.visitorDetailsId}::uuid FOR SHARE`;
+      if (!held.length) throw purged();
+      const details = await tx.visitorDetails.findUniqueOrThrow({
+        where: { id: source.visitorDetailsId },
+      });
+      if (details.expiresAt.getTime() <= (await dbNow(tx)).getTime())
+        throw purged();
+      const pass = this.validate({
+        kind: source.kind,
+        partySize: source.partySize,
+        validFrom: input.validFrom,
+        validUntil: input.validUntil,
+        schedule: input.schedule,
+        visitorName: details.fullName ?? undefined,
+        visitorPhone: details.phone ?? undefined,
+        vehiclePlate: details.vehiclePlate ?? undefined,
+        expectedMinutes: source.expectedMinutes ?? undefined,
+      });
+      const issued = await this.createIn(
+        tx,
+        source.unitId,
+        pass,
+        undefined,
+        null,
+      );
+      await this.audit.record(tx, {
+        action: 'visitor_pass.reinvited',
+        targetId: issued.id,
+        metadata: { fromPassId: source.id, unitId: source.unitId },
+      });
+      return issued;
+    });
+  }
+
   async cancel(id: string, reasonCode: string | undefined): Promise<void> {
     const code = requireReasonCodeOnly(
       reasonCode,

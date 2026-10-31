@@ -1,3 +1,4 @@
+import { BUSY_LEVELS, type BusyLevel } from '../../busy/busy-levels';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   FacilityCapacityUnit,
@@ -210,6 +211,20 @@ export class FacilityView {
     description: 'Closures not lifted and not over, soonest first.',
   })
   closures: FacilityClosureNoticeView[];
+  @ApiProperty({
+    enum: BUSY_LEVELS,
+    nullable: true,
+    description:
+      'How busy now (ADR 0071): a level, never a count. On a single facility’s read only; null for walk-in.',
+  })
+  busyNow: BusyLevel | null;
+  @ApiProperty({
+    enum: BUSY_LEVELS,
+    nullable: true,
+    description:
+      'How busy it usually is at this weekday and hour over the last eight weeks; null with fewer than four.',
+  })
+  usuallyBusy: BusyLevel | null;
 
   static from(f: ResidentFacility): FacilityView {
     const rules = rulesOf(f);
@@ -225,6 +240,8 @@ export class FacilityView {
       closures: f.closures.map((c) => FacilityClosureNoticeView.from(c)),
       fees: feesOf(f),
       stay: FacilityStayRulesView.of(f),
+      busyNow: f.busyNow ?? null,
+      usuallyBusy: f.usuallyBusy ?? null,
       rules: rules && {
         slotMinutes: rules.slotMinutes,
         maxDaysAhead: rules.maxDaysAhead,
@@ -320,4 +337,7 @@ export type FacilityWithWindows = Facility & {
 /** A facility as residents are shown it: with its upcoming closures. */
 export type ResidentFacility = FacilityWithWindows & {
   closures: FacilityClosure[];
+  /** How busy now and usually at this hour (ADR 0071); null for walk-in. */
+  busyNow?: BusyLevel | null;
+  usuallyBusy?: BusyLevel | null;
 };

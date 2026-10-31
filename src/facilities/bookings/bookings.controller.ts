@@ -52,6 +52,7 @@ export class FacilitySlotsController {
         peak: s.peak,
         state: s.state,
         mine: s.mine,
+        busy: s.busy,
       })),
     };
   }

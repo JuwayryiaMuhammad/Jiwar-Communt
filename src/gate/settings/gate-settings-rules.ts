@@ -36,6 +36,12 @@ export const GATE_SETTING_LIMITS = {
    */
   callRingSeconds: { min: 15, max: 120, default: 45 },
   callMaxSeconds: { min: 60, max: 900, default: 300 },
+  /**
+   * How busy a gate reads (ADR 0071): entries in the last fifteen minutes
+   * from which it is `normal`, and from which `busy` (above the first).
+   */
+  gateBusyNormalFrom: { min: 1, max: 1000, default: 10 },
+  gateBusyBusyFrom: { min: 2, max: 1000, default: 30 },
 } as const;
 
 /** The gate's switches, each with its default. */

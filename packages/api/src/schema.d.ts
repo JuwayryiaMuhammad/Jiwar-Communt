@@ -23817,6 +23817,11 @@ export interface components {
             pinned: components["schemas"]["AnnouncementListItemView"][];
         };
         BriefGateView: {
+            /**
+             * @description How busy now (ADR 0071): a level, never a count.
+             * @enum {string}
+             */
+            busy: "quiet" | "normal" | "busy";
             /** Format: uuid */
             id: string;
             /** @description Written by the compound. */
@@ -29085,6 +29090,11 @@ export interface components {
          */
         FacilitySlotState: "free" | "full" | "closed";
         FacilitySlotView: {
+            /**
+             * @description How busy (ADR 0071): a level, never a count. Null when closed.
+             * @enum {string|null}
+             */
+            busy: "quiet" | "normal" | "busy" | null;
             /** Format: date-time */
             endsAt: string;
             /** @description The unit asked about (`unitId`) holds this slot. */
@@ -29145,6 +29155,11 @@ export interface components {
             use: number | null;
         };
         FacilityView: {
+            /**
+             * @description How busy now (ADR 0071): a level, never a count. On a single facility’s read only; null for walk-in.
+             * @enum {string|null}
+             */
+            busyNow: "quiet" | "normal" | "busy" | null;
             /** @description Closures not lifted and not over, soonest first. */
             closures: components["schemas"]["FacilityClosureNoticeView"][];
             descriptionAr: string | null;
@@ -29165,6 +29180,11 @@ export interface components {
             rules: components["schemas"]["FacilityBookingRulesView"] | null;
             /** @description A stay facility’s rules (ADR 0070); null otherwise. */
             stay: components["schemas"]["FacilityStayRulesView"] | null;
+            /**
+             * @description How busy it usually is at this weekday and hour over the last eight weeks; null with fewer than four.
+             * @enum {string|null}
+             */
+            usuallyBusy: "quiet" | "normal" | "busy" | null;
         };
         FacilityViewList: {
             data: components["schemas"]["FacilityView"][];
@@ -29771,6 +29791,16 @@ export interface components {
             /** @description Face checks against the blocklist’s faces (ADR 0068), advisory only. */
             faceChecks: boolean;
             /**
+             * @description Entries in fifteen minutes from which a gate reads busy; above the normal one.
+             * @example 30
+             */
+            gateBusyBusyFrom: number;
+            /**
+             * @description Entries in fifteen minutes from which a gate reads normal (ADR 0071).
+             * @example 10
+             */
+            gateBusyNormalFrom: number;
+            /**
              * @description Minutes outside a patrol route’s geofence that flag the exit to `patrols.manage`.
              * @example 3
              */
@@ -29799,6 +29829,11 @@ export interface components {
         /** @enum {string} */
         GateStatus: "active" | "inactive";
         GateStatusView: {
+            /**
+             * @description How busy now (ADR 0071): its entries in the last fifteen minutes, as a level, never a count.
+             * @enum {string}
+             */
+            busy: "quiet" | "normal" | "busy";
             /** Format: uuid */
             id: string;
             name: string;
@@ -42529,6 +42564,10 @@ export interface components {
             faceChecks?: boolean;
             /** @description The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020). */
             faceChecksNoticePosted?: boolean;
+            /** @description Entries in fifteen minutes from which a gate reads busy; above the normal one (INVALID_VALUE). */
+            gateBusyBusyFrom?: number;
+            /** @description Entries in fifteen minutes from which a gate reads normal (ADR 0071). */
+            gateBusyNormalFrom?: number;
             /** @description Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. */
             geofenceExitMinutes?: number;
             /** @description Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. */

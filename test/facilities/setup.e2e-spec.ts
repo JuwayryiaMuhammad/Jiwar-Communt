@@ -356,6 +356,7 @@ describe('Facilities: set-up (ADR 0044)', () => {
         'weeklyQuota',
       ]);
       expect(Object.keys(seen).sort()).toEqual([
+        'busyNow',
         'closures',
         'descriptionAr',
         'descriptionEn',
@@ -369,6 +370,7 @@ describe('Facilities: set-up (ADR 0044)', () => {
         'peakWindows',
         'rules',
         'stay',
+        'usuallyBusy',
       ]);
 
       await f

@@ -5785,6 +5785,15 @@
       },
       "BriefGateView": {
         "properties": {
+          "busy": {
+            "description": "How busy now (ADR 0071): a level, never a count.",
+            "enum": [
+              "quiet",
+              "normal",
+              "busy"
+            ],
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -5801,7 +5810,8 @@
         "required": [
           "id",
           "name",
-          "open"
+          "open",
+          "busy"
         ],
         "type": "object"
       },
@@ -21637,6 +21647,16 @@
       },
       "FacilitySlotView": {
         "properties": {
+          "busy": {
+            "description": "How busy (ADR 0071): a level, never a count. Null when closed.",
+            "enum": [
+              "quiet",
+              "normal",
+              "busy"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
           "endsAt": {
             "format": "date-time",
             "type": "string"
@@ -21666,7 +21686,8 @@
           "endsAt",
           "peak",
           "state",
-          "mine"
+          "mine",
+          "busy"
         ],
         "type": "object"
       },
@@ -21832,6 +21853,16 @@
       },
       "FacilityView": {
         "properties": {
+          "busyNow": {
+            "description": "How busy now (ADR 0071): a level, never a count. On a single facility’s read only; null for walk-in.",
+            "enum": [
+              "quiet",
+              "normal",
+              "busy"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
           "closures": {
             "description": "Closures not lifted and not over, soonest first.",
             "items": {
@@ -21908,6 +21939,16 @@
             "description": "A stay facility’s rules (ADR 0070); null otherwise.",
             "nullable": true,
             "type": "object"
+          },
+          "usuallyBusy": {
+            "description": "How busy it usually is at this weekday and hour over the last eight weeks; null with fewer than four.",
+            "enum": [
+              "quiet",
+              "normal",
+              "busy"
+            ],
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -21922,7 +21963,9 @@
           "rules",
           "fees",
           "stay",
-          "closures"
+          "closures",
+          "busyNow",
+          "usuallyBusy"
         ],
         "type": "object"
       },
@@ -24020,6 +24063,16 @@
             "description": "Face checks against the blocklist’s faces (ADR 0068), advisory only.",
             "type": "boolean"
           },
+          "gateBusyBusyFrom": {
+            "description": "Entries in fifteen minutes from which a gate reads busy; above the normal one.",
+            "example": 30,
+            "type": "number"
+          },
+          "gateBusyNormalFrom": {
+            "description": "Entries in fifteen minutes from which a gate reads normal (ADR 0071).",
+            "example": 10,
+            "type": "number"
+          },
           "geofenceExitMinutes": {
             "description": "Minutes outside a patrol route’s geofence that flag the exit to `patrols.manage`.",
             "example": 3,
@@ -24059,7 +24112,9 @@
           "offlineSyncAlertMinutes",
           "faceChecks",
           "callRingSeconds",
-          "callMaxSeconds"
+          "callMaxSeconds",
+          "gateBusyNormalFrom",
+          "gateBusyBusyFrom"
         ],
         "type": "object"
       },
@@ -24072,6 +24127,15 @@
       },
       "GateStatusView": {
         "properties": {
+          "busy": {
+            "description": "How busy now (ADR 0071): its entries in the last fifteen minutes, as a level, never a count.",
+            "enum": [
+              "quiet",
+              "normal",
+              "busy"
+            ],
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -24093,7 +24157,8 @@
           "id",
           "name",
           "open",
-          "phone"
+          "phone",
+          "busy"
         ],
         "type": "object"
       },
@@ -65897,6 +65962,18 @@
           "faceChecksNoticePosted": {
             "description": "The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020).",
             "type": "boolean"
+          },
+          "gateBusyBusyFrom": {
+            "description": "Entries in fifteen minutes from which a gate reads busy; above the normal one (INVALID_VALUE).",
+            "maximum": 1000,
+            "minimum": 2,
+            "type": "number"
+          },
+          "gateBusyNormalFrom": {
+            "description": "Entries in fifteen minutes from which a gate reads normal (ADR 0071).",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "number"
           },
           "geofenceExitMinutes": {
             "description": "Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once.",

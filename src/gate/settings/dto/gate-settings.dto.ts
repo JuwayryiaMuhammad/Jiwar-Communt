@@ -209,4 +209,32 @@ export class UpdateGateSettingsDto {
   @IsOptional()
   @IsBoolean()
   faceChecksNoticePosted?: boolean;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.gateBusyNormalFrom.min,
+    maximum: L.gateBusyNormalFrom.max,
+    description:
+      'Entries in fifteen minutes from which a gate reads normal (ADR 0071).',
+  })
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.gateBusyNormalFrom)))
+  @Min(L.gateBusyNormalFrom.min, withParams(bounds(L.gateBusyNormalFrom)))
+  @Max(L.gateBusyNormalFrom.max, withParams(bounds(L.gateBusyNormalFrom)))
+  gateBusyNormalFrom?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.gateBusyBusyFrom.min,
+    maximum: L.gateBusyBusyFrom.max,
+    description:
+      'Entries in fifteen minutes from which a gate reads busy; above the normal one (INVALID_VALUE).',
+  })
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.gateBusyBusyFrom)))
+  @Min(L.gateBusyBusyFrom.min, withParams(bounds(L.gateBusyBusyFrom)))
+  @Max(L.gateBusyBusyFrom.max, withParams(bounds(L.gateBusyBusyFrom)))
+  gateBusyBusyFrom?: number;
 }

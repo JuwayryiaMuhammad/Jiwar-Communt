@@ -2962,6 +2962,9 @@ model GateSettings {
   /// A gate call rings this long, then is missed; answered, it lasts at most the other (ADR 0068).
   callRingSeconds        Int      @default(45) @map("call_ring_seconds") @db.SmallInt
   callMaxSeconds         Int      @default(300) @map("call_max_seconds") @db.SmallInt
+  /// Entries in 15 minutes from which a gate reads normal, and busy (ADR 0071).
+  gateBusyNormalFrom     Int      @default(10) @map("gate_busy_normal_from") @db.SmallInt
+  gateBusyBusyFrom       Int      @default(30) @map("gate_busy_busy_from") @db.SmallInt
 
   @@map("gate_settings")
 }

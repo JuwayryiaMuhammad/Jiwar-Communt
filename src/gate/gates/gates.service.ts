@@ -1,3 +1,4 @@
+import { gateBusyLevels, type GateBusyLevel } from '../gate-busy';
 import { Injectable } from '@nestjs/common';
 import type { Gate, GateKind, GateStatus } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
@@ -66,19 +67,25 @@ export class GatesService {
    * permission: nothing here is a manager's to grant or withdraw. Never who
    * is on duty: a shift is not read.
    */
-  statuses(): Promise<Pick<Gate, 'id' | 'name' | 'status' | 'phone'>[]> {
+  statuses(): Promise<
+    (Pick<Gate, 'id' | 'name' | 'status' | 'phone'> & {
+      busy: GateBusyLevel;
+    })[]
+  > {
     const type = this.ctx.accountType;
     if (type !== 'resident' && type !== 'family')
       throw appError.forbidden(
         ErrorCode.FORBIDDEN,
         'Only residents and their family see the gate status',
       );
-    return this.tenantTx.withTenantTx((tx) =>
-      tx.gate.findMany({
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const gates = await tx.gate.findMany({
         select: { id: true, name: true, status: true, phone: true },
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
-      }),
-    );
+      });
+      const busy = await gateBusyLevels(tx, this.ctx.txTenantId);
+      return gates.map((g) => ({ ...g, busy: busy.get(g.id) ?? 'quiet' }));
+    });
   }
 
   create(input: GateInput): Promise<Gate> {

@@ -76,6 +76,8 @@ describe('Bookings: a resident books for a unit (ADR 0044)', () => {
         peak: false,
         state: 'full',
         mine: false,
+        // ADR 0071: full is busy, a level and never a count.
+        busy: 'busy',
       });
       const forAlice = await f.slots(s.alice, court, day(2), s.homeA.id);
       expect(

@@ -1,3 +1,5 @@
+import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { FacilityBusy } from '../busy/busy-levels';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { Prisma, type Facility, type FacilityMode } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
@@ -234,6 +236,8 @@ export class FacilitiesService implements OnModuleInit {
     private readonly ctx: RequestContext,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly tenantSettings: TenantSettingsService,
+    private readonly busy: FacilityBusy,
   ) {}
 
   onModuleInit(): void {
@@ -296,7 +300,15 @@ export class FacilitiesService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const facility = await this.inTx(tx, id);
       if (!facility.active) throw facilityNotFound();
-      return (await this.withClosures(tx, [facility]))[0];
+      const [read] = await this.withClosures(tx, [facility]);
+      const { timezone } = await this.tenantSettings.inTx(
+        tx,
+        this.ctx.txTenantId,
+      );
+      return {
+        ...read,
+        ...(await this.busy.levels(tx, facility, await dbNow(tx), timezone)),
+      };
     });
   }
 

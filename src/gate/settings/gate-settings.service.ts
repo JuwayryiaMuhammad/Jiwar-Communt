@@ -102,6 +102,17 @@ export class GateSettingsService {
           input[n],
         ]),
       );
+      const next = { ...before, ...data } as GateSettingsValues;
+      if (next.gateBusyBusyFrom <= next.gateBusyNormalFrom)
+        throw appError.badRequest(
+          ErrorCode.VALIDATION_FAILED,
+          'Invalid settings',
+          {
+            fields: [
+              { field: 'gateBusyBusyFrom', code: FieldErrorCode.INVALID_VALUE },
+            ],
+          },
+        );
       const after = values(
         await tx.gateSettings.update({ where: { tenantId }, data }),
       );

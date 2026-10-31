@@ -217,8 +217,9 @@ describe('Community life — the daily brief', () => {
     const view = await brief(s.owner);
     expect(view.gates).toEqual(
       [
-        { id: gate.id, name: 'North gate', open: true },
-        { id: duty.gateId, name: duty.gateName, open: true },
+        // How busy, a level (ADR 0071): nobody came in here yet.
+        { id: gate.id, name: 'North gate', open: true, busy: 'quiet' },
+        { id: duty.gateId, name: duty.gateName, open: true, busy: 'quiet' },
       ].sort((a, b) => a.name.localeCompare(b.name)),
     );
     expect(JSON.stringify(view)).not.toContain(duty.guardId);

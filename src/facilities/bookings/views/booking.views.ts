@@ -1,3 +1,4 @@
+import { BUSY_LEVELS, type BusyLevel } from '../../busy/busy-levels';
 import { ApiProperty } from '@nestjs/swagger';
 import { BookingSide, BookingStatus, type Booking } from '@prisma/client';
 
@@ -181,6 +182,13 @@ export class FacilitySlotView {
     description: 'The unit asked about (`unitId`) holds this slot.',
   })
   mine: boolean;
+  @ApiProperty({
+    enum: BUSY_LEVELS,
+    nullable: true,
+    description:
+      'How busy (ADR 0071): a level, never a count. Null when closed.',
+  })
+  busy: BusyLevel | null;
 }
 
 export class FacilitySlotsView {

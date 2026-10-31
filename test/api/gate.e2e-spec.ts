@@ -11,7 +11,8 @@ import { call, err } from './request';
 import { buildWorld, type World } from './world';
 
 const GATE = ['createdAt', 'id', 'kind', 'name', 'phone', 'status'];
-const GATE_STATUS = ['id', 'name', 'open', 'phone'];
+// ADR 0071: how busy, as a level.
+const GATE_STATUS = ['busy', 'id', 'name', 'open', 'phone'];
 const SHIFT = [
   'endedAt',
   'gateId',
@@ -151,6 +152,7 @@ describe('API v0 — gates and shifts (ADR 0028)', () => {
         open: true,
         // Set by the manager (ADR 0043); none here.
         phone: null,
+        busy: expect.stringMatching(/^(quiet|normal|busy)$/) as string,
       });
       expect(gates.find((x) => x.id === unmannedId)?.open).toBe(true);
       expect(gates.find((x) => x.id === closedId)?.open).toBe(false);

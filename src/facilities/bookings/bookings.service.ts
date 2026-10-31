@@ -40,6 +40,7 @@ import {
 } from '../setup/facilities.service';
 import { ClubService } from '../club/club.service';
 import { SuspensionsService } from '../suspensions/suspensions.service';
+import { levelOf, type BusyLevel } from '../busy/busy-levels';
 import { assertCan, COUNTED, HOLDING, isHolding } from './booking-rules';
 import {
   bookableWhen,
@@ -95,6 +96,8 @@ export interface SlotState extends FacilitySlot {
   state: 'free' | 'full' | 'closed';
   /** The unit asked about holds this slot. */
   mine: boolean;
+  /** How busy, as a level (ADR 0071); null when closed. Never a count. */
+  busy: BusyLevel | null;
 }
 
 export const bookingNotFound = () =>
@@ -286,6 +289,11 @@ export class BookingsService implements OnModuleInit {
         mine:
           unitId !== undefined &&
           heldIn(slot, holding).some((b) => b.unitId === unitId),
+        busy: heldIn(slot, closures).length
+          ? null
+          : levelOf(
+              BookingsService.taken(rules, slot, holding) / rules.capacity,
+            ),
       }));
       return { date: on, slots };
     });

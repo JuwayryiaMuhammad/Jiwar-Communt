@@ -1,3 +1,4 @@
+import { FacilityBusy } from './busy/busy-levels';
 import { ResidentBookingItems } from './bookings/resident-booking-items';
 import { Module } from '@nestjs/common';
 import { CommunityFacilitiesPortModule } from '../community';
@@ -97,6 +98,7 @@ import { FacilityUsageService } from './usage/usage.service';
     FacilityUsageController,
   ],
   providers: [
+    FacilityBusy,
     ResidentBookingItems,
     FacilitiesAccess,
     SuspensionBoardAppeals,

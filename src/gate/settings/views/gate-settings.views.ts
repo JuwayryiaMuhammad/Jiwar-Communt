@@ -96,6 +96,22 @@ export class GateSettingsResponse {
   })
   callMaxSeconds: number;
 
+  @ApiProperty({
+    type: Number,
+    example: L.gateBusyNormalFrom.default,
+    description:
+      'Entries in fifteen minutes from which a gate reads normal (ADR 0071).',
+  })
+  gateBusyNormalFrom: number;
+
+  @ApiProperty({
+    type: Number,
+    example: L.gateBusyBusyFrom.default,
+    description:
+      'Entries in fifteen minutes from which a gate reads busy; above the normal one.',
+  })
+  gateBusyBusyFrom: number;
+
   static from(s: GateSettingsValues): GateSettingsResponse {
     return {
       exceptionAnswerMinutes: s.exceptionAnswerMinutes,
@@ -110,6 +126,8 @@ export class GateSettingsResponse {
       faceChecks: s.faceChecks,
       callRingSeconds: s.callRingSeconds,
       callMaxSeconds: s.callMaxSeconds,
+      gateBusyNormalFrom: s.gateBusyNormalFrom,
+      gateBusyBusyFrom: s.gateBusyBusyFrom,
     };
   }
 }

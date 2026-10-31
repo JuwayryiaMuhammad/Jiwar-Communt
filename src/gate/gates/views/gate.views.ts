@@ -1,3 +1,4 @@
+import { GATE_BUSY_LEVELS, type GateBusyLevel } from '../../gate-busy';
 import { ApiProperty } from '@nestjs/swagger';
 import { GateKind, GateStatus, type Gate } from '@prisma/client';
 
@@ -57,14 +58,24 @@ export class GateStatusView {
   })
   phone: string | null;
 
+  @ApiProperty({
+    enum: GATE_BUSY_LEVELS,
+    description:
+      'How busy now (ADR 0071): its entries in the last fifteen minutes, as a level, never a count.',
+  })
+  busy: GateBusyLevel;
+
   static from(
-    g: Pick<Gate, 'id' | 'name' | 'status' | 'phone'>,
+    g: Pick<Gate, 'id' | 'name' | 'status' | 'phone'> & {
+      busy: GateBusyLevel;
+    },
   ): GateStatusView {
     return {
       id: g.id,
       name: g.name,
       open: g.status === 'active',
       phone: g.phone,
+      busy: g.busy,
     };
   }
 }

@@ -75,6 +75,11 @@ export class BriefGateView {
   name: string;
   @ApiProperty({ type: Boolean, description: 'In service now.' })
   open: boolean;
+  @ApiProperty({
+    enum: ['quiet', 'normal', 'busy'],
+    description: 'How busy now (ADR 0071): a level, never a count.',
+  })
+  busy: string;
 }
 
 /** A utility outage told to the caller (ADR 0069): the kind and the instants. */
@@ -176,7 +181,12 @@ export class DailyBriefView {
       polls: b.polls.map((p) => BriefPollView.from(p)),
       tickets: b.tickets,
       requests: b.requests,
-      gates: b.gates.map((g) => ({ id: g.id, name: g.name, open: g.open })),
+      gates: b.gates.map((g) => ({
+        id: g.id,
+        name: g.name,
+        open: g.open,
+        busy: g.busy,
+      })),
       outages: b.outages.map((o) => ({
         id: o.id,
         kind: o.kind,

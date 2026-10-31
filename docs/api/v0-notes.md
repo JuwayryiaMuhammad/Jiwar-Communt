@@ -303,3 +303,16 @@ The full notes for the apps are in [`notes/money-and-unit.md`](notes/money-and-u
 - **Upcoming dues.** `GET /units/{unitId}/upcoming-dues`; push `finance.dues_rising` when turned on.
 - **Collectors.** A staff role `collector` (`finance.collect`, `access:sync`); `POST/GET /units/{unitId}/collector-visits`, `/collector-visits/{id}/cancel|accept-offer`; `/staff/collector-visits`, `…/{id}/assign|cancel`, `GET /staff/collectors`, `GET/PATCH /staff/finance/collector-settings`; the collector's `GET /collector/visits`, `…/{id}/collected|failed` (`400 AMOUNT_TOO_HIGH {max}`).
 - **Lists.** `/me/requests` gains `instalment_plan_request` and `collector_visit`.
+
+### Booking extras and charges (ADR 0070)
+
+The full notes for the apps are in [`notes/booking-extras-charges.md`](notes/booking-extras-charges.md).
+
+- **Charges.** Invoice kinds `facility`, `club`, `fine`, raised by the system only (the staff's issue and billing plans take `StaffInvoiceKind`). A charge's invoice is neither split nor disputed (`reason: charge`). Credit note reason `charge_cancelled`.
+- **Fees.** Facilities gain `feeAmount`, `peakFeeAmount`, `refundCutoffHours` (`fees` on the views); bookings gain `charge`.
+- **Companions.** `/bookings/{id}/companions`, `…/share-link`, `…/companions/me/leave`, `/booking-invites/preview|accept`, `/me/companion-bookings[/{companionId}/accept|decline]`; bookings gain `companions`.
+- **Waitlist.** `POST /facilities/{id}/waitlist`, `GET /me/waitlist`, `POST /booking-waitlist/{id}/leave|claim`; facility settings gain `waitlistHoldMinutes`.
+- **Stays.** Mode `stay` with `checkInTime`, `checkOutTime`, `maxNights` (`stay` on the views); `POST /units/{unitId}/stays`; bookings gain `stayFromOn`, `stayToOn`.
+- **Rebook.** Bookings gain `rebookUntil`, `rebookOfId`; `POST /units/{unitId}/bookings` takes `rebookOf`.
+- **Club and fines.** `/units/{unitId}/club-membership/requests`, `/club-membership-requests/{id}/cancel`, `GET /staff/club/requests`; fines gain `payable` and `charge`.
+- **Notifications** `booking.companion_invited`, `booking.companion_cancelled`, `booking_waitlist.offered`, `booking_waitlist.closed`, `club_membership_request.paid`.

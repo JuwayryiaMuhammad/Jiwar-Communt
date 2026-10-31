@@ -1291,6 +1291,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ينتهي اشتراكك في النادي خلال أسبوع.',
     },
   },
+  'club_membership_request.paid': {
+    en: {
+      title: 'Club membership paid',
+      body: 'Your club membership request is paid. Open the app for its dates.',
+    },
+    ar: {
+      title: 'تم دفع اشتراك النادي',
+      body: 'تم دفع طلب اشتراكك في النادي. افتح التطبيق لمعرفة المواعيد.',
+    },
+  },
   'vehicle.approved': {
     en: {
       title: 'Vehicle approved',

@@ -870,6 +870,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   billing_plans_staff_kind: {},
   credit_notes_author: {},
+  club_membership_requests_amount: {},
+  club_membership_requests_state_shape: {},
+  club_membership_requests_cancel_reason: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
   facilities_fees: {
     guarded:
       'fee_amount and peak_fee_amount are each tested IS NULL first; the walk-in clause only asks IS NULL',

@@ -1127,6 +1127,17 @@ export const NOTIFICATION_KINDS = {
     target: 'club_membership',
     params: {},
   },
+  /**
+   * A club membership request's invoice was paid: the membership starts or
+   * is extended (ADR 0070). To the requester; the dates are read on it.
+   */
+  'club_membership_request.paid': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'club_membership_request',
+    params: {},
+  },
   // Vehicles and parking (ADR 0045). No kind is critical. They target the
   // vehicle and carry a reason's code at most: never a plate, a unit or a
   // name. Never to the one who acted.

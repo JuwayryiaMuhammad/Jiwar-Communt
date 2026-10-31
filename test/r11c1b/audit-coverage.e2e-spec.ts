@@ -108,6 +108,79 @@ describe('Audit coverage — booking extras and charges', () => {
     });
   });
 
+  describe('club membership requests', () => {
+    it('club_membership_request.created, .paid and .cancelled — the unit, the plan, the charge and the codes', async () => {
+      const planId = await f.plan(s.c, s.manager, { price: '120' });
+      const ask = async () =>
+        (
+          await f
+            .http(
+              'post',
+              `/units/${s.homeB.id}/club-membership/requests`,
+              s.bob.token,
+              { planId },
+            )
+            .expect(201)
+        ).body as {
+          id: string;
+          charge: { invoiceId: string };
+        };
+      const paid = await ask();
+      const created = await single('club_membership_request.created', paid.id);
+      expect(created).toMatchObject({
+        actorId: s.bob.id,
+        metadata: {
+          unitId: s.homeB.id,
+          planId,
+          amount: '120.00',
+          chargeId: expect.any(String) as string,
+          invoiceId: paid.charge.invoiceId,
+        },
+      });
+      await f
+        .http('post', `/staff/units/${s.homeB.id}/payments`, accountant.token, {
+          amount: '120.00',
+          method: 'cash',
+          paidOn: day(0),
+          invoiceIds: [paid.charge.invoiceId],
+        })
+        .expect(201);
+      const row = await single('club_membership_request.paid', paid.id);
+      expect(row).toMatchObject({
+        actorId: accountant.id,
+        metadata: {
+          unitId: s.homeB.id,
+          planId,
+          membershipId: expect.any(String) as string,
+          paymentId: expect.any(String) as string,
+          periodStartsOn: day(0),
+          periodEndsOn: expect.any(String) as string,
+          membershipCreated: true,
+        },
+      });
+
+      const called = await ask();
+      await f
+        .http(
+          'post',
+          `/club-membership-requests/${called.id}/cancel`,
+          s.bob.token,
+          { reasonCode: 'wrong_plan' },
+        )
+        .expect(200);
+      expect(
+        await single('club_membership_request.cancelled', called.id),
+      ).toMatchObject({
+        actorId: s.bob.id,
+        metadata: {
+          unitId: s.homeB.id,
+          reasonCode: 'wrong_plan',
+          chargeStatus: 'cancelled',
+        },
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every entry of booking extras and charges has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

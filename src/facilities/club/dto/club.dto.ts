@@ -17,6 +17,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import {
   IsLocalDate,
@@ -221,4 +222,40 @@ export class ClubUnitQueryDto {
   @IsString()
   @Length(1, 40, withParams({ min: 1, max: 40 }))
   code: string;
+}
+
+/** ADR 0070: a club plan asked for, owed through finance. */
+export class CreateClubRequestDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'An active plan (PLAN_NOT_AVAILABLE).',
+  })
+  @IsUUID()
+  planId: string;
+}
+
+export class CancelClubRequestDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `clubRequestCancel`.',
+  })
+  @IsString()
+  reasonCode: string;
+}
+
+export const CLUB_REQUEST_STATUSES = [
+  'requested',
+  'paid',
+  'cancelled',
+] as const;
+
+export class ClubRequestsQueryDto extends PageQueryDto {
+  @ApiProperty({ enum: CLUB_REQUEST_STATUSES, required: false })
+  @IsOptional()
+  @IsIn(
+    CLUB_REQUEST_STATUSES,
+    withParams({ allowed: [...CLUB_REQUEST_STATUSES] }),
+  )
+  status?: (typeof CLUB_REQUEST_STATUSES)[number];
 }

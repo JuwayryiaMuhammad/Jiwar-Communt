@@ -576,6 +576,7 @@ model Tenant {
   invoiceBatches               InvoiceBatch[]
   invoices                     Invoice[]
   financeCharges               FinanceCharge[]
+  clubMembershipRequests       ClubMembershipRequest[]
   billingPlans                 BillingPlan[]
   financePayments              FinancePayment[]
   receiptLinks                 ReceiptLink[]
@@ -1057,6 +1058,8 @@ model Account {
   clubPeopleAdded                ClubMembershipPerson[]              @relation("ClubPersonAdder")
   clubPeopleRemoved              ClubMembershipPerson[]              @relation("ClubPersonRemover")
   clubPaymentsRecorded           ClubPaymentRecord[]                 @relation("ClubPaymentRecorder")
+  clubRequestsMade               ClubMembershipRequest[]             @relation("ClubRequester")
+  clubRequestsCancelled          ClubMembershipRequest[]             @relation("ClubRequestCanceller")
   financeGatewaysUpdated         FinanceGateway[]                    @relation("FinanceGatewayUpdater")
   invoiceBatchesCreated          InvoiceBatch[]                      @relation("InvoiceBatchCreator")
   invoicesCreated                Invoice[]                           @relation("InvoiceCreator")
@@ -1186,6 +1189,7 @@ model Unit {
   invoiceBatches             InvoiceBatch[]
   invoices                   Invoice[]
   financeCharges             FinanceCharge[]
+  clubMembershipRequests     ClubMembershipRequest[]
   instalmentPlans            InstalmentPlan[]
   invoiceDisputes            InvoiceDispute[]
   financeRefunds             FinanceRefund[]
@@ -6183,6 +6187,7 @@ model ClubPlan {
 
   tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   payments ClubPaymentRecord[]
+  requests ClubMembershipRequest[]
 
   @@unique([tenantId, id])
   @@map("club_plans")
@@ -6250,19 +6255,59 @@ model ClubPaymentRecord {
   periodEndsOn   DateTime?       @map("period_ends_on") @db.Date
   reversesId     String?         @map("reverses_id") @db.Uuid
   reasonCode     String?         @map("reason_code")
-  recordedById   String          @map("recorded_by_account_id") @db.Uuid
+  /// Null exactly for a payment a paid charge wrote (ADR 0070).
+  recordedById   String?         @map("recorded_by_account_id") @db.Uuid
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// The charge whose payment wrote it (ADR 0070): no receipt number, no recorder.
+  chargeId       String?         @map("charge_id") @db.Uuid
 
   membership ClubMembership     @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  charge     FinanceCharge?     @relation(fields: [tenantId, chargeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_payment_records_charge_fkey")
+  request    ClubMembershipRequest?
   plan       ClubPlan?          @relation(fields: [tenantId, planId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_payment_records_tenant_id_plan_id_fkey")
   reverses   ClubPaymentRecord? @relation("ClubReversal", fields: [tenantId, reversesId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_payment_records_tenant_id_reverses_id_fkey")
   reversedBy ClubPaymentRecord? @relation("ClubReversal")
-  recordedBy Account            @relation("ClubPaymentRecorder", fields: [tenantId, recordedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_payment_records_tenant_id_recorded_by_fkey")
+  recordedBy Account?           @relation("ClubPaymentRecorder", fields: [tenantId, recordedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_payment_records_tenant_id_recorded_by_fkey")
 
   @@unique([tenantId, id])
   @@unique([tenantId, reversesId], map: "club_payment_records_one_reversal")
+  @@unique([tenantId, chargeId], map: "club_payment_records_charge_key")
   @@index([tenantId, membershipId, createdAt, id], map: "club_payment_records_membership_idx")
   @@map("club_payment_records")
+}
+
+/// A resident's request for a club plan (ADR 0070): its price owed through a
+/// `club` charge. One open per unit; paid or called off once (trigger).
+model ClubMembershipRequest {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  unitId          String    @map("unit_id") @db.Uuid
+  planId          String    @map("plan_id") @db.Uuid
+  requestedById   String    @map("requested_by_account_id") @db.Uuid
+  /// The plan's price when asked, EGP.
+  amount          Decimal   @db.Decimal(10, 2)
+  /// `requested`, `paid` or `cancelled`.
+  status          String    @default("requested")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  paidAt          DateTime? @map("paid_at") @db.Timestamptz(3)
+  paymentRecordId String?   @map("payment_record_id") @db.Uuid
+  cancelledAt     DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById   String?   @map("cancelled_by_account_id") @db.Uuid
+  /// REASON_CODES.clubRequestCancel.
+  cancelReason    String?   @map("cancel_reason")
+
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit          Unit               @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_requests_unit_fkey")
+  plan          ClubPlan           @relation(fields: [tenantId, planId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_requests_plan_fkey")
+  requestedBy   Account            @relation("ClubRequester", fields: [tenantId, requestedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_requests_requested_by_fkey")
+  cancelledBy   Account?           @relation("ClubRequestCanceller", fields: [tenantId, cancelledById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_requests_cancelled_by_fkey")
+  paymentRecord ClubPaymentRecord? @relation(fields: [tenantId, paymentRecordId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_requests_payment_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, paymentRecordId], map: "club_membership_requests_payment_key")
+  @@index([tenantId, unitId, createdAt, id], map: "club_membership_requests_unit_idx")
+  @@index([tenantId, createdAt, id], map: "club_membership_requests_list_idx")
+  @@map("club_membership_requests")
 }
 
 /// A membership's reminder before it ends: once per end date. Append-only.
@@ -6879,6 +6924,7 @@ model FinanceCharge {
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   unit    Unit    @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_charges_unit_fkey")
   invoice Invoice @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_charges_invoice_fkey")
+  clubPaymentRecord ClubPaymentRecord?
 
   @@unique([tenantId, id])
   @@unique([tenantId, source, sourceId], map: "finance_charges_source_key")

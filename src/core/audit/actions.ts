@@ -764,6 +764,23 @@ export const AUDIT_ACTIONS = {
   'club_payment.recorded': { log: 'tenant', target: 'club_payment' },
   // metadata: membershipId, unitId, reversesId, reasonCode.
   'club_payment.reversed': { log: 'tenant', target: 'club_payment' },
+  // Club membership requests (ADR 0070). metadata: unitId, planId, amount,
+  // chargeId, invoiceId.
+  'club_membership_request.created': {
+    log: 'tenant',
+    target: 'club_membership_request',
+  },
+  // metadata: unitId, reasonCode, chargeStatus (what the cancel left).
+  'club_membership_request.cancelled': {
+    log: 'tenant',
+    target: 'club_membership_request',
+  },
+  // metadata: unitId, planId, membershipId, paymentId, periodStartsOn,
+  // periodEndsOn, membershipCreated. The paying transaction's actor.
+  'club_membership_request.paid': {
+    log: 'tenant',
+    target: 'club_membership_request',
+  },
   // Vehicles and parking (ADR 0045). Ids, codes, statuses and days by
   // value; a plate only as { changed: true } (`plate` is always
   // sensitive), never a name.

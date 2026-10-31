@@ -68,6 +68,14 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
     const plan = await f.plan(s.c, s.manager);
     const membership = await f.membership(s.c, accountant, home.id);
     await f.pay(accountant, membership, plan).expect(201);
+    // A club request it made (ADR 0070): its own, in the export.
+    const asked = (
+      await f
+        .http('post', `/units/${home.id}/club-membership/requests`, p.token, {
+          planId: plan,
+        })
+        .expect(201)
+    ).body as { id: string };
     // A ban from another facility (ADR 0067): its own, in the export.
     const pool = await f.facility(s.c, s.manager, { nameEn: 'Pool' });
     const ban = (
@@ -86,6 +94,8 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
     expect(section.sort()).toEqual([
       'facilities/bans.json',
       'facilities/bookings.json',
+      // ADR 0070.
+      'facilities/club-requests.json',
       `facilities/club/${home.code}.json`,
     ]);
     expect(JSON.parse(archive.text('facilities/bans.json'))).toMatchObject([
@@ -116,6 +126,9 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
     expect(club.state).toBe('active');
     expect(club.coversMeSince).not.toBeNull();
     expect(club.payments).toHaveLength(1);
+    expect(
+      JSON.parse(archive.text('facilities/club-requests.json')),
+    ).toMatchObject([{ id: asked.id, status: 'requested' }]);
     const text = section.map(archive.text).join('\n');
     const primaryRow = await f.inTx(s.c, (tx) =>
       tx.account.findUniqueOrThrow({ where: { id: primary.id } }),

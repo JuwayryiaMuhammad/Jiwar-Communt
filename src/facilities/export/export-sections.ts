@@ -13,6 +13,8 @@ import { FacilityBansService } from '../bans/bans.service';
 import { dayOf } from '../bans/ban-reads';
 import { ClubService } from '../club/club.service';
 import { ClubPaymentView } from '../club/views/club.views';
+import { ClubRequestsService } from '../club/club-requests.service';
+import { ClubRequestView } from '../club/views/club-request.views';
 
 /**
  * The facilities section of a personal-data export (ADR 0044). It runs as
@@ -24,7 +26,9 @@ import { ClubPaymentView } from '../club/views/club.views';
  * - `facilities/club/<unitCode>.json`: for each unit it has a place in now
  *   and whose household it sees, the membership's state, the last day it
  *   is active, and since when it covers the account (or not); its payments
- *   only where the account sees the unit's money.
+ *   only where the account sees the unit's money;
+ * - `facilities/club-requests.json`: every club membership request it made
+ *   (ADR 0070), with its plan, price, state and invoice.
  *
  * Nothing here names another person: not who else a membership covers,
  * nor who else of the household booked.
@@ -38,6 +42,7 @@ export class FacilitiesExportSections implements OnModuleInit {
     private readonly bookings: BookingsService,
     private readonly club: ClubService,
     private readonly bans: FacilityBansService,
+    private readonly clubRequests: ClubRequestsService,
   ) {}
 
   onModuleInit(): void {
@@ -62,6 +67,12 @@ export class FacilitiesExportSections implements OnModuleInit {
         startedAt: b.createdAt,
         liftedAt: b.liftedAt,
       })),
+    };
+    yield {
+      path: 'facilities/club-requests.json',
+      json: (await this.clubRequests.everyOwn()).map((r) =>
+        ClubRequestView.from(r),
+      ),
     };
     const units = await this.tenantTx.withTenantTx((tx) =>
       this.community.places(tx, s.accountId),

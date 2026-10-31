@@ -1558,6 +1558,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/facilities/{id}/closures': w.aFacilityId,
       '/units/{unitId}/booking-standing': unit.id,
       '/units/{unitId}/club-membership': unit.id,
+      // ADR 0070: the unit's requests (by ids and codes; never a name).
+      '/units/{unitId}/club-membership/requests': unit.id,
       '/staff/club/units/{unitId}/people': unit.id,
       '/staff/club-memberships/{id}': piiMembership,
       '/units/{unitId}/vehicles': unit.id,

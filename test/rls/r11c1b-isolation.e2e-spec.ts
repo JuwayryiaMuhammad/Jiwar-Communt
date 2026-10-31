@@ -12,6 +12,7 @@ interface Side {
   unitId: string;
   staffId: string;
   invoiceId: string;
+  clubPlanId: string;
 }
 
 /**
@@ -51,6 +52,28 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  {
+    table: 'club_membership_requests',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.clubMembershipRequest.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          // Called off: the one-open-per-unit key leaves it alone.
+          unitId: link.unitId,
+          planId: link.clubPlanId,
+          requestedById: link.staffId,
+          amount: '300',
+          status: 'cancelled',
+          cancelledAt: new Date(),
+          cancelledById: link.staffId,
+          cancelReason: 'other',
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — booking extras and charges (ADR 0070)', () => {
@@ -70,6 +93,17 @@ describe('RLS isolation — booking extras and charges (ADR 0070)', () => {
     const staff = await createAccountRow(h, tenantId, 'staff');
     const s = { tenantId, unitId: unit.id, staffId: staff.id } as Side;
     await inTenant(s, async (tx) => {
+      s.clubPlanId = newId();
+      await tx.clubPlan.create({
+        data: {
+          id: s.clubPlanId,
+          tenantId,
+          nameEn: 'Plan',
+          nameAr: 'خطة',
+          durationKind: 'monthly',
+          price: '300',
+        },
+      });
       s.invoiceId = await invoiceRow(tx, {
         tenantId,
         unitId: unit.id,

@@ -210,6 +210,7 @@ describe('audit catalog', () => {
         'facility_ban',
         // ADR 0070
         'finance_charge',
+        'club_membership_request',
         'work_permit',
         'safety_instruction',
         // ADR 0069.

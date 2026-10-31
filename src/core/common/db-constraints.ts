@@ -646,6 +646,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   finance_charges_tenant_id_id_key: null,
   finance_charges_source_key: null,
   finance_charges_invoice_key: null,
+  // Club membership requests (ADR 0070): one open per unit, checked first
+  // under the unit's finance lock (CLUB_REQUEST_OPEN); one payment record
+  // per request and per charge, written by the paid handler once.
+  club_membership_requests_tenant_id_id_key: null,
+  club_membership_requests_open_key: null,
+  club_membership_requests_payment_key: null,
+  club_payment_records_charge_key: null,
   // Refunds (ADR 0048): numbers from the counter, one reversal per refund
   // and one source per refund and payment, under the unit's finance lock.
   finance_refunds_tenant_id_id_key: null,

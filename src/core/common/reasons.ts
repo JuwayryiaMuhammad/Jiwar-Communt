@@ -408,6 +408,8 @@ export const REASON_CODES = {
   bookingSuspensionSystemLift: ['board_overturned'],
   // Why the accountant reverses a club payment recorded by mistake.
   clubPaymentReverse: ['entered_in_error', 'duplicate', 'refunded', 'other'],
+  // Why a resident calls off a club membership request (ADR 0070).
+  clubRequestCancel: ['no_longer_needed', 'wrong_plan', 'other'],
   // Vehicles and parking (ADR 0045). Why the staff reject a vehicle, why a
   // resident removes one and why the staff do.
   vehicleReject: [

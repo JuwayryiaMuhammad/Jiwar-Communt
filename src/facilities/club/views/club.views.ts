@@ -104,6 +104,14 @@ export class ClubPaymentView {
     description: 'A payment: a reversal reversed it.',
   })
   reversed: boolean;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description:
+      'A payment made through finance for a membership request (ADR 0070): no receipt number here, and never reversed here.',
+  })
+  chargeId: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -121,6 +129,7 @@ export class ClubPaymentView {
       reversesId: r.reversesId,
       reasonCode: r.reasonCode,
       reversed,
+      chargeId: r.chargeId,
       createdAt: r.createdAt,
     };
   }

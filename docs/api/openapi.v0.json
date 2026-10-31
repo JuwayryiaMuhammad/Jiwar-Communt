@@ -6368,6 +6368,18 @@
         ],
         "type": "object"
       },
+      "CancelClubRequestDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `clubRequestCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CancelCollectorVisitDto": {
         "properties": {
           "reasonCode": {
@@ -9152,6 +9164,12 @@
             "nullable": true,
             "type": "string"
           },
+          "chargeId": {
+            "description": "A payment made through finance for a membership request (ADR 0070): no receipt number here, and never reversed here.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -9225,6 +9243,7 @@
           "reversesId",
           "reasonCode",
           "reversed",
+          "chargeId",
           "createdAt"
         ],
         "type": "object"
@@ -9408,6 +9427,130 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/ClubPlanView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ClubRequestChargeView": {
+        "properties": {
+          "invoiceId": {
+            "description": "The unit’s `club` invoice that owes the price.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargeStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "invoiceId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "ClubRequestStatus": {
+        "description": "`paid`: the membership started or was extended (`paymentId`, a payment of the membership).",
+        "enum": [
+          "requested",
+          "paid",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "ClubRequestView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "A code of `clubRequestCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "charge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubRequestChargeView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "paidAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "paymentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubRequestStatus"
+              }
+            ],
+            "description": "`paid`: the membership started or was extended (`paymentId`, a payment of the membership)."
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "planId",
+          "amount",
+          "status",
+          "charge",
+          "paymentId",
+          "cancelReason",
+          "createdAt",
+          "paidAt",
+          "cancelledAt"
+        ],
+        "type": "object"
+      },
+      "ClubRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ClubRequestView"
             },
             "type": "array"
           },
@@ -12815,6 +12958,19 @@
           "nameAr",
           "durationKind",
           "price"
+        ],
+        "type": "object"
+      },
+      "CreateClubRequestDto": {
+        "properties": {
+          "planId": {
+            "description": "An active plan (PLAN_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "planId"
         ],
         "type": "object"
       },
@@ -51571,6 +51727,104 @@
         ],
         "type": "object"
       },
+      "StaffClubRequestView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "A code of `clubRequestCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "charge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubRequestChargeView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "paidAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "paymentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubRequestStatus"
+              }
+            ],
+            "description": "`paid`: the membership started or was extended (`paymentId`, a payment of the membership)."
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "planId",
+          "amount",
+          "status",
+          "charge",
+          "paymentId",
+          "cancelReason",
+          "createdAt",
+          "paidAt",
+          "cancelledAt",
+          "unitCode"
+        ],
+        "type": "object"
+      },
+      "StaffClubRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffClubRequestView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffComplaintDetailView": {
         "properties": {
           "againstUnit": {
@@ -69082,6 +69336,55 @@
         "summary": "A clearance certificate as a PDF",
         "tags": [
           "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/club-membership-requests/{id}/cancel": {
+      "post": {
+        "description": "Its requester or the unit’s primary, until it is paid (CLUB_REQUEST_CLOSED): its invoice is credited off.",
+        "operationId": "ResidentClubRequestsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelClubRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a club membership request",
+        "tags": [
+          "club"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -102332,6 +102635,69 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/club/requests": {
+      "get": {
+        "operationId": "StaffClubRequestsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "requested",
+                "paid",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffClubRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List club membership requests, newest first",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/club/units": {
       "get": {
         "operationId": "ClubMembershipsController_unit",
@@ -123604,6 +123970,121 @@
           }
         ],
         "summary": "Get the unit’s club membership",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/club-membership/requests": {
+      "get": {
+        "description": "Newest first: every one for the unit’s primary, the caller’s own for anyone else.",
+        "operationId": "ResidentClubRequestsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s club membership requests",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Whoever books for the unit: an active plan (PLAN_NOT_AVAILABLE), one request open per unit (CLUB_REQUEST_OPEN). Its price is owed at once through a `club` invoice of the unit’s, due in a week; once paid, the membership starts, or is extended from where it ends.",
+        "operationId": "ResidentClubRequestsController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClubRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a club plan",
         "tags": [
           "club"
         ],

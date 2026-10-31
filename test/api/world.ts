@@ -50,6 +50,7 @@ import { ReportsService } from '../../src/neighbours/conversations/reports.servi
 import { PostsService } from '../../src/neighbours/posts/posts.service';
 import { BookingsService } from '../../src/facilities/bookings/bookings.service';
 import { ClosuresService } from '../../src/facilities/closures/closures.service';
+import { ClubRequestsService } from '../../src/facilities/club/club-requests.service';
 import { ClubService } from '../../src/facilities/club/club.service';
 import { VehiclesService } from '../../src/gate/vehicles/vehicles.service';
 import { StaffParkingService } from '../../src/gate/parking/staff-parking.service';
@@ -315,6 +316,8 @@ export interface World
   bClubPlanId: string;
   bMembershipId: string;
   bPaymentId: string;
+  /** ADR 0070: B's owner asked for B's plan; its invoice is open. */
+  bClubRequestId: string;
   /** B's finance (ADR 0046): an issue to B's home, and its invoice. */
   bInvoiceBatchId: string;
   bInvoiceId: string;
@@ -1259,6 +1262,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     });
     return { membershipId: membership.membership.id, paymentId: payment.id };
   });
+  const bClubRequest = await asBOwner(() =>
+    h.moduleRef.get(ClubRequestsService).request(b.homeUnitId, bClubPlan.id),
+  );
   // Partners (ADR 0060).
   const cleaningOf = (c: typeof a) =>
     helpers.asManager(c, () =>
@@ -1644,6 +1650,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     aClubPlanId: aClubPlan.id,
     bMembershipId: bClub.membershipId,
     bPaymentId: bClub.paymentId,
+    bClubRequestId: bClubRequest.id,
     bSuspensionId,
     bBanId: bBan.id,
     bWorkPermitId: bWorkPermit.id,

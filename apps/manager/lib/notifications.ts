@@ -304,6 +304,7 @@ const TEXT: Record<string, (p: P) => string> = {
     `You may not book ${p.scope === 'all' ? 'any facility' : 'this facility'}${p.until ? ` until ${p.until}` : ''}`,
   'facility_ban.lifted': () => 'You may book again',
   'club_membership.expiring': () => 'Your club membership ends within a week',
+  'club_membership_request.paid': () => 'Your club membership is paid: it starts as planned',
   // The asset register, plans and inspections (ADR 0064).
   'asset.warranty_expiring': (p) => `The warranty of asset ${p.assetRef} ends on ${p.endsOn}`,
   'stock.reorder_level': (p) => `${p.itemRef} is at or under its reorder level`,

@@ -525,6 +525,17 @@ export const ErrorCode = {
   CLUB_PAYMENT_NOT_FOUND: 'CLUB_PAYMENT_NOT_FOUND',
   /** It was reversed already (409). */
   CLUB_PAYMENT_ALREADY_REVERSED: 'CLUB_PAYMENT_ALREADY_REVERSED',
+  /**
+   * A payment a paid charge wrote (ADR 0070): its money is finance's, so a
+   * mistake is undone there (a refund), never by a reversal here (409).
+   */
+  CLUB_PAYMENT_FROM_CHARGE: 'CLUB_PAYMENT_FROM_CHARGE',
+  /** Unknown, another compound's, or not the caller's to see (ADR 0070). */
+  CLUB_REQUEST_NOT_FOUND: 'CLUB_REQUEST_NOT_FOUND',
+  /** The unit has a request waiting for payment (409, params.requestId). */
+  CLUB_REQUEST_OPEN: 'CLUB_REQUEST_OPEN',
+  /** Paid or called off already: it never moves again (409, params.status). */
+  CLUB_REQUEST_CLOSED: 'CLUB_REQUEST_CLOSED',
   // vehicles and parking (ADR 0045)
   /**
    * Unknown, another compound's or removed; for a resident also another

@@ -675,6 +675,79 @@ export const CLUB_ROUTES: Row[] = [
     },
     noStore: true,
   },
+  // Club membership requests (ADR 0070).
+  {
+    method: 'POST',
+    path: '/units/{unitId}/club-membership/requests',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      body: (w) => ({ planId: w.aClubPlanId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { planId: 'x' },
+      fields: [{ field: 'planId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/club-membership/requests',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: { params: (w) => ({ unitId: w.bUnitId }), code: 'UNIT_NOT_FOUND' },
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/club-membership-requests/{id}/cancel',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bClubRequestId }),
+      body: () => ({ reasonCode: 'other' }),
+      code: 'CLUB_REQUEST_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: false },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/club/requests',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'x' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['requested', 'paid', 'cancelled'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
   {
     method: 'POST',
     path: '/staff/club-payments/{id}/reverse',

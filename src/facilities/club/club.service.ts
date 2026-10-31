@@ -577,6 +577,12 @@ export class ClubService implements OnModuleInit {
         where: { id: paymentId },
       });
       if (seen?.kind !== 'payment') throw paymentNotFound();
+      // A paid charge's: undone in finance, by a refund (ADR 0070).
+      if (seen.chargeId)
+        throw appError.conflict(
+          ErrorCode.CLUB_PAYMENT_FROM_CHARGE,
+          'This payment was made through finance: refund it there',
+        );
       const membership = await this.lockMembership(
         tx,
         seen.membershipId,
@@ -810,7 +816,8 @@ export class ClubService implements OnModuleInit {
     return out;
   }
 
-  private async today(tx: TenantTxClient): Promise<LocalDate> {
+  /** The compound's local day, by the database's clock. */
+  async today(tx: TenantTxClient): Promise<LocalDate> {
     const settings = await this.tenantSettings.inTx(tx, this.ctx.txTenantId);
     return localDate(await dbNow(tx), settings.timezone);
   }

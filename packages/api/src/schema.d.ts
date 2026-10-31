@@ -951,6 +951,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/club-membership-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off a club membership request
+         * @description Its requester or the unit’s primary, until it is paid (CLUB_REQUEST_CLOSED): its invoice is credited off.
+         */
+        post: operations["ResidentClubRequestsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/club/plans": {
         parameters: {
             query?: never;
@@ -12417,6 +12437,23 @@ export interface paths {
         patch: operations["ClubPlansController_update"];
         trace?: never;
     };
+    "/api/v1/staff/club/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List club membership requests, newest first */
+        get: operations["StaffClubRequestsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/club/units": {
         parameters: {
             query?: never;
@@ -19544,6 +19581,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/club-membership/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unit’s club membership requests
+         * @description Newest first: every one for the unit’s primary, the caller’s own for anyone else.
+         */
+        get: operations["ResidentClubRequestsController_list"];
+        put?: never;
+        /**
+         * Ask for a club plan
+         * @description Whoever books for the unit: an active plan (PLAN_NOT_AVAILABLE), one request open per unit (CLUB_REQUEST_OPEN). Its price is owed at once through a `club` invoice of the unit’s, due in a week; once paid, the membership starts, or is extended from where it ends.
+         */
+        post: operations["ResidentClubRequestsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/collector-visits": {
         parameters: {
             query?: never;
@@ -22812,6 +22873,10 @@ export interface components {
             /** @description From the closed list `bookingResidentCancel`. */
             reasonCode: string;
         };
+        CancelClubRequestDto: {
+            /** @description From the closed list `clubRequestCancel`. */
+            reasonCode: string;
+        };
         CancelCollectorVisitDto: {
             /** @description From the closed list `collectorVisitCancel`. */
             reasonCode: string;
@@ -23666,6 +23731,11 @@ export interface components {
         ClubPaymentKind: "payment" | "reversal";
         ClubPaymentView: {
             amount: string | null;
+            /**
+             * Format: uuid
+             * @description A payment made through finance for a membership request (ADR 0070): no receipt number here, and never reversed here.
+             */
+            chargeId: string | null;
             /** Format: date-time */
             createdAt: string;
             /** @description EGP. */
@@ -23751,6 +23821,46 @@ export interface components {
         };
         ClubPlanViewList: {
             data: components["schemas"]["ClubPlanView"][];
+            nextCursor: string | null;
+        };
+        ClubRequestChargeView: {
+            /**
+             * Format: uuid
+             * @description The unit’s `club` invoice that owes the price.
+             */
+            invoiceId: string;
+            status: components["schemas"]["ChargeStatus"];
+        };
+        /**
+         * @description `paid`: the membership started or was extended (`paymentId`, a payment of the membership).
+         * @enum {string}
+         */
+        ClubRequestStatus: "requested" | "paid" | "cancelled";
+        ClubRequestView: {
+            /** @description EGP, two decimals. */
+            amount: string;
+            /** @description A code of `clubRequestCancel`. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            charge: components["schemas"]["ClubRequestChargeView"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            paidAt: string | null;
+            /** Format: uuid */
+            paymentId: string | null;
+            /** Format: uuid */
+            planId: string;
+            /** @description `paid`: the membership started or was extended (`paymentId`, a payment of the membership). */
+            status: components["schemas"]["ClubRequestStatus"];
+            /** Format: uuid */
+            unitId: string;
+        };
+        ClubRequestViewList: {
+            data: components["schemas"]["ClubRequestView"][];
             nextCursor: string | null;
         };
         ClubUnitView: {
@@ -24826,6 +24936,13 @@ export interface components {
             nameEn: string;
             /** @description EGP, e.g. `1500` or `1500.50`. */
             price: string;
+        };
+        CreateClubRequestDto: {
+            /**
+             * Format: uuid
+             * @description An active plan (PLAN_NOT_AVAILABLE).
+             */
+            planId: string;
         };
         CreateCommonAreaDto: {
             /** @description As the units have it: some unit must be in it. */
@@ -37140,6 +37257,34 @@ export interface components {
             data: components["schemas"]["StaffClaimView"][];
             nextCursor: string | null;
         };
+        StaffClubRequestView: {
+            /** @description EGP, two decimals. */
+            amount: string;
+            /** @description A code of `clubRequestCancel`. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            charge: components["schemas"]["ClubRequestChargeView"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            paidAt: string | null;
+            /** Format: uuid */
+            paymentId: string | null;
+            /** Format: uuid */
+            planId: string;
+            /** @description `paid`: the membership started or was extended (`paymentId`, a payment of the membership). */
+            status: components["schemas"]["ClubRequestStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        StaffClubRequestViewList: {
+            data: components["schemas"]["StaffClubRequestView"][];
+            nextCursor: string | null;
+        };
         StaffComplaintDetailView: {
             /** @description Complaints against the same unit, this one included. */
             againstUnit: components["schemas"]["ComplaintUnitTallyView"];
@@ -42947,6 +43092,31 @@ export interface operations {
                 };
                 content: {
                     "application/pdf": string;
+                };
+            };
+        };
+    };
+    ResidentClubRequestsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelClubRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubRequestView"];
                 };
             };
         };
@@ -60492,6 +60662,30 @@ export interface operations {
             };
         };
     };
+    StaffClubRequestsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "requested" | "paid" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffClubRequestViewList"];
+                };
+            };
+        };
+    };
     ClubMembershipsController_unit: {
         parameters: {
             query: {
@@ -71041,6 +71235,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyClubView"];
+                };
+            };
+        };
+    };
+    ResidentClubRequestsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubRequestViewList"];
+                };
+            };
+        };
+    };
+    ResidentClubRequestsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClubRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubRequestView"];
                 };
             };
         };

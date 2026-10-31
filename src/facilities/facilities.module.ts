@@ -25,7 +25,10 @@ import {
   ClubMembershipsController,
   ClubPlansController,
   ResidentClubController,
+  ResidentClubRequestsController,
+  StaffClubRequestsController,
 } from './club/club.controller';
+import { ClubRequestsService } from './club/club-requests.service';
 import { ClubService } from './club/club.service';
 import { FacilitiesExportSections } from './export/export-sections';
 import { FacilitiesLifecycle } from './privacy/facilities-lifecycle';
@@ -73,6 +76,8 @@ import { FacilityUsageService } from './usage/usage.service';
     ResidentClubController,
     ClubPlansController,
     ClubMembershipsController,
+    ResidentClubRequestsController,
+    StaffClubRequestsController,
     FacilityBansController,
     OwnFacilityBansController,
     FacilityUsageController,
@@ -91,6 +96,7 @@ import { FacilityUsageService } from './usage/usage.service';
     SuspensionsService,
     BookingReminders,
     ClubService,
+    ClubRequestsService,
     FacilitiesLifecycle,
     FacilitiesExportSections,
     FacilityBansService,

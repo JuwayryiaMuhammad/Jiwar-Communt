@@ -625,6 +625,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       items: [
         { href: '/club/memberships', label: 'Memberships', icon: <IdCard aria-hidden />, show: can('club.billing') },
         { href: '/club/plans', label: 'Plans', icon: <Receipt aria-hidden />, show: can('facilities.manage') || can('club.billing') },
+        { href: '/club/requests', label: 'Requests', icon: <Receipt aria-hidden />, show: can('club.billing') },
       ],
     },
     {

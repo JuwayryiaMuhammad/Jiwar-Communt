@@ -37628,6 +37628,8 @@ export interface components {
             charge: components["schemas"]["BookingChargeView"] | null;
             /** @description One of the unit's children is the booking's occasion (ADR 0054): never who. */
             childOccasion: boolean;
+            /** @description Companions invited or accepted (ADR 0070): seats beside the party. */
+            companions: number;
             /** Format: date-time */
             createdAt: string;
             /**
@@ -37651,6 +37653,9 @@ export interface components {
             /** Format: date-time */
             startsAt: string;
             status: components["schemas"]["BookingStatus"];
+            /** @description A stay (ADR 0070): its first night and check-out day. */
+            stayFromOn: string | null;
+            stayToOn: string | null;
             unitCode: string;
             /** Format: uuid */
             unitId: string;

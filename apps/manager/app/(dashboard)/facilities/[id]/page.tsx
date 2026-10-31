@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { Back, FacilityBadges } from '@/components/facilities/bits';
 import { Closures } from '@/components/facilities/closures';
+import { Fees, StayRules } from '@/components/facilities/fees';
 import { Rules } from '@/components/facilities/rules';
 import { WeeklyWindows } from '@/components/facilities/weekly-windows';
 import { api } from '@/lib/api';
@@ -15,7 +16,7 @@ import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Facility } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
 
-const TABS = ['details', 'rules', 'hours', 'peaks', 'closures'] as const;
+const TABS = ['details', 'rules', 'stay', 'fees', 'hours', 'peaks', 'closures'] as const;
 type Tab = (typeof TABS)[number];
 
 function Details({ facility }: { facility: Facility }) {
@@ -99,7 +100,12 @@ function FacilityView() {
     );
   const f = facility.data;
   const bookable = f?.mode === 'bookable';
-  const shown: Tab = !canManage ? 'closures' : !bookable && (tab === 'rules' || tab === 'peaks') ? 'details' : tab;
+  const stay = f?.mode === 'stay';
+  const shown: Tab = !canManage
+    ? 'closures'
+    : (!bookable && (tab === 'rules' || tab === 'peaks')) || (!stay && tab === 'stay') || (f?.mode === 'walk_in' && tab === 'fees')
+      ? 'details'
+      : tab;
 
   return (
     <>
@@ -125,6 +131,8 @@ function FacilityView() {
                   options={[
                     { value: 'details', label: 'Details' },
                     ...(bookable ? [{ value: 'rules' as const, label: 'Rules' }] : []),
+                    ...(stay ? [{ value: 'stay' as const, label: 'Nights' }] : []),
+                    ...(bookable || stay ? [{ value: 'fees' as const, label: 'Fees' }] : []),
                     { value: 'hours', label: 'Opening hours' },
                     ...(bookable ? [{ value: 'peaks' as const, label: 'Peak times' }] : []),
                     { value: 'closures', label: 'Closures' },
@@ -135,6 +143,8 @@ function FacilityView() {
             {!f.active ? <Alert tone="warn">Retired: residents do not see it and it takes no new booking. Bookings already made stay.</Alert> : null}
             {shown === 'details' ? <Details key={f.updatedAt} facility={f} /> : null}
             {shown === 'rules' && f.rules ? <Rules key={f.updatedAt} facility={f} rules={f.rules} /> : null}
+            {shown === 'stay' && f.stay ? <StayRules key={`stay-${f.updatedAt}`} facility={f} /> : null}
+            {shown === 'fees' && f.fees ? <Fees key={`fees-${f.updatedAt}`} facility={f} /> : null}
             {shown === 'hours' ? <WeeklyWindows key={`hours-${f.updatedAt}`} facility={f} kind="hours" /> : null}
             {shown === 'peaks' ? <WeeklyWindows key={`peaks-${f.updatedAt}`} facility={f} kind="peaks" /> : null}
             {shown === 'closures' ? <Closures facility={f} canManage={canManage} /> : null}

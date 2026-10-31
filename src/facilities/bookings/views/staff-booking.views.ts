@@ -69,6 +69,20 @@ export class StaffBookingView {
   })
   childOccasion: boolean;
   @ApiProperty({
+    type: Number,
+    description:
+      'Companions invited or accepted (ADR 0070): seats beside the party.',
+  })
+  companions: number;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'A stay (ADR 0070): its first night and check-out day.',
+  })
+  stayFromOn: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  stayToOn: string | null;
+  @ApiProperty({
     type: BookingChargeView,
     nullable: true,
     description: 'Its fee’s invoice and state (ADR 0070); null: none.',
@@ -102,6 +116,9 @@ export class StaffBookingView {
       cancelledAt: b.cancelledAt,
       noShowMarkedAt: b.noShowMarkedAt,
       childOccasion: b.occasionMemberId !== null,
+      companions: b.companions,
+      stayFromOn: b.stayFromOn?.toISOString().slice(0, 10) ?? null,
+      stayToOn: b.stayToOn?.toISOString().slice(0, 10) ?? null,
       charge: charge ?? null,
       createdAt: b.createdAt,
     };

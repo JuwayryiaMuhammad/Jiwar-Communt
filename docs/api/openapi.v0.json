@@ -51985,6 +51985,10 @@
             "description": "One of the unit's children is the booking's occasion (ADR 0054): never who.",
             "type": "boolean"
           },
+          "companions": {
+            "description": "Companions invited or accepted (ADR 0070): seats beside the party.",
+            "type": "number"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -52037,6 +52041,15 @@
               }
             ]
           },
+          "stayFromOn": {
+            "description": "A stay (ADR 0070): its first night and check-out day.",
+            "nullable": true,
+            "type": "string"
+          },
+          "stayToOn": {
+            "nullable": true,
+            "type": "string"
+          },
           "unitCode": {
             "type": "string"
           },
@@ -52064,6 +52077,9 @@
           "cancelledAt",
           "noShowMarkedAt",
           "childOccasion",
+          "companions",
+          "stayFromOn",
+          "stayToOn",
           "charge",
           "createdAt"
         ],

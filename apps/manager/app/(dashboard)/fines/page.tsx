@@ -371,6 +371,12 @@ export default function FinesPage() {
               { key: 'reason', header: 'Reason', cell: (f) => humanize(f.reason) },
               { key: 'amount', header: 'Amount', cell: (f) => egp(f.amount) },
               { key: 'status', header: 'Status', cell: (f) => <StatusBadge status={f.status} /> },
+              // ADR 0070: a fine issued now is owed through the unit's invoice, payable online.
+              {
+                key: 'payable',
+                header: 'Paid through',
+                cell: (f) => (f.payable === 'online' ? <Badge tone="green">Invoice</Badge> : <Badge tone="beige">Office</Badge>),
+              },
               { key: 'when', header: 'Issued', cell: (f) => <span title={formatDateTime(f.createdAt)}>{relativeTime(f.createdAt)}</span> },
             ]}
           />

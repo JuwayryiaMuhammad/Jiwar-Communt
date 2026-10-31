@@ -176,6 +176,8 @@ export type FacilityClosure = Schema<'FacilityClosureView'>;
 export type BookingSuspension = Schema<'BookingSuspensionView'>;
 export type FacilitySettings = Schema<'FacilitySettingsResponse'>;
 export type ClubPlan = Schema<'ClubPlanView'>;
+/** ADR 0070: a club membership request, its price owed through finance. */
+export type ClubRequest = Schema<'StaffClubRequestView'>;
 export type ClubMembership = Schema<'ClubMembershipView'>;
 export type ClubMembershipDetail = Schema<'ClubMembershipDetailView'>;
 export type ClubPayment = Schema<'ClubPaymentView'>;
@@ -688,6 +690,7 @@ export const keys = {
   report: (name: string, filters: object) => ['invoices', 'report', name, filters] as const,
   dispute: (id: string) => ['invoices', 'dispute', id] as const,
   clubPlans: ['club-plans'] as const,
+  clubRequests: (status: string) => ['club-requests', status] as const,
   clubAll: ['club-memberships'] as const,
   clubMemberships: (state: string) => ['club-memberships', 'list', state] as const,
   clubMembership: (id: string) => ['club-memberships', 'detail', id] as const,
@@ -1210,6 +1213,8 @@ export const fetchers = {
   dailyCash: (day: string) =>
     unwrap(api.GET('/api/v1/staff/finance/reports/daily-cash', { params: { query: { day } } })),
   clubPlans: () => unwrap(api.GET('/api/v1/staff/club-plans')),
+  clubRequests: (status: string) =>
+    unwrap(api.GET('/api/v1/staff/club/requests', { params: { query: status ? { status: status as 'requested' } : {} } })),
   clubMemberships: (state: ClubMembershipState | '') =>
     unwrap(api.GET('/api/v1/staff/club-memberships', { params: { query: state ? { state } : {} } })),
   clubMembership: (id: string) => unwrap(api.GET('/api/v1/staff/club-memberships/{id}', { params: { path: { id } } })),

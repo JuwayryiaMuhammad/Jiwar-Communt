@@ -20565,6 +20565,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/stays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Book nights in a guest room
+         * @description Confirmed at once, from the check-in on the first night to the check-out on `toOn`, in the compound’s time zone. Each night needs a free room (STAY_NIGHT_FULL); a stay counts as one booking of the weekly quota. Cancelled, read and listed as any booking.
+         */
+        post: operations["StaysController_book"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/upcoming-dues": {
         parameters: {
             query?: never;
@@ -22886,6 +22906,10 @@ export interface components {
             /** Format: date-time */
             startsAt: string;
             status: components["schemas"]["BookingStatus"];
+            /** @description A stay (ADR 0070): its first night, local `YYYY-MM-DD`. */
+            stayFromOn: string | null;
+            /** @description A stay: its check-out day, local. */
+            stayToOn: string | null;
             /** Format: uuid */
             unitId: string;
         };
@@ -25405,6 +25429,10 @@ export interface components {
             capacity?: number;
             /** @description Default `bookings`. */
             capacityUnit?: components["schemas"]["FacilityCapacityUnit"];
+            /** @description A stay facility (ADR 0070): check-in, local `HH:MM`. Required to create one; not for any other mode. */
+            checkInTime?: string;
+            /** @description A stay facility: check-out, local `HH:MM`, on the day after the last night. Required to create one. */
+            checkOutTime?: string;
             /** @description A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false. */
             childOccasions?: boolean;
             /** @description Optional, per language. On an update, null clears it. */
@@ -25417,6 +25445,8 @@ export interface components {
             maxDaysAhead?: number;
             /** @description Guests a booking may bring beside its booker. Default 0. */
             maxGuests?: number;
+            /** @description A stay facility: nights a booking may take. Default 3. */
+            maxNights?: number;
             /** @description A booking starts at least this many minutes from now. Default 60. */
             minMinutesBefore?: number;
             /** @description Never changes. A walk-in facility takes no rule field (FIELD_NOT_ALLOWED). */
@@ -26185,6 +26215,19 @@ export interface components {
              * @example My mother, Hoda, grey Toyota
              */
             description: string;
+        };
+        CreateStayDto: {
+            /**
+             * Format: uuid
+             * @description A stay facility.
+             */
+            facilityId: string;
+            /** @description The first night, a local day `YYYY-MM-DD`. */
+            fromOn: string;
+            /** @description Guests beside the booker. Default 0. */
+            guests?: number;
+            /** @description The check-out day, after the last night: 1 to the facility’s `maxNights` nights (STAY_TOO_LONG). */
+            toOn: string;
         };
         CreateStockItemDto: {
             nameAr: string;
@@ -27981,7 +28024,7 @@ export interface components {
             refundCutoffHours: number;
         };
         /** @enum {string} */
-        FacilityMode: "bookable" | "walk_in";
+        FacilityMode: "bookable" | "walk_in" | "stay";
         FacilityRulesView: {
             /** @description A confirmed booking is cancelled by the resident at least this many minutes before its start. */
             cancelCutoffMinutes: number;
@@ -28038,6 +28081,22 @@ export interface components {
             /** @description The slots of the day that may be booked now, in order. Too soon and too far are left out. */
             slots: components["schemas"]["FacilitySlotView"][];
         };
+        FacilityStayRulesView: {
+            cancelCutoffMinutes: number;
+            /** @description Check-in, local `HH:MM`. */
+            checkInTime: string;
+            /** @description Check-out, local `HH:MM`, the day after the last night. */
+            checkOutTime: string;
+            maxDaysAhead: number;
+            maxGuests: number;
+            maxNights: number;
+            minMinutesBefore: number;
+            requiresMembership: boolean;
+            /** @description Rooms: stays a night takes. */
+            rooms: number;
+            /** @description Stays a unit may hold in any 7 days. */
+            weeklyQuota: number;
+        };
         FacilityUsageReportView: {
             days: number;
             facilities: components["schemas"]["FacilityUsageView"][];
@@ -28084,6 +28143,8 @@ export interface components {
             peakWindows: components["schemas"]["FacilityWindowView"][];
             /** @description Null for a walk-in facility (the pool, the gym): nothing to book. */
             rules: components["schemas"]["FacilityBookingRulesView"] | null;
+            /** @description A stay facility’s rules (ADR 0070); null otherwise. */
+            stay: components["schemas"]["FacilityStayRulesView"] | null;
         };
         FacilityViewList: {
             data: components["schemas"]["FacilityView"][];
@@ -37977,6 +38038,7 @@ export interface components {
             peakWindows: components["schemas"]["FacilityWindowView"][];
             position: number;
             rules: components["schemas"]["FacilityRulesView"] | null;
+            stay: components["schemas"]["FacilityStayRulesView"] | null;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -40879,6 +40941,10 @@ export interface components {
             capacity?: number;
             /** @description Default `bookings`. */
             capacityUnit?: components["schemas"]["FacilityCapacityUnit"];
+            /** @description A stay facility (ADR 0070): check-in, local `HH:MM`. Required to create one; not for any other mode. */
+            checkInTime?: string;
+            /** @description A stay facility: check-out, local `HH:MM`, on the day after the last night. Required to create one. */
+            checkOutTime?: string;
             /** @description A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false. */
             childOccasions?: boolean;
             /** @description Optional, per language. On an update, null clears it. */
@@ -40891,6 +40957,8 @@ export interface components {
             maxDaysAhead?: number;
             /** @description Guests a booking may bring beside its booker. Default 0. */
             maxGuests?: number;
+            /** @description A stay facility: nights a booking may take. Default 3. */
+            maxNights?: number;
             /** @description A booking starts at least this many minutes from now. Default 60. */
             minMinutesBefore?: number;
             /** @description Both languages are required; surrounding spaces are trimmed. */
@@ -73113,6 +73181,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatementView"];
+                };
+            };
+        };
+    };
+    StaysController_book: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStayDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingView"];
                 };
             };
         };

@@ -889,6 +889,32 @@ export const CLUB_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  // Overnight guest rooms (ADR 0070).
+  {
+    method: 'POST',
+    path: '/units/{unitId}/stays',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      body: (w) => ({
+        facilityId: w.aFacilityId,
+        fromOn: '2099-01-05',
+        toOn: '2099-01-06',
+      }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { facilityId: 'x', fromOn: '2026-02-30', toOn: '2027-02-29' },
+      fields: [
+        { field: 'facilityId', code: 'INVALID_UUID' },
+        { field: 'fromOn', code: 'INVALID_FORMAT' },
+        { field: 'toOn', code: 'INVALID_FORMAT' },
+      ],
+    },
+    noStore: true,
+  },
   // Club membership requests (ADR 0070).
   {
     method: 'POST',

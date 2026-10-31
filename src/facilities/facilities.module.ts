@@ -34,6 +34,8 @@ import {
   CompanionPlacesController,
 } from './companions/companions.controller';
 import { CompanionsService } from './companions/companions.service';
+import { StaysController } from './stays/stays.controller';
+import { StaysService } from './stays/stays.service';
 import { WaitlistController } from './waitlist/waitlist.controller';
 import { WaitlistOffers } from './waitlist/waitlist-offers';
 import { WaitlistService } from './waitlist/waitlist.service';
@@ -89,6 +91,7 @@ import { FacilityUsageService } from './usage/usage.service';
     BookingCompanionsController,
     CompanionPlacesController,
     WaitlistController,
+    StaysController,
     FacilityBansController,
     OwnFacilityBansController,
     FacilityUsageController,
@@ -111,6 +114,7 @@ import { FacilityUsageService } from './usage/usage.service';
     CompanionsService,
     WaitlistOffers,
     WaitlistService,
+    StaysService,
     FacilitiesLifecycle,
     FacilitiesExportSections,
     FacilityBansService,

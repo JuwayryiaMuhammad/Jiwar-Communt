@@ -814,7 +814,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   facilities_names_length: {},
   facilities_position_range: {},
   // Nullable rules only under IS [NOT] NULL; mode and the two flags are NOT NULL.
-  facilities_rules_shape: {},
+  facilities_rules_shape: {
+    guarded:
+      'a stay’s capacity_unit is compared with IS NOT DISTINCT FROM, which is never NULL; every other column is only tested IS [NOT] NULL (ADR 0070)',
+  },
+  facilities_stay_ranges: {
+    guarded:
+      'check_in_minute, check_out_minute and max_nights are each tested IS NULL first',
+  },
+  bookings_stay: {
+    guarded:
+      'stay_from_on IS NULL is tested first, and the shape pairs it with stay_to_on',
+  },
   facilities_descriptions_length: {
     guarded:
       'each description IS NULL is tested first; its length runs only on a value',

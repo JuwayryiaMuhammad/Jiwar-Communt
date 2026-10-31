@@ -60,6 +60,9 @@ describe('Bookings: a resident books for a unit (ADR 0044)', () => {
         'rejectReason',
         'startsAt',
         'status',
+        // ADR 0070: a stay's nights.
+        'stayFromOn',
+        'stayToOn',
         'unitId',
       ]);
       const forBob = await f.slots(s.bob, court, day(2), s.homeB.id);

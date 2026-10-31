@@ -380,12 +380,15 @@ export class StaffBookingsService implements OnModuleInit {
       const booking = await this.lockForStaff(tx, id);
       assertCan(booking, 'mark_no_show');
       const now = await dbNow(tx);
-      if (booking.endsAt.getTime() > now.getTime())
+      // A stay's no-show is taken from its check-in (ADR 0070); a slot's
+      // once it ended.
+      const from = booking.stayFromOn ? booking.startsAt : booking.endsAt;
+      if (from.getTime() > now.getTime())
         throw appError.conflict(
           ErrorCode.BOOKING_NOT_OVER,
           'The booking’s slot has not ended',
         );
-      if (now.getTime() - booking.endsAt.getTime() > NO_SHOW_HOURS * HOUR)
+      if (now.getTime() - from.getTime() > NO_SHOW_HOURS * HOUR)
         throw appError.conflict(
           ErrorCode.BOOKING_NO_SHOW_TOO_LATE,
           'Too late to mark this booking a no-show',

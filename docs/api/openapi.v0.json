@@ -5633,6 +5633,16 @@
               }
             ]
           },
+          "stayFromOn": {
+            "description": "A stay (ADR 0070): its first night, local `YYYY-MM-DD`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "stayToOn": {
+            "description": "A stay: its check-out day, local.",
+            "nullable": true,
+            "type": "string"
+          },
           "unitId": {
             "format": "uuid",
             "type": "string"
@@ -5644,6 +5654,8 @@
           "unitId",
           "startsAt",
           "endsAt",
+          "stayFromOn",
+          "stayToOn",
           "guests",
           "companions",
           "peak",
@@ -13569,6 +13581,16 @@
             ],
             "description": "Default `bookings`."
           },
+          "checkInTime": {
+            "description": "A stay facility (ADR 0070): check-in, local `HH:MM`. Required to create one; not for any other mode.",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          },
+          "checkOutTime": {
+            "description": "A stay facility: check-out, local `HH:MM`, on the day after the last night. Required to create one.",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          },
           "childOccasions": {
             "description": "A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false.",
             "type": "boolean"
@@ -13603,6 +13625,12 @@
             "description": "Guests a booking may bring beside its booker. Default 0.",
             "maximum": 50,
             "minimum": 0,
+            "type": "number"
+          },
+          "maxNights": {
+            "description": "A stay facility: nights a booking may take. Default 3.",
+            "maximum": 14,
+            "minimum": 1,
             "type": "number"
           },
           "minMinutesBefore": {
@@ -15335,6 +15363,37 @@
         "required": [
           "description",
           "action"
+        ],
+        "type": "object"
+      },
+      "CreateStayDto": {
+        "properties": {
+          "facilityId": {
+            "description": "A stay facility.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "fromOn": {
+            "description": "The first night, a local day `YYYY-MM-DD`.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "guests": {
+            "description": "Guests beside the booker. Default 0.",
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "toOn": {
+            "description": "The check-out day, after the last night: 1 to the facility’s `maxNights` nights (STAY_TOO_LONG).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "facilityId",
+          "fromOn",
+          "toOn"
         ],
         "type": "object"
       },
@@ -21021,7 +21080,8 @@
       "FacilityMode": {
         "enum": [
           "bookable",
-          "walk_in"
+          "walk_in",
+          "stay"
         ],
         "type": "string"
       },
@@ -21185,6 +21245,57 @@
         ],
         "type": "object"
       },
+      "FacilityStayRulesView": {
+        "properties": {
+          "cancelCutoffMinutes": {
+            "type": "number"
+          },
+          "checkInTime": {
+            "description": "Check-in, local `HH:MM`.",
+            "type": "string"
+          },
+          "checkOutTime": {
+            "description": "Check-out, local `HH:MM`, the day after the last night.",
+            "type": "string"
+          },
+          "maxDaysAhead": {
+            "type": "number"
+          },
+          "maxGuests": {
+            "type": "number"
+          },
+          "maxNights": {
+            "type": "number"
+          },
+          "minMinutesBefore": {
+            "type": "number"
+          },
+          "requiresMembership": {
+            "type": "boolean"
+          },
+          "rooms": {
+            "description": "Rooms: stays a night takes.",
+            "type": "number"
+          },
+          "weeklyQuota": {
+            "description": "Stays a unit may hold in any 7 days.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "rooms",
+          "checkInTime",
+          "checkOutTime",
+          "maxNights",
+          "maxDaysAhead",
+          "minMinutesBefore",
+          "cancelCutoffMinutes",
+          "maxGuests",
+          "requiresMembership",
+          "weeklyQuota"
+        ],
+        "type": "object"
+      },
       "FacilityUsageReportView": {
         "properties": {
           "days": {
@@ -21342,6 +21453,16 @@
             "description": "Null for a walk-in facility (the pool, the gym): nothing to book.",
             "nullable": true,
             "type": "object"
+          },
+          "stay": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityStayRulesView"
+              }
+            ],
+            "description": "A stay facility’s rules (ADR 0070); null otherwise.",
+            "nullable": true,
+            "type": "object"
           }
         },
         "required": [
@@ -21355,6 +21476,7 @@
           "peakWindows",
           "rules",
           "fees",
+          "stay",
           "closures"
         ],
         "type": "object"
@@ -53319,6 +53441,15 @@
             "nullable": true,
             "type": "object"
           },
+          "stay": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityStayRulesView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -53337,6 +53468,7 @@
           "peakWindows",
           "rules",
           "fees",
+          "stay",
           "createdAt",
           "updatedAt"
         ],
@@ -63402,6 +63534,16 @@
             ],
             "description": "Default `bookings`."
           },
+          "checkInTime": {
+            "description": "A stay facility (ADR 0070): check-in, local `HH:MM`. Required to create one; not for any other mode.",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          },
+          "checkOutTime": {
+            "description": "A stay facility: check-out, local `HH:MM`, on the day after the last night. Required to create one.",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          },
           "childOccasions": {
             "description": "A booking may name one of the unit's children as its occasion (a birthday space, ADR 0054). Default false.",
             "type": "boolean"
@@ -63436,6 +63578,12 @@
             "description": "Guests a booking may bring beside its booker. Default 0.",
             "maximum": 50,
             "minimum": 0,
+            "type": "number"
+          },
+          "maxNights": {
+            "description": "A stay facility: nights a booking may take. Default 3.",
+            "maximum": 14,
+            "minimum": 1,
             "type": "number"
           },
           "minMinutesBefore": {
@@ -127343,6 +127491,64 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/stays": {
+      "post": {
+        "description": "Confirmed at once, from the check-in on the first night to the check-out on `toOn`, in the compound’s time zone. Each night needs a free room (STAY_NIGHT_FULL); a stay counts as one booking of the weekly quota. Cancelled, read and listed as any booking.",
+        "operationId": "StaysController_book",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStayDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Book nights in a guest room",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

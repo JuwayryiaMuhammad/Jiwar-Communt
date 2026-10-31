@@ -162,6 +162,15 @@ export class CompanionsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
       const seen = await this.ownBooking(tx, bookingId);
+      // A stay takes no companions (ADR 0070).
+      const facility = await tx.facility.findUniqueOrThrow({
+        where: { id: seen.facilityId },
+      });
+      if (!rulesOf(facility))
+        throw appError.conflict(
+          ErrorCode.FACILITY_NOT_BOOKABLE,
+          'Only a slot booking takes companions',
+        );
       const booking = await this.bookings.lockBooking(tx, seen.id);
       await this.assertOpen(tx, booking);
       const token = randomBytes(24).toString('base64url');

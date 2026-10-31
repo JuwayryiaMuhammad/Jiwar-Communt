@@ -24,6 +24,9 @@ import {
   FEE_FIELDS,
   feesOf,
   rulesOf,
+  STAY_RANGES,
+  stayRulesOf,
+  toMinute,
   withDefaults,
   type FacilityRules,
   type FeeInput,
@@ -53,7 +56,73 @@ const RULE_FIELDS = [
   'peakQuota',
 ] as const satisfies readonly (keyof FacilityRules)[];
 
-export interface NewFacility extends Partial<FacilityRules>, FeeInput {
+/** A stay facility's own fields (ADR 0070), as the API carries them. */
+export interface StayInput {
+  checkInTime?: string;
+  checkOutTime?: string;
+  maxNights?: number;
+}
+const STAY_FIELDS = ['checkInTime', 'checkOutTime', 'maxNights'] as const;
+/** What a stay facility never takes: it has no slots, peaks or approval. */
+const NOT_FOR_STAY = [
+  'slotMinutes',
+  'capacityUnit',
+  'requiresApproval',
+  'childOccasions',
+  'peakQuota',
+] as const;
+
+/**
+ * A stay facility's rule columns from the input (ADR 0070): on create the
+ * rooms and both times are required and the rest take their defaults; on a
+ * change, only what is given. What a stay never takes is refused.
+ */
+function stayData(
+  input: Partial<FacilityRules> & StayInput,
+  creating: boolean,
+  errors: FieldError[],
+): Record<string, unknown> {
+  for (const field of NOT_FOR_STAY)
+    if (input[field] !== undefined)
+      errors.push({ field, code: FieldErrorCode.FIELD_NOT_ALLOWED });
+  if (creating)
+    for (const field of ['capacity', 'checkInTime', 'checkOutTime'] as const)
+      if (input[field] === undefined)
+        errors.push({ field, code: FieldErrorCode.FIELD_REQUIRED });
+  const d = withDefaults({
+    ...input,
+    slotMinutes: 60,
+    capacity: input.capacity ?? 1,
+  });
+  const pick = <K extends keyof FacilityRules>(k: K) =>
+    creating ? d[k] : input[k];
+  const data: Record<string, unknown> = {
+    capacity: input.capacity,
+    maxDaysAhead: pick('maxDaysAhead'),
+    minMinutesBefore: pick('minMinutesBefore'),
+    cancelCutoffMinutes: pick('cancelCutoffMinutes'),
+    maxGuests: pick('maxGuests'),
+    weeklyQuota: pick('weeklyQuota'),
+    requiresMembership: pick('requiresMembership'),
+    checkInMinute:
+      input.checkInTime === undefined ? undefined : toMinute(input.checkInTime),
+    checkOutMinute:
+      input.checkOutTime === undefined
+        ? undefined
+        : toMinute(input.checkOutTime),
+    maxNights:
+      input.maxNights ?? (creating ? STAY_RANGES.maxNights.default : undefined),
+  };
+  if (creating) {
+    data.capacityUnit = 'bookings';
+    // A stay has no peaks: its peak quota is its weekly one, never read.
+    data.peakQuota = d.weeklyQuota;
+  }
+  return data;
+}
+
+export interface NewFacility
+  extends Partial<FacilityRules>, FeeInput, StayInput {
   mode: FacilityMode;
   nameEn: string;
   nameAr: string;
@@ -62,7 +131,8 @@ export interface NewFacility extends Partial<FacilityRules>, FeeInput {
   position?: number;
 }
 
-export interface FacilityChange extends Partial<FacilityRules>, FeeInput {
+export interface FacilityChange
+  extends Partial<FacilityRules>, FeeInput, StayInput {
   nameEn?: string;
   nameAr?: string;
   descriptionEn?: string | null;
@@ -105,6 +175,7 @@ function audited(f: Facility) {
     descriptionEn: f.descriptionEn,
     descriptionAr: f.descriptionAr,
     ...(rulesOf(f) ?? {}),
+    ...(stayRulesOf(f) ?? {}),
     ...(feesOf(f) ?? {}),
   };
 }
@@ -269,7 +340,14 @@ export class FacilitiesService implements OnModuleInit {
     const nameEn = name('nameEn', input.nameEn, errors);
     const nameAr = name('nameAr', input.nameAr, errors);
     let rules: FacilityRules | null = null;
-    if (input.mode === 'walk_in') {
+    let stay: Record<string, unknown> = {};
+    if (input.mode !== 'stay')
+      for (const field of STAY_FIELDS)
+        if (input[field] !== undefined)
+          errors.push({ field, code: FieldErrorCode.FIELD_NOT_ALLOWED });
+    if (input.mode === 'stay') {
+      stay = stayData(input, true, errors);
+    } else if (input.mode === 'walk_in') {
       for (const field of RULE_FIELDS)
         if (input[field] !== undefined)
           errors.push({ field, code: FieldErrorCode.FIELD_NOT_ALLOWED });
@@ -308,6 +386,7 @@ export class FacilitiesService implements OnModuleInit {
           descriptionAr: description(input.descriptionAr) ?? null,
           position: input.position ?? 0,
           ...(rules ?? {}),
+          ...stay,
           ...fees,
         },
       });
@@ -338,8 +417,14 @@ export class FacilitiesService implements OnModuleInit {
           ? undefined
           : name('nameAr', input.nameAr, errors);
       const current = rulesOf(before);
-      let rules: Partial<FacilityRules> = {};
-      if (!current) {
+      let rules: Partial<FacilityRules> | Record<string, unknown> = {};
+      if (before.mode !== 'stay')
+        for (const field of STAY_FIELDS)
+          if (input[field] !== undefined)
+            errors.push({ field, code: FieldErrorCode.FIELD_NOT_ALLOWED });
+      if (before.mode === 'stay') {
+        rules = stayData(input, false, errors);
+      } else if (!current) {
         for (const field of RULE_FIELDS)
           if (input[field] !== undefined)
             errors.push({ field, code: FieldErrorCode.FIELD_NOT_ALLOWED });
@@ -350,7 +435,9 @@ export class FacilitiesService implements OnModuleInit {
             input[f],
           ]),
         );
-        errors.push(...quotaErrors({ ...current, ...rules }));
+        errors.push(
+          ...quotaErrors({ ...current, ...(rules as Partial<FacilityRules>) }),
+        );
       }
       const fees = feeData(input, before.mode === 'walk_in', errors);
       if (errors.length) throw invalid(errors);

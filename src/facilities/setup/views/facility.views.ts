@@ -7,7 +7,7 @@ import {
 } from '@prisma/client';
 import { FacilityClosureNoticeView } from '../../closures/views/closure.views';
 import type { WeeklyWindow } from '../../../core/common/slots/weekly-windows';
-import { feesOf, rulesOf } from '../facility-rules';
+import { feesOf, fromMinute, rulesOf, stayRulesOf } from '../facility-rules';
 
 /** A weekly window: a weekday and minutes after local midnight. */
 export class FacilityWindowView {
@@ -94,6 +94,56 @@ export class FacilityBookingRulesView {
   peakQuota: number;
 }
 
+/** A stay facility's rules (ADR 0070). */
+export class FacilityStayRulesView {
+  @ApiProperty({ type: Number, description: 'Rooms: stays a night takes.' })
+  rooms: number;
+  @ApiProperty({ type: String, description: 'Check-in, local `HH:MM`.' })
+  checkInTime: string;
+  @ApiProperty({
+    type: String,
+    description: 'Check-out, local `HH:MM`, the day after the last night.',
+  })
+  checkOutTime: string;
+  @ApiProperty({ type: Number })
+  maxNights: number;
+  @ApiProperty({ type: Number })
+  maxDaysAhead: number;
+  @ApiProperty({ type: Number })
+  minMinutesBefore: number;
+  @ApiProperty({ type: Number })
+  cancelCutoffMinutes: number;
+  @ApiProperty({ type: Number })
+  maxGuests: number;
+  @ApiProperty({ type: Boolean })
+  requiresMembership: boolean;
+  @ApiProperty({
+    type: Number,
+    description: 'Stays a unit may hold in any 7 days.',
+  })
+  weeklyQuota: number;
+
+  static of(
+    f: Parameters<typeof stayRulesOf>[0],
+  ): FacilityStayRulesView | null {
+    const r = stayRulesOf(f);
+    return (
+      r && {
+        rooms: r.rooms,
+        checkInTime: fromMinute(r.checkInMinute),
+        checkOutTime: fromMinute(r.checkOutMinute),
+        maxNights: r.maxNights,
+        maxDaysAhead: r.maxDaysAhead,
+        minMinutesBefore: r.minMinutesBefore,
+        cancelCutoffMinutes: r.cancelCutoffMinutes,
+        maxGuests: r.maxGuests,
+        requiresMembership: r.requiresMembership,
+        weeklyQuota: r.weeklyQuota,
+      }
+    );
+  }
+}
+
 /** What a booking costs (ADR 0070): null for a walk-in facility. */
 export class FacilityFeesView {
   @ApiProperty({
@@ -150,6 +200,12 @@ export class FacilityView {
   @ApiProperty({ type: FacilityFeesView, nullable: true })
   fees: FacilityFeesView | null;
   @ApiProperty({
+    type: FacilityStayRulesView,
+    nullable: true,
+    description: 'A stay facility’s rules (ADR 0070); null otherwise.',
+  })
+  stay: FacilityStayRulesView | null;
+  @ApiProperty({
     type: [FacilityClosureNoticeView],
     description: 'Closures not lifted and not over, soonest first.',
   })
@@ -168,6 +224,7 @@ export class FacilityView {
       peakWindows: f.peakWindows.map((w) => FacilityWindowView.from(w)),
       closures: f.closures.map((c) => FacilityClosureNoticeView.from(c)),
       fees: feesOf(f),
+      stay: FacilityStayRulesView.of(f),
       rules: rules && {
         slotMinutes: rules.slotMinutes,
         maxDaysAhead: rules.maxDaysAhead,
@@ -227,6 +284,8 @@ export class StaffFacilityView {
   rules: FacilityRulesView | null;
   @ApiProperty({ type: FacilityFeesView, nullable: true })
   fees: FacilityFeesView | null;
+  @ApiProperty({ type: FacilityStayRulesView, nullable: true })
+  stay: FacilityStayRulesView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -246,6 +305,7 @@ export class StaffFacilityView {
       peakWindows: f.peakWindows.map((w) => FacilityWindowView.from(w)),
       rules: rulesOf(f),
       fees: feesOf(f),
+      stay: FacilityStayRulesView.of(f),
       createdAt: f.createdAt,
       updatedAt: f.updatedAt,
     };

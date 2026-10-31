@@ -368,6 +368,7 @@ describe('Facilities: set-up (ADR 0044)', () => {
         'nameEn',
         'peakWindows',
         'rules',
+        'stay',
       ]);
 
       await f

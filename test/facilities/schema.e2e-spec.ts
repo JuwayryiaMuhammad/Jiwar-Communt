@@ -112,6 +112,11 @@ describe('Facilities tables — CHECKs, triggers and privileges', () => {
       'bookings',
       'booking_suspensions',
       'facility_bans',
+      // ADR 0070.
+      'facility_night_locks',
+      'booking_companions',
+      'booking_waitlist_entries',
+      'club_membership_requests',
       'club_plans',
       'club_memberships',
       'club_membership_people',

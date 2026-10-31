@@ -45,7 +45,7 @@ export interface FacilityRules {
 
 /** The rules of a facility row, or null for a walk-in one. */
 export function rulesOf(f: {
-  mode: 'bookable' | 'walk_in';
+  mode: string;
   slotMinutes: number | null;
   capacity: number | null;
   capacityUnit: FacilityCapacityUnit | null;
@@ -75,6 +75,68 @@ export function rulesOf(f: {
     peakQuota: f.peakQuota!,
   };
 }
+
+// ============================================================================
+// Overnight guest rooms (ADR 0070)
+// ============================================================================
+
+/** The CHECK facilities_stay_ranges, and a new stay facility's defaults. */
+export const STAY_RANGES = {
+  checkInMinute: { min: 0, max: 1439 },
+  checkOutMinute: { min: 0, max: 1439 },
+  maxNights: { min: 1, max: 14, default: 3 },
+} as const;
+
+/** Everything a stay facility is booked by. */
+export interface StayRules {
+  /** Rooms: a night takes this many stays. */
+  rooms: number;
+  checkInMinute: number;
+  checkOutMinute: number;
+  maxNights: number;
+  maxDaysAhead: number;
+  minMinutesBefore: number;
+  cancelCutoffMinutes: number;
+  maxGuests: number;
+  requiresMembership: boolean;
+  weeklyQuota: number;
+}
+
+/** The stay rules of a facility row, or null when it is not a stay. */
+export function stayRulesOf(f: {
+  mode: string;
+  capacity: number | null;
+  checkInMinute: number | null;
+  checkOutMinute: number | null;
+  maxNights: number | null;
+  maxDaysAhead: number | null;
+  minMinutesBefore: number | null;
+  cancelCutoffMinutes: number | null;
+  maxGuests: number | null;
+  requiresMembership: boolean;
+  weeklyQuota: number | null;
+}): StayRules | null {
+  if (f.mode !== 'stay') return null;
+  return {
+    rooms: f.capacity!,
+    checkInMinute: f.checkInMinute!,
+    checkOutMinute: f.checkOutMinute!,
+    maxNights: f.maxNights!,
+    maxDaysAhead: f.maxDaysAhead!,
+    minMinutesBefore: f.minMinutesBefore!,
+    cancelCutoffMinutes: f.cancelCutoffMinutes!,
+    maxGuests: f.maxGuests!,
+    requiresMembership: f.requiresMembership,
+    weeklyQuota: f.weeklyQuota!,
+  };
+}
+
+/** `HH:MM`, local: the check-in and check-out times as the API carries them. */
+export const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const toMinute = (hhmm: string) =>
+  Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+export const fromMinute = (m: number) =>
+  `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
 // ============================================================================
 // What a booking costs (ADR 0070)

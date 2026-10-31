@@ -592,6 +592,7 @@ model Tenant {
   gateSettings           GateSettings?
   bookingCompanions            BookingCompanion[]
   bookingWaitlistEntries       BookingWaitlistEntry[]
+  facilityNightLocks           FacilityNightLock[]
 
   @@map("tenants")
 }
@@ -5899,6 +5900,8 @@ enum FacilityMode {
   bookable
   /// The pool, the gym: what it is and when it is open, no booking.
   walk_in
+  /// Overnight guest rooms (ADR 0070): booked by the night.
+  stay
 
   @@map("facility_mode")
 }
@@ -5945,6 +5948,11 @@ model Facility {
   peakFeeAmount       Decimal?              @map("peak_fee_amount") @db.Decimal(12, 2)
   /// A resident who cancels this many hours or more before the start is credited in full.
   refundCutoffHours   Int                   @default(24) @map("refund_cutoff_hours")
+  /// A stay facility (ADR 0070): check-in and check-out, local minutes after midnight.
+  checkInMinute       Int?                  @map("check_in_minute")
+  checkOutMinute      Int?                  @map("check_out_minute")
+  /// A stay facility: at most this many nights a booking.
+  maxNights           Int?                  @map("max_nights")
   createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -5956,6 +5964,7 @@ model Facility {
   closures    FacilityClosure[]
   serviceVehicles     ServiceVehicleVisit[]
   waitlistEntries     BookingWaitlistEntry[]
+  nightLocks          FacilityNightLock[]
 
   @@unique([tenantId, id])
   @@index([tenantId, position, id], map: "facilities_position_idx")
@@ -6006,6 +6015,20 @@ model FacilitySlotLock {
 
   @@id([tenantId, facilityId, startsAt])
   @@map("facility_slot_locks")
+}
+
+/// A stay facility's night lock row (ADR 0070): a stay locks its nights in
+/// order, then counts the stays covering them. It holds no count.
+model FacilityNightLock {
+  tenantId   String   @map("tenant_id") @db.Uuid
+  facilityId String   @map("facility_id") @db.Uuid
+  nightOn    DateTime @map("night_on") @db.Date
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  facility Facility @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "facility_night_locks_facility_fkey")
+
+  @@id([tenantId, facilityId, nightOn])
+  @@map("facility_night_locks")
 }
 
 enum BookingStatus {
@@ -6082,6 +6105,9 @@ model Booking {
   /// The share link's token, hashed; null until the booker makes one.
   companionTokenHash   String?       @map("companion_token_hash")
   companionRows        BookingCompanion[]
+  /// A stay (ADR 0070): its first night and its check-out day, local.
+  stayFromOn           DateTime?     @map("stay_from_on") @db.Date
+  stayToOn             DateTime?     @map("stay_to_on") @db.Date
   waitlistEntry        BookingWaitlistEntry?
 
   @@unique([tenantId, id])

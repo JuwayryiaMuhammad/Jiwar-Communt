@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
+import { dbDate } from '../setup/compound-clock';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { batchRow, invoiceRow } from '../setup/finance-rows';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
@@ -28,6 +29,9 @@ interface Table {
   insert(tx: TenantTxClient, own: Side, link: Side): Promise<string>;
   linked?: boolean;
 }
+
+/** Each night lock its own night. */
+let nights = 0;
 
 /**
  * The tables of booking extras and charges (ADR 0070): isolated like every
@@ -74,6 +78,22 @@ const TABLES: Table[] = [
         },
       });
       return id;
+    },
+  },
+  {
+    table: 'facility_night_locks',
+    key: 'facility_id',
+    insert: async (tx, own, link) => {
+      await tx.facilityNightLock.create({
+        data: {
+          tenantId: own.tenantId,
+          facilityId: link.facilityId,
+          nightOn: dbDate(
+            `2031-${String(1 + (nights % 12)).padStart(2, '0')}-${String(1 + (nights++ % 28)).padStart(2, '0')}`,
+          ),
+        },
+      });
+      return link.facilityId;
     },
   },
   {

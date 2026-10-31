@@ -24,10 +24,12 @@ import {
 import { withParams } from '../../../core/common/validation/validation-errors';
 import {
   FEE_AMOUNT,
+  HH_MM,
   MAX_WINDOWS,
   POSITION,
   REFUND_CUTOFF_HOURS,
   RULE_RANGES,
+  STAY_RANGES,
   type FacilityRuleName,
 } from '../facility-rules';
 
@@ -95,6 +97,11 @@ function Description() {
 }
 
 /** The rules a bookable facility takes; a walk-in facility takes none. */
+const NIGHTS = {
+  min: STAY_RANGES.maxNights.min,
+  max: STAY_RANGES.maxNights.max,
+};
+
 const CUTOFF_PARAMS = {
   min: REFUND_CUTOFF_HOURS.min,
   max: REFUND_CUTOFF_HOURS.max,
@@ -223,6 +230,43 @@ class FacilityRulesInput {
   @Min(REFUND_CUTOFF_HOURS.min, withParams(CUTOFF_PARAMS))
   @Max(REFUND_CUTOFF_HOURS.max, withParams(CUTOFF_PARAMS))
   refundCutoffHours?: number;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    pattern: HH_MM.source,
+    description:
+      'A stay facility (ADR 0070): check-in, local `HH:MM`. Required to create one; not for any other mode.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(HH_MM)
+  checkInTime?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    pattern: HH_MM.source,
+    description:
+      'A stay facility: check-out, local `HH:MM`, on the day after the last night. Required to create one.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(HH_MM)
+  checkOutTime?: string;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: STAY_RANGES.maxNights.min,
+    maximum: STAY_RANGES.maxNights.max,
+    description: 'A stay facility: nights a booking may take. Default 3.',
+  })
+  @IsOptional()
+  @IsInt(withParams(NIGHTS))
+  @Min(NIGHTS.min, withParams(NIGHTS))
+  @Max(NIGHTS.max, withParams(NIGHTS))
+  maxNights?: number;
 }
 
 export class CreateFacilityDto extends FacilityRulesInput {

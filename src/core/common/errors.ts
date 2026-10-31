@@ -562,6 +562,9 @@ export const ErrorCode = {
   WAITLIST_EXISTS: 'WAITLIST_EXISTS',
   /** Waiting for as many slots as allowed at once (409, params.max). */
   WAITLIST_LIMIT_REACHED: 'WAITLIST_LIMIT_REACHED',
+  // Overnight guest rooms (ADR 0070)
+  /** Every room is taken that night (409, params.nightOn). */
+  STAY_NIGHT_FULL: 'STAY_NIGHT_FULL',
   // vehicles and parking (ADR 0045)
   /**
    * Unknown, another compound's or removed; for a resident also another
@@ -1887,6 +1890,8 @@ export const FieldErrorCode = {
   READINESS_ITEMS_DUE_LATER: 'READINESS_ITEMS_DUE_LATER',
   /** ADR 0067: a contract under review is in force and ends by the program's last day. */
   CONTRACT_NOT_DUE_FOR_REVIEW: 'CONTRACT_NOT_DUE_FOR_REVIEW',
+  /** ADR 0070: more nights than the stay facility's maxNights (params.max). */
+  STAY_TOO_LONG: 'STAY_TOO_LONG',
   /** ADR 0067: a ban is for an active account that books: a resident or a family member. */
   BAN_ACCOUNT_NOT_ELIGIBLE: 'BAN_ACCOUNT_NOT_ELIGIBLE',
 } as const;

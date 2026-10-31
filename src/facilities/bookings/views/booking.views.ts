@@ -59,6 +59,18 @@ export class BookingView {
   startsAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
   endsAt: Date;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'A stay (ADR 0070): its first night, local `YYYY-MM-DD`.',
+  })
+  stayFromOn: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'A stay: its check-out day, local.',
+  })
+  stayToOn: string | null;
   @ApiProperty({ type: Number })
   guests: number;
   @ApiProperty({
@@ -121,6 +133,8 @@ export class BookingView {
       unitId: b.unitId,
       startsAt: b.startsAt,
       endsAt: b.endsAt,
+      stayFromOn: b.stayFromOn?.toISOString().slice(0, 10) ?? null,
+      stayToOn: b.stayToOn?.toISOString().slice(0, 10) ?? null,
       guests: b.guests,
       companions: b.companions,
       peak: b.peak,

@@ -28,7 +28,12 @@ import { needOf, WaitlistOffers } from '../waitlist/waitlist-offers';
 import { banInForce, dayOf } from '../bans/ban-reads';
 import { closedOver, closuresBetween } from '../closures/closure-reads';
 import { dbNow } from '../db-clock';
-import { feeFor, rulesOf, type FacilityRules } from '../setup/facility-rules';
+import {
+  feeFor,
+  rulesOf,
+  stayRulesOf,
+  type FacilityRules,
+} from '../setup/facility-rules';
 import {
   FacilitiesService,
   facilityNotFound,
@@ -362,6 +367,11 @@ export class BookingsService implements OnModuleInit {
     }));
   }
 
+  /** A booking as the household reads it, in the caller's transaction. */
+  async readIn(tx: TenantTxClient, booking: Booking): Promise<BookingRead> {
+    return (await this.withOccasions(tx, [booking]))[0];
+  }
+
   /** The bookings' charges (ADR 0070), as their views show them. */
   async chargesOf(
     tx: TenantTxClient,
@@ -421,8 +431,10 @@ export class BookingsService implements OnModuleInit {
     facility: Facility,
     booking: Booking,
     timeZone: string,
+    /** A stay's (ADR 0070): the fee is per night. */
+    nights = 1,
   ): Promise<void> {
-    const fee = feeFor(facility, booking.peak);
+    const fee = feeFor(facility, booking.peak)?.mul(nights);
     if (!fee) return;
     const on = localDate(booking.startsAt, timeZone);
     const time = new Intl.DateTimeFormat('en-GB', {
@@ -437,8 +449,14 @@ export class BookingsService implements OnModuleInit {
       sourceId: booking.id,
       kind: 'facility',
       amount: fee,
-      textEn: `Booking: ${facility.nameEn}, ${on} ${time}`,
-      textAr: `حجز: ${facility.nameAr}، ${on} ${time}`,
+      textEn:
+        nights > 1
+          ? `Booking: ${facility.nameEn}, ${on} ${time}, ${nights} nights`
+          : `Booking: ${facility.nameEn}, ${on} ${time}`,
+      textAr:
+        nights > 1
+          ? `حجز: ${facility.nameAr}، ${on} ${time}، ${nights} ليالٍ`
+          : `حجز: ${facility.nameAr}، ${on} ${time}`,
       dueOn: on,
     });
   }
@@ -829,7 +847,8 @@ export class BookingsService implements OnModuleInit {
       const booking = await this.lockBooking(tx, id);
       assertCan(booking, 'cancel');
       const now = await dbNow(tx);
-      const rules = rulesOf(facility)!;
+      // A slot's rules, or a stay's (ADR 0070): both have a cutoff.
+      const rules = (rulesOf(facility) ?? stayRulesOf(facility))!;
       if (
         booking.status === 'confirmed' &&
         now.getTime() >

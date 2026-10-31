@@ -32,6 +32,12 @@
 -- and a club payment's recorder be null, rewrites their CHECKs, links a fine
 -- payment to finance's, and recreates the facilities' and bookings' shape
 -- and window CHECKs and the bookings' trigger).
+-- Community (ADR 0071): the gate's directions and busy thresholds, a
+-- recurring pass told of no entry and expected at the gate, standing
+-- instructions with and without their notice, an emergency raised from a
+-- common area, the compound's place for prayer times, an emergency guide,
+-- a booking held now, and a lending post and a live listing each with its
+-- masked conversation (exactly one subject each).
 -- ============================================================================
 
 DO $$
@@ -325,5 +331,55 @@ BEGIN
       INSERT INTO management_request_topics (id, tenant_id, key, name_ar, name_en, target_response_hours, updated_at)
       VALUES (gen_random_uuid(), t, 'utilities', 'المرافق', 'Utilities (ours)', 48, now());
     END IF;
+    -- The community as R11c-2 leaves it (ADR 0071): the rows its columns,
+    -- backfills and CHECKs reach — passes' notices (a recurring pass is
+    -- told of nothing) and expected gate, a standing instruction's opt-in,
+    -- a gate's directions and the busy thresholds, an emergency's common
+    -- area (a unit's still), the prayer place (both or neither), the
+    -- emergency guide kinds, and the conversations' one subject.
+    DECLARE
+      post uuid := gen_random_uuid();
+      lst uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO gate_settings (tenant_id, updated_at) VALUES (t, now())
+        ON CONFLICT (tenant_id) DO NOTHING;
+      UPDATE gate_settings SET gate_busy_normal_from = 5, gate_busy_busy_from = 20 WHERE tenant_id = t;
+      UPDATE gates SET directions_en = 'Take the second exit off the ring road.',
+                       directions_ar = 'خد المخرج التاني من الطريق الدائري.'
+        WHERE id = gate;
+      INSERT INTO visitor_passes (id, tenant_id, unit_id, host_account_id, kind, party_size,
+                                  valid_from, valid_until, schedule, status, code_hash, entries_used,
+                                  notify_on_entry, expected_gate_id) VALUES
+        (gen_random_uuid(), t, u1, res1, 'recurring', 1, now() - interval '1 day', now() + interval '20 days',
+         '{"days": [1, 4], "windows": [{"from": "08:00", "to": "12:00"}]}'::jsonb, 'active',
+         encode(sha256(convert_to(gen_random_uuid()::text, 'UTF8')), 'hex'), 0, false, gate);
+      INSERT INTO unit_standing_instructions (id, tenant_id, unit_id, description, action, notify, created_by) VALUES
+        (gen_random_uuid(), t, u1, 'The gardener on Mondays', 'always_allow', true, res1),
+        (gen_random_uuid(), t, u1, 'The water delivery', 'leave_at_gate', false, res1);
+      INSERT INTO emergencies (id, tenant_id, number, unit_id, common_area_id, type, reported_by_account_id,
+                               responders_notified, updated_at) VALUES
+        (gen_random_uuid(), t, 2, u1, area, 'fire', res1, 0, now());
+      INSERT INTO engagement_settings (tenant_id, latitude, longitude, updated_at) VALUES
+        (t, 30.044420, 31.235712, now());
+      INSERT INTO compound_document_versions (id, tenant_id, kind, version_no, title_en, title_ar, body_en, body_ar,
+                                              effective_on, published_by, published_at) VALUES
+        (gen_random_uuid(), t, 'emergency_fire', 1, 'Fire', 'الحريق', 'Leave by the stairs, then call the gate.',
+         'انزل على السلم وكلم البوابة.', current_date - 7, mgr, now() - interval '7 days');
+      INSERT INTO bookings (id, tenant_id, facility_id, unit_id, booked_by_account_id, starts_at, ends_at,
+                            guests, party_size, peak, status, updated_at) VALUES
+        (gen_random_uuid(), t, fac, u2, res2, date_trunc('hour', now()),
+         date_trunc('hour', now()) + interval '1 hour', 0, 1, false, 'confirmed', now());
+      INSERT INTO neighbour_posts (id, tenant_id, kind, author_account_id, author_side, author_unit_id, body,
+                                   expires_at, updated_at) VALUES
+        (post, t, 'lend', res1, 'resident', u1, 'A ladder to lend for the weekend.', now() + interval '14 days', now());
+      INSERT INTO market_listings (id, tenant_id, kind, category, seller_account_id, seller_unit_id, title, body,
+                                   price, status, expires_at, decided_at, decided_by, updated_at) VALUES
+        (lst, t, 'sell', 'furniture', res1, u1, 'Oak dining table', 'Seats six, collect from the lobby.',
+         1500.00, 'live', now() + interval '30 days', now(), mgr, now());
+      INSERT INTO neighbour_conversations (id, tenant_id, post_id, listing_id, author_account_id,
+                                           responder_account_id, responder_unit_id, last_message_at, updated_at) VALUES
+        (gen_random_uuid(), t, post, NULL, res1, res2, u2, now(), now()),
+        (gen_random_uuid(), t, NULL, lst, res1, res2, u2, now(), now());
+    END;
   END LOOP;
 END $$;

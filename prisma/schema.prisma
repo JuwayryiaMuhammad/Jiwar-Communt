@@ -6108,6 +6108,12 @@ model Booking {
   /// A stay (ADR 0070): its first night and its check-out day, local.
   stayFromOn           DateTime?     @map("stay_from_on") @db.Date
   stayToOn             DateTime?     @map("stay_to_on") @db.Date
+  /// Cancelled by a closure (ADR 0070): may be rebooked once until then.
+  rebookUntil          DateTime?     @map("rebook_until") @db.Timestamptz(3)
+  /// The closure-cancelled booking this one rebooks.
+  rebookOfId           String?       @map("rebook_of_id") @db.Uuid
+  rebookOf             Booking?      @relation("BookingRebook", fields: [tenantId, rebookOfId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_rebook_of_fkey")
+  rebookedBy           Booking?      @relation("BookingRebook")
   waitlistEntry        BookingWaitlistEntry?
 
   @@unique([tenantId, id])
@@ -6116,6 +6122,7 @@ model Booking {
   @@index([tenantId, facilityId, startsAt, id], map: "bookings_facility_idx")
   @@index([tenantId, status, startsAt, id], map: "bookings_status_idx")
   @@unique([tenantId, companionTokenHash], map: "bookings_companion_token_key")
+  @@unique([tenantId, rebookOfId], map: "bookings_rebook_of_key")
   @@map("bookings")
 }
 

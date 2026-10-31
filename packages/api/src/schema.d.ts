@@ -22901,6 +22901,13 @@ export interface components {
             occasion: components["schemas"]["BookingOccasionView"] | null;
             /** @description The slot is in a peak time: it counts towards the peak quota. */
             peak: boolean;
+            /** Format: uuid */
+            rebookOfId: string | null;
+            /**
+             * Format: date-time
+             * @description Cancelled by a closure (ADR 0070): it may be rebooked once until then (`rebookOf`).
+             */
+            rebookUntil: string | null;
             /** @description A code of `bookingReject`. */
             rejectReason: string | null;
             /** Format: date-time */
@@ -25198,6 +25205,11 @@ export interface components {
              * @description One of the unit's children as the occasion (ADR 0054), on a facility that takes one (`childOccasions`).
              */
             occasionMemberId?: string;
+            /**
+             * Format: uuid
+             * @description A booking of the unit’s a closure cancelled, rebooked once at the same facility within 72 hours (REBOOK_NOT_ALLOWED): the quotas are skipped that once (ADR 0070).
+             */
+            rebookOf?: string;
             /**
              * Format: date-time
              * @description The start of one of the facility’s slots, exactly (BOOKING_SLOT_NOT_OFFERED); not sooner than its `minMinutesBefore` (BOOKING_TOO_SOON) nor further than its `maxDaysAhead` (BOOKING_TOO_FAR).

@@ -57,6 +57,9 @@ describe('Bookings: a resident books for a unit (ADR 0044)', () => {
         'mine',
         'occasion',
         'peak',
+        // ADR 0070: a rebook after a closure.
+        'rebookOfId',
+        'rebookUntil',
         'rejectReason',
         'startsAt',
         'status',

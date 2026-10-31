@@ -22,6 +22,17 @@ import {
 export const GUESTS = { min: 0, max: 50 } as const;
 
 export class CreateBookingDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'A booking of the unit’s a closure cancelled, rebooked once at the same facility within 72 hours (REBOOK_NOT_ALLOWED): the quotas are skipped that once (ADR 0070).',
+  })
+  @IsOptional()
+  @IsUUID()
+  rebookOf?: string;
+
   @ApiProperty({ type: String, format: 'uuid' })
   @IsUUID()
   facilityId: string;

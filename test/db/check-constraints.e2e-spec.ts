@@ -884,6 +884,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   credit_notes_author: {},
   bookings_companions: {},
   facility_settings_waitlist_hold: {},
+  bookings_rebook: {},
   booking_waitlist_entries_shape: {},
   booking_companions_shape: {},
   booking_companions_remove_reason: {

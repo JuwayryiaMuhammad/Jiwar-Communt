@@ -117,6 +117,16 @@ export class BookingView {
       'What it costs, raised when it was confirmed (ADR 0070); null: free, or not confirmed.',
   })
   charge: BookingChargeView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Cancelled by a closure (ADR 0070): it may be rebooked once until then (`rebookOf`).',
+  })
+  rebookUntil: Date | null;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  rebookOfId: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -145,6 +155,8 @@ export class BookingView {
       cancelReason: b.cancelReason,
       occasion: b.occasion ?? null,
       charge: b.charge ?? null,
+      rebookUntil: b.rebookUntil,
+      rebookOfId: b.rebookOfId,
       createdAt: b.createdAt,
     };
   }

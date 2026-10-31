@@ -5617,6 +5617,17 @@
             "description": "The slot is in a peak time: it counts towards the peak quota.",
             "type": "boolean"
           },
+          "rebookOfId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "rebookUntil": {
+            "description": "Cancelled by a closure (ADR 0070): it may be rebooked once until then (`rebookOf`).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "rejectReason": {
             "description": "A code of `bookingReject`.",
             "nullable": true,
@@ -5666,6 +5677,8 @@
           "cancelReason",
           "occasion",
           "charge",
+          "rebookUntil",
+          "rebookOfId",
           "createdAt"
         ],
         "type": "object"
@@ -12953,6 +12966,11 @@
           },
           "occasionMemberId": {
             "description": "One of the unit's children as the occasion (ADR 0054), on a facility that takes one (`childOccasions`).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rebookOf": {
+            "description": "A booking of the unit’s a closure cancelled, rebooked once at the same facility within 72 hours (REBOOK_NOT_ALLOWED): the quotas are skipped that once (ADR 0070).",
             "format": "uuid",
             "type": "string"
           },

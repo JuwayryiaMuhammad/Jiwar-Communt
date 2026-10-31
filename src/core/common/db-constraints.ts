@@ -661,6 +661,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   booking_companions_tenant_id_id_key: null,
   booking_companions_live_key: null,
   bookings_companion_token_key: null,
+  // A closure's cancel is rebooked once, checked first under the unit's lock
+  // (REBOOK_NOT_ALLOWED rebooked); a violation is a race (ADR 0070).
+  bookings_rebook_of_key: null,
   // The booking waitlist (ADR 0070): one live entry per account and slot,
   // checked first under the slot's row lock (WAITLIST_EXISTS); one entry per
   // booking it became. A violation is a race.

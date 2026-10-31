@@ -66,6 +66,11 @@ export interface NewBooking {
   occasionMemberId?: string;
   /** A waitlist offer the caller claims (ADR 0070): it frees only its own hold. */
   fromEntryId?: string;
+  /**
+   * A booking a closure cancelled, rebooked once at the same facility within
+   * 72 hours (ADR 0070): the quotas are skipped that once.
+   */
+  rebookOf?: string;
 }
 
 /**
@@ -78,6 +83,8 @@ export type BookingRead = Booking & {
 };
 
 const HOUR_MS = 3_600_000;
+/** A closure's cancel may be rebooked for this long (ADR 0070). */
+export const REBOOK_HOURS = 72;
 
 /** A facility charges for bookings (ADR 0070). */
 export const charging = (f: Facility) =>
@@ -611,7 +618,12 @@ export class BookingsService implements OnModuleInit {
           'The facility is closed at that time',
         );
 
-      await this.checkQuota(tx, unitId, facility.id, slot, rules);
+      // A rebook after a closure skips the quotas, once (ADR 0070); under
+      // the unit's lock, so two rebooks of one booking go one at a time.
+      const rebook = input.rebookOf
+        ? await this.rebookable(tx, input.rebookOf, unitId, facility.id, now)
+        : null;
+      if (!rebook) await this.checkQuota(tx, unitId, facility.id, slot, rules);
 
       // The slot's lock: bookings of this slot are decided one at a time.
       const taken = await this.lockSlot(tx, facility, rules, slot);
@@ -651,6 +663,7 @@ export class BookingsService implements OnModuleInit {
           peak: slot.peak,
           status,
           occasionMemberId: input.occasionMemberId ?? null,
+          rebookOfId: rebook?.id ?? null,
           createdAt: now,
         },
       });
@@ -665,6 +678,7 @@ export class BookingsService implements OnModuleInit {
           guests,
           startsAt: slot.startsAt.toISOString(),
           ...(booking.occasionMemberId ? { childOccasion: true } : {}),
+          ...(rebook ? { rebookOf: rebook.id } : {}),
         },
       });
       if (entry) {
@@ -682,6 +696,38 @@ export class BookingsService implements OnModuleInit {
         await this.raiseFee(tx, facility, booking, cal.timeZone);
       return (await this.withOccasions(tx, [booking]))[0];
     });
+  }
+
+  /**
+   * The booking a rebook replaces, under the unit's lock: the unit's, of the
+   * same facility, cancelled by a closure less than 72 hours ago, never
+   * rebooked; or 409 REBOOK_NOT_ALLOWED with why.
+   */
+  private async rebookable(
+    tx: TenantTxClient,
+    id: string,
+    unitId: string,
+    facilityId: string,
+    now: Date,
+  ): Promise<Booking> {
+    const original = await tx.booking.findUnique({ where: { id } });
+    if (!original || original.unitId !== unitId) throw bookingNotFound();
+    const refuse = (reason: string) =>
+      appError.conflict(
+        ErrorCode.REBOOK_NOT_ALLOWED,
+        'This booking may not be rebooked',
+        { params: { reason } },
+      );
+    if (original.facilityId !== facilityId) throw refuse('other_facility');
+    if (!original.rebookUntil) throw refuse('not_closed');
+    if (original.rebookUntil.getTime() <= now.getTime())
+      throw refuse('expired');
+    const already = await tx.booking.findFirst({
+      where: { rebookOfId: id },
+      select: { id: true },
+    });
+    if (already) throw refuse('rebooked');
+    return original;
   }
 
   /**
@@ -912,6 +958,10 @@ export class BookingsService implements OnModuleInit {
         cancelledById: how.by,
         cancelledAt: how.now,
         closureId: how.closureId,
+        // A closure's cancel may be rebooked once within 72 hours (ADR 0070).
+        rebookUntil: how.closureId
+          ? new Date(how.now.getTime() + REBOOK_HOURS * HOUR_MS)
+          : undefined,
         banId: how.banId,
       },
     });

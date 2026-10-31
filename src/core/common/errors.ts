@@ -565,6 +565,12 @@ export const ErrorCode = {
   // Overnight guest rooms (ADR 0070)
   /** Every room is taken that night (409, params.nightOn). */
   STAY_NIGHT_FULL: 'STAY_NIGHT_FULL',
+  /**
+   * The booking is not rebookable (ADR 0070; 409, params.reason):
+   * `other_facility`, `not_closed` (no closure cancelled it), `expired`
+   * (72 hours passed) or `rebooked` (once only).
+   */
+  REBOOK_NOT_ALLOWED: 'REBOOK_NOT_ALLOWED',
   // vehicles and parking (ADR 0045)
   /**
    * Unknown, another compound's or removed; for a resident also another

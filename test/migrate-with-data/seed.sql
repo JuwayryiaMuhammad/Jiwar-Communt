@@ -23,7 +23,10 @@
 -- CHECKs and recreates their triggers); occupancies (a residing owner, a
 -- landlord, a tenant who bought the unit), the finance settings, a billing
 -- plan, an invoice's notice and a conduct guide's version (ADR 0069 backfills
--- `resides_since` and widens their columns and CHECKs).
+-- `resides_since` and widens their columns and CHECKs);
+-- the gate's settings, and a banned person with a photo met at the gate
+-- twice (ADR 0068 adds the settings' face-check switch and call times,
+-- widens the matches' CHECKs and recreates the files').
 -- ============================================================================
 
 DO $$
@@ -42,6 +45,7 @@ DECLARE
   area uuid; doc uuid;
   fac uuid;
   occ_t uuid;
+  ph uuid; bl uuid; vp uuid;
 BEGIN
   FOR c IN 1..2 LOOP
     s := substr(md5(random()::text || clock_timestamp()::text), 1, 10);
@@ -270,6 +274,25 @@ BEGIN
                                             effective_on, published_by, published_at) VALUES
       (gen_random_uuid(), t, 'conduct_guide', 1, 'Conduct', 'السلوك', 'Be kind to your neighbours.',
        'كن لطيفا مع جيرانك.', current_date - 30, mgr, now() - interval '30 days');
+    -- The gate's settings and the blocklist as G8 finds them (ADR 0068): the
+    -- settings gain the face-check switch (off) and the call times, a match
+    -- by ID and one at a visitor pass keep their rows under the widened
+    -- CHECKs, and the ban's photo under the files' recreated ones.
+    INSERT INTO gate_settings (tenant_id, updated_at) VALUES (t, now());
+    ph := gen_random_uuid();
+    INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes,
+                       status, upload_expires_at, finalized_at, attached_at) VALUES
+      (ph, t, NULL, 'blocklist_photo', 'image/jpeg', 204800,
+       'ready', now() - interval '1 day', now() - interval '1 day', now() - interval '1 day');
+    bl := gen_random_uuid();
+    INSERT INTO blocklist_entries (id, tenant_id, kind, subject, full_name, id_hash, photo_file_id,
+                                   reason_code, created_by_account_id, updated_at) VALUES
+      (bl, t, 'ban', 'person', 'Seed Banned Person', md5(s) || md5(s || 'id'), ph, 'trespassing', mgr, now());
+    SELECT id INTO vp FROM visitor_passes WHERE tenant_id = t ORDER BY id LIMIT 1;
+    INSERT INTO blocklist_matches (id, tenant_id, entry_id, kind, source, subject_type, subject_id,
+                                   gate_id, actor_account_id, outcome) VALUES
+      (gen_random_uuid(), t, bl, 'ban', 'id_lookup', NULL, NULL, gate, guard, 'refused'),
+      (gen_random_uuid(), t, bl, 'ban', 'visitor_pass', 'visitor_pass', vp, gate, guard, 'refused');
     IF c = 1 THEN
       INSERT INTO management_request_topics (id, tenant_id, key, name_ar, name_en, target_response_hours, updated_at)
       VALUES (gen_random_uuid(), t, 'utilities', 'المرافق', 'Utilities (ours)', 48, now());

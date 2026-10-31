@@ -81,6 +81,9 @@ export const GATE_SETTINGS = [
   // Calls from the gate (ADR 0068).
   { name: 'callRingSeconds', label: 'Seconds a call from the gate rings before it is missed', min: 15, max: 120 },
   { name: 'callMaxSeconds', label: 'Seconds an answered call from the gate lasts at most', min: 60, max: 900 },
+  // How busy a gate reads (ADR 0071): entries in fifteen minutes; busy above normal.
+  { name: 'gateBusyNormalFrom', label: 'Entries in 15 minutes from which a gate reads normal', min: 1, max: 1000 },
+  { name: 'gateBusyBusyFrom', label: 'Entries in 15 minutes from which a gate reads busy (above normal)', min: 2, max: 1000 },
 ] as const;
 
 export type GateSettingName = (typeof GATE_SETTINGS)[number]['name'];

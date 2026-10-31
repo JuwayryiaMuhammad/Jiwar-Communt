@@ -91,7 +91,7 @@ export default function GateSettingsPage() {
   const ok = form !== null && wrong.length === 0 && Object.keys(changes).length > 0;
   return (
     <>
-      <PageHeader title="Gate settings" description="Field exceptions, visits, patrols, recordings, calls and face checks at the gate." />
+      <PageHeader title="Gate settings" description="Field exceptions, visits, patrols, recordings, calls, how busy a gate reads and face checks at the gate." />
       <QueryState query={settings}>
         {form ? (
           <Card>

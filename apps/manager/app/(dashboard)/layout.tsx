@@ -83,6 +83,9 @@ import {
   Gauge,
   Zap,
   ZapOff,
+  ShoppingBag,
+  Tag,
+  Sun,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -378,6 +381,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           count: reports,
           show: can('neighbours.handle'),
         },
+        // The market: review, reports, shops; group and partner offers (ADR 0071).
+        { href: '/market', label: 'Market', icon: <ShoppingBag aria-hidden />, exact: true, show: can('market.handle') },
+        { href: '/market/offers', label: 'Offers', icon: <Tag aria-hidden />, show: can('market.handle') || can('partners.manage') },
+        // Prayer times, buses and the gallery (ADR 0071).
+        { href: '/daily-life', label: 'Daily life', icon: <Sun aria-hidden />, show: can('content.manage') },
         {
           href: '/facilities',
           label: 'Facilities',

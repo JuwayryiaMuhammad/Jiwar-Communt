@@ -15,6 +15,7 @@ import {
   Select,
   StatusBadge,
   useToast,
+  Textarea,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, RotateCcw } from 'lucide-react';
@@ -166,6 +167,9 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
   const [name, setName] = useState(gate?.name ?? '');
   const [kind, setKind] = useState<GateKind>(gate?.kind ?? 'mixed');
   const [phone, setPhone] = useState(gate?.phone ?? '');
+  // How a visitor reaches it from outside (ADR 0071), on their page.
+  const [directionsEn, setDirectionsEn] = useState(gate?.directionsEn ?? '');
+  const [directionsAr, setDirectionsAr] = useState(gate?.directionsAr ?? '');
   const save = useAction(
     () =>
       gate
@@ -173,7 +177,13 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
             api.PATCH('/api/v1/gates/{id}', {
               params: { path: { id: gate.id } },
               // Empty removes the phone.
-              body: { name: name.trim(), kind, phone: phone.trim() || null },
+              body: {
+                name: name.trim(),
+                kind,
+                phone: phone.trim() || null,
+                directionsEn: directionsEn.trim() || null,
+                directionsAr: directionsAr.trim() || null,
+              },
             }),
           )
         : unwrap(api.POST('/api/v1/gates', { body: { name: name.trim(), kind, ...(phone.trim() ? { phone: phone.trim() } : {}) } })),
@@ -220,6 +230,20 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
         >
           {(p) => <Input {...p} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
         </Field>
+        {gate && (
+          <>
+            <Field
+              label="Directions (English)"
+              hint="How a visitor reaches this gate from outside. Shown on the visitor's page when a pass names this gate."
+              error={fieldError(save.error, 'directionsEn')}
+            >
+              {(p) => <Textarea {...p} rows={2} maxLength={500} value={directionsEn} onChange={(e) => setDirectionsEn(e.target.value)} />}
+            </Field>
+            <Field label="Directions (Arabic)" error={fieldError(save.error, 'directionsAr')}>
+              {(p) => <Textarea {...p} dir="rtl" rows={2} maxLength={500} value={directionsAr} onChange={(e) => setDirectionsAr(e.target.value)} />}
+            </Field>
+          </>
+        )}
         <ErrorAlert error={save.error} />
       </div>
     </Dialog>

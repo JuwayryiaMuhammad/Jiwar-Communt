@@ -59,6 +59,8 @@ const values = {
   offlineSyncAlertMinutes: 15,
   callRingSeconds: 45,
   callMaxSeconds: 300,
+  gateBusyNormalFrom: 10,
+  gateBusyBusyFrom: 30,
 };
 
 test('the settings form: whole numbers within each bound; only the visit length may be off', () => {

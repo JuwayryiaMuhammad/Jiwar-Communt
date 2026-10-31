@@ -388,3 +388,10 @@ test('money and the unit (ADR 0069): a plan request and a collector visit open t
   assert.equal(notificationHref(n('collector_visit.requested', {}, 'collector_visit', 'x'), all), '/finance/collector-visits');
   assert.equal(notificationHref(n('collector_visit.requested', {}, 'collector_visit', 'x'), () => false), null);
 });
+
+test('a reported listing opens the market’s review, a reported photo the gallery (ADR 0071)', () => {
+  const all = () => true;
+  assert.equal(notificationHref(n('market_listing.under_review', { listingKind: 'sell' }, 'market_listing', 'x'), all), '/market');
+  assert.equal(notificationHref(n('gallery_photo.reported', { reason: 'privacy' }, 'gallery_photo', 'x'), all), '/daily-life');
+  assert.equal(notificationHref(n('gallery_photo.reported', { reason: 'privacy' }, 'gallery_photo', 'x'), () => false), null);
+});

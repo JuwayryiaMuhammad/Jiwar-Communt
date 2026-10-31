@@ -328,6 +328,9 @@ const TEXT: Record<string, (p: P) => string> = {
   // Money and the unit (ADR 0069): what the finance staff are asked for.
   'instalment_plan_request.submitted': () => 'A resident asked for a payment plan on an invoice',
   'collector_visit.requested': () => 'A resident asked for a collector to take cash at their unit',
+  // Community (ADR 0071): the staff's.
+  'market_listing.under_review': () => 'Several homes reported a listing: it is off the market for review',
+  'gallery_photo.reported': () => 'A resident reported a gallery photo',
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -355,6 +358,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   // Money and the unit (ADR 0069): the finance staff's queues.
   if (n.targetType === 'plan_request') return can('finance.invoice') ? '/finance/plan-requests' : null;
   if (n.targetType === 'collector_visit') return can('finance.payments') ? '/finance/collector-visits' : null;
+  // Community (ADR 0071): the market's review, and the gallery.
+  if (n.targetType === 'market_listing') return can('market.handle') ? '/market' : null;
+  if (n.targetType === 'gallery_photo') return can('content.manage') ? '/daily-life' : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

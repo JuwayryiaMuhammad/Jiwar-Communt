@@ -11,6 +11,8 @@ const impl: ChargesImpl = {
       status: 'open',
     }),
   cancel: () => Promise.resolve(null),
+  payAtOffice: () => Promise.resolve('p'),
+  reverseAtOffice: () => Promise.resolve(),
   of: () => Promise.resolve(new Map()),
 };
 

@@ -1,6 +1,7 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { Prisma, type VehicleFinePayment } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
+import { Charges } from '../../core/charges/charges';
 import { RequestContext } from '../../core/common/cls/request-context';
 import {
   appError,
@@ -47,6 +48,7 @@ export class FinePaymentsService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly core: VehicleCore,
     private readonly fines: FinesService,
+    private readonly charges: Charges,
   ) {}
 
   onModuleInit(): void {
@@ -78,7 +80,9 @@ export class FinePaymentsService implements OnModuleInit {
       const id = newId();
       await this.idempotency.claim(tx, { type: FINE_PAYMENT_RESOURCE, id });
       await this.core.lockSelf(tx);
-      const fine = await this.fines.lockRow(tx, fineId);
+      // The unit's finance lock first: a charged fine's payment is
+      // finance's too (the charges' rule, ADR 0070).
+      const fine = await this.fines.lockCharged(tx, fineId);
       if (fine.status === 'under_appeal')
         throw appError.conflict(
           ErrorCode.FINE_UNDER_APPEAL,
@@ -128,6 +132,18 @@ export class FinePaymentsService implements OnModuleInit {
           'Invalid request',
           { fields },
         );
+      // A charged fine (ADR 0070): the office's cash is a payment of its
+      // invoice in finance — the unit's receipt, the charge settled — and
+      // this record points at it.
+      const charge = await this.charges.one(tx, 'vehicle_fine', fineId);
+      const financePaymentId = charge
+        ? await this.charges.payAtOffice(tx, {
+            source: 'vehicle_fine',
+            sourceId: fineId,
+            amount,
+            paidOn: input.paidOn,
+          })
+        : null;
       const payment = await tx.vehicleFinePayment.create({
         data: {
           id,
@@ -139,6 +155,7 @@ export class FinePaymentsService implements OnModuleInit {
           receiptNumber: input.receiptNumber,
           paidOn: asDate(input.paidOn),
           recordedById: this.ctx.accountId,
+          financePaymentId,
         },
       });
       await tx.vehicleFine.update({
@@ -178,7 +195,7 @@ export class FinePaymentsService implements OnModuleInit {
         where: { id: paymentId },
       });
       if (seen?.kind !== 'payment') throw paymentNotFound();
-      const fine = await this.fines.lockRow(tx, seen.fineId);
+      const fine = await this.fines.lockCharged(tx, seen.fineId);
       const already = await tx.vehicleFinePayment.findFirst({
         where: { reversesId: paymentId },
         select: { id: true },
@@ -203,6 +220,14 @@ export class FinePaymentsService implements OnModuleInit {
         where: { id: fine.id },
         data: { status: 'unpaid' },
       });
+      // A charged fine's: finance's payment is reversed with it, and its
+      // invoice is owed again (ADR 0070).
+      if (seen.financePaymentId)
+        await this.charges.reverseAtOffice(
+          tx,
+          seen.financePaymentId,
+          reason === 'entered_in_error' ? 'entered_in_error' : 'other',
+        );
       await this.audit.record(tx, {
         action: 'vehicle_fine.payment_reversed',
         targetId: id,

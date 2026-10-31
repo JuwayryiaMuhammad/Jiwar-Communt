@@ -6621,9 +6621,13 @@ model VehicleFinePayment {
   reasonCode    String?                @map("reason_code")
   recordedById  String                 @map("recorded_by_account_id") @db.Uuid
   createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// A charged fine's office payment (ADR 0070): finance's payment of its invoice.
+  financePaymentId String?             @map("finance_payment_id") @db.Uuid
 
-  fine VehicleFine @relation(fields: [tenantId, fineId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  fine           VehicleFine     @relation(fields: [tenantId, fineId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  financePayment FinancePayment? @relation(fields: [tenantId, financePaymentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "vehicle_fine_payments_finance_payment_fkey")
 
+  @@unique([tenantId, financePaymentId], map: "vehicle_fine_payments_finance_payment_key")
   @@unique([tenantId, id])
   @@unique([tenantId, reversesId], map: "vehicle_fine_payments_one_reversal")
   @@index([tenantId, fineId, createdAt, id], map: "vehicle_fine_payments_fine_idx")
@@ -7295,6 +7299,7 @@ model FinancePayment {
   refundSources FinanceRefundSource[]
 
   depositEvents FinanceDepositEvent[]
+  finePayment   VehicleFinePayment?
   @@unique([tenantId, id])
   @@unique([tenantId, reversesId], map: "finance_payments_one_reversal")
   @@index([tenantId, unitId, createdAt, id], map: "finance_payments_unit_idx")

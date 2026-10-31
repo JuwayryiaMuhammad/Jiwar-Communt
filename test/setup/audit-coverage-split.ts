@@ -920,7 +920,10 @@ export const R11C1B_COVERAGE: readonly string[] = [
   'finance_charge.raised',
   'finance_charge.paid',
   'finance_charge.cancelled',
+  'finance_charge.reopened',
   'club_membership_request.created',
   'club_membership_request.cancelled',
   'club_membership_request.paid',
+  'vehicle_fine.paid',
+  'vehicle_fine.reopened',
 ];

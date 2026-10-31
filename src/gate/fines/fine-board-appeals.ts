@@ -1,6 +1,7 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { VehicleFine } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
+import { Charges } from '../../core/charges/charges';
 import {
   BoardMatters,
   type AppealRefusal,
@@ -22,6 +23,7 @@ export class FineBoardAppeals implements OnModuleInit {
   constructor(
     private readonly matters: BoardMatters,
     private readonly audit: AuditService,
+    private readonly charges: Charges,
   ) {}
 
   onModuleInit(): void {
@@ -46,10 +48,17 @@ export class FineBoardAppeals implements OnModuleInit {
         if (!fine?.boardAppealAt || fine.boardAppealClosedAt)
           return { effect: 'none' };
         const cancel = outcome === 'overturned' && fine.status === 'unpaid';
+        // Its invoice paid while the board looked (ADR 0070): upheld, the
+        // fine is paid; overturned, the charge is credited off below.
+        const paid =
+          !cancel &&
+          fine.status === 'unpaid' &&
+          (await this.charges.one(tx, 'vehicle_fine', id))?.status === 'paid';
         await tx.vehicleFine.update({
           where: { id },
           data: {
             boardAppealClosedAt: now,
+            ...(paid ? { status: 'paid' } : {}),
             ...(cancel
               ? {
                   status: 'cancelled',
@@ -60,6 +69,8 @@ export class FineBoardAppeals implements OnModuleInit {
               : {}),
           },
         });
+        if (cancel)
+          await this.charges.cancel(tx, 'vehicle_fine', id, 'appeal_accepted');
         if (cancel)
           await this.audit.record(tx, {
             action: 'vehicle_fine.cancelled',
@@ -96,10 +107,20 @@ export class FineBoardAppeals implements OnModuleInit {
     });
   }
 
+  /**
+   * The fine's row, after its unit's finance lock (the charges' rule, ADR
+   * 0070): an overturn credits its charge off, and a payment takes the
+   * finance lock and then the fine.
+   */
   private async lock(
     tx: TenantTxClient,
     id: string,
   ): Promise<VehicleFine | null> {
+    const seen = await tx.vehicleFine.findUnique({
+      where: { id },
+      select: { unitId: true },
+    });
+    if (seen) await this.charges.lockUnit(tx, seen.unitId);
     const rows = await tx.$queryRaw<{ id: string }[]>`
       SELECT id FROM vehicle_fines WHERE id = ${id}::uuid FOR UPDATE`;
     if (!rows.length) return null;

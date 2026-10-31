@@ -653,6 +653,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   club_membership_requests_open_key: null,
   club_membership_requests_payment_key: null,
   club_payment_records_charge_key: null,
+  // A charged fine's office payment points at finance's, once (ADR 0070).
+  vehicle_fine_payments_finance_payment_key: null,
   // Refunds (ADR 0048): numbers from the counter, one reversal per refund
   // and one source per refund and payment, under the unit's finance lock.
   finance_refunds_tenant_id_id_key: null,

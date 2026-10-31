@@ -207,6 +207,9 @@ describe('Fines', () => {
           // ADR 0055: an appeal to the board, after the first one.
           'boardAppealUntil',
           'boardAppealAt',
+          // ADR 0070: owed through the unit's invoice.
+          'payable',
+          'charge',
           'createdAt',
         ].sort(),
       );

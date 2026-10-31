@@ -9,6 +9,7 @@ import {
   type ChargeSource,
   type ChargeState,
   type NewCharge,
+  type OfficeCharge,
 } from '../../core/charges/charges';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { newId } from '../../core/common/uuid';
@@ -19,6 +20,7 @@ import { dbNow } from '../db-clock';
 import { show, ZERO } from '../money';
 import { supersedeLive } from '../online/supersede';
 import { allocateUnit } from '../payments/allocation';
+import { PaymentsService } from '../payments/payments.service';
 import { balancesOf } from '../invoices/balances';
 import { creditInvoice, InvoicesService } from '../invoices/invoices.service';
 import { ChargeSettler } from './charge-settler';
@@ -50,6 +52,7 @@ export class FinanceChargesService implements ChargesImpl, OnModuleInit {
     private readonly community: CommunityFinancePort,
     private readonly invoices: InvoicesService,
     private readonly settler: ChargeSettler,
+    private readonly payments: PaymentsService,
   ) {}
 
   onModuleInit(): void {
@@ -176,6 +179,41 @@ export class FinanceChargesService implements ChargesImpl, OnModuleInit {
       },
     });
     return stateOf(cancelled);
+  }
+
+  /**
+   * The office takes a charge's whole amount (a fine's, ADR 0070) as an
+   * office payment of the unit's that names its invoice — its receipt, the
+   * unit told, the charge settled and its handler run — under the unit's
+   * finance lock. Cash; recorded by the caller.
+   */
+  async payAtOffice(tx: TenantTxClient, p: OfficeCharge): Promise<string> {
+    const charge = await tx.financeCharge.findFirst({
+      where: { source: p.source, sourceId: p.sourceId },
+    });
+    if (!charge) throw new Error('Charges: no such charge');
+    await this.access.lockUnits(tx, [charge.unitId]);
+    const id = newId();
+    await this.payments.create(tx, id, {
+      unitId: charge.unitId,
+      channel: 'office',
+      method: 'cash',
+      amount: p.amount,
+      paidOn: p.paidOn,
+      reference: null,
+      recordedById: this.ctx.accountId,
+      named: [charge.invoiceId],
+    });
+    return id;
+  }
+
+  /** Reverses such a payment, as finance's office reversal does. */
+  async reverseAtOffice(
+    tx: TenantTxClient,
+    paymentId: string,
+    reasonCode: string,
+  ): Promise<void> {
+    await this.payments.reverseInTx(tx, newId(), paymentId, reasonCode);
   }
 
   async of(

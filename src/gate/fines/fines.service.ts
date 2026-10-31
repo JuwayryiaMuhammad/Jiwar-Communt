@@ -8,6 +8,7 @@ import {
 } from '@prisma/client';
 import { CommunityGatePort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
+import { Charges, type PaidCharge } from '../../core/charges/charges';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import {
@@ -28,7 +29,7 @@ import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { unitNotFound, VehicleCore } from '../vehicles/vehicle-core';
-import { asDate } from '../vehicles/vehicle-rules';
+import { asDate, reference } from '../vehicles/vehicle-rules';
 import {
   APPEAL_DAYS,
   APPEAL_TEXT,
@@ -42,6 +43,8 @@ import { StaffFineView } from './views/fine.views';
 export const FINE_RESOURCE = 'vehicle_fine';
 
 const DAY = 86_400_000;
+/** A fine's invoice falls due two weeks after it is issued (ADR 0070). */
+const FINE_DUE_DAYS = 14;
 
 export type FineReason = (typeof REASON_CODES.vehicleFineReason)[number];
 
@@ -71,6 +74,11 @@ export interface FineFile {
   canAppeal: boolean;
   /** Its upheld appeal may go to the board until then (ADR 0055), or null. */
   boardAppealUntil: Date | null;
+  /**
+   * Its charge (ADR 0070): the invoice that owes it, payable online. Null
+   * for a fine issued before charges, paid at the office only.
+   */
+  charge: { invoiceId: string; status: 'open' | 'paid' | 'cancelled' } | null;
 }
 
 const invalid = (fields: FieldError[]) =>
@@ -103,9 +111,16 @@ export class FinesService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly community: CommunityGatePort,
     private readonly core: VehicleCore,
+    private readonly charges: Charges,
   ) {}
 
   onModuleInit(): void {
+    this.charges.registerPaidHandler('vehicle_fine', (tx, c) =>
+      this.paidThroughFinance(tx, c),
+    );
+    this.charges.registerUnpaidHandler('vehicle_fine', (tx, c) =>
+      this.owedAgain(tx, c.sourceId),
+    );
     this.idempotency.renderer(FINE_RESOURCE, async (id) =>
       StaffFineView.from(await this.staffFile(id)),
     );
@@ -201,6 +216,9 @@ export class FinesService implements OnModuleInit {
           'photoFileId',
         )
       : null;
+    // Its charge is raised here: the unit's finance lock before the fine's
+    // row (the charges' rule, ADR 0070).
+    await this.charges.lockUnit(tx, unit!.id);
     const number = await this.core.nextNumber(tx, 'fine');
     const fine = await tx.vehicleFine.create({
       data: {
@@ -232,6 +250,18 @@ export class FinesService implements OnModuleInit {
         occurredOn: input.occurredOn,
         photo: photo !== null,
       },
+    });
+    // Owed through finance (ADR 0070): an invoice of the unit's, payable
+    // online, due in two weeks.
+    await this.charges.raise(tx, {
+      unitId: unit!.id,
+      source: 'vehicle_fine',
+      sourceId: id,
+      kind: 'fine',
+      amount: fine.amount,
+      textEn: `Vehicle fine ${reference('F', number)}`,
+      textAr: `مخالفة مركبة ${reference('F', number)}`,
+      dueOn: addDays(today, FINE_DUE_DAYS),
     });
     const keepers = await this.community.holders(tx, unit!.id, 'vehicles');
     await this.core.notify(
@@ -298,7 +328,7 @@ export class FinesService implements OnModuleInit {
       ]);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.core.lockSelf(tx);
-      const fine = await this.lockRow(tx, id);
+      const fine = await this.lockCharged(tx, id);
       if (fine.status !== 'under_appeal')
         throw appError.conflict(
           ErrorCode.FINE_NOT_UNDER_APPEAL,
@@ -320,9 +350,11 @@ export class FinesService implements OnModuleInit {
                 cancelledById: this.ctx.accountId,
                 cancelledAt: now,
               }
-            : { status: 'unpaid' }),
+            : { status: (await this.paidCharge(tx, id)) ? 'paid' : 'unpaid' }),
         },
       });
+      if (reason)
+        await this.charges.cancel(tx, 'vehicle_fine', id, 'appeal_accepted');
       await this.audit.record(tx, {
         action: 'vehicle_fine.appeal_decided',
         targetId: id,
@@ -352,7 +384,7 @@ export class FinesService implements OnModuleInit {
     );
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.core.lockSelf(tx);
-      const fine = await this.lockRow(tx, id);
+      const fine = await this.lockCharged(tx, id);
       if (fine.boardAppealAt && !fine.boardAppealClosedAt)
         throw appError.conflict(
           ErrorCode.FINE_UNDER_APPEAL,
@@ -374,6 +406,7 @@ export class FinesService implements OnModuleInit {
           cancelledAt: new Date(),
         },
       });
+      await this.charges.cancel(tx, 'vehicle_fine', id, 'fine_cancelled');
       await this.audit.record(tx, {
         action: 'vehicle_fine.cancelled',
         targetId: id,
@@ -486,6 +519,76 @@ export class FinesService implements OnModuleInit {
   // --------------------------------------------------------------------------
   // Helpers
   // --------------------------------------------------------------------------
+
+  /**
+   * The fine's row, after its unit's finance lock (the charges' rule, ADR
+   * 0070): every path that may cancel its charge, as a payment takes the
+   * finance lock and then the fine.
+   */
+  async lockCharged(tx: TenantTxClient, id: string): Promise<VehicleFine> {
+    const seen = await tx.vehicleFine.findUnique({
+      where: { id },
+      select: { unitId: true },
+    });
+    if (seen) await this.charges.lockUnit(tx, seen.unitId);
+    return this.lockRow(tx, id);
+  }
+
+  /** Its charge was paid (ADR 0070). */
+  async paidCharge(tx: TenantTxClient, id: string): Promise<boolean> {
+    return (await this.charges.one(tx, 'vehicle_fine', id))?.status === 'paid';
+  }
+
+  /**
+   * Its invoice was paid (ADR 0070), in the paying transaction, after the
+   * finance lock: an unpaid fine not before the board is paid. One under an
+   * appeal stays as it is: the decision reads its charge (upheld, it is
+   * paid; cancelled, the charge is credited off and the money is the
+   * unit's credit). Never throws for the fine's state.
+   */
+  private async paidThroughFinance(
+    tx: TenantTxClient,
+    c: PaidCharge,
+  ): Promise<void> {
+    const fine = await this.lockRow(tx, c.sourceId);
+    if (
+      fine.status !== 'unpaid' ||
+      (fine.boardAppealAt && !fine.boardAppealClosedAt)
+    )
+      return;
+    await tx.vehicleFine.update({
+      where: { id: fine.id },
+      data: { status: 'paid' },
+    });
+    await this.audit.record(tx, {
+      action: 'vehicle_fine.paid',
+      targetId: fine.id,
+      metadata: {
+        unitId: fine.unitId,
+        chargeId: c.chargeId,
+        invoiceId: c.invoiceId,
+        amount: fine.amount.toFixed(2),
+      },
+    });
+  }
+
+  /**
+   * Its invoice is owed again: an office payment reversed in finance (ADR
+   * 0070). A paid fine is unpaid again; anything else stays.
+   */
+  private async owedAgain(tx: TenantTxClient, id: string): Promise<void> {
+    const fine = await this.lockRow(tx, id);
+    if (fine.status !== 'paid') return;
+    await tx.vehicleFine.update({
+      where: { id },
+      data: { status: 'unpaid' },
+    });
+    await this.audit.record(tx, {
+      action: 'vehicle_fine.reopened',
+      targetId: id,
+      metadata: { unitId: fine.unitId },
+    });
+  }
 
   async lockRow(tx: TenantTxClient, id: string): Promise<VehicleFine> {
     const rows = await tx.$queryRaw<{ id: string }[]>`
@@ -600,6 +703,11 @@ export class FinesService implements OnModuleInit {
       : new Map<string, Person>();
     const me = this.ctx.accountId;
     const now = await dbNow(tx);
+    const charges = await this.charges.of(
+      tx,
+      'vehicle_fine',
+      fines.map((f) => f.id),
+    );
     const out: FineFile[] = [];
     for (const fine of fines) {
       let canAppeal = false;
@@ -624,6 +732,10 @@ export class FinesService implements OnModuleInit {
         people,
         canAppeal,
         boardAppealUntil: boardAppealUntil(fine, now),
+        charge: ((c) =>
+          c ? { invoiceId: c.invoiceId, status: c.status } : null)(
+          charges.get(fine.id),
+        ),
       });
     }
     return out;

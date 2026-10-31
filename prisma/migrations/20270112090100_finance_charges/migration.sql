@@ -3,8 +3,9 @@
 -- price and a vehicle fine, each owed through one invoice of the unit's that
 -- the charges port issued (kinds `facility`, `club`, `fine`). One charge per
 -- source row, ever, and one per invoice. It is paid once its invoice is
--- settled by payments (stamped once, in the paying transaction, which runs
--- the source's handler) and cancelled once (a credit note of what the
+-- settled by payments (stamped in the paying transaction, which runs the
+-- source's handler; cleared when a reversed office payment leaves it owed
+-- again, never moved) and cancelled once (a credit note of what the
 -- invoice could still take, by nobody when the system cancels). Its source,
 -- invoice and amount never change (trigger); never deleted. `source_id`
 -- points at a booking, a club membership request or a vehicle fine by the
@@ -52,7 +53,7 @@ ALTER TABLE "finance_charges" ADD CONSTRAINT "finance_charges_amount"
 ALTER TABLE "finance_charges" ADD CONSTRAINT "finance_charges_cancel_shape"
   CHECK (("cancelled_at" IS NULL) = ("cancel_reason" IS NULL)
      AND ("cancel_reason" IS NULL
-          OR "cancel_reason" IN ('booking_cancelled', 'booking_rejected', 'closure', 'appeal_accepted', 'request_cancelled')));
+          OR "cancel_reason" IN ('booking_cancelled', 'booking_rejected', 'closure', 'appeal_accepted', 'fine_cancelled', 'request_cancelled')));
 
 CREATE FUNCTION finance_charge_keeps_its_terms() RETURNS trigger
   LANGUAGE plpgsql AS $$
@@ -67,7 +68,8 @@ BEGIN
      AND NEW."invoice_id" = OLD."invoice_id"
      AND NEW."amount" = OLD."amount"
      AND NEW."raised_at" = OLD."raised_at"
-     AND (NEW."paid_at" IS NOT DISTINCT FROM OLD."paid_at" OR OLD."paid_at" IS NULL)
+     AND (NEW."paid_at" IS NOT DISTINCT FROM OLD."paid_at"
+          OR OLD."paid_at" IS NULL OR NEW."paid_at" IS NULL)
      AND ((NEW."cancelled_at" IS NOT DISTINCT FROM OLD."cancelled_at"
            AND NEW."cancel_reason" IS NOT DISTINCT FROM OLD."cancel_reason")
           OR OLD."cancelled_at" IS NULL) THEN

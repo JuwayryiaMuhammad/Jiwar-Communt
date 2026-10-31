@@ -9,6 +9,7 @@ import {
   type Who,
 } from '../setup/facilities';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { vehicleHelpers } from '../setup/vehicles';
 
 /**
  * One scenario per entry of booking extras' and charges' catalog (ADR 0014,
@@ -177,6 +178,63 @@ describe('Audit coverage — booking extras and charges', () => {
           reasonCode: 'wrong_plan',
           chargeStatus: 'cancelled',
         },
+      });
+    });
+  });
+
+  describe('fines through finance', () => {
+    it('vehicle_fine.paid, finance_charge.reopened and vehicle_fine.reopened — paid as its invoice, then the payment reversed', async () => {
+      // A home of its own: no credit from the scenarios above pays it first.
+      const home = await f.unit(s.c, 'C');
+      const fine = await vehicleHelpers(h).fine(s.manager, home.code, {
+        amount: '200',
+      });
+      const charge = await f.inTx(s.c, (tx) =>
+        tx.financeCharge.findFirstOrThrow({
+          where: { source: 'vehicle_fine', sourceId: fine.id },
+        }),
+      );
+      const payment = (
+        await f
+          .http('post', `/staff/units/${home.id}/payments`, accountant.token, {
+            amount: '200.00',
+            method: 'cash',
+            paidOn: day(0),
+            invoiceIds: [charge.invoiceId],
+          })
+          .expect(201)
+      ).body as { id: string };
+      expect(await single('vehicle_fine.paid', fine.id)).toMatchObject({
+        actorId: accountant.id,
+        metadata: {
+          unitId: home.id,
+          chargeId: charge.id,
+          invoiceId: charge.invoiceId,
+          amount: '200.00',
+        },
+      });
+      await f
+        .http(
+          'post',
+          `/staff/payments/${payment.id}/reverse`,
+          accountant.token,
+          {
+            reasonCode: 'entered_in_error',
+          },
+        )
+        .expect(201);
+      expect(await single('finance_charge.reopened', charge.id)).toMatchObject({
+        actorId: accountant.id,
+        metadata: {
+          source: 'vehicle_fine',
+          sourceId: fine.id,
+          unitId: home.id,
+          invoiceId: charge.invoiceId,
+        },
+      });
+      expect(await single('vehicle_fine.reopened', fine.id)).toMatchObject({
+        actorId: accountant.id,
+        metadata: { unitId: home.id },
       });
     });
   });

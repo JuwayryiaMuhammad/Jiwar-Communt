@@ -344,11 +344,22 @@ describe('Parking reports', () => {
           Object.keys(issued).sort(),
         );
         const strip = (f: Record<string, unknown>) => {
-          const { id: _id, reference: _ref, createdAt: _at, ...rest } = f;
+          const {
+            id: _id,
+            reference: _ref,
+            createdAt: _at,
+            charge,
+            ...rest
+          } = f;
           void _id;
           void _ref;
           void _at;
-          return rest;
+          // Each fine owes through its own invoice (ADR 0070).
+          const { invoiceId: _inv, ...state } = charge as {
+            invoiceId: string;
+          };
+          void _inv;
+          return { ...rest, charge: state };
         };
         expect(strip(fromReport)).toEqual(strip(issued));
         expect(fromReport.photoUrl).toBeNull();

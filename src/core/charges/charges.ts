@@ -40,6 +40,7 @@ export type ChargeCancelReason =
   | 'booking_rejected'
   | 'closure'
   | 'appeal_accepted'
+  | 'fine_cancelled'
   | 'request_cancelled';
 
 export interface NewCharge {
@@ -84,6 +85,25 @@ export type PaidHandler = (
   charge: PaidCharge,
 ) => Promise<void>;
 
+/**
+ * Runs when a paid charge's invoice is owed again — an office payment
+ * reversed — in that transaction, after the finance locks. A source whose
+ * paid state can go back (a fine) registers one; the club's membership
+ * keeps the period it was given.
+ */
+export type UnpaidHandler = (
+  tx: TenantTxClient,
+  charge: Omit<PaidCharge, 'paidAt'>,
+) => Promise<void>;
+
+/** A payment taken at the office for one charge (a fine's, ADR 0070). */
+export interface OfficeCharge {
+  source: ChargeSource;
+  sourceId: string;
+  amount: Prisma.Decimal;
+  paidOn: LocalDate;
+}
+
 /** What finance implements. */
 export interface ChargesImpl {
   /** Takes the unit's finance lock (and the compound's, shared). */
@@ -102,6 +122,17 @@ export interface ChargesImpl {
     sourceId: string,
     reason: ChargeCancelReason,
   ): Promise<ChargeState | null>;
+  /**
+   * Records the office's payment of the charge's invoice, as finance's
+   * office payment does (its receipt, the unit told); returns its id.
+   */
+  payAtOffice(tx: TenantTxClient, payment: OfficeCharge): Promise<string>;
+  /** Reverses such a payment, once, with finance's `paymentReverse` code. */
+  reverseAtOffice(
+    tx: TenantTxClient,
+    paymentId: string,
+    reasonCode: string,
+  ): Promise<void>;
   /** The sources' charges, by source id. */
   of(
     tx: TenantTxClient,
@@ -114,6 +145,7 @@ export interface ChargesImpl {
 export class Charges {
   private impl: ChargesImpl | null = null;
   private readonly handlers = new Map<ChargeSource, PaidHandler>();
+  private readonly unpaid = new Map<ChargeSource, UnpaidHandler>();
 
   /** Finance, at startup: once. */
   implement(impl: ChargesImpl): void {
@@ -131,6 +163,30 @@ export class Charges {
   /** Finance, in the paying transaction. */
   paidHandler(source: ChargeSource): PaidHandler | null {
     return this.handlers.get(source) ?? null;
+  }
+
+  /** A domain, at startup: one per source, when its paid state can go back. */
+  registerUnpaidHandler(source: ChargeSource, handler: UnpaidHandler): void {
+    if (this.unpaid.has(source))
+      throw new Error(`Charges: unpaid handler for ${source} registered twice`);
+    this.unpaid.set(source, handler);
+  }
+
+  /** Finance, in the transaction that re-owed it. */
+  unpaidHandler(source: ChargeSource): UnpaidHandler | null {
+    return this.unpaid.get(source) ?? null;
+  }
+
+  payAtOffice(tx: TenantTxClient, payment: OfficeCharge): Promise<string> {
+    return this.need().payAtOffice(tx, payment);
+  }
+
+  reverseAtOffice(
+    tx: TenantTxClient,
+    paymentId: string,
+    reasonCode: string,
+  ): Promise<void> {
+    return this.need().reverseAtOffice(tx, paymentId, reasonCode);
   }
 
   lockUnit(tx: TenantTxClient, unitId: string): Promise<void> {

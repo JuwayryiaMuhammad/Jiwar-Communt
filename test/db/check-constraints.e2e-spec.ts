@@ -869,6 +869,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'cancel_reason IS NULL is tested first, and the shape pairs it with cancelled_at',
   },
   billing_plans_staff_kind: {},
+  vehicle_fine_payments_finance_payment: {},
   credit_notes_author: {},
   club_membership_requests_amount: {},
   club_membership_requests_state_shape: {},

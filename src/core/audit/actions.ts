@@ -938,6 +938,15 @@ export const AUDIT_ACTIONS = {
   // metadata: source, sourceId, unitId, invoiceId, reasonCode,
   // creditNoteId, credited, released.
   'finance_charge.cancelled': { log: 'tenant', target: 'finance_charge' },
+  // An office payment reversed left a paid charge owed again. metadata:
+  // source, sourceId, unitId, invoiceId.
+  'finance_charge.reopened': { log: 'tenant', target: 'finance_charge' },
+  // A fine paid as its invoice (ADR 0070). metadata: unitId, chargeId,
+  // invoiceId, amount. The paying transaction's actor, or nobody.
+  'vehicle_fine.paid': { log: 'tenant', target: 'vehicle_fine' },
+  // Its paid invoice owed again (an office payment reversed in finance).
+  // metadata: unitId.
+  'vehicle_fine.reopened': { log: 'tenant', target: 'vehicle_fine' },
   // changes: kind, frequency, amount, days and state by value; names as
   // changed only.
   'billing_plan.created': {

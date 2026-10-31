@@ -23161,10 +23161,7 @@ export interface components {
             /** @description At least 12 characters (checked by the service). */
             newPassword: string;
         };
-        /**
-         * @description `cancelled`: credited off — what was paid of it is the unit’s credit.
-         * @enum {string}
-         */
+        /** @enum {string} */
         ChargeStatus: "open" | "paid" | "cancelled";
         CheckAssetImportDto: {
             /**
@@ -27933,6 +27930,16 @@ export interface components {
             /** @description The appellant’s words; null once the appellant was erased. */
             reason: string | null;
         };
+        FineChargeView: {
+            /** Format: uuid */
+            invoiceId: string;
+            status: components["schemas"]["ChargeStatus"];
+        };
+        /**
+         * @description `online`: owed through an invoice of the unit’s (`charge`, ADR 0070), paid as any invoice; `office`: issued before, paid at the office only.
+         * @enum {string}
+         */
+        FinePayable: "online" | "office";
         FinePaymentView: {
             amount: string | null;
             /** Format: date-time */
@@ -35404,6 +35411,7 @@ export interface components {
             canAppeal: boolean;
             /** @description Why it was cancelled: `vehicleFineCancel`. */
             cancelReason: string | null;
+            charge: components["schemas"]["FineChargeView"] | null;
             /** Format: date-time */
             createdAt: string;
             /** @enum {string} */
@@ -35414,6 +35422,8 @@ export interface components {
             id: string;
             /** @description The staff’s words. */
             note: string | null;
+            /** @description `online`: owed through an invoice of the unit’s (`charge`, ADR 0070), paid as any invoice; `office`: issued before, paid at the office only. */
+            payable: components["schemas"]["FinePayable"];
             /** @description A presigned URL, valid for minutes. */
             photoUrl: string | null;
             plate: string;
@@ -37701,6 +37711,7 @@ export interface components {
             /** Format: date-time */
             cancelledAt: string | null;
             cancelledBy: components["schemas"]["AccountRefView"] | null;
+            charge: components["schemas"]["FineChargeView"] | null;
             /** Format: date-time */
             createdAt: string;
             currency: string;
@@ -37711,6 +37722,8 @@ export interface components {
             note: string | null;
             /** @description `YYYY-MM-DD`. */
             occurredOn: string;
+            /** @description `online`: owed through an invoice of the unit’s (`charge`, ADR 0070), paid as any invoice; `office`: issued before, paid at the office only. */
+            payable: components["schemas"]["FinePayable"];
             payments: components["schemas"]["StaffFinePaymentView"][];
             photoUrl: string | null;
             plate: string;

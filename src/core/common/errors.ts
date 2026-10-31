@@ -601,6 +601,7 @@ export const ErrorCode = {
   FINE_UNDER_APPEAL: 'FINE_UNDER_APPEAL',
   /** Paid already, or cancelled (409, params.status). */
   FINE_NOT_PAYABLE: 'FINE_NOT_PAYABLE',
+
   /** Unknown, another compound's, or not a payment. */
   FINE_PAYMENT_NOT_FOUND: 'FINE_PAYMENT_NOT_FOUND',
   /** It was reversed already (409). */

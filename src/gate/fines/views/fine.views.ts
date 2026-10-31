@@ -36,6 +36,17 @@ export class FineAppealView {
 }
 
 /** A unit's fine as its people see it (ADR 0045). Never where it came from. */
+/** A fine's invoice (ADR 0070). */
+export class FineChargeView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  invoiceId: string;
+  @ApiProperty({
+    enum: ['open', 'paid', 'cancelled'],
+    enumName: 'ChargeStatus',
+  })
+  status: 'open' | 'paid' | 'cancelled';
+}
+
 export class ResidentFineView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -109,6 +120,15 @@ export class ResidentFineView {
       'When it was taken to the board; no payment until the board decides.',
   })
   boardAppealAt: Date | null;
+  @ApiProperty({
+    enum: ['online', 'office'],
+    enumName: 'FinePayable',
+    description:
+      '`online`: owed through an invoice of the unit’s (`charge`, ADR 0070), paid as any invoice; `office`: issued before, paid at the office only.',
+  })
+  payable: 'online' | 'office';
+  @ApiProperty({ type: FineChargeView, nullable: true })
+  charge: FineChargeView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -138,6 +158,8 @@ export class ResidentFineView {
       canAppeal: f.canAppeal,
       boardAppealUntil: f.boardAppealUntil,
       boardAppealAt: v.boardAppealAt,
+      payable: f.charge ? 'online' : 'office',
+      charge: f.charge,
       createdAt: v.createdAt,
     };
   }
@@ -235,6 +257,15 @@ export class StaffFineView {
   cancelledAt: Date | null;
   @ApiProperty({ type: [StaffFinePaymentView] })
   payments: StaffFinePaymentView[];
+  @ApiProperty({
+    enum: ['online', 'office'],
+    enumName: 'FinePayable',
+    description:
+      '`online`: owed through an invoice of the unit’s (`charge`, ADR 0070), paid as any invoice; `office`: issued before, paid at the office only.',
+  })
+  payable: 'online' | 'office';
+  @ApiProperty({ type: FineChargeView, nullable: true })
+  charge: FineChargeView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -277,6 +308,8 @@ export class StaffFineView {
         ...FinePaymentView.from(p),
         recordedBy: ref(p.recordedById)!,
       })),
+      payable: f.charge ? 'online' : 'office',
+      charge: f.charge,
       createdAt: v.createdAt,
     };
   }

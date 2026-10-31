@@ -310,59 +310,73 @@ export class PaymentsService implements OnModuleInit {
       const id = newId();
       await this.idempotency.claim(tx, { type: PAYMENT_RESOURCE, id });
       await this.access.lockSelf(tx);
-      const payment = await tx.financePayment.findUnique({
-        where: { id: paymentId },
-      });
-      if (payment?.kind !== 'payment') throw paymentNotFound();
-      if (payment.channel !== 'office')
-        throw appError.conflict(
-          ErrorCode.PAYMENT_NOT_REVERSIBLE,
-          'An online payment cannot be reversed',
-        );
-      await this.access.lockUnits(tx, [payment.unitId]);
-      const already = await tx.financePayment.findFirst({
-        where: { reversesId: paymentId },
-        select: { id: true },
-      });
-      if (already)
-        throw appError.conflict(
-          ErrorCode.PAYMENT_ALREADY_REVERSED,
-          'Reversed already',
-        );
-      // Its money left the compound as a refund already (ADR 0048).
-      const refunded = await tx.financeRefundSource.findFirst({
-        where: { paymentId, refund: { reversedBy: null } },
-        select: { id: true },
-      });
-      if (refunded)
-        throw appError.conflict(
-          ErrorCode.PAYMENT_REFUNDED,
-          'Money of this payment was refunded',
-        );
-      await tx.financePayment.create({
-        data: {
-          id,
-          tenantId: payment.tenantId,
-          kind: 'reversal',
-          unitId: payment.unitId,
-          reversesId: paymentId,
-          reasonCode,
-          recordedById: this.ctx.accountId,
-        },
-      });
-      await allocateUnit(tx, payment.tenantId, payment.unitId);
-      await this.settler.settle(tx, [payment.unitId]);
-      await this.audit.record(tx, {
-        action: 'payment.reversed',
-        targetId: id,
-        metadata: {
-          paymentId,
-          unitId: payment.unitId,
-          amount: show(payment.amount!),
-          reasonCode,
-        },
-      });
+      await this.reverseInTx(tx, id, paymentId, reasonCode);
       return this.detailIn(tx, paymentId, true);
+    });
+  }
+
+  /**
+   * Reverses an office payment in the caller's transaction, after its
+   * account lock: the unit's finance lock, then once, unless its money was
+   * refunded. A fine's office payment is reversed here too (ADR 0070).
+   */
+  async reverseInTx(
+    tx: TenantTxClient,
+    id: string,
+    paymentId: string,
+    reasonCode: string,
+  ): Promise<void> {
+    const payment = await tx.financePayment.findUnique({
+      where: { id: paymentId },
+    });
+    if (payment?.kind !== 'payment') throw paymentNotFound();
+    if (payment.channel !== 'office')
+      throw appError.conflict(
+        ErrorCode.PAYMENT_NOT_REVERSIBLE,
+        'An online payment cannot be reversed',
+      );
+    await this.access.lockUnits(tx, [payment.unitId]);
+    const already = await tx.financePayment.findFirst({
+      where: { reversesId: paymentId },
+      select: { id: true },
+    });
+    if (already)
+      throw appError.conflict(
+        ErrorCode.PAYMENT_ALREADY_REVERSED,
+        'Reversed already',
+      );
+    // Its money left the compound as a refund already (ADR 0048).
+    const refunded = await tx.financeRefundSource.findFirst({
+      where: { paymentId, refund: { reversedBy: null } },
+      select: { id: true },
+    });
+    if (refunded)
+      throw appError.conflict(
+        ErrorCode.PAYMENT_REFUNDED,
+        'Money of this payment was refunded',
+      );
+    await tx.financePayment.create({
+      data: {
+        id,
+        tenantId: payment.tenantId,
+        kind: 'reversal',
+        unitId: payment.unitId,
+        reversesId: paymentId,
+        reasonCode,
+        recordedById: this.ctx.accountId,
+      },
+    });
+    await allocateUnit(tx, payment.tenantId, payment.unitId);
+    await this.settler.settle(tx, [payment.unitId]);
+    await this.audit.record(tx, {
+      action: 'payment.reversed',
+      targetId: id,
+      metadata: {
+        paymentId,
+        unitId: payment.unitId,
+        amount: show(payment.amount!),
+        reasonCode,
+      },
     });
   }
 

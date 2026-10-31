@@ -7350,7 +7350,6 @@
         "type": "object"
       },
       "ChargeStatus": {
-        "description": "`cancelled`: credited off — what was paid of it is the unit’s credit.",
         "enum": [
           "open",
           "paid",
@@ -21698,6 +21697,34 @@
           "decidedAt"
         ],
         "type": "object"
+      },
+      "FineChargeView": {
+        "properties": {
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargeStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "invoiceId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "FinePayable": {
+        "description": "`online`: owed through an invoice of the unit’s (`charge`, ADR 0070), paid as any invoice; `office`: issued before, paid at the office only.",
+        "enum": [
+          "online",
+          "office"
+        ],
+        "type": "string"
       },
       "FinePaymentView": {
         "properties": {
@@ -45562,6 +45589,15 @@
             "nullable": true,
             "type": "string"
           },
+          "charge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FineChargeView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -45584,6 +45620,14 @@
             "description": "The staff’s words.",
             "nullable": true,
             "type": "string"
+          },
+          "payable": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinePayable"
+              }
+            ],
+            "description": "`online`: owed through an invoice of the unit’s (`charge`, ADR 0070), paid as any invoice; `office`: issued before, paid at the office only."
           },
           "photoUrl": {
             "description": "A presigned URL, valid for minutes.",
@@ -45626,6 +45670,8 @@
           "canAppeal",
           "boardAppealUntil",
           "boardAppealAt",
+          "payable",
+          "charge",
           "createdAt"
         ],
         "type": "object"
@@ -53320,6 +53366,15 @@
             "nullable": true,
             "type": "object"
           },
+          "charge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FineChargeView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -53350,6 +53405,14 @@
           "occurredOn": {
             "description": "`YYYY-MM-DD`.",
             "type": "string"
+          },
+          "payable": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinePayable"
+              }
+            ],
+            "description": "`online`: owed through an invoice of the unit’s (`charge`, ADR 0070), paid as any invoice; `office`: issued before, paid at the office only."
           },
           "payments": {
             "items": {
@@ -53413,6 +53476,8 @@
           "cancelledBy",
           "cancelledAt",
           "payments",
+          "payable",
+          "charge",
           "createdAt"
         ],
         "type": "object"

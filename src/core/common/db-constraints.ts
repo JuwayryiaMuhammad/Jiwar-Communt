@@ -929,4 +929,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // A conversation a listing and responder, checked first under the pair's
   // lock (NEIGHBOUR_CONVERSATION_EXISTS); a violation is a race.
   neighbour_conversations_one_per_listing_responder: null,
+  // One open shop an account, checked first under the quota lock
+  // (MARKET_SHOP_EXISTS); a violation is a race.
+  market_shops_tenant_id_id_key: null,
+  market_shops_one_open: null,
 };

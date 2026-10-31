@@ -2197,6 +2197,14 @@ export const AUDIT_ACTIONS = {
   // Its day passed (the sweep, or a new listing of its unit). metadata: kind.
   'market_listing.expired': { log: 'tenant', target: 'market_listing' },
   'market.settings_changed': { log: 'tenant', target: 'tenant' },
+  // A resident's shop. metadata: category; reasonCode where a code was
+  // given; by (owner | system) when it closed. Never its words.
+  'market_shop.opened': { log: 'tenant', target: 'market_shop' },
+  'market_shop.approved': { log: 'tenant', target: 'market_shop' },
+  'market_shop.rejected': { log: 'tenant', target: 'market_shop' },
+  'market_shop.suspended': { log: 'tenant', target: 'market_shop' },
+  'market_shop.reinstated': { log: 'tenant', target: 'market_shop' },
+  'market_shop.closed': { log: 'tenant', target: 'market_shop' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -1,7 +1,7 @@
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
-import { listingRow } from '../setup/market-rows';
+import { listingRow, shopRow } from '../setup/market-rows';
 import type { Side } from './world';
 
 /**
@@ -11,6 +11,8 @@ import type { Side } from './world';
 export interface R11c2World {
   /** A live listing B's owner put on B's market. */
   bListingId: string;
+  /** B's owner's open shop. */
+  bShopId: string;
 }
 
 export async function r11c2World(
@@ -25,6 +27,11 @@ export async function r11c2World(
         tenantId: b.tenantId,
         sellerId: b.ids.owner,
         sellerUnitId: b.homeUnitId,
+      }),
+      bShopId: await shopRow(tx, {
+        tenantId: b.tenantId,
+        ownerId: b.ids.owner,
+        ownerUnitId: b.homeUnitId,
       }),
     })),
   );

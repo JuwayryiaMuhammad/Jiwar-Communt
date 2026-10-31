@@ -68,3 +68,31 @@ export async function listingRow(
   });
   return id;
 }
+
+/** An open shop, active unless told otherwise. */
+export async function shopRow(
+  tx: TenantTxClient,
+  row: {
+    tenantId: string;
+    ownerId: string;
+    ownerUnitId: string;
+    status?: 'pending' | 'active';
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.marketShop.create({
+    data: {
+      id,
+      tenantId: row.tenantId,
+      ownerId: row.ownerId,
+      ownerUnitId: row.ownerUnitId,
+      nameEn: 'Home bakery',
+      nameAr: 'مخبز منزلي',
+      description: 'Bread on Fridays.',
+      category: 'food',
+      status: row.status ?? 'active',
+      createdAt: dbClock(),
+    },
+  });
+  return id;
+}

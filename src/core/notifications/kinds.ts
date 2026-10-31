@@ -2617,6 +2617,28 @@ export const NOTIFICATION_KINDS = {
     target: 'market_listing',
     params: { listingKind: {}, reason: {} },
   },
+  /** A handler opened the owner's shop, or reinstated it. */
+  'market_shop.approved': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_shop',
+    params: {},
+  },
+  'market_shop.rejected': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_shop',
+    params: { reason: {} },
+  },
+  'market_shop.suspended': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'market_shop',
+    params: { reason: {} },
+  },
   /** Its day is within two days: renew by listing it again. */
   'market_listing.expiring': {
     priority: 'normal',

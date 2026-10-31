@@ -32,17 +32,23 @@ import {
   ListingReasonDto,
   MarketQueryDto,
   MarketQueueQueryDto,
+  OpenShopDto,
+  ShopReasonDto,
+  StaffShopsQueryDto,
   UpdateListingDto,
   UpdateMarketSettingsDto,
 } from './dto/market.dto';
 import { ListingsService } from './listings.service';
 import { MarketSettingsService } from './market-settings.service';
+import { ShopsService } from './shops.service';
 import {
   ListingCreatedView,
   ListingView,
   MarketSettingsView,
   MyListingView,
+  ShopView,
   StaffListingView,
+  StaffShopView,
 } from './views/market.views';
 
 /**
@@ -243,5 +249,118 @@ export class MarketSettingsController {
     @Body() dto: UpdateMarketSettingsDto,
   ): Promise<MarketSettingsView> {
     return MarketSettingsView.from(await this.settings.update(dto));
+  }
+}
+
+/** Residents' small shops (ADR 0071): a building, never a person. */
+@ApiArea('market')
+@RequirePermissions('market.post')
+@Controller('market/shops')
+export class ShopsController {
+  constructor(private readonly shops: ShopsService) {}
+
+  @Post()
+  @NoStore()
+  @ApiOperation({ summary: 'Open my shop (it waits for the management)' })
+  @ApiCreatedResponse({ type: ShopView })
+  async open(@Body() dto: OpenShopDto): Promise<ShopView> {
+    const shop = await this.shops.open(dto);
+    return ShopView.from(await this.shops.get(shop.id));
+  }
+
+  @Get()
+  @NoStore()
+  @ApiOperation({ summary: 'List the open shops' })
+  @ApiOkResponse({ type: ListOf(ShopView) })
+  async list(@Query() q: PageQueryDto): Promise<ListResponse<ShopView>> {
+    return toList(await this.shops.list(q), (r) => ShopView.from(r));
+  }
+
+  @Get(':id')
+  @NoStore()
+  @ApiOperation({ summary: 'Get an open shop, or my own' })
+  @ApiOkResponse({ type: ShopView })
+  async get(@Param('id', parseId()) id: string): Promise<ShopView> {
+    return ShopView.from(await this.shops.get(id));
+  }
+}
+
+/** A resident's own shop (ADR 0071). */
+@ApiArea('market')
+@RequirePermissions('market.post')
+@Controller('me/market/shop')
+export class MyShopController {
+  constructor(private readonly shops: ShopsService) {}
+
+  @Get()
+  @NoStore()
+  @ApiOperation({ summary: 'Get my shop, open or the last I had' })
+  @ApiOkResponse({ type: ShopView })
+  async get(): Promise<ShopView> {
+    return ShopView.from(await this.shops.mine());
+  }
+
+  @Post('close')
+  @HttpCode(204)
+  @NoStore()
+  @ApiOperation({ summary: 'Close my shop' })
+  @ApiNoContentResponse()
+  async close(): Promise<void> {
+    await this.shops.close();
+  }
+}
+
+/** The handlers' review of the shops (ADR 0071). */
+@ApiArea('market')
+@RequirePermissions('market.handle')
+@Controller('market/shop-review')
+export class ShopReviewController {
+  constructor(private readonly shops: ShopsService) {}
+
+  @Get()
+  @NoStore()
+  @ApiOperation({ summary: 'List the shops, by state' })
+  @ApiOkResponse({ type: ListOf(StaffShopView) })
+  async list(
+    @Query() q: StaffShopsQueryDto,
+  ): Promise<ListResponse<StaffShopView>> {
+    return toList(await this.shops.staffList(q), (r) =>
+      StaffShopView.fromStaff(r),
+    );
+  }
+
+  @Post(':id/approve')
+  @HttpCode(204)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Open a waiting shop, or reinstate a suspended one',
+  })
+  @ApiNoContentResponse()
+  async approve(@Param('id', parseId()) id: string): Promise<void> {
+    await this.shops.approve(id);
+  }
+
+  @Post(':id/reject')
+  @HttpCode(204)
+  @NoStore()
+  @ApiOperation({ summary: 'Turn a waiting shop down' })
+  @ApiNoContentResponse()
+  async reject(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ShopReasonDto,
+  ): Promise<void> {
+    await this.shops.reject(id, dto.reasonCode);
+  }
+
+  @Post(':id/suspend')
+  @HttpCode(204)
+  @NoStore()
+  @ApiOperation({ summary: 'Suspend an open shop' })
+  @ApiNoContentResponse()
+  async suspend(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ShopReasonDto,
+  ): Promise<void> {
+    await this.shops.suspend(id, dto.reasonCode);
   }
 }

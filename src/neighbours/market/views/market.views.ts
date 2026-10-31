@@ -3,6 +3,7 @@ import {
   MarketListingCategory,
   MarketListingKind,
   MarketListingStatus,
+  MarketShopStatus,
   type MarketListing,
 } from '@prisma/client';
 import { accountRef, AccountRefView } from '../../../core/common/http/personal';
@@ -12,6 +13,7 @@ import type {
   StaffListingRead,
 } from '../listings.service';
 import type { MarketSettingsView as Settings } from '../market-settings.service';
+import type { ShopRead, StaffShopRead } from '../shops.service';
 
 /** The answer to listing: enough to show and fetch it. No words. */
 export class ListingCreatedView {
@@ -139,6 +141,13 @@ export class ListingView {
     description: 'The unit for sale or to let.',
   })
   unit: ListedUnitView | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The seller’s shop it is listed under.',
+  })
+  shopId: string | null;
   @ApiProperty({ type: [ListingPhotoView] })
   photos: ListingPhotoView[];
   @ApiProperty({ type: String, format: 'date-time' })
@@ -159,6 +168,7 @@ export class ListingView {
       state: r.state,
       seller: { building: r.building, mine: r.mine },
       unit: r.unit,
+      shopId: l.shopId,
       photos: r.photos.map((p) => ListingPhotoView.from(p)),
       expiresAt: l.expiresAt,
       createdAt: l.createdAt,
@@ -227,5 +237,79 @@ export class MarketSettingsView {
 
   static from(s: Settings): MarketSettingsView {
     return { ...s };
+  }
+}
+
+/** A shop as residents read it: its building, never a person. */
+export class ShopView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Null once its owner was erased.',
+  })
+  nameEn: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  nameAr: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  description: string | null;
+  @ApiProperty({
+    enum: MarketListingCategory,
+    enumName: 'MarketListingCategory',
+  })
+  category: MarketListingCategory;
+  @ApiProperty({ enum: MarketShopStatus, enumName: 'MarketShopStatus' })
+  status: MarketShopStatus;
+  @ApiProperty({ type: String, nullable: true })
+  building: string | null;
+  @ApiProperty({ type: Boolean, description: 'The caller runs it.' })
+  mine: boolean;
+  @ApiProperty({ type: Number, description: 'Its listings on the market now.' })
+  liveListings: number;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'A suspension’s `marketShopSuspend` code, or why it closed: a `marketShopReject` code, `owner_left` or `owner_erased`.',
+  })
+  reasonCode: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(r: ShopRead): ShopView {
+    const s = r.shop;
+    return {
+      id: s.id,
+      nameEn: s.nameEn,
+      nameAr: s.nameAr,
+      description: s.description,
+      category: s.category,
+      status: s.status,
+      building: r.building,
+      mine: r.mine,
+      liveListings: r.liveListings,
+      reasonCode: s.reasonCode,
+      createdAt: s.createdAt,
+    };
+  }
+}
+
+/** What the handlers read of a shop: its owner named, the unit's code. */
+export class StaffShopView extends ShopView {
+  @ApiProperty({ type: AccountRefView })
+  owner: AccountRefView;
+  @ApiProperty({ type: String, nullable: true })
+  ownerUnitCode: string | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  decidedAt: Date | null;
+
+  static fromStaff(r: StaffShopRead): StaffShopView {
+    return {
+      ...ShopView.from(r),
+      owner: accountRef(r.owner),
+      ownerUnitCode: r.ownerUnitCode,
+      decidedAt: r.shop.decidedAt,
+    };
   }
 }

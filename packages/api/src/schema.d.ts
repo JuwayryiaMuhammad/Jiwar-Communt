@@ -8688,6 +8688,109 @@ export interface paths {
         patch: operations["MarketSettingsController_update"];
         trace?: never;
     };
+    "/api/v1/market/shop-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the shops, by state */
+        get: operations["ShopReviewController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/shop-review/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a waiting shop, or reinstate a suspended one */
+        post: operations["ShopReviewController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/shop-review/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a waiting shop down */
+        post: operations["ShopReviewController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/shop-review/{id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend an open shop */
+        post: operations["ShopReviewController_suspend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/shops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the open shops */
+        get: operations["ShopsController_list"];
+        put?: never;
+        /** Open my shop (it waits for the management) */
+        post: operations["ShopsController_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/shops/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an open shop, or my own */
+        get: operations["ShopsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -9313,6 +9416,40 @@ export interface paths {
         get: operations["MyListingsController_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/market/shop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my shop, open or the last I had */
+        get: operations["MyShopController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/market/shop/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close my shop */
+        post: operations["MyShopController_close"];
         delete?: never;
         options?: never;
         head?: never;
@@ -25915,6 +26052,11 @@ export interface components {
              * @example 1500.00
              */
             price?: string;
+            /**
+             * Format: uuid
+             * @description The caller’s own active shop, to list under (MARKET_SHOP_NOT_FOUND otherwise).
+             */
+            shopId?: string;
             title: string;
             /**
              * Format: uuid
@@ -31171,6 +31313,11 @@ export interface components {
              */
             price: string | null;
             seller: components["schemas"]["ListingSellerView"];
+            /**
+             * Format: uuid
+             * @description The seller’s shop it is listed under.
+             */
+            shopId: string | null;
             /** @description By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings. */
             state: components["schemas"]["MarketListingStatus"];
             /** @description Null once its seller was erased. */
@@ -31630,6 +31777,8 @@ export interface components {
             reportHideThreshold: number;
             requiresReview: boolean;
         };
+        /** @enum {string} */
+        MarketShopStatus: "pending" | "active" | "suspended" | "closed";
         MaskedPartyView: {
             /** @description The building they wrote from. Null when their unit names none. */
             building: string | null;
@@ -32173,6 +32322,11 @@ export interface components {
             /** @description Why it ended: a `marketListingReject` or `marketListingRemove` code, or `seller_left`, `seller_erased`, `owner_left` for the system’s withdrawals. */
             reasonCode: string | null;
             seller: components["schemas"]["ListingSellerView"];
+            /**
+             * Format: uuid
+             * @description The seller’s shop it is listed under.
+             */
+            shopId: string | null;
             /** @description By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings. */
             state: components["schemas"]["MarketListingStatus"];
             /** @description Null once its seller was erased. */
@@ -33015,6 +33169,17 @@ export interface components {
         OpenPaymentSessionDto: {
             /** @description Omitted or empty: every invoice the unit owes. */
             invoiceIds?: string[];
+        };
+        OpenShopDto: {
+            category: components["schemas"]["MarketListingCategory"];
+            description: string;
+            /**
+             * Format: uuid
+             * @description One of the caller’s units to run it from, when they have several: only its building shows.
+             */
+            fromUnitId?: string;
+            nameAr: string;
+            nameEn: string;
         };
         OtpRequestedView: {
             /**
@@ -37537,6 +37702,33 @@ export interface components {
             /** @description The zone, for a shift that is not at a gate (ADR 0050); the gate actions refuse it. */
             zone: components["schemas"]["PlaceView"] | null;
         };
+        ShopReasonDto: {
+            /** @description A code of the action’s list: `marketShopReject` to turn a shop down, `marketShopSuspend` to suspend one (INVALID_REASON_CODE names the allowed ones). */
+            reasonCode: string;
+        };
+        ShopView: {
+            building: string | null;
+            category: components["schemas"]["MarketListingCategory"];
+            /** Format: date-time */
+            createdAt: string;
+            description: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Its listings on the market now. */
+            liveListings: number;
+            /** @description The caller runs it. */
+            mine: boolean;
+            nameAr: string | null;
+            /** @description Null once its owner was erased. */
+            nameEn: string | null;
+            /** @description A suspension’s `marketShopSuspend` code, or why it closed: a `marketShopReject` code, `owner_left` or `owner_erased`. */
+            reasonCode: string | null;
+            status: components["schemas"]["MarketShopStatus"];
+        };
+        ShopViewList: {
+            data: components["schemas"]["ShopView"][];
+            nextCursor: string | null;
+        };
         SignIncidentDto: {
             /**
              * Format: uuid
@@ -39024,6 +39216,11 @@ export interface components {
             seller: components["schemas"]["ListingSellerView"];
             sellerAccount: components["schemas"]["AccountRefView"];
             sellerUnitCode: string | null;
+            /**
+             * Format: uuid
+             * @description The seller’s shop it is listed under.
+             */
+            shopId: string | null;
             /** @description By the reader’s clock: a live listing whose day passed reads `expired`. Others see only `live` listings. */
             state: components["schemas"]["MarketListingStatus"];
             /** @description Null once its seller was erased. */
@@ -39677,6 +39874,33 @@ export interface components {
             /** @description 1 for the first. */
             position: number;
             scan: components["schemas"]["StaffStopScanView"] | null;
+        };
+        StaffShopView: {
+            building: string | null;
+            category: components["schemas"]["MarketListingCategory"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            description: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Its listings on the market now. */
+            liveListings: number;
+            /** @description The caller runs it. */
+            mine: boolean;
+            nameAr: string | null;
+            /** @description Null once its owner was erased. */
+            nameEn: string | null;
+            owner: components["schemas"]["AccountRefView"];
+            ownerUnitCode: string | null;
+            /** @description A suspension’s `marketShopSuspend` code, or why it closed: a `marketShopReject` code, `owner_left` or `owner_erased`. */
+            reasonCode: string | null;
+            status: components["schemas"]["MarketShopStatus"];
+        };
+        StaffShopViewList: {
+            data: components["schemas"]["StaffShopView"][];
+            nextCursor: string | null;
         };
         StaffStopNoteView: {
             /** Format: uuid */
@@ -55962,6 +56186,162 @@ export interface operations {
             };
         };
     };
+    ShopReviewController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "pending" | "active" | "suspended" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffShopViewList"];
+                };
+            };
+        };
+    };
+    ShopReviewController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ShopReviewController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ShopReviewController_suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ShopsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopViewList"];
+                };
+            };
+        };
+    };
+    ShopsController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenShopDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopView"];
+                };
+            };
+        };
+    };
+    ShopsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopView"];
+                };
+            };
+        };
+    };
     MeController_me: {
         parameters: {
             query?: never;
@@ -56792,6 +57172,42 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MyListingViewList"];
                 };
+            };
+        };
+    };
+    MyShopController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopView"];
+                };
+            };
+        };
+    };
+    MyShopController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

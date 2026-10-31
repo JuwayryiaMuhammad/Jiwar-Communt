@@ -34594,7 +34594,7 @@
               },
               "raw": "{\n  \"kind\": \"sell\",\n  \"category\": \"furniture\",\n  \"title\": \"\",\n  \"body\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string | yes | What it is, its condition, where to see it. |\n| `category` | `furniture` \\| `electronics` \\| `appliances` \\| `clothing` \\| `kids` \\| `books` \\| `sports` \\| `vehicles` \\| `home_garden` \\| `services` \\| `food` \\| `real_estate` \\| `other` | yes | A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE). |\n| `fromUnitId` | string (uuid) |  | One of the caller’s units to list from, when they have several: only its building shows. Not for a unit listing. |\n| `kind` | `sell` \\| `give` \\| `wanted` \\| `service` \\| `unit_sale` \\| `unit_rent` | yes | `sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner). |\n| `negotiable` | boolean |  | Open to offers. Ignored without a price. |\n| `photoFileIds` | string[] |  | Up to 6 uploaded files of purpose `market_listing_photo`, in the order shown. |\n| `price` | string |  | EGP. Required to sell and for a unit (FIELD_REQUIRED); refused on a gift (FIELD_NOT_ALLOWED). |\n| `title` | string | yes |  |\n| `unitId` | string (uuid) |  | The unit for sale or to let: one the caller owns now (MARKET_UNIT_NOT_OWNED). Only for `unit_sale` and `unit_rent`. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string | yes | What it is, its condition, where to see it. |\n| `category` | `furniture` \\| `electronics` \\| `appliances` \\| `clothing` \\| `kids` \\| `books` \\| `sports` \\| `vehicles` \\| `home_garden` \\| `services` \\| `food` \\| `real_estate` \\| `other` | yes | A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE). |\n| `fromUnitId` | string (uuid) |  | One of the caller’s units to list from, when they have several: only its building shows. Not for a unit listing. |\n| `kind` | `sell` \\| `give` \\| `wanted` \\| `service` \\| `unit_sale` \\| `unit_rent` | yes | `sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner). |\n| `negotiable` | boolean |  | Open to offers. Ignored without a price. |\n| `photoFileIds` | string[] |  | Up to 6 uploaded files of purpose `market_listing_photo`, in the order shown. |\n| `price` | string |  | EGP. Required to sell and for a unit (FIELD_REQUIRED); refused on a gift (FIELD_NOT_ALLOWED). |\n| `shopId` | string (uuid) |  | The caller’s own active shop, to list under (MARKET_SHOP_NOT_FOUND otherwise). |\n| `title` | string | yes |  |\n| `unitId` | string (uuid) |  | The unit for sale or to let: one the caller owns now (MARKET_UNIT_NOT_OWNED). Only for `unit_sale` and `unit_rent`. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -35041,6 +35041,260 @@
           }
         },
         {
+          "name": "List the shops, by state",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "shop-review"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/shop-review"
+            }
+          }
+        },
+        {
+          "name": "Open a waiting shop, or reinstate a suspended one",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "shop-review",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/shop-review/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn a waiting shop down",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code of the action’s list: `marketShopReject` to turn a shop down, `marketShopSuspend` to suspend one (INVALID_REASON_CODE names the allowed ones). |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "shop-review",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/shop-review/:id/reject",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Suspend an open shop",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code of the action’s list: `marketShopReject` to turn a shop down, `marketShopSuspend` to suspend one (INVALID_REASON_CODE names the allowed ones). |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "shop-review",
+                ":id",
+                "suspend"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/shop-review/:id/suspend",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the open shops",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "shops"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/shops"
+            }
+          }
+        },
+        {
+          "name": "Open my shop (it waits for the management)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameEn\": \"\",\n  \"nameAr\": \"\",\n  \"description\": \"\",\n  \"category\": \"furniture\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `category` | `furniture` \\| `electronics` \\| `appliances` \\| `clothing` \\| `kids` \\| `books` \\| `sports` \\| `vehicles` \\| `home_garden` \\| `services` \\| `food` \\| `real_estate` \\| `other` | yes | A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE). |\n| `description` | string | yes |  |\n| `fromUnitId` | string (uuid) |  | One of the caller’s units to run it from, when they have several: only its building shows. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "shops"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/shops"
+            }
+          }
+        },
+        {
+          "name": "Get an open shop, or my own",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "shops",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/shops/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List my listings and how each ended",
           "request": {
             "description": "**Responses:** 200",
@@ -35072,6 +35326,49 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/me/market/listings"
+            }
+          }
+        },
+        {
+          "name": "Get my shop, open or the last I had",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "market",
+                "shop"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/market/shop"
+            }
+          }
+        },
+        {
+          "name": "Close my shop",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "market",
+                "shop",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/market/shop/close"
             }
           }
         }

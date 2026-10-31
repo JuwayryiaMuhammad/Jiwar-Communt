@@ -14228,6 +14228,11 @@
             "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
             "type": "string"
           },
+          "shopId": {
+            "description": "The caller’s own active shop, to list under (MARKET_SHOP_NOT_FOUND otherwise).",
+            "format": "uuid",
+            "type": "string"
+          },
           "title": {
             "maxLength": 80,
             "minLength": 3,
@@ -30652,6 +30657,12 @@
           "seller": {
             "$ref": "#/components/schemas/ListingSellerView"
           },
+          "shopId": {
+            "description": "The seller’s shop it is listed under.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "state": {
             "allOf": [
               {
@@ -30687,6 +30698,7 @@
           "state",
           "seller",
           "unit",
+          "shopId",
           "photos",
           "expiresAt",
           "createdAt"
@@ -32181,6 +32193,15 @@
           "reportHideThreshold"
         ],
         "type": "object"
+      },
+      "MarketShopStatus": {
+        "enum": [
+          "pending",
+          "active",
+          "suspended",
+          "closed"
+        ],
+        "type": "string"
       },
       "MaskedPartyView": {
         "properties": {
@@ -33997,6 +34018,12 @@
           "seller": {
             "$ref": "#/components/schemas/ListingSellerView"
           },
+          "shopId": {
+            "description": "The seller’s shop it is listed under.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "state": {
             "allOf": [
               {
@@ -34032,6 +34059,7 @@
           "state",
           "seller",
           "unit",
+          "shopId",
           "photos",
           "expiresAt",
           "createdAt",
@@ -36640,6 +36668,44 @@
             "type": "array"
           }
         },
+        "type": "object"
+      },
+      "OpenShopDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingCategory"
+              }
+            ]
+          },
+          "description": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "fromUnitId": {
+            "description": "One of the caller’s units to run it from, when they have several: only its building shows.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 60,
+            "minLength": 2,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 60,
+            "minLength": 2,
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr",
+          "description",
+          "category"
+        ],
         "type": "object"
       },
       "OtpRequestedView": {
@@ -51044,6 +51110,107 @@
         ],
         "type": "object"
       },
+      "ShopReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code of the action’s list: `marketShopReject` to turn a shop down, `marketShopSuspend` to suspend one (INVALID_REASON_CODE names the allowed ones).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ShopView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingCategory"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "liveListings": {
+            "description": "Its listings on the market now.",
+            "type": "number"
+          },
+          "mine": {
+            "description": "The caller runs it.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Null once its owner was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A suspension’s `marketShopSuspend` code, or why it closed: a `marketShopReject` code, `owner_left` or `owner_erased`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketShopStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "description",
+          "category",
+          "status",
+          "building",
+          "mine",
+          "liveListings",
+          "reasonCode",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ShopViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ShopView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "SignIncidentDto": {
         "properties": {
           "fileId": {
@@ -56310,6 +56477,12 @@
             "nullable": true,
             "type": "string"
           },
+          "shopId": {
+            "description": "The seller’s shop it is listed under.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "state": {
             "allOf": [
               {
@@ -56349,6 +56522,7 @@
           "state",
           "seller",
           "unit",
+          "shopId",
           "photos",
           "expiresAt",
           "createdAt",
@@ -58582,6 +58756,110 @@
           "location",
           "scan",
           "note"
+        ],
+        "type": "object"
+      },
+      "StaffShopView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingCategory"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "liveListings": {
+            "description": "Its listings on the market now.",
+            "type": "number"
+          },
+          "mine": {
+            "description": "The caller runs it.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Null once its owner was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "ownerUnitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A suspension’s `marketShopSuspend` code, or why it closed: a `marketShopReject` code, `owner_left` or `owner_erased`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketShopStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "description",
+          "category",
+          "status",
+          "building",
+          "mine",
+          "liveListings",
+          "reasonCode",
+          "createdAt",
+          "owner",
+          "ownerUnitCode",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
+      "StaffShopViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffShopView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -93739,6 +94017,308 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/market/shop-review": {
+      "get": {
+        "operationId": "ShopReviewController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "active",
+                "suspended",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffShopViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the shops, by state",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/shop-review/{id}/approve": {
+      "post": {
+        "operationId": "ShopReviewController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a waiting shop, or reinstate a suspended one",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/shop-review/{id}/reject": {
+      "post": {
+        "operationId": "ShopReviewController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn a waiting shop down",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/shop-review/{id}/suspend": {
+      "post": {
+        "operationId": "ShopReviewController_suspend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suspend an open shop",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/shops": {
+      "get": {
+        "operationId": "ShopsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the open shops",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ShopsController_open",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenShopDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open my shop (it waits for the management)",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/shops/{id}": {
+      "get": {
+        "operationId": "ShopsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an open shop, or my own",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "MeController_me",
@@ -95172,6 +95752,57 @@
           }
         ],
         "summary": "List my listings and how each ended",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/market/shop": {
+      "get": {
+        "operationId": "MyShopController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my shop, open or the last I had",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/market/shop/close": {
+      "post": {
+        "operationId": "MyShopController_close",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close my shop",
         "tags": [
           "market"
         ],

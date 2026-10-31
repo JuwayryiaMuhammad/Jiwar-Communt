@@ -2576,6 +2576,15 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   market_listing_photos_position_range: {},
   neighbour_conversations_one_subject: {},
+  market_shops_erased_shape: {},
+  market_shops_text_length: {
+    guarded:
+      'each of the three words is tested IS NULL first; the length runs only on a value',
+  },
+  market_shops_state_shape: {
+    guarded:
+      'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',
+  },
 };
 
 interface Check {

@@ -21,7 +21,8 @@ import {
   ConversationView,
 } from '../conversations/views/conversation.views';
 import { ListingsService } from '../market/listings.service';
-import { MyListingView } from '../market/views/market.views';
+import { ShopsService } from '../market/shops.service';
+import { MyListingView, ShopView } from '../market/views/market.views';
 import { PostsService } from '../posts/posts.service';
 import { BoardPostView, MyClaimView } from '../posts/views/post.views';
 
@@ -45,7 +46,9 @@ const PAGE = 100;
  * - `neighbours/blocks.json`: its blocks, each a building and a date;
  * - `market/listings.json`: every listing it put on the market (ADR
  *   0071), in every state, as its own list shows them, the photos as a
- *   count. A conversation about one is among its conversations above.
+ *   count. A conversation about one is among its conversations above;
+ * - `market/shops.json`: every shop it opened, in every state, with the
+ *   code it was turned down or suspended for.
  *
  * Nothing here is another person's identity. A sender is `mine` or not,
  * never a name; the other side of a conversation is the building the
@@ -67,6 +70,7 @@ export class NeighboursExportSections implements OnModuleInit {
     private readonly conversations: ConversationsService,
     private readonly blocks: BlocksService,
     private readonly listings: ListingsService,
+    private readonly shops: ShopsService,
   ) {}
 
   onModuleInit(): void {
@@ -135,6 +139,10 @@ export class NeighboursExportSections implements OnModuleInit {
       listings.push({ ...view, photoCount });
     }
     yield { path: 'market/listings.json', json: listings };
+    yield {
+      path: 'market/shops.json',
+      json: (await this.shops.everyOwn()).map((r) => ShopView.from(r)),
+    };
   }
 
   /** The complaints the account filed, each with its own thread. */

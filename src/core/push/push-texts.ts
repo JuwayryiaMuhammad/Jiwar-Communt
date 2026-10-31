@@ -2843,6 +2843,33 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أزالت الإدارة إعلانك من السوق. افتحه لمعرفة السبب.',
     },
   },
+  'market_shop.approved': {
+    en: {
+      title: 'Your shop is open',
+      body: 'Your shop is open on the market.',
+    },
+    ar: { title: 'متجرك مفتوح', body: 'متجرك مفتوح الآن في السوق.' },
+  },
+  'market_shop.rejected': {
+    en: {
+      title: 'Your shop was not approved',
+      body: 'The management did not approve your shop. Open it to see why.',
+    },
+    ar: {
+      title: 'لم يُقبل متجرك',
+      body: 'لم توافق الإدارة على متجرك. افتحه لمعرفة السبب.',
+    },
+  },
+  'market_shop.suspended': {
+    en: {
+      title: 'Your shop was suspended',
+      body: 'The management suspended your shop. Open it to see why.',
+    },
+    ar: {
+      title: 'أُوقف متجرك',
+      body: 'أوقفت الإدارة متجرك مؤقتًا. افتحه لمعرفة السبب.',
+    },
+  },
   'market_listing.expiring': {
     en: {
       title: 'Your listing ends soon',

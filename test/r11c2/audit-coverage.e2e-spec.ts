@@ -120,6 +120,58 @@ describe('Audit coverage — community', () => {
       });
     });
 
+    it('market_shop.opened, .approved, .suspended, .reinstated, .rejected and .closed — the category, the codes, who closed it; never its words', async () => {
+      const open = async (by: typeof s.alice, nameEn: string) =>
+        (
+          (
+            await m
+              .http('post', '/market/shops', by.token, {
+                nameEn,
+                nameAr: 'متجر',
+                description: MARKER,
+                category: 'food',
+              })
+              .expect(201)
+          ).body as { id: string }
+        ).id;
+      const act = (id: string, action: string, reasonCode?: string) =>
+        m
+          .http(
+            'post',
+            `/market/shop-review/${id}/${action}`,
+            s.marketHandler.token,
+            reasonCode ? { reasonCode } : {},
+          )
+          .expect(204);
+      const shop = await open(s.alice, 'Audit bakery');
+      expect(await single('market_shop.opened', shop)).toMatchObject({
+        actorId: s.alice.id,
+        metadata: { category: 'food' },
+      });
+      await act(shop, 'approve');
+      expect(await single('market_shop.approved', shop)).toMatchObject({
+        actorId: s.marketHandler.id,
+      });
+      await act(shop, 'suspend', 'complaints');
+      expect(await single('market_shop.suspended', shop)).toMatchObject({
+        metadata: { reasonCode: 'complaints' },
+      });
+      await act(shop, 'approve');
+      expect(await single('market_shop.reinstated', shop)).toMatchObject({
+        actorId: s.marketHandler.id,
+      });
+      await m.http('post', '/me/market/shop/close', s.alice.token).expect(204);
+      expect(await single('market_shop.closed', shop)).toMatchObject({
+        actorId: s.alice.id,
+        metadata: { by: 'owner' },
+      });
+      const turned = await open(s.bob, 'Audit odd jobs');
+      await act(turned, 'reject', 'duplicate');
+      expect(await single('market_shop.rejected', turned)).toMatchObject({
+        metadata: { reasonCode: 'duplicate' },
+      });
+    });
+
     it('market.settings_changed — the settings, from and to', async () => {
       await m.marketSettings(s.manager, { expiryDays: 21 });
       expect(

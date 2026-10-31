@@ -595,6 +595,7 @@ model Tenant {
   facilityNightLocks           FacilityNightLock[]
   marketSettings         MarketSettings?
   marketListings         MarketListing[]
+  marketShops            MarketShop[]
 
   @@map("tenants")
 }
@@ -1097,6 +1098,8 @@ model Account {
 
   marketListingsSold    MarketListing[] @relation("MarketListingSeller")
   marketListingsDecided MarketListing[] @relation("MarketListingDecider")
+  marketShopsOwned      MarketShop[]    @relation("MarketShopOwner")
+  marketShopsDecided    MarketShop[]    @relation("MarketShopDecider")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1220,6 +1223,7 @@ model Unit {
   bookingWaitlistEntries     BookingWaitlistEntry[]
   marketListingsFrom MarketListing[] @relation("MarketListingSellerUnit")
   marketListingsOf   MarketListing[] @relation("MarketListingUnit")
+  marketShops        MarketShop[]
   @@unique([tenantId, code])
   @@unique([tenantId, id])
   @@map("units")
@@ -11499,6 +11503,8 @@ model MarketListing {
   sellerUnitId     String                @map("seller_unit_id") @db.Uuid
   /// The unit for sale or to let (its owner's); never its code in a view.
   unitId           String?               @map("unit_id") @db.Uuid
+  /// The seller's own shop it appears under, if any.
+  shopId           String?               @map("shop_id") @db.Uuid
   /// The seller's words; null once erased.
   title            String?
   body             String?
@@ -11525,6 +11531,7 @@ model MarketListing {
   sellerUnit Unit                 @relation("MarketListingSellerUnit", fields: [tenantId, sellerUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_seller_unit_fkey")
   unit       Unit?                @relation("MarketListingUnit", fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_unit_fkey")
   decidedBy  Account?             @relation("MarketListingDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_decided_by_fkey")
+  shop       MarketShop?          @relation(fields: [tenantId, shopId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_shop_fkey")
   photos     MarketListingPhoto[]
   conversations NeighbourConversation[]
 
@@ -11532,6 +11539,7 @@ model MarketListing {
   @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "market_listings_market_idx")
   @@index([tenantId, sellerId, createdAt(sort: Desc), id(sort: Desc)], map: "market_listings_seller_idx")
   @@index([tenantId, status, expiresAt], map: "market_listings_expiry_idx")
+  @@index([tenantId, shopId, status], map: "market_listings_shop_idx")
   @@map("market_listings")
 }
 
@@ -11549,4 +11557,46 @@ model MarketListingPhoto {
 
   @@unique([tenantId, listingId, position], map: "market_listing_photos_position_key")
   @@map("market_listing_photos")
+}
+
+enum MarketShopStatus {
+  pending
+  active
+  suspended
+  closed
+
+  @@map("market_shop_status")
+}
+
+/// A resident's small shop (ADR 0071): one open an account. Names no person.
+model MarketShop {
+  id           String                @id @db.Uuid
+  tenantId     String                @map("tenant_id") @db.Uuid
+  ownerId      String                @map("owner_account_id") @db.Uuid
+  /// The unit it is run from: only its building is ever shown.
+  ownerUnitId  String                @map("owner_unit_id") @db.Uuid
+  /// The owner's words; null once erased.
+  nameEn       String?               @map("name_en")
+  nameAr       String?               @map("name_ar")
+  description  String?
+  category     MarketListingCategory
+  status       MarketShopStatus      @default(pending)
+  decidedAt    DateTime?             @map("decided_at") @db.Timestamptz(3)
+  decidedById  String?               @map("decided_by") @db.Uuid
+  /// A suspension's code, or why it closed (turned down, its owner left).
+  reasonCode   String?               @map("reason_code")
+  closedAt     DateTime?             @map("closed_at") @db.Timestamptz(3)
+  erasedAt     DateTime?             @map("erased_at") @db.Timestamptz(3)
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  owner     Account         @relation("MarketShopOwner", fields: [tenantId, ownerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_shops_tenant_id_owner_fkey")
+  ownerUnit Unit            @relation(fields: [tenantId, ownerUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_shops_tenant_id_owner_unit_fkey")
+  decidedBy Account?        @relation("MarketShopDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_shops_tenant_id_decided_by_fkey")
+  listings  MarketListing[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "market_shops_status_idx")
+  @@map("market_shops")
 }

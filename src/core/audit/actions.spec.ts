@@ -229,6 +229,7 @@ describe('audit catalog', () => {
         'gate_call',
         // ADR 0071.
         'market_listing',
+        'market_shop',
       ]).toContain(def.target);
     }
   });

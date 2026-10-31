@@ -28,6 +28,28 @@ export function marketCalls(
         }).expect(201)
       ).body as { id: string }
     ).id;
+  /** A's landlord runs the shops these calls open, one at a time. */
+  const shopOwner = () => world().a.tokens.landlord;
+  const shop = () => ({
+    nameEn: `Shop ${++n}`,
+    nameAr: 'متجر',
+    description: 'Things.',
+    category: 'other',
+  });
+  /** A waiting shop of the landlord's: any open one closed first. */
+  const opened = async (): Promise<string> => {
+    await call(world(), 'POST', '/me/market/shop/close', {
+      token: shopOwner(),
+    });
+    return (
+      (
+        await call(world(), 'POST', '/market/shops', {
+          token: shopOwner(),
+          body: shop(),
+        }).expect(201)
+      ).body as { id: string }
+    ).id;
+  };
   const live = async (): Promise<string> => {
     const id = await listed();
     await call(world(), 'POST', `/market/review/${id}/approve`, {
@@ -87,6 +109,53 @@ export function marketCalls(
         token: manager(),
         body: { reasonCode: 'duplicate' },
       }),
+    'POST /market/shops': async () => {
+      await call(world(), 'POST', '/me/market/shop/close', {
+        token: world().a.tokens.family,
+      });
+      return call(world(), 'POST', '/market/shops', {
+        token: world().a.tokens.family,
+        body: shop(),
+      });
+    },
+    'GET /market/shops': () =>
+      call(world(), 'GET', '/market/shops', { token: owner() }),
+    // A waiting shop is its owner's alone to read.
+    'GET /market/shops/{id}': async () =>
+      call(world(), 'GET', `/market/shops/${await opened()}`, {
+        token: shopOwner(),
+      }),
+    'GET /me/market/shop': async () => {
+      await opened();
+      return call(world(), 'GET', '/me/market/shop', { token: shopOwner() });
+    },
+    'POST /me/market/shop/close': async () => {
+      await opened();
+      return call(world(), 'POST', '/me/market/shop/close', {
+        token: shopOwner(),
+      });
+    },
+    'GET /market/shop-review': () =>
+      call(world(), 'GET', '/market/shop-review', { token: manager() }),
+    'POST /market/shop-review/{id}/approve': async () =>
+      call(world(), 'POST', `/market/shop-review/${await opened()}/approve`, {
+        token: manager(),
+      }),
+    'POST /market/shop-review/{id}/reject': async () =>
+      call(world(), 'POST', `/market/shop-review/${await opened()}/reject`, {
+        token: manager(),
+        body: { reasonCode: 'incomplete' },
+      }),
+    'POST /market/shop-review/{id}/suspend': async () => {
+      const id = await opened();
+      await call(world(), 'POST', `/market/shop-review/${id}/approve`, {
+        token: manager(),
+      }).expect(204);
+      return call(world(), 'POST', `/market/shop-review/${id}/suspend`, {
+        token: manager(),
+        body: { reasonCode: 'inactive' },
+      });
+    },
     'GET /market/settings': () =>
       call(world(), 'GET', '/market/settings', { token: manager() }),
     'PATCH /market/settings': () =>

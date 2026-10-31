@@ -1167,6 +1167,15 @@ describe('API v0 — PII leak scan', () => {
     await call(w, 'POST', `/market/review/${piiListing}/approve`, {
       token: a.tokens.manager,
     }).expect(204);
+    const piiShop = await idOf('POST', '/market/shops', primaryToken, {
+      nameEn: 'Corner bakery',
+      nameAr: 'مخبز الركن',
+      description: 'Bread.',
+      category: 'food',
+    });
+    await call(w, 'POST', `/market/shop-review/${piiShop}/approve`, {
+      token: a.tokens.manager,
+    }).expect(204);
     // Facilities (ADR 0044): the primary's booking of A's roomy facility.
     const piiBooking = await idOf(
       'POST',
@@ -1620,6 +1629,7 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0071: a listing of the primary's, on A's market.
       '/market/listings/{id}': piiListing,
       '/market/review/{id}': piiListing,
+      '/market/shops/{id}': piiShop,
       '/units/{unitId}/payments': unit.id,
       '/units/{unitId}/statement': unit.id,
       '/staff/units/{unitId}/statement': unit.id,

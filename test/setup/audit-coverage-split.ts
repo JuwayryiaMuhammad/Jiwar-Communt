@@ -953,4 +953,10 @@ export const R11C2_COVERAGE: readonly string[] = [
   'market_listing.removed',
   'market_listing.expired',
   'market.settings_changed',
+  'market_shop.opened',
+  'market_shop.approved',
+  'market_shop.rejected',
+  'market_shop.suspended',
+  'market_shop.reinstated',
+  'market_shop.closed',
 ];

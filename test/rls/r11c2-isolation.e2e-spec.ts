@@ -4,7 +4,7 @@ import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { listingRow, marketFileRow } from '../setup/market-rows';
+import { listingRow, marketFileRow, shopRow } from '../setup/market-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -12,6 +12,8 @@ interface Side {
   unitId: string;
   accountId: string;
   listingId: string;
+  /** An account with no shop, for the shop row (one open an account). */
+  shopOwnerId: string;
 }
 
 /**
@@ -60,6 +62,16 @@ const TABLES: Table[] = [
       }),
   },
   {
+    table: 'market_shops',
+    // One open shop an account: the side's spare account runs it.
+    insert: (tx, own, link) =>
+      shopRow(tx, {
+        tenantId: own.tenantId,
+        ownerId: link.shopOwnerId,
+        ownerUnitId: link.unitId,
+      }),
+  },
+  {
     table: 'market_listing_photos',
     insert: async (tx, own, link) => {
       const id = newId();
@@ -93,6 +105,7 @@ describe('RLS isolation — community (ADR 0071)', () => {
       unitId: (await createUnit(h, tenantId)).id,
       accountId: (await createAccountRow(h, tenantId)).id,
       listingId: '',
+      shopOwnerId: (await createAccountRow(h, tenantId)).id,
     };
     await inTenant(s, async (tx) => {
       s.listingId = await listingRow(tx, {

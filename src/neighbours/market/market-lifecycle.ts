@@ -11,6 +11,7 @@ import { FilesService } from '../../core/files/files.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { dbNow } from '../db-clock';
 import { ListingsService } from './listings.service';
+import { ShopsService } from './shops.service';
 import { EXPIRY_NOTICE_MS, OPEN_STATUSES, stateOf } from './market-rules';
 
 export const MARKET_LISTINGS_SWEEP = 'market.listings';
@@ -27,8 +28,9 @@ const BATCH = 500;
  *   owner whose ownership of a listed unit ended loses that listing
  *   (`owner_left`), wherever else they live.
  * - Erasure: their open listings are withdrawn (`seller_erased`), the
- *   words of every listing of theirs go, and their photos with their files.
- *   The rows stay, pointing at the tombstone.
+ *   words of every listing of theirs go, and their photos with their files;
+ *   their shop closes (`owner_erased`) and its words go. The rows stay,
+ *   pointing at the tombstone. Leaving closes their shop (`owner_left`).
  */
 @Injectable()
 export class MarketLifecycle implements OnModuleInit {
@@ -36,6 +38,7 @@ export class MarketLifecycle implements OnModuleInit {
     private readonly lifecycle: AccountLifecycle,
     private readonly community: CommunityNeighboursPort,
     private readonly listings: ListingsService,
+    private readonly shops: ShopsService,
     private readonly files: FilesService,
     private readonly audit: AuditService,
     private readonly sweep: SweepRunner,
@@ -46,6 +49,7 @@ export class MarketLifecycle implements OnModuleInit {
     this.lifecycle.onResidenceChanged(async (tx, account) => {
       const now = await dbNow(tx);
       const left = !(await this.community.places(tx, account.id)).length;
+      if (left) await this.closeShop(tx, account.id, 'owner_left', now);
       for (const l of await this.openOf(tx, account.id)) {
         if (left) {
           await this.withdraw(tx, l.id, 'seller_left', now);
@@ -131,6 +135,28 @@ export class MarketLifecycle implements OnModuleInit {
     return out;
   }
 
+  /** The account's open shop closes, by the system, with the reason. */
+  private async closeShop(
+    tx: TenantTxClient,
+    accountId: string,
+    reason: 'owner_left' | 'owner_erased',
+    now: Date,
+  ): Promise<void> {
+    const open = await tx.marketShop.findFirst({
+      where: { ownerId: accountId, status: { not: 'closed' } },
+      select: { id: true },
+    });
+    if (!open) return;
+    const shop = await this.shops.lock(tx, open.id);
+    if (shop.status === 'closed') return;
+    await this.shops.closeLocked(tx, shop, reason, now);
+    await this.audit.record(tx, {
+      action: 'market_shop.closed',
+      targetId: shop.id,
+      metadata: { by: 'system', reasonCode: reason },
+    });
+  }
+
   private async withdraw(
     tx: TenantTxClient,
     id: string,
@@ -147,8 +173,14 @@ export class MarketLifecycle implements OnModuleInit {
     accountId: string,
   ): Promise<AfterCommit[]> {
     const now = await dbNow(tx);
+    await this.closeShop(tx, accountId, 'owner_erased', now);
     for (const l of await this.openOf(tx, accountId))
       await this.withdraw(tx, l.id, 'seller_erased', now);
+    await tx.$executeRaw`
+      UPDATE market_shops
+         SET name_en = NULL, name_ar = NULL, description = NULL,
+             erased_at = ${now}, updated_at = ${now}
+       WHERE owner_account_id = ${accountId}::uuid AND erased_at IS NULL`;
     await tx.$executeRaw`
       UPDATE market_listings
          SET title = NULL, body = NULL, erased_at = ${now}, updated_at = ${now}

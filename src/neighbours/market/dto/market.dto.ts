@@ -18,6 +18,7 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { SHOP_DESCRIPTION_LENGTH, SHOP_NAME_LENGTH } from '../shops.service';
 import {
   LISTING_BODY_LENGTH,
   LISTING_TITLE_LENGTH,
@@ -123,6 +124,17 @@ export class CreateListingDto {
   @IsOptional()
   @IsUUID('all')
   fromUnitId?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'The caller’s own active shop, to list under (MARKET_SHOP_NOT_FOUND otherwise).',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  shopId?: string;
 
   @ApiProperty({
     type: [String],
@@ -318,4 +330,82 @@ export class UpdateMarketSettingsDto {
     'Units whose reports take a live listing off for review.',
   )
   reportHideThreshold?: number;
+}
+
+const SHOP_STATUSES = ['pending', 'active', 'suspended', 'closed'] as const;
+
+export class OpenShopDto {
+  @ApiProperty({
+    type: String,
+    minLength: SHOP_NAME_LENGTH.min,
+    maxLength: SHOP_NAME_LENGTH.max,
+  })
+  @IsString()
+  @Length(
+    SHOP_NAME_LENGTH.min,
+    SHOP_NAME_LENGTH.max,
+    withParams({ ...SHOP_NAME_LENGTH }),
+  )
+  nameEn: string;
+
+  @ApiProperty({
+    type: String,
+    minLength: SHOP_NAME_LENGTH.min,
+    maxLength: SHOP_NAME_LENGTH.max,
+  })
+  @IsString()
+  @Length(
+    SHOP_NAME_LENGTH.min,
+    SHOP_NAME_LENGTH.max,
+    withParams({ ...SHOP_NAME_LENGTH }),
+  )
+  nameAr: string;
+
+  @ApiProperty({
+    type: String,
+    minLength: SHOP_DESCRIPTION_LENGTH.min,
+    maxLength: SHOP_DESCRIPTION_LENGTH.max,
+  })
+  @IsString()
+  @Length(
+    SHOP_DESCRIPTION_LENGTH.min,
+    SHOP_DESCRIPTION_LENGTH.max,
+    withParams({ ...SHOP_DESCRIPTION_LENGTH }),
+  )
+  description: string;
+
+  @ApiProperty({
+    enum: MarketListingCategory,
+    enumName: 'MarketListingCategory',
+  })
+  @IsEnum(MarketListingCategory, withParams({ allowed: CATEGORIES }))
+  category: MarketListingCategory;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'One of the caller’s units to run it from, when they have several: only its building shows.',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  fromUnitId?: string;
+}
+
+export class StaffShopsQueryDto extends PageQueryDto {
+  @ApiProperty({ enum: SHOP_STATUSES, required: false })
+  @IsOptional()
+  @IsIn(SHOP_STATUSES, withParams({ allowed: [...SHOP_STATUSES] }))
+  status?: (typeof SHOP_STATUSES)[number];
+}
+
+export class ShopReasonDto {
+  @ApiProperty({
+    type: String,
+    description:
+      'A code of the action’s list: `marketShopReject` to turn a shop down, `marketShopSuspend` to suspend one (INVALID_REASON_CODE names the allowed ones).',
+  })
+  @IsString()
+  reasonCode: string;
 }

@@ -1653,6 +1653,11 @@ export const ErrorCode = {
   MARKET_UNIT_LISTED: 'MARKET_UNIT_LISTED',
   /** The caller's own listing: nobody to write to about it (409). */
   MARKET_LISTING_NO_CONTACT: 'MARKET_LISTING_NO_CONTACT',
+  MARKET_SHOP_NOT_FOUND: 'MARKET_SHOP_NOT_FOUND',
+  /** The caller has an open shop already: one at a time (409, params.shopId). */
+  MARKET_SHOP_EXISTS: 'MARKET_SHOP_EXISTS',
+  /** Not in a state this move starts from (409, params.status). */
+  MARKET_SHOP_STATE: 'MARKET_SHOP_STATE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -45,6 +45,7 @@ import {
   type SystemWithdrawal,
 } from './market-rules';
 import { MarketSettingsService } from './market-settings.service';
+import { ShopsService } from './shops.service';
 
 export const LISTING_RESOURCE = 'market_listing';
 
@@ -60,6 +61,8 @@ export interface NewListing {
   unitId?: string;
   /** One of the caller's own units to list from, when they have several. */
   fromUnitId?: string;
+  /** The caller's own active shop, to list under. */
+  shopId?: string;
   photoFileIds?: string[];
 }
 
@@ -185,6 +188,7 @@ export class ListingsService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly notifier: Notifier,
     private readonly rateLimit: RateLimitService,
+    private readonly shops: ShopsService,
   ) {}
 
   onModuleInit(): void {
@@ -239,6 +243,7 @@ export class ListingsService implements OnModuleInit {
         await this.assertUnitFree(tx, input.unitId, input.kind);
         sellerUnitId = input.unitId;
       }
+      if (input.shopId) await this.shops.activeOf(tx, input.shopId);
       const settings = await this.settings.share(tx);
       const now = await dbNow(tx);
       const open = await tx.marketListing.count({
@@ -263,6 +268,7 @@ export class ListingsService implements OnModuleInit {
           sellerId: me,
           sellerUnitId,
           unitId: input.unitId ?? null,
+          shopId: input.shopId ?? null,
           title: text.title,
           body: text.body,
           price,
@@ -301,6 +307,7 @@ export class ListingsService implements OnModuleInit {
           category: listing.category,
           status,
           unitId: listing.unitId,
+          shopId: listing.shopId,
           photos: photoIds.length,
         },
       });

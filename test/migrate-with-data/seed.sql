@@ -20,7 +20,10 @@
 -- (the first compound) a `utilities` topic of the management's own; a
 -- bookable court with a confirmed booking and one the staff cancelled, an
 -- emergency from a unit and an incident at it (ADR 0067 widens their
--- CHECKs and recreates their triggers).
+-- CHECKs and recreates their triggers); occupancies (a residing owner, a
+-- landlord, a tenant who bought the unit), the finance settings, a billing
+-- plan, an invoice's notice and a conduct guide's version (ADR 0069 backfills
+-- `resides_since` and widens their columns and CHECKs).
 -- ============================================================================
 
 DO $$
@@ -38,6 +41,7 @@ DECLARE
   cat uuid;
   area uuid; doc uuid;
   fac uuid;
+  occ_t uuid;
 BEGIN
   FOR c IN 1..2 LOOP
     s := substr(md5(random()::text || clock_timestamp()::text), 1, 10);
@@ -237,6 +241,35 @@ BEGIN
     INSERT INTO incidents (id, tenant_id, number, type, severity, unit_id, occurred_at, description,
                            reported_by_account_id, updated_at) VALUES
       (gen_random_uuid(), t, 1, 'hazard', 'low', u1, now() - interval '1 hour', 'A loose tile', mgr, now());
+    -- The occupancies, documents and finance rows as R11c-1a finds them
+    -- (ADR 0069): `resides_since` is backfilled from each residing row's
+    -- start (a converted owner's from its tenant row), a plan gains its
+    -- descriptions, the settings their plan, dues and collector terms, and
+    -- the document and notice kinds' CHECKs widen. Res1 owns and lives in
+    -- A-101 and owns A-102 as a landlord; res2 rented A-102, then bought it.
+    occ_t := gen_random_uuid();
+    INSERT INTO unit_occupancies (id, tenant_id, unit_id, account_id, occupancy_type, status, is_primary,
+                                  started_at, ended_at, created_by, resides, end_reason, primary_since) VALUES
+      (gen_random_uuid(), t, u1, res1, 'owner', 'active', true, now() - interval '400 days', NULL, mgr,
+       true, NULL, now() - interval '400 days'),
+      (gen_random_uuid(), t, u2, res1, 'owner', 'active', false, now() - interval '500 days', NULL, mgr,
+       false, NULL, NULL),
+      (occ_t, t, u2, res2, 'tenant', 'ended', false, now() - interval '300 days', now() - interval '30 days', mgr,
+       true, 'converted_to_owner', NULL);
+    INSERT INTO unit_occupancies (id, tenant_id, unit_id, account_id, occupancy_type, status, is_primary,
+                                  started_at, created_by, resides, converted_from_id, primary_since) VALUES
+      (gen_random_uuid(), t, u2, res2, 'owner', 'active', true, now() - interval '30 days', mgr,
+       true, occ_t, now() - interval '30 days');
+    INSERT INTO finance_settings (tenant_id, updated_at) VALUES (t, now());
+    INSERT INTO billing_plans (id, tenant_id, name_en, name_ar, kind, frequency, amount, starts_on,
+                               issue_days_before, due_days_after_issue, created_by_account_id, updated_at) VALUES
+      (gen_random_uuid(), t, 'Service charge', 'رسوم الخدمة', 'service_charge', 'monthly', 1500.00,
+       date_trunc('month', current_date)::date, 5, 14, mgr, now());
+    INSERT INTO invoice_notices (id, tenant_id, invoice_id, kind) VALUES (gen_random_uuid(), t, inv, 'issued');
+    INSERT INTO compound_document_versions (id, tenant_id, kind, version_no, title_en, title_ar, body_en, body_ar,
+                                            effective_on, published_by, published_at) VALUES
+      (gen_random_uuid(), t, 'conduct_guide', 1, 'Conduct', 'السلوك', 'Be kind to your neighbours.',
+       'كن لطيفا مع جيرانك.', current_date - 30, mgr, now() - interval '30 days');
     IF c = 1 THEN
       INSERT INTO management_request_topics (id, tenant_id, key, name_ar, name_en, target_response_hours, updated_at)
       VALUES (gen_random_uuid(), t, 'utilities', 'المرافق', 'Utilities (ours)', 48, now());

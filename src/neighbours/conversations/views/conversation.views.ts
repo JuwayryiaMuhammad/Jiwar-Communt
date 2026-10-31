@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  MarketListingKind,
+  MarketListingStatus,
   NeighbourPostKind,
   NeighbourReportStatus,
   type NeighbourConversation,
@@ -69,20 +71,41 @@ export class ConversationPostRefView {
   state: PostState;
 }
 
+/** A market listing a conversation is about (ADR 0071). */
+export class ConversationListingRefView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: MarketListingKind, enumName: 'MarketListingKind' })
+  kind: MarketListingKind;
+  @ApiProperty({ enum: MarketListingStatus, enumName: 'MarketListingStatus' })
+  state: MarketListingStatus;
+}
+
 export class ConversationView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
-  @ApiProperty({ type: ConversationPostRefView })
-  post: ConversationPostRefView;
+  @ApiProperty({
+    type: ConversationPostRefView,
+    nullable: true,
+    description: 'The board post it is about; null when about a listing.',
+  })
+  post: ConversationPostRefView | null;
+  @ApiProperty({
+    type: ConversationListingRefView,
+    nullable: true,
+    description: 'The market listing it is about; null when about a post.',
+  })
+  listing: ConversationListingRefView | null;
   @ApiProperty({
     enum: SIDES,
-    description: 'The caller’s side: the post’s `author`, or the `responder`.',
+    description:
+      'The caller’s side: the post’s (the listing’s) `author`, or the `responder`.',
   })
   side: ConversationSide;
   @ApiProperty({
     type: Boolean,
     description:
-      'Something may still be written. False once it closed or its post left the board; never says which.',
+      'Something may still be written. False once it closed, or its post left the board, or its listing the market; never says which.',
   })
   open: boolean;
   @ApiProperty({ type: MaskedPartyView })
@@ -104,7 +127,12 @@ export class ConversationView {
   static from(r: ConversationRead): ConversationView {
     return {
       id: r.conversation.id,
-      post: { id: r.post.id, kind: r.post.kind, state: r.postState },
+      post: r.post && { id: r.post.id, kind: r.post.kind, state: r.postState! },
+      listing: r.listing && {
+        id: r.listing.id,
+        kind: r.listing.kind,
+        state: r.listingState!,
+      },
       side: r.side,
       open: r.open,
       other: { building: r.other.building, firstName: r.other.firstName },
@@ -205,6 +233,18 @@ export class ReportPostView {
   state: PostState;
 }
 
+/** A reported conversation's listing (ADR 0071), as the staff read it. */
+export class ReportListingView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: MarketListingKind, enumName: 'MarketListingKind' })
+  kind: MarketListingKind;
+  @ApiProperty({ type: String, nullable: true })
+  title: string | null;
+  @ApiProperty({ enum: MarketListingStatus, enumName: 'MarketListingStatus' })
+  state: MarketListingStatus;
+}
+
 /** A reported conversation's case, as the staff read it. */
 export class StaffReportView {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -235,8 +275,20 @@ export class StaffReportView {
   author: ReportPartyView;
   @ApiProperty({ type: ReportPartyView, description: 'Who wrote to them.' })
   responder: ReportPartyView;
-  @ApiProperty({ type: ReportPostView })
-  post: ReportPostView;
+  @ApiProperty({
+    type: ReportPostView,
+    nullable: true,
+    description:
+      'The board post; null when the conversation is about a listing.',
+  })
+  post: ReportPostView | null;
+  @ApiProperty({
+    type: ReportListingView,
+    nullable: true,
+    description:
+      'The listing; null when about a post. `post_removed` takes it off the market (harassment).',
+  })
+  listing: ReportListingView | null;
   @ApiProperty({
     type: String,
     nullable: true,
@@ -269,11 +321,17 @@ export class StaffReportView {
         unitCode: r.responderUnit?.code ?? null,
         building: r.responderUnit?.building ?? null,
       },
-      post: {
+      post: r.post && {
         id: r.post.id,
         kind: r.post.kind,
         body: r.post.body,
-        state: r.postState,
+        state: r.postState!,
+      },
+      listing: r.listing && {
+        id: r.listing.id,
+        kind: r.listing.kind,
+        title: r.listing.title,
+        state: r.listingState!,
       },
       outcome: r.report.outcome,
       closedBy: r.closedBy && accountRef(r.closedBy),

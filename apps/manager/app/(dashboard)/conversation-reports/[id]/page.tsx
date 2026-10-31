@@ -204,30 +204,53 @@ export default function ConversationReportPage() {
                 <CardHeader title="The two residents" />
                 <CardBody>
                   <dl className="dl">
-                    <PartyLine label="Post author" party={r.author} reported={r.reporterSide !== 'author'} />
+                    <PartyLine label={r.post ? 'Post author' : 'Seller'} party={r.author} reported={r.reporterSide !== 'author'} />
                     <PartyLine label="Responder" party={r.responder} reported={r.reporterSide !== 'responder'} />
                   </dl>
                 </CardBody>
               </Card>
-              <Card flush>
-                <CardHeader
-                  title="The post"
-                  actions={
-                    <span className="row" style={{ gap: 8 }}>
-                      <Badge plain>{KIND_TEXT[r.post.kind] ?? r.post.kind}</Badge>
-                      <StatusBadge status={r.post.state} />
-                    </span>
-                  }
-                />
-                <CardBody>
-                  {r.post.body === null ? <p className="t-secondary">Text removed.</p> : <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{r.post.body}</p>}
-                  <p style={{ margin: '8px 0 0' }}>
-                    <Link className="table__link" href={`/lost-found/${r.post.id}`}>
-                      Open the post
-                    </Link>
-                  </p>
-                </CardBody>
-              </Card>
+              {r.post ? (
+                <Card flush>
+                  <CardHeader
+                    title="The post"
+                    actions={
+                      <span className="row" style={{ gap: 8 }}>
+                        <Badge plain>{KIND_TEXT[r.post.kind] ?? r.post.kind}</Badge>
+                        <StatusBadge status={r.post.state} />
+                      </span>
+                    }
+                  />
+                  <CardBody>
+                    {r.post.body === null ? <p className="t-secondary">Text removed.</p> : <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{r.post.body}</p>}
+                    <p style={{ margin: '8px 0 0' }}>
+                      <Link className="table__link" href={`/lost-found/${r.post.id}`}>
+                        Open the post
+                      </Link>
+                    </p>
+                  </CardBody>
+                </Card>
+              ) : r.listing ? (
+                // A listing's conversation (ADR 0071): closing it `post_removed` takes the listing off the market.
+                <Card flush>
+                  <CardHeader
+                    title="The listing"
+                    actions={
+                      <span className="row" style={{ gap: 8 }}>
+                        <Badge plain>{r.listing.kind}</Badge>
+                        <StatusBadge status={r.listing.state} />
+                      </span>
+                    }
+                  />
+                  <CardBody>
+                    {r.listing.title === null ? <p className="t-secondary">Text removed.</p> : <p style={{ margin: 0 }}>{r.listing.title}</p>}
+                    <p style={{ margin: '8px 0 0' }}>
+                      <Link className="table__link" href="/market">
+                        Open the market
+                      </Link>
+                    </p>
+                  </CardBody>
+                </Card>
+              ) : null}
             </div>
           </div>
         ) : null}

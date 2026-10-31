@@ -1122,21 +1122,21 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
   'neighbour_conversation.started': {
     en: {
       title: 'A neighbour wrote to you',
-      body: 'A neighbour wrote to you about one of your posts.',
+      body: 'A neighbour wrote to you about one of your posts or listings.',
     },
     ar: {
       title: 'رسالة من أحد الجيران',
-      body: 'كتب إليك أحد الجيران بخصوص أحد منشوراتك.',
+      body: 'كتب إليك أحد الجيران بخصوص أحد منشوراتك أو إعلاناتك.',
     },
   },
   'neighbour_conversation.message': {
     en: {
       title: 'New message from a neighbour',
-      body: 'You have a new message in a conversation about a post.',
+      body: 'You have a new message in a conversation with a neighbour.',
     },
     ar: {
       title: 'رسالة جديدة من أحد الجيران',
-      body: 'لديك رسالة جديدة في محادثة بخصوص منشور.',
+      body: 'لديك رسالة جديدة في محادثة مع أحد الجيران.',
     },
   },
   'neighbour_conversation.reveal_requested': {

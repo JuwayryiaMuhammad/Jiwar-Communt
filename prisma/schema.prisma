@@ -5768,8 +5768,10 @@ enum NeighbourReportStatus {
 model NeighbourConversation {
   id                String    @id @db.Uuid
   tenantId          String    @map("tenant_id") @db.Uuid
-  postId            String    @map("post_id") @db.Uuid
-  /// The post's author.
+  /// The board post it is about; or a listing (ADR 0071), never both.
+  postId            String?   @map("post_id") @db.Uuid
+  listingId         String?   @map("listing_id") @db.Uuid
+  /// The post's author, or the listing's seller.
   authorId          String    @map("author_account_id") @db.Uuid
   responderId       String    @map("responder_account_id") @db.Uuid
   /// The responder's own unit: only its building is ever shown.
@@ -5784,7 +5786,8 @@ model NeighbourConversation {
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant        Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  post          NeighbourPost                  @relation(fields: [tenantId, postId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  post          NeighbourPost?                 @relation(fields: [tenantId, postId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  listing       MarketListing?                 @relation(fields: [tenantId, listingId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversations_tenant_id_listing_id_fkey")
   author        Account                        @relation("NeighbourConversationAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversations_tenant_id_author_fkey")
   responder     Account                        @relation("NeighbourConversationResponder", fields: [tenantId, responderId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversations_tenant_id_responder_fkey")
   responderUnit Unit?                          @relation(fields: [tenantId, responderUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversations_tenant_id_responder_unit_fkey")
@@ -11523,6 +11526,7 @@ model MarketListing {
   unit       Unit?                @relation("MarketListingUnit", fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_unit_fkey")
   decidedBy  Account?             @relation("MarketListingDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "market_listings_tenant_id_decided_by_fkey")
   photos     MarketListingPhoto[]
+  conversations NeighbourConversation[]
 
   @@unique([tenantId, id])
   @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "market_listings_market_idx")

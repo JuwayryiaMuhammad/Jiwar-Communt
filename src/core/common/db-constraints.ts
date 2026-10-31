@@ -926,4 +926,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   market_listings_one_per_unit: null,
   market_listing_photos_file_id_key: null,
   market_listing_photos_position_key: null,
+  // A conversation a listing and responder, checked first under the pair's
+  // lock (NEIGHBOUR_CONVERSATION_EXISTS); a violation is a race.
+  neighbour_conversations_one_per_listing_responder: null,
 };

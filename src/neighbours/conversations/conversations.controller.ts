@@ -14,7 +14,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   bounded,
@@ -67,7 +70,9 @@ export class PostContactController {
  * ever read it here. Every answer is no-store.
  */
 @ApiArea('neighbours')
-@RequirePermissions('neighbours.board')
+// A conversation is about a board post or a market listing (ADR 0071):
+// either permission reaches it; the service finds the caller's side.
+@RequireAnyPermission('neighbours.board', 'market.post')
 @Controller('neighbour-conversations')
 export class ConversationsController {
   constructor(
@@ -167,7 +172,7 @@ export class ConversationsController {
 
 /** The residents the caller blocked, each as a building and a date (ADR 0042). */
 @ApiArea('neighbours')
-@RequirePermissions('neighbours.board')
+@RequireAnyPermission('neighbours.board', 'market.post')
 @Controller('neighbour-blocks')
 export class BlocksController {
   constructor(private readonly blocks: BlocksService) {}

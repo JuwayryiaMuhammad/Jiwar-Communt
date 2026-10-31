@@ -139,18 +139,22 @@ export class BlocksService {
               authorId: true,
               responderUnitId: true,
               post: { select: { authorUnitId: true } },
+              listing: { select: { sellerUnitId: true } },
             },
           },
         },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: LIST_CAP,
       });
-      // The blocked side's unit: the post's if they wrote it, else their own.
+      // The blocked side's unit: the post's (the listing's) if they wrote
+      // it, else their own.
       const reads = blocks.map(({ conversation, ...block }) => ({
         block,
         unitId:
           conversation.authorId === block.blockedId
-            ? conversation.post.authorUnitId
+            ? (conversation.post?.authorUnitId ??
+              conversation.listing?.sellerUnitId ??
+              null)
             : conversation.responderUnitId,
       }));
       const units = await this.community.units(

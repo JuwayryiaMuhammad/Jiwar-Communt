@@ -123,6 +123,29 @@ export const MARKET_ROUTES: Row[] = [
     noStore: true,
   },
   {
+    method: 'POST',
+    path: '/market/listings/{id}/conversations',
+    auth: 'tenant',
+    as: 'tenant',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bListingId }),
+      body: () => ({ body: 'Still for sale?' }),
+      code: LISTING_404,
+    },
+    invalid: {
+      body: { body: '' },
+      fields: [
+        {
+          field: 'body',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 2000 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
     method: 'GET',
     path: '/me/market/listings',
     auth: 'tenant',

@@ -12106,6 +12106,34 @@
         ],
         "type": "object"
       },
+      "ConversationListingRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingKind"
+              }
+            ]
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "state"
+        ],
+        "type": "object"
+      },
       "ConversationMessageDto": {
         "properties": {
           "body": {
@@ -12217,22 +12245,39 @@
             "format": "date-time",
             "type": "string"
           },
+          "listing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationListingRefView"
+              }
+            ],
+            "description": "The market listing it is about; null when about a post.",
+            "nullable": true,
+            "type": "object"
+          },
           "namesRevealed": {
             "description": "Both agreed: names are shown.",
             "type": "boolean"
           },
           "open": {
-            "description": "Something may still be written. False once it closed or its post left the board; never says which.",
+            "description": "Something may still be written. False once it closed, or its post left the board, or its listing the market; never says which.",
             "type": "boolean"
           },
           "other": {
             "$ref": "#/components/schemas/MaskedPartyView"
           },
           "post": {
-            "$ref": "#/components/schemas/ConversationPostRefView"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationPostRefView"
+              }
+            ],
+            "description": "The board post it is about; null when about a listing.",
+            "nullable": true,
+            "type": "object"
           },
           "side": {
-            "description": "The caller’s side: the post’s `author`, or the `responder`.",
+            "description": "The caller’s side: the post’s (the listing’s) `author`, or the `responder`.",
             "enum": [
               "author",
               "responder"
@@ -12247,6 +12292,7 @@
         "required": [
           "id",
           "post",
+          "listing",
           "side",
           "open",
           "other",
@@ -32090,7 +32136,6 @@
         "type": "string"
       },
       "MarketListingKind": {
-        "description": "`sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner).",
         "enum": [
           "sell",
           "give",
@@ -32102,7 +32147,6 @@
         "type": "string"
       },
       "MarketListingStatus": {
-        "description": "`pending_review` where the compound reviews, else `live`.",
         "enum": [
           "pending_review",
           "live",
@@ -45167,6 +45211,39 @@
         ],
         "type": "object"
       },
+      "ReportListingView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingKind"
+              }
+            ]
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MarketListingStatus"
+              }
+            ]
+          },
+          "title": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "state"
+        ],
+        "type": "object"
+      },
       "ReportMatchView": {
         "properties": {
           "permitStatus": {
@@ -57781,6 +57858,16 @@
             "format": "uuid",
             "type": "string"
           },
+          "listing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportListingView"
+              }
+            ],
+            "description": "The listing; null when about a post. `post_removed` takes it off the market (harassment).",
+            "nullable": true,
+            "type": "object"
+          },
           "note": {
             "description": "What the reporter told the staff.",
             "nullable": true,
@@ -57792,7 +57879,14 @@
             "type": "string"
           },
           "post": {
-            "$ref": "#/components/schemas/ReportPostView"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportPostView"
+              }
+            ],
+            "description": "The board post; null when the conversation is about a listing.",
+            "nullable": true,
+            "type": "object"
           },
           "reasonCode": {
             "description": "A code of `neighbourConversationReport`.",
@@ -57835,6 +57929,7 @@
           "author",
           "responder",
           "post",
+          "listing",
           "outcome",
           "closedBy",
           "closedAt",
@@ -93238,6 +93333,63 @@
           }
         ],
         "summary": "Change my listing while it waits or is live (back to review where the compound reviews)",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/listings/{id}/conversations": {
+      "post": {
+        "operationId": "ListingContactController_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write to whoever listed it, without either name",
         "tags": [
           "market"
         ],

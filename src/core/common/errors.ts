@@ -1651,6 +1651,8 @@ export const ErrorCode = {
   MARKET_UNIT_NOT_OWNED: 'MARKET_UNIT_NOT_OWNED',
   /** The unit is listed for this already (409, params.listingId). */
   MARKET_UNIT_LISTED: 'MARKET_UNIT_LISTED',
+  /** The caller's own listing: nobody to write to about it (409). */
+  MARKET_LISTING_NO_CONTACT: 'MARKET_LISTING_NO_CONTACT',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

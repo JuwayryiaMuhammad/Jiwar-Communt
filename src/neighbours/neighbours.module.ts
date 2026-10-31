@@ -39,6 +39,7 @@ import { StaffReportsController } from './conversations/staff-reports.controller
 import { NeighboursExportSections } from './export/export-sections';
 import { ListingsService } from './market/listings.service';
 import {
+  ListingContactController,
   MarketController,
   MarketReviewController,
   MarketSettingsController,
@@ -82,6 +83,7 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ComplaintCategoryOptionsController,
     NeighbourSettingsController,
     MarketController,
+    ListingContactController,
     MyListingsController,
     MarketReviewController,
     MarketSettingsController,

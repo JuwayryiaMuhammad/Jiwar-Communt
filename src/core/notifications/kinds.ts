@@ -983,7 +983,7 @@ export const NOTIFICATION_KINDS = {
     category: 'neighbours',
     critical: false,
     target: 'neighbour_conversation',
-    params: { postKind: {} },
+    params: { postKind: { optional: true }, listingKind: { optional: true } },
   },
   /** The other side wrote in the conversation; never its body. */
   'neighbour_conversation.message': {
@@ -991,7 +991,7 @@ export const NOTIFICATION_KINDS = {
     category: 'neighbours',
     critical: false,
     target: 'neighbour_conversation',
-    params: { postKind: {} },
+    params: { postKind: { optional: true }, listingKind: { optional: true } },
   },
   /** The other side agreed to show names and waits for this one. */
   'neighbour_conversation.reveal_requested': {
@@ -999,7 +999,7 @@ export const NOTIFICATION_KINDS = {
     category: 'neighbours',
     critical: false,
     target: 'neighbour_conversation',
-    params: { postKind: {} },
+    params: { postKind: { optional: true }, listingKind: { optional: true } },
   },
   /** Both agreed: first names are shown. The name itself is read in the app. */
   'neighbour_conversation.names_revealed': {
@@ -1007,7 +1007,7 @@ export const NOTIFICATION_KINDS = {
     category: 'neighbours',
     critical: false,
     target: 'neighbour_conversation',
-    params: { postKind: {} },
+    params: { postKind: { optional: true }, listingKind: { optional: true } },
   },
   /** A participant reported a conversation: to the staff who handle them. */
   'neighbour_conversation.reported': {

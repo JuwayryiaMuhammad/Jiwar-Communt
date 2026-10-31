@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type {
+  MarketListing,
+  MarketListingStatus,
   NeighbourConversation,
   NeighbourConversationMessage,
   NeighbourConversationReport,
@@ -19,6 +21,8 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { Notifier } from '../../core/notifications/notifier';
 import { NeighbourAccess } from '../access';
 import { dbNow } from '../db-clock';
+import { ListingsService } from '../market/listings.service';
+import { stateOf } from '../market/market-rules';
 import { BoardNotices } from '../posts/board-notices';
 import { postState, type PostState } from '../posts/post-rules';
 import { PostsService, type Person } from '../posts/posts.service';
@@ -43,8 +47,12 @@ export interface ReportRead {
   authorUnit: NeighbourUnit | null;
   responder: Person;
   responderUnit: NeighbourUnit | null;
-  post: NeighbourPost;
-  postState: PostState;
+  /** The board post it was about, or null when about a listing. */
+  post: NeighbourPost | null;
+  postState: PostState | null;
+  /** The listing it was about (ADR 0071), or null when about a post. */
+  listing: MarketListing | null;
+  listingState: MarketListingStatus | null;
 }
 
 export interface ReportedMessageRead {
@@ -62,7 +70,7 @@ const CASE = {
   reporter: PERSON,
   closedBy: PERSON,
   conversation: {
-    include: { author: PERSON, responder: PERSON, post: true },
+    include: { author: PERSON, responder: PERSON, post: true, listing: true },
   },
 } as const;
 
@@ -88,6 +96,7 @@ export class ReportsService {
     private readonly ctx: RequestContext,
     private readonly self: NeighbourAccess,
     private readonly posts: PostsService,
+    private readonly listings: ListingsService,
     private readonly community: CommunityNeighboursPort,
     private readonly staff: StaffRecipients,
     private readonly audit: AuditService,
@@ -265,12 +274,18 @@ export class ReportsService {
       await this.self.lockSelf(tx);
       const found = await tx.neighbourConversationReport.findUnique({
         where: { id },
-        include: { conversation: { select: { postId: true } } },
+        include: {
+          conversation: { select: { postId: true, listingId: true } },
+        },
       });
       if (!found) throw reportNotFound();
-      // The post before the report: the order every board write takes.
-      if (outcome === 'post_removed')
-        await this.posts.lock(tx, found.conversation.postId);
+      const { postId, listingId } = found.conversation;
+      // The post (or the listing) before the report: the order every board
+      // and market write takes.
+      if (outcome === 'post_removed' && postId)
+        await this.posts.lock(tx, postId);
+      if (outcome === 'post_removed' && listingId)
+        await this.listings.lock(tx, listingId);
       await tx.$queryRaw`SELECT id FROM neighbour_conversation_reports WHERE id = ${id}::uuid FOR UPDATE`;
       const report = await tx.neighbourConversationReport.findUniqueOrThrow({
         where: { id },
@@ -287,9 +302,21 @@ export class ReportsService {
         },
       });
       let postRemoved = false;
-      if (outcome === 'post_removed') {
+      // A listing's conversation: the listing comes off the market as any
+      // handler's removal does, for harassment (ADR 0071).
+      if (outcome === 'post_removed' && listingId) {
+        const listing = await tx.marketListing.findUniqueOrThrow({
+          where: { id: listingId },
+        });
+        const state = stateOf(listing, now);
+        if (state === 'live' || state === 'under_review') {
+          await this.listings.removeLocked(tx, listing, 'harassment', now);
+          postRemoved = true;
+        }
+      }
+      if (outcome === 'post_removed' && postId) {
         const post = await tx.neighbourPost.findUniqueOrThrow({
-          where: { id: found.conversation.postId },
+          where: { id: postId },
         });
         if (post.status === 'open') {
           await this.posts.end(
@@ -348,16 +375,19 @@ export class ReportsService {
       conversation: NeighbourConversation & {
         author: Person;
         responder: Person;
-        post: NeighbourPost;
+        post: NeighbourPost | null;
+        listing: MarketListing | null;
       };
     },
     now: Date,
   ): Promise<ReportRead> {
     const { reporter, closedBy, conversation: full, ...report } = row;
-    const { author, responder, post, ...conversation } = full;
+    const { author, responder, post, listing, ...conversation } = full;
+    // The author wrote from the post's unit, or the seller from theirs.
+    const authorUnitId = post?.authorUnitId ?? listing?.sellerUnitId ?? null;
     const units = await this.community.units(
       tx,
-      [post.authorUnitId, conversation.responderUnitId].flatMap((u) => u ?? []),
+      [authorUnitId, conversation.responderUnitId].flatMap((u) => u ?? []),
     );
     return {
       report,
@@ -366,15 +396,15 @@ export class ReportsService {
       closedBy,
       conversation,
       author,
-      authorUnit: post.authorUnitId
-        ? (units.get(post.authorUnitId) ?? null)
-        : null,
+      authorUnit: authorUnitId ? (units.get(authorUnitId) ?? null) : null,
       responder,
       responderUnit: conversation.responderUnitId
         ? (units.get(conversation.responderUnitId) ?? null)
         : null,
       post,
-      postState: postState(post, now),
+      postState: post ? postState(post, now) : null,
+      listing,
+      listingState: listing ? stateOf(listing, now) : null,
     };
   }
 }

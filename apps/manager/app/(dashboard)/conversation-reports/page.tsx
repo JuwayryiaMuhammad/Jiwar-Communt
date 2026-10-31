@@ -89,9 +89,10 @@ export default function ConversationReportsPage() {
                 header: 'Post',
                 cell: (r) => (
                   <span className="row" style={{ gap: 8 }}>
-                    <Badge plain>{KIND_TEXT[r.post.kind] ?? r.post.kind}</Badge>
+                    {/* A board post, or a market listing (ADR 0071). */}
+                    <Badge plain>{r.post ? (KIND_TEXT[r.post.kind] ?? r.post.kind) : `Listing · ${r.listing?.kind ?? ''}`}</Badge>
                     <span className="t-secondary" style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {excerpt(r.post.body, 60)}
+                      {excerpt(r.post ? r.post.body : (r.listing?.title ?? null), 60)}
                     </span>
                   </span>
                 ),

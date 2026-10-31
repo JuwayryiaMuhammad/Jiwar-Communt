@@ -60,6 +60,11 @@ export function marketCalls(
       call(world(), 'POST', `/market/listings/${await live()}/sold`, {
         token: owner(),
       }),
+    'POST /market/listings/{id}/conversations': async () =>
+      call(world(), 'POST', `/market/listings/${await live()}/conversations`, {
+        token: world().a.tokens.tenant,
+        body: { body: 'Still for sale?' },
+      }),
     'GET /me/market/listings': () =>
       call(world(), 'GET', '/me/market/listings', { token: owner() }),
     'GET /market/review': () =>

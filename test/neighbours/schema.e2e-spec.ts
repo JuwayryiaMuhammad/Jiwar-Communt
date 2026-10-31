@@ -686,13 +686,17 @@ describe('Neighbours tables — CHECKs, triggers and privileges', () => {
             `author_reveal_at = now(), responder_reveal_at = now()`,
             `author_reveal_at = NULL`,
           ),
-        ).rejects.toThrow(/keeps its parties, its names and its end/);
+        ).rejects.toThrow(
+          /keeps its parties, its subject, its names and its end/,
+        );
         await expect(
           change(
             `closed_at = now(), close_reason = 'reported'`,
             `closed_at = NULL, close_reason = NULL`,
           ),
-        ).rejects.toThrow(/keeps its parties, its names and its end/);
+        ).rejects.toThrow(
+          /keeps its parties, its subject, its names and its end/,
+        );
         await expect(
           attempt(
             client,

@@ -1,5 +1,7 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type {
+  MarketListing,
+  MarketListingStatus,
   NeighbourConversation,
   NeighbourConversationMessage,
   NeighbourPost,
@@ -17,6 +19,8 @@ import { Notifier } from '../../core/notifications/notifier';
 import type { NotificationKind } from '../../core/notifications/kinds';
 import { NeighbourAccess } from '../access';
 import { dbNow } from '../db-clock';
+import { listingNotFound, ListingsService } from '../market/listings.service';
+import { onMarket, stateOf } from '../market/market-rules';
 import { isLive, postState, type PostState } from '../posts/post-rules';
 import { postNotFound, PostsService } from '../posts/posts.service';
 import { NeighbourSettingsService } from '../settings/neighbour-settings.service';
@@ -40,8 +44,12 @@ const DAY = 86_400_000;
 /** A conversation as one of its two sides reads it. */
 export interface ConversationRead {
   conversation: NeighbourConversation;
-  post: Pick<NeighbourPost, 'id' | 'kind'>;
-  postState: PostState;
+  /** The board post it is about, or null when it is about a listing. */
+  post: Pick<NeighbourPost, 'id' | 'kind'> | null;
+  postState: PostState | null;
+  /** The listing it is about (ADR 0071), or null when it is about a post. */
+  listing: Pick<MarketListing, 'id' | 'kind'> | null;
+  listingState: MarketListingStatus | null;
   side: ConversationSide;
   /** Something may still be written in it. */
   open: boolean;
@@ -56,7 +64,17 @@ export interface ConversationMessageRead {
   mine: boolean;
 }
 
-type WithPost = NeighbourConversation & { post: NeighbourPost };
+/** A conversation with its subject: a post or a listing, never both. */
+type WithSubject = NeighbourConversation & {
+  post: NeighbourPost | null;
+  listing: MarketListing | null;
+};
+const SUBJECT = { post: true, listing: true } as const;
+
+/** What a notice about a conversation names: the subject's kind alone. */
+type Subject =
+  | { post: Pick<NeighbourPost, 'kind'>; listing?: null }
+  | { post?: null; listing: Pick<MarketListing, 'kind'> };
 
 /** The most recently written in first. */
 const LIST = keysetCursor('lastMessageAt');
@@ -76,9 +94,10 @@ const closed = () =>
   );
 
 /**
- * Masked contact on a board post (ADR 0042): the post's author and one
- * responder, each "a resident of building X" to the other until BOTH agree
- * to show names, and then a first name and nothing more.
+ * Masked contact on a board post (ADR 0042), and on a market listing (ADR
+ * 0071): the post's author (the listing's seller) and one responder, each
+ * "a resident of building X" to the other until BOTH agree to show names,
+ * and then a first name and nothing more.
  *
  * Nobody but its two sides reads a conversation: every read and write
  * finds the caller's side first, and anyone else gets the one not-found.
@@ -96,6 +115,7 @@ export class ConversationsService implements OnModuleInit {
     private readonly ctx: RequestContext,
     private readonly self: NeighbourAccess,
     private readonly posts: PostsService,
+    private readonly listings: ListingsService,
     private readonly blocks: BlocksService,
     private readonly settings: NeighbourSettingsService,
     private readonly community: CommunityNeighboursPort,
@@ -205,7 +225,96 @@ export class ConversationsService implements OnModuleInit {
       await this.tell(
         tx,
         post.authorId,
-        post,
+        { post },
+        id,
+        'neighbour_conversation.started',
+      );
+      return conversation;
+    });
+  }
+
+  /**
+   * A resident writes to whoever listed something on the market (ADR
+   * 0071), about the listing: the same rules as on a post. The listing is
+   * read under a shared lock after the pair's, so a handler taking it off
+   * (FOR UPDATE) and a conversation starting on it are decided one at a
+   * time: the one that comes second finds the other.
+   */
+  startOnListing(
+    listingId: string,
+    input: { body: string },
+  ): Promise<NeighbourConversation> {
+    const me = this.ctx.accountId;
+    const body = this.body(input.body);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const id = newId();
+      await this.idempotency.claim(tx, { type: CONVERSATION_RESOURCE, id });
+      await this.self.lockSelf(tx);
+      await this.self.lockQuota(tx, me);
+      const seen = await this.listings.seen(tx, listingId, await dbNow(tx));
+      if (seen.sellerId === me)
+        throw appError.conflict(
+          ErrorCode.MARKET_LISTING_NO_CONTACT,
+          'Nobody to write to about this listing',
+        );
+      await this.self.lockPair(tx, me, seen.sellerId);
+      if (await this.blocks.between(tx, me, seen.sellerId))
+        throw listingNotFound();
+      await tx.$queryRaw`SELECT id FROM market_listings WHERE id = ${listingId}::uuid FOR SHARE`;
+      const existing = await tx.neighbourConversation.findFirst({
+        where: { listingId, responderId: me },
+        select: { id: true },
+      });
+      if (existing)
+        throw appError.conflict(
+          ErrorCode.NEIGHBOUR_CONVERSATION_EXISTS,
+          'You already wrote about this listing',
+          { params: { conversationId: existing.id } },
+        );
+      const places = await this.community.places(tx, me);
+      if (!places.length)
+        throw appError.forbidden(
+          ErrorCode.FORBIDDEN,
+          'Only someone with a unit in the compound writes to a neighbour',
+        );
+      const { maxNewConversationsPerDay: max } = await this.settings.share(tx);
+      const now = await dbNow(tx);
+      // The listing again, under its lock, by the clock this request decides on.
+      const listing = await this.listings.seen(tx, listingId, now);
+      const started = await tx.neighbourConversation.count({
+        where: {
+          responderId: me,
+          createdAt: { gt: new Date(now.getTime() - DAY) },
+        },
+      });
+      if (started >= max)
+        throw appError.conflict(
+          ErrorCode.NEIGHBOUR_CONVERSATION_LIMIT_REACHED,
+          'Too many new conversations today',
+          { params: { max } },
+        );
+      const conversation = await tx.neighbourConversation.create({
+        data: {
+          id,
+          tenantId: listing.tenantId,
+          listingId,
+          authorId: listing.sellerId,
+          responderId: me,
+          responderUnitId: places[0].id,
+          lastMessageAt: now,
+          createdAt: now,
+        },
+      });
+      await this.write(tx, conversation, body, now);
+      await this.audit.record(tx, {
+        action: 'neighbour_conversation.started',
+        targetId: id,
+        metadata: { listingId, listingKind: listing.kind },
+      });
+      await this.tell(
+        tx,
+        listing.sellerId,
+        { listing },
         id,
         'neighbour_conversation.started',
       );
@@ -228,7 +337,7 @@ export class ConversationsService implements OnModuleInit {
             ...LIST.after(q.cursor),
           ],
         },
-        include: { post: true },
+        include: SUBJECT,
         orderBy: LIST.orderBy,
         take: limit + 1,
       });
@@ -271,7 +380,7 @@ export class ConversationsService implements OnModuleInit {
     });
   }
 
-  /** One side writes; the other is told, by the post's kind alone. */
+  /** One side writes; the other is told, by the subject's kind alone. */
   post(
     id: string,
     input: { body: string },
@@ -296,7 +405,7 @@ export class ConversationsService implements OnModuleInit {
       await this.tell(
         tx,
         otherOf(c, side),
-        c.post,
+        subjectOf(c),
         id,
         'neighbour_conversation.message',
       );
@@ -324,19 +433,21 @@ export class ConversationsService implements OnModuleInit {
           side === 'author'
             ? { authorRevealAt: now }
             : { responderRevealAt: now },
-        include: { post: true },
+        include: SUBJECT,
       });
       const both = namesRevealed(updated);
       if (both)
         await this.audit.record(tx, {
           action: 'neighbour_conversation.names_revealed',
           targetId: id,
-          metadata: { postId: c.postId },
+          metadata: c.postId
+            ? { postId: c.postId }
+            : { listingId: c.listingId },
         });
       await this.tell(
         tx,
         otherOf(c, side),
-        c.post,
+        subjectOf(c),
         id,
         both
           ? 'neighbour_conversation.names_revealed'
@@ -365,7 +476,7 @@ export class ConversationsService implements OnModuleInit {
           side === 'author'
             ? { authorRevealAt: null }
             : { responderRevealAt: null },
-        include: { post: true },
+        include: SUBJECT,
       });
       return this.read(tx, updated, now);
     });
@@ -379,24 +490,26 @@ export class ConversationsService implements OnModuleInit {
     tx: TenantTxClient,
     id: string,
     opts: { lock?: boolean } = {},
-  ): Promise<WithPost> {
+  ): Promise<WithSubject> {
     if (opts.lock)
       await tx.$queryRaw`SELECT id FROM neighbour_conversations WHERE id = ${id}::uuid FOR UPDATE`;
     const c = await tx.neighbourConversation.findUnique({
       where: { id },
-      include: { post: true },
+      include: SUBJECT,
     });
     if (!c || sideOf(c, this.ctx.accountId) === null)
       throw conversationNotFound();
     return c;
   }
 
-  /** Not closed, and its post still on its board. */
-  writable(c: WithPost, now: Date): boolean {
-    return c.closedAt === null && isLive(c.post, now);
+  /** Not closed, and its post still on its board, or its listing on the market. */
+  writable(c: WithSubject, now: Date): boolean {
+    if (c.closedAt !== null) return false;
+    if (c.post) return isLive(c.post, now);
+    return c.listing !== null && onMarket(c.listing, now);
   }
 
-  private assertWritable(c: WithPost, now: Date): void {
+  private assertWritable(c: WithSubject, now: Date): void {
     if (!this.writable(c, now)) throw closed();
   }
 
@@ -442,11 +555,11 @@ export class ConversationsService implements OnModuleInit {
     });
   }
 
-  /** One inbox row for the other side, if still active: the post's kind only. */
+  /** One inbox row for the other side, if still active: the subject's kind only. */
   private async tell(
     tx: TenantTxClient,
     accountId: string,
-    post: Pick<NeighbourPost, 'kind'>,
+    subject: Subject,
     conversationId: string,
     kind: NotificationKind,
   ): Promise<void> {
@@ -456,7 +569,9 @@ export class ConversationsService implements OnModuleInit {
     if (!active) return;
     await this.notifier.notify(tx, [accountId], {
       kind,
-      params: { postKind: post.kind },
+      params: subject.post
+        ? { postKind: subject.post.kind }
+        : { listingKind: subject.listing.kind },
       targetId: conversationId,
     });
   }
@@ -464,7 +579,7 @@ export class ConversationsService implements OnModuleInit {
   /** What the caller's side is shown: the other by building, and by first name once both agreed. */
   private async read(
     tx: TenantTxClient,
-    c: WithPost,
+    c: WithSubject,
     now: Date,
   ): Promise<ConversationRead> {
     const side = sideOf(c, this.ctx.accountId)!;
@@ -472,14 +587,20 @@ export class ConversationsService implements OnModuleInit {
       where: { id: otherOf(c, side) },
       select: { fullName: true, status: true },
     });
-    // The author wrote from the post's unit, the responder from their own.
-    const unitId = side === 'author' ? c.responderUnitId : c.post.authorUnitId;
+    // The author wrote from the post's unit (the seller from the unit they
+    // listed from), the responder from their own.
+    const unitId =
+      side === 'author'
+        ? c.responderUnitId
+        : (c.post?.authorUnitId ?? c.listing?.sellerUnitId ?? null);
     const unit = unitId ? await this.community.unit(tx, unitId) : null;
-    const { post, ...conversation } = c;
+    const { post, listing, ...conversation } = c;
     return {
       conversation,
-      post: { id: post.id, kind: post.kind },
-      postState: postState(post, now),
+      post: post ? { id: post.id, kind: post.kind } : null,
+      postState: post ? postState(post, now) : null,
+      listing: listing ? { id: listing.id, kind: listing.kind } : null,
+      listingState: listing ? stateOf(listing, now) : null,
       side,
       open: this.writable(c, now),
       other: masked(c, { building: unit?.building ?? null, ...other }),
@@ -488,4 +609,9 @@ export class ConversationsService implements OnModuleInit {
       theyAgreed: agreed(c, otherSide(side)),
     };
   }
+}
+
+/** The conversation's subject, for a notice: its post, or its listing. */
+function subjectOf(c: WithSubject): Subject {
+  return c.post ? { post: c.post } : { listing: c.listing! };
 }

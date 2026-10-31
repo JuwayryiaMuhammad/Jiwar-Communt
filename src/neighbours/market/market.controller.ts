@@ -24,6 +24,9 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { ConversationsService } from '../conversations/conversations.service';
+import { ConversationMessageDto } from '../conversations/dto/conversations.dto';
+import { ConversationCreatedView } from '../conversations/views/conversation.views';
 import {
   CreateListingDto,
   ListingReasonDto,
@@ -107,6 +110,32 @@ export class MarketController {
   @ApiNoContentResponse()
   async sold(@Param('id', parseId()) id: string): Promise<void> {
     await this.listings.sold(id);
+  }
+}
+
+/**
+ * Writing to whoever listed something, about it, without either name
+ * (ADR 0071): the neighbours' masked conversation, read and written
+ * through `/neighbour-conversations` from then on.
+ */
+@ApiArea('market')
+@RequirePermissions('market.post')
+@Controller('market/listings')
+export class ListingContactController {
+  constructor(private readonly conversations: ConversationsService) {}
+
+  @Post(':id/conversations')
+  @NoStore()
+  @ApiOperation({ summary: 'Write to whoever listed it, without either name' })
+  @Idempotent()
+  @ApiCreatedResponse({ type: ConversationCreatedView })
+  async start(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ConversationMessageDto,
+  ): Promise<ConversationCreatedView> {
+    return ConversationCreatedView.from(
+      await this.conversations.startOnListing(id, dto),
+    );
   }
 }
 

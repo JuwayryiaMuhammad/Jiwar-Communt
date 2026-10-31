@@ -106,22 +106,26 @@ describe('Neighbours — notifications', () => {
       [
         'neighbour_conversation.started',
         'neighbour_conversation',
-        ['postKind'],
+        // A listing's conversation says its kind instead (ADR 0071).
+        ['listingKind', 'postKind'],
       ],
       [
         'neighbour_conversation.message',
         'neighbour_conversation',
-        ['postKind'],
+        // A listing's conversation says its kind instead (ADR 0071).
+        ['listingKind', 'postKind'],
       ],
       [
         'neighbour_conversation.reveal_requested',
         'neighbour_conversation',
-        ['postKind'],
+        // A listing's conversation says its kind instead (ADR 0071).
+        ['listingKind', 'postKind'],
       ],
       [
         'neighbour_conversation.names_revealed',
         'neighbour_conversation',
-        ['postKind'],
+        // A listing's conversation says its kind instead (ADR 0071).
+        ['listingKind', 'postKind'],
       ],
       ['neighbour_conversation.reported', 'neighbour_report', []],
       ['neighbour_report.closed', 'neighbour_conversation', []],
@@ -257,9 +261,16 @@ describe('Neighbours — notifications', () => {
     for (const row of rows) {
       const spec =
         NOTIFICATION_KINDS[row.kind as keyof typeof NOTIFICATION_KINDS];
-      expect(Object.keys(row.params as object).sort()).toEqual(
-        Object.keys(spec.params).sort(),
-      );
+      // Only params the kind declares, and every one it does not mark
+      // optional (a conversation's is its post's kind or its listing's).
+      const keys = Object.keys(row.params as object);
+      const declared = spec.params as Record<string, { optional?: boolean }>;
+      expect(keys.filter((k) => !(k in declared))).toEqual([]);
+      expect(
+        Object.keys(declared).filter(
+          (k) => !declared[k].optional && !keys.includes(k),
+        ),
+      ).toEqual([]);
       const text = JSON.stringify(row.params);
       expect(text).not.toContain(WORDS);
       for (const secret of [

@@ -8534,6 +8534,23 @@ export interface paths {
         patch: operations["MarketController_update"];
         trace?: never;
     };
+    "/api/v1/market/listings/{id}/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Write to whoever listed it, without either name */
+        post: operations["ListingContactController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market/listings/{id}/sold": {
         parameters: {
             query?: never;
@@ -25082,6 +25099,12 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        ConversationListingRefView: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MarketListingKind"];
+            state: components["schemas"]["MarketListingStatus"];
+        };
         ConversationMessageDto: {
             body: string;
         };
@@ -25116,14 +25139,17 @@ export interface components {
             id: string;
             /** Format: date-time */
             lastMessageAt: string;
+            /** @description The market listing it is about; null when about a post. */
+            listing: components["schemas"]["ConversationListingRefView"] | null;
             /** @description Both agreed: names are shown. */
             namesRevealed: boolean;
-            /** @description Something may still be written. False once it closed or its post left the board; never says which. */
+            /** @description Something may still be written. False once it closed, or its post left the board, or its listing the market; never says which. */
             open: boolean;
             other: components["schemas"]["MaskedPartyView"];
-            post: components["schemas"]["ConversationPostRefView"];
+            /** @description The board post it is about; null when about a listing. */
+            post: components["schemas"]["ConversationPostRefView"] | null;
             /**
-             * @description The caller’s side: the post’s `author`, or the `responder`.
+             * @description The caller’s side: the post’s (the listing’s) `author`, or the `responder`.
              * @enum {string}
              */
             side: "author" | "responder";
@@ -31594,15 +31620,9 @@ export interface components {
          * @enum {string}
          */
         MarketListingCategory: "furniture" | "electronics" | "appliances" | "clothing" | "kids" | "books" | "sports" | "vehicles" | "home_garden" | "services" | "food" | "real_estate" | "other";
-        /**
-         * @description `sell`, `give` (free), `wanted`, `service` (offered by a resident), `unit_sale` or `unit_rent` (an owned unit, by its owner).
-         * @enum {string}
-         */
+        /** @enum {string} */
         MarketListingKind: "sell" | "give" | "wanted" | "service" | "unit_sale" | "unit_rent";
-        /**
-         * @description `pending_review` where the compound reviews, else `live`.
-         * @enum {string}
-         */
+        /** @enum {string} */
         MarketListingStatus: "pending_review" | "live" | "under_review" | "rejected" | "removed" | "withdrawn" | "sold" | "expired";
         MarketSettingsView: {
             expiryDays: number;
@@ -35738,6 +35758,13 @@ export interface components {
             /** @description A unit’s code; and/or a place. */
             unitCode?: string;
         };
+        ReportListingView: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MarketListingKind"];
+            state: components["schemas"]["MarketListingStatus"];
+            title: string | null;
+        };
         ReportMatchView: {
             permitStatus: components["schemas"]["VehiclePermitStatus"];
             unitCode: string;
@@ -39432,11 +39459,14 @@ export interface components {
             createdAt: string;
             /** Format: uuid */
             id: string;
+            /** @description The listing; null when about a post. `post_removed` takes it off the market (harassment). */
+            listing: components["schemas"]["ReportListingView"] | null;
             /** @description What the reporter told the staff. */
             note: string | null;
             /** @description A code of `neighbourReportOutcome`, once closed. */
             outcome: string | null;
-            post: components["schemas"]["ReportPostView"];
+            /** @description The board post; null when the conversation is about a listing. */
+            post: components["schemas"]["ReportPostView"] | null;
             /** @description A code of `neighbourConversationReport`. */
             reasonCode: string;
             reporter: components["schemas"]["AccountRefView"];
@@ -55709,6 +55739,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyListingView"];
+                };
+            };
+        };
+    };
+    ListingContactController_start: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConversationMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationCreatedView"];
                 };
             };
         };

@@ -2610,6 +2610,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'latitude and longitude are each tested IS NULL first; the range runs only on a value',
   },
   engagement_settings_prayer: {},
+  bus_routes_name_length: {},
+  bus_departures_shape: {},
   market_shops_state_shape: {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',

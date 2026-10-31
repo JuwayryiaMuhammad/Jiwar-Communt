@@ -1679,6 +1679,8 @@ export const ErrorCode = {
   GROUP_OFFER_NOT_JOINED: 'GROUP_OFFER_NOT_JOINED',
   /** The compound has not set where it is: no prayer times yet (409). */
   PRAYER_PLACE_NOT_SET: 'PRAYER_PLACE_NOT_SET',
+  BUS_ROUTE_NOT_FOUND: 'BUS_ROUTE_NOT_FOUND',
+  BUS_DEPARTURE_NOT_FOUND: 'BUS_DEPARTURE_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

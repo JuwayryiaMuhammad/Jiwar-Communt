@@ -366,6 +366,56 @@ describe('Audit coverage — community', () => {
       });
     });
 
+    it('bus_route.created, .updated and bus_departure.added, .removed — the route, the weekdays and the minute', async () => {
+      const line = (
+        (
+          await m
+            .http('post', '/community/bus-routes', s.manager.token, {
+              nameEn: 'Audit line',
+              nameAr: 'خط',
+            })
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      expect(await single('bus_route.created', line)).toMatchObject({
+        actorId: s.manager.id,
+      });
+      await m
+        .http('patch', `/community/bus-routes/${line}`, s.manager.token, {
+          active: false,
+        })
+        .expect(200);
+      expect(await single('bus_route.updated', line)).toMatchObject({
+        metadata: { active: false, renamed: false },
+      });
+      const dep = (
+        (
+          await m
+            .http(
+              'post',
+              `/community/bus-routes/${line}/departures`,
+              s.manager.token,
+              {
+                weekdays: [0, 1],
+                time: '07:30',
+                fromStop: 'Gate',
+                toStop: 'Metro',
+              },
+            )
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      expect(await single('bus_departure.added', dep)).toMatchObject({
+        metadata: { routeId: line, weekdays: 3, departsMinute: 450 },
+      });
+      await m
+        .http('delete', `/community/bus-departures/${dep}`, s.manager.token)
+        .expect(204);
+      expect(await single('bus_departure.removed', dep)).toMatchObject({
+        metadata: { routeId: line },
+      });
+    });
+
     it('market.settings_changed — the settings, from and to', async () => {
       const before = (
         await read.tenant(s.c.tenantId, {

@@ -944,4 +944,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   group_offers_tenant_id_id_key: null,
   group_offer_participants_tenant_id_id_key: null,
   group_offer_participants_one_live: null,
+  // The buses' timetable (ADR 0071), keyed for composite links.
+  bus_routes_tenant_id_id_key: null,
+  bus_departures_tenant_id_id_key: null,
 };

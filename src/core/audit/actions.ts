@@ -2214,6 +2214,12 @@ export const AUDIT_ACTIONS = {
   'group_offer.cancelled': { log: 'tenant', target: 'group_offer' },
   // Where the compound is and how its prayer times are computed (ADR 0071).
   'engagement.prayer_settings_changed': { log: 'tenant', target: 'tenant' },
+  // The buses' timetable (ADR 0071). updated: active, renamed;
+  // added: routeId, weekdays (bits), departsMinute; removed: routeId.
+  'bus_route.created': { log: 'tenant', target: 'bus_route' },
+  'bus_route.updated': { log: 'tenant', target: 'bus_route' },
+  'bus_departure.added': { log: 'tenant', target: 'bus_departure' },
+  'bus_departure.removed': { log: 'tenant', target: 'bus_departure' },
   // A listing reported (target: the listing). metadata: reportId,
   // reasonCode; never the note.
   'market_listing.reported': { log: 'tenant', target: 'market_listing' },

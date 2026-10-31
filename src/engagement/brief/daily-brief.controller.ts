@@ -7,6 +7,7 @@ import { AnnouncementListItemView } from '../announcements/views/announcement.vi
 import { EventListItemView } from '../events/views/event.views';
 import type { PollRead } from '../polls/polls.service';
 import { PrayerTimesView } from '../prayer/prayer.controller';
+import { NextBusView } from '../transport/buses.controller';
 import { DailyBriefService, type DailyBrief } from './daily-brief.service';
 
 /** A poll that is about to close and still waits for the caller's vote. */
@@ -156,6 +157,11 @@ export class DailyBriefView {
       'Today’s prayer times; null until the compound sets its place.',
   })
   prayer: PrayerTimesView | null;
+  @ApiProperty({
+    type: [NextBusView],
+    description: 'The next three bus departures.',
+  })
+  buses: NextBusView[];
 
   static from(b: DailyBrief): DailyBriefView {
     return {
@@ -178,6 +184,7 @@ export class DailyBriefView {
         endsAt: o.endsAt,
       })),
       prayer: b.prayer && PrayerTimesView.from(b.prayer),
+      buses: b.buses.map((n) => NextBusView.from(n)),
     };
   }
 }

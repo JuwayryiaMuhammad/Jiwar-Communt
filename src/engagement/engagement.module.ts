@@ -21,6 +21,11 @@ import {
   PrayerTimesController,
 } from './prayer/prayer.controller';
 import { PrayerService } from './prayer/prayer.service';
+import {
+  BusesController,
+  StaffBusesController,
+} from './transport/buses.controller';
+import { BusesService } from './transport/buses.service';
 import { CommunityAttachments } from './content/attachments';
 import { EngagementExportSections } from './export/export-sections';
 import { EngagementProvisioning } from './provisioning';
@@ -81,6 +86,8 @@ import { SuggestionTopicsService } from './topics/topics.service';
     DailyBriefController,
     PrayerTimesController,
     PrayerSettingsController,
+    BusesController,
+    StaffBusesController,
   ],
   providers: [
     EngagementProvisioning,
@@ -96,6 +103,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     SuggestionsService,
     DailyBriefService,
     PrayerService,
+    BusesService,
     EngagementExportSections,
     BoardNotices,
   ],

@@ -5,6 +5,8 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
+  busDepartureRow,
+  busRouteRow,
   listingRow,
   marketFileRow,
   groupOfferRow,
@@ -25,6 +27,7 @@ interface Side {
   shopOwnerId: string;
   partnerId: string;
   groupOfferId: string;
+  busRouteId: string;
 }
 
 /**
@@ -136,6 +139,16 @@ const TABLES: Table[] = [
       }),
   },
   {
+    table: 'bus_routes',
+    linked: false,
+    insert: (tx, own) => busRouteRow(tx, own.tenantId),
+  },
+  {
+    table: 'bus_departures',
+    insert: (tx, own, link) =>
+      busDepartureRow(tx, own.tenantId, link.busRouteId),
+  },
+  {
     table: 'market_listing_photos',
     insert: async (tx, own, link) => {
       const id = newId();
@@ -172,12 +185,14 @@ describe('RLS isolation — community (ADR 0071)', () => {
       shopOwnerId: (await createAccountRow(h, tenantId)).id,
       partnerId: '',
       groupOfferId: '',
+      busRouteId: '',
     };
     await inTenant(s, async (tx) => {
       s.partnerId = await partnerRow(tx, {
         tenantId,
         createdById: s.accountId,
       });
+      s.busRouteId = await busRouteRow(tx, tenantId);
       s.groupOfferId = await groupOfferRow(tx, {
         tenantId,
         createdById: s.accountId,

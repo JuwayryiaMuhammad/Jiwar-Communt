@@ -24,6 +24,7 @@ import { dbNow } from '../db-clock';
 import { EventsService, type EventRead } from '../events/events.service';
 import { PollsService, type PollRead } from '../polls/polls.service';
 import { PrayerService, type PrayerRead } from '../prayer/prayer.service';
+import { BusesService, type NextDeparture } from '../transport/buses.service';
 
 const HOUR = 3_600_000;
 /** An announcement is "new" for this long after it comes out, until opened. */
@@ -49,6 +50,8 @@ export interface DailyBrief {
   outages: OutageBrief[];
   /** Today's prayer times (ADR 0071); null until the compound sets its place. */
   prayer: PrayerRead | null;
+  /** The next three bus departures (ADR 0071). */
+  buses: NextDeparture[];
 }
 
 /**
@@ -67,7 +70,8 @@ export interface DailyBrief {
  * - the gates and whether each is in service;
  * - the utility outages told to the caller that are under way or start
  *   within 48 hours (ADR 0069), read through maintenance's port;
- * - today's prayer times, once the compound has set where it is (ADR 0071).
+ * - today's prayer times, once the compound has set where it is, and the
+ *   next three bus departures (ADR 0071).
  *
  * Everything the engagement domain owns is read by its own rules (the
  * audience, at this moment); everything else through the other domains'
@@ -88,6 +92,7 @@ export class DailyBriefService {
     private readonly gates: GateStatusPort,
     private readonly outages: ResidentOutageSummary,
     private readonly prayer: PrayerService,
+    private readonly buses: BusesService,
   ) {}
 
   async get(): Promise<DailyBrief> {
@@ -129,6 +134,7 @@ export class DailyBriefService {
         gates: await this.gates.statuses(tx),
         outages: await this.outages.of(tx, me, now),
         prayer: await this.prayer.forDay(tx, date),
+        buses: await this.buses.next(tx),
       };
     });
   }

@@ -1058,6 +1058,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/buses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the buses’ timetable and the next departures */
+        get: operations["BusesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/card-incidents": {
         parameters: {
             query?: never;
@@ -1363,6 +1380,75 @@ export interface paths {
         get: operations["AudienceController_buildings"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/bus-departures/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a departure that no longer runs */
+        delete: operations["StaffBusesController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/bus-routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List every bus route, retired ones too */
+        get: operations["StaffBusesController_list"];
+        put?: never;
+        /** Add a bus route */
+        post: operations["StaffBusesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/bus-routes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename or retire a bus route */
+        patch: operations["StaffBusesController_update"];
+        trace?: never;
+    };
+    "/api/v1/community/bus-routes/{id}/departures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a departure to a route */
+        post: operations["StaffBusesController_add"];
         delete?: never;
         options?: never;
         head?: never;
@@ -21955,6 +22041,26 @@ export interface components {
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
         };
+        AddBusDepartureDto: {
+            fromStop: string;
+            /**
+             * @description The compound’s local time of day, `HH:MM`.
+             * @example 07:30
+             */
+            time: string;
+            toStop: string;
+            /**
+             * @description Weekdays it runs: 0 is Sunday, 6 Saturday.
+             * @example [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4
+             *     ]
+             */
+            weekdays: number[];
+        };
         AddChildEscortDto: {
             /**
              * Format: uuid
@@ -23774,6 +23880,37 @@ export interface components {
             keys: components["schemas"]["BundleKeyView"][];
             /** Format: date-time */
             serverTime: string;
+        };
+        BusDepartureView: {
+            fromStop: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Local time of day.
+             * @example 07:30
+             */
+            time: string;
+            toStop: string;
+            /** @description 0 is Sunday, 6 Saturday. */
+            weekdays: number[];
+        };
+        BusRouteView: {
+            active: boolean;
+            departures: components["schemas"]["BusDepartureView"][];
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        BusRouteViewList: {
+            data: components["schemas"]["BusRouteView"][];
+            nextCursor: string | null;
+        };
+        BusesView: {
+            /** @description The next departures, today’s and tomorrow’s. */
+            next: components["schemas"]["NextBusView"][];
+            /** @description The routes running. */
+            routes: components["schemas"]["BusRouteView"][];
         };
         CampaignInspectionView: {
             /** Format: uuid */
@@ -25864,6 +26001,10 @@ export interface components {
              */
             startsAt: string;
         };
+        CreateBusRouteDto: {
+            nameAr: string;
+            nameEn: string;
+        };
         CreateCategoryDto: {
             /** @default true */
             commonAreaAllowed: boolean;
@@ -27206,6 +27347,8 @@ export interface components {
         };
         DailyBriefView: {
             announcements: components["schemas"]["BriefAnnouncementsView"];
+            /** @description The next three bus departures. */
+            buses: components["schemas"]["NextBusView"][];
             /**
              * Format: date
              * @description The compound’s local day the brief is of.
@@ -33295,6 +33438,18 @@ export interface components {
              * @description Required for `temporary`.
              */
             validUntil?: string;
+        };
+        NextBusView: {
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            departureId: string;
+            fromStop: string;
+            /** Format: uuid */
+            routeId: string;
+            routeNameAr: string;
+            routeNameEn: string;
+            toStop: string;
         };
         NotCarriedView: {
             passes: number;
@@ -41962,6 +42117,12 @@ export interface components {
             /** @description From the closed list `blocklistReason`. */
             reasonCode?: string;
         };
+        UpdateBusRouteDto: {
+            /** @description False retires it. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+        };
         UpdateCategoryDto: {
             /** @description False retires it: no new ticket under it. */
             active?: boolean;
@@ -44870,6 +45031,25 @@ export interface operations {
             };
         };
     };
+    BusesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusesView"];
+                };
+            };
+        };
+    };
     WorkersController_incidents: {
         parameters: {
             query?: {
@@ -45309,6 +45489,117 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BuildingsView"];
+                };
+            };
+        };
+    };
+    StaffBusesController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffBusesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusRouteViewList"];
+                };
+            };
+        };
+    };
+    StaffBusesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBusRouteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusRouteView"];
+                };
+            };
+        };
+    };
+    StaffBusesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBusRouteDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusRouteView"];
+                };
+            };
+        };
+    };
+    StaffBusesController_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddBusDepartureDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusDepartureView"];
                 };
             };
         };

@@ -58,6 +58,21 @@ export function marketCalls(
         }).expect(201)
       ).body as { id: string }
     ).id;
+  const departure = () => ({
+    weekdays: [0, 3],
+    time: '08:15',
+    fromStop: 'Gate 1',
+    toStop: 'Metro',
+  });
+  const busRoute = async (): Promise<string> =>
+    (
+      (
+        await call(world(), 'POST', '/community/bus-routes', {
+          token: manager(),
+          body: { nameEn: `Line ${++n}`, nameAr: 'خط' },
+        }).expect(201)
+      ).body as { id: string }
+    ).id;
   /** A's landlord runs the shops these calls open, one at a time. */
   const shopOwner = () => world().a.tokens.landlord;
   const shop = () => ({
@@ -288,6 +303,40 @@ export function marketCalls(
         token: manager(),
         body: { latitude: '30.044420', longitude: '31.235712' },
       }),
+    'GET /buses': () => call(world(), 'GET', '/buses', { token: owner() }),
+    'GET /community/bus-routes': () =>
+      call(world(), 'GET', '/community/bus-routes', { token: manager() }),
+    'POST /community/bus-routes': () =>
+      call(world(), 'POST', '/community/bus-routes', {
+        token: manager(),
+        body: { nameEn: `Line ${++n}`, nameAr: 'خط' },
+      }),
+    'PATCH /community/bus-routes/{id}': async () =>
+      call(world(), 'PATCH', `/community/bus-routes/${await busRoute()}`, {
+        token: manager(),
+        body: { nameEn: 'Renamed' },
+      }),
+    'POST /community/bus-routes/{id}/departures': async () =>
+      call(
+        world(),
+        'POST',
+        `/community/bus-routes/${await busRoute()}/departures`,
+        { token: manager(), body: departure() },
+      ),
+    'DELETE /community/bus-departures/{id}': async () => {
+      const res = await call(
+        world(),
+        'POST',
+        `/community/bus-routes/${await busRoute()}/departures`,
+        { token: manager(), body: departure() },
+      ).expect(201);
+      return call(
+        world(),
+        'DELETE',
+        `/community/bus-departures/${(res.body as { id: string }).id}`,
+        { token: manager() },
+      );
+    },
     'GET /market/settings': () =>
       call(world(), 'GET', '/market/settings', { token: manager() }),
     'PATCH /market/settings': () =>

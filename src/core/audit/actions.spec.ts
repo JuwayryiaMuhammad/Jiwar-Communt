@@ -233,6 +233,8 @@ describe('audit catalog', () => {
         'market_report',
         'partner_offer',
         'group_offer',
+        'bus_route',
+        'bus_departure',
       ]).toContain(def.target);
     }
   });

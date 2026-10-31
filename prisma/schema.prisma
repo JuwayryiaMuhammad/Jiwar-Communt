@@ -11747,3 +11747,37 @@ model GroupOfferParticipant {
   @@index([tenantId, accountId, joinedAt(sort: Desc)], map: "group_offer_participants_account_idx")
   @@map("group_offer_participants")
 }
+
+/// A bus route of the compound (ADR 0071); retired with `active`.
+model BusRoute {
+  id         String         @id @db.Uuid
+  tenantId   String         @map("tenant_id") @db.Uuid
+  nameEn     String         @map("name_en")
+  nameAr     String         @map("name_ar")
+  active     Boolean        @default(true)
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  departures BusDeparture[]
+
+  @@unique([tenantId, id])
+  @@map("bus_routes")
+}
+
+/// A departure on some weekdays (a bit a day, Sunday = 1) at a local time of day.
+model BusDeparture {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  routeId       String   @map("route_id") @db.Uuid
+  weekdays      Int
+  /// Minutes after the compound's local midnight.
+  departsMinute Int      @map("departs_minute")
+  fromStop      String   @map("from_stop")
+  toStop        String   @map("to_stop")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  route BusRoute @relation(fields: [tenantId, routeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bus_departures_tenant_id_route_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, routeId, departsMinute], map: "bus_departures_route_idx")
+  @@map("bus_departures")
+}

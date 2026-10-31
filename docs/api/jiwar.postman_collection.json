@@ -6029,6 +6029,25 @@
           }
         },
         {
+          "name": "Get the buses’ timetable and the next departures",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "buses"
+              ],
+              "raw": "{{baseUrl}}/api/v1/buses"
+            }
+          }
+        },
+        {
           "name": "List the announcements, drafts and archived included",
           "request": {
             "description": "**Responses:** 200",
@@ -6369,6 +6388,176 @@
                 "buildings"
               ],
               "raw": "{{baseUrl}}/api/v1/community/buildings"
+            }
+          }
+        },
+        {
+          "name": "Remove a departure that no longer runs",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "bus-departures",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/bus-departures/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List every bus route, retired ones too",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "bus-routes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/bus-routes"
+            }
+          }
+        },
+        {
+          "name": "Add a bus route",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameEn\": \"\",\n  \"nameAr\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "bus-routes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/bus-routes"
+            }
+          }
+        },
+        {
+          "name": "Rename or retire a bus route",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires it. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "bus-routes",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/bus-routes/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add a departure to a route",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"weekdays\": [\n    0,\n    1,\n    2,\n    3,\n    4\n  ],\n  \"time\": \"07:30\",\n  \"fromStop\": \"\",\n  \"toStop\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fromStop` | string | yes |  |\n| `time` | string | yes | The compound’s local time of day, `HH:MM`. |\n| `toStop` | string | yes |  |\n| `weekdays` | number[] | yes | Weekdays it runs: 0 is Sunday, 6 Saturday. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "bus-routes",
+                ":id",
+                "departures"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/bus-routes/:id/departures",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

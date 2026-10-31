@@ -341,6 +341,46 @@
         ],
         "type": "object"
       },
+      "AddBusDepartureDto": {
+        "properties": {
+          "fromStop": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "time": {
+            "description": "The compound’s local time of day, `HH:MM`.",
+            "example": "07:30",
+            "type": "string"
+          },
+          "toStop": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "weekdays": {
+            "description": "Weekdays it runs: 0 is Sunday, 6 Saturday.",
+            "example": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "weekdays",
+          "time",
+          "fromStop",
+          "toStop"
+        ],
+        "type": "object"
+      },
       "AddChildEscortDto": {
         "properties": {
           "accountId": {
@@ -6346,6 +6386,113 @@
         "required": [
           "keys",
           "serverTime"
+        ],
+        "type": "object"
+      },
+      "BusDepartureView": {
+        "properties": {
+          "fromStop": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "time": {
+            "description": "Local time of day.",
+            "example": "07:30",
+            "type": "string"
+          },
+          "toStop": {
+            "type": "string"
+          },
+          "weekdays": {
+            "description": "0 is Sunday, 6 Saturday.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "weekdays",
+          "time",
+          "fromStop",
+          "toStop"
+        ],
+        "type": "object"
+      },
+      "BusRouteView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "departures": {
+            "items": {
+              "$ref": "#/components/schemas/BusDepartureView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "active",
+          "departures"
+        ],
+        "type": "object"
+      },
+      "BusRouteViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BusRouteView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BusesView": {
+        "properties": {
+          "next": {
+            "description": "The next departures, today’s and tomorrow’s.",
+            "items": {
+              "$ref": "#/components/schemas/NextBusView"
+            },
+            "type": "array"
+          },
+          "routes": {
+            "description": "The routes running.",
+            "items": {
+              "$ref": "#/components/schemas/BusRouteView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "routes",
+          "next"
         ],
         "type": "object"
       },
@@ -13044,6 +13191,25 @@
         ],
         "type": "object"
       },
+      "CreateBusRouteDto": {
+        "properties": {
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "CreateCategoryDto": {
         "properties": {
           "commonAreaAllowed": {
@@ -16316,6 +16482,13 @@
           "announcements": {
             "$ref": "#/components/schemas/BriefAnnouncementsView"
           },
+          "buses": {
+            "description": "The next three bus departures.",
+            "items": {
+              "$ref": "#/components/schemas/NextBusView"
+            },
+            "type": "array"
+          },
           "date": {
             "description": "The compound’s local day the brief is of.",
             "format": "date",
@@ -16401,7 +16574,8 @@
           "requests",
           "gates",
           "outages",
-          "prayer"
+          "prayer",
+          "buses"
         ],
         "type": "object"
       },
@@ -36065,6 +36239,44 @@
           "fullName",
           "phone",
           "capacity"
+        ],
+        "type": "object"
+      },
+      "NextBusView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "departureId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "fromStop": {
+            "type": "string"
+          },
+          "routeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "routeNameAr": {
+            "type": "string"
+          },
+          "routeNameEn": {
+            "type": "string"
+          },
+          "toStop": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "routeId",
+          "routeNameEn",
+          "routeNameAr",
+          "departureId",
+          "at",
+          "fromStop",
+          "toStop"
         ],
         "type": "object"
       },
@@ -64812,6 +65024,25 @@
         },
         "type": "object"
       },
+      "UpdateBusRouteDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateCategoryDto": {
         "properties": {
           "active": {
@@ -71955,6 +72186,35 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/buses": {
+      "get": {
+        "operationId": "BusesController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the buses’ timetable and the next departures",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/card-incidents": {
       "get": {
         "operationId": "WorkersController_incidents",
@@ -72775,6 +73035,199 @@
           }
         ],
         "summary": "List the buildings an audience may name",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/bus-departures/{id}": {
+      "delete": {
+        "operationId": "StaffBusesController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a departure that no longer runs",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/bus-routes": {
+      "get": {
+        "operationId": "StaffBusesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusRouteViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List every bus route, retired ones too",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffBusesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBusRouteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusRouteView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a bus route",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/bus-routes/{id}": {
+      "patch": {
+        "operationId": "StaffBusesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBusRouteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusRouteView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename or retire a bus route",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/bus-routes/{id}/departures": {
+      "post": {
+        "operationId": "StaffBusesController_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBusDepartureDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusDepartureView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a departure to a route",
         "tags": [
           "community"
         ],

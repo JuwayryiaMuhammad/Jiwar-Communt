@@ -184,3 +184,36 @@ export async function groupParticipantRow(
   });
   return id;
 }
+
+/** A bus route. */
+export async function busRouteRow(
+  tx: TenantTxClient,
+  tenantId: string,
+): Promise<string> {
+  const id = newId();
+  await tx.busRoute.create({
+    data: { id, tenantId, nameEn: 'Line', nameAr: 'خط' },
+  });
+  return id;
+}
+
+/** A weekday departure of a route at 07:30. */
+export async function busDepartureRow(
+  tx: TenantTxClient,
+  tenantId: string,
+  routeId: string,
+): Promise<string> {
+  const id = newId();
+  await tx.busDeparture.create({
+    data: {
+      id,
+      tenantId,
+      routeId,
+      weekdays: 31,
+      departsMinute: 450,
+      fromStop: 'Gate 1',
+      toStop: 'Metro',
+    },
+  });
+  return id;
+}

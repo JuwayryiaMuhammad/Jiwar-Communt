@@ -2,6 +2,8 @@ import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
 import {
+  busDepartureRow,
+  busRouteRow,
   groupOfferRow,
   listingRow,
   marketReportRow,
@@ -25,6 +27,9 @@ export interface R11c2World {
   bPartnerOfferId: string;
   /** An open group offer of B's. */
   bGroupOfferId: string;
+  /** A bus route of B's and a departure of it. */
+  bBusRouteId: string;
+  bBusDepartureId: string;
 }
 
 export async function r11c2World(
@@ -36,6 +41,7 @@ export async function r11c2World(
   const tenantTx = h.moduleRef.get(TenantTx);
   return helpers.asManager(b, () =>
     tenantTx.withTenantTx(async (tx) => {
+      const bBusRouteId = await busRouteRow(tx, b.tenantId);
       const bListingId = await listingRow(tx, {
         tenantId: b.tenantId,
         sellerId: b.ids.owner,
@@ -59,6 +65,8 @@ export async function r11c2World(
           partnerId: bPartnerId,
           createdById: b.ids.manager,
         }),
+        bBusRouteId,
+        bBusDepartureId: await busDepartureRow(tx, b.tenantId, bBusRouteId),
         bGroupOfferId: await groupOfferRow(tx, {
           tenantId: b.tenantId,
           createdById: b.ids.manager,

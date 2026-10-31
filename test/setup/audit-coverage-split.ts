@@ -972,4 +972,8 @@ export const R11C2_COVERAGE: readonly string[] = [
   'group_offer.failed',
   'group_offer.cancelled',
   'engagement.prayer_settings_changed',
+  'bus_route.created',
+  'bus_route.updated',
+  'bus_departure.added',
+  'bus_departure.removed',
 ];

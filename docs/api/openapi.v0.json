@@ -11325,7 +11325,11 @@
               "occupant_rights",
               "conduct_guide",
               "moving_guide",
-              "saving_tips"
+              "saving_tips",
+              "emergency_medical",
+              "emergency_fire",
+              "emergency_security",
+              "emergency_facilities"
             ],
             "type": "string"
           },
@@ -11403,7 +11407,11 @@
               "occupant_rights",
               "conduct_guide",
               "moving_guide",
-              "saving_tips"
+              "saving_tips",
+              "emergency_medical",
+              "emergency_fire",
+              "emergency_security",
+              "emergency_facilities"
             ],
             "type": "string"
           },
@@ -19533,6 +19541,27 @@
           "from",
           "to",
           "perDay"
+        ],
+        "type": "object"
+      },
+      "EmergencyAreaView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "building"
         ],
         "type": "object"
       },
@@ -35870,7 +35899,11 @@
               "occupant_rights",
               "conduct_guide",
               "moving_guide",
-              "saving_tips"
+              "saving_tips",
+              "emergency_medical",
+              "emergency_fire",
+              "emergency_security",
+              "emergency_facilities"
             ],
             "type": "string"
           },
@@ -46235,6 +46268,11 @@
       },
       "ReportEmergencyDto": {
         "properties": {
+          "commonAreaId": {
+            "description": "Where the caller is, when not at home (ADR 0071): one of the compound’s common areas (the pool, a garden). The responders see it and its building. Still no GPS.",
+            "format": "uuid",
+            "type": "string"
+          },
           "type": {
             "allOf": [
               {
@@ -54824,6 +54862,16 @@
             "nullable": true,
             "type": "string"
           },
+          "commonArea": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyAreaView"
+              }
+            ],
+            "description": "Where a resident away from home reported it from (ADR 0071): the common area and its building.",
+            "nullable": true,
+            "type": "object"
+          },
           "escalatedAt": {
             "description": "Handed to the management: nobody accepted in time, or nobody was there to tell.",
             "format": "date-time",
@@ -54961,6 +55009,7 @@
           "location",
           "post",
           "ticket",
+          "commonArea",
           "reportedBy",
           "responderAccount",
           "responder",
@@ -75257,7 +75306,11 @@
                 "occupant_rights",
                 "conduct_guide",
                 "moving_guide",
-                "saving_tips"
+                "saving_tips",
+                "emergency_medical",
+                "emergency_fire",
+                "emergency_security",
+                "emergency_facilities"
               ],
               "type": "string"
             }
@@ -75866,6 +75919,38 @@
         "summary": "Answer “on my way” to an emergency at home",
         "tags": [
           "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/emergency-guides": {
+      "get": {
+        "operationId": "EmergencyGuidesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompoundDocumentView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s emergency guides, latest versions",
+        "tags": [
+          "governance"
         ],
         "x-no-store": true,
         "x-stability": "draft"

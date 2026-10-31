@@ -20,7 +20,16 @@ import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 
 type Summary = Schema<'CompoundDocumentSummaryView'>;
-type Kind = 'bylaws' | 'occupant_rights' | 'conduct_guide' | 'moving_guide' | 'saving_tips';
+type Kind =
+  | 'bylaws'
+  | 'occupant_rights'
+  | 'conduct_guide'
+  | 'moving_guide'
+  | 'saving_tips'
+  | 'emergency_medical'
+  | 'emergency_fire'
+  | 'emergency_security'
+  | 'emergency_facilities';
 const KEY = ['compound-documents'] as const;
 
 const KINDS: { value: Kind; label: string; hint: string }[] = [
@@ -48,6 +57,26 @@ const KINDS: { value: Kind; label: string; hint: string }[] = [
     value: 'saving_tips',
     label: 'Saving tips',
     hint: 'How a household uses less water, power and gas.',
+  },
+  {
+    value: 'emergency_medical',
+    label: 'Emergency: medical',
+    hint: 'What to do in a medical emergency, and whom to call.',
+  },
+  {
+    value: 'emergency_fire',
+    label: 'Emergency: fire',
+    hint: 'What to do in a fire: the way out, the assembly point.',
+  },
+  {
+    value: 'emergency_security',
+    label: 'Emergency: security',
+    hint: 'What to do when security is threatened.',
+  },
+  {
+    value: 'emergency_facilities',
+    label: 'Emergency: facilities',
+    hint: 'A gas leak, a flood, a power failure: what to shut and whom to call.',
   },
 ];
 

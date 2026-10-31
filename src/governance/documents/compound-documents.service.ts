@@ -26,7 +26,19 @@ export const COMPOUND_DOCUMENT_KINDS = [
   'moving_guide',
   // How to use less water, power and gas at home (ADR 0069): a guide.
   'saving_tips',
+  // What to do in an emergency (ADR 0071): guides, read on their own route.
+  'emergency_medical',
+  'emergency_fire',
+  'emergency_security',
+  'emergency_facilities',
 ] as const;
+/** The emergency guides (ADR 0071), in the order residents read them. */
+export const EMERGENCY_GUIDE_KINDS: readonly CompoundDocumentKind[] = [
+  'emergency_medical',
+  'emergency_fire',
+  'emergency_security',
+  'emergency_facilities',
+];
 export type CompoundDocumentKind = (typeof COMPOUND_DOCUMENT_KINDS)[number];
 /** Publishing these tells everyone in the compound; the guides do not. */
 const ANNOUNCED: readonly CompoundDocumentKind[] = [
@@ -131,6 +143,36 @@ export class CompoundDocumentsService {
         document: full(row),
         read: row.fileId ? await this.files.readUrl(tx, row.fileId) : null,
       };
+    });
+  }
+
+  /**
+   * The emergency guides (ADR 0071): the latest version of each kind the
+   * compound has published, whole, in a fixed order, each with a presigned
+   * read of its PDF when it has one (as one version's read).
+   */
+  emergencyGuides(): Promise<
+    { document: CompoundDocumentRead; read: PresignedRead | null }[]
+  > {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const rows = await tx.compoundDocumentVersion.findMany({
+        where: { kind: { in: [...EMERGENCY_GUIDE_KINDS] } },
+        distinct: ['kind'],
+        orderBy: [{ kind: 'asc' }, { versionNo: 'desc' }],
+      });
+      const guides: {
+        document: CompoundDocumentRead;
+        read: PresignedRead | null;
+      }[] = [];
+      for (const k of EMERGENCY_GUIDE_KINDS) {
+        const row = rows.find((r) => r.kind === k);
+        if (!row) continue;
+        guides.push({
+          document: full(row),
+          read: row.fileId ? await this.files.readUrl(tx, row.fileId) : null,
+        });
+      }
+      return guides;
     });
   }
 

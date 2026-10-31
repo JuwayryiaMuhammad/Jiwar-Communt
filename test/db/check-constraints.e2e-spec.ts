@@ -2626,6 +2626,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'each direction is tested IS NULL first; the length runs only on a value',
   },
+  emergencies_common_area_shape: {},
   market_shops_state_shape: {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',

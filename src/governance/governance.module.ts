@@ -1,5 +1,6 @@
 import {
   CompoundDocumentsController,
+  EmergencyGuidesController,
   StaffCompoundDocumentsController,
 } from './documents/compound-documents.controller';
 import { CompoundDocumentsService } from './documents/compound-documents.service';
@@ -91,6 +92,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
   ],
   controllers: [
     CompoundDocumentsController,
+    EmergencyGuidesController,
     StaffCompoundDocumentsController,
     GovernanceBoardController,
     StaffBoardController,

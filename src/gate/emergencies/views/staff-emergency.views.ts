@@ -16,6 +16,16 @@ import {
 } from './emergency.views';
 
 /** The ticket a technician's SOS came from (ADR 0067). */
+/** A common area an emergency was reported from (ADR 0071). */
+export class EmergencyAreaView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String })
+  name: string;
+  @ApiProperty({ type: String, nullable: true })
+  building: string | null;
+}
+
 export class EmergencyTicketView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -60,6 +70,13 @@ export class StaffEmergencyView {
       'A technician’s SOS (ADR 0067): the ticket in their hands it was raised from.',
   })
   ticket: EmergencyTicketView | null;
+  @ApiProperty({
+    type: EmergencyAreaView,
+    nullable: true,
+    description:
+      'Where a resident away from home reported it from (ADR 0071): the common area and its building.',
+  })
+  commonArea: EmergencyAreaView | null;
   @ApiProperty({ type: FirstNameRefView })
   reportedBy: FirstNameRefView;
   @ApiProperty({
@@ -138,6 +155,7 @@ export class StaffEmergencyView {
       location: r.location && { ...r.location },
       post: r.post,
       ticket: r.ticket && { ...r.ticket },
+      commonArea: r.commonArea && { ...r.commonArea },
       reportedBy: firstNameRef(r.reporter),
       responderAccount: r.responder && firstNameRef(r.responder),
       responder: responderOf(r),

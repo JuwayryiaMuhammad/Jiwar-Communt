@@ -968,4 +968,15 @@ export const MARKET_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  {
+    method: 'GET',
+    path: '/emergency-guides',
+    auth: 'tenant',
+    as: 'tenant',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+    // A guide's PDF is a presigned read.
+    noStore: true,
+  },
 ];

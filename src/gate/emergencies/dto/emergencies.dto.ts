@@ -25,6 +25,17 @@ export class ReportEmergencyDto {
   })
   @IsUUID()
   unitId: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'Where the caller is, when not at home (ADR 0071): one of the compound’s common areas (the pool, a garden). The responders see it and its building. Still no GPS.',
+  })
+  @IsOptional()
+  @IsUUID()
+  commonAreaId?: string;
 }
 
 export class RaiseSosDto {

@@ -46,6 +46,8 @@ export interface EmergencyRecord {
    * if it is in one, is the location.
    */
   ticket: { id: string; number: number } | null;
+  /** Where a resident away from home reported it from (ADR 0071). */
+  commonArea: { id: string; name: string; building: string | null } | null;
   reporter: Person;
   responder: Person | null;
   /** The phone the responder gives: their gate's, else the compound's. */
@@ -138,6 +140,18 @@ export class EmergencyRecords {
       placeId: e.originPlaceId,
     }));
     const names = await this.names.read(tx, [], posts);
+    const areas = new Map(
+      (
+        await tx.commonArea.findMany({
+          where: {
+            id: {
+              in: list.flatMap((e) => (e.commonAreaId ? [e.commonAreaId] : [])),
+            },
+          },
+          select: { id: true, nameEn: true, building: true },
+        })
+      ).map((a) => [a.id, { id: a.id, name: a.nameEn, building: a.building }]),
+    );
     const now = await dbNow(tx);
     const out: EmergencyRecord[] = [];
     for (const e of list)
@@ -157,6 +171,7 @@ export class EmergencyRecords {
               number: tickets.get(e.originTicketId)?.number ?? 0,
             }
           : null,
+        commonArea: e.commonAreaId ? (areas.get(e.commonAreaId) ?? null) : null,
         reporter: people.get(e.reportedById)!,
         responder: e.responderId ? (people.get(e.responderId) ?? null) : null,
         responderPhone: e.responderId

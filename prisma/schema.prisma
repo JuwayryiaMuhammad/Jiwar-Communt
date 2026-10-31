@@ -7750,6 +7750,8 @@ model Emergency {
   originShiftId      String?         @map("origin_shift_id") @db.Uuid
   /// A technician's SOS: the ticket in their hands it was raised from (ADR 0067).
   originTicketId     String?         @map("origin_ticket_id") @db.Uuid
+  /// Where a resident away from home reported it from (ADR 0071); frozen.
+  commonAreaId       String?         @map("common_area_id") @db.Uuid
   /// Who raised it asked for it to be called off (ADR 0067); it stays open until resolved.
   cancelRequestedAt   DateTime?       @map("cancel_requested_at") @db.Timestamptz(3)
   /// REASON_CODES.emergencyCancel, or none.

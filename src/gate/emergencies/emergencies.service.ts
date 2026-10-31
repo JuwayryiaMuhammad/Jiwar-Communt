@@ -78,6 +78,7 @@ export class EmergenciesService implements OnModuleInit {
   report(input: {
     type: EmergencyType;
     unitId: string;
+    commonAreaId?: string;
   }): Promise<{ record: HouseholdEmergency; created: boolean }> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const me = this.ctx.accountId;
@@ -85,6 +86,16 @@ export class EmergenciesService implements OnModuleInit {
       const caps = await this.community.placeIn(tx, me, input.unitId);
       if (!caps?.emergency)
         throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+      if (
+        input.commonAreaId &&
+        !(await tx.commonArea.count({
+          where: { id: input.commonAreaId, active: true },
+        }))
+      )
+        throw appError.notFound(
+          ErrorCode.COMMON_AREA_NOT_FOUND,
+          'Common area not found',
+        );
       await this.core.lockUnit(tx, 'emergency-unit', input.unitId);
       const open = await tx.emergency.findFirst({
         where: {
@@ -120,6 +131,7 @@ export class EmergenciesService implements OnModuleInit {
           tenantId,
           number,
           unitId: input.unitId,
+          commonAreaId: input.commonAreaId ?? null,
           type: input.type,
           reportedById: me,
           respondersNotified: responders.length,
@@ -140,6 +152,8 @@ export class EmergenciesService implements OnModuleInit {
           number,
           type: input.type,
           unitId: input.unitId,
+          // Named only when the caller was away from home (ADR 0071).
+          ...(input.commonAreaId ? { commonAreaId: input.commonAreaId } : {}),
           respondersNotified: responders.length,
           familyNotified: family.length,
         },

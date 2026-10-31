@@ -89,3 +89,21 @@ export class StaffCompoundDocumentsController {
     );
   }
 }
+
+/** What to do in an emergency (ADR 0071): the latest guide of each kind. */
+@ApiArea('governance')
+@RequirePermissions('community.read')
+@Controller('emergency-guides')
+export class EmergencyGuidesController {
+  constructor(private readonly documents: CompoundDocumentsService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'The compound’s emergency guides, latest versions' })
+  @NoStore()
+  @ApiOkResponse({ type: [CompoundDocumentView] })
+  async list(): Promise<CompoundDocumentView[]> {
+    return (await this.documents.emergencyGuides()).map(({ document, read }) =>
+      CompoundDocumentView.fromRead(document, read),
+    );
+  }
+}

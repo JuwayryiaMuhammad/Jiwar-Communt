@@ -459,6 +459,8 @@ export function marketCalls(
         },
       );
     },
+    'GET /emergency-guides': () =>
+      call(world(), 'GET', '/emergency-guides', { token: owner() }),
     'GET /market/settings': () =>
       call(world(), 'GET', '/market/settings', { token: manager() }),
     'PATCH /market/settings': () =>

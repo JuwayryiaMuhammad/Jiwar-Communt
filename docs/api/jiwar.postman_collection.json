@@ -8947,7 +8947,7 @@
               },
               "raw": "{\n  \"type\": \"medical\",\n  \"unitId\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `type` | `medical` \\| `fire` \\| `security` \\| `facilities` | yes |  |\n| `unitId` | string (uuid) | yes | A unit that gives the caller the emergency button. |\n\n**Responses:** 200, 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `commonAreaId` | string (uuid) |  | Where the caller is, when not at home (ADR 0071): one of the compound’s common areas (the pool, a garden). The responders see it and its building. Still no GPS. |\n| `type` | `medical` \\| `fire` \\| `security` \\| `facilities` | yes |  |\n| `unitId` | string (uuid) | yes | A unit that gives the caller the emergency button. |\n\n**Responses:** 200, 201",
             "header": [
               {
                 "description": "",
@@ -18617,6 +18617,25 @@
           }
         },
         {
+          "name": "The compound’s emergency guides, latest versions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "emergency-guides"
+              ],
+              "raw": "{{baseUrl}}/api/v1/emergency-guides"
+            }
+          }
+        },
+        {
           "name": "The caller’s agenda proposals, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -20008,7 +20027,7 @@
               },
               "raw": "{\n  \"kind\": \"bylaws\",\n  \"titleEn\": \"\",\n  \"titleAr\": \"\",\n  \"bodyEn\": \"\",\n  \"bodyAr\": \"\",\n  \"effectiveOn\": \"2026-01-01\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `boardPublicationId` | string (uuid) |  | The bylaws only, and required there: the board’s published decision that adopted this version. |\n| `bodyAr` | string | yes | Markdown. |\n| `bodyEn` | string | yes | Markdown. |\n| `changesAr` | string |  |  |\n| `changesEn` | string |  | What this version changes: required from the second version on, refused on the first. |\n| `effectiveOn` | string (date) | yes |  |\n| `fileId` | string (uuid) |  | A finalized `compound_document` PDF of the caller’s: the signed copy. |\n| `kind` | `bylaws` \\| `occupant_rights` \\| `conduct_guide` \\| `moving_guide` \\| `saving_tips` | yes |  |\n| `titleAr` | string | yes |  |\n| `titleEn` | string | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `boardPublicationId` | string (uuid) |  | The bylaws only, and required there: the board’s published decision that adopted this version. |\n| `bodyAr` | string | yes | Markdown. |\n| `bodyEn` | string | yes | Markdown. |\n| `changesAr` | string |  |  |\n| `changesEn` | string |  | What this version changes: required from the second version on, refused on the first. |\n| `effectiveOn` | string (date) | yes |  |\n| `fileId` | string (uuid) |  | A finalized `compound_document` PDF of the caller’s: the signed copy. |\n| `kind` | `bylaws` \\| `occupant_rights` \\| `conduct_guide` \\| `moving_guide` \\| `saving_tips` \\| `emergency_medical` \\| `emergency_fire` \\| `emergency_security` \\| `emergency_facilities` | yes |  |\n| `titleAr` | string | yes |  |\n| `titleEn` | string | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

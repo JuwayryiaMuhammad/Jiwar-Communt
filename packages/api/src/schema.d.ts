@@ -2236,6 +2236,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/emergency-guides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s emergency guides, latest versions */
+        get: operations["EmergencyGuidesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/erasures": {
         parameters: {
             query?: never;
@@ -25552,7 +25569,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips";
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips" | "emergency_medical" | "emergency_fire" | "emergency_security" | "emergency_facilities";
             /** Format: date-time */
             publishedAt: string;
             titleAr: string;
@@ -25581,7 +25598,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips";
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips" | "emergency_medical" | "emergency_fire" | "emergency_security" | "emergency_facilities";
             /** Format: date-time */
             publishedAt: string;
             titleAr: string;
@@ -28431,6 +28448,12 @@ export interface components {
             perDay: string;
             /** Format: date */
             to: string;
+        };
+        EmergencyAreaView: {
+            building: string | null;
+            /** Format: uuid */
+            id: string;
+            name: string;
         };
         EmergencyContactsView: {
             /** @description The other people who live in the unit, the primary first. Empty for a caller who does not live there (a landlord). */
@@ -33474,7 +33497,7 @@ export interface components {
              */
             fileId?: string;
             /** @enum {string} */
-            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips";
+            kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips" | "emergency_medical" | "emergency_fire" | "emergency_security" | "emergency_facilities";
             titleAr: string;
             titleEn: string;
         };
@@ -36782,6 +36805,11 @@ export interface components {
             id: string;
         };
         ReportEmergencyDto: {
+            /**
+             * Format: uuid
+             * @description Where the caller is, when not at home (ADR 0071): one of the compound’s common areas (the pool, a garden). The responders see it and its building. Still no GPS.
+             */
+            commonAreaId?: string;
             type: components["schemas"]["EmergencyType"];
             /**
              * Format: uuid
@@ -39386,6 +39414,8 @@ export interface components {
             /** @description The resolving staff’s note. */
             closeNote: string | null;
             closeReason: string | null;
+            /** @description Where a resident away from home reported it from (ADR 0071): the common area and its building. */
+            commonArea: components["schemas"]["EmergencyAreaView"] | null;
             /**
              * Format: date-time
              * @description Handed to the management: nobody accepted in time, or nobody was there to tell.
@@ -46761,7 +46791,7 @@ export interface operations {
     CompoundDocumentsController_versions: {
         parameters: {
             query: {
-                kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips";
+                kind: "bylaws" | "occupant_rights" | "conduct_guide" | "moving_guide" | "saving_tips" | "emergency_medical" | "emergency_fire" | "emergency_security" | "emergency_facilities";
             };
             header?: never;
             path?: never;
@@ -47094,6 +47124,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EmergencyView"];
+                };
+            };
+        };
+    };
+    EmergencyGuidesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundDocumentView"][];
                 };
             };
         };

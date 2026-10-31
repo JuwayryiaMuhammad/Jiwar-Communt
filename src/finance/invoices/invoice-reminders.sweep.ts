@@ -73,6 +73,8 @@ export class InvoiceRemindersSweep implements OnModuleInit {
                  AND NOT ${DISPUTED_SQL} AS owed,
                  i.total - ${CREDITED_SQL} - ${PAID_SQL} AS outstanding,
                  i.instalment_plan_id IS NULL
+                 -- A charge's invoice is never split (ADR 0070).
+                 AND i.kind::text IN ('service_charge', 'maintenance', 'other')
                  AND NOT EXISTS (SELECT 1 FROM instalment_plans p
                                   WHERE p.tenant_id = i.tenant_id AND p.invoice_id = i.id) AS splittable
             FROM invoices i WHERE i.id = ${item.id}::uuid`;

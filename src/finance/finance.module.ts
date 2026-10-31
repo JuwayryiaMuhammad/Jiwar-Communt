@@ -79,6 +79,8 @@ import {
   UnitInvoicesController,
 } from './invoices/invoices.controller';
 import { InvoicesService } from './invoices/invoices.service';
+import { ChargeSettler } from './charges/charge-settler';
+import { FinanceChargesService } from './charges/finance-charges.service';
 import {
   StaffInstalmentsController,
   UnitInstalmentsController,
@@ -185,6 +187,8 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     FinanceOverview,
     FinanceNotices,
     InvoicesService,
+    ChargeSettler,
+    FinanceChargesService,
     ResidentFinanceItems,
     LateNoticesService,
     InstalmentsService,

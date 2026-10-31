@@ -231,6 +231,21 @@ export class FacilityBansService implements OnModuleInit {
           createdAt: now,
         },
       });
+      // The charges' rule (ADR 0070): the units of the bookings it cancels
+      // that have a fee take their finance lock before the bookings' rows.
+      // Nobody books for this account meanwhile (its row is held).
+      await this.staffBookings.lockChargedUnits(
+        tx,
+        await tx.booking.findMany({
+          where: {
+            bookedById: input.accountId,
+            ...(input.facilityId ? { facilityId: input.facilityId } : {}),
+            status: { in: [...HOLDING] },
+            startsAt: { gt: now },
+          },
+          select: { id: true, unitId: true },
+        }),
+      );
       const due = input.facilityId
         ? await tx.$queryRaw<{ id: string }[]>`
             SELECT id FROM bookings

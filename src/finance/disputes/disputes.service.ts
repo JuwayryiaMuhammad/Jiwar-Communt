@@ -19,6 +19,8 @@ import {
 import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { FinanceAccess } from '../access';
+import { ChargeSettler } from '../charges/charge-settler';
+import { isStaffKind } from '../invoices/invoice-kinds';
 import { formatNumber } from '../counters';
 import { dbNow } from '../db-clock';
 import { money, show, ZERO } from '../money';
@@ -84,6 +86,7 @@ export class DisputesService implements OnModuleInit {
     private readonly access: FinanceAccess,
     private readonly notices: FinanceNotices,
     private readonly files: FilesService,
+    private readonly settler: ChargeSettler,
   ) {}
 
   onModuleInit(): void {
@@ -137,6 +140,14 @@ export class DisputesService implements OnModuleInit {
         invoice.unitId,
       );
       if (!caps?.financeView) throw invoiceNotFound();
+      // A charge's invoice is disputed by its source's own path: a fine's
+      // appeal, a booking's or a club request's cancellation (ADR 0070).
+      if (!isStaffKind(invoice.kind))
+        throw appError.conflict(
+          ErrorCode.INVOICE_NOT_DISPUTABLE,
+          'A charge is disputed through what raised it',
+          { params: { reason: 'charge' } },
+        );
       await this.access.lockUnits(tx, [invoice.unitId]);
       const balance = (await balancesOf(tx, [invoiceId])).get(invoiceId)!;
       if (balance.outstanding.lte(ZERO))
@@ -281,6 +292,7 @@ export class DisputesService implements OnModuleInit {
       // What was held back from the invoice (the unit's credit) pays what
       // is left of it now.
       await allocateUnit(tx, tenantId, dispute.unitId);
+      await this.settler.settle(tx, [dispute.unitId]);
       await this.audit.record(tx, {
         action: 'invoice_dispute.decided',
         targetId: id,

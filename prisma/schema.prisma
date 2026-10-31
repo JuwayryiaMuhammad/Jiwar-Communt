@@ -575,6 +575,7 @@ model Tenant {
   financeCounters              FinanceCounter[]
   invoiceBatches               InvoiceBatch[]
   invoices                     Invoice[]
+  financeCharges               FinanceCharge[]
   billingPlans                 BillingPlan[]
   financePayments              FinancePayment[]
   receiptLinks                 ReceiptLink[]
@@ -1184,6 +1185,7 @@ model Unit {
   clubMembership             ClubMembership?
   invoiceBatches             InvoiceBatch[]
   invoices                   Invoice[]
+  financeCharges             FinanceCharge[]
   instalmentPlans            InstalmentPlan[]
   invoiceDisputes            InvoiceDispute[]
   financeRefunds             FinanceRefund[]
@@ -5927,6 +5929,12 @@ model Facility {
   requiresMembership  Boolean               @default(false) @map("requires_membership")
   weeklyQuota         Int?                  @map("weekly_quota")
   peakQuota           Int?                  @map("peak_quota")
+  /// What a booking costs, in EGP, through the charges port (ADR 0070); null: free.
+  feeAmount           Decimal?              @map("fee_amount") @db.Decimal(12, 2)
+  /// What a peak-time booking costs, when it differs.
+  peakFeeAmount       Decimal?              @map("peak_fee_amount") @db.Decimal(12, 2)
+  /// A resident who cancels this many hours or more before the start is credited in full.
+  refundCutoffHours   Int                   @default(24) @map("refund_cutoff_hours")
   createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -6783,6 +6791,7 @@ model Invoice {
   notices         InvoiceNotice[]
   allocations     FinanceAllocation[]
   sessionInvoices PaymentSessionInvoice[]
+  charge          FinanceCharge?
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
@@ -6821,7 +6830,8 @@ model CreditNote {
   invoiceId          String   @map("invoice_id") @db.Uuid
   amount             Decimal  @db.Decimal(12, 2)
   reasonCode         String   @map("reason_code")
-  createdById        String   @map("created_by_account_id") @db.Uuid
+  /// Null only for `charge_cancelled` written by the system (ADR 0070).
+  createdById        String?  @map("created_by_account_id") @db.Uuid
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   /// Reason `instalment_plan` (ADR 0048): the plan it opened or cancelled.
   instalmentPlanId   String?  @map("instalment_plan_id") @db.Uuid
@@ -6831,7 +6841,7 @@ model CreditNote {
   compensationReason String?  @map("compensation_reason")
 
   invoice        Invoice                    @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  createdBy      Account                    @relation("CreditNoteCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "credit_notes_tenant_id_created_by_fkey")
+  createdBy      Account?                   @relation("CreditNoteCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "credit_notes_tenant_id_created_by_fkey")
   instalmentPlan InstalmentPlan?            @relation(fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   dispute        InvoiceDispute?            @relation(fields: [tenantId, disputeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   releases       FinanceAllocationRelease[]
@@ -6843,6 +6853,37 @@ model CreditNote {
   @@index([tenantId, instalmentPlanId], map: "credit_notes_instalment_plan_idx")
   @@index([tenantId, createdAt, id], map: "credit_notes_created_idx")
   @@map("credit_notes")
+}
+
+/// A booking's fee, a club membership request's price or a vehicle fine,
+/// owed through one invoice the charges port issued (ADR 0070). One per
+/// source row and one per invoice; paid once, cancelled once (trigger).
+/// `sourceId` names the source's row by `source`: no foreign key.
+model FinanceCharge {
+  id           String      @id @db.Uuid
+  tenantId     String      @map("tenant_id") @db.Uuid
+  unitId       String      @map("unit_id") @db.Uuid
+  /// `booking`, `club_request` or `vehicle_fine` (CHARGE_SOURCES).
+  source       String
+  sourceId     String      @map("source_id") @db.Uuid
+  kind         InvoiceKind
+  invoiceId    String      @map("invoice_id") @db.Uuid
+  amount       Decimal     @db.Decimal(12, 2)
+  raisedAt     DateTime    @default(now()) @map("raised_at") @db.Timestamptz(3)
+  /// Its invoice was settled by payments: the source's handler ran.
+  paidAt       DateTime?   @map("paid_at") @db.Timestamptz(3)
+  cancelledAt  DateTime?   @map("cancelled_at") @db.Timestamptz(3)
+  /// REASON_CODES.chargeCancel.
+  cancelReason String?     @map("cancel_reason")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit    Unit    @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_charges_unit_fkey")
+  invoice Invoice @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_charges_invoice_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, source, sourceId], map: "finance_charges_source_key")
+  @@unique([tenantId, invoiceId], map: "finance_charges_invoice_key")
+  @@map("finance_charges")
 }
 
 enum InvoiceDisputeStatus {

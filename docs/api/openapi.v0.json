@@ -5295,6 +5295,33 @@
         ],
         "type": "object"
       },
+      "BookingChargeView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "invoiceId": {
+            "description": "The unit’s invoice that owes it: paid as any invoice.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargeStatus"
+              }
+            ],
+            "description": "`cancelled`: credited off — what was paid of it is the unit’s credit."
+          }
+        },
+        "required": [
+          "invoiceId",
+          "amount",
+          "status"
+        ],
+        "type": "object"
+      },
       "BookingOccasionView": {
         "properties": {
           "firstName": {
@@ -5496,6 +5523,16 @@
             ],
             "nullable": true
           },
+          "charge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingChargeView"
+              }
+            ],
+            "description": "What it costs, raised when it was confirmed (ADR 0070); null: free, or not confirmed.",
+            "nullable": true,
+            "type": "object"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -5568,6 +5605,7 @@
           "cancelledSide",
           "cancelReason",
           "occasion",
+          "charge",
           "createdAt"
         ],
         "type": "object"
@@ -7298,6 +7336,15 @@
           "newPassword"
         ],
         "type": "object"
+      },
+      "ChargeStatus": {
+        "description": "`cancelled`: credited off — what was paid of it is the unit’s credit.",
+        "enum": [
+          "open",
+          "paid",
+          "cancelled"
+        ],
+        "type": "string"
       },
       "CheckAssetImportDto": {
         "properties": {
@@ -13176,6 +13223,12 @@
             "nullable": true,
             "type": "string"
           },
+          "feeAmount": {
+            "description": "What a booking costs, EGP, owed by the unit through an invoice raised when the booking is confirmed (ADR 0070). Null: free. Not for a walk-in facility.",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,5}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
           "maxDaysAhead": {
             "description": "How many local days ahead a slot may be booked. Default 14.",
             "maximum": 90,
@@ -13214,6 +13267,12 @@
             "minLength": 1,
             "type": "string"
           },
+          "peakFeeAmount": {
+            "description": "What a peak-time booking costs, when it differs from `feeAmount`. Null: as `feeAmount`.",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,5}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
           "peakQuota": {
             "description": "Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1.",
             "maximum": 20,
@@ -13223,6 +13282,12 @@
           "position": {
             "description": "Order in the compound’s list. Default 0.",
             "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "refundCutoffHours": {
+            "description": "A resident who cancels at least this many hours before the start is credited the fee in full; later, nothing. Default 24.",
+            "maximum": 168,
             "minimum": 0,
             "type": "number"
           },
@@ -20565,6 +20630,30 @@
         ],
         "type": "object"
       },
+      "FacilityFeesView": {
+        "properties": {
+          "feeAmount": {
+            "description": "EGP, two decimals. Null: free.",
+            "nullable": true,
+            "type": "string"
+          },
+          "peakFeeAmount": {
+            "description": "At peak times, when it differs. Null: as `feeAmount`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "refundCutoffHours": {
+            "description": "Cancelled by the resident at least this many hours before the start, the fee is credited in full; later, it stays owed.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "feeAmount",
+          "peakFeeAmount",
+          "refundCutoffHours"
+        ],
+        "type": "object"
+      },
       "FacilityMode": {
         "enum": [
           "bookable",
@@ -20833,6 +20922,15 @@
             "nullable": true,
             "type": "string"
           },
+          "fees": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityFeesView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "hours": {
             "description": "Opening hours, by weekday then start.",
             "items": {
@@ -20887,6 +20985,7 @@
           "hours",
           "peakWindows",
           "rules",
+          "fees",
           "closures"
         ],
         "type": "object"
@@ -51260,6 +51359,16 @@
             ],
             "nullable": true
           },
+          "charge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingChargeView"
+              }
+            ],
+            "description": "Its fee’s invoice and state (ADR 0070); null: none.",
+            "nullable": true,
+            "type": "object"
+          },
           "childOccasion": {
             "description": "One of the unit's children is the booking's occasion (ADR 0054): never who.",
             "type": "boolean"
@@ -51343,6 +51452,7 @@
           "cancelledAt",
           "noShowMarkedAt",
           "childOccasion",
+          "charge",
           "createdAt"
         ],
         "type": "object"
@@ -52589,6 +52699,15 @@
             "nullable": true,
             "type": "string"
           },
+          "fees": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityFeesView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "hours": {
             "items": {
               "$ref": "#/components/schemas/FacilityWindowView"
@@ -52647,6 +52766,7 @@
           "hours",
           "peakWindows",
           "rules",
+          "fees",
           "createdAt",
           "updatedAt"
         ],
@@ -62711,6 +62831,12 @@
             "nullable": true,
             "type": "string"
           },
+          "feeAmount": {
+            "description": "What a booking costs, EGP, owed by the unit through an invoice raised when the booking is confirmed (ADR 0070). Null: free. Not for a walk-in facility.",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,5}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
           "maxDaysAhead": {
             "description": "How many local days ahead a slot may be booked. Default 14.",
             "maximum": 90,
@@ -62741,6 +62867,12 @@
             "minLength": 1,
             "type": "string"
           },
+          "peakFeeAmount": {
+            "description": "What a peak-time booking costs, when it differs from `feeAmount`. Null: as `feeAmount`.",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,5}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
           "peakQuota": {
             "description": "Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1.",
             "maximum": 20,
@@ -62749,6 +62881,12 @@
           },
           "position": {
             "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "refundCutoffHours": {
+            "description": "A resident who cancels at least this many hours before the start is credited the fee in full; later, nothing. Default 24.",
+            "maximum": 168,
             "minimum": 0,
             "type": "number"
           },
@@ -68779,7 +68917,7 @@
     },
     "/api/v1/bookings/{id}/cancel": {
       "post": {
-        "description": "Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED).",
+        "description": "Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED). Its fee (ADR 0070) is credited in full until `fees.refundCutoffHours` before the start; later it stays owed.",
         "operationId": "BookingsController_cancel",
         "parameters": [
           {

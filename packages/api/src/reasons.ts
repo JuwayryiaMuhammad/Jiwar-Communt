@@ -130,7 +130,7 @@ export const REASON_CODES = {
   gateServiceClose: ['done', 'not_found', 'no_show', 'duplicate', 'not_possible'],
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'compensation', 'other'],
   creditNoteCompensation: ['service_outage', 'maintenance_delay', 'facility_closure', 'other'],
-  creditNoteSystem: ['instalment_plan', 'dispute'],
+  creditNoteSystem: ['instalment_plan', 'dispute', 'charge_cancelled'],
   invoiceDispute: ['already_paid', 'wrong_amount', 'not_my_unit', 'service_not_provided', 'duplicate_invoice', 'other'],
   refundReverse: ['entered_in_error', 'refund_failed', 'other'],
   invoiceDisputeReject: ['charge_is_correct', 'payment_not_found', 'outside_policy', 'no_longer_owed', 'other'],

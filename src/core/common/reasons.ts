@@ -509,8 +509,9 @@ export const REASON_CODES = {
     'other',
   ],
   // A credit note the system writes, never picked by staff (ADR 0048): an
-  // instalment plan closing an invoice or cancelling its instalments.
-  creditNoteSystem: ['instalment_plan', 'dispute'],
+  // instalment plan closing an invoice or cancelling its instalments, a
+  // dispute accepted, a charge cancelled (ADR 0070).
+  creditNoteSystem: ['instalment_plan', 'dispute', 'charge_cancelled'],
   // Why a resident disputes an invoice (ADR 0048).
   invoiceDispute: [
     'already_paid',

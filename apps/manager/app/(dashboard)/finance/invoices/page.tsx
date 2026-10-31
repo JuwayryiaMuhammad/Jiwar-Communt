@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { egp } from '@/components/club/logic';
 import { InvoiceDetailDialog } from '@/components/finance/invoice-detail';
 import { IssueDialog } from '@/components/finance/issue-dialog';
-import { KIND_TEXT } from '@/components/finance/logic';
+import { CHARGE_KIND_TEXT, KIND_TEXT } from '@/components/finance/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Invoice, type InvoiceFilters, type InvoiceKind } from '@/lib/queries';
 
@@ -66,7 +66,7 @@ export default function InvoicesPage() {
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as InvoiceKind | '')}>
               <option value="">Any</option>
-              {Object.entries(KIND_TEXT).map(([v, label]) => (
+              {Object.entries({ ...KIND_TEXT, ...CHARGE_KIND_TEXT }).map(([v, label]) => (
                 <option key={v} value={v}>
                   {label}
                 </option>
@@ -101,7 +101,7 @@ export default function InvoicesPage() {
                   </Link>
                 ),
               },
-              { key: 'kind', header: 'Kind', cell: (i) => KIND_TEXT[i.kind] ?? i.kind },
+              { key: 'kind', header: 'Kind', cell: (i) => KIND_TEXT[i.kind] ?? CHARGE_KIND_TEXT[i.kind] ?? i.kind },
               { key: 'total', header: 'Total', cell: (i) => egp(i.total) },
               { key: 'owed', header: 'Owed', cell: (i) => egp(i.outstanding) },
               { key: 'due', header: 'Due', cell: (i) => i.dueOn },

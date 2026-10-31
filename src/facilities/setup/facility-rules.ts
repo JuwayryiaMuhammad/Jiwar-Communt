@@ -1,4 +1,4 @@
-import type { FacilityCapacityUnit } from '@prisma/client';
+import type { FacilityCapacityUnit, Prisma } from '@prisma/client';
 
 // ============================================================================
 // A bookable facility's rules (ADR 0044)
@@ -74,6 +74,59 @@ export function rulesOf(f: {
     weeklyQuota: f.weeklyQuota!,
     peakQuota: f.peakQuota!,
   };
+}
+
+// ============================================================================
+// What a booking costs (ADR 0070)
+// ============================================================================
+
+/** A booking's fee, EGP: more than zero, below 100,000 (CHECK facilities_fees). */
+export const FEE_AMOUNT = /^(?!0+(\.0{1,2})?$)\d{1,5}(\.\d{1,2})?$/;
+/** A resident who cancels this many hours or more before the start is credited in full. */
+export const REFUND_CUTOFF_HOURS = { min: 0, max: 168, default: 24 } as const;
+
+export const FEE_FIELDS = [
+  'feeAmount',
+  'peakFeeAmount',
+  'refundCutoffHours',
+] as const;
+
+export interface FeeInput {
+  feeAmount?: string | null;
+  peakFeeAmount?: string | null;
+  refundCutoffHours?: number;
+}
+
+/** A facility's fees as views and the audit show them; null for a walk-in one. */
+export interface FacilityFees {
+  feeAmount: string | null;
+  peakFeeAmount: string | null;
+  refundCutoffHours: number;
+}
+
+export function feesOf(f: {
+  mode: string;
+  feeAmount: Prisma.Decimal | null;
+  peakFeeAmount: Prisma.Decimal | null;
+  refundCutoffHours: number;
+}): FacilityFees | null {
+  if (f.mode === 'walk_in') return null;
+  return {
+    feeAmount: f.feeAmount?.toFixed(2) ?? null,
+    peakFeeAmount: f.peakFeeAmount?.toFixed(2) ?? null,
+    refundCutoffHours: f.refundCutoffHours,
+  };
+}
+
+/** What a booking of a slot costs, peak or not; null: free. */
+export function feeFor(
+  f: {
+    feeAmount: Prisma.Decimal | null;
+    peakFeeAmount: Prisma.Decimal | null;
+  },
+  peak: boolean,
+): Prisma.Decimal | null {
+  return (peak ? f.peakFeeAmount : null) ?? f.feeAmount;
 }
 
 /** A new bookable facility's rules: what was given, then the defaults. */

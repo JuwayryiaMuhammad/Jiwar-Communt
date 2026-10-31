@@ -359,6 +359,8 @@ describe('Facilities: set-up (ADR 0044)', () => {
         'closures',
         'descriptionAr',
         'descriptionEn',
+        // ADR 0070.
+        'fees',
         'hours',
         'id',
         'mode',

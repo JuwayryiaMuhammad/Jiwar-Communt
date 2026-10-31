@@ -145,6 +145,21 @@ export class ClosuresService implements OnModuleInit {
           createdAt: now,
         },
       });
+      // The charges' rule (ADR 0070): the units of the bookings it cancels
+      // that have a fee take their finance lock before the bookings' rows;
+      // the facility's row, held FOR UPDATE, keeps new ones out meanwhile.
+      await this.bookings.lockChargedUnits(
+        tx,
+        await tx.booking.findMany({
+          where: {
+            facilityId,
+            status: { in: [...HOLDING] },
+            startsAt: { lt: input.endsAt, gt: now },
+            endsAt: { gt: input.startsAt },
+          },
+          select: { id: true, unitId: true },
+        }),
+      );
       const ids = await tx.$queryRaw<{ id: string }[]>`
         SELECT id FROM bookings
          WHERE facility_id = ${facilityId}::uuid

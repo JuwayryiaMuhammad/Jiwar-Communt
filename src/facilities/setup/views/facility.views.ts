@@ -7,7 +7,7 @@ import {
 } from '@prisma/client';
 import { FacilityClosureNoticeView } from '../../closures/views/closure.views';
 import type { WeeklyWindow } from '../../../core/common/slots/weekly-windows';
-import { rulesOf } from '../facility-rules';
+import { feesOf, rulesOf } from '../facility-rules';
 
 /** A weekly window: a weekday and minutes after local midnight. */
 export class FacilityWindowView {
@@ -94,6 +94,28 @@ export class FacilityBookingRulesView {
   peakQuota: number;
 }
 
+/** What a booking costs (ADR 0070): null for a walk-in facility. */
+export class FacilityFeesView {
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'EGP, two decimals. Null: free.',
+  })
+  feeAmount: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'At peak times, when it differs. Null: as `feeAmount`.',
+  })
+  peakFeeAmount: string | null;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Cancelled by the resident at least this many hours before the start, the fee is credited in full; later, it stays owed.',
+  })
+  refundCutoffHours: number;
+}
+
 /** A facility as residents see it. */
 export class FacilityView {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -125,6 +147,8 @@ export class FacilityView {
       'Null for a walk-in facility (the pool, the gym): nothing to book.',
   })
   rules: FacilityBookingRulesView | null;
+  @ApiProperty({ type: FacilityFeesView, nullable: true })
+  fees: FacilityFeesView | null;
   @ApiProperty({
     type: [FacilityClosureNoticeView],
     description: 'Closures not lifted and not over, soonest first.',
@@ -143,6 +167,7 @@ export class FacilityView {
       hours: f.hours.map((w) => FacilityWindowView.from(w)),
       peakWindows: f.peakWindows.map((w) => FacilityWindowView.from(w)),
       closures: f.closures.map((c) => FacilityClosureNoticeView.from(c)),
+      fees: feesOf(f),
       rules: rules && {
         slotMinutes: rules.slotMinutes,
         maxDaysAhead: rules.maxDaysAhead,
@@ -200,6 +225,8 @@ export class StaffFacilityView {
   peakWindows: FacilityWindowView[];
   @ApiProperty({ type: FacilityRulesView, nullable: true })
   rules: FacilityRulesView | null;
+  @ApiProperty({ type: FacilityFeesView, nullable: true })
+  fees: FacilityFeesView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -218,6 +245,7 @@ export class StaffFacilityView {
       hours: f.hours.map((w) => FacilityWindowView.from(w)),
       peakWindows: f.peakWindows.map((w) => FacilityWindowView.from(w)),
       rules: rulesOf(f),
+      fees: feesOf(f),
       createdAt: f.createdAt,
       updatedAt: f.updatedAt,
     };

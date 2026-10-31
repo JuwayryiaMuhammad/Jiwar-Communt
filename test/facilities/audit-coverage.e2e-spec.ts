@@ -13,6 +13,7 @@ import {
   PHASE_2_2_COVERAGE,
   PHASE_4_COVERAGE,
   R1_COVERAGE,
+  R11C1B_COVERAGE,
   RESIDENT_SCREENS_COVERAGE,
   VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
@@ -528,6 +529,8 @@ describe('Audit coverage — facilities', () => {
       expect(
         all
           .filter((k) => /^(facility|facilities|booking|club)[._]/.test(k))
+          // ADR 0070's are claimed by test/r11c1b/audit-coverage.
+          .filter((k) => !R11C1B_COVERAGE.includes(k))
           .sort(),
       ).toEqual([...FACILITIES_COVERAGE].sort());
     });

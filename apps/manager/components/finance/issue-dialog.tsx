@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { egp } from '@/components/club/logic';
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
-import { keys, type InvoiceKind } from '@/lib/queries';
+import { keys, type StaffInvoiceKind } from '@/lib/queries';
 import { KIND_TEXT, lineReady, linesTotal, validMoney } from './logic';
 
 type Target = 'unit' | 'building' | 'all';
@@ -30,7 +30,7 @@ export function IssueDialog({ unitId: fixedUnit, onClose }: { unitId?: string; o
   const [target, setTarget] = useState<Target>('unit');
   const [unitId, setUnitId] = useState(fixedUnit ?? '');
   const [building, setBuilding] = useState('');
-  const [kind, setKind] = useState<InvoiceKind>('service_charge');
+  const [kind, setKind] = useState<StaffInvoiceKind>('service_charge');
   const [dueOn, setDueOn] = useState(inDays(14));
   const [lines, setLines] = useState<Line[]>([blank()]);
   const issue = useAction(
@@ -109,7 +109,7 @@ export function IssueDialog({ unitId: fixedUnit, onClose }: { unitId?: string; o
         ) : null}
         <Field label="Kind">
           {(p) => (
-            <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as InvoiceKind)}>
+            <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as StaffInvoiceKind)}>
               {Object.entries(KIND_TEXT).map(([v, label]) => (
                 <option key={v} value={v}>
                   {label}

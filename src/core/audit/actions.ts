@@ -690,8 +690,8 @@ export const AUDIT_ACTIONS = {
   // metadata: unitId, occupancyId, accountId.
   'neighbour_welcome.sent': { log: 'tenant', target: 'neighbour_welcome' },
   // Facilities and bookings, the club (ADR 0044).
-  // changes: mode, state, position and rules by value; names and
-  // descriptions as `{ changed: true }` only.
+  // changes: mode, state, position, rules and fees (ADR 0070) by value;
+  // names and descriptions as `{ changed: true }` only.
   'facility.created': {
     log: 'tenant',
     target: 'facility',
@@ -912,6 +912,15 @@ export const AUDIT_ACTIONS = {
   // metadata: invoiceId, unitId, number, amount, released (paid money
   // given back to credit, ADR 0048), reasonCode.
   'credit_note.created': { log: 'tenant', target: 'credit_note' },
+  // Charges (ADR 0070). metadata: source, sourceId, unitId, invoiceId,
+  // number, kind, amount.
+  'finance_charge.raised': { log: 'tenant', target: 'finance_charge' },
+  // metadata: source, sourceId, unitId, invoiceId, amount. The paying
+  // transaction's actor, or nobody (the webhook).
+  'finance_charge.paid': { log: 'tenant', target: 'finance_charge' },
+  // metadata: source, sourceId, unitId, invoiceId, reasonCode,
+  // creditNoteId, credited, released.
+  'finance_charge.cancelled': { log: 'tenant', target: 'finance_charge' },
   // changes: kind, frequency, amount, days and state by value; names as
   // changed only.
   'billing_plan.created': {

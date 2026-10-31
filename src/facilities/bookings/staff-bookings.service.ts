@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Booking, BookingStatus } from '@prisma/client';
 import { CommunityFacilitiesPort, type FacilityAccount } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
+import { Charges } from '../../core/charges/charges';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import { appError, ErrorCode } from '../../core/common/errors';
@@ -22,8 +23,9 @@ import { rulesOf, type FacilityRules } from '../setup/facility-rules';
 import { FacilitiesService } from '../setup/facilities.service';
 import { SuspensionsService } from '../suspensions/suspensions.service';
 import { assertCan, HOLDING } from './booking-rules';
-import { BookingsService, bookingNotFound } from './bookings.service';
+import { BookingsService, bookingNotFound, charging } from './bookings.service';
 import { slotsOfDate, type FacilitySlot } from './facility-slots';
+import type { BookingCharge } from './views/booking.views';
 
 export const BOOKING_EXPIRE_SWEEP = 'bookings.expire_pending';
 /** A no-show is marked within three days of the slot's end. */
@@ -36,6 +38,8 @@ export interface StaffBooking {
   booking: Booking;
   unitCode: string;
   bookedBy: FacilityAccount;
+  /** Its fee (ADR 0070). */
+  charge?: BookingCharge | null;
 }
 
 export interface StaffBookingsQuery {
@@ -89,6 +93,7 @@ export class StaffBookingsService implements OnModuleInit {
     private readonly bookings: BookingsService,
     private readonly notices: BookingNotices,
     private readonly suspensions: SuspensionsService,
+    private readonly charges: Charges,
   ) {}
 
   onModuleInit(): void {
@@ -186,7 +191,9 @@ export class StaffBookingsService implements OnModuleInit {
       tx,
       rows.map((b) => b.bookedById),
     );
+    const charges = await this.bookings.chargesOf(tx, rows);
     return rows.map((booking) => ({
+      charge: charges.get(booking.id) ?? null,
       booking,
       unitCode: codes.get(booking.unitId) ?? '',
       bookedBy: people.get(booking.bookedById) ?? {
@@ -215,6 +222,9 @@ export class StaffBookingsService implements OnModuleInit {
         seen.facilityId,
         'update',
       );
+      // Its fee is raised here: the finance lock after the facility's row
+      // (the charges' rule, ADR 0070).
+      if (charging(facility)) await this.charges.lockUnit(tx, seen.unitId);
       const booking = await this.bookings.lockBooking(tx, id);
       assertCan(booking, 'approve');
       const now = await dbNow(tx);
@@ -250,6 +260,12 @@ export class StaffBookingsService implements OnModuleInit {
         targetId: id,
         metadata: { facilityId: booking.facilityId, unitId: booking.unitId },
       });
+      await this.bookings.raiseFee(
+        tx,
+        facility,
+        booking,
+        (await this.bookings.calendar(tx, facility, rules)).timeZone,
+      );
       await this.notices.send(
         tx,
         [booking.bookedById],
@@ -387,12 +403,24 @@ export class StaffBookingsService implements OnModuleInit {
     });
   }
 
-  /** The actor, the unit, the facility (shared), then the booking, locked. */
+  /** BookingsService.lockChargedUnits, for the paths that hold this service. */
+  lockChargedUnits(
+    tx: TenantTxClient,
+    rows: readonly { id: string; unitId: string }[],
+  ): Promise<void> {
+    return this.bookings.lockChargedUnits(tx, rows);
+  }
+
+  /**
+   * The actor, the unit, the facility (shared), the unit's finance lock when
+   * the booking has a charge (ADR 0070), then the booking, locked.
+   */
   private async lockForStaff(tx: TenantTxClient, id: string): Promise<Booking> {
     await this.access.lockSelf(tx);
     const seen = await this.seen(tx, id);
     await this.access.lockUnit(tx, seen.unitId);
     await this.facilities.lock(tx, seen.facilityId, 'share');
+    await this.bookings.lockChargedUnits(tx, [seen]);
     return this.bookings.lockBooking(tx, id);
   }
 

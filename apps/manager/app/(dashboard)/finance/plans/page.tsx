@@ -11,7 +11,7 @@ import { FREQUENCY_TEXT, KIND_TEXT, monthStarts, validMoney } from '@/components
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
-import { fetchers, keys, type BillingOverride, type BillingPlan, type InvoiceKind } from '@/lib/queries';
+import { fetchers, keys, type BillingOverride, type BillingPlan, type StaffInvoiceKind } from '@/lib/queries';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 type Frequency = BillingPlan['frequency'];
@@ -36,7 +36,7 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
   const [decisionId, setDecisionId] = useState('');
   const [nameEn, setNameEn] = useState(plan?.nameEn ?? '');
   const [nameAr, setNameAr] = useState(plan?.nameAr ?? '');
-  const [kind, setKind] = useState<InvoiceKind>(plan?.kind ?? 'service_charge');
+  const [kind, setKind] = useState<StaffInvoiceKind>((plan?.kind as StaffInvoiceKind | undefined) ?? 'service_charge');
   const [frequency, setFrequency] = useState<Frequency>(plan?.frequency ?? 'monthly');
   const [amount, setAmount] = useState(plan?.amount ?? '');
   const starts = monthStarts(today());
@@ -115,7 +115,7 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
           <>
             <Field label="Kind">
               {(p) => (
-                <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as InvoiceKind)}>
+                <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as StaffInvoiceKind)}>
                   {Object.entries(KIND_TEXT).map(([v, label]) => (
                     <option key={v} value={v}>
                       {label}

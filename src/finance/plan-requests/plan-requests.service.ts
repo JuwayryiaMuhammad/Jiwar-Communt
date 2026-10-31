@@ -21,6 +21,7 @@ import {
   checkInstalmentShape,
   InstalmentsService,
 } from '../instalments/instalments.service';
+import { isStaffKind } from '../invoices/invoice-kinds';
 import { balancesOf, disputedAmong } from '../invoices/balances';
 import { invoiceDisputed, invoiceNotFound } from '../invoices/invoices.service';
 import { ZERO } from '../money';
@@ -65,7 +66,9 @@ const lapsed = () =>
     ErrorCode.PLAN_REQUEST_LAPSED,
     'The invoice no longer owes, or was split, since it was asked',
   );
-const notConvertible = (reason: 'instalment' | 'has_plan' | 'nothing_owed') =>
+const notConvertible = (
+  reason: 'instalment' | 'has_plan' | 'nothing_owed' | 'charge',
+) =>
   appError.conflict(
     ErrorCode.INVOICE_NOT_CONVERTIBLE,
     'This invoice cannot be split into instalments',
@@ -150,6 +153,8 @@ export class PlanRequestsService implements OnModuleInit {
           },
         );
       if (invoice.instalmentPlanId) throw notConvertible('instalment');
+      // A charge's invoice is paid or cancelled whole (ADR 0070).
+      if (!isStaffKind(invoice.kind)) throw notConvertible('charge');
       if (await tx.instalmentPlan.findFirst({ where: { invoiceId } }))
         throw notConvertible('has_plan');
       if ((await disputedAmong(tx, [invoiceId])).length)

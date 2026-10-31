@@ -20,6 +20,7 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { FinanceAccess } from '../access';
+import { ChargeSettler } from '../charges/charge-settler';
 import { formatNumber, takeNumbers } from '../counters';
 import { asDate, fromDate } from '../db-clock';
 import { InvoicesService } from '../invoices/invoices.service';
@@ -70,6 +71,7 @@ export class RefundsService implements OnModuleInit {
     private readonly community: CommunityFinancePort,
     private readonly access: FinanceAccess,
     private readonly invoices: InvoicesService,
+    private readonly settler: ChargeSettler,
   ) {}
 
   onModuleInit(): void {
@@ -211,6 +213,7 @@ export class RefundsService implements OnModuleInit {
       });
       // The money is credit again: it pays what the unit owes.
       await allocateUnit(tx, refund.tenantId, refund.unitId);
+      await this.settler.settle(tx, [refund.unitId]);
       await this.audit.record(tx, {
         action: 'refund.reversed',
         targetId: refundId,

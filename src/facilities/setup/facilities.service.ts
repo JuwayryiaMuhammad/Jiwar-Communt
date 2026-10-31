@@ -1,5 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import type { Facility, FacilityMode, Prisma } from '@prisma/client';
+import { Prisma, type Facility, type FacilityMode } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -20,7 +20,14 @@ import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
-import { rulesOf, withDefaults, type FacilityRules } from './facility-rules';
+import {
+  FEE_FIELDS,
+  feesOf,
+  rulesOf,
+  withDefaults,
+  type FacilityRules,
+  type FeeInput,
+} from './facility-rules';
 import { upcomingClosures } from '../closures/closure-reads';
 import { dbNow } from '../db-clock';
 import {
@@ -46,7 +53,7 @@ const RULE_FIELDS = [
   'peakQuota',
 ] as const satisfies readonly (keyof FacilityRules)[];
 
-export interface NewFacility extends Partial<FacilityRules> {
+export interface NewFacility extends Partial<FacilityRules>, FeeInput {
   mode: FacilityMode;
   nameEn: string;
   nameAr: string;
@@ -55,7 +62,7 @@ export interface NewFacility extends Partial<FacilityRules> {
   position?: number;
 }
 
-export interface FacilityChange extends Partial<FacilityRules> {
+export interface FacilityChange extends Partial<FacilityRules>, FeeInput {
   nameEn?: string;
   nameAr?: string;
   descriptionEn?: string | null;
@@ -98,6 +105,32 @@ function audited(f: Facility) {
     descriptionEn: f.descriptionEn,
     descriptionAr: f.descriptionAr,
     ...(rulesOf(f) ?? {}),
+    ...(feesOf(f) ?? {}),
+  };
+}
+
+/** The fee fields given, as the row takes them; a walk-in facility takes none. */
+function feeData(
+  input: FeeInput,
+  walkIn: boolean,
+  errors: FieldError[],
+): {
+  feeAmount?: Prisma.Decimal | null;
+  peakFeeAmount?: Prisma.Decimal | null;
+  refundCutoffHours?: number;
+} {
+  if (walkIn) {
+    for (const field of FEE_FIELDS)
+      if (input[field] !== undefined)
+        errors.push({ field, code: FieldErrorCode.FIELD_NOT_ALLOWED });
+    return {};
+  }
+  const amount = (v: string | null | undefined) =>
+    v === undefined ? undefined : v === null ? null : new Prisma.Decimal(v);
+  return {
+    feeAmount: amount(input.feeAmount),
+    peakFeeAmount: amount(input.peakFeeAmount),
+    refundCutoffHours: input.refundCutoffHours,
   };
 }
 
@@ -257,6 +290,7 @@ export class FacilitiesService implements OnModuleInit {
         errors.push(...quotaErrors(rules));
       }
     }
+    const fees = feeData(input, input.mode === 'walk_in', errors);
     if (errors.length) throw invalid(errors);
 
     const tenantId = this.ctx.tenantId;
@@ -274,6 +308,7 @@ export class FacilitiesService implements OnModuleInit {
           descriptionAr: description(input.descriptionAr) ?? null,
           position: input.position ?? 0,
           ...(rules ?? {}),
+          ...fees,
         },
       });
       await this.audit.record(tx, {
@@ -317,6 +352,7 @@ export class FacilitiesService implements OnModuleInit {
         );
         errors.push(...quotaErrors({ ...current, ...rules }));
       }
+      const fees = feeData(input, before.mode === 'walk_in', errors);
       if (errors.length) throw invalid(errors);
 
       const after = await tx.facility.update({
@@ -329,6 +365,7 @@ export class FacilitiesService implements OnModuleInit {
           position: input.position,
           active: input.active,
           ...rules,
+          ...fees,
         },
       });
       const changes = diffChanges(

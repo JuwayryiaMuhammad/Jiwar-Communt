@@ -728,8 +728,9 @@ export const ErrorCode = {
   INSTALMENT_PLAN_NOT_FOUND: 'INSTALMENT_PLAN_NOT_FOUND',
   /**
    * The invoice cannot become instalments (409, params.reason): it is an
-   * instalment itself (`instalment`), already has a plan (`has_plan`), or
-   * nothing is owed on it (`nothing_owed`).
+   * instalment itself (`instalment`), already has a plan (`has_plan`),
+   * nothing is owed on it (`nothing_owed`), or it is a charge's (`charge`,
+   * ADR 0070).
    */
   INVOICE_NOT_CONVERTIBLE: 'INVOICE_NOT_CONVERTIBLE',
   /**
@@ -745,7 +746,11 @@ export const ErrorCode = {
    * decide (409, params.invoiceIds when a payment named it).
    */
   INVOICE_DISPUTED: 'INVOICE_DISPUTED',
-  /** Nothing is owed on it: a paid invoice is not disputed (409). */
+  /**
+   * Nothing is owed on it: a paid invoice is not disputed; or it is a
+   * charge's, disputed through what raised it (409, params.reason
+   * `charge`, ADR 0070).
+   */
   INVOICE_NOT_DISPUTABLE: 'INVOICE_NOT_DISPUTABLE',
   /** Unknown, another compound's, or not the caller's to see. */
   DISPUTE_NOT_FOUND: 'DISPUTE_NOT_FOUND',

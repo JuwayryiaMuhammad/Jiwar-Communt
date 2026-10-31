@@ -911,3 +911,13 @@ export const GUARD_VENDORS_COVERAGE: readonly string[] = [
   'gate_call.missed',
   'gate_call.webhook_rejected',
 ];
+
+/**
+ * Booking extras and charges (ADR 0070): charges, companions, the
+ * waitlist and club membership requests. test/r11c1b/audit-coverage.
+ */
+export const R11C1B_COVERAGE: readonly string[] = [
+  'finance_charge.raised',
+  'finance_charge.paid',
+  'finance_charge.cancelled',
+];

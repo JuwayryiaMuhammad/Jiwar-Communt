@@ -32,6 +32,7 @@ import {
   disputedAmong,
   PAID_SQL,
 } from '../invoices/balances';
+import { ChargeSettler } from '../charges/charge-settler';
 import { invoiceView, InvoicesService } from '../invoices/invoices.service';
 import { CURRENCY, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
@@ -113,6 +114,7 @@ export class PaymentsService implements OnModuleInit {
     private readonly notices: FinanceNotices,
     private readonly invoices: InvoicesService,
     private readonly gateway: GatewayService,
+    private readonly settler: ChargeSettler,
   ) {
     this.publicAppUrl = config.get('PUBLIC_APP_URL', { infer: true });
   }
@@ -270,6 +272,8 @@ export class PaymentsService implements OnModuleInit {
       data: { codeHash: receiptCodeHash(code), tenantId, paymentId: id },
     });
     await applyPayment(tx, tenantId, p.unitId, id, p.named);
+    // A charge it settled runs its source's handler here (ADR 0070).
+    await this.settler.settle(tx, [p.unitId]);
     await this.audit.record(tx, {
       action: 'payment.recorded',
       targetId: id,
@@ -347,6 +351,7 @@ export class PaymentsService implements OnModuleInit {
         },
       });
       await allocateUnit(tx, payment.tenantId, payment.unitId);
+      await this.settler.settle(tx, [payment.unitId]);
       await this.audit.record(tx, {
         action: 'payment.reversed',
         targetId: id,

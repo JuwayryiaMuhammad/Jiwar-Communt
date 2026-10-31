@@ -18,6 +18,8 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { FinanceAccess } from '../access';
+import { ChargeSettler } from '../charges/charge-settler';
+import { isStaffKind } from '../invoices/invoice-kinds';
 import { formatNumber, takeNumbers } from '../counters';
 import { asDate, dbNow } from '../db-clock';
 import { CURRENCY, money, show, ZERO } from '../money';
@@ -62,7 +64,9 @@ const planNotFound = () =>
     'Instalment plan not found',
   );
 
-const notConvertible = (reason: 'instalment' | 'has_plan' | 'nothing_owed') =>
+const notConvertible = (
+  reason: 'instalment' | 'has_plan' | 'nothing_owed' | 'charge',
+) =>
   appError.conflict(
     ErrorCode.INVOICE_NOT_CONVERTIBLE,
     'This invoice cannot be split into instalments',
@@ -102,6 +106,7 @@ export class InstalmentsService implements OnModuleInit {
     private readonly access: FinanceAccess,
     private readonly notices: FinanceNotices,
     private readonly invoices: InvoicesService,
+    private readonly settler: ChargeSettler,
   ) {}
 
   onModuleInit(): void {
@@ -169,6 +174,9 @@ export class InstalmentsService implements OnModuleInit {
         },
       ]);
     if (invoice.instalmentPlanId) throw notConvertible('instalment');
+    // A charge's invoice is paid or cancelled whole (ADR 0070): the staff's
+    // convert and a resident's plan request both pass here.
+    if (!isStaffKind(invoice.kind)) throw notConvertible('charge');
     if ((await disputedAmong(tx, [invoiceId])).length) throw invoiceDisputed();
     if (await tx.instalmentPlan.findFirst({ where: { invoiceId } }))
       throw notConvertible('has_plan');
@@ -275,6 +283,7 @@ export class InstalmentsService implements OnModuleInit {
     await supersedeLive(tx, [invoice.unitId]);
     // Credit the unit holds pays the first instalments at once.
     await allocateUnit(tx, tenantId, invoice.unitId);
+    await this.settler.settle(tx, [invoice.unitId]);
     await this.audit.record(tx, {
       action: 'instalment_plan.created',
       targetId: id,
@@ -422,6 +431,7 @@ export class InstalmentsService implements OnModuleInit {
       });
       await supersedeLive(tx, [plan.unitId]);
       await allocateUnit(tx, tenantId, plan.unitId);
+      await this.settler.settle(tx, [plan.unitId]);
       await this.audit.record(tx, {
         action: 'instalment_plan.cancelled',
         targetId: planId,

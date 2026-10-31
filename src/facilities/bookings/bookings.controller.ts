@@ -124,7 +124,7 @@ export class BookingsController {
   @ApiOperation({
     summary: 'Cancel a booking',
     description:
-      'Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED).',
+      'Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED). Its fee (ADR 0070) is credited in full until `fees.refundCutoffHours` before the start; later it stays owed.',
   })
   @ApiNoContentResponse()
   async cancel(

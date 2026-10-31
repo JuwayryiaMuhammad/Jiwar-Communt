@@ -380,6 +380,8 @@ export type Invoice = Schema<'InvoiceView'>;
 export type InvoiceDetail = Schema<'InvoiceDetailView'>;
 export type InvoiceBatch = Schema<'InvoiceBatchView'>;
 export type InvoiceKind = Schema<'InvoiceKind'>;
+/** What the staff issue and plans bill (ADR 0070): never a charge's kind. */
+export type StaffInvoiceKind = Schema<'StaffInvoiceKind'>;
 export type Payment = Schema<'PaymentView'>;
 export type PaymentDetail = Schema<'PaymentDetailView'>;
 export type Statement = Schema<'StatementView'>;

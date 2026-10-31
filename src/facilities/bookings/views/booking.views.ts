@@ -19,6 +19,31 @@ export class BookingOccasionView {
   firstName: string | null;
 }
 
+/** What a confirmed booking of a paying facility costs (ADR 0070). */
+export interface BookingCharge {
+  invoiceId: string;
+  amount: string;
+  status: 'open' | 'paid' | 'cancelled';
+}
+
+export class BookingChargeView {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'The unit’s invoice that owes it: paid as any invoice.',
+  })
+  invoiceId: string;
+  @ApiProperty({ type: String, description: 'EGP, two decimals.' })
+  amount: string;
+  @ApiProperty({
+    enum: ['open', 'paid', 'cancelled'],
+    enumName: 'ChargeStatus',
+    description:
+      '`cancelled`: credited off — what was paid of it is the unit’s credit.',
+  })
+  status: 'open' | 'paid' | 'cancelled';
+}
+
 /**
  * A booking as residents see it: the unit's, never who of the household
  * made it beyond `mine`, and never an account id.
@@ -67,11 +92,21 @@ export class BookingView {
     description: 'The child whose occasion it is (a birthday space), or null.',
   })
   occasion: BookingOccasionView | null;
+  @ApiProperty({
+    type: BookingChargeView,
+    nullable: true,
+    description:
+      'What it costs, raised when it was confirmed (ADR 0070); null: free, or not confirmed.',
+  })
+  charge: BookingChargeView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
   static from(
-    b: Booking & { occasion?: BookingOccasion | null },
+    b: Booking & {
+      occasion?: BookingOccasion | null;
+      charge?: BookingCharge | null;
+    },
     accountId: string,
   ): BookingView {
     return {
@@ -88,6 +123,7 @@ export class BookingView {
       cancelledSide: b.cancelledSide,
       cancelReason: b.cancelReason,
       occasion: b.occasion ?? null,
+      charge: b.charge ?? null,
       createdAt: b.createdAt,
     };
   }

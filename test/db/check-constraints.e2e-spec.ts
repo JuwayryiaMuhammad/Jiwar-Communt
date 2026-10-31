@@ -861,6 +861,19 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   facility_bans_lift_reason_known: {
     guarded: 'lift_reason_code IS NULL is tested first',
   },
+  // Charges (ADR 0070).
+  finance_charges_source_kind: {},
+  finance_charges_amount: {},
+  finance_charges_cancel_shape: {
+    guarded:
+      'cancel_reason IS NULL is tested first, and the shape pairs it with cancelled_at',
+  },
+  billing_plans_staff_kind: {},
+  credit_notes_author: {},
+  facilities_fees: {
+    guarded:
+      'fee_amount and peak_fee_amount are each tested IS NULL first; the walk-in clause only asks IS NULL',
+  },
   facility_closures_window: {},
   facility_closures_reason: {},
   facility_closures_lifted_shape: {},

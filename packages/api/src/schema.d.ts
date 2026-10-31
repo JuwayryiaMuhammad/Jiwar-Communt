@@ -891,7 +891,7 @@ export interface paths {
         put?: never;
         /**
          * Cancel a booking
-         * @description Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED).
+         * @description Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED). Its fee (ADR 0070) is credited in full until `fees.refundCutoffHours` before the start; later it stays owed.
          */
         post: operations["BookingsController_cancel"];
         delete?: never;
@@ -22456,6 +22456,17 @@ export interface components {
             /** Format: uuid */
             memberId: string;
         };
+        BookingChargeView: {
+            /** @description EGP, two decimals. */
+            amount: string;
+            /**
+             * Format: uuid
+             * @description The unit’s invoice that owes it: paid as any invoice.
+             */
+            invoiceId: string;
+            /** @description `cancelled`: credited off — what was paid of it is the unit’s credit. */
+            status: components["schemas"]["ChargeStatus"];
+        };
         BookingOccasionView: {
             /** @description The child's first name; null once they are no longer the unit's. */
             firstName: string | null;
@@ -22528,6 +22539,8 @@ export interface components {
             /** @description A code of `bookingResidentCancel`, `bookingStaffCancel` or `bookingSystemCancel`, by side. */
             cancelReason: string | null;
             cancelledSide: components["schemas"]["BookingSide"] | null;
+            /** @description What it costs, raised when it was confirmed (ADR 0070); null: free, or not confirmed. */
+            charge: components["schemas"]["BookingChargeView"] | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -23083,6 +23096,11 @@ export interface components {
             /** @description At least 12 characters (checked by the service). */
             newPassword: string;
         };
+        /**
+         * @description `cancelled`: credited off — what was paid of it is the unit’s credit.
+         * @enum {string}
+         */
+        ChargeStatus: "open" | "paid" | "cancelled";
         CheckAssetImportDto: {
             /**
              * Format: uuid
@@ -24964,6 +24982,8 @@ export interface components {
             descriptionAr?: string | null;
             /** @description Optional, per language. On an update, null clears it. */
             descriptionEn?: string | null;
+            /** @description What a booking costs, EGP, owed by the unit through an invoice raised when the booking is confirmed (ADR 0070). Null: free. Not for a walk-in facility. */
+            feeAmount?: string | null;
             /** @description How many local days ahead a slot may be booked. Default 14. */
             maxDaysAhead?: number;
             /** @description Guests a booking may bring beside its booker. Default 0. */
@@ -24976,10 +24996,14 @@ export interface components {
             nameAr: string;
             /** @description Both languages are required; surrounding spaces are trimmed. */
             nameEn: string;
+            /** @description What a peak-time booking costs, when it differs from `feeAmount`. Null: as `feeAmount`. */
+            peakFeeAmount?: string | null;
             /** @description Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1. */
             peakQuota?: number;
             /** @description Order in the compound’s list. Default 0. */
             position?: number;
+            /** @description A resident who cancels at least this many hours before the start is credited the fee in full; later, nothing. Default 24. */
+            refundCutoffHours?: number;
             /** @description Default false. */
             requiresApproval?: boolean;
             /** @description Default false. */
@@ -27519,6 +27543,14 @@ export interface components {
             /** @description The slots of the day as the hours cut them now. */
             slots: components["schemas"]["FacilityDaySlotView"][];
         };
+        FacilityFeesView: {
+            /** @description EGP, two decimals. Null: free. */
+            feeAmount: string | null;
+            /** @description At peak times, when it differs. Null: as `feeAmount`. */
+            peakFeeAmount: string | null;
+            /** @description Cancelled by the resident at least this many hours before the start, the fee is credited in full; later, it stays owed. */
+            refundCutoffHours: number;
+        };
         /** @enum {string} */
         FacilityMode: "bookable" | "walk_in";
         FacilityRulesView: {
@@ -27607,6 +27639,7 @@ export interface components {
             closures: components["schemas"]["FacilityClosureNoticeView"][];
             descriptionAr: string | null;
             descriptionEn: string | null;
+            fees: components["schemas"]["FacilityFeesView"] | null;
             /** @description Opening hours, by weekday then start. */
             hours: components["schemas"]["FacilityWindowView"][];
             /** Format: uuid */
@@ -37044,6 +37077,8 @@ export interface components {
             /** Format: date-time */
             cancelledAt: string | null;
             cancelledSide: components["schemas"]["BookingSide"] | null;
+            /** @description Its fee’s invoice and state (ADR 0070); null: none. */
+            charge: components["schemas"]["BookingChargeView"] | null;
             /** @description One of the unit's children is the booking's occasion (ADR 0054): never who. */
             childOccasion: boolean;
             /** Format: date-time */
@@ -37430,6 +37465,7 @@ export interface components {
             createdAt: string;
             descriptionAr: string | null;
             descriptionEn: string | null;
+            fees: components["schemas"]["FacilityFeesView"] | null;
             hours: components["schemas"]["FacilityWindowView"][];
             /** Format: uuid */
             id: string;
@@ -40344,6 +40380,8 @@ export interface components {
             descriptionAr?: string | null;
             /** @description Optional, per language. On an update, null clears it. */
             descriptionEn?: string | null;
+            /** @description What a booking costs, EGP, owed by the unit through an invoice raised when the booking is confirmed (ADR 0070). Null: free. Not for a walk-in facility. */
+            feeAmount?: string | null;
             /** @description How many local days ahead a slot may be booked. Default 14. */
             maxDaysAhead?: number;
             /** @description Guests a booking may bring beside its booker. Default 0. */
@@ -40354,9 +40392,13 @@ export interface components {
             nameAr?: string;
             /** @description Both languages are required; surrounding spaces are trimmed. */
             nameEn?: string;
+            /** @description What a peak-time booking costs, when it differs from `feeAmount`. Null: as `feeAmount`. */
+            peakFeeAmount?: string | null;
             /** @description Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1. */
             peakQuota?: number;
             position?: number;
+            /** @description A resident who cancels at least this many hours before the start is credited the fee in full; later, nothing. Default 24. */
+            refundCutoffHours?: number;
             /** @description Default false. */
             requiresApproval?: boolean;
             /** @description Default false. */

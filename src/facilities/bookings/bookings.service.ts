@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Booking, Facility } from '@prisma/client';
 import { CommunityFacilitiesPort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
+import { Charges } from '../../core/charges/charges';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import {
@@ -25,7 +26,7 @@ import { FacilitiesAccess } from '../access';
 import { banInForce, dayOf } from '../bans/ban-reads';
 import { closedOver, closuresBetween } from '../closures/closure-reads';
 import { dbNow } from '../db-clock';
-import { rulesOf, type FacilityRules } from '../setup/facility-rules';
+import { feeFor, rulesOf, type FacilityRules } from '../setup/facility-rules';
 import {
   FacilitiesService,
   facilityNotFound,
@@ -42,7 +43,11 @@ import {
   type FacilitySlot,
 } from './facility-slots';
 import { WEEK_MS, withinQuota } from './quota-window';
-import { BookingView, type BookingOccasion } from './views/booking.views';
+import {
+  BookingView,
+  type BookingCharge,
+  type BookingOccasion,
+} from './views/booking.views';
 
 export const BOOKING_RESOURCE = 'booking';
 
@@ -54,8 +59,20 @@ export interface NewBooking {
   occasionMemberId?: string;
 }
 
-/** A booking with its occasion, as the household sees it (ADR 0054). */
-export type BookingRead = Booking & { occasion: BookingOccasion | null };
+/**
+ * A booking with its occasion, as the household sees it (ADR 0054), and
+ * what it costs (ADR 0070).
+ */
+export type BookingRead = Booking & {
+  occasion: BookingOccasion | null;
+  charge: BookingCharge | null;
+};
+
+const HOUR_MS = 3_600_000;
+
+/** A facility charges for bookings (ADR 0070). */
+export const charging = (f: Facility) =>
+  f.feeAmount !== null || f.peakFeeAmount !== null;
 
 /** A slot as a resident sees it: free or full, never how full or by whom. */
 export interface SlotState extends FacilitySlot {
@@ -120,6 +137,7 @@ export class BookingsService implements OnModuleInit {
     private readonly facilities: FacilitiesService,
     private readonly suspensions: SuspensionsService,
     private readonly club: ClubService,
+    private readonly charges: Charges,
   ) {}
 
   onModuleInit(): void {
@@ -306,6 +324,7 @@ export class BookingsService implements OnModuleInit {
       tx,
       named.map((b) => ({ memberId: b.occasionMemberId!, unitId: b.unitId })),
     );
+    const charges = await this.chargesOf(tx, rows);
     return rows.map((b) => ({
       ...b,
       occasion: b.occasionMemberId
@@ -314,7 +333,89 @@ export class BookingsService implements OnModuleInit {
             firstName: names.get(b.occasionMemberId) ?? null,
           }
         : null,
+      charge: charges.get(b.id) ?? null,
     }));
+  }
+
+  /** The bookings' charges (ADR 0070), as their views show them. */
+  async chargesOf(
+    tx: TenantTxClient,
+    rows: readonly Booking[],
+  ): Promise<Map<string, BookingCharge>> {
+    const found = await this.charges.of(
+      tx,
+      'booking',
+      rows.map((b) => b.id),
+    );
+    return new Map(
+      [...found].map(([id, c]) => [
+        id,
+        {
+          invoiceId: c.invoiceId,
+          amount: c.amount.toFixed(2),
+          status: c.status,
+        },
+      ]),
+    );
+  }
+
+  /**
+   * The charges' lock rule (ADR 0070): the units of those of these bookings
+   * that have a charge not cancelled take their finance lock, in unit
+   * order, before any booking row is locked.
+   */
+  async lockChargedUnits(
+    tx: TenantTxClient,
+    rows: readonly { id: string; unitId: string }[],
+  ): Promise<void> {
+    const found = await this.charges.of(
+      tx,
+      'booking',
+      rows.map((b) => b.id),
+    );
+    const units = [
+      ...new Set(
+        rows
+          .filter((b) => {
+            const c = found.get(b.id);
+            return c !== undefined && c.status !== 'cancelled';
+          })
+          .map((b) => b.unitId),
+      ),
+    ].sort();
+    for (const unitId of units) await this.charges.lockUnit(tx, unitId);
+  }
+
+  /**
+   * Raises a confirmed booking's fee, when its facility charges one: an
+   * invoice of the unit's, due on the booking's local day (ADR 0070). The
+   * caller took the unit's finance lock after the facility's row.
+   */
+  async raiseFee(
+    tx: TenantTxClient,
+    facility: Facility,
+    booking: Booking,
+    timeZone: string,
+  ): Promise<void> {
+    const fee = feeFor(facility, booking.peak);
+    if (!fee) return;
+    const on = localDate(booking.startsAt, timeZone);
+    const time = new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(booking.startsAt);
+    await this.charges.raise(tx, {
+      unitId: booking.unitId,
+      source: 'booking',
+      sourceId: booking.id,
+      kind: 'facility',
+      amount: fee,
+      textEn: `Booking: ${facility.nameEn}, ${on} ${time}`,
+      textAr: `حجز: ${facility.nameAr}، ${on} ${time}`,
+      dueOn: on,
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -359,6 +460,10 @@ export class BookingsService implements OnModuleInit {
         input.facilityId,
         'share',
       );
+      // A fee is raised in this transaction: the unit's finance lock comes
+      // right after the facility's row, before the club's and the slot's
+      // (the charges' rule, ADR 0070).
+      if (charging(facility)) await this.charges.lockUnit(tx, unitId);
       // The booker's own ban (ADR 0067), after the unit's suspension and the
       // facility: the booker's account is held FOR SHARE, which a ban takes
       // FOR UPDATE, so a ban and a booking never cross.
@@ -507,6 +612,8 @@ export class BookingsService implements OnModuleInit {
           ...(booking.occasionMemberId ? { childOccasion: true } : {}),
         },
       });
+      if (status === 'confirmed')
+        await this.raiseFee(tx, facility, booking, cal.timeZone);
       return (await this.withOccasions(tx, [booking]))[0];
     });
   }
@@ -620,7 +727,7 @@ export class BookingsService implements OnModuleInit {
    * The booker, or the unit's primary, cancels: a pending booking at any
    * time, a confirmed one until the facility's cutoff before its start.
    */
-  cancel(id: string, reasonCode: string | undefined): Promise<Booking> {
+  cancel(id: string, reasonCode: string | undefined): Promise<BookingRead> {
     const reason = requireReasonCodeOnly(
       reasonCode,
       REASON_CODES.bookingResidentCancel,
@@ -630,6 +737,7 @@ export class BookingsService implements OnModuleInit {
       const seen = await this.visible(tx, id);
       await this.access.lockUnit(tx, seen.unitId);
       const facility = await this.facilities.lock(tx, seen.facilityId, 'share');
+      await this.lockChargedUnits(tx, [seen]);
       const booking = await this.lockBooking(tx, id);
       assertCan(booking, 'cancel');
       const now = await dbNow(tx);
@@ -644,12 +752,19 @@ export class BookingsService implements OnModuleInit {
           'Too late to cancel this booking',
           { params: { minutes: rules.cancelCutoffMinutes } },
         );
-      return this.end(tx, booking, {
+      // Its fee is credited in full until the facility's refund cutoff;
+      // later it stays owed (ADR 0070).
+      const refunded =
+        now.getTime() <=
+        booking.startsAt.getTime() - facility.refundCutoffHours * HOUR_MS;
+      const ended = await this.end(tx, booking, {
         side: 'resident',
         reason,
         by: this.ctx.accountId,
         now,
+        keepCharge: !refunded,
       });
+      return (await this.withOccasions(tx, [ended]))[0];
     });
   }
 
@@ -672,6 +787,8 @@ export class BookingsService implements OnModuleInit {
       now: Date;
       closureId?: string;
       banId?: string;
+      /** A resident's late cancel: the fee stays owed (ADR 0070). */
+      keepCharge?: boolean;
     },
   ): Promise<Booking> {
     const ended = await tx.booking.update({
@@ -699,6 +816,15 @@ export class BookingsService implements OnModuleInit {
         ...(how.banId ? { banId: how.banId } : {}),
       },
     });
+    // Its fee, if one was raised: credited in full, unless kept (ADR 0070).
+    // The caller took the unit's finance lock before the booking's row.
+    if (!how.keepCharge)
+      await this.charges.cancel(
+        tx,
+        'booking',
+        booking.id,
+        how.closureId ? 'closure' : 'booking_cancelled',
+      );
     return ended;
   }
 

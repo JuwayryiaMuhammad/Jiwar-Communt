@@ -23,6 +23,8 @@ import { FinanceAccess } from '../access';
 import { formatNumber, takeNumbers } from '../counters';
 import { asDate, fromDate, localToday } from '../db-clock';
 import { CURRENCY, MAX_AMOUNT, money, show, ZERO } from '../money';
+import { isStaffKind } from './invoice-kinds';
+import { ChargeSettler } from '../charges/charge-settler';
 import { FinanceNotices } from '../notices/finance-notices';
 import { supersedeLive } from '../online/supersede';
 import {
@@ -103,6 +105,7 @@ export class InvoicesService implements OnModuleInit {
     private readonly community: CommunityFinancePort,
     private readonly access: FinanceAccess,
     private readonly notices: FinanceNotices,
+    private readonly settler: ChargeSettler,
   ) {}
 
   onModuleInit(): void {
@@ -284,6 +287,10 @@ export class InvoicesService implements OnModuleInit {
       tenantId,
       input.units.map((u) => u.id),
     );
+    await this.settler.settle(
+      tx,
+      input.units.map((u) => u.id),
+    );
     const last = first + input.units.length - 1;
     await this.audit.record(tx, {
       action: 'invoice_batch.issued',
@@ -359,8 +366,10 @@ export class InvoicesService implements OnModuleInit {
       });
       await supersedeLive(tx, [invoice.unitId]);
       // Released money pays the unit's other open invoices at once.
-      if (released.gt(ZERO))
+      if (released.gt(ZERO)) {
         await allocateUnit(tx, invoice.tenantId, invoice.unitId);
+        await this.settler.settle(tx, [invoice.unitId]);
+      }
       await this.audit.record(tx, {
         action: 'credit_note.created',
         targetId: id,
@@ -589,6 +598,8 @@ export class InvoicesService implements OnModuleInit {
     });
     const outstanding = money(view.outstanding);
     const splittable =
+      // A charge's invoice is never split (ADR 0070).
+      isStaffKind(invoice.kind) &&
       !instalmentOf &&
       !rescheduledBy &&
       dispute?.status !== 'open' &&
@@ -765,7 +776,8 @@ export async function creditInvoice(
     amount: Prisma.Decimal;
     reasonCode: string;
     compensationReason?: string | null;
-    createdById: string;
+    /** Null only for `charge_cancelled` written by the system (ADR 0070). */
+    createdById: string | null;
     instalmentPlanId?: string;
     disputeId?: string;
   },

@@ -11,3 +11,7 @@ export const STAFF_INVOICE_KINDS = [
   'other',
 ] as const satisfies readonly InvoiceKind[];
 export type StaffInvoiceKind = (typeof STAFF_INVOICE_KINDS)[number];
+
+/** Not a charge's: split into instalments and disputed as ADR 0048 says. */
+export const isStaffKind = (kind: InvoiceKind): boolean =>
+  (STAFF_INVOICE_KINDS as readonly InvoiceKind[]).includes(kind);

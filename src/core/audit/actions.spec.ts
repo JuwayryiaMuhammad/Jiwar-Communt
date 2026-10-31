@@ -208,6 +208,8 @@ describe('audit catalog', () => {
         'readiness_program',
         'readiness_item',
         'facility_ban',
+        // ADR 0070
+        'finance_charge',
         'work_permit',
         'safety_instruction',
         // ADR 0069.

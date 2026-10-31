@@ -640,6 +640,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   invoice_disputes_tenant_id_id_key: null,
   invoice_disputes_one_open: null,
   credit_notes_one_per_dispute: null,
+  // Charges (ADR 0070): one per source row and one per invoice, both
+  // written by the port under the unit's finance lock; a violation is a
+  // race and names nothing.
+  finance_charges_tenant_id_id_key: null,
+  finance_charges_source_key: null,
+  finance_charges_invoice_key: null,
   // Refunds (ADR 0048): numbers from the counter, one reversal per refund
   // and one source per refund and payment, under the unit's finance lock.
   finance_refunds_tenant_id_id_key: null,

@@ -5,6 +5,7 @@ import {
   FacilityCapacityUnit,
 } from '@prisma/client';
 import type { FacilityDay, StaffBooking } from '../staff-bookings.service';
+import { BookingChargeView } from './booking.views';
 
 /** Who made a booking, as the staff see them: a name, or none once erased. */
 export class BookingPersonView {
@@ -67,6 +68,12 @@ export class StaffBookingView {
       "One of the unit's children is the booking's occasion (ADR 0054): never who.",
   })
   childOccasion: boolean;
+  @ApiProperty({
+    type: BookingChargeView,
+    nullable: true,
+    description: 'Its fee’s invoice and state (ADR 0070); null: none.',
+  })
+  charge: BookingChargeView | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -74,6 +81,7 @@ export class StaffBookingView {
     booking: b,
     unitCode,
     bookedBy,
+    charge,
   }: StaffBooking): StaffBookingView {
     return {
       id: b.id,
@@ -94,6 +102,7 @@ export class StaffBookingView {
       cancelledAt: b.cancelledAt,
       noShowMarkedAt: b.noShowMarkedAt,
       childOccasion: b.occasionMemberId !== null,
+      charge: charge ?? null,
       createdAt: b.createdAt,
     };
   }

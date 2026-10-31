@@ -46,6 +46,8 @@ describe('Bookings: a resident books for a unit (ADR 0044)', () => {
       expect(Object.keys(b).sort()).toEqual([
         'cancelReason',
         'cancelledSide',
+        // ADR 0070.
+        'charge',
         'createdAt',
         'endsAt',
         'facilityId',

@@ -10,6 +10,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
   Max,
   Min,
   ValidateIf,
@@ -22,8 +23,10 @@ import {
 } from '../../../core/common/slots/weekly-windows';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import {
+  FEE_AMOUNT,
   MAX_WINDOWS,
   POSITION,
+  REFUND_CUTOFF_HOURS,
   RULE_RANGES,
   type FacilityRuleName,
 } from '../facility-rules';
@@ -92,6 +95,11 @@ function Description() {
 }
 
 /** The rules a bookable facility takes; a walk-in facility takes none. */
+const CUTOFF_PARAMS = {
+  min: REFUND_CUTOFF_HOURS.min,
+  max: REFUND_CUTOFF_HOURS.max,
+};
+
 class FacilityRulesInput {
   @Rule(
     'slotMinutes',
@@ -175,6 +183,46 @@ class FacilityRulesInput {
     'Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1.',
   )
   peakQuota?: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    required: false,
+    pattern: FEE_AMOUNT.source,
+    description:
+      'What a booking costs, EGP, owed by the unit through an invoice raised when the booking is confirmed (ADR 0070). Null: free. Not for a walk-in facility.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(FEE_AMOUNT)
+  feeAmount?: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    required: false,
+    pattern: FEE_AMOUNT.source,
+    description:
+      'What a peak-time booking costs, when it differs from `feeAmount`. Null: as `feeAmount`.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(FEE_AMOUNT)
+  peakFeeAmount?: string | null;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: REFUND_CUTOFF_HOURS.min,
+    maximum: REFUND_CUTOFF_HOURS.max,
+    description:
+      'A resident who cancels at least this many hours before the start is credited the fee in full; later, nothing. Default 24.',
+  })
+  @IsOptional()
+  @IsInt(withParams(CUTOFF_PARAMS))
+  @Min(REFUND_CUTOFF_HOURS.min, withParams(CUTOFF_PARAMS))
+  @Max(REFUND_CUTOFF_HOURS.max, withParams(CUTOFF_PARAMS))
+  refundCutoffHours?: number;
 }
 
 export class CreateFacilityDto extends FacilityRulesInput {

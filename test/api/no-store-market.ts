@@ -1,5 +1,6 @@
 import type { Response } from 'supertest';
 import { at, day } from '../setup/compound-clock';
+import { fileHelpers } from '../setup/files';
 import { call } from './request';
 import type { World } from './world';
 
@@ -73,6 +74,42 @@ export function marketCalls(
         }).expect(201)
       ).body as { id: string }
     ).id;
+  /** A new album of A's with one photo, published or not. */
+  const galleryPhoto = async (published: boolean) => {
+    const albumId = (
+      (
+        await call(world(), 'POST', '/community/gallery/albums', {
+          token: manager(),
+          body: { titleEn: `Album ${++n}`, titleAr: 'ألبوم' },
+        }).expect(201)
+      ).body as { id: string }
+    ).id;
+    const res = await call(
+      world(),
+      'POST',
+      `/community/gallery/albums/${albumId}/photos`,
+      {
+        token: manager(),
+        body: {
+          fileId: await fileHelpers(world().h).ready(
+            manager(),
+            'gallery_photo',
+          ),
+        },
+      },
+    );
+    const photoId = (res.body as { id: string }).id;
+    if (published)
+      await call(
+        world(),
+        'POST',
+        `/community/gallery/albums/${albumId}/publish`,
+        {
+          token: manager(),
+        },
+      ).expect(204);
+    return { albumId, photoId, res };
+  };
   /** A's landlord runs the shops these calls open, one at a time. */
   const shopOwner = () => world().a.tokens.landlord;
   const shop = () => ({
@@ -334,6 +371,62 @@ export function marketCalls(
         world(),
         'DELETE',
         `/community/bus-departures/${(res.body as { id: string }).id}`,
+        { token: manager() },
+      );
+    },
+    'GET /gallery/albums': () =>
+      call(world(), 'GET', '/gallery/albums', { token: owner() }),
+    'GET /gallery/albums/{id}': async () => {
+      const { albumId } = await galleryPhoto(true);
+      return call(world(), 'GET', `/gallery/albums/${albumId}`, {
+        token: owner(),
+      });
+    },
+    'POST /gallery/photos/{id}/report': async () => {
+      const { photoId } = await galleryPhoto(true);
+      return call(world(), 'POST', `/gallery/photos/${photoId}/report`, {
+        token: owner(),
+        body: { reasonCode: 'other' },
+      });
+    },
+    'GET /community/gallery/albums': () =>
+      call(world(), 'GET', '/community/gallery/albums', { token: manager() }),
+    'POST /community/gallery/albums': () =>
+      call(world(), 'POST', '/community/gallery/albums', {
+        token: manager(),
+        body: { titleEn: `Album ${++n}`, titleAr: 'ألبوم' },
+      }),
+    'POST /community/gallery/albums/{id}/photos': async () =>
+      (await galleryPhoto(false)).res,
+    'POST /community/gallery/albums/{id}/publish': async () => {
+      const { albumId } = await galleryPhoto(false);
+      return call(
+        world(),
+        'POST',
+        `/community/gallery/albums/${albumId}/publish`,
+        {
+          token: manager(),
+        },
+      );
+    },
+    'POST /community/gallery/photos/{id}/hide': async () => {
+      const { photoId } = await galleryPhoto(true);
+      return call(
+        world(),
+        'POST',
+        `/community/gallery/photos/${photoId}/hide`,
+        {
+          token: manager(),
+          body: { reasonCode: 'other' },
+        },
+      );
+    },
+    'POST /community/gallery/photos/{id}/restore': async () => {
+      const { photoId } = await galleryPhoto(true);
+      return call(
+        world(),
+        'POST',
+        `/community/gallery/photos/${photoId}/restore`,
         { token: manager() },
       );
     },

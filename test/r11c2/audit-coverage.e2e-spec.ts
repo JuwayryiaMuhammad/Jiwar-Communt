@@ -416,6 +416,74 @@ describe('Audit coverage — community', () => {
       });
     });
 
+    it('gallery_album.created, .published and gallery_photo.added, .reported, .hidden, .restored — ids, counts and codes', async () => {
+      const albumId = (
+        (
+          await m
+            .http('post', '/community/gallery/albums', s.manager.token, {
+              titleEn: 'Audit album',
+              titleAr: 'ألبوم',
+            })
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      expect(await single('gallery_album.created', albumId)).toMatchObject({
+        actorId: s.manager.id,
+        metadata: { eventId: null },
+      });
+      const photo = (
+        (
+          await m
+            .http(
+              'post',
+              `/community/gallery/albums/${albumId}/photos`,
+              s.manager.token,
+              {
+                fileId: await m.galleryPhoto(s.manager),
+                caption: MARKER,
+              },
+            )
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      expect(await single('gallery_photo.added', photo)).toMatchObject({
+        metadata: { albumId },
+      });
+      await m
+        .http(
+          'post',
+          `/community/gallery/albums/${albumId}/publish`,
+          s.manager.token,
+        )
+        .expect(204);
+      expect(await single('gallery_album.published', albumId)).toMatchObject({
+        metadata: { photos: 1 },
+      });
+      await m
+        .http('post', `/gallery/photos/${photo}/report`, s.bob.token, {
+          reasonCode: 'privacy',
+        })
+        .expect(204);
+      expect(await single('gallery_photo.reported', photo)).toMatchObject({
+        actorId: s.bob.id,
+        metadata: { reason: 'privacy' },
+      });
+      expect(await single('gallery_photo.hidden', photo)).toMatchObject({
+        metadata: { reasonCode: 'privacy_report', by: 'report' },
+      });
+      await m
+        .http(
+          'post',
+          `/community/gallery/photos/${photo}/restore`,
+          s.manager.token,
+        )
+        .expect(204);
+      expect(await single('gallery_photo.restored', photo)).toMatchObject({
+        actorId: s.manager.id,
+        metadata: { was: 'privacy_report' },
+      });
+    });
+
     it('market.settings_changed — the settings, from and to', async () => {
       const before = (
         await read.tenant(s.c.tenantId, {

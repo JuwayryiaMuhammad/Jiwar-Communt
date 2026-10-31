@@ -976,4 +976,10 @@ export const R11C2_COVERAGE: readonly string[] = [
   'bus_route.updated',
   'bus_departure.added',
   'bus_departure.removed',
+  'gallery_album.created',
+  'gallery_album.published',
+  'gallery_photo.added',
+  'gallery_photo.hidden',
+  'gallery_photo.restored',
+  'gallery_photo.reported',
 ];

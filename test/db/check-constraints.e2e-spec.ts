@@ -2612,6 +2612,15 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   engagement_settings_prayer: {},
   bus_routes_name_length: {},
   bus_departures_shape: {},
+  gallery_albums_title_length: {},
+  gallery_photos_caption_length: {
+    guarded: 'caption IS NULL is tested first; the length runs only on a value',
+  },
+  gallery_photos_hidden_shape: {
+    guarded:
+      'hidden_at and hidden_reason under IS [NOT] NULL; the list runs only on a value',
+  },
+  gallery_photo_reports_reason: {},
   market_shops_state_shape: {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',

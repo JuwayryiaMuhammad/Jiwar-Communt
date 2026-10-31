@@ -1196,6 +1196,16 @@ describe('API v0 — PII leak scan', () => {
     await call(w, 'POST', `/market/shop-review/${piiShop}/approve`, {
       token: a.tokens.manager,
     }).expect(204);
+    // A published album of A's (ADR 0071): the staff's, no uploader named.
+    const piiAlbum = await idOf(
+      'POST',
+      '/community/gallery/albums',
+      a.tokens.manager,
+      { titleEn: 'Eid morning', titleAr: 'صباح العيد' },
+    );
+    await call(w, 'POST', `/community/gallery/albums/${piiAlbum}/publish`, {
+      token: a.tokens.manager,
+    }).expect(204);
     // Facilities (ADR 0044): the primary's booking of A's roomy facility.
     const piiBooking = await idOf(
       'POST',
@@ -1651,6 +1661,7 @@ describe('API v0 — PII leak scan', () => {
       '/market/group-offers/{id}': piiGroupOffer,
       '/market/review/{id}': piiListing,
       '/market/shops/{id}': piiShop,
+      '/gallery/albums/{id}': piiAlbum,
       '/units/{unitId}/payments': unit.id,
       '/units/{unitId}/statement': unit.id,
       '/staff/units/{unitId}/statement': unit.id,

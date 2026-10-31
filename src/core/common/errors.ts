@@ -1681,6 +1681,12 @@ export const ErrorCode = {
   PRAYER_PLACE_NOT_SET: 'PRAYER_PLACE_NOT_SET',
   BUS_ROUTE_NOT_FOUND: 'BUS_ROUTE_NOT_FOUND',
   BUS_DEPARTURE_NOT_FOUND: 'BUS_DEPARTURE_NOT_FOUND',
+  GALLERY_ALBUM_NOT_FOUND: 'GALLERY_ALBUM_NOT_FOUND',
+  GALLERY_PHOTO_NOT_FOUND: 'GALLERY_PHOTO_NOT_FOUND',
+  /** Published already (409). */
+  GALLERY_ALBUM_PUBLISHED: 'GALLERY_ALBUM_PUBLISHED',
+  /** The caller reported this photo already (409). */
+  GALLERY_REPORT_EXISTS: 'GALLERY_REPORT_EXISTS',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

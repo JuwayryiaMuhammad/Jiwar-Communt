@@ -2,7 +2,9 @@ import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
 import {
+  albumRow,
   busDepartureRow,
+  galleryPhotoRow,
   busRouteRow,
   groupOfferRow,
   listingRow,
@@ -30,6 +32,9 @@ export interface R11c2World {
   /** A bus route of B's and a departure of it. */
   bBusRouteId: string;
   bBusDepartureId: string;
+  /** A published album of B's and a photo in it. */
+  bAlbumId: string;
+  bGalleryPhotoId: string;
 }
 
 export async function r11c2World(
@@ -42,6 +47,10 @@ export async function r11c2World(
   return helpers.asManager(b, () =>
     tenantTx.withTenantTx(async (tx) => {
       const bBusRouteId = await busRouteRow(tx, b.tenantId);
+      const bAlbumId = await albumRow(tx, {
+        tenantId: b.tenantId,
+        createdById: b.ids.manager,
+      });
       const bListingId = await listingRow(tx, {
         tenantId: b.tenantId,
         sellerId: b.ids.owner,
@@ -66,6 +75,11 @@ export async function r11c2World(
           createdById: b.ids.manager,
         }),
         bBusRouteId,
+        bAlbumId,
+        bGalleryPhotoId: await galleryPhotoRow(tx, {
+          tenantId: b.tenantId,
+          albumId: bAlbumId,
+        }),
         bBusDepartureId: await busDepartureRow(tx, b.tenantId, bBusRouteId),
         bGroupOfferId: await groupOfferRow(tx, {
           tenantId: b.tenantId,

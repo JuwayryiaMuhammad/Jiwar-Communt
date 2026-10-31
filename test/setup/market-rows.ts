@@ -217,3 +217,51 @@ export async function busDepartureRow(
   });
   return id;
 }
+
+/** A published album. */
+export async function albumRow(
+  tx: TenantTxClient,
+  row: { tenantId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.galleryAlbum.create({
+    data: {
+      id,
+      tenantId: row.tenantId,
+      titleEn: 'Album',
+      titleAr: 'ألبوم',
+      createdById: row.createdById,
+      publishedAt: dbClock(),
+    },
+  });
+  return id;
+}
+
+/** A visible photo of an album, its own file. */
+export async function galleryPhotoRow(
+  tx: TenantTxClient,
+  row: { tenantId: string; albumId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.galleryPhoto.create({
+    data: {
+      id,
+      tenantId: row.tenantId,
+      albumId: row.albumId,
+      fileId: await marketFileRow(tx, row.tenantId, 'gallery_photo'),
+    },
+  });
+  return id;
+}
+
+/** A report of a photo. */
+export async function galleryReportRow(
+  tx: TenantTxClient,
+  row: { tenantId: string; photoId: string; reporterId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.galleryPhotoReport.create({
+    data: { id, ...row, reason: 'other' },
+  });
+  return id;
+}

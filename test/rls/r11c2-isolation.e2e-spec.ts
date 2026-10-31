@@ -5,7 +5,10 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
+  albumRow,
   busDepartureRow,
+  galleryPhotoRow,
+  galleryReportRow,
   busRouteRow,
   listingRow,
   marketFileRow,
@@ -28,6 +31,8 @@ interface Side {
   partnerId: string;
   groupOfferId: string;
   busRouteId: string;
+  albumId: string;
+  galleryPhotoId: string;
 }
 
 /**
@@ -149,6 +154,32 @@ const TABLES: Table[] = [
       busDepartureRow(tx, own.tenantId, link.busRouteId),
   },
   {
+    table: 'gallery_albums',
+    insert: (tx, own, link) =>
+      albumRow(tx, { tenantId: own.tenantId, createdById: link.accountId }),
+  },
+  {
+    table: 'gallery_photos',
+    insert: (tx, own, link) =>
+      galleryPhotoRow(tx, { tenantId: own.tenantId, albumId: link.albumId }),
+  },
+  {
+    table: 'gallery_photo_reports',
+    // A new photo of the link's each time: one report a reporter there.
+    insert: async (tx, own, link) =>
+      galleryReportRow(tx, {
+        tenantId: own.tenantId,
+        photoId:
+          own === link
+            ? await galleryPhotoRow(tx, {
+                tenantId: own.tenantId,
+                albumId: own.albumId,
+              })
+            : link.galleryPhotoId,
+        reporterId: link.accountId,
+      }),
+  },
+  {
     table: 'market_listing_photos',
     insert: async (tx, own, link) => {
       const id = newId();
@@ -186,6 +217,8 @@ describe('RLS isolation — community (ADR 0071)', () => {
       partnerId: '',
       groupOfferId: '',
       busRouteId: '',
+      albumId: '',
+      galleryPhotoId: '',
     };
     await inTenant(s, async (tx) => {
       s.partnerId = await partnerRow(tx, {
@@ -193,6 +226,11 @@ describe('RLS isolation — community (ADR 0071)', () => {
         createdById: s.accountId,
       });
       s.busRouteId = await busRouteRow(tx, tenantId);
+      s.albumId = await albumRow(tx, { tenantId, createdById: s.accountId });
+      s.galleryPhotoId = await galleryPhotoRow(tx, {
+        tenantId,
+        albumId: s.albumId,
+      });
       s.groupOfferId = await groupOfferRow(tx, {
         tenantId,
         createdById: s.accountId,

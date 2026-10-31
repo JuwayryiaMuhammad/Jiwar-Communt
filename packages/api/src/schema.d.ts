@@ -1525,6 +1525,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/gallery/albums": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List every album, drafts too */
+        get: operations["StaffGalleryController_list"];
+        put?: never;
+        /** Start an album */
+        post: operations["StaffGalleryController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/gallery/albums/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a photo to an album */
+        post: operations["StaffGalleryController_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/gallery/albums/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish an album */
+        post: operations["StaffGalleryController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/gallery/photos/{id}/hide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hide a photo, or keep a reported one hidden */
+        post: operations["StaffGalleryController_hide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/gallery/photos/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Show a hidden photo again */
+        post: operations["StaffGalleryController_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/community/permit-rules": {
         parameters: {
             query?: never;
@@ -2467,6 +2553,57 @@ export interface paths {
         get: operations["SpendingReportsController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gallery/albums": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the published albums */
+        get: operations["GalleryController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gallery/albums/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a published album */
+        get: operations["GalleryController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gallery/photos/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report a photo */
+        post: operations["GalleryController_report"];
         delete?: never;
         options?: never;
         head?: never;
@@ -22126,6 +22263,14 @@ export interface components {
              */
             photoFileId: string;
         };
+        AddPhotoDto: {
+            caption?: string;
+            /**
+             * Format: uuid
+             * @description An uploaded file of purpose `gallery_photo`.
+             */
+            fileId: string;
+        };
         AdjustStockDto: {
             /** @description Signed: `-2` takes two off, `1.5` adds one and a half. */
             delta: string;
@@ -25830,6 +25975,15 @@ export interface components {
             /** @enum {string} */
             type: "resident" | "staff" | "manager" | "family";
         };
+        CreateAlbumDto: {
+            /**
+             * Format: uuid
+             * @description The community event it is of.
+             */
+            eventId?: string;
+            titleAr: string;
+            titleEn: string;
+        };
         CreateAnnouncementDto: {
             /** @description The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
             attachmentFileIds?: string[];
@@ -29269,6 +29423,36 @@ export interface components {
         FoundItemViewList: {
             data: components["schemas"]["FoundItemView"][];
             nextCursor: string | null;
+        };
+        GalleryAlbumView: {
+            /** Format: uuid */
+            eventId: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Its visible photos. */
+            photos: components["schemas"]["GalleryPhotoView"][];
+            /** Format: date-time */
+            publishedAt: string | null;
+            titleAr: string;
+            titleEn: string;
+        };
+        GalleryAlbumViewList: {
+            data: components["schemas"]["GalleryAlbumView"][];
+            nextCursor: string | null;
+        };
+        GalleryPhotoView: {
+            caption: string | null;
+            contentType: string;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description A presigned GET, valid until `expiresAt`. */
+            url: string | null;
+        };
+        GalleryReasonDto: {
+            /** @description A code: `galleryPhotoReport` for a resident (privacy hides the photo at once), `galleryPhotoHide` for the staff. */
+            reasonCode: string;
         };
         GateBundleResponse: {
             /** @description The bundle’s UTF-8 JSON in base64url, exactly as signed (ADR 0057 lists its fields). */
@@ -39397,6 +39581,35 @@ export interface components {
             data: components["schemas"]["StaffFoundItemView"][];
             nextCursor: string | null;
         };
+        StaffGalleryAlbumView: {
+            /** Format: uuid */
+            eventId: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Every photo, hidden ones too. */
+            photos: components["schemas"]["StaffGalleryPhotoView"][];
+            /** Format: date-time */
+            publishedAt: string | null;
+            titleAr: string;
+            titleEn: string;
+        };
+        StaffGalleryAlbumViewList: {
+            data: components["schemas"]["StaffGalleryAlbumView"][];
+            nextCursor: string | null;
+        };
+        StaffGalleryPhotoView: {
+            caption: string | null;
+            contentType: string;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** @description `privacy_report`, or a `galleryPhotoHide` code. */
+            hiddenReason: string | null;
+            /** Format: uuid */
+            id: string;
+            reports: number;
+            /** @description A presigned GET, valid until `expiresAt`. */
+            url: string | null;
+        };
         StaffGateServiceView: {
             /** Format: date-time */
             acceptedAt: string | null;
@@ -45748,6 +45961,138 @@ export interface operations {
             };
         };
     };
+    StaffGalleryController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGalleryAlbumViewList"];
+                };
+            };
+        };
+    };
+    StaffGalleryController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAlbumDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGalleryAlbumView"];
+                };
+            };
+        };
+    };
+    StaffGalleryController_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddPhotoDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGalleryPhotoView"];
+                };
+            };
+        };
+    };
+    StaffGalleryController_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffGalleryController_hide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GalleryReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffGalleryController_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PermitRulesController_get: {
         parameters: {
             query?: never;
@@ -47097,6 +47442,73 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SpendingReportView"];
                 };
+            };
+        };
+    };
+    GalleryController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GalleryAlbumViewList"];
+                };
+            };
+        };
+    };
+    GalleryController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GalleryAlbumView"];
+                };
+            };
+        };
+    };
+    GalleryController_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GalleryReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

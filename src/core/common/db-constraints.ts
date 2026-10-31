@@ -947,4 +947,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // The buses' timetable (ADR 0071), keyed for composite links.
   bus_routes_tenant_id_id_key: null,
   bus_departures_tenant_id_id_key: null,
+  // The gallery (ADR 0071): a photo is one file's; one report a photo and
+  // reporter, checked first under the photo's lock (GALLERY_REPORT_EXISTS).
+  gallery_albums_tenant_id_id_key: null,
+  gallery_photos_tenant_id_id_key: null,
+  gallery_photos_file_id_key: null,
+  gallery_photo_reports_tenant_id_id_key: null,
+  gallery_photo_reports_one_per_reporter: null,
 };

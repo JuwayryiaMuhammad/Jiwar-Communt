@@ -26,6 +26,11 @@ import {
   StaffBusesController,
 } from './transport/buses.controller';
 import { BusesService } from './transport/buses.service';
+import {
+  GalleryController,
+  StaffGalleryController,
+} from './gallery/gallery.controller';
+import { GalleryService } from './gallery/gallery.service';
 import { CommunityAttachments } from './content/attachments';
 import { EngagementExportSections } from './export/export-sections';
 import { EngagementProvisioning } from './provisioning';
@@ -88,6 +93,8 @@ import { SuggestionTopicsService } from './topics/topics.service';
     PrayerSettingsController,
     BusesController,
     StaffBusesController,
+    GalleryController,
+    StaffGalleryController,
   ],
   providers: [
     EngagementProvisioning,
@@ -104,6 +111,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     DailyBriefService,
     PrayerService,
     BusesService,
+    GalleryService,
     EngagementExportSections,
     BoardNotices,
   ],

@@ -2903,6 +2903,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ألغت الإدارة عرضًا جماعيًا كنت مشاركًا فيه.',
     },
   },
+  'gallery_photo.reported': {
+    en: {
+      title: 'A gallery photo was reported',
+      body: 'A resident reported a photo in the gallery.',
+    },
+    ar: {
+      title: 'إبلاغ عن صورة',
+      body: 'أبلغ أحد السكان عن صورة في معرض الصور.',
+    },
+  },
   'market_shop.approved': {
     en: {
       title: 'Your shop is open',

@@ -2220,6 +2220,15 @@ export const AUDIT_ACTIONS = {
   'bus_route.updated': { log: 'tenant', target: 'bus_route' },
   'bus_departure.added': { log: 'tenant', target: 'bus_departure' },
   'bus_departure.removed': { log: 'tenant', target: 'bus_departure' },
+  // The gallery (ADR 0071). album created: eventId; published: photos
+  // (a count); photo added: albumId; hidden: reasonCode, by (staff |
+  // report); restored: was; reported: reason.
+  'gallery_album.created': { log: 'tenant', target: 'gallery_album' },
+  'gallery_album.published': { log: 'tenant', target: 'gallery_album' },
+  'gallery_photo.added': { log: 'tenant', target: 'gallery_photo' },
+  'gallery_photo.hidden': { log: 'tenant', target: 'gallery_photo' },
+  'gallery_photo.restored': { log: 'tenant', target: 'gallery_photo' },
+  'gallery_photo.reported': { log: 'tenant', target: 'gallery_photo' },
   // A listing reported (target: the listing). metadata: reportId,
   // reasonCode; never the note.
   'market_listing.reported': { log: 'tenant', target: 'market_listing' },

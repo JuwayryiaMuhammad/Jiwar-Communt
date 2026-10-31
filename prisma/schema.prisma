@@ -11781,3 +11781,58 @@ model BusDeparture {
   @@index([tenantId, routeId, departsMinute], map: "bus_departures_route_idx")
   @@map("bus_departures")
 }
+
+/// A gallery album (ADR 0071): the staff's; residents see it once published.
+model GalleryAlbum {
+  id          String         @id @db.Uuid
+  tenantId    String         @map("tenant_id") @db.Uuid
+  titleEn     String         @map("title_en")
+  titleAr     String         @map("title_ar")
+  /// The community event it is of, if any.
+  eventId     String?        @map("event_id") @db.Uuid
+  publishedAt DateTime?      @map("published_at") @db.Timestamptz(3)
+  createdById String         @map("created_by") @db.Uuid
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  photos      GalleryPhoto[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, publishedAt(sort: Desc), id(sort: Desc)], map: "gallery_albums_published_idx")
+  @@map("gallery_albums")
+}
+
+/// A gallery photo; a hidden one is never shown.
+model GalleryPhoto {
+  id           String               @id @db.Uuid
+  tenantId     String               @map("tenant_id") @db.Uuid
+  albumId      String               @map("album_id") @db.Uuid
+  fileId       String               @unique @map("file_id") @db.Uuid
+  caption      String?
+  hiddenAt     DateTime?            @map("hidden_at") @db.Timestamptz(3)
+  /// privacy_report (a resident's report hid it) or a galleryPhotoHide code.
+  hiddenReason String?              @map("hidden_reason")
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+  album        GalleryAlbum         @relation(fields: [tenantId, albumId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "gallery_photos_tenant_id_album_fkey")
+  reports      GalleryPhotoReport[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, albumId, createdAt, id], map: "gallery_photos_album_idx")
+  @@map("gallery_photos")
+}
+
+/// A resident's report of a gallery photo: once each; never changes.
+model GalleryPhotoReport {
+  id         String       @id @db.Uuid
+  tenantId   String       @map("tenant_id") @db.Uuid
+  photoId    String       @map("photo_id") @db.Uuid
+  reporterId String       @map("reporter_account_id") @db.Uuid
+  /// galleryPhotoReport
+  reason     String
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  photo      GalleryPhoto @relation(fields: [tenantId, photoId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "gallery_photo_reports_tenant_id_photo_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, photoId, reporterId], map: "gallery_photo_reports_one_per_reporter")
+  @@map("gallery_photo_reports")
+}

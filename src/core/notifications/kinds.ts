@@ -2663,6 +2663,14 @@ export const NOTIFICATION_KINDS = {
     target: 'group_offer',
     params: { reason: {} },
   },
+  /** A resident reported a gallery photo (privacy hid it): to the staff who keep it. */
+  'gallery_photo.reported': {
+    priority: 'normal',
+    category: 'community',
+    critical: false,
+    target: 'gallery_photo',
+    params: { reason: {} },
+  },
   /** A handler opened the owner's shop, or reinstated it. */
   'market_shop.approved': {
     priority: 'normal',

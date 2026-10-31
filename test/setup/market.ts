@@ -99,6 +99,9 @@ export function marketHelpers(h: HttpHarness) {
     return list<T>(`/market/listings${query ? `?${query}` : ''}`, by);
   }
 
+  /** A finalized gallery photo of the caller's (the staff's). */
+  const galleryPhoto = (by: Who) => files.ready(by.token, 'gallery_photo');
+
   /** A finalized photo of the caller's for a listing. */
   const photo = (by: Who, contentType = 'image/png') =>
     files.ready(by.token, 'market_listing_photo', contentType);
@@ -241,6 +244,7 @@ export function marketHelpers(h: HttpHarness) {
     partner,
     timeMachine,
     sweep_,
+    galleryPhoto,
   };
 }
 

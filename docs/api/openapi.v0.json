@@ -538,6 +538,24 @@
         ],
         "type": "object"
       },
+      "AddPhotoDto": {
+        "properties": {
+          "caption": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "fileId": {
+            "description": "An uploaded file of purpose `gallery_photo`.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
       "AdjustStockDto": {
         "properties": {
           "delta": {
@@ -12760,6 +12778,30 @@
         ],
         "type": "object"
       },
+      "CreateAlbumDto": {
+        "properties": {
+          "eventId": {
+            "description": "The community event it is of.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "titleEn",
+          "titleAr"
+        ],
+        "type": "object"
+      },
       "CreateAnnouncementDto": {
         "properties": {
           "attachmentFileIds": {
@@ -22747,6 +22789,110 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GalleryAlbumView": {
+        "properties": {
+          "eventId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "photos": {
+            "description": "Its visible photos.",
+            "items": {
+              "$ref": "#/components/schemas/GalleryPhotoView"
+            },
+            "type": "array"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "titleAr": {
+            "type": "string"
+          },
+          "titleEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "titleEn",
+          "titleAr",
+          "eventId",
+          "publishedAt",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "GalleryAlbumViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GalleryAlbumView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GalleryPhotoView": {
+        "properties": {
+          "caption": {
+            "nullable": true,
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET, valid until `expiresAt`.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "caption",
+          "contentType",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "GalleryReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code: `galleryPhotoReport` for a resident (privacy hides the photo at once), `galleryPhotoHide` for the staff.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -55641,6 +55787,108 @@
         ],
         "type": "object"
       },
+      "StaffGalleryAlbumView": {
+        "properties": {
+          "eventId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "photos": {
+            "description": "Every photo, hidden ones too.",
+            "items": {
+              "$ref": "#/components/schemas/StaffGalleryPhotoView"
+            },
+            "type": "array"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "titleAr": {
+            "type": "string"
+          },
+          "titleEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "titleEn",
+          "titleAr",
+          "eventId",
+          "publishedAt",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "StaffGalleryAlbumViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGalleryAlbumView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffGalleryPhotoView": {
+        "properties": {
+          "caption": {
+            "nullable": true,
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "hiddenReason": {
+            "description": "`privacy_report`, or a `galleryPhotoHide` code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reports": {
+            "type": "number"
+          },
+          "url": {
+            "description": "A presigned GET, valid until `expiresAt`.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "caption",
+          "contentType",
+          "url",
+          "expiresAt",
+          "hiddenReason",
+          "reports"
+        ],
+        "type": "object"
+      },
       "StaffGateServiceView": {
         "properties": {
           "acceptedAt": {
@@ -73531,6 +73779,244 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/community/gallery/albums": {
+      "get": {
+        "operationId": "StaffGalleryController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGalleryAlbumViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List every album, drafts too",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffGalleryController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAlbumDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGalleryAlbumView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start an album",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/gallery/albums/{id}/photos": {
+      "post": {
+        "operationId": "StaffGalleryController_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPhotoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGalleryPhotoView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a photo to an album",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/gallery/albums/{id}/publish": {
+      "post": {
+        "operationId": "StaffGalleryController_publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish an album",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/gallery/photos/{id}/hide": {
+      "post": {
+        "operationId": "StaffGalleryController_hide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hide a photo, or keep a reported one hidden",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/gallery/photos/{id}/restore": {
+      "post": {
+        "operationId": "StaffGalleryController_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Show a hidden photo again",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/community/permit-rules": {
       "get": {
         "description": "The work days, hours and days off (from today on) works and moves must fit, the time zone they are read in, and the fixed limits.",
@@ -76018,6 +76504,135 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gallery/albums": {
+      "get": {
+        "operationId": "GalleryController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GalleryAlbumViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the published albums",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gallery/albums/{id}": {
+      "get": {
+        "operationId": "GalleryController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GalleryAlbumView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a published album",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gallery/photos/{id}/report": {
+      "post": {
+        "operationId": "GalleryController_report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report a photo",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

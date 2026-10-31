@@ -235,6 +235,8 @@ describe('audit catalog', () => {
         'group_offer',
         'bus_route',
         'bus_departure',
+        'gallery_album',
+        'gallery_photo',
       ]).toContain(def.target);
     }
   });

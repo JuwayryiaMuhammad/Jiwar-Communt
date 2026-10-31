@@ -31,4 +31,10 @@ export class UpdateFacilitySettingsDto {
 
   @Setting('suspensionDays', 'Days a suspension lasts.')
   suspensionDays?: number;
+
+  @Setting(
+    'waitlistHoldMinutes',
+    'Minutes a waitlist offer holds its place (ADR 0070); never past 15 minutes before the start.',
+  )
+  waitlistHoldMinutes?: number;
 }

@@ -933,4 +933,9 @@ export const R11C1B_COVERAGE: readonly string[] = [
   'booking_companion.left',
   'booking_companion.removed',
   'booking.share_link_rotated',
+  'booking_waitlist.joined',
+  'booking_waitlist.left',
+  'booking_waitlist.offered',
+  'booking_waitlist.claimed',
+  'booking_waitlist.lapsed',
 ];

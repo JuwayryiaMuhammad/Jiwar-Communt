@@ -744,6 +744,27 @@ export const AUDIT_ACTIONS = {
   'booking_companion.removed': { log: 'tenant', target: 'booking_companion' },
   // metadata: unitId. Never the token.
   'booking.share_link_rotated': { log: 'tenant', target: 'booking' },
+  // The booking waitlist (ADR 0070). joined — facilityId, unitId,
+  // startsAt, guests; left and lapsed — facilityId, from; offered —
+  // facilityId, startsAt, offerExpiresAt (the system's, or the act that
+  // freed it); claimed — facilityId, bookingId.
+  'booking_waitlist.joined': {
+    log: 'tenant',
+    target: 'booking_waitlist_entry',
+  },
+  'booking_waitlist.left': { log: 'tenant', target: 'booking_waitlist_entry' },
+  'booking_waitlist.offered': {
+    log: 'tenant',
+    target: 'booking_waitlist_entry',
+  },
+  'booking_waitlist.claimed': {
+    log: 'tenant',
+    target: 'booking_waitlist_entry',
+  },
+  'booking_waitlist.lapsed': {
+    log: 'tenant',
+    target: 'booking_waitlist_entry',
+  },
   // ADR 0067. metadata: accountId, facilityId, reasonCode, endsOn,
   // cancelledBookingIds (ids only), endedBanId when one had ended.
   'facility_ban.started': { log: 'tenant', target: 'facility_ban' },

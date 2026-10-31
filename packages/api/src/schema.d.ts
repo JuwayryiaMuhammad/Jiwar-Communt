@@ -903,6 +903,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/booking-waitlist/{id}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Book the place an offer holds
+         * @description A live offer (WAITLIST_OFFER_INVALID otherwise), booked as any booking is decided — the quotas included — taking only its own hold.
+         */
+        post: operations["WaitlistController_claim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/booking-waitlist/{id}/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Leave a waitlist
+         * @description An offer it held goes to the next in line.
+         */
+        post: operations["WaitlistController_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/bookings/{id}": {
         parameters: {
             query?: never;
@@ -2211,6 +2251,26 @@ export interface paths {
         get: operations["FacilitySlotsController_slots"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facilities/{id}/waitlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Wait for a full slot
+         * @description For a unit the caller books for: a full slot (BOOKING_SLOT_AVAILABLE while it has room), at least 15 minutes ahead, at most three at once (WAITLIST_LIMIT_REACHED), once per slot (WAITLIST_EXISTS). What frees room is offered in the order of joining and held for the compound’s `waitlistHoldMinutes`.
+         */
+        post: operations["WaitlistController_join"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9659,6 +9719,23 @@ export interface paths {
         };
         /** List the maintenance visits coming to my unit */
         get: operations["UnitVisitsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/waitlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the caller’s waitlist entries, newest first */
+        get: operations["WaitlistController_mine"];
         put?: never;
         post?: never;
         delete?: never;
@@ -27936,6 +28013,8 @@ export interface components {
             noShowWindowDays: number;
             /** @description Days a suspension lasts. */
             suspensionDays: number;
+            /** @description Minutes a waitlist offer holds its place (ADR 0070). */
+            waitlistHoldMinutes: number;
         };
         /**
          * @description `closed`: a closure of the facility covers it.
@@ -30582,6 +30661,20 @@ export interface components {
         ItemDoneDto: {
             /** @description A contract review’s, required; no other kind’s. */
             decision?: components["schemas"]["ContractReviewDecision"];
+        };
+        JoinWaitlistDto: {
+            /** @description Guests the booking would take. Default 0. */
+            guests?: number;
+            /**
+             * Format: date-time
+             * @description The slot’s start, with an offset; a full slot of the facility’s, at least 15 minutes ahead.
+             */
+            startsAt: string;
+            /**
+             * Format: uuid
+             * @description A unit the caller books for.
+             */
+            unitId: string;
         };
         KeptCountsView: {
             /** @description They stay, pointing at a deleted user. */
@@ -40827,6 +40920,8 @@ export interface components {
             noShowWindowDays?: number;
             /** @description Days a suspension lasts. */
             suspensionDays?: number;
+            /** @description Minutes a waitlist offer holds its place (ADR 0070); never past 15 minutes before the start. */
+            waitlistHoldMinutes?: number;
         };
         UpdateGateDto: {
             kind?: components["schemas"]["GateKind"];
@@ -41793,6 +41888,37 @@ export interface components {
             /** @example 3200.00 */
             monthlyWage: string | null;
         };
+        WaitlistEntryView: {
+            /** Format: uuid */
+            bookingId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: uuid */
+            facilityId: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            offerExpiresAt: string | null;
+            /** @description The booker and the guests. */
+            partySize: number;
+            /** Format: date-time */
+            startsAt: string;
+            /** @description `offered`: a place is held until `offerExpiresAt` — claim it; `booked`: claimed (`bookingId`). */
+            status: components["schemas"]["WaitlistStatus"];
+            /** Format: uuid */
+            unitId: string;
+        };
+        WaitlistEntryViewList: {
+            data: components["schemas"]["WaitlistEntryView"][];
+            nextCursor: string | null;
+        };
+        /**
+         * @description `offered`: a place is held until `offerExpiresAt` — claim it; `booked`: claimed (`bookingId`).
+         * @enum {string}
+         */
+        WaitlistStatus: "waiting" | "offered" | "booked" | "lapsed" | "left" | "closed";
         WarningView: {
             /** @enum {string} */
             code: "WORKER_SCHEDULE_CONFLICT";
@@ -43300,6 +43426,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingInviteView"];
+                };
+            };
+        };
+    };
+    WaitlistController_claim: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingView"];
+                };
+            };
+        };
+    };
+    WaitlistController_leave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistEntryView"];
                 };
             };
         };
@@ -45205,6 +45376,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacilitySlotsView"];
+                };
+            };
+        };
+    };
+    WaitlistController_join: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JoinWaitlistDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistEntryView"];
                 };
             };
         };
@@ -56595,6 +56794,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnitVisitViewList"];
+                };
+            };
+        };
+    };
+    WaitlistController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistEntryViewList"];
                 };
             };
         };

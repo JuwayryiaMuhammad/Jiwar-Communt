@@ -300,6 +300,8 @@ const TEXT: Record<string, (p: P) => string> = {
   'booking.cancelled_by_closure': (p) => `Your booking was cancelled: the facility is closed (${words(p.reason)})`,
   'booking.companion_invited': () => 'You were invited to come along to a booking',
   'booking.companion_cancelled': () => 'A booking you were to come along to was cancelled',
+  'booking_waitlist.offered': () => 'A place you wait for is free: book it soon',
+  'booking_waitlist.closed': () => 'A slot you waited for is closed',
   'booking.reminder': () => 'Your booking starts in about two hours',
   'booking_suspension.started': () => 'Your unit cannot make new bookings for a while',
   'facility_ban.started': (p) =>

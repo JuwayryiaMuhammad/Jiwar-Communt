@@ -1281,6 +1281,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'دعاك أحد أفراد أسرتك إلى حجز. افتح التطبيق للقبول أو الرفض.',
     },
   },
+  'booking_waitlist.offered': {
+    en: {
+      title: 'A place is free',
+      body: 'A place freed up in a slot you wait for. It is held for you for a short while: open the app to book it.',
+    },
+    ar: {
+      title: 'مكان متاح',
+      body: 'أصبح هناك مكان متاح في موعد تنتظره، ومحجوز لك لفترة قصيرة. افتح التطبيق لتحجزه.',
+    },
+  },
+  'booking_waitlist.closed': {
+    en: {
+      title: 'Waitlist closed',
+      body: 'The facility is closed at a time you waited for.',
+    },
+    ar: {
+      title: 'إغلاق قائمة الانتظار',
+      body: 'المرفق مغلق في الموعد الذي كنت تنتظره.',
+    },
+  },
   'booking.companion_cancelled': {
     en: {
       title: 'Booking cancelled',

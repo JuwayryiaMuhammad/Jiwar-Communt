@@ -14,6 +14,7 @@ interface Side {
   invoiceId: string;
   clubPlanId: string;
   bookingId: string;
+  facilityId: string;
 }
 
 /**
@@ -76,6 +77,27 @@ const TABLES: Table[] = [
     },
   },
   {
+    table: 'booking_waitlist_entries',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.bookingWaitlistEntry.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          facilityId: link.facilityId,
+          startsAt: new Date('2031-01-01T08:00:00Z'),
+          accountId: link.staffId,
+          unitId: link.unitId,
+          partySize: 1,
+          // Ended: the one-live-entry key leaves it alone.
+          status: 'left',
+          endedAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
+  {
     table: 'booking_companions',
     insert: async (tx, own, link) => {
       const id = newId();
@@ -115,6 +137,7 @@ describe('RLS isolation — booking extras and charges (ADR 0070)', () => {
     const s = { tenantId, unitId: unit.id, staffId: staff.id } as Side;
     await inTenant(s, async (tx) => {
       const facilityId = newId();
+      s.facilityId = facilityId;
       await tx.facility.create({
         data: {
           id: facilityId,

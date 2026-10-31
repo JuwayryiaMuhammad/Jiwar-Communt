@@ -317,6 +317,8 @@ export class StaffBookingsService implements OnModuleInit {
       );
       // Its companions' places end with it (ADR 0070).
       await this.bookings.endCompanions(tx, id, now, true);
+      // Its place, held while it waited, goes to the waitlist (ADR 0070).
+      await this.bookings.offerFreed(tx, booking, now);
     });
   }
 
@@ -408,6 +410,14 @@ export class StaffBookingsService implements OnModuleInit {
     });
   }
 
+  /** BookingsService.lockSlotRows, for the paths that hold this service. */
+  lockSlotRows(
+    tx: TenantTxClient,
+    rows: readonly { facilityId: string; startsAt: Date }[],
+  ): Promise<void> {
+    return this.bookings.lockSlotRows(tx, rows);
+  }
+
   /** BookingsService.lockChargedUnits, for the paths that hold this service. */
   lockChargedUnits(
     tx: TenantTxClient,
@@ -424,8 +434,10 @@ export class StaffBookingsService implements OnModuleInit {
     await this.access.lockSelf(tx);
     const seen = await this.seen(tx, id);
     await this.access.lockUnit(tx, seen.unitId);
-    await this.facilities.lock(tx, seen.facilityId, 'share');
+    const facility = await this.facilities.lock(tx, seen.facilityId, 'share');
     await this.bookings.lockChargedUnits(tx, [seen]);
+    // The slot's row: what a decision frees is offered on the waitlist.
+    await this.bookings.lockSlotRow(tx, facility, seen.startsAt);
     return this.bookings.lockBooking(tx, id);
   }
 

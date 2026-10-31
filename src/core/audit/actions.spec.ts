@@ -212,6 +212,7 @@ describe('audit catalog', () => {
         'finance_charge',
         'club_membership_request',
         'booking_companion',
+        'booking_waitlist_entry',
         'work_permit',
         'safety_instruction',
         // ADR 0069.

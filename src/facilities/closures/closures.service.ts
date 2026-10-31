@@ -18,6 +18,7 @@ import { HOLDING } from '../bookings/booking-rules';
 import { BookingsService } from '../bookings/bookings.service';
 import { dbNow } from '../db-clock';
 import { BookingNotices } from '../notices/booking-notices';
+import { WaitlistOffers } from '../waitlist/waitlist-offers';
 import { FacilitiesService } from '../setup/facilities.service';
 import { FacilityClosureView } from './views/closure.views';
 
@@ -66,6 +67,7 @@ export class ClosuresService implements OnModuleInit {
     private readonly facilities: FacilitiesService,
     private readonly bookings: BookingsService,
     private readonly notices: BookingNotices,
+    private readonly waitlist: WaitlistOffers,
   ) {}
 
   onModuleInit(): void {
@@ -177,6 +179,8 @@ export class ClosuresService implements OnModuleInit {
           by: null,
           now,
           closureId: closure.id,
+          // Its slots are closed: their waitlists close below.
+          offer: false,
         });
         await this.notices.send(
           tx,
@@ -186,6 +190,13 @@ export class ClosuresService implements OnModuleInit {
           { reason },
         );
       }
+      await this.waitlist.closeIn(
+        tx,
+        facility,
+        input.startsAt,
+        input.endsAt,
+        now,
+      );
       await this.audit.record(tx, {
         action: 'facility_closure.created',
         targetId: closure.id,

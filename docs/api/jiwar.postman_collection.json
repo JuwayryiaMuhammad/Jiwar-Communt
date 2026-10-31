@@ -3289,6 +3289,68 @@
           }
         },
         {
+          "name": "Book the place an offer holds",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "booking-waitlist",
+                ":id",
+                "claim"
+              ],
+              "raw": "{{baseUrl}}/api/v1/booking-waitlist/:id/claim",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Leave a waitlist",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "booking-waitlist",
+                ":id",
+                "leave"
+              ],
+              "raw": "{{baseUrl}}/api/v1/booking-waitlist/:id/leave",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get a booking",
           "request": {
             "description": "**Responses:** 200",
@@ -3576,6 +3638,54 @@
           }
         },
         {
+          "name": "Wait for a full slot",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `guests` | number |  | Guests the booking would take. Default 0. |\n| `startsAt` | string (date-time) | yes | The slot’s start, with an offset; a full slot of the facility’s, at least 15 minutes ahead. |\n| `unitId` | string (uuid) | yes | A unit the caller books for. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "facilities",
+                ":id",
+                "waitlist"
+              ],
+              "raw": "{{baseUrl}}/api/v1/facilities/:id/waitlist",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the bookings the caller comes along to",
           "request": {
             "description": "**Responses:** 200",
@@ -3670,6 +3780,26 @@
                 "facility-bans"
               ],
               "raw": "{{baseUrl}}/api/v1/me/facility-bans"
+            }
+          }
+        },
+        {
+          "name": "List the caller’s waitlist entries, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "waitlist"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/waitlist"
             }
           }
         },
@@ -9523,9 +9653,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"noShowThreshold\": 1,\n  \"noShowWindowDays\": 7,\n  \"suspensionDays\": 1\n}"
+              "raw": "{\n  \"noShowThreshold\": 1,\n  \"noShowWindowDays\": 7,\n  \"suspensionDays\": 1,\n  \"waitlistHoldMinutes\": 5\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `noShowThreshold` | number |  | No-shows within the window that suspend a unit. |\n| `noShowWindowDays` | number |  | Days the no-shows are counted over. |\n| `suspensionDays` | number |  | Days a suspension lasts. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `noShowThreshold` | number |  | No-shows within the window that suspend a unit. |\n| `noShowWindowDays` | number |  | Days the no-shows are counted over. |\n| `suspensionDays` | number |  | Days a suspension lasts. |\n| `waitlistHoldMinutes` | number |  | Minutes a waitlist offer holds its place (ADR 0070); never past 15 minutes before the start. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",

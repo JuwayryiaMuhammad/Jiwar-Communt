@@ -468,7 +468,7 @@ export class CompanionsService implements OnModuleInit {
         ...(to === 'removed' ? { removeReason: reason } : {}),
       },
     });
-    await tx.booking.update({
+    const freed = await tx.booking.update({
       where: { id: booking.id },
       data: { companions: { decrement: 1 } },
     });
@@ -481,6 +481,9 @@ export class CompanionsService implements OnModuleInit {
         ...(reason ? { reasonCode: reason } : {}),
       },
     });
+    // The seat it frees goes to the waitlist (ADR 0070), under the slot's
+    // row lock taken above.
+    await this.bookings.offerFreed(tx, freed, now);
     return ended;
   }
 

@@ -21107,12 +21107,17 @@
           "suspensionDays": {
             "description": "Days a suspension lasts.",
             "type": "number"
+          },
+          "waitlistHoldMinutes": {
+            "description": "Minutes a waitlist offer holds its place (ADR 0070).",
+            "type": "number"
           }
         },
         "required": [
           "noShowThreshold",
           "noShowWindowDays",
-          "suspensionDays"
+          "suspensionDays",
+          "waitlistHoldMinutes"
         ],
         "type": "object"
       },
@@ -29837,6 +29842,31 @@
             "description": "A contract review’s, required; no other kind’s."
           }
         },
+        "type": "object"
+      },
+      "JoinWaitlistDto": {
+        "properties": {
+          "guests": {
+            "description": "Guests the booking would take. Default 0.",
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "startsAt": {
+            "description": "The slot’s start, with an offset; a full slot of the facility’s, at least 15 minutes ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "unitId": {
+            "description": "A unit the caller books for.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "startsAt"
+        ],
         "type": "object"
       },
       "KeptCountsView": {
@@ -63491,6 +63521,12 @@
             "maximum": 90,
             "minimum": 1,
             "type": "number"
+          },
+          "waitlistHoldMinutes": {
+            "description": "Minutes a waitlist offer holds its place (ADR 0070); never past 15 minutes before the start.",
+            "maximum": 120,
+            "minimum": 5,
+            "type": "number"
           }
         },
         "type": "object"
@@ -66317,6 +66353,101 @@
           "monthlyWage"
         ],
         "type": "object"
+      },
+      "WaitlistEntryView": {
+        "properties": {
+          "bookingId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "offerExpiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "partySize": {
+            "description": "The booker and the guests.",
+            "type": "number"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WaitlistStatus"
+              }
+            ],
+            "description": "`offered`: a place is held until `offerExpiresAt` — claim it; `booked`: claimed (`bookingId`)."
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "facilityId",
+          "unitId",
+          "startsAt",
+          "partySize",
+          "status",
+          "offerExpiresAt",
+          "bookingId",
+          "createdAt",
+          "endedAt"
+        ],
+        "type": "object"
+      },
+      "WaitlistEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WaitlistEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "WaitlistStatus": {
+        "description": "`offered`: a place is held until `offerExpiresAt` — claim it; `booked`: claimed (`bookingId`).",
+        "enum": [
+          "waiting",
+          "offered",
+          "booked",
+          "lapsed",
+          "left",
+          "closed"
+        ],
+        "type": "string"
       },
       "WarningView": {
         "properties": {
@@ -69519,6 +69650,93 @@
           }
         ],
         "summary": "See what a share link opens",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/booking-waitlist/{id}/claim": {
+      "post": {
+        "description": "A live offer (WAITLIST_OFFER_INVALID otherwise), booked as any booking is decided — the quotas included — taking only its own hold.",
+        "operationId": "WaitlistController_claim",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Book the place an offer holds",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/booking-waitlist/{id}/leave": {
+      "post": {
+        "description": "An offer it held goes to the next in line.",
+        "operationId": "WaitlistController_leave",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitlistEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Leave a waitlist",
         "tags": [
           "bookings"
         ],
@@ -73106,6 +73324,64 @@
           }
         ],
         "summary": "List a facility’s slots of a day, free or full",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/facilities/{id}/waitlist": {
+      "post": {
+        "description": "For a unit the caller books for: a full slot (BOOKING_SLOT_AVAILABLE while it has room), at least 15 minutes ahead, at most three at once (WAITLIST_LIMIT_REACHED), once per slot (WAITLIST_EXISTS). What frees room is offered in the order of joining and held for the compound’s `waitlistHoldMinutes`.",
+        "operationId": "WaitlistController_join",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinWaitlistDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitlistEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Wait for a full slot",
         "tags": [
           "bookings"
         ],
@@ -94791,6 +95067,35 @@
         "summary": "List the maintenance visits coming to my unit",
         "tags": [
           "me"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/waitlist": {
+      "get": {
+        "operationId": "WaitlistController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitlistEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the caller’s waitlist entries, newest first",
+        "tags": [
+          "bookings"
         ],
         "x-no-store": true,
         "x-stability": "draft"

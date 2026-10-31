@@ -320,6 +320,8 @@ export interface World
   bClubRequestId: string;
   /** ADR 0070: B's family member, invited to B's booking. */
   bCompanionId: string;
+  /** ADR 0070: B's tenant waiting for the slot of B's booking. */
+  bWaitlistEntryId: string;
   /** B's finance (ADR 0046): an issue to B's home, and its invoice. */
   bInvoiceBatchId: string;
   bInvoiceId: string;
@@ -1283,6 +1285,20 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     });
     return row;
   });
+  // B's tenant waits for the slot B's owner holds (ADR 0070).
+  const bWaitlistEntry = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.bookingWaitlistEntry.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        facilityId: bFacility.id,
+        startsAt: bBooking.startsAt,
+        accountId: b.ids.tenant,
+        unitId: b.rentedUnitId,
+        partySize: 1,
+      },
+    }),
+  );
   const bClubRequest = await asBOwner(() =>
     h.moduleRef.get(ClubRequestsService).request(b.homeUnitId, bClubPlan.id),
   );
@@ -1673,6 +1689,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPaymentId: bClub.paymentId,
     bClubRequestId: bClubRequest.id,
     bCompanionId: bCompanion.id,
+    bWaitlistEntryId: bWaitlistEntry.id,
     bSuspensionId,
     bBanId: bBan.id,
     bWorkPermitId: bWorkPermit.id,

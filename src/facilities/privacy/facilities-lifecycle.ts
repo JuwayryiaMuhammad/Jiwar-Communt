@@ -73,18 +73,18 @@ export class FacilitiesLifecycle implements OnModuleInit {
     const now = await dbNow(tx);
     // The charges' rule (ADR 0070): their units' finance locks before the
     // bookings' rows; the fees are credited by nobody (the system).
-    await this.bookings.lockChargedUnits(
-      tx,
-      await tx.booking.findMany({
-        where: {
-          bookedById: accountId,
-          ...(unitId ? { unitId } : {}),
-          status: { in: [...HOLDING] },
-          startsAt: { gt: now },
-        },
-        select: { id: true, unitId: true },
-      }),
-    );
+    // Then their slots' rows: what it frees is offered on the waitlist.
+    const candidates = await tx.booking.findMany({
+      where: {
+        bookedById: accountId,
+        ...(unitId ? { unitId } : {}),
+        status: { in: [...HOLDING] },
+        startsAt: { gt: now },
+      },
+      select: { id: true, unitId: true, facilityId: true, startsAt: true },
+    });
+    await this.bookings.lockChargedUnits(tx, candidates);
+    await this.bookings.lockSlotRows(tx, candidates);
     const ids = unitId
       ? await tx.$queryRaw<{ id: string }[]>`
           SELECT id FROM bookings

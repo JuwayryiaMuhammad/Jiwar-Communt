@@ -322,6 +322,89 @@ describe('Audit coverage — booking extras and charges', () => {
     });
   });
 
+  describe('the waitlist', () => {
+    it('booking_waitlist.joined, .offered, .claimed, .left and .lapsed — the facility, the slot and the step', async () => {
+      const court = await f.facility(s.c, s.manager, { weeklyQuota: 20 });
+      const slot = at(day(7), 10);
+      const held = await f.book(s.alice, s.homeA.id, court, slot);
+      const join = async (who: Who, unitId: string) =>
+        (
+          (
+            await f
+              .http('post', `/facilities/${court}/waitlist`, who.token, {
+                unitId,
+                startsAt: slot.toISOString(),
+              })
+              .expect(201)
+          ).body as { id: string }
+        ).id;
+      const first = await join(s.bob, s.homeB.id);
+      expect(await single('booking_waitlist.joined', first)).toMatchObject({
+        actorId: s.bob.id,
+        metadata: {
+          facilityId: court,
+          unitId: s.homeB.id,
+          startsAt: slot.toISOString(),
+          guests: 0,
+        },
+      });
+      const otherHome = await f.unit(s.c, 'A');
+      const other = await f.owner(s.c, otherHome.id);
+      const second = await join(other, otherHome.id);
+      await f.cancel(s.alice, held.id).expect(204);
+      expect(await single('booking_waitlist.offered', first)).toMatchObject({
+        actorId: s.alice.id,
+        metadata: {
+          facilityId: court,
+          startsAt: slot.toISOString(),
+          offerExpiresAt: expect.any(String) as string,
+        },
+      });
+      await f
+        .http('post', `/booking-waitlist/${first}/leave`, s.bob.token)
+        .expect(200);
+      expect(await single('booking_waitlist.left', first)).toMatchObject({
+        actorId: s.bob.id,
+        metadata: { facilityId: court, from: 'offered' },
+      });
+      const booked = (
+        await f
+          .http('post', `/booking-waitlist/${second}/claim`, other.token)
+          .expect(201)
+      ).body as { id: string };
+      expect(await single('booking_waitlist.claimed', second)).toMatchObject({
+        actorId: other.id,
+        metadata: { facilityId: court, bookingId: booked.id },
+      });
+
+      // A slot of its own, offered and then let expire.
+      const late = at(day(8), 10);
+      const lateHeld = await f.book(s.alice, s.homeA.id, court, late);
+      const third = (
+        (
+          await f
+            .http('post', `/facilities/${court}/waitlist`, s.bob.token, {
+              unitId: s.homeB.id,
+              startsAt: late.toISOString(),
+            })
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      await f.cancel(s.alice, lateHeld.id).expect(204);
+      const offer = await f.inTx(s.c, (tx) =>
+        tx.bookingWaitlistEntry.findUniqueOrThrow({ where: { id: third } }),
+      );
+      await f.sweep(
+        'facilities.waitlist',
+        new Date(offer.offerExpiresAt!.getTime() + 60_000),
+      );
+      expect(await single('booking_waitlist.lapsed', third)).toMatchObject({
+        actorId: null,
+        metadata: { facilityId: court, from: 'offered' },
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every entry of booking extras and charges has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

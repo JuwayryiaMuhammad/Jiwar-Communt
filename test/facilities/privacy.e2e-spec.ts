@@ -117,6 +117,21 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
       })
       .expect(201);
 
+    // A slot it waits for (ADR 0070): the primary's, full.
+    const full = await f.facility(s.c, s.manager, {
+      nameEn: 'Single court',
+      weeklyQuota: 20,
+    });
+    await f.book(primary, home.id, full, at(day(5), 10));
+    const waiting = (
+      await f
+        .http('post', `/facilities/${full}/waitlist`, p.token, {
+          unitId: home.id,
+          startsAt: at(day(5), 10).toISOString(),
+        })
+        .expect(201)
+    ).body as { id: string };
+
     const archive = await exportOf(p);
     const section = archive.names.filter((x) => x.startsWith('facilities/'));
     expect(section.sort()).toEqual([
@@ -126,6 +141,7 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
       'facilities/club-requests.json',
       `facilities/club/${home.code}.json`,
       'facilities/companions.json',
+      'facilities/waitlist.json',
     ]);
     expect(JSON.parse(archive.text('facilities/bans.json'))).toMatchObject([
       {
@@ -166,6 +182,9 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
     };
     expect(companions.places).toMatchObject([
       { companion: { bookingId: theirs.id, status: 'accepted' } },
+    ]);
+    expect(JSON.parse(archive.text('facilities/waitlist.json'))).toMatchObject([
+      { id: waiting.id, status: 'waiting', unitId: home.id },
     ]);
     expect(companions.invited).toMatchObject([
       { bookingId: own.id, via: 'link', status: 'accepted' },

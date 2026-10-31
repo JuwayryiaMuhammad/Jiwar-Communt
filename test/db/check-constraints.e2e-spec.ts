@@ -872,6 +872,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   vehicle_fine_payments_finance_payment: {},
   credit_notes_author: {},
   bookings_companions: {},
+  facility_settings_waitlist_hold: {},
+  booking_waitlist_entries_shape: {},
   booking_companions_shape: {},
   booking_companions_remove_reason: {
     guarded: 'remove_reason IS NULL is tested first',

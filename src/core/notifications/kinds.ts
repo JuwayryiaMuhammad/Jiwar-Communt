@@ -1119,6 +1119,25 @@ export const NOTIFICATION_KINDS = {
     target: 'booking',
     params: {},
   },
+  /**
+   * A place freed in a slot the account waits for (ADR 0070): held for a
+   * while, to claim. The slot and the hold's end are read on the entry.
+   */
+  'booking_waitlist.offered': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking_waitlist_entry',
+    params: {},
+  },
+  /** A closure covers the slot the account waited for (ADR 0070). */
+  'booking_waitlist.closed': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking_waitlist_entry',
+    params: {},
+  },
   /** A booking the account was to come along to was cancelled (ADR 0070). */
   'booking.companion_cancelled': {
     priority: 'normal',

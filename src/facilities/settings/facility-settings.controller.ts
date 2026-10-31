@@ -21,6 +21,11 @@ export class FacilitySettingsResponse {
   noShowWindowDays: number;
   @ApiProperty({ type: Number, description: 'Days a suspension lasts.' })
   suspensionDays: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Minutes a waitlist offer holds its place (ADR 0070).',
+  })
+  waitlistHoldMinutes: number;
 
   static from(s: FacilitySettingsView): FacilitySettingsResponse {
     return { ...s };

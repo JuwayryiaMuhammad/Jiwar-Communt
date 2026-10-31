@@ -824,6 +824,71 @@ export const CLUB_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  // The booking waitlist (ADR 0070).
+  {
+    method: 'POST',
+    path: '/facilities/{id}/waitlist',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFacilityId }),
+      body: (w) => ({
+        unitId: w.a.homeUnitId,
+        startsAt: '2099-01-05T08:00:00Z',
+      }),
+      code: 'FACILITY_NOT_FOUND',
+    },
+    invalid: {
+      body: { unitId: 'x', startsAt: '2099-02-30T08:00:00Z', guests: 99 },
+      fields: [
+        { field: 'unitId', code: 'INVALID_UUID' },
+        { field: 'startsAt', code: 'INVALID_FORMAT' },
+        {
+          field: 'guests',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 50 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/me/waitlist',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/booking-waitlist/{id}/leave',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bWaitlistEntryId }),
+      code: 'WAITLIST_ENTRY_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/booking-waitlist/{id}/claim',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bWaitlistEntryId }),
+      code: 'WAITLIST_ENTRY_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
   // Club membership requests (ADR 0070).
   {
     method: 'POST',

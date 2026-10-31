@@ -591,6 +591,7 @@ model Tenant {
   standingInstructions         UnitStandingInstruction[]
   gateSettings           GateSettings?
   bookingCompanions            BookingCompanion[]
+  bookingWaitlistEntries       BookingWaitlistEntry[]
 
   @@map("tenants")
 }
@@ -1089,6 +1090,7 @@ model Account {
   serviceVehiclesIn      ServiceVehicleVisit[] @relation("ServiceVehicleEnteredBy")
   serviceVehiclesOut     ServiceVehicleVisit[] @relation("ServiceVehicleExitedBy")
   bookingCompanions              BookingCompanion[]                  @relation("BookingCompanionAccount")
+  bookingWaitlistEntries         BookingWaitlistEntry[]              @relation("BookingWaitlistAccount")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1209,6 +1211,7 @@ model Unit {
   inspectionRequests UnitInspectionRequest[]
   clearances FinanceClearance[]
   deposits FinanceDeposit[]
+  bookingWaitlistEntries     BookingWaitlistEntry[]
   @@unique([tenantId, code])
   @@unique([tenantId, id])
   @@map("units")
@@ -5952,6 +5955,7 @@ model Facility {
   bookings    Booking[]
   closures    FacilityClosure[]
   serviceVehicles     ServiceVehicleVisit[]
+  waitlistEntries     BookingWaitlistEntry[]
 
   @@unique([tenantId, id])
   @@index([tenantId, position, id], map: "facilities_position_idx")
@@ -6078,6 +6082,7 @@ model Booking {
   /// The share link's token, hashed; null until the booker makes one.
   companionTokenHash   String?       @map("companion_token_hash")
   companionRows        BookingCompanion[]
+  waitlistEntry        BookingWaitlistEntry?
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId, startsAt, id], map: "bookings_unit_idx")
@@ -6086,6 +6091,38 @@ model Booking {
   @@index([tenantId, status, startsAt, id], map: "bookings_status_idx")
   @@unique([tenantId, companionTokenHash], map: "bookings_companion_token_key")
   @@map("bookings")
+}
+
+/// A wait for a full slot (ADR 0070): offered, in the order of joining,
+/// what frees room in it. Moves forward once per step (trigger).
+model BookingWaitlistEntry {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  facilityId     String    @map("facility_id") @db.Uuid
+  startsAt       DateTime  @map("starts_at") @db.Timestamptz(3)
+  accountId      String    @map("account_id") @db.Uuid
+  unitId         String    @map("unit_id") @db.Uuid
+  /// The booker and their guests, as the booking would take them.
+  partySize      Int       @map("party_size")
+  /// `waiting`, `offered`, `booked`, `lapsed`, `left` or `closed`.
+  status         String    @default("waiting")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  offeredAt      DateTime? @map("offered_at") @db.Timestamptz(3)
+  offerExpiresAt DateTime? @map("offer_expires_at") @db.Timestamptz(3)
+  bookingId      String?   @map("booking_id") @db.Uuid
+  endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  facility Facility @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_waitlist_entries_facility_fkey")
+  account  Account  @relation("BookingWaitlistAccount", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_waitlist_entries_account_fkey")
+  unit     Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_waitlist_entries_unit_fkey")
+  booking  Booking? @relation(fields: [tenantId, bookingId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_waitlist_entries_booking_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, bookingId], map: "booking_waitlist_entries_booking_key")
+  @@index([tenantId, facilityId, startsAt, createdAt, id], map: "booking_waitlist_entries_slot_idx")
+  @@index([tenantId, accountId, createdAt, id], map: "booking_waitlist_entries_account_idx")
+  @@map("booking_waitlist_entries")
 }
 
 /// Someone who comes with a booker (ADR 0070): of the household, invited;
@@ -6150,6 +6187,8 @@ model FacilitySettings {
   noShowThreshold  Int      @default(3) @map("no_show_threshold")
   noShowWindowDays Int      @default(30) @map("no_show_window_days")
   suspensionDays   Int      @default(14) @map("suspension_days")
+  /// How long a waitlist offer holds its place (ADR 0070).
+  waitlistHoldMinutes Int   @default(30) @map("waitlist_hold_minutes")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 

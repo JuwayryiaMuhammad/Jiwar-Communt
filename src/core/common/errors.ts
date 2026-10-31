@@ -549,6 +549,19 @@ export const ErrorCode = {
   COMPANION_EXISTS: 'COMPANION_EXISTS',
   /** Guests and companions reach the facility's max_guests (409, params.max). */
   BOOKING_PARTY_FULL: 'BOOKING_PARTY_FULL',
+  // The booking waitlist (ADR 0070)
+  /** Unknown, another compound's, or not the caller's. */
+  WAITLIST_ENTRY_NOT_FOUND: 'WAITLIST_ENTRY_NOT_FOUND',
+  /** The entry holds no live offer now (409, params.status). */
+  WAITLIST_OFFER_INVALID: 'WAITLIST_OFFER_INVALID',
+  /** The entry was booked, lapsed, left or closed (409, params.status). */
+  WAITLIST_ENTRY_ENDED: 'WAITLIST_ENTRY_ENDED',
+  /** The slot has room: book it instead (409). */
+  BOOKING_SLOT_AVAILABLE: 'BOOKING_SLOT_AVAILABLE',
+  /** Waiting for this slot already (409, params.entryId). */
+  WAITLIST_EXISTS: 'WAITLIST_EXISTS',
+  /** Waiting for as many slots as allowed at once (409, params.max). */
+  WAITLIST_LIMIT_REACHED: 'WAITLIST_LIMIT_REACHED',
   // vehicles and parking (ADR 0045)
   /**
    * Unknown, another compound's or removed; for a resident also another

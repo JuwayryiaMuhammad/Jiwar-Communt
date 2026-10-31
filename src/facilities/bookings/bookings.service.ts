@@ -24,6 +24,7 @@ import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { FacilitiesAccess } from '../access';
 import { BookingNotices } from '../notices/booking-notices';
+import { needOf, WaitlistOffers } from '../waitlist/waitlist-offers';
 import { banInForce, dayOf } from '../bans/ban-reads';
 import { closedOver, closuresBetween } from '../closures/closure-reads';
 import { dbNow } from '../db-clock';
@@ -34,7 +35,7 @@ import {
 } from '../setup/facilities.service';
 import { ClubService } from '../club/club.service';
 import { SuspensionsService } from '../suspensions/suspensions.service';
-import { assertCan, COUNTED, HOLDING } from './booking-rules';
+import { assertCan, COUNTED, HOLDING, isHolding } from './booking-rules';
 import {
   bookableWhen,
   heldIn,
@@ -58,6 +59,8 @@ export interface NewBooking {
   guests?: number;
   /** One of the unit's minors as the occasion (ADR 0054). */
   occasionMemberId?: string;
+  /** A waitlist offer the caller claims (ADR 0070): it frees only its own hold. */
+  fromEntryId?: string;
 }
 
 /**
@@ -140,6 +143,7 @@ export class BookingsService implements OnModuleInit {
     private readonly club: ClubService,
     private readonly charges: Charges,
     private readonly notices: BookingNotices,
+    private readonly waitlist: WaitlistOffers,
   ) {}
 
   onModuleInit(): void {
@@ -244,13 +248,27 @@ export class BookingsService implements OnModuleInit {
         day[0].startsAt,
         day[day.length - 1].endsAt,
       );
+      // Live waitlist offers hold their places (ADR 0070).
+      const offers = await tx.bookingWaitlistEntry.findMany({
+        where: {
+          facilityId,
+          status: 'offered',
+          offerExpiresAt: { gt: now },
+          startsAt: { gte: day[0].startsAt, lt: day[day.length - 1].endsAt },
+        },
+      });
+      const offered = (slot: Slot) =>
+        offers
+          .filter((e) => e.startsAt.getTime() === slot.startsAt.getTime())
+          .reduce((sum, e) => sum + needOf(rules, e), 0);
       const slots = day.map((slot): SlotState => ({
         ...slot,
         // Closed by a closure in force; full when not even one more
         // booking (or person) fits.
         state: heldIn(slot, closures).length
           ? 'closed'
-          : BookingsService.taken(rules, slot, holding) >= rules.capacity
+          : BookingsService.taken(rules, slot, holding) + offered(slot) >=
+              rules.capacity
             ? 'full'
             : 'free',
         mine:
@@ -579,8 +597,20 @@ export class BookingsService implements OnModuleInit {
 
       // The slot's lock: bookings of this slot are decided one at a time.
       const taken = await this.lockSlot(tx, facility, rules, slot);
+      // The waitlist's live offers hold their places; a claimed one frees
+      // only its own (ADR 0070). Entries change only under this lock.
+      const entry = input.fromEntryId
+        ? await this.offerOf(tx, input.fromEntryId, unitId, facility, slot, now)
+        : null;
+      const offers = await this.waitlist.offerSeats(
+        tx,
+        facility,
+        slot.startsAt,
+        now,
+        entry?.id,
+      );
       if (
-        taken + (rules.capacityUnit === 'people' ? party : 1) >
+        taken + offers + (rules.capacityUnit === 'people' ? party : 1) >
         rules.capacity
       )
         throw appError.conflict(
@@ -619,10 +649,59 @@ export class BookingsService implements OnModuleInit {
           ...(booking.occasionMemberId ? { childOccasion: true } : {}),
         },
       });
+      if (entry) {
+        await tx.bookingWaitlistEntry.update({
+          where: { id: entry.id },
+          data: { status: 'booked', bookingId: booking.id, endedAt: now },
+        });
+        await this.audit.record(tx, {
+          action: 'booking_waitlist.claimed',
+          targetId: entry.id,
+          metadata: { facilityId: facility.id, bookingId: booking.id },
+        });
+      }
       if (status === 'confirmed')
         await this.raiseFee(tx, facility, booking, cal.timeZone);
       return (await this.withOccasions(tx, [booking]))[0];
     });
+  }
+
+  /**
+   * The caller's live offer for this slot and unit, under the slot's lock,
+   * or 409 WAITLIST_OFFER_INVALID with what it is now.
+   */
+  private async offerOf(
+    tx: TenantTxClient,
+    entryId: string,
+    unitId: string,
+    facility: Facility,
+    slot: Slot,
+    now: Date,
+  ) {
+    const entry = await tx.bookingWaitlistEntry.findUnique({
+      where: { id: entryId },
+    });
+    if (
+      !entry ||
+      entry.accountId !== this.ctx.accountId ||
+      entry.unitId !== unitId ||
+      entry.facilityId !== facility.id ||
+      entry.startsAt.getTime() !== slot.startsAt.getTime()
+    )
+      throw appError.notFound(
+        ErrorCode.WAITLIST_ENTRY_NOT_FOUND,
+        'Waitlist entry not found',
+      );
+    if (
+      entry.status !== 'offered' ||
+      entry.offerExpiresAt!.getTime() <= now.getTime()
+    )
+      throw appError.conflict(
+        ErrorCode.WAITLIST_OFFER_INVALID,
+        'The entry holds no offer now',
+        { params: { status: entry.status } },
+      );
+    return entry;
   }
 
   /**
@@ -712,7 +791,7 @@ export class BookingsService implements OnModuleInit {
   /** The slot's lock row, created on first use, locked to the end of the transaction. */
   async lockSlotRow(
     tx: TenantTxClient,
-    facility: Facility,
+    facility: Pick<Facility, 'id' | 'tenantId'>,
     startsAt: Date,
   ): Promise<void> {
     await tx.$executeRaw`
@@ -745,6 +824,8 @@ export class BookingsService implements OnModuleInit {
       await this.access.lockUnit(tx, seen.unitId);
       const facility = await this.facilities.lock(tx, seen.facilityId, 'share');
       await this.lockChargedUnits(tx, [seen]);
+      // The slot's row: what it frees is offered on the waitlist (ADR 0070).
+      await this.lockSlotRow(tx, facility, seen.startsAt);
       const booking = await this.lockBooking(tx, id);
       assertCan(booking, 'cancel');
       const now = await dbNow(tx);
@@ -796,6 +877,11 @@ export class BookingsService implements OnModuleInit {
       banId?: string;
       /** A resident's late cancel: the fee stays owed (ADR 0070). */
       keepCharge?: boolean;
+      /**
+       * Offer what it frees on the waitlist (ADR 0070), under the slot's
+       * row lock the caller took: all but a closure, which closes them.
+       */
+      offer?: boolean;
     },
   ): Promise<Booking> {
     const ended = await tx.booking.update({
@@ -833,6 +919,7 @@ export class BookingsService implements OnModuleInit {
         how.closureId ? 'closure' : 'booking_cancelled',
       );
     await this.endCompanions(tx, booking.id, how.now, true);
+    if (how.offer !== false) await this.offerFreed(tx, booking, how.now);
     return ended;
   }
 
@@ -871,6 +958,51 @@ export class BookingsService implements OnModuleInit {
         bookingId,
       );
     return live.length;
+  }
+
+  /**
+   * What a booking that held its slot frees, offered on the waitlist (ADR
+   * 0070); nothing once it started. Under the slot's row lock.
+   */
+  async offerFreed(
+    tx: TenantTxClient,
+    booking: Booking,
+    now: Date,
+  ): Promise<void> {
+    if (
+      !isHolding(booking.status) ||
+      booking.startsAt.getTime() <= now.getTime()
+    )
+      return;
+    const facility = await tx.facility.findUniqueOrThrow({
+      where: { id: booking.facilityId },
+    });
+    await this.waitlist.offerFreedInTx(tx, facility, booking.startsAt, now);
+  }
+
+  /**
+   * The slots' rows of these bookings, in (facility, start) order, before
+   * their rows: the batch paths (a ban, a booker who left) that free them.
+   */
+  async lockSlotRows(
+    tx: TenantTxClient,
+    rows: readonly { facilityId: string; startsAt: Date }[],
+  ): Promise<void> {
+    const keys = [
+      ...new Map(
+        rows.map((r) => [`${r.facilityId}|${r.startsAt.toISOString()}`, r]),
+      ).values(),
+    ].sort(
+      (a, b) =>
+        a.facilityId.localeCompare(b.facilityId) ||
+        a.startsAt.getTime() - b.startsAt.getTime(),
+    );
+    for (const k of keys)
+      await this.lockSlotRow(
+        tx,
+        { id: k.facilityId, tenantId: this.ctx.txTenantId },
+        k.startsAt,
+      );
   }
 
   // --------------------------------------------------------------------------

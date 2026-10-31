@@ -157,6 +157,8 @@ describe('Bookings: no-shows and suspensions (ADR 0044)', () => {
       noShowThreshold: 1,
       noShowWindowDays: 30,
       suspensionDays: 2,
+      // ADR 0070.
+      waitlistHoldMinutes: 30,
     });
     try {
       const unit = await f.unit(s.c, 'N');

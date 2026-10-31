@@ -19,7 +19,7 @@ import {
   LOCAL_DATE,
 } from '../../../core/common/validation/local-date';
 
-const GUESTS = { min: 0, max: 50 } as const;
+export const GUESTS = { min: 0, max: 50 } as const;
 
 export class CreateBookingDto {
   @ApiProperty({ type: String, format: 'uuid' })

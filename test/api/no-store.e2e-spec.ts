@@ -58,6 +58,7 @@ import { energyCalls } from './no-store-energy';
 import { facilityUsageCalls } from './no-store-facility-usage';
 import { clubRequestCalls } from './no-store-club-requests';
 import { companionCalls } from './no-store-companions';
+import { waitlistCalls } from './no-store-waitlist';
 import { technicianSafetyCalls } from './no-store-technician-safety';
 import { buildWorld, type World } from './world';
 
@@ -3179,6 +3180,7 @@ describe('API v0 — no-store', () => {
     ...guardVendorCalls(() => w),
     ...clubRequestCalls(() => w),
     ...companionCalls(() => w),
+    ...waitlistCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

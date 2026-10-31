@@ -14,6 +14,7 @@ function view(s: FacilitySettings): FacilitySettingsView {
     noShowThreshold: s.noShowThreshold,
     noShowWindowDays: s.noShowWindowDays,
     suspensionDays: s.suspensionDays,
+    waitlistHoldMinutes: s.waitlistHoldMinutes,
   };
 }
 
@@ -61,6 +62,7 @@ export class FacilitySettingsService {
           noShowThreshold: input.noShowThreshold,
           noShowWindowDays: input.noShowWindowDays,
           suspensionDays: input.suspensionDays,
+          waitlistHoldMinutes: input.waitlistHoldMinutes,
         },
       });
       const changes = diffChanges(

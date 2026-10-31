@@ -298,6 +298,8 @@ const TEXT: Record<string, (p: P) => string> = {
   'booking.approval_expired': () => 'Your booking request was not approved in time',
   'booking.cancelled_by_staff': (p) => `The management cancelled your booking (${words(p.reason)})`,
   'booking.cancelled_by_closure': (p) => `Your booking was cancelled: the facility is closed (${words(p.reason)})`,
+  'booking.companion_invited': () => 'You were invited to come along to a booking',
+  'booking.companion_cancelled': () => 'A booking you were to come along to was cancelled',
   'booking.reminder': () => 'Your booking starts in about two hours',
   'booking_suspension.started': () => 'Your unit cannot make new bookings for a while',
   'facility_ban.started': (p) =>

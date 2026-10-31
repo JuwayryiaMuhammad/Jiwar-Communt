@@ -5322,6 +5322,49 @@
         ],
         "type": "object"
       },
+      "BookingInviteDto": {
+        "properties": {
+          "token": {
+            "maxLength": 128,
+            "minLength": 16,
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "BookingInviteView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "facilityNameAr": {
+            "type": "string"
+          },
+          "facilityNameEn": {
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "facilityId",
+          "facilityNameEn",
+          "facilityNameAr",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
       "BookingOccasionView": {
         "properties": {
           "firstName": {
@@ -5533,6 +5576,10 @@
             "nullable": true,
             "type": "object"
           },
+          "companions": {
+            "description": "Companions invited or accepted (ADR 0070): seats they hold beside the guests.",
+            "type": "number"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -5598,6 +5645,7 @@
           "startsAt",
           "endsAt",
           "guests",
+          "companions",
           "peak",
           "status",
           "mine",
@@ -10045,6 +10093,167 @@
           "contentType",
           "url",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "CompanionBookingView": {
+        "properties": {
+          "bookingStatus": {
+            "description": "The booking’s status: `pending` or `confirmed` while it holds.",
+            "type": "string"
+          },
+          "companion": {
+            "$ref": "#/components/schemas/CompanionView"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "facilityNameAr": {
+            "type": "string"
+          },
+          "facilityNameEn": {
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "facilityId",
+          "facilityNameEn",
+          "facilityNameAr",
+          "startsAt",
+          "endsAt",
+          "companion",
+          "bookingStatus"
+        ],
+        "type": "object"
+      },
+      "CompanionBookingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CompanionBookingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CompanionStatus": {
+        "description": "`invited` and `accepted` hold a seat; `cancelled`: the booking ended (cancelled, rejected, expired or a no-show).",
+        "enum": [
+          "invited",
+          "accepted",
+          "declined",
+          "removed",
+          "left",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "CompanionVia": {
+        "description": "`household`: invited by member id; `link`: joined by the share link.",
+        "enum": [
+          "household",
+          "link"
+        ],
+        "type": "string"
+      },
+      "CompanionView": {
+        "properties": {
+          "bookingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "removeReason": {
+            "description": "A code of `companionRemove`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "respondedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanionStatus"
+              }
+            ],
+            "description": "`invited` and `accepted` hold a seat; `cancelled`: the booking ended (cancelled, rejected, expired or a no-show)."
+          },
+          "via": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanionVia"
+              }
+            ],
+            "description": "`household`: invited by member id; `link`: joined by the share link."
+          }
+        },
+        "required": [
+          "id",
+          "bookingId",
+          "via",
+          "memberId",
+          "status",
+          "removeReason",
+          "createdAt",
+          "respondedAt",
+          "endedAt"
+        ],
+        "type": "object"
+      },
+      "CompanionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CompanionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -28603,6 +28812,19 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "InviteCompanionDto": {
+        "properties": {
+          "memberId": {
+            "description": "A household member of the booking’s unit with an account (PERSON_NOT_OF_UNIT).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId"
         ],
         "type": "object"
       },
@@ -49992,6 +50214,24 @@
         ],
         "type": "object"
       },
+      "ShareLinkView": {
+        "properties": {
+          "expiresAt": {
+            "description": "The booking’s start: the link works until then.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "token": {
+            "description": "Shown once; the link carries it. Any earlier link stops working.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "ShiftView": {
         "properties": {
           "endedAt": {
@@ -69196,6 +69436,96 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/booking-invites/accept": {
+      "post": {
+        "description": "Accepted at once. Refused to its booker (COMPANION_IS_BOOKER), to an account banned from the facility (FACILITY_BANNED), while its unit is suspended (BOOKINGS_SUSPENDED), and when the party or the slot is full.",
+        "operationId": "CompanionPlacesController_join",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingInviteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionBookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Join a booking by its share link",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/booking-invites/preview": {
+      "post": {
+        "description": "The facility and the time, never the booker (BOOKING_INVITE_INVALID).",
+        "operationId": "CompanionPlacesController_preview",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingInviteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingInviteView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "See what a share link opens",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/bookings/{id}": {
       "get": {
         "operationId": "BookingsController_get",
@@ -69269,6 +69599,233 @@
           }
         ],
         "summary": "Cancel a booking",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/bookings/{id}/companions": {
+      "get": {
+        "operationId": "BookingCompanionsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a booking’s companions",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "The booker: a household member of the unit with an account, invited, holding a seat until they decline. Guests and companions stay within max_guests (BOOKING_PARTY_FULL); a slot counted in people needs room (BOOKING_SLOT_FULL).",
+        "operationId": "BookingCompanionsController_invite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteCompanionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionBookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite one of the household to come along",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/bookings/{id}/companions/me/leave": {
+      "post": {
+        "operationId": "BookingCompanionsController_leave",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionBookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Leave a booking one came along to",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/bookings/{id}/companions/{companionId}": {
+      "delete": {
+        "description": "The booker, with a code in the query (`?reasonCode=`, a DELETE takes no body): the seat is freed.",
+        "operationId": "BookingCompanionsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "companionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "From the closed list `companionRemove`.",
+            "in": "query",
+            "name": "reasonCode",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a companion",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/bookings/{id}/share-link": {
+      "post": {
+        "description": "The booker: anyone of the compound who opens it until the start may join. Any earlier link stops working.",
+        "operationId": "BookingCompanionsController_shareLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Make a new share link",
         "tags": [
           "bookings"
         ],
@@ -91383,6 +91940,112 @@
         "summary": "List my appeals and where each stands",
         "tags": [
           "me"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/companion-bookings": {
+      "get": {
+        "description": "Live places first, then soonest first; at most 100.",
+        "operationId": "CompanionPlacesController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionBookingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the bookings the caller comes along to",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/companion-bookings/{companionId}/accept": {
+      "post": {
+        "operationId": "CompanionPlacesController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionBookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept a household invitation",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/companion-bookings/{companionId}/decline": {
+      "post": {
+        "operationId": "CompanionPlacesController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionBookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a household invitation",
+        "tags": [
+          "bookings"
         ],
         "x-no-store": true,
         "x-stability": "draft"

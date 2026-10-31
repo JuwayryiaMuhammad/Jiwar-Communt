@@ -871,6 +871,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   billing_plans_staff_kind: {},
   vehicle_fine_payments_finance_payment: {},
   credit_notes_author: {},
+  bookings_companions: {},
+  booking_companions_shape: {},
+  booking_companions_remove_reason: {
+    guarded: 'remove_reason IS NULL is tested first',
+  },
   club_membership_requests_amount: {},
   club_membership_requests_state_shape: {},
   club_membership_requests_cancel_reason: {

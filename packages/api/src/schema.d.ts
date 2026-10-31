@@ -863,6 +863,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/booking-invites/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Join a booking by its share link
+         * @description Accepted at once. Refused to its booker (COMPANION_IS_BOOKER), to an account banned from the facility (FACILITY_BANNED), while its unit is suspended (BOOKINGS_SUSPENDED), and when the party or the slot is full.
+         */
+        post: operations["CompanionPlacesController_join"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/booking-invites/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * See what a share link opens
+         * @description The facility and the time, never the booker (BOOKING_INVITE_INVALID).
+         */
+        post: operations["CompanionPlacesController_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/bookings/{id}": {
         parameters: {
             query?: never;
@@ -894,6 +934,84 @@ export interface paths {
          * @description Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED). Its fee (ADR 0070) is credited in full until `fees.refundCutoffHours` before the start; later it stays owed.
          */
         post: operations["BookingsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bookings/{id}/companions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a booking’s companions */
+        get: operations["BookingCompanionsController_list"];
+        put?: never;
+        /**
+         * Invite one of the household to come along
+         * @description The booker: a household member of the unit with an account, invited, holding a seat until they decline. Guests and companions stay within max_guests (BOOKING_PARTY_FULL); a slot counted in people needs room (BOOKING_SLOT_FULL).
+         */
+        post: operations["BookingCompanionsController_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bookings/{id}/companions/me/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Leave a booking one came along to */
+        post: operations["BookingCompanionsController_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bookings/{id}/companions/{companionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a companion
+         * @description The booker, with a code in the query (`?reasonCode=`, a DELETE takes no body): the seat is freed.
+         */
+        delete: operations["BookingCompanionsController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bookings/{id}/share-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make a new share link
+         * @description The booker: anyone of the compound who opens it until the start may join. Any earlier link stops working.
+         */
+        post: operations["BookingCompanionsController_shareLink"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8348,6 +8466,60 @@ export interface paths {
         get: operations["ResidentItemsController_appeals"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/companion-bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the bookings the caller comes along to
+         * @description Live places first, then soonest first; at most 100.
+         */
+        get: operations["CompanionPlacesController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/companion-bookings/{companionId}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a household invitation */
+        post: operations["CompanionPlacesController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/companion-bookings/{companionId}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a household invitation */
+        post: operations["CompanionPlacesController_decline"];
         delete?: never;
         options?: never;
         head?: never;
@@ -22528,6 +22700,19 @@ export interface components {
             /** @description `cancelled`: credited off — what was paid of it is the unit’s credit. */
             status: components["schemas"]["ChargeStatus"];
         };
+        BookingInviteDto: {
+            token: string;
+        };
+        BookingInviteView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            facilityId: string;
+            facilityNameAr: string;
+            facilityNameEn: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
         BookingOccasionView: {
             /** @description The child's first name; null once they are no longer the unit's. */
             firstName: string | null;
@@ -22602,6 +22787,8 @@ export interface components {
             cancelledSide: components["schemas"]["BookingSide"] | null;
             /** @description What it costs, raised when it was confirmed (ADR 0070); null: free, or not confirmed. */
             charge: components["schemas"]["BookingChargeView"] | null;
+            /** @description Companions invited or accepted (ADR 0070): seats they hold beside the guests. */
+            companions: number;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -24006,6 +24193,57 @@ export interface components {
             id: string;
             /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
             url: string | null;
+        };
+        CompanionBookingView: {
+            /** @description The booking’s status: `pending` or `confirmed` while it holds. */
+            bookingStatus: string;
+            companion: components["schemas"]["CompanionView"];
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            facilityId: string;
+            facilityNameAr: string;
+            facilityNameEn: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        CompanionBookingViewList: {
+            data: components["schemas"]["CompanionBookingView"][];
+            nextCursor: string | null;
+        };
+        /**
+         * @description `invited` and `accepted` hold a seat; `cancelled`: the booking ended (cancelled, rejected, expired or a no-show).
+         * @enum {string}
+         */
+        CompanionStatus: "invited" | "accepted" | "declined" | "removed" | "left" | "cancelled";
+        /**
+         * @description `household`: invited by member id; `link`: joined by the share link.
+         * @enum {string}
+         */
+        CompanionVia: "household" | "link";
+        CompanionView: {
+            /** Format: uuid */
+            bookingId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            memberId: string | null;
+            /** @description A code of `companionRemove`. */
+            removeReason: string | null;
+            /** Format: date-time */
+            respondedAt: string | null;
+            /** @description `invited` and `accepted` hold a seat; `cancelled`: the booking ended (cancelled, rejected, expired or a no-show). */
+            status: components["schemas"]["CompanionStatus"];
+            /** @description `household`: invited by member id; `link`: joined by the share link. */
+            via: components["schemas"]["CompanionVia"];
+        };
+        CompanionViewList: {
+            data: components["schemas"]["CompanionView"][];
+            nextCursor: string | null;
         };
         ComparedInvoiceView: {
             /** Format: uuid */
@@ -29981,6 +30219,13 @@ export interface components {
         InviteCodeRequestedView: {
             /** @enum {string} */
             code: "INVITE_CODE_REQUESTED";
+        };
+        InviteCompanionDto: {
+            /**
+             * Format: uuid
+             * @description A household member of the booking’s unit with an account (PERSON_NOT_OF_UNIT).
+             */
+            memberId: string;
         };
         InviteTokenDto: {
             /** @description The token from the invitation link. */
@@ -36724,6 +36969,15 @@ export interface components {
             /** @description A code from the closed list for the kind; see `allowed` on INVALID_REASON_CODE. */
             reasonCode: string;
         };
+        ShareLinkView: {
+            /**
+             * Format: date-time
+             * @description The booking’s start: the link works until then.
+             */
+            expiresAt: string;
+            /** @description Shown once; the link carries it. Any earlier link stops working. */
+            token: string;
+        };
         ShiftView: {
             /** Format: date-time */
             endedAt: string | null;
@@ -43001,6 +43255,55 @@ export interface operations {
             };
         };
     };
+    CompanionPlacesController_join: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookingInviteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionBookingView"];
+                };
+            };
+        };
+    };
+    CompanionPlacesController_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookingInviteDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingInviteView"];
+                };
+            };
+        };
+    };
     BookingsController_get: {
         parameters: {
             query?: never;
@@ -43042,6 +43345,122 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    BookingCompanionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionViewList"];
+                };
+            };
+        };
+    };
+    BookingCompanionsController_invite: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteCompanionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionBookingView"];
+                };
+            };
+        };
+    };
+    BookingCompanionsController_leave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionBookingView"];
+                };
+            };
+        };
+    };
+    BookingCompanionsController_remove: {
+        parameters: {
+            query: {
+                /** @description From the closed list `companionRemove`. */
+                reasonCode: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+                companionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionView"];
+                };
+            };
+        };
+    };
+    BookingCompanionsController_shareLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareLinkView"];
+                };
             };
         };
     };
@@ -54553,6 +54972,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResidentItemViewList"];
+                };
+            };
+        };
+    };
+    CompanionPlacesController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionBookingViewList"];
+                };
+            };
+        };
+    };
+    CompanionPlacesController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionBookingView"];
+                };
+            };
+        };
+    };
+    CompanionPlacesController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionBookingView"];
                 };
             };
         };

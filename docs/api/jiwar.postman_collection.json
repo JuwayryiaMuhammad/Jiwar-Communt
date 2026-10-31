@@ -3214,6 +3214,81 @@
     {
       "item": [
         {
+          "name": "Join a booking by its share link",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "booking-invites",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/booking-invites/accept"
+            }
+          }
+        },
+        {
+          "name": "See what a share link opens",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "booking-invites",
+                "preview"
+              ],
+              "raw": "{{baseUrl}}/api/v1/booking-invites/preview"
+            }
+          }
+        },
+        {
           "name": "Get a booking",
           "request": {
             "description": "**Responses:** 200",
@@ -3284,6 +3359,181 @@
           }
         },
         {
+          "name": "List a booking’s companions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                ":id",
+                "companions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/bookings/:id/companions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Invite one of the household to come along",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"memberId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `memberId` | string (uuid) | yes | A household member of the booking’s unit with an account (PERSON_NOT_OF_UNIT). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                ":id",
+                "companions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/bookings/:id/companions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Leave a booking one came along to",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                ":id",
+                "companions",
+                "me",
+                "leave"
+              ],
+              "raw": "{{baseUrl}}/api/v1/bookings/:id/companions/me/leave",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a companion",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                ":id",
+                "companions",
+                ":companionId"
+              ],
+              "query": [
+                {
+                  "description": "(required) From the closed list `companionRemove`.",
+                  "key": "reasonCode",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/bookings/:id/companions/:companionId?reasonCode=",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "companionId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Make a new share link",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                ":id",
+                "share-link"
+              ],
+              "raw": "{{baseUrl}}/api/v1/bookings/:id/share-link",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List a facility’s slots of a day, free or full",
           "request": {
             "description": "**Responses:** 200",
@@ -3319,6 +3569,84 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the bookings the caller comes along to",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "companion-bookings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/companion-bookings"
+            }
+          }
+        },
+        {
+          "name": "Accept a household invitation",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "companion-bookings",
+                ":companionId",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/companion-bookings/:companionId/accept",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "companionId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decline a household invitation",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "companion-bookings",
+                ":companionId",
+                "decline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/companion-bookings/:companionId/decline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "companionId",
                   "value": ""
                 }
               ]

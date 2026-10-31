@@ -318,6 +318,8 @@ export interface World
   bPaymentId: string;
   /** ADR 0070: B's owner asked for B's plan; its invoice is open. */
   bClubRequestId: string;
+  /** ADR 0070: B's family member, invited to B's booking. */
+  bCompanionId: string;
   /** B's finance (ADR 0046): an issue to B's home, and its invoice. */
   bInvoiceBatchId: string;
   bInvoiceId: string;
@@ -1262,6 +1264,25 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     });
     return { membershipId: membership.membership.id, paymentId: payment.id };
   });
+  // B's family member invited to B's booking (ADR 0070), as the booker would.
+  const bCompanion = await helpers.asManager(b, async () => {
+    const row = await helpers.prisma.tenant.bookingCompanion.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        bookingId: bBooking.id,
+        accountId: b.ids.family,
+        via: 'household',
+        householdMemberId: b.familyMemberId,
+        status: 'invited',
+      },
+    });
+    await helpers.prisma.tenant.booking.update({
+      where: { id: bBooking.id },
+      data: { companions: 1 },
+    });
+    return row;
+  });
   const bClubRequest = await asBOwner(() =>
     h.moduleRef.get(ClubRequestsService).request(b.homeUnitId, bClubPlan.id),
   );
@@ -1651,6 +1672,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bMembershipId: bClub.membershipId,
     bPaymentId: bClub.paymentId,
     bClubRequestId: bClubRequest.id,
+    bCompanionId: bCompanion.id,
     bSuspensionId,
     bBanId: bBan.id,
     bWorkPermitId: bWorkPermit.id,

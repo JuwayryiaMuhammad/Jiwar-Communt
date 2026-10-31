@@ -32,6 +32,12 @@ describe('charges and booking extras: the closed lists are the CHECKs’ (ADR 00
     );
   });
 
+  it('a companion’s removal reasons', () => {
+    expect(migration('20270112090400_booking_companions')).toContain(
+      `"remove_reason" IN (${quoted(REASON_CODES.companionRemove)})`,
+    );
+  });
+
   it('a club membership request’s cancel reasons', () => {
     expect(migration('20270112090200_club_membership_requests')).toContain(
       `"cancel_reason" IN (${quoted(REASON_CODES.clubRequestCancel)})`,

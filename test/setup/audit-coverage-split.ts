@@ -926,4 +926,11 @@ export const R11C1B_COVERAGE: readonly string[] = [
   'club_membership_request.paid',
   'vehicle_fine.paid',
   'vehicle_fine.reopened',
+  'booking_companion.invited',
+  'booking_companion.joined',
+  'booking_companion.accepted',
+  'booking_companion.declined',
+  'booking_companion.left',
+  'booking_companion.removed',
+  'booking.share_link_rotated',
 ];

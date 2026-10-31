@@ -536,6 +536,19 @@ export const ErrorCode = {
   CLUB_REQUEST_OPEN: 'CLUB_REQUEST_OPEN',
   /** Paid or called off already: it never moves again (409, params.status). */
   CLUB_REQUEST_CLOSED: 'CLUB_REQUEST_CLOSED',
+  // Booking companions (ADR 0070)
+  /** Unknown, another compound's, or not the caller's. */
+  COMPANION_NOT_FOUND: 'COMPANION_NOT_FOUND',
+  /** The share link is unknown, rotated, or its booking started or ended (404). */
+  BOOKING_INVITE_INVALID: 'BOOKING_INVITE_INVALID',
+  /** The companion does not take this action now (409, params.status). */
+  COMPANION_INVALID_TRANSITION: 'COMPANION_INVALID_TRANSITION',
+  /** The booker comes with their booking already (409). */
+  COMPANION_IS_BOOKER: 'COMPANION_IS_BOOKER',
+  /** Invited or accepted already (409, params.companionId). */
+  COMPANION_EXISTS: 'COMPANION_EXISTS',
+  /** Guests and companions reach the facility's max_guests (409, params.max). */
+  BOOKING_PARTY_FULL: 'BOOKING_PARTY_FULL',
   // vehicles and parking (ADR 0045)
   /**
    * Unknown, another compound's or removed; for a resident also another

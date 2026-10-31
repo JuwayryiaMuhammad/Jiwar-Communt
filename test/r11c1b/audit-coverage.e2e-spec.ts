@@ -239,6 +239,89 @@ describe('Audit coverage — booking extras and charges', () => {
     });
   });
 
+  describe('companions', () => {
+    it('booking_companion.* and booking.share_link_rotated — the booking and the unit, a removal’s code; never the token', async () => {
+      const hall = await f.facility(s.c, s.manager, {
+        maxGuests: 3,
+        weeklyQuota: 20,
+      });
+      const b = await f.book(s.alice, s.homeA.id, hall, at(day(6), 10));
+      const meta = { bookingId: b.id, unitId: s.homeA.id };
+      const kid = await f.family(s.c, s.homeA.id, s.alice);
+      const ask = async () =>
+        (
+          (
+            await f
+              .http('post', `/bookings/${b.id}/companions`, s.alice.token, {
+                memberId: kid.memberId,
+              })
+              .expect(201)
+          ).body as { companion: { id: string } }
+        ).companion.id;
+      const first = await ask();
+      expect(await single('booking_companion.invited', first)).toMatchObject({
+        actorId: s.alice.id,
+        metadata: meta,
+      });
+      await f
+        .http('post', `/me/companion-bookings/${first}/decline`, kid.token)
+        .expect(200);
+      expect(await single('booking_companion.declined', first)).toMatchObject({
+        actorId: kid.id,
+        metadata: meta,
+      });
+      const second = await ask();
+      await f
+        .http('post', `/me/companion-bookings/${second}/accept`, kid.token)
+        .expect(200);
+      expect(await single('booking_companion.accepted', second)).toMatchObject({
+        actorId: kid.id,
+        metadata: meta,
+      });
+      await f
+        .http(
+          'delete',
+          `/bookings/${b.id}/companions/${second}?reasonCode=misconduct`,
+          s.alice.token,
+        )
+        .expect(200);
+      expect(await single('booking_companion.removed', second)).toMatchObject({
+        actorId: s.alice.id,
+        metadata: { ...meta, reasonCode: 'misconduct' },
+      });
+
+      const { token } = (
+        await f
+          .http('post', `/bookings/${b.id}/share-link`, s.alice.token)
+          .expect(201)
+      ).body as { token: string };
+      const rotated = await single('booking.share_link_rotated', b.id);
+      expect(rotated).toMatchObject({
+        actorId: s.alice.id,
+        metadata: { unitId: s.homeA.id },
+      });
+      expect(JSON.stringify(rotated)).not.toContain(token);
+      const joined = (
+        (
+          await f
+            .http('post', '/booking-invites/accept', s.bob.token, { token })
+            .expect(201)
+        ).body as { companion: { id: string } }
+      ).companion.id;
+      expect(await single('booking_companion.joined', joined)).toMatchObject({
+        actorId: s.bob.id,
+        metadata: meta,
+      });
+      await f
+        .http('post', `/bookings/${b.id}/companions/me/leave`, s.bob.token)
+        .expect(200);
+      expect(await single('booking_companion.left', joined)).toMatchObject({
+        actorId: s.bob.id,
+        metadata: meta,
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every entry of booking extras and charges has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

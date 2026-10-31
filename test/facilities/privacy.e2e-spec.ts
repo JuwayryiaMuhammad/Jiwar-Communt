@@ -89,6 +89,34 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
         .expect(201)
     ).body as { id: string };
 
+    // Companions (ADR 0070): its place with the primary's booking, and the
+    // primary with its own: both in its export, never the primary's identity.
+    const hall = await f.facility(s.c, s.manager, {
+      nameEn: 'Hall',
+      maxGuests: 3,
+      weeklyQuota: 20,
+    });
+    const share = async (who: Who, bookingId: string) =>
+      (
+        (
+          await f
+            .http('post', `/bookings/${bookingId}/share-link`, who.token)
+            .expect(201)
+        ).body as { token: string }
+      ).token;
+    const theirs = await f.book(primary, home.id, hall, at(day(4), 10));
+    await f
+      .http('post', '/booking-invites/accept', p.token, {
+        token: await share(primary, theirs.id),
+      })
+      .expect(201);
+    const own = await f.book(p, home.id, hall, at(day(4), 12));
+    await f
+      .http('post', '/booking-invites/accept', primary.token, {
+        token: await share(p, own.id),
+      })
+      .expect(201);
+
     const archive = await exportOf(p);
     const section = archive.names.filter((x) => x.startsWith('facilities/'));
     expect(section.sort()).toEqual([
@@ -97,6 +125,7 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
       // ADR 0070.
       'facilities/club-requests.json',
       `facilities/club/${home.code}.json`,
+      'facilities/companions.json',
     ]);
     expect(JSON.parse(archive.text('facilities/bans.json'))).toMatchObject([
       {
@@ -113,7 +142,7 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
       mine: boolean;
     }[];
     expect(bookings.map((b) => b.id).sort()).toEqual(
-      mine.map((b) => b.id).sort(),
+      [...mine, own].map((b) => b.id).sort(),
     );
     expect(bookings.every((b) => b.mine)).toBe(true);
     const club = JSON.parse(
@@ -129,6 +158,18 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
     expect(
       JSON.parse(archive.text('facilities/club-requests.json')),
     ).toMatchObject([{ id: asked.id, status: 'requested' }]);
+    const companions = JSON.parse(
+      archive.text('facilities/companions.json'),
+    ) as {
+      places: { companion: { bookingId: string; status: string } }[];
+      invited: { bookingId: string; status: string }[];
+    };
+    expect(companions.places).toMatchObject([
+      { companion: { bookingId: theirs.id, status: 'accepted' } },
+    ]);
+    expect(companions.invited).toMatchObject([
+      { bookingId: own.id, via: 'link', status: 'accepted' },
+    ]);
     const text = section.map(archive.text).join('\n');
     const primaryRow = await f.inTx(s.c, (tx) =>
       tx.account.findUniqueOrThrow({ where: { id: primary.id } }),

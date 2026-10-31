@@ -62,6 +62,12 @@ export class BookingView {
   @ApiProperty({ type: Number })
   guests: number;
   @ApiProperty({
+    type: Number,
+    description:
+      'Companions invited or accepted (ADR 0070): seats they hold beside the guests.',
+  })
+  companions: number;
+  @ApiProperty({
     type: Boolean,
     description:
       'The slot is in a peak time: it counts towards the peak quota.',
@@ -116,6 +122,7 @@ export class BookingView {
       startsAt: b.startsAt,
       endsAt: b.endsAt,
       guests: b.guests,
+      companions: b.companions,
       peak: b.peak,
       status: b.status,
       mine: b.bookedById === accountId,

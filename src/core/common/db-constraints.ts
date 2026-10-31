@@ -655,6 +655,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   club_payment_records_charge_key: null,
   // A charged fine's office payment points at finance's, once (ADR 0070).
   vehicle_fine_payments_finance_payment_key: null,
+  // Booking companions (ADR 0070): one live place per booking and account,
+  // checked first under the booking's lock (COMPANION_EXISTS); a share
+  // link's hash is random. A violation is a race.
+  booking_companions_tenant_id_id_key: null,
+  booking_companions_live_key: null,
+  bookings_companion_token_key: null,
   // Refunds (ADR 0048): numbers from the counter, one reversal per refund
   // and one source per refund and payment, under the unit's finance lock.
   finance_refunds_tenant_id_id_key: null,

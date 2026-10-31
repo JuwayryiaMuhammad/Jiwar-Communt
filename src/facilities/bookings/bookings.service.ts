@@ -23,6 +23,7 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { FacilitiesAccess } from '../access';
+import { BookingNotices } from '../notices/booking-notices';
 import { banInForce, dayOf } from '../bans/ban-reads';
 import { closedOver, closuresBetween } from '../closures/closure-reads';
 import { dbNow } from '../db-clock';
@@ -138,6 +139,7 @@ export class BookingsService implements OnModuleInit {
     private readonly suspensions: SuspensionsService,
     private readonly club: ClubService,
     private readonly charges: Charges,
+    private readonly notices: BookingNotices,
   ) {}
 
   onModuleInit(): void {
@@ -200,8 +202,13 @@ export class BookingsService implements OnModuleInit {
   ): number {
     const inSlot = heldIn(slot, holding);
     return rules.capacityUnit === 'people'
-      ? inSlot.reduce((sum, b) => sum + b.partySize, 0)
+      ? inSlot.reduce((sum, b) => sum + BookingsService.seats(b), 0)
       : inSlot.length;
+  }
+
+  /** The people a booking takes: its party and its companions' seats (ADR 0070). */
+  static seats(b: Pick<Booking, 'partySize' | 'companions'>): number {
+    return b.partySize + b.companions;
   }
 
   /**
@@ -825,7 +832,45 @@ export class BookingsService implements OnModuleInit {
         booking.id,
         how.closureId ? 'closure' : 'booking_cancelled',
       );
+    await this.endCompanions(tx, booking.id, how.now, true);
     return ended;
+  }
+
+  /**
+   * A booking ended — cancelled (by its booker, the staff, a ban, a closure,
+   * a booker who left), rejected, expired unapproved, or marked a no-show:
+   * its companions' live places end with it, `cancelled`, and its seats are
+   * 0 again (ADR 0070). Every path that ends a booking calls this, under
+   * the booking's row lock. Its companions are told when it was called off
+   * (`booking.companion_cancelled`, no params), not after a no-show.
+   */
+  async endCompanions(
+    tx: TenantTxClient,
+    bookingId: string,
+    now: Date,
+    tell: boolean,
+  ): Promise<number> {
+    const live = await tx.bookingCompanion.findMany({
+      where: { bookingId, status: { in: ['invited', 'accepted'] } },
+      select: { id: true, accountId: true },
+    });
+    if (!live.length) return 0;
+    await tx.bookingCompanion.updateMany({
+      where: { id: { in: live.map((c) => c.id) } },
+      data: { status: 'cancelled', endedAt: now },
+    });
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { companions: 0 },
+    });
+    if (tell)
+      await this.notices.send(
+        tx,
+        live.map((c) => c.accountId),
+        'booking.companion_cancelled',
+        bookingId,
+      );
+    return live.length;
   }
 
   // --------------------------------------------------------------------------

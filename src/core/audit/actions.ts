@@ -734,6 +734,16 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'booking_suspension',
   },
+  // Booking companions (ADR 0070). metadata: bookingId, unitId; a
+  // removal's reasonCode. Never who the companion is beyond the target.
+  'booking_companion.invited': { log: 'tenant', target: 'booking_companion' },
+  'booking_companion.joined': { log: 'tenant', target: 'booking_companion' },
+  'booking_companion.accepted': { log: 'tenant', target: 'booking_companion' },
+  'booking_companion.declined': { log: 'tenant', target: 'booking_companion' },
+  'booking_companion.left': { log: 'tenant', target: 'booking_companion' },
+  'booking_companion.removed': { log: 'tenant', target: 'booking_companion' },
+  // metadata: unitId. Never the token.
+  'booking.share_link_rotated': { log: 'tenant', target: 'booking' },
   // ADR 0067. metadata: accountId, facilityId, reasonCode, endsOn,
   // cancelledBookingIds (ids only), endedBanId when one had ended.
   'facility_ban.started': { log: 'tenant', target: 'facility_ban' },

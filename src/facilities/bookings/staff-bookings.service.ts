@@ -238,7 +238,8 @@ export class StaffBookingsService implements OnModuleInit {
           booking.endsAt,
         )
       ).filter((b) => b.status === 'confirmed' && b.id !== id);
-      const need = rules.capacityUnit === 'people' ? booking.partySize : 1;
+      const need =
+        rules.capacityUnit === 'people' ? BookingsService.seats(booking) : 1;
       if (
         BookingsService.taken(rules, booking, confirmed) + need >
         rules.capacity
@@ -314,6 +315,8 @@ export class StaffBookingsService implements OnModuleInit {
         { reason },
         this.ctx.accountId,
       );
+      // Its companions' places end with it (ADR 0070).
+      await this.bookings.endCompanions(tx, id, now, true);
     });
   }
 
@@ -394,6 +397,8 @@ export class StaffBookingsService implements OnModuleInit {
           noShowMarkedAt: now,
         },
       });
+      // The day passed: its companions' places end, untold (ADR 0070).
+      await this.bookings.endCompanions(tx, id, now, false);
       await this.audit.record(tx, {
         action: 'booking.no_show',
         targetId: id,
@@ -471,6 +476,7 @@ export class StaffBookingsService implements OnModuleInit {
             cancelledAt: now,
           },
         });
+        await this.bookings.endCompanions(tx, booking.id, now, true);
         await this.audit.record(tx, {
           action: 'booking.expired',
           targetId: booking.id,

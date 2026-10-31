@@ -1271,6 +1271,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'رفعت الإدارة إيقاف حجوزاتك.',
     },
   },
+  'booking.companion_invited': {
+    en: {
+      title: 'Come along?',
+      body: 'Someone of your household invited you to a booking. Open the app to accept or decline.',
+    },
+    ar: {
+      title: 'دعوة لحجز',
+      body: 'دعاك أحد أفراد أسرتك إلى حجز. افتح التطبيق للقبول أو الرفض.',
+    },
+  },
+  'booking.companion_cancelled': {
+    en: {
+      title: 'Booking cancelled',
+      body: 'A booking you were to come along to was cancelled.',
+    },
+    ar: {
+      title: 'إلغاء حجز',
+      body: 'تم إلغاء حجز كنت مدعواً إليه.',
+    },
+  },
   'booking.reminder': {
     en: {
       title: 'Booking soon',

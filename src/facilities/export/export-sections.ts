@@ -15,6 +15,8 @@ import { ClubService } from '../club/club.service';
 import { ClubPaymentView } from '../club/views/club.views';
 import { ClubRequestsService } from '../club/club-requests.service';
 import { ClubRequestView } from '../club/views/club-request.views';
+import { CompanionsService } from '../companions/companions.service';
+import { CompanionBookingView } from '../companions/views/companion.views';
 
 /**
  * The facilities section of a personal-data export (ADR 0044). It runs as
@@ -28,7 +30,11 @@ import { ClubRequestView } from '../club/views/club-request.views';
  *   is active, and since when it covers the account (or not); its payments
  *   only where the account sees the unit's money;
  * - `facilities/club-requests.json`: every club membership request it made
- *   (ADR 0070), with its plan, price, state and invoice.
+ *   (ADR 0070), with its plan, price, state and invoice;
+ * - `facilities/companions.json`: the places it had with others' bookings
+ *   (the facility, the time, its state — never the booker), and the
+ *   companions of the bookings it made (the booking, the way in and the
+ *   state — never who).
  *
  * Nothing here names another person: not who else a membership covers,
  * nor who else of the household booked.
@@ -43,6 +49,7 @@ export class FacilitiesExportSections implements OnModuleInit {
     private readonly club: ClubService,
     private readonly bans: FacilityBansService,
     private readonly clubRequests: ClubRequestsService,
+    private readonly companions: CompanionsService,
   ) {}
 
   onModuleInit(): void {
@@ -73,6 +80,21 @@ export class FacilitiesExportSections implements OnModuleInit {
       json: (await this.clubRequests.everyOwn()).map((r) =>
         ClubRequestView.from(r),
       ),
+    };
+    const companions = await this.companions.everyOwn();
+    yield {
+      path: 'facilities/companions.json',
+      json: {
+        places: companions.places.map((p) => CompanionBookingView.fromPlace(p)),
+        invited: companions.invited.map((c) => ({
+          id: c.id,
+          bookingId: c.bookingId,
+          via: c.via,
+          status: c.status,
+          createdAt: c.createdAt,
+          endedAt: c.endedAt,
+        })),
+      },
     };
     const units = await this.tenantTx.withTenantTx((tx) =>
       this.community.places(tx, s.accountId),

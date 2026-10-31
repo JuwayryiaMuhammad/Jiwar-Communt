@@ -1108,6 +1108,25 @@ export const NOTIFICATION_KINDS = {
     target: 'facility_ban',
     params: { scope: {} },
   },
+  /**
+   * The booker invited one of the household to come along (ADR 0070): to
+   * the invitee, who accepts or declines. Never who, where or when.
+   */
+  'booking.companion_invited': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking',
+    params: {},
+  },
+  /** A booking the account was to come along to was cancelled (ADR 0070). */
+  'booking.companion_cancelled': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking',
+    params: {},
+  },
   /** A confirmed booking starts in about two hours: to its booker, once. */
   'booking.reminder': {
     priority: 'normal',

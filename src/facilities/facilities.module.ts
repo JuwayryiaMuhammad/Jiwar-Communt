@@ -29,6 +29,11 @@ import {
   StaffClubRequestsController,
 } from './club/club.controller';
 import { ClubRequestsService } from './club/club-requests.service';
+import {
+  BookingCompanionsController,
+  CompanionPlacesController,
+} from './companions/companions.controller';
+import { CompanionsService } from './companions/companions.service';
 import { ClubService } from './club/club.service';
 import { FacilitiesExportSections } from './export/export-sections';
 import { FacilitiesLifecycle } from './privacy/facilities-lifecycle';
@@ -78,6 +83,8 @@ import { FacilityUsageService } from './usage/usage.service';
     ClubMembershipsController,
     ResidentClubRequestsController,
     StaffClubRequestsController,
+    BookingCompanionsController,
+    CompanionPlacesController,
     FacilityBansController,
     OwnFacilityBansController,
     FacilityUsageController,
@@ -97,6 +104,7 @@ import { FacilityUsageService } from './usage/usage.service';
     BookingReminders,
     ClubService,
     ClubRequestsService,
+    CompanionsService,
     FacilitiesLifecycle,
     FacilitiesExportSections,
     FacilityBansService,

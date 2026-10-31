@@ -48,6 +48,7 @@ describe('Bookings: a resident books for a unit (ADR 0044)', () => {
         'cancelledSide',
         // ADR 0070.
         'charge',
+        'companions',
         'createdAt',
         'endsAt',
         'facilityId',

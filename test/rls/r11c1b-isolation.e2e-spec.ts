@@ -13,6 +13,7 @@ interface Side {
   staffId: string;
   invoiceId: string;
   clubPlanId: string;
+  bookingId: string;
 }
 
 /**
@@ -74,6 +75,26 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  {
+    table: 'booking_companions',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.bookingCompanion.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          bookingId: link.bookingId,
+          accountId: link.staffId,
+          via: 'link',
+          // Ended: the one-live-place key leaves it alone.
+          status: 'left',
+          respondedAt: new Date(),
+          endedAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — booking extras and charges (ADR 0070)', () => {
@@ -93,6 +114,32 @@ describe('RLS isolation — booking extras and charges (ADR 0070)', () => {
     const staff = await createAccountRow(h, tenantId, 'staff');
     const s = { tenantId, unitId: unit.id, staffId: staff.id } as Side;
     await inTenant(s, async (tx) => {
+      const facilityId = newId();
+      await tx.facility.create({
+        data: {
+          id: facilityId,
+          tenantId,
+          mode: 'walk_in',
+          nameEn: 'F',
+          nameAr: 'F',
+        },
+      });
+      s.bookingId = newId();
+      await tx.booking.create({
+        data: {
+          id: s.bookingId,
+          tenantId,
+          facilityId,
+          unitId: unit.id,
+          bookedById: staff.id,
+          startsAt: new Date('2031-01-01T08:00:00Z'),
+          endsAt: new Date('2031-01-01T09:00:00Z'),
+          guests: 0,
+          partySize: 1,
+          peak: false,
+          status: 'confirmed',
+        },
+      });
       s.clubPlanId = newId();
       await tx.clubPlan.create({
         data: {

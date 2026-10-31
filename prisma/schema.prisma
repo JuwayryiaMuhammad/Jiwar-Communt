@@ -590,6 +590,7 @@ model Tenant {
   slaSettings                  MaintenanceSlaSettings?
   standingInstructions         UnitStandingInstruction[]
   gateSettings           GateSettings?
+  bookingCompanions            BookingCompanion[]
 
   @@map("tenants")
 }
@@ -1087,6 +1088,7 @@ model Account {
   fieldExceptionsDecided GateFieldException[] @relation("FieldExceptionDecidedBy")
   serviceVehiclesIn      ServiceVehicleVisit[] @relation("ServiceVehicleEnteredBy")
   serviceVehiclesOut     ServiceVehicleVisit[] @relation("ServiceVehicleExitedBy")
+  bookingCompanions              BookingCompanion[]                  @relation("BookingCompanionAccount")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1337,6 +1339,7 @@ model HouseholdMember {
   majorityInvites HouseholdInvite[]
   deferredActions HouseholdDeferredAction[]
   clubCoverage    ClubMembershipPerson[]
+  bookingCompanions     BookingCompanion[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, id, isMinor])
@@ -6070,13 +6073,49 @@ model Booking {
 
   /// One of the unit's minors, the booking's occasion (ADR 0054). Never changes.
   occasionMemberId     String?       @map("occasion_member_id") @db.Uuid
+  /// Companions invited or accepted (ADR 0070): seats they hold beside the party.
+  companions           Int           @default(0)
+  /// The share link's token, hashed; null until the booker makes one.
+  companionTokenHash   String?       @map("companion_token_hash")
+  companionRows        BookingCompanion[]
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId, startsAt, id], map: "bookings_unit_idx")
   @@index([tenantId, bookedById, startsAt, id], map: "bookings_booker_idx")
   @@index([tenantId, facilityId, startsAt, id], map: "bookings_facility_idx")
   @@index([tenantId, status, startsAt, id], map: "bookings_status_idx")
+  @@unique([tenantId, companionTokenHash], map: "bookings_companion_token_key")
   @@map("bookings")
+}
+
+/// Someone who comes with a booker (ADR 0070): of the household, invited;
+/// or anyone of the compound by the booking's share link. Moves forward once
+/// per step (trigger); never deleted.
+model BookingCompanion {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  bookingId         String    @map("booking_id") @db.Uuid
+  accountId         String    @map("account_id") @db.Uuid
+  /// `household` or `link`.
+  via               String
+  householdMemberId String?   @map("household_member_id") @db.Uuid
+  /// `invited`, `accepted`, `declined`, `removed` or `left`.
+  status            String
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  respondedAt       DateTime? @map("responded_at") @db.Timestamptz(3)
+  endedAt           DateTime? @map("ended_at") @db.Timestamptz(3)
+  /// REASON_CODES.companionRemove.
+  removeReason      String?   @map("remove_reason")
+
+  tenant  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  booking Booking          @relation(fields: [tenantId, bookingId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_companions_booking_fkey")
+  account Account          @relation("BookingCompanionAccount", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_companions_account_fkey")
+  member  HouseholdMember? @relation(fields: [tenantId, householdMemberId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_companions_member_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, bookingId, createdAt, id], map: "booking_companions_booking_idx")
+  @@index([tenantId, accountId, createdAt, id], map: "booking_companions_account_idx")
+  @@map("booking_companions")
 }
 
 /// A facility closed for a time, with a reason code (ADR 0044). Creating

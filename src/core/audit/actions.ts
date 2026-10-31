@@ -272,7 +272,12 @@ export const AUDIT_ACTIONS = {
   'worker.birth_date_attested': { log: 'tenant', target: 'domestic_worker' },
   // the gate (ADR 0028)
   'gate.created': { log: 'tenant', target: 'gate' },
-  'gate.updated': { log: 'tenant', target: 'gate' },
+  // The directions are the management's words (ADR 0071): changed only.
+  'gate.updated': {
+    log: 'tenant',
+    target: 'gate',
+    sensitive: ['directionsEn', 'directionsAr'],
+  },
   'gate.shift_started': { log: 'tenant', target: 'guard_shift' },
   'gate.shift_ended': { log: 'tenant', target: 'guard_shift' },
   'gate.instructions_changed': { log: 'tenant', target: 'unit' },

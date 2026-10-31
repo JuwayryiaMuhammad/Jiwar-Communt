@@ -126,6 +126,8 @@ export class GatesService {
       kind?: GateKind;
       status?: GateStatus;
       phone?: string | null;
+      directionsEn?: string | null;
+      directionsAr?: string | null;
     },
   ): Promise<Gate> {
     const phone = checkPhone(input.phone);
@@ -139,6 +141,14 @@ export class GatesService {
           kind: input.kind,
           status: input.status,
           phone,
+          directionsEn:
+            input.directionsEn === undefined
+              ? undefined
+              : input.directionsEn?.trim() || null,
+          directionsAr:
+            input.directionsAr === undefined
+              ? undefined
+              : input.directionsAr?.trim() || null,
         },
       });
       // The phone is recorded as `{ changed: true }` (a personal-looking
@@ -149,12 +159,16 @@ export class GatesService {
           kind: before.kind,
           status: before.status,
           phone: before.phone,
+          directionsEn: before.directionsEn,
+          directionsAr: before.directionsAr,
         },
         {
           name: gate.name,
           kind: gate.kind,
           status: gate.status,
           phone: gate.phone,
+          directionsEn: gate.directionsEn,
+          directionsAr: gate.directionsAr,
         },
         'gate.updated',
       );

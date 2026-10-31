@@ -23,7 +23,10 @@ const PAGE = [
   'code',
   'compoundName',
   'emergencyPhone',
+  // ADR 0071: the route before arrival.
+  'expectedGate',
   'kind',
+  'parkingArea',
   'partySize',
   'qrPayload',
   'schedule',
@@ -153,6 +156,9 @@ describe('Gate — the visitor page (ADR 0030)', () => {
       qrPayload: `JWR1.${p.token}`,
       visitorDirections: 'Gate 2, then the second left.',
       emergencyPhone: '+201000000777',
+      // The route before arrival (ADR 0071): no gate named, no parking.
+      expectedGate: null,
+      parkingArea: null,
     });
     // The host (a family member), the primary, the guard, the visitor.
     const people = await w.helpers.asManager(w.a, () =>

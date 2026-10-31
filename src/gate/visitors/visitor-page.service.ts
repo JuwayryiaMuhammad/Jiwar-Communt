@@ -43,6 +43,14 @@ export interface VisitorPage {
   qrPayload: string | null;
   visitorDirections: string | null;
   emergencyPhone: string | null;
+  /** The gate the visitor is expected at, with its directions (ADR 0071). */
+  expectedGate: {
+    name: string;
+    directionsEn: string | null;
+    directionsAr: string | null;
+  } | null;
+  /** The parking area of the unit's visitor parking booking for the pass. */
+  parkingArea: string | null;
 }
 
 interface Resolved {
@@ -114,8 +122,35 @@ export class VisitorPageService {
         qrPayload: live ? this.tokens.qrPayload(token) : null,
         visitorDirections: settings.visitorDirections,
         emergencyPhone: settings.emergencyPhone,
+        ...(await this.route(tx, pass)),
       };
     });
+  }
+
+  /**
+   * The route before arrival (ADR 0071): the gate the visitor is expected
+   * at, with its directions, and the parking area of the unit's visitor
+   * parking booking linked to the pass, while it stands.
+   */
+  private async route(
+    tx: TenantTxClient,
+    pass: { id: string; expectedGateId: string | null },
+  ): Promise<Pick<VisitorPage, 'expectedGate' | 'parkingArea'>> {
+    const gate = pass.expectedGateId
+      ? await tx.gate.findUnique({
+          where: { id: pass.expectedGateId },
+          select: { name: true, directionsEn: true, directionsAr: true },
+        })
+      : null;
+    const parking = await tx.visitorParkingBooking.findFirst({
+      where: { visitorPassId: pass.id, status: 'confirmed' },
+      select: { area: { select: { name: true } } },
+      orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+    });
+    return {
+      expectedGate: gate,
+      parkingArea: parking?.area.name ?? null,
+    };
   }
 
   /**

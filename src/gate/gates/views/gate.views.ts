@@ -22,6 +22,16 @@ export class GateView {
   })
   phone: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'How a visitor reaches it from outside (ADR 0071).',
+  })
+  directionsEn: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  directionsAr: string | null;
+
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -32,6 +42,8 @@ export class GateView {
       kind: g.kind,
       status: g.status,
       phone: g.phone,
+      directionsEn: g.directionsEn,
+      directionsAr: g.directionsAr,
       createdAt: g.createdAt,
     };
   }

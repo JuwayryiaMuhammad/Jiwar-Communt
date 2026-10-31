@@ -2705,6 +2705,9 @@ model Gate {
   status    GateStatus @default(active)
   /// E.164 (ADR 0043): the household calls the gate from a request.
   phone     String?
+  /// How to reach it from outside, for a visitor's page (ADR 0071).
+  directionsEn String? @map("directions_en")
+  directionsAr String? @map("directions_ar")
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -2820,6 +2823,8 @@ model VisitorPass {
   expectedMinutes  Int?              @map("expected_minutes") @db.SmallInt
   /// The host and the unit's visitorsNotify holders hear of each entry and exit (ADR 0071).
   notifyOnEntry    Boolean           @default(true) @map("notify_on_entry")
+  /// The gate its visitor is expected at (ADR 0071); its directions show on the visitor's page.
+  expectedGateId   String?           @map("expected_gate_id") @db.Uuid
 
   @@unique([tenantId, id])
   @@unique([tenantId, hostAccountId, idempotencyKey])

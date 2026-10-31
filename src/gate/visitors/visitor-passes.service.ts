@@ -44,6 +44,8 @@ export interface NewPass {
   expectedMinutes?: number;
   /** Tell the household of each entry and exit (ADR 0071); off by default on a recurring pass. */
   notifyOnEntry?: boolean;
+  /** The gate the visitor is expected at (ADR 0071): its directions show on their page. */
+  expectedGateId?: string;
 }
 
 /**
@@ -257,6 +259,11 @@ export class VisitorPassesService implements OnModuleInit {
       if (existing) return this.replay(tx, existing, hash!);
     }
     await this.requireInviter(tx, unitId);
+    if (
+      input.expectedGateId &&
+      !(await tx.gate.count({ where: { id: input.expectedGateId } }))
+    )
+      throw appError.notFound(ErrorCode.GATE_NOT_FOUND, 'Gate not found');
     await this.community.lockUnit(tx, unitId);
     const max = await this.roomFor(tx, tenantId, unitId);
     if (max !== null)
@@ -397,6 +404,7 @@ export class VisitorPassesService implements OnModuleInit {
         visitorDetailsId: detailsId,
         expectedMinutes: input.expectedMinutes ?? null,
         notifyOnEntry: input.notifyOnEntry ?? input.kind !== 'recurring',
+        expectedGateId: input.expectedGateId ?? null,
         idempotencyKey: key ?? null,
         requestHash: hash,
       },
@@ -731,6 +739,7 @@ export class VisitorPassesService implements OnModuleInit {
         vehiclePlate: details.vehiclePlate ?? undefined,
         expectedMinutes: source.expectedMinutes ?? undefined,
         notifyOnEntry: source.notifyOnEntry,
+        expectedGateId: source.expectedGateId ?? undefined,
       });
       const issued = await this.createIn(
         tx,

@@ -15,6 +15,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   Max,
@@ -177,6 +178,17 @@ export class CreateVisitorPassDto {
   @IsOptional()
   @IsBoolean()
   notifyOnEntry?: boolean;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'The gate the visitor is expected at (ADR 0071): its directions show on their page (GATE_NOT_FOUND).',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  expectedGateId?: string;
 }
 
 export class CancelVisitorPassDto {

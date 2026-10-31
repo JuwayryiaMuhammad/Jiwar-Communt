@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GateKind, GateStatus } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  Length,
+  ValidateIf,
+} from 'class-validator';
 import { IsPhone } from '../../../core/common/validation/is-phone';
 import { withParams } from '../../../core/common/validation/validation-errors';
 
@@ -65,4 +71,30 @@ export class UpdateGateDto {
   @IsOptional()
   @IsPhone()
   phone?: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    maxLength: 500,
+    description:
+      'How a visitor reaches it from outside (ADR 0071), shown on their page; `null` removes it.',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(1, 500, withParams({ min: 1, max: 500 }))
+  directionsEn?: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    maxLength: 500,
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(1, 500, withParams({ min: 1, max: 500 }))
+  directionsAr?: string | null;
 }

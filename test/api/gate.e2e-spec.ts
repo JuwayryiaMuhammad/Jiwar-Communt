@@ -10,7 +10,17 @@ import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { buildWorld, type World } from './world';
 
-const GATE = ['createdAt', 'id', 'kind', 'name', 'phone', 'status'];
+// ADR 0071: a gate's directions.
+const GATE = [
+  'createdAt',
+  'directionsAr',
+  'directionsEn',
+  'id',
+  'kind',
+  'name',
+  'phone',
+  'status',
+];
 // ADR 0071: how busy, as a level.
 const GATE_STATUS = ['busy', 'id', 'name', 'open', 'phone'];
 const SHIFT = [

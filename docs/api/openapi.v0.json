@@ -16259,6 +16259,11 @@
       },
       "CreateVisitorPassDto": {
         "properties": {
+          "expectedGateId": {
+            "description": "The gate the visitor is expected at (ADR 0071): its directions show on their page (GATE_NOT_FOUND).",
+            "format": "uuid",
+            "type": "string"
+          },
           "expectedMinutes": {
             "description": "How long a visit on it is expected to last, in minutes (ADR 0056). A visitor still inside past it alerts the guards on shift and the host, once; nothing else. Without it, the compound’s setting applies.",
             "maximum": 720,
@@ -24208,6 +24213,15 @@
             "format": "date-time",
             "type": "string"
           },
+          "directionsAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "directionsEn": {
+            "description": "How a visitor reaches it from outside (ADR 0071).",
+            "nullable": true,
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -24241,6 +24255,8 @@
           "kind",
           "status",
           "phone",
+          "directionsEn",
+          "directionsAr",
           "createdAt"
         ],
         "type": "object"
@@ -65933,6 +65949,17 @@
       },
       "UpdateGateDto": {
         "properties": {
+          "directionsAr": {
+            "maxLength": 500,
+            "nullable": true,
+            "type": "string"
+          },
+          "directionsEn": {
+            "description": "How a visitor reaches it from outside (ADR 0071), shown on their page; `null` removes it.",
+            "maxLength": 500,
+            "nullable": true,
+            "type": "string"
+          },
           "kind": {
             "allOf": [
               {
@@ -68427,6 +68454,27 @@
         ],
         "type": "string"
       },
+      "VisitorPageGateView": {
+        "properties": {
+          "directionsAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "directionsEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "directionsEn",
+          "directionsAr"
+        ],
+        "type": "object"
+      },
       "VisitorPageView": {
         "properties": {
           "code": {
@@ -68442,12 +68490,27 @@
             "nullable": true,
             "type": "string"
           },
+          "expectedGate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPageGateView"
+              }
+            ],
+            "description": "The gate the visitor is expected at, and how to reach it (ADR 0071).",
+            "nullable": true,
+            "type": "object"
+          },
           "kind": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/VisitorPassKind"
               }
             ]
+          },
+          "parkingArea": {
+            "description": "Where to park: the area of the host’s visitor parking booking for this pass.",
+            "nullable": true,
+            "type": "string"
           },
           "partySize": {
             "type": "number"
@@ -68520,7 +68583,9 @@
           "code",
           "qrPayload",
           "visitorDirections",
-          "emergencyPhone"
+          "emergencyPhone",
+          "expectedGate",
+          "parkingArea"
         ],
         "type": "object"
       },

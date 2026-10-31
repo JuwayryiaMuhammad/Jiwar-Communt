@@ -8,6 +8,16 @@ import type { PassStatus } from '../visitor-passes.service';
  * The visitor's public page (ADR 0030). Never the host, another resident,
  * the guard, or the visitor's own name or phone.
  */
+/** The gate a visitor is expected at (ADR 0071). */
+export class VisitorPageGateView {
+  @ApiProperty({ type: String })
+  name: string;
+  @ApiProperty({ type: String, nullable: true })
+  directionsEn: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  directionsAr: string | null;
+}
+
 export class VisitorPageView {
   @ApiProperty({ type: String })
   compoundName: string;
@@ -71,6 +81,22 @@ export class VisitorPageView {
   @ApiProperty({ type: String, nullable: true, description: 'E.164.' })
   emergencyPhone: string | null;
 
+  @ApiProperty({
+    type: VisitorPageGateView,
+    nullable: true,
+    description:
+      'The gate the visitor is expected at, and how to reach it (ADR 0071).',
+  })
+  expectedGate: VisitorPageGateView | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'Where to park: the area of the host’s visitor parking booking for this pass.',
+  })
+  parkingArea: string | null;
+
   static from(p: VisitorPage): VisitorPageView {
     return {
       compoundName: p.compoundName,
@@ -87,6 +113,8 @@ export class VisitorPageView {
       qrPayload: p.qrPayload,
       visitorDirections: p.visitorDirections,
       emergencyPhone: p.emergencyPhone,
+      expectedGate: p.expectedGate,
+      parkingArea: p.parkingArea,
     };
   }
 }

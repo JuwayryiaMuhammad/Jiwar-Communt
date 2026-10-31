@@ -27426,6 +27426,11 @@ export interface components {
             visitorPassId?: string | null;
         };
         CreateVisitorPassDto: {
+            /**
+             * Format: uuid
+             * @description The gate the visitor is expected at (ADR 0071): its directions show on their page (GATE_NOT_FOUND).
+             */
+            expectedGateId?: string;
             /** @description How long a visit on it is expected to last, in minutes (ADR 0056). A visitor still inside past it alerts the guards on shift and the host, once; nothing else. Without it, the compound’s setting applies. */
             expectedMinutes?: number;
             kind: components["schemas"]["VisitorPassKind"];
@@ -29875,6 +29880,9 @@ export interface components {
         GateView: {
             /** Format: date-time */
             createdAt: string;
+            directionsAr: string | null;
+            /** @description How a visitor reaches it from outside (ADR 0071). */
+            directionsEn: string | null;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["GateKind"];
@@ -42576,6 +42584,9 @@ export interface components {
             waitlistHoldMinutes?: number;
         };
         UpdateGateDto: {
+            directionsAr?: string | null;
+            /** @description How a visitor reaches it from outside (ADR 0071), shown on their page; `null` removes it. */
+            directionsEn?: string | null;
             kind?: components["schemas"]["GateKind"];
             name?: string;
             /**
@@ -43429,13 +43440,22 @@ export interface components {
         };
         /** @enum {string} */
         VisitorInstruction: "ask" | "allow" | "deny";
+        VisitorPageGateView: {
+            directionsAr: string | null;
+            directionsEn: string | null;
+            name: string;
+        };
         VisitorPageView: {
             /** @description 6 digits to type at the gate. Only while active. */
             code: string | null;
             compoundName: string;
             /** @description E.164. */
             emergencyPhone: string | null;
+            /** @description The gate the visitor is expected at, and how to reach it (ADR 0071). */
+            expectedGate: components["schemas"]["VisitorPageGateView"] | null;
             kind: components["schemas"]["VisitorPassKind"];
+            /** @description Where to park: the area of the host’s visitor parking booking for this pass. */
+            parkingArea: string | null;
             partySize: number;
             /** @description What the QR encodes (`JWR1.<token>`). Only while active. */
             qrPayload: string | null;

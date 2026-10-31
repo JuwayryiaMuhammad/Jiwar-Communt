@@ -7,6 +7,8 @@ import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
   listingRow,
   marketFileRow,
+  groupOfferRow,
+  groupParticipantRow,
   marketReportRow,
   partnerOfferRow,
   shopRow,
@@ -22,6 +24,7 @@ interface Side {
   /** An account with no shop, for the shop row (one open an account). */
   shopOwnerId: string;
   partnerId: string;
+  groupOfferId: string;
 }
 
 /**
@@ -107,6 +110,32 @@ const TABLES: Table[] = [
       }),
   },
   {
+    table: 'group_offers',
+    insert: (tx, own, link) =>
+      groupOfferRow(tx, {
+        tenantId: own.tenantId,
+        createdById: link.accountId,
+        partnerId: link.partnerId,
+      }),
+  },
+  {
+    table: 'group_offer_participants',
+    // A new offer of the link's each time: one live join an account there.
+    insert: async (tx, own, link) =>
+      groupParticipantRow(tx, {
+        tenantId: own.tenantId,
+        offerId:
+          own === link
+            ? await groupOfferRow(tx, {
+                tenantId: own.tenantId,
+                createdById: own.accountId,
+              })
+            : link.groupOfferId,
+        accountId: link.accountId,
+        unitId: link.unitId,
+      }),
+  },
+  {
     table: 'market_listing_photos',
     insert: async (tx, own, link) => {
       const id = newId();
@@ -142,9 +171,14 @@ describe('RLS isolation — community (ADR 0071)', () => {
       listingId: '',
       shopOwnerId: (await createAccountRow(h, tenantId)).id,
       partnerId: '',
+      groupOfferId: '',
     };
     await inTenant(s, async (tx) => {
       s.partnerId = await partnerRow(tx, {
+        tenantId,
+        createdById: s.accountId,
+      });
+      s.groupOfferId = await groupOfferRow(tx, {
         tenantId,
         createdById: s.accountId,
       });

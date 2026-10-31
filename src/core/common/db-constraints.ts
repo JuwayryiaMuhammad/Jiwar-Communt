@@ -939,4 +939,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   market_listing_reports_one_per_reporter: null,
   // A partner offer is immutable but for its withdrawal, keyed for links.
   partner_offers_tenant_id_id_key: null,
+  // One live participation an offer, account and kind, checked first under
+  // the offer's lock (GROUP_OFFER_JOINED); a violation is a race.
+  group_offers_tenant_id_id_key: null,
+  group_offer_participants_tenant_id_id_key: null,
+  group_offer_participants_one_live: null,
 };

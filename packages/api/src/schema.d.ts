@@ -8498,6 +8498,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market/group-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the group offers in interest, open or confirmed */
+        get: operations["GroupOffersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/group-offers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a group offer and my part in it */
+        get: operations["GroupOffersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/group-offers/{id}/interest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Say I would join (non-binding) */
+        post: operations["GroupOffersController_interest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/group-offers/{id}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Join an open group offer for one of my units */
+        post: operations["GroupOffersController_join"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/group-offers/{id}/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Leave a group offer I joined, while it is open */
+        post: operations["GroupOffersController_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market/listings": {
         parameters: {
             query?: never;
@@ -15136,6 +15221,58 @@ export interface paths {
          * @description A deadline applies to matters raised from now on. A threshold is shown when a request is raised; `major_contract`’s is the manager’s limit for one expense.
          */
         patch: operations["GovernanceSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/group-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the group offers */
+        get: operations["StaffGroupOffersController_list"];
+        put?: never;
+        /** Publish a group offer */
+        post: operations["StaffGroupOffersController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/group-offers/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call a group offer off */
+        post: operations["StaffGroupOffersController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/group-offers/{id}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End the interest phase now: open it */
+        post: operations["StaffGroupOffersController_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/instalment-plans": {
@@ -26052,6 +26189,34 @@ export interface components {
             /** @description English, Arabic or both, each with its body. */
             titleEn?: string | null;
         };
+        CreateGroupOfferDto: {
+            bodyAr: string;
+            bodyEn: string;
+            /** Format: date-time */
+            closesAt: string;
+            /**
+             * @description Below the list price (INVALID_VALUE).
+             * @example 950.00
+             */
+            groupPrice: string;
+            /**
+             * Format: date-time
+             * @description An interest phase first, until then: a non-binding count. Before `closesAt`.
+             */
+            interestClosesAt?: string;
+            /** @example 1200.00 */
+            listPrice: string;
+            /** @description The most quantity it takes in all; not below the minimum. */
+            maxParticipants?: number;
+            minParticipants: number;
+            /**
+             * Format: uuid
+             * @description The partner giving the price, when it is one of the compound’s.
+             */
+            partnerId?: string;
+            titleAr: string;
+            titleEn: string;
+        };
         CreateGuardTaskDto: {
             details?: string;
             /** Format: date-time */
@@ -29626,6 +29791,57 @@ export interface components {
             /** @enum {string} */
             permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "polls_vote";
         };
+        GroupOfferReasonDto: {
+            /** @description A code of `groupOfferCancel`. */
+            reasonCode: string;
+        };
+        /** @enum {string} */
+        GroupOfferStatus: "interest" | "open" | "confirmed" | "failed" | "cancelled";
+        GroupOfferUnitDto: {
+            /**
+             * Format: uuid
+             * @description One of the caller’s units.
+             */
+            unitId: string;
+        };
+        GroupOfferView: {
+            bodyAr: string;
+            bodyEn: string;
+            /** @description A `groupOfferCancel` code. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            closesAt: string;
+            /** @example 950.00 */
+            groupPrice: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            interestClosesAt: string | null;
+            /** @description Who said they would join. */
+            interested: number;
+            /** @description Households that joined. */
+            joined: number;
+            /** @example 1200.00 */
+            listPrice: string;
+            maxParticipants: number | null;
+            minParticipants: number;
+            myInterest: boolean;
+            /** @description The caller’s quantity, once joined. */
+            myQuantity: number | null;
+            /** @description (list − group) × the caller’s quantity, once joined. */
+            mySaving: string | null;
+            /** Format: uuid */
+            partnerId: string | null;
+            /** @description The quantity taken in all. */
+            quantity: number;
+            status: components["schemas"]["GroupOfferStatus"];
+            titleAr: string;
+            titleEn: string;
+        };
+        GroupOfferViewList: {
+            data: components["schemas"]["GroupOfferView"][];
+            nextCursor: string | null;
+        };
         GuardAttendanceView: {
             /** @description Of them, not opened an hour after they were due. */
             absent: number;
@@ -31243,6 +31459,14 @@ export interface components {
         ItemDoneDto: {
             /** @description A contract review’s, required; no other kind’s. */
             decision?: components["schemas"]["ContractReviewDecision"];
+        };
+        JoinGroupOfferDto: {
+            quantity: number;
+            /**
+             * Format: uuid
+             * @description One of the caller’s units.
+             */
+            unitId: string;
         };
         JoinWaitlistDto: {
             /** @description Guests the booking would take. Default 0. */
@@ -56066,6 +56290,121 @@ export interface operations {
             };
         };
     };
+    GroupOffersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferViewList"];
+                };
+            };
+        };
+    };
+    GroupOffersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferView"];
+                };
+            };
+        };
+    };
+    GroupOffersController_interest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GroupOfferUnitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferView"];
+                };
+            };
+        };
+    };
+    GroupOffersController_join: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JoinGroupOfferDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferView"];
+                };
+            };
+        };
+    };
+    GroupOffersController_leave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferView"];
+                };
+            };
+        };
+    };
     MarketController_search: {
         parameters: {
             query?: {
@@ -65875,6 +66214,95 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GovernanceSettingsResponse"];
                 };
+            };
+        };
+    };
+    StaffGroupOffersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "interest" | "open" | "confirmed" | "failed" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferViewList"];
+                };
+            };
+        };
+    };
+    StaffGroupOffersController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGroupOfferDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferView"];
+                };
+            };
+        };
+    };
+    StaffGroupOffersController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GroupOfferReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffGroupOffersController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

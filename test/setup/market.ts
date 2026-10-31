@@ -159,6 +159,32 @@ export function marketHelpers(h: HttpHarness) {
       partnerRow(tx, { tenantId: c.tenantId, createdById: c.managerId }),
     );
 
+  /** Moves a group offer's close into the past, as a test's time machine. */
+  async function timeMachine(c: Compound, offerId: string): Promise<void> {
+    const db = new Client({
+      connectionString: required('TEST_SUPERUSER_DATABASE_URL'),
+    });
+    await db.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query(`SET LOCAL session_replication_role = replica`);
+      await db.query(
+        `UPDATE group_offers
+            SET closes_at = now() - interval '1 second',
+                interest_closes_at = CASE WHEN interest_closes_at IS NULL
+                  THEN NULL ELSE now() - interval '2 seconds' END
+          WHERE id = $1 AND tenant_id = $2`,
+        [offerId, c.tenantId],
+      );
+      await db.query('COMMIT');
+    } finally {
+      await db.end();
+    }
+  }
+
+  /** Any sweep, by name, at a given instant. */
+  const sweep_ = (name: string, now: Date) => n.sweep(name, now);
+
   /** A listing's row, as the database holds it. */
   const row = (c: Compound, id: string) =>
     x.asManager(c, () =>
@@ -213,6 +239,8 @@ export function marketHelpers(h: HttpHarness) {
     sweep,
     row,
     partner,
+    timeMachine,
+    sweep_,
   };
 }
 

@@ -34513,6 +34513,185 @@
     {
       "item": [
         {
+          "name": "List the group offers in interest, open or confirmed",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "group-offers"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/group-offers"
+            }
+          }
+        },
+        {
+          "name": "Get a group offer and my part in it",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "group-offers",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/group-offers/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Say I would join (non-binding)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `unitId` | string (uuid) | yes | One of the caller’s units. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "group-offers",
+                ":id",
+                "interest"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/group-offers/:id/interest",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Join an open group offer for one of my units",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"quantity\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `quantity` | number | yes |  |\n| `unitId` | string (uuid) | yes | One of the caller’s units. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "group-offers",
+                ":id",
+                "join"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/group-offers/:id/join",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Leave a group offer I joined, while it is open",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "group-offers",
+                ":id",
+                "leave"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/group-offers/:id/leave",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Search the market",
           "request": {
             "description": "**Responses:** 200",
@@ -35517,6 +35696,154 @@
                 "close"
               ],
               "raw": "{{baseUrl}}/api/v1/me/market/shop/close"
+            }
+          }
+        },
+        {
+          "name": "List the group offers",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "group-offers"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/group-offers"
+            }
+          }
+        },
+        {
+          "name": "Publish a group offer",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"titleEn\": \"\",\n  \"titleAr\": \"\",\n  \"bodyEn\": \"\",\n  \"bodyAr\": \"\",\n  \"listPrice\": \"1200.00\",\n  \"groupPrice\": \"950.00\",\n  \"minParticipants\": 2,\n  \"closesAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string | yes |  |\n| `bodyEn` | string | yes |  |\n| `closesAt` | string (date-time) | yes |  |\n| `groupPrice` | string | yes | Below the list price (INVALID_VALUE). |\n| `interestClosesAt` | string (date-time) |  | An interest phase first, until then: a non-binding count. Before `closesAt`. |\n| `listPrice` | string | yes |  |\n| `maxParticipants` | number |  | The most quantity it takes in all; not below the minimum. |\n| `minParticipants` | number | yes |  |\n| `partnerId` | string (uuid) |  | The partner giving the price, when it is one of the compound’s. |\n| `titleAr` | string | yes |  |\n| `titleEn` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "group-offers"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/group-offers"
+            }
+          }
+        },
+        {
+          "name": "Call a group offer off",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code of `groupOfferCancel`. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "group-offers",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/group-offers/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End the interest phase now: open it",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "group-offers",
+                ":id",
+                "open"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/group-offers/:id/open",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         }

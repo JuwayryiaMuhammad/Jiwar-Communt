@@ -1167,6 +1167,26 @@ describe('API v0 — PII leak scan', () => {
     await call(w, 'POST', `/market/review/${piiListing}/approve`, {
       token: a.tokens.manager,
     }).expect(204);
+    // A group offer of A's the primary joined: counts, never who.
+    const piiGroupOffer = await idOf(
+      'POST',
+      '/staff/group-offers',
+      a.tokens.manager,
+      {
+        titleEn: 'Water filters',
+        titleAr: 'فلاتر مياه',
+        bodyEn: 'One a home.',
+        bodyAr: 'فلتر لكل وحدة.',
+        listPrice: '1200',
+        groupPrice: '950',
+        minParticipants: 2,
+        closesAt: at(day(5), 20).toISOString(),
+      },
+    );
+    await call(w, 'POST', `/market/group-offers/${piiGroupOffer}/join`, {
+      token: primaryToken,
+      body: { unitId: unit.id, quantity: 1 },
+    }).expect(201);
     const piiShop = await idOf('POST', '/market/shops', primaryToken, {
       nameEn: 'Corner bakery',
       nameAr: 'مخبز الركن',
@@ -1628,6 +1648,7 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/consumption/benchmark': unit.id,
       // ADR 0071: a listing of the primary's, on A's market.
       '/market/listings/{id}': piiListing,
+      '/market/group-offers/{id}': piiGroupOffer,
       '/market/review/{id}': piiListing,
       '/market/shops/{id}': piiShop,
       '/units/{unitId}/payments': unit.id,

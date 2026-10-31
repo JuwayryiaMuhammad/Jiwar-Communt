@@ -5,6 +5,7 @@ import {
   type ExportEntry,
   type ExportSubject,
 } from '../../core/exports/export-sections';
+import { GroupOffersService } from '../group-offers/group-offers.service';
 import { PartnerRequestsService } from '../requests/requests.service';
 import { ResidentPartnerRequestView } from '../requests/views/request.views';
 
@@ -15,7 +16,10 @@ import { ResidentPartnerRequestView } from '../requests/views/request.views';
  * - `partners/requests.json`: every request the account made, as its own
  *   view shows it, with its history, rating and complaint (the complaint's
  *   conversation is in the management section);
- * - `partners/favourites.json`: the partners it keeps, by id and name.
+ * - `partners/favourites.json`: the partners it keeps, by id and name;
+ * - `partners/group-offers.json`: every place it took in a group offer
+ *   (ADR 0071), its interest or its quantity for which unit, left ones
+ *   too, with the offer's title, group price and state — never who else.
  *
  * Nothing here names another person, and nothing of a partner's side
  * beyond what the requester sees.
@@ -26,6 +30,7 @@ export class PartnersExportSections implements OnModuleInit {
     private readonly sections: ExportSections,
     private readonly tenantTx: TenantTx,
     private readonly requests: PartnerRequestsService,
+    private readonly groupOffers: GroupOffersService,
   ) {}
 
   onModuleInit(): void {
@@ -63,6 +68,10 @@ export class PartnersExportSections implements OnModuleInit {
         nameAr: f.partner.nameAr,
         since: f.createdAt,
       })),
+    };
+    yield {
+      path: 'partners/group-offers.json',
+      json: await this.groupOffers.everyOwn(),
     };
   }
 }

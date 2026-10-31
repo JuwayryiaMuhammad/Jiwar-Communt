@@ -964,4 +964,11 @@ export const R11C2_COVERAGE: readonly string[] = [
   'market_report.closed',
   'partner_offer.published',
   'partner_offer.withdrawn',
+  'group_offer.created',
+  'group_offer.opened',
+  'group_offer.joined',
+  'group_offer.left',
+  'group_offer.confirmed',
+  'group_offer.failed',
+  'group_offer.cancelled',
 ];

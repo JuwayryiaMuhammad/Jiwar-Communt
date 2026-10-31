@@ -2633,6 +2633,36 @@ export const NOTIFICATION_KINDS = {
     target: 'market_report',
     params: {},
   },
+  /** A group offer the account was interested in opened: join now. */
+  'group_offer.opened': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'group_offer',
+    params: {},
+  },
+  /** Enough households joined: buy from the partner at the group price. */
+  'group_offer.confirmed': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'group_offer',
+    params: {},
+  },
+  'group_offer.failed': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'group_offer',
+    params: {},
+  },
+  'group_offer.cancelled': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'group_offer',
+    params: { reason: {} },
+  },
   /** A handler opened the owner's shop, or reinstated it. */
   'market_shop.approved': {
     priority: 'normal',

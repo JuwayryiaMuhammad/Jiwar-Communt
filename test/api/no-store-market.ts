@@ -1,5 +1,5 @@
 import type { Response } from 'supertest';
-import { day } from '../setup/compound-clock';
+import { at, day } from '../setup/compound-clock';
 import { call } from './request';
 import type { World } from './world';
 
@@ -37,6 +37,27 @@ export function marketCalls(
     validFromOn: day(0),
     validToOn: day(5),
   });
+  const group = (interest = false) => ({
+    titleEn: `Group ${++n}`,
+    titleAr: 'عرض جماعي',
+    bodyEn: 'Words.',
+    bodyAr: 'كلمات.',
+    listPrice: '100',
+    groupPrice: '80',
+    minParticipants: 2,
+    ...(interest ? { interestClosesAt: at(day(2), 12).toISOString() } : {}),
+    closesAt: at(day(5), 12).toISOString(),
+  });
+  /** A new group offer of A's: in its interest phase, or open. */
+  const grouped = async (interest = false): Promise<string> =>
+    (
+      (
+        await call(world(), 'POST', '/staff/group-offers', {
+          token: manager(),
+          body: group(interest),
+        }).expect(201)
+      ).body as { id: string }
+    ).id;
   /** A's landlord runs the shops these calls open, one at a time. */
   const shopOwner = () => world().a.tokens.landlord;
   const shop = () => ({
@@ -209,6 +230,50 @@ export function marketCalls(
     },
     'GET /market/offers': () =>
       call(world(), 'GET', '/market/offers', { token: owner() }),
+    'POST /staff/group-offers': () =>
+      call(world(), 'POST', '/staff/group-offers', {
+        token: manager(),
+        body: group(),
+      }),
+    'GET /staff/group-offers': () =>
+      call(world(), 'GET', '/staff/group-offers', { token: manager() }),
+    'POST /staff/group-offers/{id}/open': async () =>
+      call(world(), 'POST', `/staff/group-offers/${await grouped(true)}/open`, {
+        token: manager(),
+      }),
+    'POST /staff/group-offers/{id}/cancel': async () =>
+      call(world(), 'POST', `/staff/group-offers/${await grouped()}/cancel`, {
+        token: manager(),
+        body: { reasonCode: 'other' },
+      }),
+    'GET /market/group-offers': () =>
+      call(world(), 'GET', '/market/group-offers', { token: owner() }),
+    'GET /market/group-offers/{id}': async () =>
+      call(world(), 'GET', `/market/group-offers/${await grouped()}`, {
+        token: owner(),
+      }),
+    'POST /market/group-offers/{id}/interest': async () =>
+      call(
+        world(),
+        'POST',
+        `/market/group-offers/${await grouped(true)}/interest`,
+        { token: owner(), body: { unitId: world().a.homeUnitId } },
+      ),
+    'POST /market/group-offers/{id}/join': async () =>
+      call(world(), 'POST', `/market/group-offers/${await grouped()}/join`, {
+        token: owner(),
+        body: { unitId: world().a.homeUnitId, quantity: 1 },
+      }),
+    'POST /market/group-offers/{id}/leave': async () => {
+      const id = await grouped();
+      await call(world(), 'POST', `/market/group-offers/${id}/join`, {
+        token: owner(),
+        body: { unitId: world().a.homeUnitId, quantity: 1 },
+      }).expect(201);
+      return call(world(), 'POST', `/market/group-offers/${id}/leave`, {
+        token: owner(),
+      });
+    },
     'GET /market/settings': () =>
       call(world(), 'GET', '/market/settings', { token: manager() }),
     'PATCH /market/settings': () =>

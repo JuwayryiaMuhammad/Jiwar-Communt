@@ -1668,6 +1668,15 @@ export const ErrorCode = {
   PARTNER_OFFER_NOT_FOUND: 'PARTNER_OFFER_NOT_FOUND',
   /** Withdrawn already (409). */
   PARTNER_OFFER_WITHDRAWN: 'PARTNER_OFFER_WITHDRAWN',
+  GROUP_OFFER_NOT_FOUND: 'GROUP_OFFER_NOT_FOUND',
+  /** Not in the phase this needs: interest, or open (409, params.status). */
+  GROUP_OFFER_PHASE: 'GROUP_OFFER_PHASE',
+  /** Not enough left under its cap (409, params.left). */
+  GROUP_OFFER_FULL: 'GROUP_OFFER_FULL',
+  /** The caller takes part already (409). */
+  GROUP_OFFER_JOINED: 'GROUP_OFFER_JOINED',
+  /** The caller does not take part (409). */
+  GROUP_OFFER_NOT_JOINED: 'GROUP_OFFER_NOT_JOINED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

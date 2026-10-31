@@ -14007,6 +14007,77 @@
         ],
         "type": "object"
       },
+      "CreateGroupOfferDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "groupPrice": {
+            "description": "Below the list price (INVALID_VALUE).",
+            "example": "950.00",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "interestClosesAt": {
+            "description": "An interest phase first, until then: a non-binding count. Before `closesAt`.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "listPrice": {
+            "example": "1200.00",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "maxParticipants": {
+            "description": "The most quantity it takes in all; not below the minimum.",
+            "maximum": 10000,
+            "minimum": 2,
+            "type": "number"
+          },
+          "minParticipants": {
+            "maximum": 1000,
+            "minimum": 2,
+            "type": "number"
+          },
+          "partnerId": {
+            "description": "The partner giving the price, when it is one of the compound’s.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 80,
+            "minLength": 2,
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 80,
+            "minLength": 2,
+            "type": "string"
+          }
+        },
+        "required": [
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "listPrice",
+          "groupPrice",
+          "minParticipants",
+          "closesAt"
+        ],
+        "type": "object"
+      },
       "CreateGuardTaskDto": {
         "properties": {
           "details": {
@@ -24937,6 +25008,169 @@
         ],
         "type": "object"
       },
+      "GroupOfferReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code of `groupOfferCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "GroupOfferStatus": {
+        "enum": [
+          "interest",
+          "open",
+          "confirmed",
+          "failed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "GroupOfferUnitDto": {
+        "properties": {
+          "unitId": {
+            "description": "One of the caller’s units.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId"
+        ],
+        "type": "object"
+      },
+      "GroupOfferView": {
+        "properties": {
+          "bodyAr": {
+            "type": "string"
+          },
+          "bodyEn": {
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "A `groupOfferCancel` code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "groupPrice": {
+            "example": "950.00",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "interestClosesAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "interested": {
+            "description": "Who said they would join.",
+            "type": "number"
+          },
+          "joined": {
+            "description": "Households that joined.",
+            "type": "number"
+          },
+          "listPrice": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "maxParticipants": {
+            "nullable": true,
+            "type": "number"
+          },
+          "minParticipants": {
+            "type": "number"
+          },
+          "myInterest": {
+            "type": "boolean"
+          },
+          "myQuantity": {
+            "description": "The caller’s quantity, once joined.",
+            "nullable": true,
+            "type": "number"
+          },
+          "mySaving": {
+            "description": "(list − group) × the caller’s quantity, once joined.",
+            "nullable": true,
+            "type": "string"
+          },
+          "partnerId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "description": "The quantity taken in all.",
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GroupOfferStatus"
+              }
+            ]
+          },
+          "titleAr": {
+            "type": "string"
+          },
+          "titleEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "partnerId",
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "listPrice",
+          "groupPrice",
+          "minParticipants",
+          "maxParticipants",
+          "interestClosesAt",
+          "closesAt",
+          "status",
+          "cancelReason",
+          "interested",
+          "joined",
+          "quantity",
+          "myInterest",
+          "myQuantity",
+          "mySaving"
+        ],
+        "type": "object"
+      },
+      "GroupOfferViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GroupOfferView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GuardAttendanceView": {
         "properties": {
           "absent": {
@@ -30113,6 +30347,25 @@
             "description": "A contract review’s, required; no other kind’s."
           }
         },
+        "type": "object"
+      },
+      "JoinGroupOfferDto": {
+        "properties": {
+          "quantity": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "number"
+          },
+          "unitId": {
+            "description": "One of the caller’s units.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "quantity"
+        ],
         "type": "object"
       },
       "JoinWaitlistDto": {
@@ -93649,6 +93902,228 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/market/group-offers": {
+      "get": {
+        "operationId": "GroupOffersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the group offers in interest, open or confirmed",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/group-offers/{id}": {
+      "get": {
+        "operationId": "GroupOffersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a group offer and my part in it",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/group-offers/{id}/interest": {
+      "post": {
+        "operationId": "GroupOffersController_interest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupOfferUnitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say I would join (non-binding)",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/group-offers/{id}/join": {
+      "post": {
+        "operationId": "GroupOffersController_join",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinGroupOfferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Join an open group offer for one of my units",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/group-offers/{id}/leave": {
+      "post": {
+        "operationId": "GroupOffersController_leave",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Leave a group offer I joined, while it is open",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/market/listings": {
       "get": {
         "operationId": "MarketController_search",
@@ -112347,6 +112822,180 @@
         "summary": "Change the board’s deadlines and thresholds",
         "tags": [
           "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/group-offers": {
+      "get": {
+        "operationId": "StaffGroupOffersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "interest",
+                "open",
+                "confirmed",
+                "failed",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the group offers",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffGroupOffersController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupOfferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish a group offer",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/group-offers/{id}/cancel": {
+      "post": {
+        "operationId": "StaffGroupOffersController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupOfferReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call a group offer off",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/group-offers/{id}/open": {
+      "post": {
+        "operationId": "StaffGroupOffersController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End the interest phase now: open it",
+        "tags": [
+          "market"
         ],
         "x-no-store": true,
         "x-stability": "draft"

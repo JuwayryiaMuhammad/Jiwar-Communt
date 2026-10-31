@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
-import { day } from '../setup/compound-clock';
+import { GROUP_OFFERS_SWEEP } from '../../src/partners/group-offers/group-offers.service';
+import { at, dbClock, day } from '../setup/compound-clock';
 import { R11C2_COVERAGE } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { marketHelpers, type MarketSetUp } from '../setup/market';
@@ -254,6 +255,94 @@ describe('Audit coverage — community', () => {
       expect(await single('partner_offer.withdrawn', offer)).toMatchObject({
         actorId: s.manager.id,
         metadata: { partnerId },
+      });
+    });
+
+    it('group_offer.created, .opened, .joined, .left, .confirmed, .failed and .cancelled — terms, units, quantities and counts', async () => {
+      const publish = async (over: Record<string, unknown> = {}) =>
+        (
+          (
+            await m
+              .http('post', '/staff/group-offers', s.manager.token, {
+                titleEn: 'Audit filters',
+                titleAr: 'فلاتر',
+                bodyEn: MARKER,
+                bodyAr: MARKER,
+                listPrice: '100',
+                groupPrice: '80',
+                minParticipants: 2,
+                closesAt: at(day(5), 20).toISOString(),
+                ...over,
+              })
+              .expect(201)
+          ).body as { id: string }
+        ).id;
+      const join = (by: typeof s.alice, id: string, unitId: string) =>
+        m
+          .http('post', `/market/group-offers/${id}/join`, by.token, {
+            unitId,
+            quantity: 1,
+          })
+          .expect(201);
+      const ok = await publish({
+        interestClosesAt: at(day(2), 20).toISOString(),
+      });
+      expect(await single('group_offer.created', ok)).toMatchObject({
+        actorId: s.manager.id,
+        metadata: {
+          status: 'interest',
+          listPrice: '100.00',
+          groupPrice: '80.00',
+          minParticipants: 2,
+        },
+      });
+      await m
+        .http('post', `/staff/group-offers/${ok}/open`, s.manager.token)
+        .expect(204);
+      expect(await single('group_offer.opened', ok)).toMatchObject({
+        metadata: { by: 'staff' },
+      });
+      await join(s.alice, ok, s.homeA.id);
+      await join(s.bob, ok, s.homeB.id);
+      await m
+        .http('post', `/market/group-offers/${ok}/leave`, s.bob.token)
+        .expect(200);
+      expect(
+        (
+          await read.tenant(s.c.tenantId, {
+            action: 'group_offer.joined',
+            targetId: ok,
+          })
+        )
+          .map((r) => r.actorId)
+          .sort(),
+      ).toEqual([s.alice.id, s.bob.id].sort());
+      covered.add('group_offer.joined');
+      expect(await single('group_offer.left', ok)).toMatchObject({
+        actorId: s.bob.id,
+        metadata: { unitId: s.homeB.id, quantity: 1 },
+      });
+      await join(s.bob, ok, s.homeB.id);
+      await m.timeMachine(s.c, ok);
+      await m.sweep_(GROUP_OFFERS_SWEEP, dbClock());
+      expect(await single('group_offer.confirmed', ok)).toMatchObject({
+        actorType: 'system',
+        metadata: { households: 2, quantity: 2 },
+      });
+      const thin = await publish();
+      await m.timeMachine(s.c, thin);
+      await m.sweep_(GROUP_OFFERS_SWEEP, dbClock());
+      expect(await single('group_offer.failed', thin)).toMatchObject({
+        metadata: { households: 0, quantity: 0 },
+      });
+      const off = await publish();
+      await m
+        .http('post', `/staff/group-offers/${off}/cancel`, s.manager.token, {
+          reasonCode: 'partner_withdrew',
+        })
+        .expect(204);
+      expect(await single('group_offer.cancelled', off)).toMatchObject({
+        metadata: { reasonCode: 'partner_withdrew' },
       });
     });
 

@@ -2863,6 +2863,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'راجعت الإدارة إعلانًا أبلغت عنه.',
     },
   },
+  'group_offer.opened': {
+    en: {
+      title: 'A group offer opened',
+      body: 'An offer you were interested in is open: join now.',
+    },
+    ar: {
+      title: 'فُتح عرض جماعي',
+      body: 'عرض أبديت اهتمامك به مفتوح الآن: انضم إليه.',
+    },
+  },
+  'group_offer.confirmed': {
+    en: {
+      title: 'Group offer confirmed',
+      body: 'Enough households joined: the group price is yours.',
+    },
+    ar: {
+      title: 'تأكد العرض الجماعي',
+      body: 'انضم عدد كافٍ من الوحدات: السعر الجماعي متاح لك.',
+    },
+  },
+  'group_offer.failed': {
+    en: {
+      title: 'Group offer did not go ahead',
+      body: 'Not enough households joined the offer.',
+    },
+    ar: {
+      title: 'لم يتم العرض الجماعي',
+      body: 'لم ينضم عدد كافٍ من الوحدات إلى العرض.',
+    },
+  },
+  'group_offer.cancelled': {
+    en: {
+      title: 'Group offer called off',
+      body: 'The management called off a group offer you were part of.',
+    },
+    ar: {
+      title: 'أُلغي عرض جماعي',
+      body: 'ألغت الإدارة عرضًا جماعيًا كنت مشاركًا فيه.',
+    },
+  },
   'market_shop.approved': {
     en: {
       title: 'Your shop is open',

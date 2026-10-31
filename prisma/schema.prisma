@@ -10176,6 +10176,7 @@ model Partner {
   priceItems PartnerPriceItem[]
   favourites PartnerFavourite[]
   offers     PartnerOffer[]
+  groupOffers GroupOffer[]
 
   @@unique([tenantId, id])
   @@index([tenantId, listedAt(sort: Desc), id], map: "partners_listed_idx")
@@ -11669,4 +11670,73 @@ model PartnerOffer {
   @@index([tenantId, status, validToOn], map: "partner_offers_in_force_idx")
   @@index([tenantId, partnerId, createdAt(sort: Desc)], map: "partner_offers_partner_idx")
   @@map("partner_offers")
+}
+
+enum GroupOfferStatus {
+  interest
+  open
+  confirmed
+  failed
+  cancelled
+
+  @@map("group_offer_status")
+}
+
+enum GroupOfferParticipation {
+  interest
+  join
+
+  @@map("group_offer_participation")
+}
+
+/// A price for buying together (ADR 0071): no money passes through Jiwar.
+model GroupOffer {
+  id               String           @id @db.Uuid
+  tenantId         String           @map("tenant_id") @db.Uuid
+  partnerId        String?          @map("partner_id") @db.Uuid
+  titleEn          String           @map("title_en")
+  titleAr          String           @map("title_ar")
+  bodyEn           String           @map("body_en")
+  bodyAr           String           @map("body_ar")
+  listPrice        Decimal          @map("list_price") @db.Decimal(12, 2)
+  groupPrice       Decimal          @map("group_price") @db.Decimal(12, 2)
+  /// Households that must join for it to be confirmed.
+  minParticipants  Int              @map("min_participants")
+  /// The most quantity it takes in all, if capped.
+  maxParticipants  Int?             @map("max_participants")
+  interestClosesAt DateTime?        @map("interest_closes_at") @db.Timestamptz(3)
+  closesAt         DateTime         @map("closes_at") @db.Timestamptz(3)
+  status           GroupOfferStatus
+  /// REASON_CODES.groupOfferCancel
+  cancelReason     String?          @map("cancel_reason")
+  createdById      String           @map("created_by") @db.Uuid
+  closedAt         DateTime?        @map("closed_at") @db.Timestamptz(3)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  partner      Partner?                @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "group_offers_tenant_id_partner_fkey")
+  participants GroupOfferParticipant[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, closesAt], map: "group_offers_status_idx")
+  @@map("group_offers")
+}
+
+/// An interest (the poll) or a join with a quantity; leaving ends it, once.
+model GroupOfferParticipant {
+  id        String                  @id @db.Uuid
+  tenantId  String                  @map("tenant_id") @db.Uuid
+  offerId   String                  @map("offer_id") @db.Uuid
+  accountId String                  @map("account_id") @db.Uuid
+  unitId    String                  @map("unit_id") @db.Uuid
+  kind      GroupOfferParticipation
+  quantity  Int                     @default(1)
+  joinedAt  DateTime                @map("joined_at") @db.Timestamptz(3)
+  leftAt    DateTime?               @map("left_at") @db.Timestamptz(3)
+
+  offer GroupOffer @relation(fields: [tenantId, offerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "group_offer_participants_tenant_id_offer_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, accountId, joinedAt(sort: Desc)], map: "group_offer_participants_account_idx")
+  @@map("group_offer_participants")
 }

@@ -2,6 +2,7 @@ import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
 import {
+  groupOfferRow,
   listingRow,
   marketReportRow,
   partnerOfferRow,
@@ -22,6 +23,8 @@ export interface R11c2World {
   bMarketReportId: string;
   /** An offer of B's partner, in force. */
   bPartnerOfferId: string;
+  /** An open group offer of B's. */
+  bGroupOfferId: string;
 }
 
 export async function r11c2World(
@@ -54,6 +57,10 @@ export async function r11c2World(
         bPartnerOfferId: await partnerOfferRow(tx, {
           tenantId: b.tenantId,
           partnerId: bPartnerId,
+          createdById: b.ids.manager,
+        }),
+        bGroupOfferId: await groupOfferRow(tx, {
+          tenantId: b.tenantId,
           createdById: b.ids.manager,
         }),
       };

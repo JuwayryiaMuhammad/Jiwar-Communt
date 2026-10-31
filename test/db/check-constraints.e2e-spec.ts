@@ -2592,6 +2592,19 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   partner_offers_text_length: {},
   partner_offers_window: {},
   partner_offers_status_shape: {},
+  group_offers_text_length: {},
+  group_offers_terms: {
+    guarded:
+      'max_participants and interest_closes_at are each tested IS NULL first; compared only on a value',
+  },
+  group_offers_state_shape: {
+    guarded:
+      'status is NOT NULL; closed_at and cancel_reason under IS [NOT] NULL; the list runs only on a value',
+  },
+  group_offer_participants_quantity: {},
+  group_offer_participants_left_after: {
+    guarded: 'left_at IS NULL is tested first',
+  },
   market_shops_state_shape: {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',

@@ -2201,6 +2201,17 @@ export const AUDIT_ACTIONS = {
   // published.
   'partner_offer.published': { log: 'tenant', target: 'partner_offer' },
   'partner_offer.withdrawn': { log: 'tenant', target: 'partner_offer' },
+  // Group offers (ADR 0071): the terms and counts; never who joined but
+  // the caller. created: partnerId, status, prices, minParticipants;
+  // opened: by; joined/left: unitId, quantity; confirmed/failed:
+  // households, quantity; cancelled: reasonCode.
+  'group_offer.created': { log: 'tenant', target: 'group_offer' },
+  'group_offer.opened': { log: 'tenant', target: 'group_offer' },
+  'group_offer.joined': { log: 'tenant', target: 'group_offer' },
+  'group_offer.left': { log: 'tenant', target: 'group_offer' },
+  'group_offer.confirmed': { log: 'tenant', target: 'group_offer' },
+  'group_offer.failed': { log: 'tenant', target: 'group_offer' },
+  'group_offer.cancelled': { log: 'tenant', target: 'group_offer' },
   // A listing reported (target: the listing). metadata: reportId,
   // reasonCode; never the note.
   'market_listing.reported': { log: 'tenant', target: 'market_listing' },

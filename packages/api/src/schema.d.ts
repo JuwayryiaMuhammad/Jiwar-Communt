@@ -24685,8 +24685,8 @@ export interface components {
             frequency: components["schemas"]["BillingFrequency"];
             /** @description Issue a period’s invoices this many days before it starts. */
             issueDaysBefore: number;
-            /** @description Never changes. */
-            kind: components["schemas"]["InvoiceKind"];
+            /** @description Never changes. The charges port alone issues `facility`, `club` and `fine` (ADR 0070). */
+            kind: components["schemas"]["StaffInvoiceKind"];
             nameAr: string;
             nameEn: string;
             /** @description The first day of the first period: the first of a month, from this month to a year ahead. Never changes. */
@@ -29939,7 +29939,7 @@ export interface components {
             position: number;
         };
         /** @enum {string} */
-        InvoiceKind: "service_charge" | "maintenance" | "other";
+        InvoiceKind: "service_charge" | "maintenance" | "other" | "facility" | "club" | "fine";
         /** @enum {string} */
         InvoiceLineChange: "same" | "added" | "removed" | "changed";
         /**
@@ -30064,7 +30064,8 @@ export interface components {
             building?: string;
             /** @description A local day of the compound: from today to 366 days ahead. */
             dueOn: string;
-            kind: components["schemas"]["InvoiceKind"];
+            /** @description The charges port alone issues `facility`, `club` and `fine` (ADR 0070). */
+            kind: components["schemas"]["StaffInvoiceKind"];
             lines: components["schemas"]["InvoiceLineDto"][];
             /** @enum {string} */
             target: "unit" | "building" | "all";
@@ -37983,6 +37984,11 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
+        /**
+         * @description The charges port alone issues `facility`, `club` and `fine` (ADR 0070).
+         * @enum {string}
+         */
+        StaffInvoiceKind: "service_charge" | "maintenance" | "other";
         StaffLateNoticeView: {
             /** @description EGP still owed at issue. */
             amount: string;

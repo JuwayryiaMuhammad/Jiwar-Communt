@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BillingFrequency, InvoiceKind } from '@prisma/client';
+import { BillingFrequency } from '@prisma/client';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -14,6 +15,10 @@ import {
 } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { MONEY } from '../../money';
+import {
+  STAFF_INVOICE_KINDS,
+  type StaffInvoiceKind,
+} from '../../invoices/invoice-kinds';
 
 const NAME = { min: 1, max: 80 } as const;
 /** What a fee pays for, to the residents it bills (ADR 0069). */
@@ -35,12 +40,13 @@ export class CreateBillingPlanDto {
   nameAr: string;
 
   @ApiProperty({
-    enum: InvoiceKind,
-    enumName: 'InvoiceKind',
-    description: 'Never changes.',
+    enum: STAFF_INVOICE_KINDS,
+    enumName: 'StaffInvoiceKind',
+    description:
+      'Never changes. The charges port alone issues `facility`, `club` and `fine` (ADR 0070).',
   })
-  @IsEnum(InvoiceKind)
-  kind: InvoiceKind;
+  @IsIn(STAFF_INVOICE_KINDS)
+  kind: StaffInvoiceKind;
 
   @ApiProperty({
     enum: BillingFrequency,

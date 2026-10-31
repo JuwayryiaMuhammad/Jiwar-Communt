@@ -22,6 +22,7 @@ import {
 } from '../../../core/common/validation/local-date';
 import { MONEY } from '../../money';
 import { INVOICE_FILTERS, type InvoiceFilter } from '../balances';
+import { STAFF_INVOICE_KINDS, type StaffInvoiceKind } from '../invoice-kinds';
 
 const DESCRIPTION = { min: 1, max: 200 } as const;
 const LINES = { min: 1, max: 20 } as const;
@@ -84,9 +85,14 @@ export class IssueInvoicesDto {
   @Length(BUILDING.min, BUILDING.max, withParams(BUILDING))
   building?: string;
 
-  @ApiProperty({ enum: InvoiceKind, enumName: 'InvoiceKind' })
-  @IsEnum(InvoiceKind)
-  kind: InvoiceKind;
+  @ApiProperty({
+    enum: STAFF_INVOICE_KINDS,
+    enumName: 'StaffInvoiceKind',
+    description:
+      'The charges port alone issues `facility`, `club` and `fine` (ADR 0070).',
+  })
+  @IsIn(STAFF_INVOICE_KINDS)
+  kind: StaffInvoiceKind;
 
   @ApiProperty({
     type: String,

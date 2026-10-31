@@ -943,4 +943,17 @@ export const REASON_CODES = {
     'request_unanswered',
     'other',
   ],
+  // Booking extras and charges (ADR 0070): why a booker removes a companion
+  // from their booking, and why the system cancels a charge it raised — the
+  // booking was cancelled or rejected, a closure cancelled it, an appeal
+  // cancelled the fine, a club membership request was called off. The
+  // migrations' CHECKs repeat them.
+  companionRemove: ['not_coming', 'party_changed', 'misconduct', 'other'],
+  chargeCancel: [
+    'booking_cancelled',
+    'booking_rejected',
+    'closure',
+    'appeal_accepted',
+    'request_cancelled',
+  ],
 } as const;

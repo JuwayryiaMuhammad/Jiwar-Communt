@@ -6686,6 +6686,12 @@ enum InvoiceKind {
   service_charge
   maintenance
   other
+  /// A facility booking's fee (ADR 0070): raised by the charges port only.
+  facility
+  /// A club membership request's plan price (ADR 0070): the port only.
+  club
+  /// A vehicle fine (ADR 0070): the port only.
+  fine
 
   @@map("invoice_kind")
 }

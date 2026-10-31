@@ -12436,10 +12436,10 @@
           "kind": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/InvoiceKind"
+                "$ref": "#/components/schemas/StaffInvoiceKind"
               }
             ],
-            "description": "Never changes."
+            "description": "Never changes. The charges port alone issues `facility`, `club` and `fine` (ADR 0070)."
           },
           "nameAr": {
             "maxLength": 80,
@@ -28704,7 +28704,10 @@
         "enum": [
           "service_charge",
           "maintenance",
-          "other"
+          "other",
+          "facility",
+          "club",
+          "fine"
         ],
         "type": "string"
       },
@@ -29029,9 +29032,10 @@
           "kind": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/InvoiceKind"
+                "$ref": "#/components/schemas/StaffInvoiceKind"
               }
-            ]
+            ],
+            "description": "The charges port alone issues `facility`, `club` and `fine` (ADR 0070)."
           },
           "lines": {
             "items": {
@@ -54709,6 +54713,15 @@
           "unitCode"
         ],
         "type": "object"
+      },
+      "StaffInvoiceKind": {
+        "description": "The charges port alone issues `facility`, `club` and `fine` (ADR 0070).",
+        "enum": [
+          "service_charge",
+          "maintenance",
+          "other"
+        ],
+        "type": "string"
       },
       "StaffLateNoticeView": {
         "properties": {

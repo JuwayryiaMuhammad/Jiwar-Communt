@@ -42,6 +42,8 @@ export interface NewPass {
   vehiclePlate?: string;
   /** How long a visit on it is expected to last (ADR 0056). */
   expectedMinutes?: number;
+  /** Tell the household of each entry and exit (ADR 0071); off by default on a recurring pass. */
+  notifyOnEntry?: boolean;
 }
 
 /**
@@ -108,6 +110,8 @@ export interface PassDetail extends PassListItem {
   visitorPhoneMasked: string | null;
   /** Security refused its visitor (ADR 0053); never why. */
   refusedBySecurity: boolean;
+  /** The household hears of each entry and exit (ADR 0071). */
+  notifyOnEntry: boolean;
 }
 
 /** When a pass's visitors last came and went (ADR 0043). */
@@ -392,6 +396,7 @@ export class VisitorPassesService implements OnModuleInit {
         tokenSeq: secret.seq,
         visitorDetailsId: detailsId,
         expectedMinutes: input.expectedMinutes ?? null,
+        notifyOnEntry: input.notifyOnEntry ?? input.kind !== 'recurring',
         idempotencyKey: key ?? null,
         requestHash: hash,
       },
@@ -616,6 +621,7 @@ export class VisitorPassesService implements OnModuleInit {
           (await tx.securityRefusal.count({
             where: { subjectType: 'visitor_pass', subjectId: pass.id },
           })) > 0,
+        notifyOnEntry: pass.notifyOnEntry,
       };
     });
   }
@@ -724,6 +730,7 @@ export class VisitorPassesService implements OnModuleInit {
         visitorPhone: details.phone ?? undefined,
         vehiclePlate: details.vehiclePlate ?? undefined,
         expectedMinutes: source.expectedMinutes ?? undefined,
+        notifyOnEntry: source.notifyOnEntry,
       });
       const issued = await this.createIn(
         tx,

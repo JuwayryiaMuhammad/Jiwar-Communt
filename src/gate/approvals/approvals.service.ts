@@ -461,6 +461,26 @@ export class ApprovalsService implements OnModuleInit {
           instructionId,
         },
       });
+      // An opted-in `always_allow` tells the household (ADR 0071): the
+      // request, never the visitor nor the instruction's words.
+      if (status === 'approved') {
+        const opted = await tx.unitStandingInstruction.findUnique({
+          where: { id: instructionId },
+          select: { notify: true },
+        });
+        if (opted?.notify) {
+          const holders = await this.community.holders(
+            tx,
+            request.unitId,
+            'visitorsNotify',
+          );
+          await this.notifier.notify(tx, holders, {
+            kind: 'gate.let_in_by_instruction',
+            params: {},
+            targetId: id,
+          });
+        }
+      }
       return this.guardView(tx, updated);
     });
   }

@@ -106,7 +106,7 @@ describe('Blocklist — matched at the gate', () => {
     await x.entryRaw(guard, 'visitor_pass', pass.id).expect(201);
   });
 
-  it('a watched plate: let in, flagged to the guard, the keepers told; the host told nothing', async () => {
+  it('a watched plate: let in, flagged to the guard, the keepers told; the host told only what any host is told', async () => {
     const p = plate();
     const watch = await x.block(s.manager, {
       subject: 'plate',
@@ -121,7 +121,20 @@ describe('Blocklist — matched at the gate', () => {
       display: { blocklist: { entryId: watch.id, kind: 'watch' } },
     });
     await x.entryRaw(guard, 'visitor_pass', pass.id).expect(201);
-    expect(await kinds(s.alice, pass.id)).toEqual([]);
+    // The host hears of the entry as of any visitor's (ADR 0071): the same
+    // notice, in the same shape, as a plain pass let in at the same gate.
+    // Holding it back would itself say the plate is watched (ADR 0053).
+    const plain = await x.passWithCode(s.alice, s.home.id);
+    await x.entryRaw(guard, 'visitor_pass', plain.id).expect(201);
+    const toldWatched = await x.told(s.c, s.alice.id, pass.id);
+    const toldPlain = await x.told(s.c, s.alice.id, plain.id);
+    expect(toldWatched.map((m) => m.kind)).toEqual(['visitor_pass.entered']);
+    expect(toldWatched).toEqual(toldPlain);
+    expect(Object.keys(toldWatched[0].params as object)).toEqual(['gateName']);
+    const all = await x.notifications(s.c, s.alice.id);
+    expect(all.filter((m) => m.kind.startsWith('blocklist.'))).toEqual([]);
+    expect(JSON.stringify(all)).not.toContain(watch.id);
+    expect(leakText(all)).not.toMatch(/watch/i);
     expect(await kinds(s.manager, watch.id)).toEqual([
       'blocklist.watch_matched',
       'blocklist.watch_matched',

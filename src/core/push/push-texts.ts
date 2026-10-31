@@ -2913,6 +2913,30 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أبلغ أحد السكان عن صورة في معرض الصور.',
     },
   },
+  'visitor_pass.entered': {
+    en: {
+      title: 'Your visitor arrived',
+      body: 'Your visitor came in at {gateName}.',
+    },
+    ar: { title: 'وصل زائرك', body: 'دخل زائرك من {gateName}.' },
+  },
+  'visitor_pass.exited': {
+    en: {
+      title: 'Your visitor left',
+      body: 'Your visitor went out at {gateName}.',
+    },
+    ar: { title: 'غادر زائرك', body: 'خرج زائرك من {gateName}.' },
+  },
+  'gate.let_in_by_instruction': {
+    en: {
+      title: 'Let in by your instruction',
+      body: 'The guard let someone in by one of your standing instructions.',
+    },
+    ar: {
+      title: 'دخول وفق تعليماتك',
+      body: 'سمح الحارس بدخول شخص وفق إحدى تعليماتك الدائمة.',
+    },
+  },
   'market_shop.approved': {
     en: {
       title: 'Your shop is open',

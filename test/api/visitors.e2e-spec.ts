@@ -56,6 +56,8 @@ const DETAIL = [
   'createdBy.fullName',
   'createdBy.id',
   'link',
+  // The household hears of each entry and exit (ADR 0071).
+  'notifyOnEntry',
   'qrPayload',
   // Security refused its visitor (ADR 0053).
   'refusedBySecurity',

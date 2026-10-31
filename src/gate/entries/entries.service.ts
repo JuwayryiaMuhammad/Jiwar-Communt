@@ -1,3 +1,4 @@
+import { VisitorPassNotices } from '../visitors/pass-notices';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -175,6 +176,7 @@ export class EntriesService implements OnModuleInit {
   private readonly unconfirmedAfterMs: number;
 
   constructor(
+    private readonly passNotices: VisitorPassNotices,
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
     private readonly shifts: ShiftsService,
@@ -522,6 +524,13 @@ export class EntriesService implements OnModuleInit {
         });
         await this.files.attach(tx, photo);
       }
+      if (subject.type === 'visitor_pass')
+        await this.passNotices.tell(
+          tx,
+          subject.id,
+          input.direction,
+          shift.gateName,
+        );
       if (subject.engagement) {
         // The household knows when its worker comes and goes (ADR 0028).
         const holders = await this.community.holders(

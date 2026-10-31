@@ -2671,6 +2671,29 @@ export const NOTIFICATION_KINDS = {
     target: 'gallery_photo',
     params: { reason: {} },
   },
+  /** The household's visitor came in, or went out, on a pass that says so (ADR 0071). */
+  'visitor_pass.entered': {
+    priority: 'normal',
+    category: 'gate_visitors',
+    critical: false,
+    target: 'visitor_pass',
+    params: { gateName: {} },
+  },
+  'visitor_pass.exited': {
+    priority: 'normal',
+    category: 'gate_visitors',
+    critical: false,
+    target: 'visitor_pass',
+    params: { gateName: {} },
+  },
+  /** The guard let someone in by an opted-in `always_allow` instruction (ADR 0071). */
+  'gate.let_in_by_instruction': {
+    priority: 'normal',
+    category: 'gate_visitors',
+    critical: false,
+    target: 'gate_approval_request',
+    params: {},
+  },
   /** A handler opened the owner's shop, or reinstated it. */
   'market_shop.approved': {
     priority: 'normal',

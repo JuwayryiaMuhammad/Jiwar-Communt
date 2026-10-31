@@ -15794,6 +15794,11 @@
             "maxLength": 140,
             "minLength": 1,
             "type": "string"
+          },
+          "notify": {
+            "default": false,
+            "description": "Tell the household when the guard lets someone in by this `always_allow` instruction (ADR 0071).",
+            "type": "boolean"
           }
         },
         "required": [
@@ -16266,6 +16271,10 @@
                 "$ref": "#/components/schemas/VisitorPassKind"
               }
             ]
+          },
+          "notifyOnEntry": {
+            "description": "Tell the host and the household of each entry and exit on it (ADR 0071): the pass and the gate, never the visitor. On by default; off by default on a recurring pass.",
+            "type": "boolean"
           },
           "partySize": {
             "description": "How many people the code lets in (ADR 0043). One-time: one per entry, at any gate, until all came in or `validUntil`. Recurring: how many may be inside at once, on every visit.",
@@ -39286,6 +39295,10 @@
             "description": "The caller is the host.",
             "type": "boolean"
           },
+          "notifyOnEntry": {
+            "description": "The host and the unit’s `visitorsNotify` holders hear of each entry and exit on the pass (ADR 0071): the gate, never the visitor’s name.",
+            "type": "boolean"
+          },
           "partySize": {
             "type": "number"
           },
@@ -39362,7 +39375,8 @@
           "link",
           "qrPayload",
           "visitorPhoneMasked",
-          "refusedBySecurity"
+          "refusedBySecurity",
+          "notifyOnEntry"
         ],
         "type": "object"
       },
@@ -61038,6 +61052,10 @@
           "id": {
             "format": "uuid",
             "type": "string"
+          },
+          "notify": {
+            "description": "The household is told when the guard lets someone in by it (ADR 0071).",
+            "type": "boolean"
           }
         },
         "required": [
@@ -61045,6 +61063,7 @@
           "description",
           "action",
           "effectiveAction",
+          "notify",
           "createdBy",
           "createdAt"
         ],

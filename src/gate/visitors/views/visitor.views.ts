@@ -245,6 +245,13 @@ export class PassDetailView extends PassView {
   })
   refusedBySecurity: boolean;
 
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'The host and the unit’s `visitorsNotify` holders hear of each entry and exit on the pass (ADR 0071): the gate, never the visitor’s name.',
+  })
+  notifyOnEntry: boolean;
+
   static fromDetail(p: PassDetail): PassDetailView {
     return {
       ...PassView.from(p),
@@ -254,6 +261,7 @@ export class PassDetailView extends PassView {
       qrPayload: p.qrPayload,
       visitorPhoneMasked: p.visitorPhoneMasked,
       refusedBySecurity: p.refusedBySecurity,
+      notifyOnEntry: p.notifyOnEntry,
     };
   }
 }
@@ -305,6 +313,13 @@ export class StandingInstructionView {
   })
   effectiveAction: StandingInstructionAction;
 
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'The household is told when the guard lets someone in by it (ADR 0071).',
+  })
+  notify: boolean;
+
   @ApiProperty({ type: AccountRefView })
   createdBy: AccountRefView;
 
@@ -317,6 +332,7 @@ export class StandingInstructionView {
       description: i.description,
       action: i.action,
       effectiveAction: i.effectiveAction,
+      notify: i.notify,
       createdBy: accountRef(i.createdBy),
       createdAt: i.createdAt,
     };

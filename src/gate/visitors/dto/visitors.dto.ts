@@ -8,6 +8,7 @@ import {
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDate,
   IsEnum,
   IsInt,
@@ -166,6 +167,16 @@ export class CreateVisitorPassDto {
   @Min(VISIT_MINUTES.min, withParams(VISIT_MINUTES))
   @Max(VISIT_MINUTES.max, withParams(VISIT_MINUTES))
   expectedMinutes?: number;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'Tell the host and the household of each entry and exit on it (ADR 0071): the pass and the gate, never the visitor. On by default; off by default on a recurring pass.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  notifyOnEntry?: boolean;
 }
 
 export class CancelVisitorPassDto {
@@ -231,6 +242,17 @@ export class CreateStandingInstructionDto {
     withParams({ allowed: Object.values(StandingInstructionAction) }),
   )
   action: StandingInstructionAction;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    description:
+      'Tell the household when the guard lets someone in by this `always_allow` instruction (ADR 0071).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  notify?: boolean;
 }
 
 /**

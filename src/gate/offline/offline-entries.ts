@@ -1,3 +1,4 @@
+import { VisitorPassNotices } from '../visitors/pass-notices';
 import { Injectable } from '@nestjs/common';
 import type { GateEntryMethod } from '@prisma/client';
 import { CommunityGatePort } from '../../community';
@@ -60,6 +61,7 @@ export type OfflineEntryOutcome =
 @Injectable()
 export class OfflineEntries {
   constructor(
+    private readonly passNotices: VisitorPassNotices,
     private readonly ctx: RequestContext,
     private readonly entries: EntriesService,
     private readonly subjects: GateSubjects,
@@ -172,6 +174,8 @@ export class OfflineEntries {
       approvalRequestId: null,
     });
     const of = () => ({ type: subject.type, id: subject.id });
+    if (subject.type === 'visitor_pass')
+      await this.passNotices.tell(tx, subject.id, a.direction, e.gateName);
     if (subject.engagement) {
       // The household knows when its worker comes and goes (ADR 0028),
       // late as it is.

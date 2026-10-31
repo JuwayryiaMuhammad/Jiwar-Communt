@@ -2818,6 +2818,8 @@ model VisitorPass {
   visitorDetails VisitorDetails? @relation(fields: [tenantId, visitorDetailsId], references: [tenantId, id], onUpdate: Restrict)
   /// Minutes a visit on it is expected to last (ADR 0056); else the compound's.
   expectedMinutes  Int?              @map("expected_minutes") @db.SmallInt
+  /// The host and the unit's visitorsNotify holders hear of each entry and exit (ADR 0071).
+  notifyOnEntry    Boolean           @default(true) @map("notify_on_entry")
 
   @@unique([tenantId, id])
   @@unique([tenantId, hostAccountId, idempotencyKey])
@@ -2856,6 +2858,8 @@ model UnitStandingInstruction {
   /// Personal free text: never audited, never in a notification.
   description String
   action      StandingInstructionAction
+  /// Tell the household when the guard lets someone in by it (ADR 0071).
+  notify      Boolean                   @default(false)
   createdById String                    @map("created_by") @db.Uuid
   createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
 

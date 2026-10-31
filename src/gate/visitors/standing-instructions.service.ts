@@ -26,6 +26,8 @@ export interface StandingInstructionItem {
   id: string;
   description: string;
   action: StandingInstructionAction;
+  /** The household is told when the guard lets someone in by it (ADR 0071). */
+  notify: boolean;
   /** What the guard is shown: `call_first` while `always_allow` is off. */
   effectiveAction: StandingInstructionAction;
   createdBy: { id: string; fullName: string | null; status: string };
@@ -113,7 +115,11 @@ export class StandingInstructionsService implements OnModuleInit {
 
   create(
     unitId: string,
-    input: { description: string; action: StandingInstructionAction },
+    input: {
+      description: string;
+      action: StandingInstructionAction;
+      notify?: boolean;
+    },
   ): Promise<StandingInstructionItem> {
     const tenantId = this.ctx.tenantId;
     const me = this.ctx.accountId;
@@ -165,6 +171,7 @@ export class StandingInstructionsService implements OnModuleInit {
           unitId,
           description,
           action: input.action,
+          notify: input.notify ?? false,
           createdById: me,
         },
         include: { createdBy: AUTHOR },
@@ -172,7 +179,11 @@ export class StandingInstructionsService implements OnModuleInit {
       await this.audit.record(tx, {
         action: 'standing_instruction.created',
         targetId: id,
-        metadata: { unitId, action: input.action },
+        metadata: {
+          unitId,
+          action: input.action,
+          notify: input.notify ?? false,
+        },
       });
       return this.item(row, always);
     });
@@ -293,6 +304,7 @@ export class StandingInstructionsService implements OnModuleInit {
       id: r.id,
       description: r.description,
       action: r.action,
+      notify: r.notify,
       effectiveAction: effective(r.action, always),
       createdBy: r.createdBy,
       createdAt: r.createdAt,

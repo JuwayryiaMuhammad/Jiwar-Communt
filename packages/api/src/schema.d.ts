@@ -27253,6 +27253,11 @@ export interface components {
              * @example My mother, Hoda, grey Toyota
              */
             description: string;
+            /**
+             * @description Tell the household when the guard lets someone in by this `always_allow` instruction (ADR 0071).
+             * @default false
+             */
+            notify: boolean;
         };
         CreateStayDto: {
             /**
@@ -27424,6 +27429,8 @@ export interface components {
             /** @description How long a visit on it is expected to last, in minutes (ADR 0056). A visitor still inside past it alerts the guards on shift and the host, once; nothing else. Without it, the compound’s setting applies. */
             expectedMinutes?: number;
             kind: components["schemas"]["VisitorPassKind"];
+            /** @description Tell the host and the household of each entry and exit on it (ADR 0071): the pass and the gate, never the visitor. On by default; off by default on a recurring pass. */
+            notifyOnEntry?: boolean;
             /** @description How many people the code lets in (ADR 0043). One-time: one per entry, at any gate, until all came in or `validUntil`. Recurring: how many may be inside at once, on every visit. */
             partySize: number;
             /** @description Recurring passes only: the days of the week and the times of day (compound time zone) the code opens the gate, between `validFrom` and `validUntil`. */
@@ -34538,6 +34545,8 @@ export interface components {
             link: string | null;
             /** @description The caller is the host. */
             mine: boolean;
+            /** @description The host and the unit’s `visitorsNotify` holders hear of each entry and exit on the pass (ADR 0071): the gate, never the visitor’s name. */
+            notifyOnEntry: boolean;
             partySize: number;
             /**
              * @description Null with `code`.
@@ -41098,6 +41107,8 @@ export interface components {
             effectiveAction: components["schemas"]["StandingInstructionAction"];
             /** Format: uuid */
             id: string;
+            /** @description The household is told when the guard lets someone in by it (ADR 0071). */
+            notify: boolean;
         };
         StandingInstructionViewList: {
             data: components["schemas"]["StandingInstructionView"][];

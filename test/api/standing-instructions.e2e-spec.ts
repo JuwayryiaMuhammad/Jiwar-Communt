@@ -13,6 +13,8 @@ const LISTED = [
   'description',
   'effectiveAction',
   'id',
+  // ADR 0071: the household told on a let-in by it.
+  'notify',
 ];
 
 /**

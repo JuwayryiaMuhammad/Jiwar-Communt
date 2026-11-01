@@ -12277,6 +12277,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/permits/{id}/drawings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Join a drawing to a works permit
+         * @description While the permit is pending, or approved and not ended (PERMIT_NOT_ACTIVE); at most 10 at once (PERMIT_DRAWING_LIMIT).
+         */
+        post: operations["FitOutController_addDrawing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/drawings/{drawingId}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a drawing off a works permit
+         * @description While the permit is open; the file stays the record’s.
+         */
+        post: operations["FitOutController_removeDrawing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/fit-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A works permit’s deposit and drawings */
+        get: operations["FitOutController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permits/{id}/guests": {
         parameters: {
             query?: never;
@@ -18924,6 +18981,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/unit-permits/{id}/fit-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A works permit’s deposit and drawings */
+        get: operations["StaffFitOutController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits/{id}/guards/{guardId}/unlock": {
         parameters: {
             query?: never;
@@ -23305,6 +23379,13 @@ export interface components {
             /** @enum {string} */
             kind: "plan" | "manual" | "warranty" | "certificate" | "photo" | "other";
             title: string;
+        };
+        AddPermitDrawingDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `permit_drawing` file of the caller’s.
+             */
+            fileId: string;
         };
         AddPermitGuestsDto: {
             /** @description Until the event starts (PERMIT_STARTED); never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`). */
@@ -31022,6 +31103,27 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        FitOutDepositView: {
+            /** @description EGP received. */
+            amount: string;
+            /** @description EGP still held. */
+            held: string;
+            /** @description `DP-` and the number. */
+            number: string;
+        };
+        FitOutView: {
+            deposit: components["schemas"]["FitOutDepositView"] | null;
+            /** @description The compound approves works only once a deposit named on them holds money. */
+            depositRequired: boolean;
+            /** @description Oldest first. */
+            drawings: components["schemas"]["PermitDrawingView"][];
+            /** Format: uuid */
+            permitId: string;
+            /** @example W-0042 */
+            reference: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected" | "cancelled" | "revoked" | "used" | "ended";
+        };
         FlagCreatedView: {
             /**
              * Format: uuid
@@ -36742,6 +36844,14 @@ export interface components {
         PermissionViewList: {
             data: components["schemas"]["PermissionView"][];
             nextCursor: string | null;
+        };
+        PermitDrawingView: {
+            /** Format: date-time */
+            addedAt: string;
+            /** @description A read of the image or the PDF; null once it is gone. */
+            file: components["schemas"]["PresignedReadView"] | null;
+            /** Format: uuid */
+            id: string;
         };
         PermitGuestDto: {
             /**
@@ -64792,6 +64902,74 @@ export interface operations {
             };
         };
     };
+    FitOutController_addDrawing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddPermitDrawingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    FitOutController_removeDrawing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                drawingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    FitOutController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
     PermitsController_addGuests: {
         parameters: {
             query?: never;
@@ -74528,6 +74706,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
                 };
             };
         };

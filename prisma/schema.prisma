@@ -2060,6 +2060,26 @@ model PermitInspectionPhoto {
   @@map("permit_inspection_photos")
 }
 
+/// A works permit's drawing (ADR 0074): joined by its requester or the
+/// unit's primary while the permit is open, taken off once, never deleted.
+/// Its keys to the permit, the file and the accounts are the database's.
+model PermitDrawing {
+  id         String         @id @db.Uuid
+  tenantId   String         @map("tenant_id") @db.Uuid
+  permitId   String         @map("permit_id") @db.Uuid
+  /// Always works (CHECK), for the composite key on the permit's kind.
+  permitKind UnitPermitKind @default(works) @map("permit_kind")
+  fileId     String         @unique @map("file_id") @db.Uuid
+  addedBy    String         @map("added_by") @db.Uuid
+  addedAt    DateTime       @map("added_at") @db.Timestamptz(3)
+  removedAt  DateTime?      @map("removed_at") @db.Timestamptz(3)
+  removedBy  String?        @map("removed_by") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@index([tenantId, permitId, addedAt], map: "permit_drawings_permit_idx")
+  @@map("permit_drawings")
+}
+
 /// The works completion certificate's public pointer (ADR 0063): global.
 model WorksCertificateLink {
   codeHash     String   @id @map("code_hash") @db.Char(64)

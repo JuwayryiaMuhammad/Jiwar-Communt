@@ -2734,6 +2734,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'permit_id and permit_kind under IS [NOT] NULL; the kind runs only once permit_id IS NULL fails',
   },
+  permit_drawings_shape: {
+    guarded:
+      'removed_at and removed_by under IS [NOT] NULL; the order runs only once removed_at IS NULL fails',
+  },
 };
 
 interface Check {

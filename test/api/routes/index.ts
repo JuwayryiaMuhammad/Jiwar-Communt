@@ -46,6 +46,7 @@ import { MOVE_ROUTES } from './moves';
 import { PROXY_ROUTES } from './proxies';
 import { INSPECTION_REQUEST_ROUTES } from './inspection-requests';
 import { PERMIT_INSPECTION_ROUTES } from './permit-inspections';
+import { FITOUT_ROUTES } from './fitout';
 import type { Row } from '../registry';
 import { APPROVALS_ROUTES } from './approvals';
 import { ASSIST_ROUTES } from './assist';
@@ -433,4 +434,6 @@ export const ROUTES: Row[] = [
   ...VENDOR_ROUTES,
   // ADR 0079.
   ...STAFF_DASHBOARD_ROUTES,
+  // ADR 0074.
+  ...FITOUT_ROUTES,
 ];

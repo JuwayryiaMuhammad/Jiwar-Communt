@@ -352,6 +352,13 @@ import { InspectionExportSections } from './tasks/inspection-export-sections';
 import { ResidentInspectionItems } from './resident-inspection-items';
 import { PermitWorksCompletion } from './permits/permit-works-completion';
 import { PermitWorksDeposits } from './permits/permit-works-deposits';
+import {
+  FitOutController,
+  StaffFitOutController,
+} from './permits/fitout/fitout.controller';
+import { FitOutAccess } from './permits/fitout/fitout-access';
+import { FitOutService } from './permits/fitout/fitout.service';
+import { PermitDrawingsService } from './permits/fitout/permit-drawings.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -466,6 +473,8 @@ import { PermitWorksDeposits } from './permits/permit-works-deposits';
     StaffInspectionRequestsController,
     PermitInspectionsController,
     StaffPermitInspectionsController,
+    FitOutController,
+    StaffFitOutController,
     PublicWorksCertificatesController,
     MyWorkController,
     GuardSwapsController,
@@ -639,6 +648,9 @@ import { PermitWorksDeposits } from './permits/permit-works-deposits';
     ResidentInspectionItems,
     PermitWorksCompletion,
     PermitWorksDeposits,
+    FitOutAccess,
+    FitOutService,
+    PermitDrawingsService,
     PermitInspectionsService,
     WorksCertificatePageService,
     MyWorkService,

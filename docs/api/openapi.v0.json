@@ -498,6 +498,19 @@
         ],
         "type": "object"
       },
+      "AddPermitDrawingDto": {
+        "properties": {
+          "fileId": {
+            "description": "A finalized `permit_drawing` file of the caller’s.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
       "AddPermitGuestsDto": {
         "properties": {
           "guests": {
@@ -24274,6 +24287,81 @@
         ],
         "type": "object"
       },
+      "FitOutDepositView": {
+        "properties": {
+          "amount": {
+            "description": "EGP received.",
+            "type": "string"
+          },
+          "held": {
+            "description": "EGP still held.",
+            "type": "string"
+          },
+          "number": {
+            "description": "`DP-` and the number.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "number",
+          "amount",
+          "held"
+        ],
+        "type": "object"
+      },
+      "FitOutView": {
+        "properties": {
+          "deposit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FitOutDepositView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "depositRequired": {
+            "description": "The compound approves works only once a deposit named on them holds money.",
+            "type": "boolean"
+          },
+          "drawings": {
+            "description": "Oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/PermitDrawingView"
+            },
+            "type": "array"
+          },
+          "permitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reference": {
+            "example": "W-0042",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "cancelled",
+              "revoked",
+              "used",
+              "ended"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "permitId",
+          "reference",
+          "status",
+          "depositRequired",
+          "deposit",
+          "drawings"
+        ],
+        "type": "object"
+      },
       "FlagCreatedView": {
         "properties": {
           "flagId": {
@@ -42750,6 +42838,34 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PermitDrawingView": {
+        "properties": {
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "file": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "A read of the image or the PDF; null once it is gone.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "addedAt",
+          "file"
         ],
         "type": "object"
       },
@@ -109235,6 +109351,140 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/permits/{id}/drawings": {
+      "post": {
+        "description": "While the permit is pending, or approved and not ended (PERMIT_NOT_ACTIVE); at most 10 at once (PERMIT_DRAWING_LIMIT).",
+        "operationId": "FitOutController_addDrawing",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermitDrawingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Join a drawing to a works permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/drawings/{drawingId}/remove": {
+      "post": {
+        "description": "While the permit is open; the file stays the record’s.",
+        "operationId": "FitOutController_removeDrawing",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "drawingId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a drawing off a works permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/fit-out": {
+      "get": {
+        "operationId": "FitOutController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A works permit’s deposit and drawings",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/permits/{id}/guests": {
       "post": {
         "description": "The host or the unit’s primary, until the event starts (PERMIT_STARTED), never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`): a bigger event is a new request.",
@@ -128531,6 +128781,44 @@
           }
         ],
         "summary": "Approve a pending permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/fit-out": {
+      "get": {
+        "operationId": "StaffFitOutController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A works permit’s deposit and drawings",
         "tags": [
           "permits"
         ],

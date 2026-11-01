@@ -1217,6 +1217,32 @@ describe('API v0 — no-store', () => {
       as('owner', 'GET', `/units/${w.a.homeUnitId}/permits`),
     'GET /permits/{id}': async () =>
       as('owner', 'GET', `/permits/${await aPermit()}`),
+    // A works permit's fit-out (ADR 0074).
+    'GET /permits/{id}/fit-out': async () =>
+      as('owner', 'GET', `/permits/${await aPermit()}/fit-out`),
+    'GET /staff/unit-permits/{id}/fit-out': async () =>
+      as('manager', 'GET', `/staff/unit-permits/${await aPermit()}/fit-out`),
+    'POST /permits/{id}/drawings': async () =>
+      as('owner', 'POST', `/permits/${await aPermit()}/drawings`, {
+        fileId: await fileHelpers(h).ready(w.a.tokens.owner, 'permit_drawing'),
+      }),
+    'POST /permits/{id}/drawings/{drawingId}/remove': async () => {
+      const id = await aPermit();
+      const added = body<{ drawings: { id: string }[] }>(
+        await as('owner', 'POST', `/permits/${id}/drawings`, {
+          fileId: await fileHelpers(h).ready(
+            w.a.tokens.owner,
+            'permit_drawing',
+          ),
+        }),
+      );
+      return as(
+        'owner',
+        'POST',
+        `/permits/${id}/drawings/${added.drawings[0].id}/remove`,
+        {},
+      );
+    },
     'POST /permits/{id}/cancel': async () =>
       as('owner', 'POST', `/permits/${await aPermit()}/cancel`, {}),
     'POST /permits/{id}/workers': async () => aWorker(await aPermit()),

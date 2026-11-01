@@ -45339,6 +45339,112 @@
           }
         },
         {
+          "name": "Join a drawing to a works permit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fileId` | string (uuid) | yes | A finalized `permit_drawing` file of the caller’s. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "drawings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/drawings",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a drawing off a works permit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "drawings",
+                ":drawingId",
+                "remove"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/drawings/:drawingId/remove",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "drawingId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A works permit’s deposit and drawings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "fit-out"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/fit-out",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Add guests to an event",
           "request": {
             "body": {
@@ -45832,6 +45938,35 @@
                 "approve"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A works permit’s deposit and drawings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "fit-out"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/fit-out",
               "variable": [
                 {
                   "description": "",

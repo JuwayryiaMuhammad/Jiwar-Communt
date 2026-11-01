@@ -54,6 +54,8 @@
 -- warranty.
 -- A scheduled inspection request whose task was cancelled when its guard
 -- left (20270511090000 cancels the request with it).
+-- Fit-out (ADR 0074): the compound's deposit rule, a finishing-works
+-- deposit naming the works permit and a move deposit naming none.
 -- ============================================================================
 
 DO $$
@@ -74,6 +76,7 @@ DECLARE
   occ_t uuid;
   ph uuid; bl uuid; vp uuid;
   fine uuid; plan uuid; mem uuid;
+  wp uuid;
 BEGIN
   FOR c IN 1..2 LOOP
     s := substr(md5(random()::text || clock_timestamp()::text), 1, 10);
@@ -243,9 +246,10 @@ BEGIN
         (gen_random_uuid(), t, 1, 'move', u1, res1, now() + interval '2 days', now() + interval '2 days 4 hours',
          'ABC 123', 'Boxes and a sofa', now());
     END IF;
+    wp := gen_random_uuid();
     INSERT INTO unit_permits (id, tenant_id, number, kind, unit_id, requested_by_account_id, starts_at, ends_at,
                               work_type, daily_from, daily_to, contractor_company, description, updated_at) VALUES
-      (gen_random_uuid(), t, 1, 'works', u2, res2, date_trunc('day', now()) + interval '3 days',
+      (wp, t, 1, 'works', u2, res2, date_trunc('day', now()) + interval '3 days',
        date_trunc('day', now()) + interval '10 days', 'finishing', 540, 1020, 'Seed Builders', 'Tiling the kitchen', now());
     INSERT INTO guard_tasks (id, tenant_id, kind, unit_id, gate_id, created_by_account_id, updated_at) VALUES
       (gen_random_uuid(), t, 'closed_unit_inspection', u1, gate, mgr, now());
@@ -492,5 +496,25 @@ BEGIN
         (gen_random_uuid(), t, 'closed_unit_inspection', u2, guard, mgr, 'cancelled', now(), 'assignee_left',
          req, now());
     END;
+    -- Fit-out completion (ADR 0074): the rows its columns and CHECKs reach —
+    -- the compound's permit rules as the app provisions them (a later
+    -- migration finds a compound's row there, as 20270209090200 finds the
+    -- existing ones and writes the deposit rule off for them), a
+    -- finishing-works deposit naming the pending works permit (its kind and
+    -- its unit's keys) and a move deposit naming none. The fit-out's own
+    -- tables are new: nothing here to carry.
+    INSERT INTO permit_settings (tenant_id, updated_at) VALUES (t, now())
+      ON CONFLICT (tenant_id) DO NOTHING;
+    INSERT INTO finance_deposits (id, tenant_id, number, unit_id, occupancy_id, kind, amount, received_on, method,
+                                  recorded_by, created_at, permit_id, permit_kind)
+      SELECT gen_random_uuid(), t, 1, u2, o.id, 'finishing_works', 5000.00, current_date, 'cash', mgr, now(),
+             wp, 'works'
+        FROM unit_occupancies o
+       WHERE o.unit_id = u2 AND o.account_id = res2 AND o.status = 'active';
+    INSERT INTO finance_deposits (id, tenant_id, number, unit_id, occupancy_id, kind, amount, received_on, method,
+                                  recorded_by, created_at)
+      SELECT gen_random_uuid(), t, 2, u2, o.id, 'move', 1000.00, current_date, 'bank_transfer', mgr, now()
+        FROM unit_occupancies o
+       WHERE o.unit_id = u2 AND o.account_id = res2 AND o.status = 'active';
   END LOOP;
 END $$;

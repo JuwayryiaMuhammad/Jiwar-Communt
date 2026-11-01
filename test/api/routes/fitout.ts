@@ -150,4 +150,33 @@ export const FITOUT_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/area-records',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({ id: UNKNOWN }),
+      body: () => ({
+        commonAreaId: UNKNOWN,
+        phase: 'before',
+        photoFileIds: [UNKNOWN],
+      }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { commonAreaId: 'x', phase: 'during', photoFileIds: [] },
+      fields: [
+        { field: 'commonAreaId', code: 'INVALID_UUID' },
+        {
+          field: 'phase',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['before', 'after'] },
+        },
+        { field: 'photoFileIds', code: 'INVALID_LENGTH', params: { min: 1 } },
+      ],
+    },
+    noStore: true,
+  },
 ];

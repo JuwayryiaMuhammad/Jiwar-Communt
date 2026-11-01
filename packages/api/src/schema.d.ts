@@ -19061,6 +19061,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/unit-permits/{id}/area-records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a common area before or after the works
+         * @description One to ten photos and a note the household reads; once per area and stage.
+         */
+        post: operations["StaffFitOutController_recordArea"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits/{id}/debris-slots": {
         parameters: {
             query?: never;
@@ -24002,6 +24022,15 @@ export interface components {
             accountId: string;
             /** Format: uuid */
             occupancyId: string;
+        };
+        AreaStageView: {
+            /** Format: uuid */
+            id: string;
+            note: string | null;
+            /** @description A read of each photo; null where one is gone. */
+            photos: components["schemas"]["PresignedReadView"][];
+            /** Format: date-time */
+            recordedAt: string;
         };
         AskCollectorVisitDto: {
             /** @description What the resident means to hand over, EGP. */
@@ -31286,6 +31315,18 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        FitOutAreaRefView: {
+            code: string;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        FitOutAreaView: {
+            after: components["schemas"]["AreaStageView"] | null;
+            before: components["schemas"]["AreaStageView"] | null;
+            commonArea: components["schemas"]["FitOutAreaRefView"];
+        };
         FitOutDepositView: {
             /** @description EGP received. */
             amount: string;
@@ -31295,6 +31336,8 @@ export interface components {
             number: string;
         };
         FitOutView: {
+            /** @description Each common area recorded, before the works and after them. */
+            areas: components["schemas"]["FitOutAreaView"][];
             /** @description By their window. */
             debrisSlots: components["schemas"]["DebrisSlotView"][];
             deposit: components["schemas"]["FitOutDepositView"] | null;
@@ -38423,6 +38466,22 @@ export interface components {
             note?: string;
             /** @enum {string} */
             reasonCode: "end_of_life" | "repeated_failures" | "repair_uneconomic" | "safety" | "obsolete" | "other";
+        };
+        RecordAreaDto: {
+            /**
+             * Format: uuid
+             * @description An active common area.
+             */
+            commonAreaId: string;
+            /** @description What the household reads with the photos. */
+            note?: string;
+            /**
+             * @description `before` while the permit is open; `after` on an approved permit once `before` is recorded (AREA_RECORD_NO_BEFORE). Once per area and stage (AREA_RECORD_EXISTS).
+             * @enum {string}
+             */
+            phase: "before" | "after";
+            /** @description Finalized `fitout_photo` files. */
+            photoFileIds: string[];
         };
         RecordClubPaymentDto: {
             /** @description What was paid, EGP. */
@@ -74992,6 +75051,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_recordArea: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordAreaDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
                 };
             };
         };

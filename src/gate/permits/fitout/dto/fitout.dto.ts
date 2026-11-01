@@ -1,6 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
+import { AREA_PHASES, AREA_PHOTOS } from '../area-records.service';
 import { IsLocalDate } from '../../../../core/common/validation/local-date';
 import { withParams } from '../../../../core/common/validation/validation-errors';
 import { PermitHoursDto } from '../../dto/permit-settings.dto';
@@ -43,4 +53,46 @@ export class CancelDebrisSlotDto {
   @IsOptional()
   @IsString()
   reasonCode?: string;
+}
+
+/** A common area before or after a works permit's works (ADR 0074). */
+export class RecordAreaDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'An active common area.',
+  })
+  @IsUUID()
+  commonAreaId: string;
+
+  @ApiProperty({
+    enum: AREA_PHASES,
+    description:
+      '`before` while the permit is open; `after` on an approved permit once `before` is recorded (AREA_RECORD_NO_BEFORE). Once per area and stage (AREA_RECORD_EXISTS).',
+  })
+  @IsIn([...AREA_PHASES], withParams({ allowed: [...AREA_PHASES] }))
+  phase: string;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    minItems: AREA_PHOTOS.min,
+    maxItems: AREA_PHOTOS.max,
+    description: 'Finalized `fitout_photo` files.',
+  })
+  @IsArray()
+  @ArrayMinSize(AREA_PHOTOS.min, withParams({ min: AREA_PHOTOS.min }))
+  @ArrayMaxSize(AREA_PHOTOS.max, withParams({ max: AREA_PHOTOS.max }))
+  @IsUUID('all', { each: true })
+  photoFileIds: string[];
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    maxLength: 500,
+    description: 'What the household reads with the photos.',
+  })
+  @IsOptional()
+  @IsString()
+  note?: string;
 }

@@ -358,6 +358,7 @@ import {
   StaffFitOutController,
 } from './permits/fitout/fitout.controller';
 import { DebrisSlotsService } from './permits/fitout/debris-slots.service';
+import { AreaRecordsService } from './permits/fitout/area-records.service';
 import { FitOutAccess } from './permits/fitout/fitout-access';
 import { FitOutService } from './permits/fitout/fitout.service';
 import { PermitDrawingsService } from './permits/fitout/permit-drawings.service';
@@ -655,6 +656,7 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     FitOutService,
     PermitDrawingsService,
     DebrisSlotsService,
+    AreaRecordsService,
     PermitInspectionsService,
     WorksCertificatePageService,
     MyWorkService,

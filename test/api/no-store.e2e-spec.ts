@@ -1304,6 +1304,26 @@ describe('API v0 — no-store', () => {
         {},
       );
     },
+    'POST /staff/unit-permits/{id}/area-records': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${await aPermit()}/area-records`,
+        {
+          commonAreaId: body<{ id: string }>(
+            await as('manager', 'POST', '/maintenance/areas', {
+              kind: 'area',
+              code: `NS-FA-${Date.now()}`,
+              nameAr: 'المدخل',
+              nameEn: 'Lobby',
+            }),
+          ).id,
+          phase: 'before',
+          photoFileIds: [
+            await fileHelpers(h).ready(w.a.tokens.manager, 'fitout_photo'),
+          ],
+        },
+      ),
     'GET /gate/unit-permits/{id}/debris-slots': async () =>
       asGuard('GET', `/gate/unit-permits/${await anApproved()}/debris-slots`),
     'POST /gate/unit-permits/{id}/debris-slots/{slotId}/done': async () => {

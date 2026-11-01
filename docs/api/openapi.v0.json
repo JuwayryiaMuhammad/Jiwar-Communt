@@ -2011,6 +2011,36 @@
         ],
         "type": "object"
       },
+      "AreaStageView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "description": "A read of each photo; null where one is gone.",
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "recordedAt",
+          "note",
+          "photos"
+        ],
+        "type": "object"
+      },
       "AskCollectorVisitDto": {
         "properties": {
           "expectedAmount": {
@@ -24409,6 +24439,61 @@
         ],
         "type": "object"
       },
+      "FitOutAreaRefView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "FitOutAreaView": {
+        "properties": {
+          "after": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AreaStageView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "before": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AreaStageView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "commonArea": {
+            "$ref": "#/components/schemas/FitOutAreaRefView"
+          }
+        },
+        "required": [
+          "commonArea",
+          "before",
+          "after"
+        ],
+        "type": "object"
+      },
       "FitOutDepositView": {
         "properties": {
           "amount": {
@@ -24433,6 +24518,13 @@
       },
       "FitOutView": {
         "properties": {
+          "areas": {
+            "description": "Each common area recorded, before the works and after them.",
+            "items": {
+              "$ref": "#/components/schemas/FitOutAreaView"
+            },
+            "type": "array"
+          },
           "debrisSlots": {
             "description": "By their window.",
             "items": {
@@ -24488,7 +24580,8 @@
           "depositRequired",
           "deposit",
           "drawings",
-          "debrisSlots"
+          "debrisSlots",
+          "areas"
         ],
         "type": "object"
       },
@@ -47345,6 +47438,44 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "RecordAreaDto": {
+        "properties": {
+          "commonAreaId": {
+            "description": "An active common area.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "What the household reads with the photos.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "phase": {
+            "description": "`before` while the permit is open; `after` on an approved permit once `before` is recorded (AREA_RECORD_NO_BEFORE). Once per area and stage (AREA_RECORD_EXISTS).",
+            "enum": [
+              "before",
+              "after"
+            ],
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Finalized `fitout_photo` files.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "commonAreaId",
+          "phase",
+          "photoFileIds"
         ],
         "type": "object"
       },
@@ -129121,6 +129252,55 @@
           }
         ],
         "summary": "Approve a pending permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/area-records": {
+      "post": {
+        "description": "One to ten photos and a note the household reads; once per area and stage.",
+        "operationId": "StaffFitOutController_recordArea",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordAreaDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a common area before or after the works",
         "tags": [
           "permits"
         ],

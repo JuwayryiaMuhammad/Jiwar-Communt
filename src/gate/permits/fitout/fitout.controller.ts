@@ -18,8 +18,10 @@ import { parseId } from '../../../core/common/validation/parse-id.pipe';
 import {
   AddPermitDrawingDto,
   CancelDebrisSlotDto,
+  RecordAreaDto,
   ScheduleDebrisSlotDto,
 } from './dto/fitout.dto';
+import { AreaRecordsService } from './area-records.service';
 import { DebrisSlotsService } from './debris-slots.service';
 import { debrisSlotRead, FitOutService } from './fitout.service';
 import { PermitDrawingsService } from './permit-drawings.service';
@@ -127,10 +129,27 @@ export class StaffFitOutController {
   constructor(
     private readonly fitOut: FitOutService,
     private readonly debris: DebrisSlotsService,
+    private readonly areas: AreaRecordsService,
   ) {}
 
   private view = async (id: string) =>
     FitOutView.from(await this.fitOut.get(id, 'staff'));
+
+  @Post('area-records')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Record a common area before or after the works',
+    description:
+      'One to ten photos and a note the household reads; once per area and stage.',
+  })
+  @ApiCreatedResponse({ type: FitOutView })
+  async recordArea(
+    @Param('id', parseId()) id: string,
+    @Body() dto: RecordAreaDto,
+  ): Promise<FitOutView> {
+    await this.areas.record(id, dto);
+    return this.view(id);
+  }
 
   @Get('fit-out')
   @NoStore()

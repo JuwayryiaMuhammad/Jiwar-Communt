@@ -12,6 +12,7 @@ import { permitReference } from '../permit-core';
 import { viewStatus, type PermitViewStatus } from '../permit-records';
 import { timeOf } from '../permit-rules';
 import { PermitSettingsService } from '../permit-settings.service';
+import { AreaRecordsService } from './area-records.service';
 import { DebrisSlotsService } from './debris-slots.service';
 import { FitOutAccess, type FitOutSide } from './fitout-access';
 import { PermitDrawingsService } from './permit-drawings.service';
@@ -31,6 +32,20 @@ export interface FitOutRead {
     file: PresignedRead | null;
   }[];
   debrisSlots: DebrisSlotRead[];
+  /** Each common area recorded, before the works and after them. */
+  areas: {
+    commonArea: { id: string; code: string; nameEn: string; nameAr: string };
+    before: AreaStageRead | null;
+    after: AreaStageRead | null;
+  }[];
+}
+
+/** One stage of an area: the management's photos and note. */
+export interface AreaStageRead {
+  id: string;
+  recordedAt: Date;
+  note: string | null;
+  photos: (PresignedRead | null)[];
 }
 
 /** A debris removal, as the views show it: sides and codes, never a person. */
@@ -72,7 +87,8 @@ export function debrisSlotRead(d: PermitDebrisSlot): DebrisSlotRead {
  * What a works permit's fit-out holds (ADR 0074), for its household and
  * for the management, read in one transaction: the deposit named on it
  * (through core's WorksDeposits port: the gate never reads finance), the
- * drawings with a read of each, and the debris removals.
+ * drawings with a read of each, the debris removals, and the common areas
+ * before and after the works.
  */
 @Injectable()
 export class FitOutService {
@@ -84,6 +100,7 @@ export class FitOutService {
     private readonly settings: PermitSettingsService,
     private readonly drawings: PermitDrawingsService,
     private readonly debris: DebrisSlotsService,
+    private readonly areas: AreaRecordsService,
   ) {}
 
   get(permitId: string, side: FitOutSide): Promise<FitOutRead> {
@@ -117,6 +134,46 @@ export class FitOutService {
         : null,
       drawings,
       debrisSlots: (await this.debris.of(tx, p.id)).map(debrisSlotRead),
+      areas: await this.areaReads(tx, p.id),
     };
+  }
+
+  private async areaReads(
+    tx: TenantTxClient,
+    permitId: string,
+  ): Promise<FitOutRead['areas']> {
+    const records = await this.areas.of(tx, permitId);
+    if (!records.length) return [];
+    const ids = [...new Set(records.map((r) => r.record.commonAreaId))];
+    const areas = await tx.commonArea.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, code: true, nameEn: true, nameAr: true },
+    });
+    const out: FitOutRead['areas'] = [];
+    for (const id of ids) {
+      const stage = async (
+        phase: 'before' | 'after',
+      ): Promise<AreaStageRead | null> => {
+        const r = records.find(
+          (x) => x.record.commonAreaId === id && x.record.phase === phase,
+        );
+        if (!r) return null;
+        const photos: (PresignedRead | null)[] = [];
+        for (const ph of r.photos)
+          photos.push(await this.files.readUrl(tx, ph.fileId));
+        return {
+          id: r.record.id,
+          recordedAt: r.record.recordedAt,
+          note: r.record.note,
+          photos,
+        };
+      };
+      out.push({
+        commonArea: areas.find((a) => a.id === id)!,
+        before: await stage('before'),
+        after: await stage('after'),
+      });
+    }
+    return out;
   }
 }

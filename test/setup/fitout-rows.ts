@@ -77,3 +77,66 @@ export async function debrisSlotRow(
   });
   return id;
 }
+
+/** An active common area of kind `area`. */
+export async function commonAreaRow(
+  tx: TenantTxClient,
+  tenantId: string,
+): Promise<string> {
+  const id = newId();
+  await tx.commonArea.create({
+    data: {
+      id,
+      tenantId,
+      kind: 'area',
+      code: `FA-${id.slice(-8)}`,
+      nameAr: 'المدخل',
+      nameEn: 'Lobby',
+    },
+  });
+  return id;
+}
+
+/** A common area before the works, recorded now. */
+export async function areaRecordRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    permitId: string;
+    commonAreaId: string;
+    recordedBy: string;
+    phase?: 'before' | 'after';
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.permitAreaRecord.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      permitId: input.permitId,
+      commonAreaId: input.commonAreaId,
+      phase: input.phase ?? 'before',
+      recordedBy: input.recordedBy,
+      recordedAt: dbClock(),
+    },
+  });
+  return id;
+}
+
+/** A photo of an area record. */
+export async function areaPhotoRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; recordId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.permitAreaPhoto.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      recordId: input.recordId,
+      fileId: await fitOutFileRow(tx, input.tenantId),
+      createdAt: dbClock(),
+    },
+  });
+  return id;
+}

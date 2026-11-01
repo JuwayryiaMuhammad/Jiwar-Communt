@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PresignedReadView } from '../../../../core/files/views/file.views';
-import type { DebrisSlotRead, FitOutRead } from '../fitout.service';
+import type {
+  AreaStageRead,
+  DebrisSlotRead,
+  FitOutRead,
+} from '../fitout.service';
 
 /** The finishing-works deposit named on a works permit (ADR 0074). */
 export class FitOutDepositView {
@@ -75,6 +79,53 @@ export class DebrisSlotView {
   }
 }
 
+export class FitOutAreaRefView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String })
+  code: string;
+  @ApiProperty({ type: String })
+  nameEn: string;
+  @ApiProperty({ type: String })
+  nameAr: string;
+}
+
+/** A common area at one stage of the works: the management's photos and note. */
+export class AreaStageView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  recordedAt: Date;
+  @ApiProperty({ type: String, nullable: true })
+  note: string | null;
+  @ApiProperty({
+    type: [PresignedReadView],
+    description: 'A read of each photo; null where one is gone.',
+  })
+  photos: (PresignedReadView | null)[];
+
+  static from(r: AreaStageRead | null): AreaStageView | null {
+    return r
+      ? {
+          id: r.id,
+          recordedAt: r.recordedAt,
+          note: r.note,
+          photos: r.photos.map((ph) => PresignedReadView.from(ph)),
+        }
+      : null;
+  }
+}
+
+/** A common area before and after the works (ADR 0074). */
+export class FitOutAreaView {
+  @ApiProperty({ type: FitOutAreaRefView })
+  commonArea: FitOutAreaRefView;
+  @ApiProperty({ type: AreaStageView, nullable: true })
+  before: AreaStageView | null;
+  @ApiProperty({ type: AreaStageView, nullable: true })
+  after: AreaStageView | null;
+}
+
 /**
  * A works permit's fit-out (ADR 0074): its deposit, its drawings — for
  * its household (the requester, the unit's primary) and the management.
@@ -108,6 +159,11 @@ export class FitOutView {
   drawings: PermitDrawingView[];
   @ApiProperty({ type: [DebrisSlotView], description: 'By their window.' })
   debrisSlots: DebrisSlotView[];
+  @ApiProperty({
+    type: [FitOutAreaView],
+    description: 'Each common area recorded, before the works and after them.',
+  })
+  areas: FitOutAreaView[];
 
   static from(r: FitOutRead): FitOutView {
     return {
@@ -122,6 +178,11 @@ export class FitOutView {
         file: PresignedReadView.from(d.file),
       })),
       debrisSlots: r.debrisSlots.map((d) => DebrisSlotView.from(d)),
+      areas: r.areas.map((a) => ({
+        commonArea: { ...a.commonArea },
+        before: AreaStageView.from(a.before),
+        after: AreaStageView.from(a.after),
+      })),
     };
   }
 }

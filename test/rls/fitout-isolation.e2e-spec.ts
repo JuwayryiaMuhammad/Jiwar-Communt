@@ -3,7 +3,13 @@ import { join } from 'node:path';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { debrisSlotRow, drawingRow } from '../setup/fitout-rows';
+import {
+  areaPhotoRow,
+  areaRecordRow,
+  commonAreaRow,
+  debrisSlotRow,
+  drawingRow,
+} from '../setup/fitout-rows';
 import { permitRow } from '../setup/permits-rows';
 
 /** What a seed needs from one compound. */
@@ -13,6 +19,9 @@ interface Side {
   accountId: string;
   /** A works permit of the unit. */
   permitId: string;
+  commonAreaId: string;
+  /** A record of the area before the permit's works. */
+  areaRecordId: string;
 }
 
 /**
@@ -50,6 +59,23 @@ const TABLES: Table[] = [
         scheduledBy: link.accountId,
       }),
   },
+  {
+    table: 'permit_area_records',
+    // One per area and stage: `after`, on the seed's `before`.
+    insert: (tx, own, link) =>
+      areaRecordRow(tx, {
+        tenantId: own.tenantId,
+        permitId: link.permitId,
+        commonAreaId: link.commonAreaId,
+        recordedBy: link.accountId,
+        phase: 'after',
+      }),
+  },
+  {
+    table: 'permit_area_photos',
+    insert: (tx, own, link) =>
+      areaPhotoRow(tx, { tenantId: own.tenantId, recordId: link.areaRecordId }),
+  },
 ];
 
 describe('RLS isolation — fit-out completion (ADR 0074)', () => {
@@ -68,12 +94,21 @@ describe('RLS isolation — fit-out completion (ADR 0074)', () => {
       unitId: (await createUnit(h, tenantId)).id,
       accountId: (await createAccountRow(h, tenantId)).id,
       permitId: '',
+      commonAreaId: '',
+      areaRecordId: '',
     };
     await inTenant(s, async (tx) => {
       s.permitId = await permitRow(tx, {
         tenantId,
         unitId: s.unitId,
         requestedById: s.accountId,
+      });
+      s.commonAreaId = await commonAreaRow(tx, tenantId);
+      s.areaRecordId = await areaRecordRow(tx, {
+        tenantId,
+        permitId: s.permitId,
+        commonAreaId: s.commonAreaId,
+        recordedBy: s.accountId,
       });
     });
     return s;

@@ -46107,6 +46107,50 @@
           }
         },
         {
+          "name": "Record a common area before or after the works",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"commonAreaId\": \"\",\n  \"phase\": \"before\",\n  \"photoFileIds\": [\n    \"\"\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `commonAreaId` | string (uuid) | yes | An active common area. |\n| `note` | string |  | What the household reads with the photos. |\n| `phase` | `before` \\| `after` | yes | `before` while the permit is open; `after` on an approved permit once `before` is recorded (AREA_RECORD_NO_BEFORE). Once per area and stage (AREA_RECORD_EXISTS). |\n| `photoFileIds` | string (uuid)[] | yes | Finalized `fitout_photo` files. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "area-records"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/area-records",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Schedule a debris removal of the works",
           "request": {
             "body": {

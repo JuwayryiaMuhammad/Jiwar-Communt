@@ -2118,6 +2118,39 @@ model PermitDebrisSlot {
   @@map("permit_debris_slots")
 }
 
+/// A common area before or after a works permit's works (ADR 0074): the
+/// management's photos and note, one record per area and stage, never
+/// changed. Keys are the database's.
+model PermitAreaRecord {
+  id           String         @id @db.Uuid
+  tenantId     String         @map("tenant_id") @db.Uuid
+  permitId     String         @map("permit_id") @db.Uuid
+  /// Always works (CHECK), for the composite key on the permit's kind.
+  permitKind   UnitPermitKind @default(works) @map("permit_kind")
+  commonAreaId String         @map("common_area_id") @db.Uuid
+  /// before | after (CHECK).
+  phase        String
+  note         String?
+  recordedBy   String         @map("recorded_by") @db.Uuid
+  recordedAt   DateTime       @map("recorded_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([permitId, commonAreaId, phase], map: "permit_area_records_stage_key")
+  @@map("permit_area_records")
+}
+
+/// An area record's photo (ADR 0074): attached with it, never detached.
+model PermitAreaPhoto {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  recordId  String   @map("record_id") @db.Uuid
+  fileId    String   @unique @map("file_id") @db.Uuid
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@index([tenantId, recordId], map: "permit_area_photos_record_idx")
+  @@map("permit_area_photos")
+}
+
 /// The works completion certificate's public pointer (ADR 0063): global.
 model WorksCertificateLink {
   codeHash     String   @id @map("code_hash") @db.Char(64)

@@ -43,6 +43,19 @@ import { month, ofDbDate } from '../setup/compound-clock';
 const born = (y: number, m: number, d: number) =>
   new Date(Date.UTC(y, m - 1, d));
 const iso = ofDbDate;
+
+/**
+ * Whether a response shows a secret. A digits-only secret (a gate code, an
+ * access code, a national ID) counts as a whole token only: six random
+ * digits also turn up inside the hex of an unrelated id (`…a917949b…`),
+ * which is no leak. A leaked code still stands alone (`"917949"`,
+ * `code=917949`), so it is still found.
+ */
+function shows(text: string, secret: string): boolean {
+  if (!secret) return false;
+  if (!/^\d+$/.test(secret)) return text.includes(secret);
+  return new RegExp(`(?<![0-9A-Za-z])${secret}(?![0-9A-Za-z])`).test(text);
+}
 import { at, day } from '../setup/facilities';
 import { BlocklistService } from '../../src/gate/blocklist/blocklist.service';
 import { FieldExceptionsService } from '../../src/gate/exceptions/field-exceptions.service';
@@ -78,6 +91,15 @@ describe('API v0 — PII leak scan', () => {
   }, 120_000);
 
   afterAll(() => h.close());
+
+  it('a digits-only secret is found standing alone, not inside an id', () => {
+    expect(shows('{"code":"917949"}', '917949')).toBe(true);
+    expect(shows('/verify?code=917949', '917949')).toBe(true);
+    expect(shows('code 917949.', '917949')).toBe(true);
+    expect(shows('{"id":"0c1f-a917949b-77"}', '917949')).toBe(false);
+    expect(shows('{"n":19179490}', '917949')).toBe(false);
+    expect(shows('{"note":"PII-NOTE-card"}', 'PII-NOTE-card')).toBe(true);
+  });
 
   it('no GET response carries what its reader may not see', async () => {
     const c = w.helpers;
@@ -1914,7 +1936,7 @@ describe('API v0 — PII leak scan', () => {
         });
         const text = res.text ?? '';
         seen.set(`${name} ${r.path}`, text);
-        const found = (s: string) => s && text.includes(s);
+        const found = (s: string) => shows(text, s);
         // ADR 0043: a pass's code is shown again to its host and the
         // unit's primary, on the pass's own detail; nowhere else.
         const passCodeReader =
@@ -2846,7 +2868,7 @@ describe('API v0 — PII leak scan', () => {
         for (const v of ['PII-VISITOR-name', visitorPhone, 'PII-ASKED-name'])
           if (found(v)) leaks.push(`public ${host} ${path}: a visitor's data`);
         for (const secret of secrets)
-          if (secret !== issued.code && found(secret))
+          if (secret !== issued.code && shows(text, secret))
             leaks.push(`public ${host} ${path}: secret ${secret}`);
         // Positive control: the pass's own code is there.
         expect(text).toContain(issued.code!);

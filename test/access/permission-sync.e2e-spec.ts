@@ -2441,4 +2441,55 @@ describe('Permission sync', () => {
       });
     });
   });
+
+  describe('Phase M2-1 (ADR 0072)', () => {
+    const m21 = ['units.manage'];
+    /** The catalog before M2-1: no units.manage anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m21.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m21.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: units.manage to the manager alone; no staff or resident role gains it', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M2-1 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added]).toEqual(m21);
+      expect(report.rolesCreated).toEqual([]);
+      expect((await role(t, 'manager')).permissions).toContain('units.manage');
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'security_supervisor',
+        'technician',
+        'maintenance_supervisor',
+        'accountant',
+        'collector',
+        'unit_proxy',
+      ])
+        expect((await role(t, key)).permissions).not.toContain('units.manage');
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
 });

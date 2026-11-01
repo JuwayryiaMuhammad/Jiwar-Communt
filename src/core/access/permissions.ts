@@ -29,6 +29,10 @@ export interface PermissionDefinition {
 export const PERMISSIONS = {
   'units.read': { kinds: ['manager', 'resident', 'family', 'proxy'] },
   'units.create': { kinds: ['manager'] },
+  // The unit register (ADR 0072): a unit's building, floor, type and area
+  // (never its code), the compound's buildings, the units' CSV and the bulk
+  // import of units and residents.
+  'units.manage': { kinds: ['manager'] },
   // The compound's units as a list (`GET /units`) for a staff role: their
   // codes, buildings and floors, never their people. Not `units.read`: that
   // one opens each unit's household and money to whoever the unit is theirs.

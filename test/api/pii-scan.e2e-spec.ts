@@ -1791,6 +1791,7 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/assets/{id}/events': w.bAssetId,
       '/maintenance/assets/{id}/impact': w.bAssetId,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
+      '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,
       // ADR 0064: a ticket's checklist (none on this one: not found).
       '/technician/tickets/{id}/checklist': ticket.id,

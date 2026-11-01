@@ -96,6 +96,61 @@ export const UNITS_ROUTES: Row[] = [
   },
   {
     method: 'GET',
+    path: '/staff/unit-imports',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [{ field: 'limit', code: 'INVALID_NUMBER', params: LIMIT }],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-imports',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { kind: 'flats', fileId: 'x' },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['units', 'residents'] },
+        },
+        { field: 'fileId', code: 'INVALID_UUID' },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/unit-imports/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bUnitImportId }),
+      code: 'UNIT_IMPORT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-imports/{id}/apply',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bUnitImportId }),
+      code: 'UNIT_IMPORT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
     path: '/buildings',
     auth: 'tenant',
     as: 'manager',

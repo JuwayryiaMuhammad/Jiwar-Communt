@@ -990,4 +990,7 @@ export const M21_COVERAGE: readonly string[] = [
   'unit.updated',
   'building.created',
   'building.deleted',
+  'unit_import.checked',
+  'unit_import.applied',
+  'unit_import.expired',
 ];

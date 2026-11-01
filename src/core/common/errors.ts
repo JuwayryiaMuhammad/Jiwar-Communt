@@ -1695,10 +1695,10 @@ export const ErrorCode = {
   /** Units name it: move them first (409, params.units). */
   BUILDING_IN_USE: 'BUILDING_IN_USE',
   UNIT_IMPORT_NOT_FOUND: 'UNIT_IMPORT_NOT_FOUND',
-  /** Its dry run is over a day old: upload the file again (409). */
-  UNIT_IMPORT_EXPIRED: 'UNIT_IMPORT_EXPIRED',
-  /** Committed already (409). */
-  UNIT_IMPORT_COMMITTED: 'UNIT_IMPORT_COMMITTED',
+  /** Only a valid import is applied, once, within a day (409, params.status). */
+  UNIT_IMPORT_NOT_VALID: 'UNIT_IMPORT_NOT_VALID',
+  /** Not CSV a spreadsheet would write (422, params.problem, params.line). */
+  UNIT_IMPORT_UNREADABLE: 'UNIT_IMPORT_UNREADABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

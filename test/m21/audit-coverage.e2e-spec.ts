@@ -1,4 +1,8 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { UNIT_IMPORTS_SWEEP } from '../../src/community/units/unit-imports.service';
+import { daysLater } from '../setup/compound-clock';
+import { fileHelpers } from '../setup/files';
 import { M21_COVERAGE } from '../setup/audit-coverage-split';
 import type { Compound } from '../setup/community';
 import { uniqueSuffix } from '../setup/fixtures';
@@ -59,6 +63,56 @@ describe('Audit coverage — the unit register', () => {
         floor: { from: 1, to: 4 },
         areaSqm: { from: null, to: '80.00' },
       },
+    });
+  });
+
+  it('unit_import.checked, .applied and .expired — kind and counts, never a cell', async () => {
+    const files = fileHelpers(h);
+    const upload = async (text: string) => {
+      const id = await files.uploaded(
+        manager.token,
+        'data_import',
+        'text/csv',
+        Buffer.from(text, 'utf8'),
+      );
+      await files.finalize(manager.token, id).expect(200);
+      return id;
+    };
+    const code = `AUD${uniqueSuffix()}`;
+    const checked = (
+      await u
+        .http('post', '/staff/unit-imports', manager.token, {
+          kind: 'units',
+          fileId: await upload(`code\r\n${code}`),
+        })
+        .expect(201)
+    ).body as { id: string };
+    expect(await single('unit_import.checked', checked.id)).toMatchObject({
+      actorId: manager.id,
+      targetType: 'unit_import',
+      metadata: { kind: 'units', rowCount: 1, errorCount: 0 },
+    });
+    await u
+      .http('post', `/staff/unit-imports/${checked.id}/apply`, manager.token)
+      .expect(201);
+    const applied = await single('unit_import.applied', checked.id);
+    expect(applied).toMatchObject({
+      actorId: manager.id,
+      metadata: { kind: 'units', created: 1 },
+    });
+    expect(JSON.stringify(applied)).not.toContain(code);
+    const later = (
+      await u
+        .http('post', '/staff/unit-imports', manager.token, {
+          kind: 'units',
+          fileId: await upload(`code\r\n${code}-2`),
+        })
+        .expect(201)
+    ).body as { id: string };
+    await h.moduleRef.get(SweepRunner).run(UNIT_IMPORTS_SWEEP, daysLater(2));
+    expect(await single('unit_import.expired', later.id)).toMatchObject({
+      actorType: 'system',
+      metadata: { kind: 'units' },
     });
   });
 

@@ -2634,6 +2634,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // M2-1 (ADR 0072): the unit register.
   buildings_name_length: {},
   units_building_both: {},
+  unit_imports_kind_known: {},
+  unit_imports_status_known: {},
+  unit_imports_counts_range: {},
+  unit_imports_state_shape: {},
+  unit_imports_file_kept: {},
 };
 
 interface Check {

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { buildingRow } from '../setup/units-rows';
+import { buildingRow, sheetFileRow, unitImportRow } from '../setup/units-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -35,6 +35,17 @@ const TABLES: Table[] = [
     table: 'buildings',
     linked: false,
     insert: (tx, own) => buildingRow(tx, own.tenantId),
+  },
+  {
+    table: 'unit_imports',
+    // The sheet is the importer's compound's file; the link is to the
+    // other compound's account.
+    insert: async (tx, own, link) =>
+      unitImportRow(tx, {
+        tenantId: own.tenantId,
+        createdById: link.accountId,
+        fileId: await sheetFileRow(tx, own.tenantId),
+      }),
   },
 ];
 

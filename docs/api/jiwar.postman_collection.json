@@ -49433,6 +49433,137 @@
           }
         },
         {
+          "name": "List unit and resident imports, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-imports"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-imports"
+            }
+          }
+        },
+        {
+          "name": "Check a sheet of units or residents",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"units\",\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fileId` | string (uuid) | yes | One of the caller’s finalized `data_import` files: UTF-8 CSV with a header row. |\n| `kind` | `units` \\| `residents` | yes | `units`: code, and building, floor, unit_type, area_sqm (up to 2000 rows). `residents`: full_name, phone, email, id_document_type, id_document_number, unit, occupancy_type, and nationality, birth_date, resides, preferred_locale (up to 300 rows). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-imports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-imports"
+            }
+          }
+        },
+        {
+          "name": "Get a unit or resident import",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-imports",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-imports/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apply a valid import of the last day: every row, or none (then it is invalid)",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-imports",
+                ":id",
+                "apply"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-imports/:id/apply",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "The units, with the same filters, as CSV",
           "request": {
             "description": "**Responses:** 200",

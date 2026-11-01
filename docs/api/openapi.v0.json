@@ -7676,6 +7676,28 @@
         ],
         "type": "object"
       },
+      "CheckUnitImportDto": {
+        "properties": {
+          "fileId": {
+            "description": "One of the caller’s finalized `data_import` files: UTF-8 CSV with a header row.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "description": "`units`: code, and building, floor, unit_type, area_sqm (up to 2000 rows). `residents`: full_name, phone, email, id_document_type, id_document_number, unit, occupancy_type, and nationality, birth_date, resides, preferred_locale (up to 300 rows).",
+            "enum": [
+              "units",
+              "residents"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "fileId"
+        ],
+        "type": "object"
+      },
       "ChecklistAnswerDto": {
         "properties": {
           "note": {
@@ -64694,6 +64716,110 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/UnitHistoryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "UnitImportProblemView": {
+        "properties": {
+          "code": {
+            "description": "A field error code.",
+            "type": "string"
+          },
+          "field": {
+            "description": "The column.",
+            "type": "string"
+          },
+          "line": {
+            "description": "The sheet’s line; the header is 1.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "line",
+          "field",
+          "code"
+        ],
+        "type": "object"
+      },
+      "UnitImportView": {
+        "properties": {
+          "appliedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "appliedCount": {
+            "description": "Units or residents created, once applied.",
+            "nullable": true,
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "errorCount": {
+            "type": "number"
+          },
+          "errors": {
+            "description": "The first 100 problems, in sheet order. Never a cell’s text.",
+            "items": {
+              "$ref": "#/components/schemas/UnitImportProblemView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "units",
+              "residents"
+            ],
+            "type": "string"
+          },
+          "rowCount": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "invalid",
+              "applied",
+              "expired"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "rowCount",
+          "errorCount",
+          "errors",
+          "appliedCount",
+          "createdAt",
+          "appliedAt"
+        ],
+        "type": "object"
+      },
+      "UnitImportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UnitImportView"
             },
             "type": "array"
           },
@@ -122377,6 +122503,175 @@
           "guard-duty"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-imports": {
+      "get": {
+        "operationId": "UnitImportsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitImportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List unit and resident imports, newest first",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "UnitImportsController_check",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckUnitImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check a sheet of units or residents",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-imports/{id}": {
+      "get": {
+        "operationId": "UnitImportsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a unit or resident import",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-imports/{id}/apply": {
+      "post": {
+        "operationId": "UnitImportsController_apply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Apply a valid import of the last day: every row, or none (then it is invalid)",
+        "tags": [
+          "units"
+        ],
         "x-stability": "draft"
       }
     },

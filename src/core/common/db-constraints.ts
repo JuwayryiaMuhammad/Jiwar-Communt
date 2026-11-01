@@ -958,4 +958,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // service (BUILDING_NAME_TAKEN); a violation names the field.
   buildings_tenant_id_id_key: null,
   buildings_name_key: ['name'],
+  // A sheet is one import's, claimed under the file's lock first.
+  unit_imports_tenant_id_id_key: null,
+  unit_imports_file_id_key: null,
 };

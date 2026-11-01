@@ -180,6 +180,10 @@ export const AUDIT_ACTIONS = {
   'unit.updated': { log: 'tenant', target: 'unit' },
   'building.created': { log: 'tenant', target: 'building' },
   'building.deleted': { log: 'tenant', target: 'building' },
+  // A sheet of units or residents (ADR 0072): counts, never a cell.
+  'unit_import.checked': { log: 'tenant', target: 'unit_import' },
+  'unit_import.applied': { log: 'tenant', target: 'unit_import' },
+  'unit_import.expired': { log: 'tenant', target: 'unit_import' },
   'unit.household_review_flagged': { log: 'tenant', target: 'unit' },
   'unit.household_review_cleared': { log: 'tenant', target: 'unit' },
   'unit.household_ended': { log: 'tenant', target: 'unit' },

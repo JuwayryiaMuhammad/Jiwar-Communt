@@ -18044,6 +18044,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/unit-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List unit and resident imports, newest first */
+        get: operations["UnitImportsController_list"];
+        put?: never;
+        /** Check a sheet of units or residents */
+        post: operations["UnitImportsController_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-imports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a unit or resident import */
+        get: operations["UnitImportsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-imports/{id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply a valid import of the last day: every row, or none (then it is invalid) */
+        post: operations["UnitImportsController_apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits": {
         parameters: {
             query?: never;
@@ -24513,6 +24565,18 @@ export interface components {
              * @description One of the caller’s finalized `data_import` files: UTF-8 CSV, a header row (meter, read_on, value, and reset).
              */
             fileId: string;
+        };
+        CheckUnitImportDto: {
+            /**
+             * Format: uuid
+             * @description One of the caller’s finalized `data_import` files: UTF-8 CSV with a header row.
+             */
+            fileId: string;
+            /**
+             * @description `units`: code, and building, floor, unit_type, area_sqm (up to 2000 rows). `residents`: full_name, phone, email, id_document_type, id_document_number, unit, occupancy_type, and nationality, birth_date, resides, preferred_locale (up to 300 rows).
+             * @enum {string}
+             */
+            kind: "units" | "residents";
         };
         ChecklistAnswerDto: {
             note?: string;
@@ -42289,6 +42353,36 @@ export interface components {
         };
         UnitHistoryViewList: {
             data: components["schemas"]["UnitHistoryView"][];
+            nextCursor: string | null;
+        };
+        UnitImportProblemView: {
+            /** @description A field error code. */
+            code: string;
+            /** @description The column. */
+            field: string;
+            /** @description The sheet’s line; the header is 1. */
+            line: number;
+        };
+        UnitImportView: {
+            /** Format: date-time */
+            appliedAt: string | null;
+            /** @description Units or residents created, once applied. */
+            appliedCount: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            errorCount: number;
+            /** @description The first 100 problems, in sheet order. Never a cell’s text. */
+            errors: components["schemas"]["UnitImportProblemView"][];
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "units" | "residents";
+            rowCount: number;
+            /** @enum {string} */
+            status: "valid" | "invalid" | "applied" | "expired";
+        };
+        UnitImportViewList: {
+            data: components["schemas"]["UnitImportView"][];
             nextCursor: string | null;
         };
         UnitInspectionReportView: {
@@ -71120,6 +71214,97 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGuardTaskView"];
+                };
+            };
+        };
+    };
+    UnitImportsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitImportViewList"];
+                };
+            };
+        };
+    };
+    UnitImportsController_check: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckUnitImportDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitImportView"];
+                };
+            };
+        };
+    };
+    UnitImportsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitImportView"];
+                };
+            };
+        };
+    };
+    UnitImportsController_apply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitImportView"];
                 };
             };
         };

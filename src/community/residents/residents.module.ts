@@ -13,6 +13,8 @@ import {
   StaffUnitHistoryController,
   UnitActionsController,
 } from './unit-actions.controller';
+import { UnitImportsController } from '../units/unit-imports.controller';
+import { UnitImportsService } from '../units/unit-imports.service';
 import { UnitStatesController } from './unit-states.controller';
 import { FilesModule } from '../../core/files/files.module';
 import { RegistrationDocumentsService } from './registration-documents.service';
@@ -57,6 +59,7 @@ import { ResidentsService } from './residents.service';
     MeUnitsController,
     UnitActionsController,
     StaffUnitHistoryController,
+    UnitImportsController,
     OccupanciesController,
     UnitStatesController,
     ResidentsController,
@@ -83,6 +86,7 @@ import { ResidentsService } from './residents.service';
   ],
   providers: [
     ResidentsService,
+    UnitImportsService,
     FreezeHooks,
     ErasureHooks,
     RegistrationService,

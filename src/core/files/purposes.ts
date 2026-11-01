@@ -357,7 +357,8 @@ export const FILE_PURPOSES = {
   data_import: {
     types: CSV_TYPES,
     maxBytes: 1 * MB,
-    uploaders: ['assets.manage', 'energy.manage'],
+    // ADR 0072: sheets of units and of residents.
+    uploaders: ['assets.manage', 'energy.manage', 'units.manage'],
   },
   // A face a guard checks against the blocklist's faces (ADR 0068): the
   // guard's, purged after a day unless it matched (then kept 30 days with

@@ -1,7 +1,7 @@
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
-import { buildingRow } from '../setup/units-rows';
+import { buildingRow, unitImportRow } from '../setup/units-rows';
 import type { Side } from './world';
 
 /**
@@ -11,6 +11,8 @@ import type { Side } from './world';
 export interface M21World {
   /** A building of B's no unit names. */
   bBuildingId: string;
+  /** A valid units import of B's manager. */
+  bUnitImportId: string;
 }
 
 export async function m21World(
@@ -22,6 +24,10 @@ export async function m21World(
   return helpers.asManager(b, () =>
     tenantTx.withTenantTx(async (tx) => ({
       bBuildingId: await buildingRow(tx, b.tenantId),
+      bUnitImportId: await unitImportRow(tx, {
+        tenantId: b.tenantId,
+        createdById: b.ids.manager,
+      }),
     })),
   );
 }

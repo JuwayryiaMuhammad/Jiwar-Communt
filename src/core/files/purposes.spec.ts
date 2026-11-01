@@ -346,10 +346,11 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.gallery_photo.uploaders).toEqual(['content.manage']);
   });
 
-  it('a sheet to import is uploaded by whoever keeps the register or the meters (ADR 0064, 0066)', () => {
+  it('a sheet to import is uploaded by whoever keeps the register, the meters or the units (ADR 0064, 0066, 0072)', () => {
     expect(FILE_PURPOSES.data_import.uploaders).toEqual([
       'assets.manage',
       'energy.manage',
+      'units.manage',
     ]);
   });
 

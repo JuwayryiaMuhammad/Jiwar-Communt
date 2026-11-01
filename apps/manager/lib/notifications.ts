@@ -124,6 +124,13 @@ const TEXT: Record<string, (p: P) => string> = {
   // The owners' voice, the board's side (ADR 0059): never who.
   'governance_agenda.proposed': () => 'An owner proposed a matter for the board’s agenda',
   'governance_objection.lodged': () => 'An owner objected to a decision of the board',
+  // The board's work (ADR 0075): codes only, never a name.
+  'board_meeting.scheduled': (p) => `${cap(aWords(p.kind))} meeting of the board was scheduled`,
+  'board_meeting.cancelled': (p) => `A meeting of the board was called off (${words(p.reason)})`,
+  'board_meeting_action.assigned': () => 'The board gave you an action item from its meeting',
+  'board_meeting_action.overdue': () => 'An action item of yours from a board meeting is past its due day',
+  'manager_handover.delivered': () => 'A manager delivered their handover',
+  'board_report.ready': () => 'Last month’s board report is ready',
   'unit_permit.requested': (p) => `A unit asked for a permit: ${words(p.permitKind)}`,
   'unit_permit.approved': (p) => `Your permit was approved: ${words(p.permitKind)}`,
   'unit_permit.rejected': (p) => `Your permit was not approved (${words(p.reason)})`,
@@ -475,6 +482,13 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     if (n.params.matter === 'appeal') return '/board/appeals';
     return n.params.matter === 'representative' ? '/board/representatives' : '/board/approvals';
   }
+  // The board's work (ADR 0075): a meeting, an action item's meeting, the handovers, the reports.
+  if (n.targetType === 'board_meeting' && n.targetId)
+    return can('governance.board') || can('governance.manage') ? `/board/meetings/${n.targetId}` : null;
+  if (n.targetType === 'board_meeting_action')
+    return can('governance.board') || can('governance.manage') ? '/board/meetings' : null;
+  if (n.targetType === 'manager_handover') return can('governance.board') || can('governance.manage') ? '/board/handover' : null;
+  if (n.targetType === 'board_report') return can('governance.board') || can('governance.manage') ? '/board/reports' : null;
   // The owners' voice (ADR 0059): a proposal or a decision's objections, to the board's page.
   if (n.targetType === 'governance_agenda_proposal' && n.targetId)
     return can('governance.board') ? `/board/agenda/${n.targetId}` : null;

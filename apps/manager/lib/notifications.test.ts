@@ -440,3 +440,15 @@ test('a brief or a review opens the briefs, service pressure the dispatch list (
   assert.equal(notificationHref(pressure, all), '/maintenance');
   assert.equal(notificationText(pressure), 'Service pressure: 12 open tickets for 1 available technician');
 });
+
+// The board's work (ADR 0075): codes only, to the board's pages.
+test('the board’s work: meetings, action items, handovers and reports', () => {
+  const all = () => true;
+  assert.equal(notificationText(n('board_meeting.scheduled', { kind: 'extraordinary' })), 'An extraordinary meeting of the board was scheduled');
+  assert.equal(notificationText(n('board_meeting.cancelled', { reason: 'postponed' })), 'A meeting of the board was called off (postponed)');
+  assert.equal(notificationHref(n('board_meeting.scheduled', { kind: 'regular' }, 'board_meeting', 'm-1'), all), '/board/meetings/m-1');
+  assert.equal(notificationHref(n('board_meeting_action.overdue', {}, 'board_meeting_action', 'a-1'), all), '/board/meetings');
+  assert.equal(notificationHref(n('manager_handover.delivered', {}, 'manager_handover', 'h-1'), all), '/board/handover');
+  assert.equal(notificationHref(n('board_report.ready', {}, 'board_report', 'r-1'), all), '/board/reports');
+  assert.equal(notificationHref(n('board_report.ready', {}, 'board_report', 'r-1'), () => false), null);
+});

@@ -49,6 +49,7 @@ function NewPoll({ onClose }: { onClose: () => void }) {
             titleEn: titleEn.trim(),
             bodyEn: bodyEn.trim(),
             secret,
+            weighting: 'unit',
             quorumPct,
             thresholdPct,
             ...(kind === 'choice' ? { options: options.map((labelEn) => ({ labelEn: labelEn.trim() })) } : {}),

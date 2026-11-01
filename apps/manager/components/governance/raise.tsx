@@ -28,6 +28,7 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
   const [key] = useState(() => crypto.randomUUID());
   const [type, setType] = useState<ApprovalType>(budgetId ? 'annual_budget' : 'major_contract');
   const [lineId, setLineId] = useState('');
+  const [managerId, setManagerId] = useState('');
   const [context, setContext] = useState('');
   const [impact, setImpact] = useState('');
   const [cost, setCost] = useState('');
@@ -40,6 +41,13 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
     enabled: subject === 'budget_line',
   });
   const lines = active.data?.data[0]?.lines ?? [];
+  // ADR 0075: the board approves a manager leaving without a handover.
+  const staff = useQuery({
+    queryKey: keys.accounts,
+    queryFn: () => fetchers.accounts(undefined, 100),
+    enabled: subject === 'manager',
+  });
+  const managers = (staff.data?.data ?? []).filter((a) => a.type === 'manager' && a.status === 'active');
   const types = (Object.keys(APPROVAL_TYPE_TEXT) as ApprovalType[]).filter(
     (t) => t !== 'annual_budget' && (t !== 'budget_increase' || can('finance.budget')),
   );
@@ -54,6 +62,7 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
             impact: impact.trim(),
             ...(subject === 'budget' && budgetId ? { budgetId } : {}),
             ...(subject === 'budget_line' && lineId ? { budgetLineId: lineId } : {}),
+            ...(subject === 'manager' && managerId ? { managerAccountId: managerId } : {}),
             ...(type !== 'annual_budget' && cost.trim() ? { cost: cost.trim() } : {}),
             ...(alternatives.length
               ? { alternatives: alternatives.map((a) => ({ text: a.text.trim(), ...(a.cost.trim() ? { cost: a.cost.trim() } : {}) })) }
@@ -72,7 +81,12 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
     },
   );
   const err = (f: string) => fieldError(raise.error, f);
-  const ready = context.trim() && impact.trim() && (subject !== 'budget_line' || lineId) && alternatives.every((a) => a.text.trim());
+  const ready =
+    context.trim() &&
+    impact.trim() &&
+    (subject !== 'budget_line' || lineId) &&
+    (subject !== 'manager' || managerId) &&
+    alternatives.every((a) => a.text.trim());
   return (
     <Dialog
       open
@@ -104,6 +118,20 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
             )}
           </Field>
         )}
+        {subject === 'manager' ? (
+          <Field label="The manager" hint="An active manager who has not delivered a handover" error={err('managerAccountId')}>
+            {(p) => (
+              <Select {...p} value={managerId} onChange={(e) => setManagerId(e.target.value)}>
+                <option value="">{staff.isPending ? 'Loading…' : 'Choose a manager'}</option>
+                {managers.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.fullName}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        ) : null}
         {subject === 'budget_line' ? (
           <Field label="Line of the active budget" error={err('budgetLineId')}>
             {(p) => (

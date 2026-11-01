@@ -8,10 +8,12 @@ export const APPROVAL_TYPE_TEXT: Record<string, string> = {
   waiver_above_limit: 'Waiver above the limit',
   payment_plan_above_limit: 'Payment plan above the limit',
   legal_escalation: 'Legal escalation',
+  // ADR 0075.
+  manager_handover_override: 'A manager leaving without a handover',
 };
 
 /** What each type of request names as its subject: the raise form asks for it. */
-export const APPROVAL_SUBJECT: Record<string, 'budget' | 'budget_line' | null> = {
+export const APPROVAL_SUBJECT: Record<string, 'budget' | 'budget_line' | 'manager' | null> = {
   annual_budget: 'budget',
   budget_increase: 'budget_line',
   major_contract: null,
@@ -19,6 +21,7 @@ export const APPROVAL_SUBJECT: Record<string, 'budget' | 'budget_line' | null> =
   waiver_above_limit: null,
   payment_plan_above_limit: null,
   legal_escalation: null,
+  manager_handover_override: 'manager',
 };
 
 export const APPROVAL_STATUS_TEXT: Record<string, string> = {

@@ -48,6 +48,8 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
   // Fit-out (ADR 0074): the management's photo of a common area before and
   // after works, or of a damage claim's damage.
   fitout_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 10 MB.' },
+  // The compound's logo on the board's documents (ADR 0075): what a PDF can draw.
+  compound_logo: { types: ['image/jpeg', 'image/png'], maxBytes: 10 * 1024 * 1024, what: 'A JPEG or PNG image, up to 10 MB.' },
   // A vehicle fine's photo (ADR 0045).
   vehicle_fine_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 5 MB.' },
   // Security (ADR 0053): a banned person's or plate's photo, a violation's.

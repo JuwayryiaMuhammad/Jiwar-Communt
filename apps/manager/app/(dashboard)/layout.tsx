@@ -661,6 +661,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/governance/approvals', label: 'Approvals', icon: <ClipboardCheck aria-hidden />, show: can('governance.approvals') },
         { href: '/governance/board-appeals', label: 'Appeals to the board', icon: <Scale aria-hidden />, show: can('governance.manage') },
         { href: '/governance/settings', label: 'Board settings', icon: <SlidersHorizontal aria-hidden />, show: can('governance.manage') },
+        // The board's work (ADR 0075): shares for weighted polls, the rules, the manager's handover.
+        { href: '/governance/unit-shares', label: 'Ownership shares', icon: <Vote aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/rules', label: 'Board rules', icon: <SlidersHorizontal aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/handover', label: 'My handover', icon: <ScrollText aria-hidden />, show: can('governance.manage') },
       ],
     },
     {
@@ -674,6 +678,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/board/representatives', label: 'Representatives', icon: <Users aria-hidden />, show: can('governance.board') },
         { href: '/board/agenda', label: 'Agenda proposals', icon: <Lightbulb aria-hidden />, show: can('governance.board') },
         { href: '/board/objections', label: 'Objections', icon: <MessageSquareWarning aria-hidden />, show: can('governance.board') },
+        // The board's work (ADR 0075): meetings, handovers and the monthly report; the manager reads them too.
+        { href: '/board/meetings', label: 'Meetings', icon: <CalendarClock aria-hidden />, show: can('governance.board') || can('governance.manage') },
+        { href: '/board/handover', label: 'Handovers', icon: <ScrollText aria-hidden />, show: can('governance.board') || can('governance.manage') },
+        { href: '/board/reports', label: 'Monthly reports', icon: <ChartColumn aria-hidden />, show: can('governance.board') || can('governance.manage') },
       ],
     },
     {

@@ -30823,6 +30823,18 @@
                   "disabled": true,
                   "key": "escalated",
                   "value": ""
+                },
+                {
+                  "description": "Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names.",
+                  "disabled": true,
+                  "key": "buildingId",
+                  "value": ""
+                },
+                {
+                  "description": "A ticket’s number (`MT-000123` or `123`) or the start of a unit’s code, any case (ADR 0076).",
+                  "disabled": true,
+                  "key": "q",
+                  "value": ""
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/tickets"
@@ -30866,6 +30878,129 @@
                 "tickets"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/tickets"
+            }
+          }
+        },
+        {
+          "name": "Export the compound's tickets as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "priority",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only tickets without a technician.",
+                  "disabled": true,
+                  "key": "unassigned",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "technicianId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "categoryId",
+                  "value": ""
+                },
+                {
+                  "description": "Only tickets of this origin (ADR 0064): `resident`, or a work order of the compound’s.",
+                  "disabled": true,
+                  "key": "origin",
+                  "value": ""
+                },
+                {
+                  "description": "Only the work orders of this asset.",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only tickets that are not finished: every status but `closed` and `cancelled`. Combines with `status` (both must hold).",
+                  "disabled": true,
+                  "key": "open",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off.",
+                  "disabled": true,
+                  "key": "overdue",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off.",
+                  "disabled": true,
+                  "key": "escalated",
+                  "value": ""
+                },
+                {
+                  "description": "Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names.",
+                  "disabled": true,
+                  "key": "buildingId",
+                  "value": ""
+                },
+                {
+                  "description": "A ticket’s number (`MT-000123` or `123`) or the start of a unit’s code, any case (ADR 0076).",
+                  "disabled": true,
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Created on or after, the compound’s day.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Created on or before; at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/export?from=&to="
             }
           }
         },

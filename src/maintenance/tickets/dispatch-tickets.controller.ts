@@ -9,14 +9,17 @@ import {
   Post,
   Put,
   Query,
+  StreamableFile,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiProduces,
   ApiProperty,
 } from '@nestjs/swagger';
+import { csvFile } from '../../core/common/csv';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -43,6 +46,7 @@ import {
   AssignDto,
   CategoryChangeDto,
   CreateTicketOnBehalfDto,
+  DispatchTicketsExportQueryDto,
   DispatchTicketsQueryDto,
   PriorityDto,
   ReasonCodeDto,
@@ -53,6 +57,7 @@ import { SlaService } from '../sla/sla.service';
 import { SlaEventView } from '../sla/views/sla.views';
 import { TicketsService } from './tickets.service';
 import { WorkService } from './work.service';
+import { TicketExport } from './ticket-export';
 import {
   AssignmentView,
   DispatchTicketDetailView,
@@ -77,6 +82,7 @@ export class DispatchTicketsController {
     private readonly messages: MessagesService,
     private readonly sla: SlaService,
     private readonly work: WorkService,
+    private readonly exports: TicketExport,
   ) {}
 
   @Get()
@@ -94,6 +100,31 @@ export class DispatchTicketsController {
         escalated: q.escalated === 'true',
       }),
       (r) => DispatchTicketView.from(r),
+    );
+  }
+
+  /**
+   * The list's filters over the tickets created on a period of the
+   * compound's days, at most a year, as CSV (ADR 0076): codes, numbers and
+   * times, never anyone's words or name.
+   */
+  @Get('export')
+  @NoStore()
+  @ApiProduces('text/csv')
+  @ApiOperation({ summary: "Export the compound's tickets as CSV" })
+  @ApiOkResponse({ schema: { type: 'string' } })
+  async export(
+    @Query() q: DispatchTicketsExportQueryDto,
+  ): Promise<StreamableFile> {
+    return csvFile(
+      `tickets-${q.from}-${q.to}.csv`,
+      await this.exports.csv({
+        ...q,
+        unassigned: q.unassigned === 'true',
+        open: q.open === 'true',
+        overdue: q.overdue === 'true',
+        escalated: q.escalated === 'true',
+      }),
     );
   }
 

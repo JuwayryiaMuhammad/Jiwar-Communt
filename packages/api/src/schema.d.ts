@@ -7692,6 +7692,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the compound's tickets as CSV */
+        get: operations["DispatchTicketsController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}": {
         parameters: {
             query?: never;
@@ -56252,6 +56269,10 @@ export interface operations {
                 overdue?: "true" | "false";
                 /** @description `true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off. */
                 escalated?: "true" | "false";
+                /** @description Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names. */
+                buildingId?: string;
+                /** @description A ticket’s number (`MT-000123` or `123`) or the start of a unit’s code, any case (ADR 0076). */
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -56291,6 +56312,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketCreatedView"];
+                };
+            };
+        };
+    };
+    DispatchTicketsController_export: {
+        parameters: {
+            query: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["TicketStatus"];
+                priority?: components["schemas"]["TicketPriority"];
+                /** @description `true`: only tickets without a technician. */
+                unassigned?: "true" | "false";
+                technicianId?: string;
+                unitId?: string;
+                categoryId?: string;
+                /** @description Only tickets of this origin (ADR 0064): `resident`, or a work order of the compound’s. */
+                origin?: components["schemas"]["TicketOrigin"];
+                /** @description Only the work orders of this asset. */
+                assetId?: string;
+                /** @description `true`: only tickets that are not finished: every status but `closed` and `cancelled`. Combines with `status` (both must hold). */
+                open?: "true" | "false";
+                /** @description `true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off. */
+                overdue?: "true" | "false";
+                /** @description `true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off. */
+                escalated?: "true" | "false";
+                /** @description Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names. */
+                buildingId?: string;
+                /** @description A ticket’s number (`MT-000123` or `123`) or the start of a unit’s code, any case (ADR 0076). */
+                q?: string;
+                /** @description Created on or after, the compound’s day. */
+                from: string;
+                /** @description Created on or before; at most 366 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

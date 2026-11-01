@@ -76,4 +76,24 @@ export const DISPATCH_DEPTH_ROUTES: Row[] = [
     foreign: { params: (w) => ({ id: w.bTicketId }), code: 'TICKET_NOT_FOUND' },
     invalid: 'none',
   },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/export',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { from: '2026-02-30', to: '2026-03-01', q: '' },
+      fields: [
+        { field: 'from', code: 'INVALID_FORMAT' },
+        {
+          field: 'q',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 40 },
+        },
+      ],
+    },
+    noStore: true,
+  },
 ];

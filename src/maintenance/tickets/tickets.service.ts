@@ -233,9 +233,19 @@ export interface DispatchQuery extends ResidentQuery {
   origin?: TicketOrigin;
   /** Only the work orders of this asset (ADR 0064). */
   assetId?: string;
+  /** ADR 0076: only tickets in this building (its unit's, or its area's, ADR 0072). */
+  buildingId?: string;
+  /** ADR 0076: a ticket number (`MT-000123` or `123`) or the start of a unit's code. */
+  q?: string;
 }
 
 const PAGE = keysetCursor('createdAt');
+
+/** `MT-000123`, `mt-123` or `123`: a ticket's number. */
+const NUMBER_SEARCH = /^(?:MT-)?0*(\d{1,9})$/i;
+
+/** A LIKE pattern's start: `%` and `_` (and the escape) as themselves. */
+const likePrefix = (q: string) => `${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 const CATEGORY = {
   select: { id: true, key: true, nameAr: true, nameEn: true },
 } as const;
@@ -602,6 +612,7 @@ export class TicketsService implements OnModuleInit {
                 q.categoryId ? { categoryId: q.categoryId } : {},
                 q.origin ? { origin: q.origin } : {},
                 q.assetId ? { assetId: q.assetId } : {},
+                ...(await this.searchWhere(tx, q)),
               ],
             });
       const slas = await this.sla.summaries(tx, page.items, now);
@@ -634,23 +645,7 @@ export class TicketsService implements OnModuleInit {
     if (!flags) return { items: [], nextCursor: null };
     const where: Prisma.Sql[] = [
       ...flags,
-      ...(q.status ? [Prisma.sql`t.status = ${q.status}::ticket_status`] : []),
-      ...(q.open
-        ? [Prisma.sql`t.status::text IN (${Prisma.join([...UNFINISHED])})`]
-        : []),
-      ...(q.priority
-        ? [Prisma.sql`t.priority = ${q.priority}::ticket_priority`]
-        : []),
-      ...(q.unassigned ? [Prisma.sql`t.technician_account_id IS NULL`] : []),
-      ...(q.technicianId
-        ? [Prisma.sql`t.technician_account_id = ${q.technicianId}::uuid`]
-        : []),
-      ...(q.unitId ? [Prisma.sql`t.unit_id = ${q.unitId}::uuid`] : []),
-      ...(q.categoryId
-        ? [Prisma.sql`t.category_id = ${q.categoryId}::uuid`]
-        : []),
-      ...(q.origin ? [Prisma.sql`t.origin = ${q.origin}`] : []),
-      ...(q.assetId ? [Prisma.sql`t.asset_id = ${q.assetId}::uuid`] : []),
+      ...dispatchSql(q),
       ...(after
         ? [
             Prisma.sql`(t.created_at, t.id) < (${after.at}::timestamptz, ${after.id}::uuid)`,
@@ -667,6 +662,41 @@ export class TicketsService implements OnModuleInit {
       orderBy: PAGE.orderBy,
     });
     return PAGE.toPage(rows, limit);
+  }
+
+  /**
+   * ADR 0076: the list's `buildingId` (a unit in the building, ADR 0072, or
+   * a common area the building names) and `q` (a ticket number, or the
+   * start of a unit's code) as Prisma filters; `searchSql` is the same for
+   * the SLA-flagged path.
+   */
+  private async searchWhere(
+    tx: TenantTxClient,
+    q: Pick<DispatchQuery, 'buildingId' | 'q'>,
+  ): Promise<Prisma.TicketWhereInput[]> {
+    const out: Prisma.TicketWhereInput[] = [];
+    if (q.buildingId) {
+      const areas = await tx.$queryRaw<{ id: string }[]>`
+        SELECT ca.id FROM common_areas ca
+          JOIN buildings b ON b.tenant_id = ca.tenant_id AND b.name = ca.building
+         WHERE b.id = ${q.buildingId}::uuid`;
+      out.push({
+        OR: [
+          { unit: { buildingId: q.buildingId } },
+          { commonAreaId: { in: areas.map((a) => a.id) } },
+        ],
+      });
+    }
+    if (q.q) {
+      const n = NUMBER_SEARCH.exec(q.q);
+      // Prisma's startsWith leaves LIKE's wildcards live: the units are found
+      // through the same escaped ILIKE as the SQL path.
+      const units = await tx.$queryRaw<{ id: string }[]>`
+        SELECT id FROM units WHERE code ILIKE ${likePrefix(q.q)}`;
+      const byUnit = { unitId: { in: units.map((u) => u.id) } };
+      out.push(n ? { OR: [{ number: Number(n[1]) }, byUnit] } : byUnit);
+    }
+    return out;
   }
 
   /**
@@ -1265,4 +1295,50 @@ function priorityCursor(cursor: string): {
     // fall through
   }
   throw invalid([{ field: 'cursor', code: FieldErrorCode.INVALID_FORMAT }]);
+}
+
+/** The list's `buildingId` and `q` (ADR 0076) as SQL on `tickets t`. */
+function searchSql(q: Pick<DispatchQuery, 'buildingId' | 'q'>): Prisma.Sql[] {
+  const out: Prisma.Sql[] = [];
+  if (q.buildingId)
+    out.push(Prisma.sql`(EXISTS (SELECT 1 FROM units u
+                                   WHERE u.id = t.unit_id AND u.building_id = ${q.buildingId}::uuid)
+                         OR t.common_area_id IN (SELECT ca.id FROM common_areas ca
+                                                   JOIN buildings b ON b.tenant_id = ca.tenant_id AND b.name = ca.building
+                                                  WHERE b.id = ${q.buildingId}::uuid))`);
+  if (q.q) {
+    const n = NUMBER_SEARCH.exec(q.q);
+    const unit = Prisma.sql`EXISTS (SELECT 1 FROM units u
+                                     WHERE u.id = t.unit_id
+                                       AND u.code ILIKE ${likePrefix(q.q)})`;
+    out.push(n ? Prisma.sql`(t.number = ${Number(n[1])} OR ${unit})` : unit);
+  }
+  return out;
+}
+
+/**
+ * The dispatch list's filters as SQL on `tickets t` (ADR 0034, 0064, 0076):
+ * the SLA-flagged page and the CSV export read them from here.
+ */
+export function dispatchSql(q: DispatchQuery): Prisma.Sql[] {
+  return [
+    ...(q.status ? [Prisma.sql`t.status = ${q.status}::ticket_status`] : []),
+    ...(q.open
+      ? [Prisma.sql`t.status::text IN (${Prisma.join([...UNFINISHED])})`]
+      : []),
+    ...(q.priority
+      ? [Prisma.sql`t.priority = ${q.priority}::ticket_priority`]
+      : []),
+    ...(q.unassigned ? [Prisma.sql`t.technician_account_id IS NULL`] : []),
+    ...(q.technicianId
+      ? [Prisma.sql`t.technician_account_id = ${q.technicianId}::uuid`]
+      : []),
+    ...(q.unitId ? [Prisma.sql`t.unit_id = ${q.unitId}::uuid`] : []),
+    ...(q.categoryId
+      ? [Prisma.sql`t.category_id = ${q.categoryId}::uuid`]
+      : []),
+    ...(q.origin ? [Prisma.sql`t.origin = ${q.origin}`] : []),
+    ...(q.assetId ? [Prisma.sql`t.asset_id = ${q.assetId}::uuid`] : []),
+    ...searchSql(q),
+  ];
 }

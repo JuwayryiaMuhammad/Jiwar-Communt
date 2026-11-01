@@ -23,6 +23,7 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import {
   COMMON_AREA_LENGTH,
@@ -37,6 +38,8 @@ const UNIT_LOCATIONS = withParams({
   allowed: Object.values(TicketUnitLocation),
 });
 const BOOL = ['true', 'false'] as const;
+/** ADR 0076: the list's search. */
+const TICKET_SEARCH = { min: 1, max: 40 };
 
 /** Where and what: a unit or a common area, never both (ADR 0032). */
 class TicketBodyDto {
@@ -330,6 +333,51 @@ export class DispatchTicketsQueryDto extends PageQueryDto {
   @IsOptional()
   @IsIn(BOOL, withParams({ allowed: [...BOOL] }))
   escalated?: (typeof BOOL)[number];
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names.',
+  })
+  @IsOptional()
+  @IsUUID()
+  buildingId?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: TICKET_SEARCH.min,
+    maxLength: TICKET_SEARCH.max,
+    description:
+      'A ticket’s number (`MT-000123` or `123`) or the start of a unit’s code, any case (ADR 0076).',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(TICKET_SEARCH.min, TICKET_SEARCH.max, withParams(TICKET_SEARCH))
+  q?: string;
+}
+
+/** The dispatch list's filters over a period of creation days, for its CSV (ADR 0076). */
+export class DispatchTicketsExportQueryDto extends DispatchTicketsQueryDto {
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'Created on or after, the compound’s day.',
+  })
+  @IsString()
+  @IsLocalDate()
+  from: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'Created on or before; at most 366 days after `from`.',
+  })
+  @IsString()
+  @IsLocalDate()
+  to: string;
 }
 
 export class TicketPhotoDto {

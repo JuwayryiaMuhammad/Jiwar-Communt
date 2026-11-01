@@ -2789,6 +2789,36 @@ export const NOTIFICATION_KINDS = {
     target: 'account_deputy',
     params: { reason: {} },
   },
+  // Dispatch depth (ADR 0076).
+  /**
+   * An SLA clock used its compound's share of its target at its priority:
+   * the technician holding the ticket and the dispatch. The number and the
+   * clock only, like a breach; two kinds because the priority belongs to
+   * the kind.
+   */
+  'ticket.sla_at_risk': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, clock: {} },
+  },
+  /** The same, on an emergency. */
+  'ticket.sla_at_risk_emergency': {
+    priority: 'critical',
+    category: 'maintenance',
+    critical: true,
+    target: 'ticket',
+    params: { ticketNumber: {}, clock: {} },
+  },
+  /** Dispatch closed the resident's completed ticket on their behalf. */
+  'ticket.closed_by_staff': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

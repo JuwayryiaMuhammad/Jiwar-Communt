@@ -554,6 +554,15 @@ const ERROR_TEXT: Record<string, string> = {
   REPRESENTATIVE_MATTER_NOT_FOUND: 'This matter does not exist.',
   REPRESENTATIVE_MATTER_PENDING: 'A matter about this building’s representative is pending already.',
   REPRESENTATIVE_MATTER_NOT_YOURS: 'Only the member who raised it withdraws it.',
+  // Dispatch depth (ADR 0076).
+  METER_ALERT_HAS_WORK_ORDER: 'This alert has its work order already.',
+  TICKET_NOT_RESIDENTS: 'This is a work order of the compound’s: accept it instead.',
+  WARRANTY_CLAIM_NOT_FOUND: 'This warranty claim was not found.',
+  ASSET_NO_WARRANTY: 'This asset has no warranty end recorded.',
+  WARRANTY_EXPIRED: 'This asset’s warranty has ended.',
+  WARRANTY_CLAIM_OPEN: 'This ticket has an open warranty claim already.',
+  WARRANTY_CLAIM_DECIDED: 'This claim is decided already.',
+  TICKET_NOT_OF_ASSET: 'That ticket is not one of this asset’s.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

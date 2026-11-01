@@ -1003,4 +1003,20 @@ export const REASON_CODES = {
   ],
   galleryPhotoReport: ['privacy', 'other'],
   galleryPhotoHide: ['privacy', 'inappropriate', 'other'],
+  // Dispatch depth (ADR 0076): a resident's completed ticket closed by the
+  // staff on their behalf; a warranty claim rejected or withdrawn.
+  ticketStaffClose: [
+    'confirmed_by_phone',
+    'resident_unreachable',
+    'resident_left',
+    'other',
+  ],
+  warrantyClaimReject: [
+    'not_covered',
+    'misuse',
+    'expired',
+    'no_fault_found',
+    'other',
+  ],
+  warrantyClaimWithdraw: ['repaired_otherwise', 'raised_in_error', 'other'],
 } as const;

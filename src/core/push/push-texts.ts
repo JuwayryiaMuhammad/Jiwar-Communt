@@ -3004,6 +3004,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'انتهت إحدى نياباتك. افتح التطبيق لتراها.',
     },
   },
+  'ticket.sla_at_risk': {
+    en: {
+      title: 'Ticket at risk',
+      body: 'Ticket #{ticketNumber} is close to its target time.',
+    },
+    ar: {
+      title: 'بلاغ يقترب من مهلته',
+      body: 'اقترب البلاغ رقم {ticketNumber} من الوقت المستهدف.',
+    },
+  },
+  'ticket.sla_at_risk_emergency': {
+    en: {
+      title: 'Emergency at risk',
+      body: 'Emergency ticket #{ticketNumber} is close to its target time.',
+    },
+    ar: {
+      title: 'بلاغ طارئ يقترب من مهلته',
+      body: 'اقترب البلاغ الطارئ رقم {ticketNumber} من الوقت المستهدف.',
+    },
+  },
+  'ticket.closed_by_staff': {
+    en: {
+      title: 'Ticket closed',
+      body: 'The management closed ticket #{ticketNumber}. You can still reopen it.',
+    },
+    ar: {
+      title: 'تم إغلاق البلاغ',
+      body: 'أغلقت الإدارة البلاغ رقم {ticketNumber}. يمكنك إعادة فتحه.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

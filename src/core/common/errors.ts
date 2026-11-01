@@ -1720,6 +1720,22 @@ export const ErrorCode = {
   UNIT_IMPORT_NOT_VALID: 'UNIT_IMPORT_NOT_VALID',
   /** Not CSV a spreadsheet would write (422, params.problem, params.line). */
   UNIT_IMPORT_UNREADABLE: 'UNIT_IMPORT_UNREADABLE',
+  // Dispatch depth (ADR 0076).
+  /** The meter's alert has its work order already (409, params.ticketNumber). */
+  METER_ALERT_HAS_WORK_ORDER: 'METER_ALERT_HAS_WORK_ORDER',
+  /** A work order of the compound's: dispatch accepts it instead (409). */
+  TICKET_NOT_RESIDENTS: 'TICKET_NOT_RESIDENTS',
+  WARRANTY_CLAIM_NOT_FOUND: 'WARRANTY_CLAIM_NOT_FOUND',
+  /** The asset has no warranty end recorded (409). */
+  ASSET_NO_WARRANTY: 'ASSET_NO_WARRANTY',
+  /** The warranty ended before today (409, params.endsOn). */
+  WARRANTY_EXPIRED: 'WARRANTY_EXPIRED',
+  /** That ticket has an open claim already (409). */
+  WARRANTY_CLAIM_OPEN: 'WARRANTY_CLAIM_OPEN',
+  /** Decided already (409, params.status). */
+  WARRANTY_CLAIM_DECIDED: 'WARRANTY_CLAIM_DECIDED',
+  /** The ticket is not one of this asset's (409). */
+  TICKET_NOT_OF_ASSET: 'TICKET_NOT_OF_ASSET',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

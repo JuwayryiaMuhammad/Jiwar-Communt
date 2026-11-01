@@ -1891,6 +1891,8 @@ export const AUDIT_ACTIONS = {
       'vendorName',
       'vendorPhone',
       'serialNumber',
+      'warrantor',
+      'warrantyCovers',
     ],
   },
   'asset.updated': {
@@ -1902,6 +1904,8 @@ export const AUDIT_ACTIONS = {
       'vendorName',
       'vendorPhone',
       'serialNumber',
+      'warrantor',
+      'warrantyCovers',
     ],
   },
   'asset.status_changed': { log: 'tenant', target: 'asset' },
@@ -2274,6 +2278,27 @@ export const AUDIT_ACTIONS = {
   'market_shop.suspended': { log: 'tenant', target: 'market_shop' },
   'market_shop.reinstated': { log: 'tenant', target: 'market_shop' },
   'market_shop.closed': { log: 'tenant', target: 'market_shop' },
+  // Dispatch depth (ADR 0076). Dispatch's own moves on a ticket: metadata
+  // origin, cycle and the reason code where one is given; never the words.
+  'ticket.closed_by_staff': { log: 'tenant', target: 'ticket' },
+  'ticket.reopened_by_staff': { log: 'tenant', target: 'ticket' },
+  'ticket.resumed_by_staff': { log: 'tenant', target: 'ticket' },
+  // The escalation levels: changes of the at-risk share per priority.
+  'maintenance.sla_escalation_changed': {
+    log: 'tenant',
+    target: 'tenant',
+  },
+  // A warranty claim. metadata: assetId, ticketId; on a decision the
+  // reason code and whether an amount was recovered. Never the words.
+  'warranty_claim.opened': { log: 'tenant', target: 'warranty_claim' },
+  'warranty_claim.reference_set': {
+    log: 'tenant',
+    target: 'warranty_claim',
+    sensitive: ['reference'],
+  },
+  'warranty_claim.accepted': { log: 'tenant', target: 'warranty_claim' },
+  'warranty_claim.rejected': { log: 'tenant', target: 'warranty_claim' },
+  'warranty_claim.withdrawn': { log: 'tenant', target: 'warranty_claim' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

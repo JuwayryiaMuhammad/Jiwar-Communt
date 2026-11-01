@@ -274,6 +274,9 @@ export const REASON_CODES = {
   groupOfferCancel: ['partner_withdrew', 'price_changed', 'not_enough_interest', 'other'],
   galleryPhotoReport: ['privacy', 'other'],
   galleryPhotoHide: ['privacy', 'inappropriate', 'other'],
+  ticketStaffClose: ['confirmed_by_phone', 'resident_unreachable', 'resident_left', 'other'],
+  warrantyClaimReject: ['not_covered', 'misuse', 'expired', 'no_fault_found', 'other'],
+  warrantyClaimWithdraw: ['repaired_otherwise', 'raised_in_error', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

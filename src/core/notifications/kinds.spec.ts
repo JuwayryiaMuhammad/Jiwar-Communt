@@ -61,6 +61,8 @@ const CRITICAL_KINDS = [
   'ticket.resident_escalated_emergency',
   'ticket.sla_breached_emergency',
   'ticket.unassignable_emergency',
+  // ADR 0076: an emergency's clock at risk, like its breach.
+  'ticket.sla_at_risk_emergency',
 ].sort();
 
 describe('notification catalog', () => {

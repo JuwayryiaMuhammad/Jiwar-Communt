@@ -242,6 +242,8 @@ describe('audit catalog', () => {
         // ADR 0073.
         'board_authorization',
         'account_deputy',
+        // ADR 0076.
+        'warranty_claim',
       ]).toContain(def.target);
     }
   });

@@ -116,6 +116,11 @@ export default function PermitSettingsPage() {
                   </div>
                 )}
               </Field>
+              <Checkbox
+                label="Approve works only once their finishing-works deposit is recorded and holds money"
+                checked={form.worksDepositRequired}
+                onChange={(e) => setForm({ ...form, worksDepositRequired: e.target.checked })}
+              />
               <ErrorAlert error={save.error} />
               <div>
                 <Button type="submit" variant="primary" loading={save.isPending} disabled={!ok}>

@@ -20,6 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Back } from '@/components/facilities/bits';
+import { FitOutCards } from '@/components/permits/fit-out';
 import { PERMIT_KIND_TEXT, periodText } from '@/components/permits/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
@@ -327,6 +328,7 @@ export default function PermitPage() {
                 ) : null}
               </Card>
             ) : null}
+            {p.kind === 'works' ? <FitOutCards permitId={p.id} unitId={p.unitId} /> : null}
             {p.event ? (
               <Card flush>
                 <CardHeader title="Guest list" />

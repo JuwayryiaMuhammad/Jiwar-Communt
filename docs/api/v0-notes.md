@@ -331,3 +331,14 @@ The full notes for the apps are in [`notes/community-life.md`](notes/community-l
 - **Busy levels.** `quiet | normal | busy`, never a count: a slot's `busy`, a facility's `busyNow` and `usuallyBusy`, a gate's `busy` on `GET /gates/status` and in the brief.
 - **Visitors.** A pass's `notifyOnEntry` (in its detail; pushes `visitor_pass.entered|exited`) and `expectedGateId`; a standing instruction's `notify` (`gate.let_in_by_instruction`); `POST /visitor-passes/{id}/reinvite` (`409 VISITOR_DETAILS_PURGED`); a gate's `directionsEn/Ar`; the visitor's page gains `expectedGate` and `parkingArea`.
 - **Health.** `GET /emergency-guides` (no-store: a guide's `fileUrl`); compound document kinds `emergency_medical|fire|security|facilities`; `POST /emergencies` gains `commonAreaId`.
+
+### The unit register (ADR 0072)
+
+The full notes for the dashboard are in [`notes/unit-register.md`](notes/unit-register.md).
+
+- **Buildings.** `GET/POST /buildings`, `DELETE /buildings/{id}` (`409 BUILDING_IN_USE`, `BUILDING_NAME_TAKEN`); units gain `buildingId` beside `building`; `POST /units` takes `buildingId`, `unitType`, `areaSqm`. A new permission `units.manage`.
+- **Edit.** `PATCH /units/{id}`: building, floor, type, area; never the code.
+- **List and CSV.** `GET /units?q&buildingId&status&occupancyType` (the last two the manager's); `GET /staff/units/export`.
+- **History and workers.** `GET /staff/units/{unitId}/occupancy-history`; `GET /worker-engagements?unitId=`.
+- **Sheets.** `POST/GET /staff/unit-imports`, `GET …/{id}`, `POST …/{id}/apply` (`409 UNIT_IMPORT_NOT_VALID`, `422 UNIT_IMPORT_UNREADABLE`).
+- **Search.** `GET /staff/search?q=`.

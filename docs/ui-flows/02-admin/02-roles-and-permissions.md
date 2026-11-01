@@ -109,6 +109,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | `units.read` | رؤية الوحدات (المدير كلها، والساكن والفرد وحداتهم فقط) | manager, resident, family, proxy | manager, resident, family_member, unit_proxy | `GET /units`، `GET /units/{id}`، `GET /units/{unitId}/household` |
 | `units.create` | إنشاء وحدة | manager | manager | `POST /units` |
+| `units.manage` | سجل الوحدات (ADR 0072): تعديل مبنى الوحدة ودورها ونوعها ومساحتها (مش الكود)، والمباني، وفلتر الحالة ونوع الإشغال، والـCSV، واستيراد شيتات الوحدات والسكان | manager | manager | `PATCH /units/{id}`، `GET/POST /buildings`، `DELETE /buildings/{id}`، `GET /staff/units/export`، `/staff/unit-imports…` |
 | `units.directory` | قائمة كل وحدات الكمبوند لدور موظف: الكود والمبنى والدور فقط، بدون سكانها، ولا تفتح صفحة وحدة | staff | security_supervisor | `GET /units` |
 | `accounts.read` | قائمة كل حسابات الكمبوند وتفاصيلها | manager | manager | `GET /accounts`، `GET /accounts/{id}` |
 | `accounts.manage` | إنشاء الحسابات، وتغيير الحالة والتواصل، والتجميد وإعادة التفعيل، ورفع ملفات `document` | manager | manager | `POST /accounts`، `PATCH /accounts/{id}/status`، `/contact`، `/freeze`، `/reactivate` |

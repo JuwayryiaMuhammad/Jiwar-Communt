@@ -53,6 +53,7 @@
 | [05-household-and-invites](03-community/05-household-and-invites.md) | أسرة الوحدة: الدعوات، القصّر، بلوغ القاصر، الموافقة والإزالة |
 | [06-delegation](03-community/06-delegation.md) | تفويض الساكن الأساسي لفرد بالغ من الأسرة |
 | [07-member-permissions](03-community/07-member-permissions.md) | صلاحيات أفراد الأسرة، والإجراءات المؤجلة |
+| [08-unit-register](03-community/08-unit-register.md) | سجل الوحدات: المباني، تعديل الوحدة، الفلاتر والـCSV، تاريخ الإشغال والعمالة، الاستيراد، والبحث |
 
 ### 04 — العمالة المنزلية
 | الملف | الفيتشر |

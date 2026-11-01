@@ -41,6 +41,11 @@
 -- The unit register (ADR 0072): a building ahead of its units, a unit put
 -- in it by id and one named by text, and a valid units import on its sheet
 -- (the base's units, named by text, are backfilled into buildings).
+-- The inbox, the authority and the deputy (ADR 0073): the board's settings
+-- with the major contract's and a waiver's thresholds binding, a due time
+-- of the inbox's own, a live deputy, and an audit entry taken on its
+-- principal's behalf (`binding` and `on_behalf_of_id` are new columns of
+-- existing tables).
 -- ============================================================================
 
 DO $$
@@ -383,6 +388,19 @@ BEGIN
                                            responder_account_id, responder_unit_id, last_message_at, updated_at) VALUES
         (gen_random_uuid(), t, post, NULL, res1, res2, u2, now(), now()),
         (gen_random_uuid(), t, NULL, lst, res1, res2, u2, now(), now());
+      -- The inbox, the authority and the deputy (ADR 0073).
+      INSERT INTO governance_approval_settings (tenant_id, type, deadline_days, threshold, binding) VALUES
+        (t, 'major_contract', 14, 50000.00, true),
+        (t, 'waiver_above_limit', 14, 1000.00, true),
+        (t, 'payment_plan_above_limit', 14, NULL, false);
+      INSERT INTO staff_inbox_due_hours (tenant_id, type, hours) VALUES (t, 'vehicle', 12);
+      INSERT INTO account_deputies (id, tenant_id, principal_account_id, deputy_account_id, permissions,
+                                    starts_at, ends_at, created_by_account_id) VALUES
+        (gen_random_uuid(), t, mgr, guard, ARRAY['permits.manage'], now(), now() + interval '3 days', mgr);
+      UPDATE accounts SET deputy_until = now() + interval '3 days' WHERE id IN (mgr, guard);
+      INSERT INTO audit_log (id, tenant_id, actor_type, actor_id, action, target_type, target_id,
+                             on_behalf_of_id) VALUES
+        (gen_random_uuid(), t, 'account', guard, 'unit_permit.approved', 'unit_permit', gen_random_uuid(), mgr);
     END;
 
     -- The unit register as M2-1 leaves it (ADR 0072): a building added

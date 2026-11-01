@@ -176,3 +176,114 @@ export const DUTY_ROSTER_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/**
+ * Instructions to the technicians (ADR 0078). The other compound's row is
+ * the guards' world instruction: not found either way.
+ */
+export const TECHNICIAN_INSTRUCTION_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/field-team/instructions',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      body: {
+        title: '',
+        body: 'Words',
+        validFrom: '2026-02-30',
+        validUntil: '2027-02-29',
+      },
+      fields: [
+        {
+          field: 'title',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+        { field: 'validFrom', code: 'INVALID_FORMAT' },
+        { field: 'validUntil', code: 'INVALID_FORMAT' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/field-team/instructions',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { state: 'old' },
+      fields: [{ field: 'state', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/field-team/instructions/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'GUARD_INSTRUCTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/field-team/instructions/{id}/archive',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'GUARD_INSTRUCTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/instructions',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'unread' },
+      fields: [{ field: 'status', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/instructions/{id}',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'GUARD_INSTRUCTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/instructions/{id}/acknowledge',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'GUARD_INSTRUCTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

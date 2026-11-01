@@ -275,6 +275,10 @@ import {
 } from './found-items/found-items.controller';
 import { FoundItemsService } from './found-items/found-items.service';
 import {
+  StaffTechnicianInstructionsController,
+  TechnicianInstructionsController,
+} from './guard-instructions/technician-instructions.controller';
+import {
   GuardInstructionsController,
   StaffGuardInstructionsController,
 } from './guard-instructions/guard-instructions.controller';
@@ -512,6 +516,8 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     StaffSwapsController,
     StaffGuardInstructionsController,
     GuardInstructionsController,
+    StaffTechnicianInstructionsController,
+    TechnicianInstructionsController,
     GuardFoundItemsController,
     StaffFoundItemsController,
     DailyReportController,

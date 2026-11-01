@@ -31821,10 +31821,11 @@
         "type": "string"
       },
       "GuardInstructionVia": {
-        "description": "Reached at the send, or opening a shift where it applies.",
+        "description": "Reached at the send, opening a shift where it applies, or (a technician) going on duty while it was live.",
         "enum": [
           "send",
-          "shift_start"
+          "shift_start",
+          "on_duty"
         ],
         "type": "string"
       },
@@ -35856,7 +35857,7 @@
                 "$ref": "#/components/schemas/GuardInstructionVia"
               }
             ],
-            "description": "Reached at the send, or opening a shift where it applies."
+            "description": "Reached at the send, opening a shift where it applies, or (a technician) going on duty while it was live."
           },
           "guard": {
             "$ref": "#/components/schemas/AccountRefView"
@@ -42293,7 +42294,8 @@
               {
                 "$ref": "#/components/schemas/GuardInstructionAudience"
               }
-            ]
+            ],
+            "description": "`technicians` (ADR 0078): every field technician."
           },
           "body": {
             "type": "string"
@@ -61119,6 +61121,42 @@
         },
         "type": "object"
       },
+      "SendTechnicianInstructionDto": {
+        "properties": {
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "urgent": {
+            "default": false,
+            "description": "A critical push (`technician_instruction.urgent`).",
+            "type": "boolean"
+          },
+          "validFrom": {
+            "description": "The compound day it holds from, inclusive. Until then technicians neither see it nor are told of it; they are told when they go on duty on a day it holds. Default: from now.",
+            "example": "2026-12-20",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "validUntil": {
+            "description": "The last compound day it holds, inclusive: not before `validFrom` (ENDS_BEFORE_START), nor before today (DAY_OUT_OF_RANGE {min}). Default: until archived.",
+            "example": "2027-01-05",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ],
+        "type": "object"
+      },
       "SensitiveReadVia": {
         "description": "How: its page or a part of it (a write reads it too), a list page, the export, the search.",
         "enum": [
@@ -67067,7 +67105,8 @@
               {
                 "$ref": "#/components/schemas/GuardInstructionAudience"
               }
-            ]
+            ],
+            "description": "`technicians` (ADR 0078): every field technician."
           },
           "body": {
             "type": "string"
@@ -67167,7 +67206,8 @@
               {
                 "$ref": "#/components/schemas/GuardInstructionAudience"
               }
-            ]
+            ],
+            "description": "`technicians` (ADR 0078): every field technician."
           },
           "body": {
             "type": "string"
@@ -102026,6 +102066,157 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/instructions": {
+      "get": {
+        "description": "Newest first; `status=pending` for those waiting for me, `q` to search the archive.",
+        "operationId": "TechnicianInstructionsController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`pending`: those waiting for me. Default: all.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "acknowledged"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Words of the title or the text (the archive).",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyGuardInstructionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the instructions that reach me",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/instructions/{id}": {
+      "get": {
+        "operationId": "TechnicianInstructionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyGuardInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an instruction that reaches me",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/instructions/{id}/acknowledge": {
+      "post": {
+        "description": "Once; again answers the same.",
+        "operationId": "TechnicianInstructionsController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyGuardInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge an instruction",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/kpis": {
       "get": {
         "operationId": "EconomicsController_kpis",
@@ -128704,6 +128895,192 @@
           }
         ],
         "summary": "Read the technicians’ attendance and overtime",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/instructions": {
+      "get": {
+        "description": "Newest first, with how many acknowledged.",
+        "operationId": "StaffTechnicianInstructionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Today, in the compound’s calendar (ADR 0056): `scheduled` (not yet valid), `live` (valid; guards see it), `expired` (past its last day), `archived`. Default: all.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GuardInstructionState"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardInstructionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the technicians’ instructions",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "It reaches every active field technician then, and anyone who goes on duty while it is live. Urgent: a critical push. With `validFrom`/`validUntil` (compound days, inclusive) technicians see and acknowledge it only on those days, and are pushed at sending only when it holds today — otherwise when they go on duty on a day it holds.",
+        "operationId": "StaffTechnicianInstructionsController_send",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendTechnicianInstructionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send the technicians an instruction",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/instructions/{id}": {
+      "get": {
+        "description": "With every technician it reaches and whether they acknowledged.",
+        "operationId": "StaffTechnicianInstructionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardInstructionDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a technicians’ instruction",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/instructions/{id}/archive": {
+      "post": {
+        "description": "It reaches nobody new; acknowledgements stay.",
+        "operationId": "StaffTechnicianInstructionsController_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive a technicians’ instruction",
         "tags": [
           "field-team"
         ],

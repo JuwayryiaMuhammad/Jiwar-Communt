@@ -7196,6 +7196,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/instructions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the instructions that reach me
+         * @description Newest first; `status=pending` for those waiting for me, `q` to search the archive.
+         */
+        get: operations["TechnicianInstructionsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/instructions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an instruction that reaches me */
+        get: operations["TechnicianInstructionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/instructions/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acknowledge an instruction
+         * @description Once; again answers the same.
+         */
+        post: operations["TechnicianInstructionsController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/kpis": {
         parameters: {
             query?: never;
@@ -16227,6 +16284,70 @@ export interface paths {
         get: operations["StaffDutyRosterController_attendance"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/instructions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the technicians’ instructions
+         * @description Newest first, with how many acknowledged.
+         */
+        get: operations["StaffTechnicianInstructionsController_list"];
+        put?: never;
+        /**
+         * Send the technicians an instruction
+         * @description It reaches every active field technician then, and anyone who goes on duty while it is live. Urgent: a critical push. With `validFrom`/`validUntil` (compound days, inclusive) technicians see and acknowledge it only on those days, and are pushed at sending only when it holds today — otherwise when they go on duty on a day it holds.
+         */
+        post: operations["StaffTechnicianInstructionsController_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/instructions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a technicians’ instruction
+         * @description With every technician it reaches and whether they acknowledged.
+         */
+        get: operations["StaffTechnicianInstructionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/instructions/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive a technicians’ instruction
+         * @description It reaches nobody new; acknowledgements stay.
+         */
+        post: operations["StaffTechnicianInstructionsController_archive"];
         delete?: never;
         options?: never;
         head?: never;
@@ -36082,10 +36203,10 @@ export interface components {
          */
         GuardInstructionState: "scheduled" | "live" | "expired" | "archived";
         /**
-         * @description Reached at the send, or opening a shift where it applies.
+         * @description Reached at the send, opening a shift where it applies, or (a technician) going on duty while it was live.
          * @enum {string}
          */
-        GuardInstructionVia: "send" | "shift_start";
+        GuardInstructionVia: "send" | "shift_start" | "on_duty";
         GuardInstructionView: {
             /**
              * @description - `always_allow`: the guard lets them in and logs the entry.
@@ -37296,7 +37417,7 @@ export interface components {
             acknowledgedAt: string | null;
             /** Format: date-time */
             addedAt: string;
-            /** @description Reached at the send, or opening a shift where it applies. */
+            /** @description Reached at the send, opening a shift where it applies, or (a technician) going on duty while it was live. */
             addedVia: components["schemas"]["GuardInstructionVia"];
             guard: components["schemas"]["AccountRefView"];
         };
@@ -39337,6 +39458,7 @@ export interface components {
              * @description It reaches nobody new once archived.
              */
             archivedAt: string | null;
+            /** @description `technicians` (ADR 0078): every field technician. */
             audience: components["schemas"]["GuardInstructionAudience"];
             body: string;
             /** Format: date-time */
@@ -45308,6 +45430,25 @@ export interface components {
             /** @description What the residents read; the suggestion’s note when left out. */
             note?: string;
         };
+        SendTechnicianInstructionDto: {
+            body: string;
+            title: string;
+            /**
+             * @description A critical push (`technician_instruction.urgent`).
+             * @default false
+             */
+            urgent: boolean;
+            /**
+             * @description The compound day it holds from, inclusive. Until then technicians neither see it nor are told of it; they are told when they go on duty on a day it holds. Default: from now.
+             * @example 2026-12-20
+             */
+            validFrom?: string;
+            /**
+             * @description The last compound day it holds, inclusive: not before `validFrom` (ENDS_BEFORE_START), nor before today (DAY_OUT_OF_RANGE {min}). Default: until archived.
+             * @example 2027-01-05
+             */
+            validUntil?: string;
+        };
         /**
          * @description How: its page or a part of it (a write reads it too), a list page, the export, the search.
          * @enum {string}
@@ -47005,6 +47146,7 @@ export interface components {
              * @description It reaches nobody new once archived.
              */
             archivedAt: string | null;
+            /** @description `technicians` (ADR 0078): every field technician. */
             audience: components["schemas"]["GuardInstructionAudience"];
             body: string;
             /** Format: date-time */
@@ -47041,6 +47183,7 @@ export interface components {
              * @description It reaches nobody new once archived.
              */
             archivedAt: string | null;
+            /** @description `technicians` (ADR 0078): every field technician. */
             audience: components["schemas"]["GuardInstructionAudience"];
             body: string;
             /** Format: date-time */
@@ -62106,6 +62249,75 @@ export interface operations {
             };
         };
     };
+    TechnicianInstructionsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `pending`: those waiting for me. Default: all. */
+                status?: "pending" | "acknowledged";
+                /** @description Words of the title or the text (the archive). */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyGuardInstructionViewList"];
+                };
+            };
+        };
+    };
+    TechnicianInstructionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyGuardInstructionView"];
+                };
+            };
+        };
+    };
+    TechnicianInstructionsController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyGuardInstructionView"];
+                };
+            };
+        };
+    };
     EconomicsController_kpis: {
         parameters: {
             query?: {
@@ -76068,6 +76280,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TechnicianAttendanceViewList"];
+                };
+            };
+        };
+    };
+    StaffTechnicianInstructionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Today, in the compound’s calendar (ADR 0056): `scheduled` (not yet valid), `live` (valid; guards see it), `expired` (past its last day), `archived`. Default: all. */
+                state?: components["schemas"]["GuardInstructionState"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardInstructionViewList"];
+                };
+            };
+        };
+    };
+    StaffTechnicianInstructionsController_send: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendTechnicianInstructionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardInstructionView"];
+                };
+            };
+        };
+    };
+    StaffTechnicianInstructionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardInstructionDetailView"];
+                };
+            };
+        };
+    };
+    StaffTechnicianInstructionsController_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardInstructionView"];
                 };
             };
         };

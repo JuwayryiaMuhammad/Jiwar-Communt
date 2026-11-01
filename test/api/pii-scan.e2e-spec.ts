@@ -1854,6 +1854,10 @@ describe('API v0 — PII leak scan', () => {
       '/staff/security/unit-entries/{id}':
         '0192a5f0-1c2b-7d3e-8f40-0000000083a2',
       '/units/{unitId}/entries': unit.id,
+      // ADR 0078: an instruction nowhere (not found), on both sides.
+      '/staff/field-team/instructions/{id}':
+        '0192a5f0-1c2b-7d3e-8f40-0000000078a1',
+      '/maintenance/instructions/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000078a1',
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,

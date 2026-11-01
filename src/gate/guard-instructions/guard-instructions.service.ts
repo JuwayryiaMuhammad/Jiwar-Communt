@@ -11,6 +11,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import { StaffDuty } from '../../core/staff-duty/staff-duty';
 import { localDate } from '../../core/common/slots/day-slots';
 import { dbNow } from '../db-clock';
 import { DutyNamesReader } from '../roster/duty-names';
@@ -68,6 +69,7 @@ export class GuardInstructionsService implements OnModuleInit {
     private readonly safety: SafetyCore,
     private readonly shifts: ShiftsService,
     private readonly names: DutyNamesReader,
+    private readonly duty: StaffDuty,
   ) {}
 
   onModuleInit(): void {
@@ -84,6 +86,9 @@ export class GuardInstructionsService implements OnModuleInit {
       ),
     );
     this.shifts.onStarted((tx, shift) => this.reachOnStart(tx, shift));
+    this.duty.onChanged(async (tx, change) => {
+      if (change.onDuty) await this.reachOnDuty(tx, change.accountId);
+    });
   }
 
   /** `Idempotency-Key`. */
@@ -91,7 +96,8 @@ export class GuardInstructionsService implements OnModuleInit {
     title: string;
     body: string;
     urgent?: boolean;
-    audience: 'all' | 'gate' | 'zone';
+    /** `technicians` (ADR 0078): every field technician, sent by the field team. */
+    audience: 'all' | 'gate' | 'zone' | 'technicians';
     gateId?: string;
     zoneId?: string;
     /** Compound days, inclusive (ADR 0056); either may be left out. */
@@ -145,7 +151,7 @@ export class GuardInstructionsService implements OnModuleInit {
           },
         ]);
       const post =
-        input.audience === 'all'
+        input.audience === 'all' || input.audience === 'technicians'
           ? { gateId: null, placeId: null }
           : await this.roster.requirePost(tx, input);
       await this.lockInstructions(tx, 'exclusive');
@@ -181,15 +187,7 @@ export class GuardInstructionsService implements OnModuleInit {
             notifiedAt: holds ? now : null,
           })),
         });
-      if (holds)
-        await this.safety.notify(
-          tx,
-          reached,
-          instruction.urgent
-            ? 'guard_instruction.urgent'
-            : 'guard_instruction.issued',
-          id,
-        );
+      if (holds) await this.safety.notify(tx, reached, kindOf(instruction), id);
       await this.audit.record(tx, {
         action: 'guard_instruction.issued',
         targetId: id,
@@ -212,6 +210,11 @@ export class GuardInstructionsService implements OnModuleInit {
     tx: TenantTxClient,
     i: GuardInstruction,
   ): Promise<string[]> {
+    if (i.audience === 'technicians')
+      return (await this.safety.holding(tx, 'tickets.work')).slice(
+        0,
+        MAX_RECIPIENTS,
+      );
     if (i.audience === 'all')
       return (await this.safety.holding(tx, 'gate.operate')).slice(
         0,
@@ -327,6 +330,68 @@ export class GuardInstructionsService implements OnModuleInit {
     }
   }
 
+  /**
+   * A technician going on duty is reached by the technicians' live
+   * instructions that do not reach them yet (ADR 0078), and told once of
+   * each that holds today, whenever it reached them; one to come is told on
+   * a day it holds. Unlike a guard's shift start, nothing is silent: a
+   * technician has no shift screen showing it pending. In the duty change's
+   * transaction, the instructions' lock shared, as a shift start takes it.
+   */
+  private async reachOnDuty(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<void> {
+    await this.lockInstructions(tx, 'shared');
+    const today = await this.today(tx);
+    const live = await tx.guardInstruction.findMany({
+      where: {
+        audience: 'technicians',
+        archivedAt: null,
+        OR: [{ validUntil: null }, { validUntil: { gte: dateOf(today) } }],
+      },
+      select: { id: true, urgent: true, validFrom: true, validUntil: true },
+    });
+    if (!live.length) return;
+    const now = await dbNow(tx);
+    await tx.guardInstructionRecipient.createMany({
+      data: live.map((i) => ({
+        id: newId(),
+        tenantId: this.ctx.txTenantId,
+        instructionId: i.id,
+        accountId,
+        addedVia: 'on_duty' as const,
+        notifiedAt: null,
+      })),
+      skipDuplicates: true,
+    });
+    const holding = live.filter((i) => validOn(i, today));
+    const untold = await tx.guardInstructionRecipient.findMany({
+      where: {
+        accountId,
+        notifiedAt: null,
+        instructionId: { in: holding.map((i) => i.id) },
+      },
+      select: { id: true, instructionId: true },
+    });
+    for (const r of untold) {
+      const { count } = await tx.guardInstructionRecipient.updateMany({
+        where: { id: r.id, notifiedAt: null },
+        data: { notifiedAt: now },
+      });
+      if (count)
+        await this.safety.notify(
+          tx,
+          [accountId],
+          kindOf({
+            audience: 'technicians',
+            urgent: holding.find((i) => i.id === r.instructionId)!.urgent,
+          }),
+          r.instructionId,
+        );
+    }
+  }
+
   /** The compound's day now, by the database's clock. */
   private async today(tx: TenantTxClient): Promise<string> {
     return localDate(await dbNow(tx), await this.roster.timeZone(tx));
@@ -343,12 +408,17 @@ export class GuardInstructionsService implements OnModuleInit {
   }
 
   /** Archived: it reaches nobody new; acknowledgements stay. */
-  archive(id: string): Promise<StaffGuardInstructionView> {
+  archive(
+    id: string,
+    scope: InstructionScope = 'guards',
+  ): Promise<StaffGuardInstructionView> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      const [row] = await tx.$queryRaw<{ archived_at: Date | null }[]>`
-        SELECT archived_at FROM guard_instructions
+      const [row] = await tx.$queryRaw<
+        { archived_at: Date | null; audience: string }[]
+      >`
+        SELECT archived_at, audience::text AS audience FROM guard_instructions
          WHERE id = ${id}::uuid FOR UPDATE`;
-      if (!row) throw notFound();
+      if (!row || !inScope(row.audience, scope)) throw notFound();
       if (row.archived_at)
         throw appError.conflict(
           ErrorCode.GUARD_INSTRUCTION_ARCHIVED,
@@ -375,15 +445,20 @@ export class GuardInstructionsService implements OnModuleInit {
     });
   }
 
-  list(q: {
-    state?: InstructionState;
-    cursor?: string;
-    limit: number;
-  }): Promise<Page<StaffGuardInstructionView>> {
+  list(
+    q: {
+      state?: InstructionState;
+      cursor?: string;
+      limit: number;
+    },
+    scope: InstructionScope = 'guards',
+  ): Promise<Page<StaffGuardInstructionView>> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const today = await this.today(tx);
       const rows = await tx.guardInstruction.findMany({
         where: {
+          audience:
+            scope === 'technicians' ? 'technicians' : { not: 'technicians' },
           AND: [
             ...CURSOR.after(q.cursor),
             ...(q.state ? [stateWhere(q.state, today)] : []),
@@ -401,10 +476,13 @@ export class GuardInstructionsService implements OnModuleInit {
   }
 
   /** With every guard it reaches, and whether they acknowledged. */
-  get(id: string): Promise<StaffGuardInstructionDetailView> {
+  get(
+    id: string,
+    scope: InstructionScope = 'guards',
+  ): Promise<StaffGuardInstructionDetailView> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const i = await tx.guardInstruction.findUnique({ where: { id } });
-      if (!i) throw notFound();
+      if (!i || !inScope(i.audience, scope)) throw notFound();
       const [view] = await this.staffViews(tx, [i], await this.today(tx));
       const recipients = await tx.guardInstructionRecipient.findMany({
         where: { instructionId: id },
@@ -586,4 +664,26 @@ export class GuardInstructionsService implements OnModuleInit {
       MyGuardInstructionView.from(r, names, acknowledged.get(r.id) ?? null),
     );
   }
+}
+
+/**
+ * Whose instructions a staff route reads (ADR 0078): the guards' (all, a
+ * gate's, a zone's), kept by `guard_instructions.manage`, or the
+ * technicians', kept by the field team.
+ */
+export type InstructionScope = 'guards' | 'technicians';
+
+function inScope(audience: string, scope: InstructionScope): boolean {
+  return (audience === 'technicians') === (scope === 'technicians');
+}
+
+/** The kind an instruction is told by: the guards' or the technicians'. */
+function kindOf(i: { audience: string; urgent: boolean }) {
+  if (i.audience === 'technicians')
+    return i.urgent
+      ? ('technician_instruction.urgent' as const)
+      : ('technician_instruction.issued' as const);
+  return i.urgent
+    ? ('guard_instruction.urgent' as const)
+    : ('guard_instruction.issued' as const);
 }

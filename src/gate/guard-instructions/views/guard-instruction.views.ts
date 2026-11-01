@@ -28,8 +28,9 @@ class GuardInstructionBodyView {
   @ApiProperty({ type: Boolean, description: 'Sent as a critical push.' })
   urgent: boolean;
   @ApiProperty({
-    enum: ['all', 'gate', 'zone'],
+    enum: ['all', 'gate', 'zone', 'technicians'],
     enumName: 'GuardInstructionAudience',
+    description: '`technicians` (ADR 0078): every field technician.',
   })
   audience: string;
   @ApiProperty({
@@ -139,9 +140,10 @@ export class InstructionRecipientView {
   @ApiProperty({ type: AccountRefView })
   guard: AccountRefView;
   @ApiProperty({
-    enum: ['send', 'shift_start'],
+    enum: ['send', 'shift_start', 'on_duty'],
     enumName: 'GuardInstructionVia',
-    description: 'Reached at the send, or opening a shift where it applies.',
+    description:
+      'Reached at the send, opening a shift where it applies, or (a technician) going on duty while it was live.',
   })
   addedVia: string;
   @ApiProperty({ type: String, format: 'date-time' })

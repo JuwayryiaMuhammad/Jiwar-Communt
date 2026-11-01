@@ -118,3 +118,52 @@ export class MyGuardInstructionsQueryDto extends PageQueryDto {
   @Length(1, 100, withParams({ min: 1, max: 100 }))
   q?: string;
 }
+
+/**
+ * An instruction to every field technician (ADR 0078), sent by the field
+ * team: no post, the same words and days as a guard's.
+ */
+export class SendTechnicianInstructionDto {
+  @ApiProperty({ type: String, minLength: 1, maxLength: 120 })
+  @IsString()
+  @Length(1, 120, withParams({ min: 1, max: 120 }))
+  title: string;
+
+  @ApiProperty({ type: String, minLength: 1, maxLength: 4000 })
+  @IsString()
+  @Length(1, 4000, withParams({ min: 1, max: 4000 }))
+  body: string;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    default: false,
+    description: 'A critical push (`technician_instruction.urgent`).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  urgent?: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2026-12-20',
+    description:
+      'The compound day it holds from, inclusive. Until then technicians neither see it nor are told of it; they are told when they go on duty on a day it holds. Default: from now.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsLocalDate()
+  validFrom?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2027-01-05',
+    description:
+      'The last compound day it holds, inclusive: not before `validFrom` (ENDS_BEFORE_START), nor before today (DAY_OUT_OF_RANGE {min}). Default: until archived.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsLocalDate()
+  validUntil?: string;
+}

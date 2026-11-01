@@ -10555,6 +10555,109 @@
     {
       "item": [
         {
+          "name": "List the instructions that reach me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "instructions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`pending`: those waiting for me. Default: all.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "Words of the title or the text (the archive).",
+                  "disabled": true,
+                  "key": "q",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/instructions"
+            }
+          }
+        },
+        {
+          "name": "Get an instruction that reaches me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "instructions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/instructions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Acknowledge an instruction",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "instructions",
+                ":id",
+                "acknowledge"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/instructions/:id/acknowledge",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Read my schedule",
           "request": {
             "description": "**Responses:** 200",
@@ -10661,6 +10764,147 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/field-team/attendance"
+            }
+          }
+        },
+        {
+          "name": "List the technicians’ instructions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "instructions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "Today, in the compound’s calendar (ADR 0056): `scheduled` (not yet valid), `live` (valid; guards see it), `expired` (past its last day), `archived`. Default: all.",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/instructions"
+            }
+          }
+        },
+        {
+          "name": "Send the technicians an instruction",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"title\": \"\",\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string | yes |  |\n| `title` | string | yes |  |\n| `urgent` | boolean |  | A critical push (`technician_instruction.urgent`). |\n| `validFrom` | string |  | The compound day it holds from, inclusive. Until then technicians neither see it nor are told of it; they are told when they go on duty on a day it holds. Default: from now. |\n| `validUntil` | string |  | The last compound day it holds, inclusive: not before `validFrom` (ENDS_BEFORE_START), nor before today (DAY_OUT_OF_RANGE {min}). Default: until archived. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "instructions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/instructions"
+            }
+          }
+        },
+        {
+          "name": "Get a technicians’ instruction",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "instructions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/instructions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Archive a technicians’ instruction",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "instructions",
+                ":id",
+                "archive"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/instructions/:id/archive",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

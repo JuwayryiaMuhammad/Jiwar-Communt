@@ -39,6 +39,12 @@ export function fieldTeamCalls(
     });
   };
   const id = (res: Response) => (res.body as { id: string }).id;
+  /** An instruction to A's technicians, reaching A's technician. */
+  const instruction = () =>
+    manager('POST', '/staff/field-team/instructions', {
+      title: 'No-store',
+      body: 'An instruction for the no-store calls.',
+    });
   return {
     'GET /staff/field-team/technicians': () =>
       manager('GET', '/staff/field-team/technicians'),
@@ -67,5 +73,27 @@ export function fieldTeamCalls(
       technician('GET', '/maintenance/my-roster'),
     'GET /maintenance/my-roster/attendance': () =>
       technician('GET', '/maintenance/my-roster/attendance'),
+    'POST /staff/field-team/instructions': () => instruction(),
+    'GET /staff/field-team/instructions': () =>
+      manager('GET', '/staff/field-team/instructions'),
+    'GET /staff/field-team/instructions/{id}': async () =>
+      manager(
+        'GET',
+        `/staff/field-team/instructions/${id(await instruction())}`,
+      ),
+    'POST /staff/field-team/instructions/{id}/archive': async () =>
+      manager(
+        'POST',
+        `/staff/field-team/instructions/${id(await instruction())}/archive`,
+      ),
+    'GET /maintenance/instructions': () =>
+      technician('GET', '/maintenance/instructions'),
+    'GET /maintenance/instructions/{id}': async () =>
+      technician('GET', `/maintenance/instructions/${id(await instruction())}`),
+    'POST /maintenance/instructions/{id}/acknowledge': async () =>
+      technician(
+        'POST',
+        `/maintenance/instructions/${id(await instruction())}/acknowledge`,
+      ),
   };
 }

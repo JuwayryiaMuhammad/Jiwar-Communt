@@ -403,3 +403,12 @@ The full notes are in [`notes/experience.md`](notes/experience.md).
 - **Compensations.** Proposed on a case, decided once (`/staff/experience/compensations/{id}/decide`, `experience.compensate`). A credit is finance's compensation credit note; above the binding `compensation_above_limit` threshold it names the board's authorization (`409 NEEDS_BOARD_APPROVAL` without). The rules are at `/staff/experience/compensation-rules`.
 - **Promises and reports.** `/staff/experience/promises…` and `…/promises/report`; `/staff/experience/ratings-report`; `sections.experience` in `GET /board/overview`.
 
+### The board's work (ADR 0075)
+
+The full notes are in [`notes/board-work.md`](notes/board-work.md).
+
+- **Weighted polls.** A poll's `weighting` (`unit` | `share`, never secret by share); `electorateWeight`, `turnoutWeight` and each option's `weight`. `GET/PUT /staff/governance/unit-shares`.
+- **Rules.** `GET/PATCH /staff/governance/rules`; a candidacy refused with `409 GOVERNANCE_CANDIDACY_NOT_ELIGIBLE` (`dues_outstanding` | `staff`).
+- **Meetings.** `/board/meetings…` (schedule, change, hold, cancel, minutes, actions) and `/board/meeting-actions…` (list, done, cancel).
+- **Handovers.** `GET /board/handover-pack` (+ `/pdf`); `GET/PUT /staff/governance/handover`, `POST …/deliver`; `GET /board/manager-handovers…` (+ `/pdf`); a manager's deactivation answers `409 HANDOVER_PENDING` while a board sits; a new approval type `manager_handover_override` naming `managerAccountId`.
+- **Reports.** `GET/POST /board/reports`, `GET …/{id}` (+ `/pdf`); a file purpose `compound_logo`.

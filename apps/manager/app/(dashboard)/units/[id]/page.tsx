@@ -23,6 +23,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { MemberOverrides } from '@/components/units/household-overrides';
 import { OccupantActions } from '@/components/units/occupant-actions';
+import { EditUnitDialog, UnitHistoryCard, UnitWorkersCard } from '@/components/units/register';
 import { UnitStates } from '@/components/units/unit-states';
 import { api } from '@/lib/api';
 import { REVIEW_TEXT } from '@/lib/labels';
@@ -38,6 +39,7 @@ export default function UnitPage() {
   const { can } = usePermissions();
   const [ending, setEnding] = useState<Occupant | null>(null);
   const [primary, setPrimary] = useState<Occupant | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const unit = useQuery({ queryKey: keys.unit(id), queryFn: () => fetchers.unit(id) });
   const household = useQuery({
@@ -85,9 +87,16 @@ export default function UnitPage() {
           </ButtonLink>
         }
         actions={
-          <ButtonLink href={`/units/${id}/papers`} size="sm">
-            Papers: contracts, documents, deposits
-          </ButtonLink>
+          <>
+            {can('units.manage') && u ? (
+              <Button size="sm" onClick={() => setEditing(true)}>
+                Edit unit
+              </Button>
+            ) : null}
+            <ButtonLink href={`/units/${id}/papers`} size="sm">
+              Papers: contracts, documents, deposits
+            </ButtonLink>
+          </>
         }
         title={
           u ? (
@@ -102,6 +111,8 @@ export default function UnitPage() {
         }
         description={u ? [u.building && `Building ${u.building}`, u.floor != null && `Floor ${u.floor}`].filter(Boolean).join(' · ') || undefined : undefined}
       />
+
+      {editing && u ? <EditUnitDialog unit={u} onClose={() => setEditing(false)} /> : null}
 
       <QueryState query={unit}>
         {u ? (
@@ -195,6 +206,8 @@ export default function UnitPage() {
                 </QueryState>
               </Card>
 
+              {can('residents.read') ? <UnitHistoryCard unitId={id} /> : null}
+              {can('workers.review') ? <UnitWorkersCard unitId={id} /> : null}
             </div>
 
             <div className="stack">

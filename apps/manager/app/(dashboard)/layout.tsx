@@ -91,6 +91,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { NotificationBell } from '@/components/notification-bell';
+import { StaffSearch } from '@/components/staff-search';
 import { lockdownBanner } from '@/components/security/ops-logic';
 import { mayEnter } from '@/lib/access';
 import { bffAuth } from '@/lib/api';
@@ -737,7 +738,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       user={me ? { name: me.fullName ?? humanRole(me.type), meta: me.email ?? me.phone ?? '', href: allowed ? '/account' : undefined } : null}
       onSignOut={signOut}
       crumb={pathname === '/notifications' ? 'Notifications' : pathname === '/account' ? 'My account' : undefined}
-      topbarEnd={ready && allowed ? <NotificationBell /> : null}
+      topbarEnd={
+        ready && allowed ? (
+          <>
+            <StaffSearch />
+            <NotificationBell />
+          </>
+        ) : null
+      }
       signingOut={signingOut}
     >
       {body}

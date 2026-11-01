@@ -6,6 +6,17 @@ import { api } from './api';
 export type Me = Schema<'MeView'>;
 export type Unit = Schema<'UnitView'>;
 export type UnitDetail = Schema<'UnitDetailView'>;
+export type Building = Schema<'BuildingView'>;
+export type UnitHistory = Schema<'UnitHistoryView'>;
+export type UnitImport = Schema<'UnitImportView'>;
+export type StaffSearchHit = Schema<'StaffSearchHitView'>;
+/** The unit register's filters (ADR 0072); status and occupancyType need units.manage. */
+export type UnitFilters = {
+  q?: string;
+  buildingId?: string;
+  status?: 'vacant' | 'occupied' | 'closed';
+  occupancyType?: 'owner' | 'tenant';
+};
 export type UnitNeedingReview = Schema<'UnitNeedingReviewView'>;
 export type Resident = Schema<'ResidentListItemView'>;
 export type ResidentDetail = Schema<'ResidentDetailView'>;
@@ -510,6 +521,12 @@ export const keys = {
   units: ['units'] as const,
   unit: (id: string) => ['units', 'detail', id] as const,
   unitsReview: ['units', 'needing-review'] as const,
+  unitsFiltered: (f: UnitFilters) => ['units', 'filtered', f] as const,
+  buildings: ['units', 'buildings'] as const,
+  unitHistory: (id: string) => ['units', 'detail', id, 'history'] as const,
+  unitWorkers: (id: string) => ['units', 'detail', id, 'workers'] as const,
+  unitImports: ['units', 'imports'] as const,
+  staffSearch: (q: string) => ['staff-search', q] as const,
   residents: ['residents'] as const,
   resident: (id: string) => ['residents', 'detail', id] as const,
   accounts: ['accounts'] as const,
@@ -852,6 +869,16 @@ export const fetchers = {
   unit: (id: string) => unwrap(api.GET('/api/v1/units/{id}', { params: { path: { id } } })),
   unitsReview: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/units/needing-review', { params: { query: { cursor, limit } } })),
+  unitsFiltered: (f: UnitFilters, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/units', { params: { query: { ...clean(f), cursor, limit } } })),
+  buildings: () => unwrap(api.GET('/api/v1/buildings')),
+  unitHistory: (unitId: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/units/{unitId}/occupancy-history', { params: { path: { unitId }, query: { cursor, limit } } })),
+  unitWorkers: (unitId: string) =>
+    unwrap(api.GET('/api/v1/worker-engagements', { params: { query: { unitId, limit: 100 } } })),
+  unitImports: (cursor?: string, limit = 20) =>
+    unwrap(api.GET('/api/v1/staff/unit-imports', { params: { query: { cursor, limit } } })),
+  staffSearch: (q: string) => unwrap(api.GET('/api/v1/staff/search', { params: { query: { q } } })),
   residents: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/residents', { params: { query: { cursor, limit } } })),
   resident: (id: string) => unwrap(api.GET('/api/v1/residents/{id}', { params: { path: { id } } })),

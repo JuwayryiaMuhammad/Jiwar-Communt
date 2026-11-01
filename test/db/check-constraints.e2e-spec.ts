@@ -2651,6 +2651,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'every used_* column is tested IS [NOT] NULL in both branches; used_by_type is compared only in the branch that requires it IS NOT NULL',
   },
+  // Deputies (ADR 0073).
+  account_deputies_shape: {},
+  account_deputies_end_shape: {
+    guarded:
+      'ended_at, end_reason and ended_by_account_id are tested IS [NOT] NULL in both branches; end_reason is compared only where it is NOT NULL',
+  },
 };
 
 interface Check {

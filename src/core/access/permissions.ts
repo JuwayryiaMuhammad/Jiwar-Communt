@@ -316,6 +316,9 @@ export const PERMISSIONS = {
   // It opens the queue only; each type shows to its own permission's
   // holders, and each decision is its domain's.
   'inbox.read': { kinds: ['staff', 'manager'] },
+  // Name a deputy who decides in one's place for at most 30 days (ADR
+  // 0073): reading and ending one needs no permission.
+  'deputies.manage': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

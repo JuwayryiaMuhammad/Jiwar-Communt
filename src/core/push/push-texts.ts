@@ -2984,6 +2984,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'عنصر في صندوقك تجاوز موعد قراره. افتح الصندوق لتقرر.',
     },
   },
+  'deputy.appointed': {
+    en: {
+      title: 'You are a deputy',
+      body: 'You decide in someone’s place for a while: {permissions} permission(s). Open the app to see them.',
+    },
+    ar: {
+      title: 'أصبحت نائبًا',
+      body: 'تقرر مكان أحد الزملاء لفترة: {permissions} صلاحية. افتح التطبيق لتراها.',
+    },
+  },
+  'deputy.ended': {
+    en: {
+      title: 'A deputyship ended',
+      body: 'A deputyship of yours ended. Open the app to see it.',
+    },
+    ar: {
+      title: 'انتهت نيابة',
+      body: 'انتهت إحدى نياباتك. افتح التطبيق لتراها.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

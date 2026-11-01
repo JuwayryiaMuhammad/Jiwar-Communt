@@ -14,6 +14,18 @@ export interface AppClsStore extends ClsStore {
   /** Set by PermissionsGuard from the database on every request (ADR 0010). */
   roleId?: string;
   permissionsVersion?: number;
+  /**
+   * Set by PermissionsGuard (ADR 0073): the permissions a live deputyship
+   * gives this account (`gained`, and whose they are) and the ones it gave
+   * away to its deputy (`away`). Empty lists when there is none.
+   */
+  delegation?: { gained: string[]; principalId: string | null; away: string[] };
+  /**
+   * Set by PermissionsGuard when the route was allowed only through a
+   * gained permission: the principal every audit entry of the request is
+   * recorded on behalf of (ADR 0073).
+   */
+  onBehalfOf?: string;
   /** Platform routes only (ADR 0011); never set together with tenantId. */
   platformAdminId?: string;
   platformScope?: 'full' | 'password_change';

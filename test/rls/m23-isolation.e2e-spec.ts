@@ -12,6 +12,8 @@ interface Side {
   accountId: string;
   /** A board approval request of the compound's (ADR 0055). */
   requestId: string;
+  /** A second account, to deputize. */
+  deputyId: string;
 }
 
 /**
@@ -77,6 +79,30 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  {
+    table: 'account_deputies',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      const now = new Date();
+      await tx.accountDeputy.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          principalAccountId: own.accountId,
+          deputyAccountId: link.deputyId,
+          permissions: ['permits.manage'],
+          startsAt: now,
+          endsAt: new Date(now.getTime() + 3_600_000),
+          // Ended: every insert here stays clear of the one-live keys, so
+          // only the composite keys can refuse the linked one.
+          endedAt: now,
+          endReason: 'expired',
+          createdByAccountId: own.accountId,
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — the staff inbox, authority and deputies (ADR 0073)', () => {
@@ -91,7 +117,12 @@ describe('RLS isolation — the staff inbox, authority and deputies (ADR 0073)',
   const side = async (label: string): Promise<Side> => {
     const tenantId = await createTenant(h, `Inbox ${label}`);
     const accountId = (await createAccountRow(h, tenantId)).id;
-    const s: Side = { tenantId, accountId, requestId: '' };
+    const s: Side = {
+      tenantId,
+      accountId,
+      requestId: '',
+      deputyId: (await createAccountRow(h, tenantId)).id,
+    };
     s.requestId = await inTenant(s, (tx) =>
       approvalRequestRow(tx, { tenantId, raisedById: accountId }),
     );

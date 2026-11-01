@@ -117,3 +117,55 @@ export const BOARD_AUTHORITY_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Deputies (ADR 0073): either account reads and ends one; the manager names one. */
+export const DEPUTY_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/deputies',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'none',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/deputies',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'supervisor',
+    foreign: 'none',
+    invalid: {
+      body: {
+        deputyAccountId: 'nope',
+        permissions: [],
+        endsAt: '2099-02-30T08:00:00Z',
+      },
+      fields: [
+        { field: 'deputyAccountId', code: 'INVALID_UUID' },
+        {
+          field: 'permissions',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 50 },
+        },
+        { field: 'endsAt', code: 'INVALID_FORMAT' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/deputies/{id}/end',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'none',
+    foreign: {
+      params: () => ({ id: '0193b8a4-0000-7000-8000-000000000000' }),
+      code: 'DEPUTY_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

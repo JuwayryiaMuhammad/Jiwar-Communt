@@ -2499,8 +2499,8 @@ describe('Permission sync', () => {
   });
 
   describe('Phase M2-3 (ADR 0073)', () => {
-    const m23 = ['inbox.read'];
-    /** The catalog before M2-3: no inbox permission anywhere. */
+    const m23 = ['inbox.read', 'deputies.manage'];
+    /** The catalog before M2-3: neither permission anywhere. */
     const before: AccessCatalog = {
       ...base,
       permissions: Object.fromEntries(
@@ -2512,7 +2512,7 @@ describe('Permission sync', () => {
       })),
     };
 
-    it('reaches an existing compound: inbox.read to the manager, the supervisors and the accountant; no other role gains it', async () => {
+    it('reaches an existing compound: inbox.read to the manager, the supervisors and the accountant, deputies.manage to the manager; no other role gains either', async () => {
       expect(catalogProblems(before)).toEqual([]);
       const t = newId();
       await h.globalDb.tenant.create({
@@ -2535,6 +2535,17 @@ describe('Permission sync', () => {
         'accountant',
       ])
         expect((await role(t, key)).permissions).toContain('inbox.read');
+      expect((await role(t, 'manager')).permissions).toContain(
+        'deputies.manage',
+      );
+      for (const key of [
+        'security_supervisor',
+        'maintenance_supervisor',
+        'accountant',
+      ])
+        expect((await role(t, key)).permissions).not.toContain(
+          'deputies.manage',
+        );
       for (const key of [
         'resident',
         'family_member',

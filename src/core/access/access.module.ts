@@ -8,10 +8,12 @@ import { ResourceAccess } from './resource-access';
 import { RoleLifecycle } from './role-lifecycle';
 import { RolesService } from './roles.service';
 import { StaffRecipients } from './staff-recipients';
+import { DeputiesController } from './deputies.controller';
+import { DeputiesService } from './deputies.service';
 
 @Global()
 @Module({
-  controllers: [RolesController],
+  controllers: [RolesController, DeputiesController],
   providers: [
     { provide: ACCESS_CATALOG, useValue: CODE_ACCESS_CATALOG },
     RoleProvisioner,
@@ -21,6 +23,7 @@ import { StaffRecipients } from './staff-recipients';
     RoleLifecycle,
     ResourceAccess,
     StaffRecipients,
+    DeputiesService,
   ],
   exports: [
     ResourceAccess,

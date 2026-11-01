@@ -58,6 +58,7 @@ export class AuditService {
         targetId: entry.targetId,
         changes,
         metadata,
+        onBehalfOfId: this.context.onBehalfOf(),
         ...origin,
       },
     });

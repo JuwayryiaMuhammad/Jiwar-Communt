@@ -13902,6 +13902,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/deputies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My deputyships, as principal or deputy */
+        get: operations["DeputiesController_mine"];
+        put?: never;
+        /**
+         * Name a deputy who decides in my place until a time
+         * @description The deputy gains the permissions and I lose them until it ends. One live deputy per principal (DEPUTY_ALREADY_SET) and one live deputyship per deputy (DEPUTY_BUSY). The deputy is told.
+         */
+        post: operations["DeputiesController_appoint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/deputies/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End a deputyship early, as its principal or its deputy
+         * @description Once (DEPUTY_ENDED). The other account is told.
+         */
+        post: operations["DeputiesController_end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/facilities": {
         parameters: {
             query?: never;
@@ -22782,6 +22823,20 @@ export interface components {
             /** @description The board’s seats; empty ones may be filled later. */
             seats: number;
         };
+        AppointDeputyDto: {
+            /**
+             * Format: uuid
+             * @description An active staff or manager account, not the caller.
+             */
+            deputyAccountId: string;
+            /**
+             * Format: date-time
+             * @description When it ends: after now and at most 30 days ahead (INVALID_VALUE, params.maxDays). It starts now.
+             */
+            endsAt: string;
+            /** @description Out of the caller’s own role, the deputy’s kind allowed; never finance.*, governance.*, appeals.decide, roles.manage or deputies.manage (INVALID_VALUE with params.permission). */
+            permissions: string[];
+        };
         AppointmentBookedView: {
             /** Format: date-time */
             endsAt: string;
@@ -23346,6 +23401,11 @@ export interface components {
             metadata: Record<string, never> | null;
             /** Format: date-time */
             occurredAt: string;
+            /**
+             * Format: uuid
+             * @description The principal the actor acted for, through a deputy’s gained permission (ADR 0073); null otherwise.
+             */
+            onBehalfOfId: string | null;
             requestId: string | null;
             /** Format: uuid */
             targetId: string | null;
@@ -28268,6 +28328,37 @@ export interface components {
             at: string;
             /** @example WC-000012 */
             reference: string;
+        };
+        DeputyView: {
+            /** Format: uuid */
+            deputyAccountId: string;
+            /**
+             * @description `ended`: by one of its accounts; `expired`: its time ran out; `account_left`: one of them is no longer active.
+             * @enum {string|null}
+             */
+            endReason: "ended" | "expired" | "account_left" | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description In force now. */
+            live: boolean;
+            permissions: string[];
+            /** Format: uuid */
+            principalAccountId: string;
+            /**
+             * @description The caller’s side of it.
+             * @enum {string}
+             */
+            role: "principal" | "deputy";
+            /** Format: date-time */
+            startsAt: string;
+        };
+        DeputyViewList: {
+            data: components["schemas"]["DeputyView"][];
+            nextCursor: string | null;
         };
         DeskAcceptDto: {
             /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
@@ -35920,6 +36011,11 @@ export interface components {
             metadata: Record<string, never> | null;
             /** Format: date-time */
             occurredAt: string;
+            /**
+             * Format: uuid
+             * @description The principal the actor acted for, through a deputy’s gained permission (ADR 0073); null otherwise.
+             */
+            onBehalfOfId: string | null;
             requestId: string | null;
             /** Format: uuid */
             targetId: string | null;
@@ -65337,6 +65433,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepositView"];
+                };
+            };
+        };
+    };
+    DeputiesController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeputyViewList"];
+                };
+            };
+        };
+    };
+    DeputiesController_appoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointDeputyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeputyView"];
+                };
+            };
+        };
+    };
+    DeputiesController_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeputyView"];
                 };
             };
         };

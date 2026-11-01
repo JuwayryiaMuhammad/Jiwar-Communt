@@ -965,4 +965,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // its decision once.
   finance_board_authorizations_tenant_id_id_key: null,
   finance_board_authorizations_request_key: null,
+  // Deputies (ADR 0073): one live per principal and per deputy, checked first
+  // under both accounts' locks (DEPUTY_ALREADY_SET, DEPUTY_BUSY); a
+  // violation is a race and names nothing.
+  account_deputies_tenant_id_id_key: null,
+  account_deputies_one_per_principal: null,
+  account_deputies_one_per_deputy: null,
 };

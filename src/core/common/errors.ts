@@ -1040,6 +1040,14 @@ export const ErrorCode = {
   BOARD_AUTHORIZATION_USED: 'BOARD_AUTHORIZATION_USED',
   /** More than the board approved (409, params.amount). */
   BOARD_AUTHORIZATION_EXCEEDED: 'BOARD_AUTHORIZATION_EXCEEDED',
+  /** Unknown, another compound's, or not the caller's (ADR 0073). */
+  DEPUTY_NOT_FOUND: 'DEPUTY_NOT_FOUND',
+  /** The caller has a live deputy already: end it first. */
+  DEPUTY_ALREADY_SET: 'DEPUTY_ALREADY_SET',
+  /** The account is someone's live deputy already. */
+  DEPUTY_BUSY: 'DEPUTY_BUSY',
+  /** It ended already (params.reason). */
+  DEPUTY_ENDED: 'DEPUTY_ENDED',
   /** Unknown, or another compound's. */
   EXPENSE_AUTHORIZATION_NOT_FOUND: 'EXPENSE_AUTHORIZATION_NOT_FOUND',
   /** More than the approved contract has left (409, params.remaining). */

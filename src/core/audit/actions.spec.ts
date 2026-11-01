@@ -241,6 +241,7 @@ describe('audit catalog', () => {
         'gallery_photo',
         // ADR 0073.
         'board_authorization',
+        'account_deputy',
       ]).toContain(def.target);
     }
   });

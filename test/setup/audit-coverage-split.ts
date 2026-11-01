@@ -1003,4 +1003,6 @@ export const M23_COVERAGE: readonly string[] = [
   'staff_inbox.settings_changed',
   'board_authorization.granted',
   'board_authorization.used',
+  'deputy.appointed',
+  'deputy.ended',
 ];

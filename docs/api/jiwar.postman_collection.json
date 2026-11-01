@@ -46573,6 +46573,90 @@
     {
       "item": [
         {
+          "name": "My deputyships, as principal or deputy",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "deputies"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/deputies"
+            }
+          }
+        },
+        {
+          "name": "Name a deputy who decides in my place until a time",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"deputyAccountId\": \"\",\n  \"permissions\": [\n    \"\"\n  ],\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `deputyAccountId` | string (uuid) | yes | An active staff or manager account, not the caller. |\n| `endsAt` | string (date-time) | yes | When it ends: after now and at most 30 days ahead (INVALID_VALUE, params.maxDays). It starts now. |\n| `permissions` | string[] | yes | Out of the caller’s own role, the deputy’s kind allowed; never finance.*, governance.*, appeals.decide, roles.manage or deputies.manage (INVALID_VALUE with params.permission). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "deputies"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/deputies"
+            }
+          }
+        },
+        {
+          "name": "End a deputyship early, as its principal or its deputy",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "deputies",
+                ":id",
+                "end"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/deputies/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List what waits for my decision, oldest first",
           "request": {
             "description": "**Responses:** 200",

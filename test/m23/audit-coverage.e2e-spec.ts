@@ -3,6 +3,8 @@ import { auditReaders } from '../setup/audit';
 import { M23_COVERAGE } from '../setup/audit-coverage-split';
 import { boardMatterHelpers } from '../setup/board-matters';
 import { batchRow, disputeRow, invoiceRow } from '../setup/finance-rows';
+import { gateHelpers } from '../setup/gate';
+import { daysLater } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 const MARKER = 'AUDIT-m23-secret';
@@ -128,6 +130,38 @@ describe('Audit coverage — the inbox, the authority and the deputies', () => {
           usedByType: 'invoice_dispute',
           usedById: disputeId,
         },
+      });
+    });
+  });
+
+  describe('the deputies', () => {
+    it('deputy.appointed and .ended — the deputy, the permissions and the end; the reason; what the deputy does is on the manager’s behalf', async () => {
+      const deputyId = (await gateHelpers(h).guard(s.c, 'technician')).id;
+      const until = daysLater(2);
+      const d = (
+        await b
+          .http('post', '/staff/deputies', s.manager.token, {
+            deputyAccountId: deputyId,
+            permissions: ['permits.manage'],
+            endsAt: until.toISOString(),
+          })
+          .expect(201)
+      ).body as { id: string };
+      expect(await single('deputy.appointed', d.id)).toMatchObject({
+        actorId: s.manager.id,
+        onBehalfOfId: null,
+        metadata: {
+          deputyAccountId: deputyId,
+          permissions: ['permits.manage'],
+          endsAt: until.toISOString(),
+        },
+      });
+      await b
+        .http('post', `/staff/deputies/${d.id}/end`, s.manager.token)
+        .expect(200);
+      expect(await single('deputy.ended', d.id)).toMatchObject({
+        actorId: s.manager.id,
+        metadata: { reason: 'ended' },
       });
     });
   });

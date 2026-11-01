@@ -37,7 +37,11 @@ export class PermissionsService {
     private readonly derived: DerivedGrants,
   ) {}
 
-  /** Permissions of the current account's role, as set by PermissionsGuard. */
+  /**
+   * Permissions of the current account: its role's, as set by
+   * PermissionsGuard, less what it gave its deputy and with what a live
+   * deputyship gave it (ADR 0073).
+   */
   async current(): Promise<ReadonlySet<string>> {
     const tenantId = this.cls.isActive() ? this.cls.get('tenantId') : undefined;
     const roleId = this.cls.get('roleId');
@@ -46,7 +50,55 @@ export class PermissionsService {
     if (!tenantId || !roleId || version === undefined || !kind) {
       throw new TenantContextMissingError();
     }
-    return this.forRole(tenantId, roleId, version, kind);
+    const role = await this.forRole(tenantId, roleId, version, kind);
+    return this.withDelegation(role, this.cls.get('delegation'), kind);
+  }
+
+  /** The role's set, less `away`, with `gained` (only what `kind` may hold). */
+  withDelegation(
+    role: ReadonlySet<string>,
+    d: { gained: string[]; away: string[] } | undefined,
+    kind: AccountType,
+  ): ReadonlySet<string> {
+    if (!d || (!d.gained.length && !d.away.length)) return role;
+    const out = new Set(role);
+    for (const p of d.away) out.delete(p);
+    for (const p of this.assignable(d.gained, kind)) out.add(p);
+    return out;
+  }
+
+  /**
+   * The account's live deputyships now (ADR 0073), read under RLS: what it
+   * gained as a deputy (its principal still active) and what it gave away
+   * as a principal. Read only for an account whose `deputy_until` is ahead.
+   */
+  async delegationOf(
+    accountId: string,
+  ): Promise<{ gained: string[]; principalId: string | null; away: string[] }> {
+    const now = new Date();
+    const rows = await this.prisma.tenant.accountDeputy.findMany({
+      where: {
+        endedAt: null,
+        startsAt: { lte: now },
+        endsAt: { gt: now },
+        OR: [{ principalAccountId: accountId }, { deputyAccountId: accountId }],
+      },
+      select: {
+        principalAccountId: true,
+        deputyAccountId: true,
+        permissions: true,
+        principal: { select: { status: true } },
+      },
+    });
+    const away = rows
+      .filter((r) => r.principalAccountId === accountId)
+      .flatMap((r) => r.permissions);
+    const mine = rows.find(
+      (r) => r.deputyAccountId === accountId && r.principal.status === 'active',
+    );
+    return mine
+      ? { gained: mine.permissions, principalId: mine.principalAccountId, away }
+      : { gained: [], principalId: null, away };
   }
 
   /** The role's permissions, or a derived one the account holds now. */

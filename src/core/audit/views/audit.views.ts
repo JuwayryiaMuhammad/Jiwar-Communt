@@ -35,6 +35,14 @@ export class AuditEntryView {
   metadata: unknown;
   @ApiProperty({ type: String, nullable: true })
   requestId: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description:
+      'The principal the actor acted for, through a deputy’s gained permission (ADR 0073); null otherwise.',
+  })
+  onBehalfOfId: string | null;
 
   static from(e: AuditLog): AuditEntryView {
     return {
@@ -48,6 +56,7 @@ export class AuditEntryView {
       changes: e.changes,
       metadata: e.metadata,
       requestId: e.requestId,
+      onBehalfOfId: e.onBehalfOfId,
     };
   }
 }
@@ -74,6 +83,7 @@ export class PlatformAuditEntryView extends AuditEntryView {
       changes: e.changes,
       metadata: e.metadata,
       requestId: e.requestId,
+      onBehalfOfId: null,
       ip: e.ip,
       userAgent: e.userAgent,
     };

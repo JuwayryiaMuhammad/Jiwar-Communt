@@ -2223,6 +2223,10 @@ export const AUDIT_ACTIONS = {
   'market.settings_changed': { log: 'tenant', target: 'tenant' },
   // A compound's due times in the staff inbox (ADR 0073): `<type>.dueHours`.
   'staff_inbox.settings_changed': { log: 'tenant', target: 'tenant' },
+  // A deputy (ADR 0073). appointed: deputyAccountId, permissions, endsAt;
+  // ended: reason (ended | expired | account_left).
+  'deputy.appointed': { log: 'tenant', target: 'account_deputy' },
+  'deputy.ended': { log: 'tenant', target: 'account_deputy' },
   // A partner's offer (ADR 0071). metadata: partnerId, and its days when
   // published.
   'partner_offer.published': { log: 'tenant', target: 'partner_offer' },

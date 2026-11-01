@@ -149,6 +149,7 @@ describe('API v0 — admin', () => {
         'id',
         'metadata',
         'occurredAt',
+        'onBehalfOfId',
         'requestId',
         'targetId',
         'targetType',

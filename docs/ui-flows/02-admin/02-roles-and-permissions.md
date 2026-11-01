@@ -218,6 +218,7 @@ sequenceDiagram
 | `market.post` | السوق: عرض شيء للبيع أو الهبة أو الطلب، أو وحدة يبيعها مالك أو يؤجرها، ومتجر صغير، والانضمام إلى العروض الجماعية، والكتابة إلى البائع عبر محادثة الجيران المقنّعة (ADR 0071) | resident, family | resident, family_member | `/market/listings`، `/market/shops`، `GET /me/market/listings`، `/market/group-offers`، `GET /market/offers` |
 | `market.handle` | مراجعة الإعلانات والمتاجر، والتعامل مع البلاغات، وإعدادات السوق، وتشغيل العروض الجماعية (ADR 0071) | staff, manager | manager | `/market/review`، `/market/shop-review`، `/market/reports`، `/market/settings`، `/staff/group-offers` |
 | `inbox.read` | صندوق القرارات: كل ما ينتظر قرارًا من الأنواع التي يملك صلاحيتها، ومهلاته، والاعتماد الجماعي لما لا يحتاج مدخلات (ADR 0073) | staff, manager | manager, security_supervisor, maintenance_supervisor, accountant | `/staff/inbox`، `/staff/inbox/count`، `/staff/inbox/bulk-approve`، `GET /staff/inbox/settings` |
+| `deputies.manage` | تسمية نائب يقرر مكان صاحب الصلاحية حتى 30 يومًا، بصلاحيات من دوره (ليس المالية ولا الحوكمة ولا التظلمات ولا الأدوار)؛ القراءة والإنهاء لا تحتاجان صلاحية (ADR 0073) | manager | manager | `POST /staff/deputies` |
 
 ملاحظات على الجدول:
 - بعض الشاشات تحتاج **صلاحيتين معًا**: قائمة "من يمكن أن يكون صاحب البلاغ" (`GET /maintenance/units/{unitId}/reporters`) تحتاج `tickets.dispatch` + `residents.read`. وشاشات وحدات طلبات الإدارة (`/management/units/*`) وجزء من `/management/requests` تحتاج `requests.handle` + `residents.read`. إذا أعطى المدير مشرفًا `tickets.dispatch` فقط فلن يرى هذه القوائم.

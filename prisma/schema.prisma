@@ -920,6 +920,11 @@ model PushDelivery {
 model Account {
   id               String          @id @db.Uuid
   tenantId         String          @map("tenant_id") @db.Uuid
+  /// Until when it has a live deputyship, as principal or deputy (ADR
+  /// 0073): the guard reads its deputyships only while this is ahead.
+  deputyUntil      DateTime?       @map("deputy_until") @db.Timestamptz(3)
+  deputyshipsAsPrincipal AccountDeputy[] @relation("DeputyPrincipal")
+  deputyshipsAsDeputy    AccountDeputy[] @relation("DeputyDeputy")
   type             AccountType
   roleId           String          @map("role_id") @db.Uuid
   /// Personal fields are NULL only on an erased account (CHECK accounts_erased_shape).
@@ -3550,6 +3555,9 @@ model AuditLog {
   ip         String?        @db.Inet
   userAgent  String?        @map("user_agent")
   metadata   Json?
+  /// The principal an action was taken for, through a deputy's gained
+  /// permission (ADR 0073); null otherwise.
+  onBehalfOfId String?      @map("on_behalf_of_id") @db.Uuid
 
   @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)])
   @@index([tenantId, targetType, targetId])
@@ -11947,4 +11955,29 @@ model FinanceBoardAuthorization {
   @@unique([tenantId, id])
   @@unique([tenantId, approvalRequestId], map: "finance_board_authorizations_request_key")
   @@map("finance_board_authorizations")
+}
+
+/// A deputy (ADR 0073): another account decides in the principal's place,
+/// with the permissions named, for at most 30 days; the principal loses
+/// them meanwhile. Its terms fixed; ended once; never deleted.
+model AccountDeputy {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  principalAccountId String    @map("principal_account_id") @db.Uuid
+  deputyAccountId    String    @map("deputy_account_id") @db.Uuid
+  permissions        String[]
+  startsAt           DateTime  @map("starts_at") @db.Timestamptz(3)
+  endsAt             DateTime  @map("ends_at") @db.Timestamptz(3)
+  endedAt            DateTime? @map("ended_at") @db.Timestamptz(3)
+  /// ended | expired | account_left (CHECK).
+  endReason          String?   @map("end_reason")
+  endedByAccountId   String?   @map("ended_by_account_id") @db.Uuid
+  createdByAccountId String    @map("created_by_account_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  principal Account @relation("DeputyPrincipal", fields: [tenantId, principalAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "account_deputies_principal_fkey")
+  deputy    Account @relation("DeputyDeputy", fields: [tenantId, deputyAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "account_deputies_deputy_fkey")
+
+  @@unique([tenantId, id])
+  @@map("account_deputies")
 }

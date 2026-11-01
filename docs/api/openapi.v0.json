@@ -1322,6 +1322,35 @@
         ],
         "type": "object"
       },
+      "AppointDeputyDto": {
+        "properties": {
+          "deputyAccountId": {
+            "description": "An active staff or manager account, not the caller.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "When it ends: after now and at most 30 days ahead (INVALID_VALUE, params.maxDays). It starts now.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "permissions": {
+            "description": "Out of the caller’s own role, the deputy’s kind allowed; never finance.*, governance.*, appeals.decide, roles.manage or deputies.manage (INVALID_VALUE with params.permission).",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "deputyAccountId",
+          "permissions",
+          "endsAt"
+        ],
+        "type": "object"
+      },
       "AppointmentBookedView": {
         "properties": {
           "endsAt": {
@@ -3291,6 +3320,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "onBehalfOfId": {
+            "description": "The principal the actor acted for, through a deputy’s gained permission (ADR 0073); null otherwise.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "requestId": {
             "nullable": true,
             "type": "string"
@@ -3314,7 +3349,8 @@
           "targetId",
           "changes",
           "metadata",
-          "requestId"
+          "requestId",
+          "onBehalfOfId"
         ],
         "type": "object"
       },
@@ -18086,6 +18122,95 @@
         "required": [
           "at",
           "reference"
+        ],
+        "type": "object"
+      },
+      "DeputyView": {
+        "properties": {
+          "deputyAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "endReason": {
+            "description": "`ended`: by one of its accounts; `expired`: its time ran out; `account_left`: one of them is no longer active.",
+            "enum": [
+              "ended",
+              "expired",
+              "account_left"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "live": {
+            "description": "In force now.",
+            "type": "boolean"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "principalAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "description": "The caller’s side of it.",
+            "enum": [
+              "principal",
+              "deputy"
+            ],
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "principalAccountId",
+          "deputyAccountId",
+          "permissions",
+          "startsAt",
+          "endsAt",
+          "endedAt",
+          "endReason",
+          "live",
+          "role"
+        ],
+        "type": "object"
+      },
+      "DeputyViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DeputyView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -42796,6 +42921,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "onBehalfOfId": {
+            "description": "The principal the actor acted for, through a deputy’s gained permission (ADR 0073); null otherwise.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "requestId": {
             "nullable": true,
             "type": "string"
@@ -42829,6 +42960,7 @@
           "changes",
           "metadata",
           "requestId",
+          "onBehalfOfId",
           "targetTenantId",
           "ip",
           "userAgent"
@@ -110389,6 +110521,112 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/deputies": {
+      "get": {
+        "operationId": "DeputiesController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeputyViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My deputyships, as principal or deputy",
+        "tags": [
+          "staff"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "The deputy gains the permissions and I lose them until it ends. One live deputy per principal (DEPUTY_ALREADY_SET) and one live deputyship per deputy (DEPUTY_BUSY). The deputy is told.",
+        "operationId": "DeputiesController_appoint",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointDeputyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeputyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Name a deputy who decides in my place until a time",
+        "tags": [
+          "staff"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/deputies/{id}/end": {
+      "post": {
+        "description": "Once (DEPUTY_ENDED). The other account is told.",
+        "operationId": "DeputiesController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeputyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a deputyship early, as its principal or its deputy",
+        "tags": [
+          "staff"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

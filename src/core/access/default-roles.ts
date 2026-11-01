@@ -106,6 +106,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'appeals.decide',
       'market.handle',
       'inbox.read',
+      'deputies.manage',
     ],
   },
   {

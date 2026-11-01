@@ -2736,6 +2736,22 @@ export const NOTIFICATION_KINDS = {
     target: 'inbox_item',
     params: { itemType: {} },
   },
+  /** Someone named the recipient their deputy (ADR 0073): how many permissions. */
+  'deputy.appointed': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'account_deputy',
+    params: { permissions: {} },
+  },
+  /** A deputyship ended: by the other account, its time, or someone left. */
+  'deputy.ended': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'account_deputy',
+    params: { reason: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

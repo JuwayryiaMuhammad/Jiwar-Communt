@@ -40,6 +40,14 @@ export class AuditContext {
     };
   }
 
+  /**
+   * The principal the request acts for, when its route was allowed only
+   * through a deputy's gained permission (ADR 0073); null otherwise.
+   */
+  onBehalfOf(): string | null {
+    return this.cls.isActive() ? (this.cls.get('onBehalfOf') ?? null) : null;
+  }
+
   /** The tenant of the running TenantTx transaction, if any. */
   txTenantId(): string | undefined {
     return this.cls.isActive() ? this.cls.get('txTenantId') : undefined;

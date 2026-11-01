@@ -150,6 +150,7 @@ describe('API v0 — platform', () => {
         'ip',
         'metadata',
         'occurredAt',
+        'onBehalfOfId',
         'requestId',
         'targetId',
         'targetTenantId',

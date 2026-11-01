@@ -214,6 +214,18 @@ export type ApprovalReader = (
   cost: string | null;
 } | null>;
 
+/**
+ * Whether any of these units owes past its due date on the compound's
+ * day `today` (ADR 0075, for a candidacy rule). Finance answers it, in
+ * governance's transaction; an invoice under an open dispute, or
+ * rescheduled into instalments, does not count.
+ */
+export type DuesReader = (
+  tx: TenantTxClient,
+  unitIds: readonly string[],
+  today: string,
+) => Promise<boolean>;
+
 @Injectable()
 export class BoardMatters {
   private readonly approvals = new Map<ApprovalType, ApprovalKindHandler>();
@@ -223,6 +235,7 @@ export class BoardMatters {
   private bindings: BindingReader | null = null;
   private decisions: DecisionReader | null = null;
   private requests: ApprovalReader | null = null;
+  private dues: DuesReader | null = null;
 
   registerApproval(type: ApprovalType, handler: ApprovalKindHandler): void {
     if (this.approvals.has(type))
@@ -277,6 +290,21 @@ export class BoardMatters {
   ): ReturnType<ApprovalReader> {
     if (!this.requests) throw new Error('No approval reader is registered');
     return this.requests(tx, requestId);
+  }
+
+  /** Finance's past-due reader (one reader, ADR 0075). */
+  registerDues(reader: DuesReader): void {
+    if (this.dues) throw new Error('Dues are registered twice');
+    this.dues = reader;
+  }
+
+  owesPastDue(
+    tx: TenantTxClient,
+    unitIds: readonly string[],
+    today: string,
+  ): Promise<boolean> {
+    if (!this.dues) throw new Error('No dues reader is registered');
+    return this.dues(tx, unitIds, today);
   }
 
   publishedDecision(

@@ -17304,6 +17304,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The compound’s governance rules
+         * @description Which candidacies the system refuses at nomination (GOVERNANCE_CANDIDACY_NOT_ELIGIBLE with `params.reason`). Both off by default.
+         */
+        get: operations["GovernanceRulesController_read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the compound’s governance rules
+         * @description A rule applies to nominations from now on: a candidacy already standing is not withdrawn by it; the manager disqualifies with a code (ADR 0051).
+         */
+        patch: operations["GovernanceRulesController_update"];
+        trace?: never;
+    };
     "/api/v1/staff/governance/settings": {
         parameters: {
             query?: never;
@@ -34667,6 +34691,15 @@ export interface components {
             choice: string[];
             unitCode: string;
         };
+        GovernanceRulesResponse: {
+            candidacyNoDues: boolean;
+            candidacyNotStaff: boolean;
+            /**
+             * Format: date-time
+             * @description Null until the manager first sets a rule: the defaults.
+             */
+            updatedAt: string | null;
+        };
         GovernanceSettingDto: {
             /** @description Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit, payment_plan_above_limit and compensation_above_limit (ADR 0082, binding by default) only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds. */
             binding?: boolean;
@@ -48596,6 +48629,12 @@ export interface components {
             titleAr?: string | null;
             /** @description English, Arabic or both, each with its body. */
             titleEn?: string | null;
+        };
+        UpdateGovernanceRulesDto: {
+            /** @description Refuse a candidacy while any unit the owner owns owes past its due date (an invoice under an open dispute does not count). */
+            candidacyNoDues?: boolean;
+            /** @description Refuse a candidacy from an owner who also holds an active staff or manager account in the compound (the same identity document). */
+            candidacyNotStaff?: boolean;
         };
         UpdateGovernanceSettingsDto: {
             items: components["schemas"]["GovernanceSettingDto"][];
@@ -76071,6 +76110,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RepresentativeView"][];
+                };
+            };
+        };
+    };
+    GovernanceRulesController_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceRulesResponse"];
+                };
+            };
+        };
+    };
+    GovernanceRulesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGovernanceRulesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceRulesResponse"];
                 };
             };
         };

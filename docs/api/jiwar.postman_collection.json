@@ -21266,6 +21266,63 @@
           }
         },
         {
+          "name": "The compound’s governance rules",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "rules"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/rules"
+            }
+          }
+        },
+        {
+          "name": "Change the compound’s governance rules",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"candidacyNoDues\": false,\n  \"candidacyNotStaff\": false\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `candidacyNoDues` | boolean |  | Refuse a candidacy while any unit the owner owns owes past its due date (an invoice under an open dispute does not count). |\n| `candidacyNotStaff` | boolean |  | Refuse a candidacy from an owner who also holds an active staff or manager account in the compound (the same identity document). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "rules"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/rules"
+            }
+          }
+        },
+        {
           "name": "Get the board’s deadlines and thresholds",
           "request": {
             "description": "**Responses:** 200",

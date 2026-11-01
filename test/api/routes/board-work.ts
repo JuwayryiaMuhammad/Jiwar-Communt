@@ -35,4 +35,27 @@ export const BOARD_WORK_ROUTES: Row[] = [
     },
     noStore: true,
   },
+  {
+    method: 'GET',
+    path: '/staff/governance/rules',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'landlord',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/governance/rules',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'landlord',
+    foreign: 'none',
+    invalid: {
+      body: { candidacyNoDues: 'yes' },
+      fields: [{ field: 'candidacyNoDues', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
 ];

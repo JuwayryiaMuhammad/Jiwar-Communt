@@ -35,6 +35,7 @@ import {
 } from '../contests/contests.service';
 import { nextGovernanceNumber } from '../counters';
 import { dbNow } from '../db-clock';
+import { GovernanceRulesService } from '../rules/governance-rules.service';
 import { GovernanceNotices } from '../governance-notices';
 import { POLL_LIMITS } from '../polls/poll-rules';
 import {
@@ -128,6 +129,7 @@ export class GovernanceElectionsService implements OnModuleInit {
     private readonly notices: GovernanceNotices,
     private readonly board: BoardService,
     private readonly staff: StaffRecipients,
+    private readonly rules: GovernanceRulesService,
   ) {}
 
   onModuleInit(): void {
@@ -394,6 +396,12 @@ export class GovernanceElectionsService implements OnModuleInit {
           'The election has as many candidates as it takes',
           { params: { max: ELECTION_LIMITS.candidates } },
         );
+      // The compound's candidacy rules (ADR 0075), on the units owned now.
+      await this.rules.requireEligible(
+        tx,
+        me,
+        await this.community.voteUnits(tx, me),
+      );
       const candidateId = newId();
       await this.idempotency.claim(tx, {
         type: GOVERNANCE_CANDIDACY_RESOURCE,

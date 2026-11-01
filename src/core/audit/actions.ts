@@ -1906,6 +1906,12 @@ export const AUDIT_ACTIONS = {
   },
   // Agenda proposals (ADR 0059). changes: the title and the words as
   // changed.
+  // The compound's governance rules changed (ADR 0075): changes:
+  // candidacyNoDues, candidacyNotStaff, by value.
+  'governance_rules.changed': {
+    log: 'tenant',
+    target: 'tenant',
+  },
   // A unit's ownership share recorded, changed or cleared (ADR 0075):
   // changes: share (four decimals, or null), before and after.
   'governance_unit_share.changed': {

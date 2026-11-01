@@ -56,6 +56,23 @@ describe('Audit coverage — the board’s work', () => {
     });
   });
 
+  describe('the rules', () => {
+    it('governance_rules.changed — on the compound, the rules by value', async () => {
+      await g
+        .http('patch', '/staff/governance/rules', s.manager.token, {
+          candidacyNotStaff: true,
+        })
+        .expect(200);
+      expect(
+        await single('governance_rules.changed', s.c.tenantId),
+      ).toMatchObject({
+        actorId: s.manager.id,
+        targetType: 'tenant',
+        changes: { candidacyNotStaff: { from: false, to: true } },
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every entry of the board’s work has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

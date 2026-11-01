@@ -8982,6 +8982,19 @@ model GovernancePoll {
   @@map("governance_polls")
 }
 
+/// The compound's governance rules (ADR 0075); no row reads as the defaults.
+model GovernanceRules {
+  tenantId          String   @id @map("tenant_id") @db.Uuid
+  /// Refuse a candidacy while the owner's units owe past their due date.
+  candidacyNoDues   Boolean  @default(false) @map("candidacy_no_dues")
+  /// Refuse a candidacy from an owner who also holds an active staff or manager account.
+  candidacyNotStaff Boolean  @default(false) @map("candidacy_not_staff")
+  updatedById       String   @map("updated_by_account_id") @db.Uuid
+  updatedAt         DateTime @map("updated_at") @db.Timestamptz(3)
+
+  @@map("governance_rules")
+}
+
 /// A unit's ownership share, as the manager records it (ADR 0075): a poll
 /// weighted by share counts each unit by it.
 model GovernanceUnitShare {

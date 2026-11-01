@@ -29994,6 +29994,28 @@
         ],
         "type": "object"
       },
+      "GovernanceRulesResponse": {
+        "properties": {
+          "candidacyNoDues": {
+            "type": "boolean"
+          },
+          "candidacyNotStaff": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "description": "Null until the manager first sets a rule: the defaults.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidacyNoDues",
+          "candidacyNotStaff",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
       "GovernanceSettingDto": {
         "properties": {
           "binding": {
@@ -75477,6 +75499,19 @@
             "minLength": 1,
             "nullable": true,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateGovernanceRulesDto": {
+        "properties": {
+          "candidacyNoDues": {
+            "description": "Refuse a candidacy while any unit the owner owns owes past its due date (an invoice under an open dispute does not count).",
+            "type": "boolean"
+          },
+          "candidacyNotStaff": {
+            "description": "Refuse a candidacy from an owner who also holds an active staff or manager account in the compound (the same identity document).",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -129827,6 +129862,74 @@
           }
         ],
         "summary": "The buildings’ representatives",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/rules": {
+      "get": {
+        "description": "Which candidacies the system refuses at nomination (GOVERNANCE_CANDIDACY_NOT_ELIGIBLE with `params.reason`). Both off by default.",
+        "operationId": "GovernanceRulesController_read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceRulesResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s governance rules",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "A rule applies to nominations from now on: a candidacy already standing is not withdrawn by it; the manager disqualifies with a code (ADR 0051).",
+        "operationId": "GovernanceRulesController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGovernanceRulesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceRulesResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the compound’s governance rules",
         "tags": [
           "governance"
         ],

@@ -75,6 +75,8 @@ import { GovernancePollsService } from './polls/polls.service';
 import { GovernanceProvisioning } from './provisioning';
 import { GovernanceSettingsController } from './settings/governance-settings.controller';
 import { GovernanceSettingsService } from './settings/governance-settings.service';
+import { GovernanceRulesController } from './rules/governance-rules.controller';
+import { GovernanceRulesService } from './rules/governance-rules.service';
 import { UnitSharesController } from './shares/unit-shares.controller';
 import { UnitSharesService } from './shares/unit-shares.service';
 
@@ -123,6 +125,7 @@ import { UnitSharesService } from './shares/unit-shares.service';
     BoardObjectionsController,
     BoardOverviewController,
     UnitSharesController,
+    GovernanceRulesController,
   ],
   providers: [
     CompoundDocumentsService,
@@ -151,6 +154,7 @@ import { UnitSharesService } from './shares/unit-shares.service';
     BoardOverviewService,
     MatterSweeps,
     UnitSharesService,
+    GovernanceRulesService,
   ],
 })
 export class GovernanceModule {}

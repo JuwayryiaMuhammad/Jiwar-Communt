@@ -938,6 +938,11 @@ export const ErrorCode = {
   GOVERNANCE_NOMINATIONS_CLOSED: 'GOVERNANCE_NOMINATIONS_CLOSED',
   /** Only an owner of a unit stands (403). */
   GOVERNANCE_CANDIDACY_NOT_ALLOWED: 'GOVERNANCE_CANDIDACY_NOT_ALLOWED',
+  /**
+   * The compound's rules exclude the candidacy (409, params.reason:
+   * `dues_outstanding` | `staff`; ADR 0075).
+   */
+  GOVERNANCE_CANDIDACY_NOT_ELIGIBLE: 'GOVERNANCE_CANDIDACY_NOT_ELIGIBLE',
   /** The caller stands already (409). */
   GOVERNANCE_ALREADY_CANDIDATE: 'GOVERNANCE_ALREADY_CANDIDATE',
   /**

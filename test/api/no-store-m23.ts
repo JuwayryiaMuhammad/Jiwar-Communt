@@ -3,8 +3,8 @@ import { call } from './request';
 import type { World } from './world';
 
 /**
- * A real call for each no-store route of the staff inbox (ADR 0073), in A,
- * as its manager.
+ * A real call for each no-store route of the staff inbox and the board's
+ * authorizations (ADR 0073), in A, as its manager.
  */
 export function m23Calls(
   world: () => World,
@@ -31,6 +31,10 @@ export function m23Calls(
       call(world(), 'PATCH', '/staff/inbox/settings', {
         token: manager(),
         body: { items: [{ type: 'vehicle', dueHours: 48 }] },
+      }),
+    'GET /staff/finance/board-authorizations': () =>
+      call(world(), 'GET', '/staff/finance/board-authorizations', {
+        token: manager(),
       }),
   };
 }

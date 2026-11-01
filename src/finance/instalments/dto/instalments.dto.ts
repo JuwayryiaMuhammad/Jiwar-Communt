@@ -66,6 +66,17 @@ export class ConvertToInstalmentsDto {
   @ValidateNested({ each: true })
   @Type(() => InstalmentDto)
   instalments: InstalmentDto[];
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'Above a binding payment_plan_above_limit (ADR 0073): what the board approved for it (GET /staff/finance/board-authorizations), used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold.',
+  })
+  @IsOptional()
+  @IsUUID()
+  authorizationId?: string;
 }
 
 export class CancelInstalmentPlanDto {

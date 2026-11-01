@@ -1029,6 +1029,17 @@ export const ErrorCode = {
    * approved major contract to name (409, params.limit).
    */
   EXPENSE_NEEDS_APPROVAL: 'EXPENSE_NEEDS_APPROVAL',
+  /**
+   * Above a binding waiver or payment plan threshold (ADR 0073): name what
+   * the board approved for it (409, params.type, params.limit).
+   */
+  NEEDS_BOARD_APPROVAL: 'NEEDS_BOARD_APPROVAL',
+  /** Unknown, another compound's, or of another type (ADR 0073). */
+  BOARD_AUTHORIZATION_NOT_FOUND: 'BOARD_AUTHORIZATION_NOT_FOUND',
+  /** It served a credit or a plan already: each is used once. */
+  BOARD_AUTHORIZATION_USED: 'BOARD_AUTHORIZATION_USED',
+  /** More than the board approved (409, params.amount). */
+  BOARD_AUTHORIZATION_EXCEEDED: 'BOARD_AUTHORIZATION_EXCEEDED',
   /** Unknown, or another compound's. */
   EXPENSE_AUTHORIZATION_NOT_FOUND: 'EXPENSE_AUTHORIZATION_NOT_FOUND',
   /** More than the approved contract has left (409, params.remaining). */

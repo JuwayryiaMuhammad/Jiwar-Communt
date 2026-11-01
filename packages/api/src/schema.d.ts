@@ -14143,6 +14143,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/board-authorizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List what the board approved for a waiver or a payment plan */
+        get: operations["BoardAuthorizationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/budget-settings": {
         parameters: {
             query?: never;
@@ -23338,6 +23355,12 @@ export interface components {
             data: components["schemas"]["AuditEntryView"][];
             nextCursor: string | null;
         };
+        AuthorizationUseView: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            type: "invoice_dispute" | "plan_request" | "invoice";
+        };
         AuthorizeDelegateDto: {
             /** @description The delegate’s name, shown to the guard only after a valid delegate code. No phone. */
             name: string;
@@ -23437,6 +23460,8 @@ export interface components {
             data: components["schemas"]["BillingPlanView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        BindableApprovalType: "waiver_above_limit" | "payment_plan_above_limit";
         BirthDateDto: {
             /** Format: date */
             birthDate: string;
@@ -23629,6 +23654,24 @@ export interface components {
             threshold: string | null;
             type: components["schemas"]["ApprovalType"];
             withdrawal: components["schemas"]["ApprovalWithdrawalView"] | null;
+        };
+        BoardAuthorizationView: {
+            /** @description EGP, the board’s approved cost. */
+            amount: string;
+            /** Format: uuid */
+            approvalRequestId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            type: components["schemas"]["BindableApprovalType"];
+            /** Format: date-time */
+            usedAt: string | null;
+            usedBy: components["schemas"]["AuthorizationUseView"] | null;
+        };
+        BoardAuthorizationViewList: {
+            data: components["schemas"]["BoardAuthorizationView"][];
+            nextCursor: string | null;
         };
         /** @enum {string} */
         BoardMotionOutcome: "approve" | "reject" | "uphold" | "overturn";
@@ -26180,6 +26223,11 @@ export interface components {
             nextCursor: string | null;
         };
         ConvertToInstalmentsDto: {
+            /**
+             * Format: uuid
+             * @description Above a binding payment_plan_above_limit (ADR 0073): what the board approved for it (GET /staff/finance/board-authorizations), used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold.
+             */
+            authorizationId?: string;
             instalments: components["schemas"]["InstalmentDto"][];
         };
         ConvertToOwnerDto: {
@@ -28005,6 +28053,11 @@ export interface components {
         DecideDisputeDto: {
             /** @description On `accept` only: what to credit. */
             amount?: string;
+            /**
+             * Format: uuid
+             * @description On `accept`, above a binding waiver_above_limit (ADR 0073): what the board approved for it, used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold and on `reject`.
+             */
+            authorizationId?: string;
             /** @enum {string} */
             decision: "accept" | "reject";
             /** @description On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject). */
@@ -30472,6 +30525,8 @@ export interface components {
             unitCode: string;
         };
         GovernanceSettingDto: {
+            /** @description Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit and payment_plan_above_limit only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds. */
+            binding?: boolean;
             /** @description Days the board has to decide a matter of this type raised from now on. */
             deadlineDays?: number;
             /** @description EGP; null to clear. The four thresholded types only (FIELD_NOT_ALLOWED otherwise). major_contract’s is the manager’s limit for one expense. */
@@ -30479,6 +30534,10 @@ export interface components {
             type: components["schemas"]["GovernanceSettingType"];
         };
         GovernanceSettingResponse: {
+            /** @description Whether the compound may change `binding`. */
+            bindable: boolean;
+            /** @description Above the threshold, the domain refuses unless the board approved it (ADR 0073). */
+            binding: boolean;
             /** @description Days the board has to decide a matter of this type. */
             deadlineDays: number;
             /** @description EGP, or none set. */
@@ -65708,6 +65767,29 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    BoardAuthorizationsController_list: {
+        parameters: {
+            query?: {
+                type?: components["schemas"]["BindableApprovalType"];
+                /** @description `true`: only those not used yet. */
+                unused?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardAuthorizationViewList"];
                 };
             };
         };

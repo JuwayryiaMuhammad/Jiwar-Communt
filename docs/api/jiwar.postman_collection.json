@@ -11690,6 +11690,41 @@
           }
         },
         {
+          "name": "List what the board approved for a waiver or a payment plan",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "board-authorizations"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only those not used yet.",
+                  "disabled": true,
+                  "key": "unused",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/board-authorizations"
+            }
+          }
+        },
+        {
           "name": "The month the fiscal year starts on",
           "request": {
             "description": "**Responses:** 200",
@@ -13247,7 +13282,7 @@
               },
               "raw": "{\n  \"decision\": \"accept\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string |  | On `accept` only: what to credit. |\n| `decision` | `accept` \\| `reject` | yes |  |\n| `reasonCode` | string |  | On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string |  | On `accept` only: what to credit. |\n| `authorizationId` | string (uuid) |  | On `accept`, above a binding waiver_above_limit (ADR 0073): what the board approved for it, used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold and on `reject`. |\n| `decision` | `accept` \\| `reject` | yes |  |\n| `reasonCode` | string |  | On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -13483,7 +13518,7 @@
               },
               "raw": "{\n  \"instalments\": [\n    {\n      \"dueOn\": \"\",\n      \"amount\": \"\"\n    }\n  ]\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `instalments` | object[] | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `authorizationId` | string (uuid) |  | Above a binding payment_plan_above_limit (ADR 0073): what the board approved for it (GET /staff/finance/board-authorizations), used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold. |\n| `instalments` | object[] | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -13758,7 +13793,7 @@
               },
               "raw": "{\n  \"instalments\": [\n    {\n      \"dueOn\": \"\",\n      \"amount\": \"\"\n    }\n  ]\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `instalments` | object[] | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `authorizationId` | string (uuid) |  | Above a binding payment_plan_above_limit (ADR 0073): what the board approved for it (GET /staff/finance/board-authorizations), used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold. |\n| `instalments` | object[] | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

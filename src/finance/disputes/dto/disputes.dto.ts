@@ -80,6 +80,17 @@ export class DecideDisputeDto {
   @IsOptional()
   @IsString()
   reasonCode?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'On `accept`, above a binding waiver_above_limit (ADR 0073): what the board approved for it, used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold and on `reject`.',
+  })
+  @IsOptional()
+  @IsUUID()
+  authorizationId?: string;
 }
 
 export class StaffDisputesQueryDto extends PageQueryDto {

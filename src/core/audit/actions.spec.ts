@@ -239,6 +239,8 @@ describe('audit catalog', () => {
         'bus_departure',
         'gallery_album',
         'gallery_photo',
+        // ADR 0073.
+        'board_authorization',
       ]).toContain(def.target);
     }
   });

@@ -31,6 +31,17 @@ export class GovernanceSettingResponse {
     description: 'Whether the type takes a threshold.',
   })
   thresholded: boolean;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Above the threshold, the domain refuses unless the board approved it (ADR 0073).',
+  })
+  binding: boolean;
+  @ApiProperty({
+    type: Boolean,
+    description: 'Whether the compound may change `binding`.',
+  })
+  bindable: boolean;
 }
 
 export class GovernanceSettingsResponse {

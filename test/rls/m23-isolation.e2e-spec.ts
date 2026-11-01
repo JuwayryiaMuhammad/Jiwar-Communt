@@ -4,11 +4,14 @@ import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
+import { approvalRequestRow } from '../setup/governance-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
   tenantId: string;
   accountId: string;
+  /** A board approval request of the compound's (ADR 0055). */
+  requestId: string;
 }
 
 /**
@@ -57,6 +60,23 @@ const TABLES: Table[] = [
       return own.tenantId;
     },
   },
+  {
+    table: 'finance_board_authorizations',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.financeBoardAuthorization.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          approvalRequestId: link.requestId,
+          type: 'waiver_above_limit',
+          amount: '1000.00',
+          createdAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — the staff inbox, authority and deputies (ADR 0073)', () => {
@@ -70,7 +90,12 @@ describe('RLS isolation — the staff inbox, authority and deputies (ADR 0073)',
 
   const side = async (label: string): Promise<Side> => {
     const tenantId = await createTenant(h, `Inbox ${label}`);
-    return { tenantId, accountId: (await createAccountRow(h, tenantId)).id };
+    const accountId = (await createAccountRow(h, tenantId)).id;
+    const s: Side = { tenantId, accountId, requestId: '' };
+    s.requestId = await inTenant(s, (tx) =>
+      approvalRequestRow(tx, { tenantId, raisedById: accountId }),
+    );
+    return s;
   };
 
   beforeAll(async () => {

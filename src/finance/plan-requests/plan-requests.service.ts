@@ -235,6 +235,7 @@ export class PlanRequestsService implements OnModuleInit {
         invoice,
         dto,
         newId(),
+        { type: 'plan_request', id },
       );
       const now = await dbNow(tx);
       const after = await tx.instalmentPlanRequest.update({

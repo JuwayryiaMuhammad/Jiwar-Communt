@@ -1416,6 +1416,14 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'expense_authorization',
   },
+  // A board authorization for a waiver or a payment plan (ADR 0073):
+  // granted by an approved request (requestId, type, amount); used once by
+  // a dispute's credit or a plan (type, amount, usedByType, usedById).
+  'board_authorization.granted': {
+    log: 'tenant',
+    target: 'board_authorization',
+  },
+  'board_authorization.used': { log: 'tenant', target: 'board_authorization' },
   // changes: number, lineId, authorizationId, amount, spentOn, the vendor
   // and the reference as changed.
   'expense.recorded': {

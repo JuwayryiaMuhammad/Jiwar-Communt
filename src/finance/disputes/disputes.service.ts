@@ -40,6 +40,7 @@ import type {
   DisputeView,
   StaffDisputeView,
 } from './views/dispute.views';
+import { BoardAuthority } from '../budgets/board-authority';
 
 export const DISPUTE_RESOURCE = 'invoice_dispute';
 /** A rejected dispute is taken to the board within this many days (ADR 0055). */
@@ -87,6 +88,7 @@ export class DisputesService implements OnModuleInit {
     private readonly notices: FinanceNotices,
     private readonly files: FilesService,
     private readonly settler: ChargeSettler,
+    private readonly authority: BoardAuthority,
   ) {}
 
   onModuleInit(): void {
@@ -233,6 +235,11 @@ export class DisputesService implements OnModuleInit {
     };
     want('amount', dto.decision === 'accept');
     want('reasonCode', dto.decision === 'reject');
+    if (dto.decision === 'reject' && dto.authorizationId !== undefined)
+      shape.push({
+        field: 'authorizationId',
+        code: FieldErrorCode.FIELD_NOT_ALLOWED,
+      });
     if (shape.length) throw invalid(shape);
     const reasonCode =
       dto.decision === 'reject'
@@ -266,6 +273,13 @@ export class DisputesService implements OnModuleInit {
         released: Prisma.Decimal;
       } | null = null;
       if (dto.decision === 'accept') {
+        // The credit, held to the board's threshold when it binds (ADR 0073).
+        await this.authority.hold(tx, {
+          type: 'waiver_above_limit',
+          amount: money(dto.amount!),
+          authorizationId: dto.authorizationId,
+          use: { type: 'invoice_dispute', id },
+        });
         // Up to what credit notes may still take: beyond what is owed (a
         // payment landed meanwhile), paid money is released to credit.
         const { note, released } = await creditInvoice(tx, {

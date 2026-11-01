@@ -3,6 +3,7 @@ import { Prisma, type GovernanceApprovalSetting } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import {
+  BINDABLE_TYPES,
   BoardMatters,
   type ThresholdType,
 } from '../../core/board-matters/board-matters';
@@ -25,10 +26,20 @@ export interface GovernanceSettingView {
   /** A decimal string, or null; always null for a type without one. */
   threshold: string | null;
   thresholded: boolean;
+  /**
+   * Above the threshold, the domain refuses unless the board approved it
+   * (ADR 0073): always major_contract; a waiver and a payment plan when the
+   * compound says so; never the rest.
+   */
+  binding: boolean;
+  /** Whether the compound may change `binding` for the type. */
+  bindable: boolean;
 }
 
 const thresholded = (type: string): type is ThresholdType =>
   (THRESHOLD_TYPES as readonly string[]).includes(type);
+const bindable = (type: string) =>
+  (BINDABLE_TYPES as readonly string[]).includes(type);
 
 function view(s: GovernanceApprovalSetting): GovernanceSettingView {
   return {
@@ -36,6 +47,8 @@ function view(s: GovernanceApprovalSetting): GovernanceSettingView {
     deadlineDays: s.deadlineDays,
     threshold: s.threshold ? s.threshold.toFixed(2) : null,
     thresholded: thresholded(s.type),
+    binding: s.binding,
+    bindable: bindable(s.type),
   };
 }
 
@@ -45,6 +58,7 @@ function flat(rows: GovernanceSettingView[]): Record<string, unknown> {
     rows.flatMap((r): [string, unknown][] => [
       [`${r.type}.deadlineDays`, r.deadlineDays],
       [`${r.type}.threshold`, r.threshold],
+      [`${r.type}.binding`, r.binding],
     ]),
   );
 }
@@ -67,6 +81,16 @@ export class GovernanceSettingsService implements OnModuleInit {
 
   onModuleInit(): void {
     this.matters.registerThresholds((tx, type) => this.threshold(tx, type));
+    this.matters.registerBindings((tx, type) => this.binding(tx, type));
+  }
+
+  /** Whether the type's threshold binds, its row shared-locked. */
+  async binding(tx: TenantTxClient, type: ThresholdType): Promise<boolean> {
+    const [row] = await tx.$queryRaw<{ binding: boolean }[]>`
+      SELECT binding FROM governance_approval_settings
+       WHERE tenant_id = ${this.ctx.txTenantId}::uuid AND type = ${type}
+       FOR SHARE`;
+    return row?.binding ?? false;
   }
 
   /** The type's threshold, its row shared-locked. */
@@ -98,6 +122,7 @@ export class GovernanceSettingsService implements OnModuleInit {
       type: SettingType;
       deadlineDays?: number;
       threshold?: string | null;
+      binding?: boolean;
     }[],
   ): Promise<GovernanceSettingView[]> {
     const fields: FieldError[] = [];
@@ -112,6 +137,11 @@ export class GovernanceSettingsService implements OnModuleInit {
       if (item.threshold !== undefined && !thresholded(item.type))
         fields.push({
           field: `items[${i}].threshold`,
+          code: FieldErrorCode.FIELD_NOT_ALLOWED,
+        });
+      if (item.binding !== undefined && !bindable(item.type))
+        fields.push({
+          field: `items[${i}].binding`,
           code: FieldErrorCode.FIELD_NOT_ALLOWED,
         });
     });
@@ -132,6 +162,7 @@ export class GovernanceSettingsService implements OnModuleInit {
           data: {
             deadlineDays: item.deadlineDays,
             threshold: item.threshold,
+            binding: item.binding,
             updatedAt: new Date(),
           },
         });

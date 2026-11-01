@@ -26,8 +26,9 @@ export type ApprovalType = (typeof APPROVAL_TYPES)[number];
 
 /**
  * The types with a per-compound threshold. `major_contract`'s is the
- * manager's limit: an expense above it needs the board (ADR 0055); the
- * others are shown when a request is raised, and enforce nothing yet.
+ * manager's limit: an expense above it needs the board (ADR 0055). A
+ * waiver's and a payment plan's bind when the compound makes them binding
+ * (ADR 0073); `exceptional_fee`'s is only shown when a request is raised.
  */
 export const THRESHOLD_TYPES = [
   'major_contract',
@@ -168,6 +169,22 @@ export type ThresholdReader = (
 ) => Promise<string | null>;
 
 /**
+ * Whether the type's threshold binds now (ADR 0073), its row shared-locked
+ * as the threshold's: a change of either waits for who reads it.
+ */
+export type BindingReader = (
+  tx: TenantTxClient,
+  type: ThresholdType,
+) => Promise<boolean>;
+
+/** The types a compound may make binding (ADR 0073). */
+export const BINDABLE_TYPES = [
+  'waiver_above_limit',
+  'payment_plan_above_limit',
+] as const satisfies readonly ThresholdType[];
+export type BindableType = (typeof BINDABLE_TYPES)[number];
+
+/**
  * A decision the board published and has not archived (ADR 0069): the day
  * it was decided, or null. A domain that cites one (a fee's change) asks
  * governance through here.
@@ -183,6 +200,7 @@ export class BoardMatters {
   private readonly appeals = new Map<BoardAppealKind, AppealKindHandler>();
   private readonly sections = new Map<string, OverviewSection>();
   private thresholds: ThresholdReader | null = null;
+  private bindings: BindingReader | null = null;
   private decisions: DecisionReader | null = null;
 
   registerApproval(type: ApprovalType, handler: ApprovalKindHandler): void {
@@ -207,6 +225,17 @@ export class BoardMatters {
   registerThresholds(reader: ThresholdReader): void {
     if (this.thresholds) throw new Error('Thresholds are registered twice');
     this.thresholds = reader;
+  }
+
+  /** Governance's settings: whether a threshold binds (one reader, ADR 0073). */
+  registerBindings(reader: BindingReader): void {
+    if (this.bindings) throw new Error('Bindings are registered twice');
+    this.bindings = reader;
+  }
+
+  binding(tx: TenantTxClient, type: ThresholdType): Promise<boolean> {
+    if (!this.bindings) throw new Error('No binding reader is registered');
+    return this.bindings(tx, type);
   }
 
   /** Governance's published decisions (one reader, ADR 0069). */

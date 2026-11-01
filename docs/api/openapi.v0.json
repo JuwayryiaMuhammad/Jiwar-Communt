@@ -3337,6 +3337,27 @@
         ],
         "type": "object"
       },
+      "AuthorizationUseView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "invoice_dispute",
+              "plan_request",
+              "invoice"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
       "AuthorizeDelegateDto": {
         "properties": {
           "name": {
@@ -3650,6 +3671,13 @@
           "nextCursor"
         ],
         "type": "object"
+      },
+      "BindableApprovalType": {
+        "enum": [
+          "waiver_above_limit",
+          "payment_plan_above_limit"
+        ],
+        "type": "string"
       },
       "BirthDateDto": {
         "properties": {
@@ -4353,6 +4381,76 @@
           "progress",
           "subject",
           "motions"
+        ],
+        "type": "object"
+      },
+      "BoardAuthorizationView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, the board’s approved cost.",
+            "type": "string"
+          },
+          "approvalRequestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BindableApprovalType"
+              }
+            ]
+          },
+          "usedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "usedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthorizationUseView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "approvalRequestId",
+          "type",
+          "amount",
+          "createdAt",
+          "usedAt",
+          "usedBy"
+        ],
+        "type": "object"
+      },
+      "BoardAuthorizationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BoardAuthorizationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -12676,6 +12774,11 @@
       },
       "ConvertToInstalmentsDto": {
         "properties": {
+          "authorizationId": {
+            "description": "Above a binding payment_plan_above_limit (ADR 0073): what the board approved for it (GET /staff/finance/board-authorizations), used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold.",
+            "format": "uuid",
+            "type": "string"
+          },
           "instalments": {
             "items": {
               "$ref": "#/components/schemas/InstalmentDto"
@@ -17284,6 +17387,11 @@
           "amount": {
             "description": "On `accept` only: what to credit.",
             "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "authorizationId": {
+            "description": "On `accept`, above a binding waiver_above_limit (ADR 0073): what the board approved for it, used once; NEEDS_BOARD_APPROVAL without it. FIELD_NOT_ALLOWED within the threshold and on `reject`.",
+            "format": "uuid",
             "type": "string"
           },
           "decision": {
@@ -25440,6 +25548,10 @@
       },
       "GovernanceSettingDto": {
         "properties": {
+          "binding": {
+            "description": "Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit and payment_plan_above_limit only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds.",
+            "type": "boolean"
+          },
           "deadlineDays": {
             "description": "Days the board has to decide a matter of this type raised from now on.",
             "maximum": 90,
@@ -25467,6 +25579,14 @@
       },
       "GovernanceSettingResponse": {
         "properties": {
+          "bindable": {
+            "description": "Whether the compound may change `binding`.",
+            "type": "boolean"
+          },
+          "binding": {
+            "description": "Above the threshold, the domain refuses unless the board approved it (ADR 0073).",
+            "type": "boolean"
+          },
           "deadlineDays": {
             "description": "Days the board has to decide a matter of this type.",
             "type": "number"
@@ -25492,7 +25612,9 @@
           "type",
           "deadlineDays",
           "threshold",
-          "thresholded"
+          "thresholded",
+          "binding",
+          "bindable"
         ],
         "type": "object"
       },
@@ -111103,6 +111225,57 @@
         "summary": "The same as CSV",
         "tags": [
           "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/board-authorizations": {
+      "get": {
+        "operationId": "BoardAuthorizationsController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BindableApprovalType"
+            }
+          },
+          {
+            "description": "`true`: only those not used yet.",
+            "in": "query",
+            "name": "unused",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardAuthorizationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List what the board approved for a waiver or a payment plan",
+        "tags": [
+          "finance"
         ],
         "x-no-store": true,
         "x-stability": "draft"

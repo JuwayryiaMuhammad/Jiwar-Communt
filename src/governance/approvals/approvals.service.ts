@@ -836,11 +836,16 @@ function packageProblems(input: NewApproval): FieldError[] {
     if (field !== wanted && input[field])
       fields.push({ field, code: FieldErrorCode.FIELD_NOT_ALLOWED });
   }
-  // An annual budget's cost is its total; an increase and a contract name one.
+  // An annual budget's cost is its total; an increase and a contract name
+  // one, and so do a waiver and a payment plan: what the board approves is
+  // what finance may then credit or spread, once (ADR 0073).
   if (input.type === 'annual_budget' && input.cost !== undefined)
     fields.push({ field: 'cost', code: FieldErrorCode.FIELD_NOT_ALLOWED });
   if (
-    (input.type === 'budget_increase' || input.type === 'major_contract') &&
+    (input.type === 'budget_increase' ||
+      input.type === 'major_contract' ||
+      input.type === 'waiver_above_limit' ||
+      input.type === 'payment_plan_above_limit') &&
     input.cost === undefined
   )
     fields.push({ field: 'cost', code: FieldErrorCode.FIELD_REQUIRED });

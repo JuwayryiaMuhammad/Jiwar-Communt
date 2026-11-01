@@ -92,3 +92,28 @@ export const STAFF_INBOX_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The board's authorizations for a waiver or a plan (ADR 0073). */
+export const BOARD_AUTHORITY_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/finance/board-authorizations',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { type: 'major_contract' },
+      fields: [
+        {
+          field: 'type',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: ['waiver_above_limit', 'payment_plan_above_limit'],
+          },
+        },
+      ],
+    },
+    noStore: true,
+  },
+];

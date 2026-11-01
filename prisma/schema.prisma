@@ -8772,6 +8772,10 @@ model GovernanceApprovalSetting {
   type         String
   deadlineDays Int      @map("deadline_days") @db.SmallInt
   threshold    Decimal? @db.Decimal(14, 2)
+  /// Above the threshold, the domain refuses unless the board approved it
+  /// (ADR 0073): always for major_contract; a setting for a waiver and a
+  /// payment plan; never for the rest.
+  binding      Boolean  @default(false)
   updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
 
   @@id([tenantId, type])
@@ -11921,4 +11925,26 @@ model StaffInboxOverdue {
 
   @@id([tenantId, type, itemId])
   @@map("staff_inbox_overdue")
+}
+
+/// What an approved waiver or payment plan request lets finance do once
+/// (ADR 0073): one dispute's credit or one plan, up to `amount`. Its terms
+/// fixed, used once, never deleted.
+model FinanceBoardAuthorization {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  approvalRequestId String    @map("approval_request_id") @db.Uuid
+  /// waiver_above_limit | payment_plan_above_limit (CHECK).
+  type              String
+  amount            Decimal   @db.Decimal(14, 2)
+  createdAt         DateTime  @map("created_at") @db.Timestamptz(3)
+  usedAt            DateTime? @map("used_at") @db.Timestamptz(3)
+  /// invoice_dispute | plan_request | invoice (CHECK, by type).
+  usedByType        String?   @map("used_by_type")
+  usedById          String?   @map("used_by_id") @db.Uuid
+  usedByAccountId   String?   @map("used_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, approvalRequestId], map: "finance_board_authorizations_request_key")
+  @@map("finance_board_authorizations")
 }

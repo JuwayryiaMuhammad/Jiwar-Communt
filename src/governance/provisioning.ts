@@ -26,6 +26,10 @@ export class GovernanceProvisioning implements OnModuleInit {
         tenantId,
         type,
         deadlineDays: DEFAULT_DEADLINE_DAYS[type],
+        // The manager's limit for one expense binds from the start (ADR
+        // 0055); a waiver's and a plan's bind once the compound says so
+        // (ADR 0073).
+        binding: type === 'major_contract',
       })),
     });
   }

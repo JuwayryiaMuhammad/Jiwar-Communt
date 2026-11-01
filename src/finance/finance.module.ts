@@ -20,6 +20,8 @@ import { AccountsModule } from '../core/accounts/accounts.module';
 import { AuthModule } from '../core/auth/auth.module';
 import { PlatformModule } from '../core/platform/platform.module';
 import { FinanceAccess } from './access';
+import { BoardAuthority } from './budgets/board-authority';
+import { BoardAuthorizationsController } from './budgets/board-authorizations.controller';
 import { BudgetMatters } from './budgets/budget-matters';
 import { BudgetReportController } from './budgets/budget-report.controller';
 import { BudgetReportService } from './budgets/budget-report.service';
@@ -127,6 +129,7 @@ import { FinanceInboxItems } from './finance-inbox-items';
     CommunityFinancePortModule,
   ],
   controllers: [
+    BoardAuthorizationsController,
     ClearancesController,
     StaffClearancesController,
     PublicClearancesController,
@@ -183,6 +186,7 @@ import { FinanceInboxItems } from './finance-inbox-items';
     SpendingReportsService,
     BudgetsService,
     BudgetMatters,
+    BoardAuthority,
     ExpensesService,
     BudgetReportService,
     DisputeBoardAppeals,

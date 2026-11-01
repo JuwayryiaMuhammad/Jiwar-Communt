@@ -961,4 +961,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // A sheet is one import's, claimed under the file's lock first.
   unit_imports_tenant_id_id_key: null,
   unit_imports_file_id_key: null,
+  // The board's authorizations (ADR 0073): one per approved request, made by
+  // its decision once.
+  finance_board_authorizations_tenant_id_id_key: null,
+  finance_board_authorizations_request_key: null,
 };

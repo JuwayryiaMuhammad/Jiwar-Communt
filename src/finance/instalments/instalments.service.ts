@@ -47,6 +47,10 @@ import type {
   InstalmentPlanDetailView,
   InstalmentPlanView,
 } from './views/instalment.views';
+import {
+  BoardAuthority,
+  type AuthorizationUse,
+} from '../budgets/board-authority';
 
 export const INSTALMENT_PLAN_RESOURCE = 'instalment_plan';
 /** How far ahead an instalment may fall due (ADR 0048). */
@@ -107,6 +111,7 @@ export class InstalmentsService implements OnModuleInit {
     private readonly notices: FinanceNotices,
     private readonly invoices: InvoicesService,
     private readonly settler: ChargeSettler,
+    private readonly authority: BoardAuthority,
   ) {}
 
   onModuleInit(): void {
@@ -155,6 +160,7 @@ export class InstalmentsService implements OnModuleInit {
     invoice: Invoice,
     dto: ConvertToInstalmentsDto,
     id: string,
+    use: AuthorizationUse = { type: 'invoice', id: invoice.id },
   ): Promise<InstalmentPlanDetailView> {
     const invoiceId = invoice.id;
     const amounts = dto.instalments.map((i) => money(i.amount));
@@ -189,6 +195,14 @@ export class InstalmentsService implements OnModuleInit {
         'The instalments do not add up to what the invoice owes',
         { params: { outstanding: show(balance.outstanding) } },
       );
+    // What is spread, held to the board's threshold when it binds (ADR
+    // 0073): the staff's convert and a resident's plan request alike.
+    await this.authority.hold(tx, {
+      type: 'payment_plan_above_limit',
+      amount: balance.outstanding,
+      authorizationId: dto.authorizationId,
+      use,
+    });
 
     const tenantId = invoice.tenantId;
     const count = amounts.length;

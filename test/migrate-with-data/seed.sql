@@ -38,6 +38,9 @@
 -- common area, the compound's place for prayer times, an emergency guide,
 -- a booking held now, and a lending post and a live listing each with its
 -- masked conversation (exactly one subject each).
+-- The unit register (ADR 0072): a building ahead of its units, a unit put
+-- in it by id and one named by text, and a valid units import on its sheet
+-- (the base's units, named by text, are backfilled into buildings).
 -- ============================================================================
 
 DO $$
@@ -380,6 +383,28 @@ BEGIN
                                            responder_account_id, responder_unit_id, last_message_at, updated_at) VALUES
         (gen_random_uuid(), t, post, NULL, res1, res2, u2, now(), now()),
         (gen_random_uuid(), t, NULL, lst, res1, res2, u2, now(), now());
+    END;
+
+    -- The unit register as M2-1 leaves it (ADR 0072): a building added
+    -- ahead of its units, a unit put in it by id (the trigger names it), a
+    -- unit named by text alone (the trigger finds or adds its building),
+    -- and a valid units import on its kept sheet.
+    DECLARE
+      bld uuid := gen_random_uuid();
+      sheet uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO buildings (id, tenant_id, name) VALUES (bld, t, 'Tower ' || s);
+      INSERT INTO units (id, tenant_id, code, building_id, floor, unit_type, area_sqm, updated_at) VALUES
+        (gen_random_uuid(), t, 'T-' || s, bld, 4, 'apartment', 120.50, now());
+      INSERT INTO units (id, tenant_id, code, building, updated_at) VALUES
+        (gen_random_uuid(), t, 'C-' || s, 'Court ' || s, now());
+      INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes,
+                         status, upload_expires_at, finalized_at, attached_at) VALUES
+        (sheet, t, NULL, 'data_import', 'text/csv', 64,
+         'ready', now() - interval '1 hour', now() - interval '1 hour', now() - interval '1 hour');
+      INSERT INTO unit_imports (id, tenant_id, kind, file_id, status, row_count, error_count,
+                                created_by_account_id, created_at) VALUES
+        (gen_random_uuid(), t, 'units', sheet, 'valid', 1, 0, mgr, now());
     END;
   END LOOP;
 END $$;

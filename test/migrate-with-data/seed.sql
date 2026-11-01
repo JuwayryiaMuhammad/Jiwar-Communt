@@ -64,6 +64,10 @@
 -- residents' tickets of one category in a building's units (what a case
 -- counts): `tickets` gains `sensitive` and `maintenance_settings` its
 -- analytics' numbers, both with defaults, over these rows.
+-- The board's work (ADR 0075): a sitting board with its handover pack, a
+-- meeting held with its agenda, attendance and an open action item, a
+-- unit's ownership share, the governance rules, a manager's delivered
+-- handover and a month's board report.
 -- ============================================================================
 
 DO $$
@@ -703,6 +707,47 @@ BEGIN
                                     created_at, updated_at) VALUES
         (gen_random_uuid(), t, 'Requests rated 4 or better', 'تقييم 4 فأكثر', 'request_rating', 4, mgr,
          now(), now());
+    END;
+    -- The board's work (ADR 0075): a sitting board, its handover pack, a
+    -- meeting held with its attendance, agenda and an open action, a
+    -- unit's share, the rules, a manager's delivered handover and a month's
+    -- report.
+    DECLARE
+      term uuid := gen_random_uuid();
+      seat uuid := gen_random_uuid();
+      mtg uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO board_terms (id, tenant_id, source, seats, starts_at, ends_at, created_by_account_id, created_at) VALUES
+        (term, t, 'appointed', 3, now() - interval '30 days', now() + interval '300 days', mgr, now() - interval '30 days');
+      INSERT INTO board_members (id, tenant_id, term_id, account_id, role, added_at, added_by_account_id) VALUES
+        (seat, t, term, res1, 'chair', now() - interval '30 days', mgr);
+      INSERT INTO board_handover_packs (id, tenant_id, term_id, contents, generated_at) VALUES
+        (gen_random_uuid(), t, term, '{"asOf": "2027-01-01", "approvals": {"pending": []}}'::jsonb, now() - interval '30 days');
+      INSERT INTO board_meetings (id, tenant_id, term_id, number, kind, title, location, scheduled_at, status,
+                                  held_at, seated_count, present_count, quorate, author_side,
+                                  created_by_account_id, created_at, updated_at) VALUES
+        (mtg, t, term, 1, 'regular', 'The first meeting', 'The club house', now() - interval '2 days', 'scheduled',
+         NULL, NULL, NULL, NULL, 'board', res1, now() - interval '3 days', now());
+      INSERT INTO board_meeting_agenda_items (tenant_id, meeting_id, position, kind, title) VALUES
+        (t, mtg, 1, 'other', 'The gardener''s contract');
+      UPDATE board_meetings SET status = 'held', held_at = now() - interval '2 days', seated_count = 1,
+                                present_count = 1, quorate = true
+        WHERE id = mtg;
+      INSERT INTO board_meeting_attendance (tenant_id, meeting_id, member_id, present) VALUES (t, mtg, seat, true);
+      INSERT INTO board_meeting_actions (id, tenant_id, meeting_id, title, owner_account_id, due_on,
+                                         created_by_account_id, created_at) VALUES
+        (gen_random_uuid(), t, mtg, 'Ask three firms for a quote', res1, current_date + 14, res1, now() - interval '2 days');
+      INSERT INTO governance_unit_shares (tenant_id, unit_id, share, updated_by_account_id, updated_at) VALUES
+        (t, u1, 2.5000, mgr, now());
+      INSERT INTO governance_rules (tenant_id, candidacy_no_dues, candidacy_not_staff, board_report_monthly,
+                                    updated_by_account_id, updated_at) VALUES
+        (t, true, false, true, mgr, now());
+      INSERT INTO manager_handovers (id, tenant_id, account_id, status, notes, contents, created_at, updated_at,
+                                     delivered_at) VALUES
+        (gen_random_uuid(), t, mgr, 'delivered', 'The pool pump needs a seal.', '{"asOf": "2027-01-01"}'::jsonb,
+         now() - interval '1 day', now(), now());
+      INSERT INTO board_reports (id, tenant_id, period, version, contents, generated_at) VALUES
+        (gen_random_uuid(), t, date_trunc('month', current_date)::date, 1, '{"month": "2027-01"}'::jsonb, now());
     END;
   END LOOP;
 END $$;

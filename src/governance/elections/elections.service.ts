@@ -642,7 +642,8 @@ export class GovernanceElectionsService implements OnModuleInit {
       });
       return;
     }
-    const electors = await this.contests.open(tx, contest, now);
+    // An election is always one unit, one vote (ADR 0075): no weights.
+    const { accounts: electors } = await this.contests.open(tx, contest, now);
     await this.audit.record(tx, {
       action: 'governance_election.opened',
       targetId: election.id,

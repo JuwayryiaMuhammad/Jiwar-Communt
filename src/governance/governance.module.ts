@@ -75,6 +75,8 @@ import { GovernancePollsService } from './polls/polls.service';
 import { GovernanceProvisioning } from './provisioning';
 import { GovernanceSettingsController } from './settings/governance-settings.controller';
 import { GovernanceSettingsService } from './settings/governance-settings.service';
+import { UnitSharesController } from './shares/unit-shares.controller';
+import { UnitSharesService } from './shares/unit-shares.service';
 
 /**
  * Governance (ADR 0051, 0055): the owners' board, its polls and elections,
@@ -120,6 +122,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     ObjectionsController,
     BoardObjectionsController,
     BoardOverviewController,
+    UnitSharesController,
   ],
   providers: [
     CompoundDocumentsService,
@@ -147,6 +150,7 @@ import { GovernanceSettingsService } from './settings/governance-settings.servic
     ObjectionsService,
     BoardOverviewService,
     MatterSweeps,
+    UnitSharesService,
   ],
 })
 export class GovernanceModule {}

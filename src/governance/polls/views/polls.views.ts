@@ -5,6 +5,7 @@ import {
   type ContestStatus,
 } from '../../contests/contest-rules';
 import type { MyUnit, RollCallEntry } from '../../contests/contests.service';
+import { POLL_WEIGHTINGS, type PollWeighting } from '../poll-rules';
 import type { PollRecord } from '../polls.service';
 
 const RESULTS = ['passed', 'failed', 'no_quorum', 'tied'] as const;
@@ -30,6 +31,14 @@ export class GovernancePollOptionView {
       'Votes, once the poll closed; null before: nobody sees a count while voting is open.',
   })
   votes: number | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '12.5000',
+    description:
+      'A poll weighted by share: the votes’ weight (the units’ shares, four decimals), once closed; null otherwise.',
+  })
+  weight: string | null;
 }
 
 export class GovernanceVoteUnitView {
@@ -88,6 +97,13 @@ export class GovernancePollView {
       'An open vote: each unit’s choice is shown to the owners once the poll closes. Show the voter a notice before they vote.',
   })
   rollCallPublic: boolean;
+  @ApiProperty({
+    enum: POLL_WEIGHTINGS,
+    enumName: 'GovernancePollWeighting',
+    description:
+      '`unit`: one unit, one vote. `share`: each unit counts by its ownership share, taken when voting opened; never secret (ADR 0075).',
+  })
+  weighting: PollWeighting;
   @ApiProperty({ type: Number })
   quorumPct: number;
   @ApiProperty({ type: Number })
@@ -110,6 +126,20 @@ export class GovernancePollView {
     description: 'Units that voted so far: shown while open, never the counts.',
   })
   turnout: number | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'Weighted by share: the electorate’s total share, taken when voting opened; null otherwise.',
+  })
+  electorateWeight: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'Weighted by share: the share of the units that voted, once closed; null otherwise.',
+  })
+  turnoutWeight: string | null;
   @ApiProperty({ type: [GovernancePollOptionView] })
   options: GovernancePollOptionView[];
   @ApiProperty({
@@ -151,6 +181,7 @@ export class GovernancePollView {
       bodyAr: r.poll.bodyAr,
       secret: r.contest.secret,
       rollCallPublic: !r.contest.secret,
+      weighting: r.poll.weighting as PollWeighting,
       quorumPct: r.poll.quorumPct,
       thresholdPct: r.poll.thresholdPct,
       opensAt: r.contest.opensAt,
@@ -158,12 +189,15 @@ export class GovernancePollView {
       status: r.status,
       electorate: r.contest.electorate,
       turnout: r.turnout,
+      electorateWeight: r.poll.electorateWeight?.toFixed(4) ?? null,
+      turnoutWeight: r.poll.turnoutWeight?.toFixed(4) ?? null,
       options: r.options.map((o) => ({
         id: o.id,
         key: o.key,
         labelEn: o.labelEn,
         labelAr: o.labelAr,
         votes: closed ? (o.finalCount ?? 0) : null,
+        weight: closed ? (o.finalWeight?.toFixed(4) ?? null) : null,
       })),
       result: (r.poll.result as GovernancePollView['result']) ?? null,
       winningOptionId: r.poll.winningOptionId,

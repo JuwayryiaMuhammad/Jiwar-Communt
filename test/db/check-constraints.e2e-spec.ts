@@ -2896,6 +2896,19 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'each branch tests metric, target and target_share IS [NOT] NULL before it compares them',
   },
+  // Board meetings and handover, weighted polls, board reports (ADR 0075).
+  governance_unit_shares_share: {},
+  governance_polls_weighting: {
+    guarded:
+      'weighting is NOT NULL; electorate_weight and turnout_weight are tested IS NULL first, and electorate_weight IS NOT NULL before turnout_weight is compared with it',
+  },
+  governance_poll_options_final_weight: {
+    guarded:
+      'final_weight IS NULL is tested first; final_count IS NOT NULL comes before the comparison',
+  },
+  governance_electors_weight: {
+    guarded: 'weight IS NULL is tested first; the range runs only on a value',
+  },
 };
 
 interface Check {

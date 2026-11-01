@@ -23,7 +23,11 @@ import {
   CONTEST_STATUSES,
   type ContestStatus,
 } from '../../contests/contest-rules';
-import { POLL_LIMITS } from '../poll-rules';
+import {
+  POLL_LIMITS,
+  POLL_WEIGHTINGS,
+  type PollWeighting,
+} from '../poll-rules';
 import { ToInstant } from '../../../core/common/validation/instant';
 
 const text = (max: number, description?: string) =>
@@ -111,6 +115,18 @@ export class CreateGovernancePollDto extends GovernancePollFieldsDto {
   })
   @IsBoolean()
   secret: boolean;
+
+  @ApiProperty({
+    enum: POLL_WEIGHTINGS,
+    enumName: 'GovernancePollWeighting',
+    required: false,
+    default: 'unit',
+    description:
+      '`unit` (the default): one unit, one vote. `share`: each unit counts by the ownership share the manager recorded for it, taken when voting opens (none: 0). Only on an open vote (`secret: false`; FIELD_NOT_ALLOWED otherwise). Fixed for good.',
+  })
+  @IsOptional()
+  @IsIn(POLL_WEIGHTINGS, withParams({ allowed: [...POLL_WEIGHTINGS] }))
+  weighting?: PollWeighting;
 
   @ApiProperty({
     type: Number,

@@ -19679,7 +19679,7 @@
               },
               "raw": "{\n  \"kind\": \"yes_no\",\n  \"secret\": false,\n  \"quorumPct\": 1,\n  \"thresholdPct\": 50,\n  \"closesAt\": \"2026-01-01T09:00:00.000Z\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `closesAt` | string (date-time) | yes | When voting closes: 1 hour to 60 days after it opens (INVALID_VALUE, params.minHours and params.maxDays). |\n| `kind` | `yes_no` \\| `choice` | yes |  |\n| `opensAt` | string (date-time) |  | When voting opens: absent or past, now; at most 90 days ahead. |\n| `options` | object[] |  | A `choice` poll's 2 to 10 options, in the order shown. A `yes_no` poll takes none: its options are yes, no and abstain. |\n| `quorumPct` | number | yes | The share of the electorate’s units that must vote, in %. |\n| `secret` | boolean | yes | A secret ballot (no choice is ever stored with its unit) or an open vote (each unit’s choice is shown to the owners after the close). Fixed for good. |\n| `thresholdPct` | number | yes | The share of the votes that carries it, in %: of yes and no on a yes/no poll (abstentions left out), of all votes for the first option of a choice poll. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | English, Arabic or both, each with its body. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `closesAt` | string (date-time) | yes | When voting closes: 1 hour to 60 days after it opens (INVALID_VALUE, params.minHours and params.maxDays). |\n| `kind` | `yes_no` \\| `choice` | yes |  |\n| `opensAt` | string (date-time) |  | When voting opens: absent or past, now; at most 90 days ahead. |\n| `options` | object[] |  | A `choice` poll's 2 to 10 options, in the order shown. A `yes_no` poll takes none: its options are yes, no and abstain. |\n| `quorumPct` | number | yes | The share of the electorate’s units that must vote, in %. |\n| `secret` | boolean | yes | A secret ballot (no choice is ever stored with its unit) or an open vote (each unit’s choice is shown to the owners after the close). Fixed for good. |\n| `thresholdPct` | number | yes | The share of the votes that carries it, in %: of yes and no on a yes/no poll (abstentions left out), of all votes for the first option of a choice poll. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | English, Arabic or both, each with its body. |\n| `weighting` | `unit` \\| `share` |  | `unit`: one unit, one vote. `share`: each unit counts by its ownership share, taken when voting opened; never secret (ADR 0075). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -21319,6 +21319,63 @@
                 "settings"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/governance/settings"
+            }
+          }
+        },
+        {
+          "name": "The units’ ownership shares",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "unit-shares"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/unit-shares"
+            }
+          }
+        },
+        {
+          "name": "Record or clear units’ ownership shares",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"shares\": [\n    {\n      \"unitId\": \"\",\n      \"share\": \"2.5000\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `shares` | object[] | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "unit-shares"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/unit-shares"
             }
           }
         }

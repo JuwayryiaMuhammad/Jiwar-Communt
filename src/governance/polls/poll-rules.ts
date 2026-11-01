@@ -10,6 +10,33 @@ export const POLL_LIMITS = {
   threshold: { min: 50, max: 100 },
 } as const;
 
+/**
+ * How a poll counts a unit (ADR 0075): one unit, one vote, or by the
+ * unit's ownership share. The migration's CHECK repeats the list.
+ */
+export const POLL_WEIGHTINGS = ['unit', 'share'] as const;
+export type PollWeighting = (typeof POLL_WEIGHTINGS)[number];
+
+/** A unit's share: a percentage above 0, at most 100, four decimals. */
+export const UNIT_SHARE_LIMITS = { min: 0, max: 100, decimals: 4 } as const;
+
+/**
+ * A weight (a decimal string with up to four decimals, as PostgreSQL
+ * returns NUMERIC) as a whole number of ten-thousandths, so a weighted
+ * tally is exact: a compound's total stays far below 2^53.
+ */
+export function scaledWeight(value: string | null | undefined): number {
+  if (!value) return 0;
+  const [whole, fraction = ''] = value.split('.');
+  return Number(whole) * 10_000 + Number(fraction.padEnd(4, '0').slice(0, 4));
+}
+
+/** Ten-thousandths back to a decimal string with four decimals. */
+export function unscaledWeight(scaled: number): string {
+  const whole = Math.floor(scaled / 10_000);
+  return `${whole}.${String(scaled % 10_000).padStart(4, '0')}`;
+}
+
 /** A yes/no poll's options, in order. */
 export const YES_NO = ['yes', 'no', 'abstain'] as const;
 
@@ -17,12 +44,13 @@ export type PollResult = 'passed' | 'failed' | 'no_quorum' | 'tied';
 
 export interface Tally {
   kind: GovernancePollKind;
+  /** Units in the electorate; on a poll weighted by share, their weight. */
   electorate: number;
-  /** Units that voted. */
+  /** Units that voted; on a poll weighted by share, their weight. */
   turnout: number;
   quorumPct: number;
   thresholdPct: number;
-  /** Votes per option, with its key on a yes/no poll. */
+  /** Votes (or their weight) per option, with its key on a yes/no poll. */
   options: { id: string; key: string | null; votes: number }[];
 }
 
@@ -35,6 +63,9 @@ export interface Tally {
  *   fails); abstentions are left out of the share;
  * - one of several: the option strictly first, with `thresholdPct` of the
  *   votes, wins; a tie at the top is `tied`.
+ *
+ * A poll weighted by share passes its weights (scaled to whole numbers)
+ * for the units and the votes: the same rules, by share (ADR 0075).
  */
 export function pollResult(t: Tally): {
   result: PollResult;

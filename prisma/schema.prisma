@@ -8878,6 +8878,8 @@ model GovernanceElector {
   contestId String @map("contest_id") @db.Uuid
   unitId    String @map("unit_id") @db.Uuid
   accountId String @map("account_id") @db.Uuid
+  /// The unit's share when the contest opened; null unless weighted by share (ADR 0075).
+  weight    Decimal? @db.Decimal(9, 4)
 
   @@id([tenantId, contestId, unitId])
   @@index([tenantId, accountId], map: "governance_electors_account_idx")
@@ -8966,12 +8968,32 @@ model GovernancePoll {
   cancelledById        String?            @map("cancelled_by_account_id") @db.Uuid
   createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// POLL_WEIGHTINGS: one unit one vote, or by ownership share (ADR 0075). Fixed at creation.
+  weighting            String             @default("unit")
+  /// By share: the electorate's total weight, at the open.
+  electorateWeight     Decimal?           @map("electorate_weight") @db.Decimal(14, 4)
+  /// By share: the turnout's weight, with the result.
+  turnoutWeight        Decimal?           @map("turnout_weight") @db.Decimal(14, 4)
 
   @@unique([tenantId, id])
   @@unique([tenantId, contestId], map: "governance_polls_contest_key")
   @@unique([tenantId, number], map: "governance_polls_number_key")
   @@index([tenantId, createdAt, id], map: "governance_polls_created_idx")
   @@map("governance_polls")
+}
+
+/// A unit's ownership share, as the manager records it (ADR 0075): a poll
+/// weighted by share counts each unit by it.
+model GovernanceUnitShare {
+  tenantId    String   @map("tenant_id") @db.Uuid
+  unitId      String   @map("unit_id") @db.Uuid
+  /// A percentage, 0 < share <= 100, up to four decimals.
+  share       Decimal  @db.Decimal(9, 4)
+  updatedById String   @map("updated_by_account_id") @db.Uuid
+  updatedAt   DateTime @map("updated_at") @db.Timestamptz(3)
+
+  @@id([tenantId, unitId])
+  @@map("governance_unit_shares")
 }
 
 model GovernancePollOption {
@@ -8983,6 +9005,8 @@ model GovernancePollOption {
   labelEn    String? @map("label_en")
   labelAr    String? @map("label_ar")
   finalCount Int?    @map("final_count")
+  /// A poll weighted by share: the option's weight, with its count (ADR 0075).
+  finalWeight Decimal? @map("final_weight") @db.Decimal(14, 4)
 
   @@unique([tenantId, id])
   @@unique([tenantId, pollId, position], map: "governance_poll_options_position_key")

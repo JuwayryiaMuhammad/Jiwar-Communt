@@ -8,6 +8,7 @@ import { appError, ErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { GovernanceAccess } from '../access';
+import { scaledWeight, unscaledWeight } from '../polls/poll-rules';
 import {
   CONTEST_LIMITS,
   contestStatus,
@@ -114,13 +115,17 @@ export class Contests {
   /**
    * Opens a contest the caller locked for update: its electorate, the
    * voting owner of every unit now, in one statement in unit order; the
-   * ballot box when secret. Returns the electors' accounts.
+   * ballot box when secret. A poll weighted by share (ADR 0075) gives each
+   * unit's share now (`weights`, decimal strings): an elector whose unit
+   * has none weighs 0. Returns the electors' accounts and the electorate's
+   * total weight (null without weights).
    */
   async open(
     tx: TenantTxClient,
     contest: GovernanceContest,
     now: Date,
-  ): Promise<string[]> {
+    weights: ReadonlyMap<string, string> | null = null,
+  ): Promise<{ accounts: string[]; weight: string | null }> {
     const owners = [...(await this.community.votingOwners(tx)).entries()].sort(
       ([a], [b]) => (a < b ? -1 : 1),
     );
@@ -138,6 +143,7 @@ export class Contests {
           contestId: contest.id,
           unitId,
           accountId,
+          weight: weights ? (weights.get(unitId) ?? '0') : null,
         })),
       });
     await tx.governanceContest.update({
@@ -148,7 +154,53 @@ export class Contests {
       await tx.governanceBallotBox.create({
         data: { tenantId, contestId: contest.id },
       });
-    return owners.map(([, accountId]) => accountId);
+    return {
+      accounts: owners.map(([, accountId]) => accountId),
+      weight: weights
+        ? unscaledWeight(
+            owners.reduce(
+              (sum, [unitId]) => sum + scaledWeight(weights.get(unitId)),
+              0,
+            ),
+          )
+        : null,
+    };
+  }
+
+  /**
+   * A closed open contest's weighted counts (ADR 0075): each choice's
+   * weight and the turnout's, from the electors' weights taken at the
+   * open, summed in the database. Only for a contest weighted by share,
+   * which is never secret.
+   */
+  async weightedCounts(
+    tx: TenantTxClient,
+    contest: GovernanceContest,
+  ): Promise<{ turnout: string; counts: Map<string, string> }> {
+    if (contest.secret)
+      throw new Error('A secret contest is never weighted by share');
+    const rows = await tx.$queryRaw<{ choice: string; w: string }[]>`
+      SELECT c.choice::text AS choice, coalesce(sum(e.weight), 0)::text AS w
+        FROM governance_participations p
+        JOIN governance_electors e
+          ON e.tenant_id = p.tenant_id AND e.contest_id = p.contest_id
+         AND e.unit_id = p.unit_id,
+             unnest(p.choice) AS c(choice)
+       WHERE p.contest_id = ${contest.id}::uuid
+       GROUP BY c.choice`;
+    const [turnout] = await tx.$queryRaw<{ w: string }[]>`
+      SELECT coalesce(sum(e.weight), 0)::text AS w
+        FROM governance_participations p
+        JOIN governance_electors e
+          ON e.tenant_id = p.tenant_id AND e.contest_id = p.contest_id
+         AND e.unit_id = p.unit_id
+       WHERE p.contest_id = ${contest.id}::uuid`;
+    return {
+      turnout: unscaledWeight(scaledWeight(turnout?.w)),
+      counts: new Map(
+        rows.map((r) => [r.choice, unscaledWeight(scaledWeight(r.w))]),
+      ),
+    };
   }
 
   /**

@@ -17328,6 +17328,30 @@ export interface paths {
         patch: operations["GovernanceSettingsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/governance/unit-shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The units’ ownership shares
+         * @description Every unit with a voting owner now, and any other with a share, by code; the total and how many owned units have none. The manager and the sitting board read them.
+         */
+        get: operations["UnitSharesController_read"];
+        /**
+         * Record or clear units’ ownership shares
+         * @description Up to 500 units, each once; null clears a share. Each change is audited with the share it replaced. A poll weighted by share takes the shares when its voting opens: a change afterwards does not reach it.
+         */
+        put: operations["UnitSharesController_write"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/group-offers": {
         parameters: {
             query?: never;
@@ -30350,6 +30374,11 @@ export interface components {
             titleAr?: string | null;
             /** @description English, Arabic or both, each with its body. */
             titleEn?: string | null;
+            /**
+             * @description `unit` (the default): one unit, one vote. `share`: each unit counts by the ownership share the manager recorded for it, taken when voting opens (none: 0). Only on an open vote (`secret: false`; FIELD_NOT_ALLOWED otherwise). Fixed for good.
+             * @default unit
+             */
+            weighting: components["schemas"]["GovernancePollWeighting"];
         };
         CreateGroupOfferDto: {
             bodyAr: string;
@@ -34574,6 +34603,11 @@ export interface components {
             labelEn: string | null;
             /** @description Votes, once the poll closed; null before: nobody sees a count while voting is open. */
             votes: number | null;
+            /**
+             * @description A poll weighted by share: the votes’ weight (the units’ shares, four decimals), once closed; null otherwise.
+             * @example 12.5000
+             */
+            weight: string | null;
         };
         /** @enum {string} */
         GovernancePollResult: "passed" | "failed" | "no_quorum" | "tied";
@@ -34586,6 +34620,8 @@ export interface components {
             closesAt: string;
             /** @description Units in the electorate, taken when voting opened. */
             electorate: number | null;
+            /** @description Weighted by share: the electorate’s total share, taken when voting opened; null otherwise. */
+            electorateWeight: string | null;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["GovernancePollKind"];
@@ -34610,6 +34646,10 @@ export interface components {
             titleEn: string | null;
             /** @description Units that voted so far: shown while open, never the counts. */
             turnout: number | null;
+            /** @description Weighted by share: the share of the units that voted, once closed; null otherwise. */
+            turnoutWeight: string | null;
+            /** @description `unit`: one unit, one vote. `share`: each unit counts by its ownership share, taken when voting opened; never secret (ADR 0075). */
+            weighting: components["schemas"]["GovernancePollWeighting"];
             /** Format: uuid */
             winningOptionId: string | null;
         };
@@ -34617,6 +34657,11 @@ export interface components {
             data: components["schemas"]["GovernancePollView"][];
             nextCursor: string | null;
         };
+        /**
+         * @description `unit`: one unit, one vote. `share`: each unit counts by its ownership share, taken when voting opened; never secret (ADR 0075).
+         * @enum {string}
+         */
+        GovernancePollWeighting: "unit" | "share";
         GovernanceRollCallView: {
             /** @description Option ids. */
             choice: string[];
@@ -45450,6 +45495,8 @@ export interface components {
             createdAt: string;
             /** @description Units in the electorate, taken when voting opened. */
             electorate: number | null;
+            /** @description Weighted by share: the electorate’s total share, taken when voting opened; null otherwise. */
+            electorateWeight: string | null;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["GovernancePollKind"];
@@ -45474,6 +45521,10 @@ export interface components {
             titleEn: string | null;
             /** @description Units that voted so far: shown while open, never the counts. */
             turnout: number | null;
+            /** @description Weighted by share: the share of the units that voted, once closed; null otherwise. */
+            turnoutWeight: string | null;
+            /** @description `unit`: one unit, one vote. `share`: each unit counts by its ownership share, taken when voting opened; never secret (ADR 0075). */
+            weighting: components["schemas"]["GovernancePollWeighting"];
             /** Format: uuid */
             winningOptionId: string | null;
         };
@@ -47953,6 +48004,37 @@ export interface components {
          * @enum {string}
          */
         UnitReviewReason: "primary_left" | "primary_frozen" | "primary_deceased" | "separation";
+        UnitShareItemDto: {
+            /**
+             * @description The unit’s ownership share in %, above 0 and at most 100, up to four decimals; null clears it.
+             * @example 2.5000
+             */
+            share: string | null;
+            /** Format: uuid */
+            unitId: string;
+        };
+        UnitShareView: {
+            /**
+             * @description Four decimals; null when none is recorded (the unit weighs 0).
+             * @example 2.5000
+             */
+            share: string | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** Format: date-time */
+            updatedAt: string | null;
+        };
+        UnitSharesView: {
+            items: components["schemas"]["UnitShareView"][];
+            /** @description Units with a voting owner and no share: they weigh 0 in a poll weighted by share. */
+            missing: number;
+            /**
+             * @description The recorded shares added up. They need not make 100.
+             * @example 100.0000
+             */
+            total: string;
+        };
         /** @enum {string} */
         UnitType: "apartment" | "villa" | "townhouse" | "duplex" | "penthouse" | "studio" | "commercial" | "other";
         UnitView: {
@@ -49916,6 +49998,9 @@ export interface components {
             place: string | null;
             /** Format: date-time */
             startsAt: string;
+        };
+        WriteUnitSharesDto: {
+            shares: components["schemas"]["UnitShareItemDto"][];
         };
     };
     responses: never;
@@ -76028,6 +76113,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GovernanceSettingsResponse"];
+                };
+            };
+        };
+    };
+    UnitSharesController_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitSharesView"];
+                };
+            };
+        };
+    };
+    UnitSharesController_write: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WriteUnitSharesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitSharesView"];
                 };
             };
         };

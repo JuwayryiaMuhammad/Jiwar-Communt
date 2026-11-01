@@ -16972,6 +16972,15 @@
             "minLength": 1,
             "nullable": true,
             "type": "string"
+          },
+          "weighting": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollWeighting"
+              }
+            ],
+            "default": "unit",
+            "description": "`unit` (the default): one unit, one vote. `share`: each unit counts by the ownership share the manager recorded for it, taken when voting opens (none: 0). Only on an open vote (`secret: false`; FIELD_NOT_ALLOWED otherwise). Fixed for good."
           }
         },
         "required": [
@@ -29752,6 +29761,12 @@
             "description": "Votes, once the poll closed; null before: nobody sees a count while voting is open.",
             "nullable": true,
             "type": "number"
+          },
+          "weight": {
+            "description": "A poll weighted by share: the votes’ weight (the units’ shares, four decimals), once closed; null otherwise.",
+            "example": "12.5000",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -29759,7 +29774,8 @@
           "key",
           "labelEn",
           "labelAr",
-          "votes"
+          "votes",
+          "weight"
         ],
         "type": "object"
       },
@@ -29795,6 +29811,11 @@
             "description": "Units in the electorate, taken when voting opened.",
             "nullable": true,
             "type": "number"
+          },
+          "electorateWeight": {
+            "description": "Weighted by share: the electorate’s total share, taken when voting opened; null otherwise.",
+            "nullable": true,
+            "type": "string"
           },
           "id": {
             "format": "uuid",
@@ -29878,6 +29899,19 @@
             "nullable": true,
             "type": "number"
           },
+          "turnoutWeight": {
+            "description": "Weighted by share: the share of the units that voted, once closed; null otherwise.",
+            "nullable": true,
+            "type": "string"
+          },
+          "weighting": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollWeighting"
+              }
+            ],
+            "description": "`unit`: one unit, one vote. `share`: each unit counts by its ownership share, taken when voting opened; never secret (ADR 0075)."
+          },
           "winningOptionId": {
             "format": "uuid",
             "nullable": true,
@@ -29894,6 +29928,7 @@
           "bodyAr",
           "secret",
           "rollCallPublic",
+          "weighting",
           "quorumPct",
           "thresholdPct",
           "opensAt",
@@ -29901,6 +29936,8 @@
           "status",
           "electorate",
           "turnout",
+          "electorateWeight",
+          "turnoutWeight",
           "options",
           "result",
           "winningOptionId",
@@ -29928,6 +29965,14 @@
           "nextCursor"
         ],
         "type": "object"
+      },
+      "GovernancePollWeighting": {
+        "description": "`unit`: one unit, one vote. `share`: each unit counts by its ownership share, taken when voting opened; never secret (ADR 0075).",
+        "enum": [
+          "unit",
+          "share"
+        ],
+        "type": "string"
       },
       "GovernanceRollCallView": {
         "properties": {
@@ -64980,6 +65025,11 @@
             "nullable": true,
             "type": "number"
           },
+          "electorateWeight": {
+            "description": "Weighted by share: the electorate’s total share, taken when voting opened; null otherwise.",
+            "nullable": true,
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -65062,6 +65112,19 @@
             "nullable": true,
             "type": "number"
           },
+          "turnoutWeight": {
+            "description": "Weighted by share: the share of the units that voted, once closed; null otherwise.",
+            "nullable": true,
+            "type": "string"
+          },
+          "weighting": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollWeighting"
+              }
+            ],
+            "description": "`unit`: one unit, one vote. `share`: each unit counts by its ownership share, taken when voting opened; never secret (ADR 0075)."
+          },
           "winningOptionId": {
             "format": "uuid",
             "nullable": true,
@@ -65078,6 +65141,7 @@
           "bodyAr",
           "secret",
           "rollCallPublic",
+          "weighting",
           "quorumPct",
           "thresholdPct",
           "opensAt",
@@ -65085,6 +65149,8 @@
           "status",
           "electorate",
           "turnout",
+          "electorateWeight",
+          "turnoutWeight",
           "options",
           "result",
           "winningOptionId",
@@ -73650,6 +73716,79 @@
         ],
         "type": "string"
       },
+      "UnitShareItemDto": {
+        "properties": {
+          "share": {
+            "description": "The unit’s ownership share in %, above 0 and at most 100, up to four decimals; null clears it.",
+            "example": "2.5000",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "share"
+        ],
+        "type": "object"
+      },
+      "UnitShareView": {
+        "properties": {
+          "share": {
+            "description": "Four decimals; null when none is recorded (the unit weighs 0).",
+            "example": "2.5000",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "share",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "UnitSharesView": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UnitShareView"
+            },
+            "type": "array"
+          },
+          "missing": {
+            "description": "Units with a voting owner and no share: they weigh 0 in a poll weighted by share.",
+            "type": "number"
+          },
+          "total": {
+            "description": "The recorded shares added up. They need not make 100.",
+            "example": "100.0000",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "missing"
+        ],
+        "type": "object"
+      },
       "UnitType": {
         "enum": [
           "apartment",
@@ -79687,6 +79826,22 @@
           "gate",
           "place",
           "active"
+        ],
+        "type": "object"
+      },
+      "WriteUnitSharesDto": {
+        "properties": {
+          "shares": {
+            "items": {
+              "$ref": "#/components/schemas/UnitShareItemDto"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "shares"
         ],
         "type": "object"
       }
@@ -129740,6 +129895,74 @@
           }
         ],
         "summary": "Change the board’s deadlines and thresholds",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/unit-shares": {
+      "get": {
+        "description": "Every unit with a voting owner now, and any other with a share, by code; the total and how many owned units have none. The manager and the sitting board read them.",
+        "operationId": "UnitSharesController_read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitSharesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The units’ ownership shares",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "put": {
+        "description": "Up to 500 units, each once; null clears a share. Each change is audited with the share it replaced. A poll weighted by share takes the shares when its voting opens: a change afterwards does not reach it.",
+        "operationId": "UnitSharesController_write",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteUnitSharesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitSharesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record or clear units’ ownership shares",
         "tags": [
           "governance"
         ],

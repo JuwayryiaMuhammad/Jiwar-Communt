@@ -42,7 +42,13 @@ import { BoardService } from '../board/board.service';
 import { nextGovernanceNumber } from '../counters';
 import { dbNow } from '../db-clock';
 import { GovernanceNotices } from '../governance-notices';
-import { POLL_LIMITS, pollResult, YES_NO } from './poll-rules';
+import {
+  POLL_LIMITS,
+  pollResult,
+  scaledWeight,
+  YES_NO,
+  type PollWeighting,
+} from './poll-rules';
 
 export const GOVERNANCE_POLL_RESOURCE = 'governance_poll';
 export const GOVERNANCE_POLL_VOTE_RESOURCE = 'governance_poll_vote';
@@ -75,6 +81,8 @@ interface PollFields {
 export interface NewPoll extends PollFields {
   kind: GovernancePollKind;
   secret: boolean;
+  /** One unit, one vote (the default), or by ownership share (ADR 0075). */
+  weighting?: PollWeighting;
   quorumPct: number;
   thresholdPct: number;
   closesAt: Date;
@@ -174,7 +182,14 @@ export class GovernancePollsService implements OnModuleInit {
   create(input: NewPoll): Promise<PollRecord> {
     const texts = localized(input, TEXTS);
     const options = checkedOptions(input.kind, input.options, texts);
+    const weighting = input.weighting ?? 'unit';
     const fields = shareProblems(input);
+    // A share can be unique to its unit: never next to a secret ballot.
+    if (weighting === 'share' && input.secret)
+      fields.push({
+        field: 'weighting',
+        code: FieldErrorCode.FIELD_NOT_ALLOWED,
+      });
     if (fields.length) throw invalid(fields);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
@@ -209,6 +224,7 @@ export class GovernancePollsService implements OnModuleInit {
           ...texts,
           quorumPct: input.quorumPct,
           thresholdPct: input.thresholdPct,
+          weighting,
           authorSide: author.side,
           createdById: this.ctx.accountId,
           createdAt: now,
@@ -227,7 +243,11 @@ export class GovernancePollsService implements OnModuleInit {
         ),
         metadata: { side: author.side },
       });
-      if (opensAt <= now) await this.openContest(tx, contest, now);
+      if (opensAt <= now) {
+        await this.openContest(tx, contest, now);
+        // The open wrote a poll by share its electorate's weight: read it back.
+        return this.load(tx, await this.reread(tx, id), null);
+      }
       return this.load(tx, poll, null);
     });
   }
@@ -307,7 +327,10 @@ export class GovernancePollsService implements OnModuleInit {
           'governance_poll.changed',
         ),
       });
-      if (opensAt <= now) await this.openContest(tx, updatedContest, now);
+      if (opensAt <= now) {
+        await this.openContest(tx, updatedContest, now);
+        return this.load(tx, await this.reread(tx, id), null);
+      }
       return this.load(tx, updated, null);
     });
   }
@@ -445,6 +468,10 @@ export class GovernancePollsService implements OnModuleInit {
   // The contest's time
   // --------------------------------------------------------------------------
 
+  private reread(tx: TenantTxClient, id: string): Promise<GovernancePoll> {
+    return tx.governancePoll.findUniqueOrThrow({ where: { id } });
+  }
+
   /** Voting opens: the electorate is taken (the contest is locked for update). */
   async openContest(
     tx: TenantTxClient,
@@ -454,12 +481,39 @@ export class GovernancePollsService implements OnModuleInit {
     const poll = await tx.governancePoll.findFirstOrThrow({
       where: { contestId: contest.id },
     });
-    const electors = await this.contests.open(tx, contest, now);
+    // By share: each unit's share now, taken with the electorate.
+    const weights =
+      poll.weighting === 'share'
+        ? new Map(
+            (await tx.governanceUnitShare.findMany()).map((s) => [
+              s.unitId,
+              s.share.toFixed(4),
+            ]),
+          )
+        : null;
+    const { accounts: electors, weight } = await this.contests.open(
+      tx,
+      contest,
+      now,
+      weights,
+    );
+    if (weight !== null)
+      await tx.governancePoll.update({
+        where: { id: poll.id },
+        data: { electorateWeight: weight },
+      });
     await this.audit.record(tx, {
       action: 'governance_poll.opened',
       targetId: poll.id,
       // `ballot`, never a key named secret: the audit withholds those.
-      metadata: { electorate: electors.length, ballot: ballotOf(contest) },
+      // A poll weighted by share adds its weights; one by unit stays as it was.
+      metadata: {
+        electorate: electors.length,
+        ballot: ballotOf(contest),
+        ...(weight !== null
+          ? { weighting: 'share', electorateWeight: weight }
+          : {}),
+      },
     });
     await this.notices.send(tx, electors, 'governance_poll.opened', poll.id);
   }
@@ -473,32 +527,58 @@ export class GovernancePollsService implements OnModuleInit {
       where: { contestId: contest.id },
     });
     const { turnout, counts } = await this.contests.close(tx, contest);
+    // By share (ADR 0075): the result is reckoned on the weights the
+    // electors were given at the open; the counts are kept beside them.
+    const weighted =
+      poll.weighting === 'share'
+        ? await this.contests.weightedCounts(tx, contest)
+        : null;
     const options = await this.optionsOf(tx, poll.id);
     for (const o of options)
       await tx.governancePollOption.update({
         where: { id: o.id },
-        data: { finalCount: counts.get(o.id) ?? 0 },
+        data: {
+          finalCount: counts.get(o.id) ?? 0,
+          ...(weighted
+            ? { finalWeight: weighted.counts.get(o.id) ?? '0.0000' }
+            : {}),
+        },
       });
     const { result, winningOptionId } = pollResult({
       kind: poll.kind,
-      electorate: contest.electorate ?? 0,
-      turnout,
+      electorate: weighted
+        ? scaledWeight(poll.electorateWeight?.toFixed(4))
+        : (contest.electorate ?? 0),
+      turnout: weighted ? scaledWeight(weighted.turnout) : turnout,
       quorumPct: poll.quorumPct,
       thresholdPct: poll.thresholdPct,
       options: options.map((o) => ({
         id: o.id,
         key: o.key,
-        votes: counts.get(o.id) ?? 0,
+        votes: weighted
+          ? scaledWeight(weighted.counts.get(o.id))
+          : (counts.get(o.id) ?? 0),
       })),
     });
     await tx.governancePoll.update({
       where: { id: poll.id },
-      data: { result, winningOptionId },
+      data: {
+        result,
+        winningOptionId,
+        ...(weighted ? { turnoutWeight: weighted.turnout } : {}),
+      },
     });
     await this.audit.record(tx, {
       action: 'governance_poll.closed',
       targetId: poll.id,
-      metadata: { result, turnout, electorate: contest.electorate ?? 0 },
+      metadata: {
+        result,
+        turnout,
+        electorate: contest.electorate ?? 0,
+        ...(weighted
+          ? { weighting: 'share', turnoutWeight: weighted.turnout }
+          : {}),
+      },
     });
     const electors = (
       await tx.governanceElector.findMany({
@@ -716,6 +796,7 @@ function audited(
     number: p.number,
     kind: p.kind,
     ballot: ballotOf(c),
+    weighting: p.weighting,
     quorumPct: p.quorumPct,
     thresholdPct: p.thresholdPct,
     opensAt: c.opensAt.toISOString(),

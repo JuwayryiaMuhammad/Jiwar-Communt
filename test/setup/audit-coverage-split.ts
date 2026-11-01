@@ -1156,3 +1156,12 @@ export const M210_COVERAGE: readonly string[] = [
   'service_promise.created',
   'service_promise.updated',
 ];
+
+/**
+ * The board's work (ADR 0075): ownership shares, meetings and their
+ * actions, the handover packs, the monthly report and the candidacy rules,
+ * covered by test/board-work/audit-coverage.e2e-spec.ts.
+ */
+export const BOARD_WORK_COVERAGE: readonly string[] = [
+  'governance_unit_share.changed',
+];

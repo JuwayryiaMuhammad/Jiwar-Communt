@@ -247,6 +247,10 @@ describe('audit catalog', () => {
         // ADR 0077.
         'vendor',
         'purchase_request',
+        // ADR 0074.
+        'debris_slot',
+        'area_record',
+        'damage_claim',
       ]).toContain(def.target);
     }
   });

@@ -2291,6 +2291,66 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'سمحت الإدارة باستئناف العمل في تصريحك.',
     },
   },
+  'unit_permit.damage_claimed': {
+    en: {
+      title: 'Damage claim',
+      body: 'The management claims damage from your works. Open the permit to see it or appeal.',
+    },
+    ar: {
+      title: 'مطالبة بأضرار',
+      body: 'طالبت الإدارة بأضرار نتجت عن أعمالك. افتح التصريح لعرضها أو التظلم منها.',
+    },
+  },
+  'unit_permit.damage_appealed': {
+    en: {
+      title: 'Damage claim appealed',
+      body: 'A unit appealed a damage claim. Open the permit to decide.',
+    },
+    ar: {
+      title: 'تظلم من مطالبة أضرار',
+      body: 'تظلمت وحدة من مطالبة أضرار. افتح التصريح للبت فيه.',
+    },
+  },
+  'unit_permit.damage_appeal_decided': {
+    en: {
+      title: 'Your appeal was decided',
+      body: 'The management decided your appeal of a damage claim. Open the permit.',
+    },
+    ar: {
+      title: 'تم البت في تظلمك',
+      body: 'بتت الإدارة في تظلمك من مطالبة الأضرار. افتح التصريح.',
+    },
+  },
+  'unit_permit.damage_withdrawn': {
+    en: {
+      title: 'Damage claim withdrawn',
+      body: 'The management withdrew a damage claim on your permit.',
+    },
+    ar: {
+      title: 'سُحبت مطالبة الأضرار',
+      body: 'سحبت الإدارة مطالبة أضرار على تصريحك.',
+    },
+  },
+  'unit_permit.damage_settled': {
+    en: {
+      title: 'Damage claim settled',
+      body: 'A damage claim on your permit was settled. Open the permit to see how.',
+    },
+    ar: {
+      title: 'تمت تسوية مطالبة الأضرار',
+      body: 'تمت تسوية مطالبة أضرار على تصريحك. افتح التصريح لمعرفة التفاصيل.',
+    },
+  },
+  'unit_permit.debris_missed': {
+    en: {
+      title: 'Debris removal missed',
+      body: 'A debris removal of your works passed with nothing taken out.',
+    },
+    ar: {
+      title: 'فات موعد إخراج المخلفات',
+      body: 'مر موعد إخراج مخلفات أعمالك دون إخراجها.',
+    },
+  },
   'incident.reported': {
     en: {
       title: 'Incident reported',

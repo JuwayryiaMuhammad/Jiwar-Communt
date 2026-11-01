@@ -7,8 +7,8 @@ import type { TenantTxClient } from '../database/tenant-tx.service';
 // Charges (ADR 0070)
 // ============================================================================
 //
-// What a facility booking, a club membership request and a vehicle fine
-// cost is owed through finance: an invoice of the unit's, paid online or at
+// What a facility booking, a club membership request, a vehicle fine and
+// a damage claim's remainder (ADR 0074) cost is owed through finance: an invoice of the unit's, paid online or at
 // the office and credited as any invoice is. Nothing imports finance (ADR
 // 0015, 0046), so finance implements this port at startup and the domains
 // call it, in their own transactions, as BoardMatters is used. A source with
@@ -22,16 +22,20 @@ import type { TenantTxClient } from '../database/tenant-tx.service';
 // facility's paths: right after the facility row, before slots, bookings
 // and memberships), and never the other way round.
 
-/** What raised a charge: one charge per source row, ever. */
+/**
+ * What raised a charge: one charge per source row, ever. A damage claim
+ * (ADR 0074) charges what its works deposit does not cover.
+ */
 export const CHARGE_SOURCES = [
   'booking',
   'club_request',
   'vehicle_fine',
+  'damage_claim',
 ] as const;
 export type ChargeSource = (typeof CHARGE_SOURCES)[number];
 
 /** The invoice kinds only the port issues. */
-export const CHARGE_KINDS = ['facility', 'club', 'fine'] as const;
+export const CHARGE_KINDS = ['facility', 'club', 'fine', 'damage'] as const;
 export type ChargeKind = (typeof CHARGE_KINDS)[number];
 
 /** Why a charge is cancelled: REASON_CODES.chargeCancel. */

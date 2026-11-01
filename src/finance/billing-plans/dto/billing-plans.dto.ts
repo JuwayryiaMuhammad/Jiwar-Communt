@@ -43,7 +43,7 @@ export class CreateBillingPlanDto {
     enum: STAFF_INVOICE_KINDS,
     enumName: 'StaffInvoiceKind',
     description:
-      'Never changes. The charges port alone issues `facility`, `club` and `fine` (ADR 0070).',
+      'Never changes. The charges port alone issues `facility`, `club`, `fine` (ADR 0070) and `damage` (ADR 0074).',
   })
   @IsIn(STAFF_INVOICE_KINDS)
   kind: StaffInvoiceKind;

@@ -27430,7 +27430,7 @@ export interface components {
             frequency: components["schemas"]["BillingFrequency"];
             /** @description Issue a period’s invoices this many days before it starts. */
             issueDaysBefore: number;
-            /** @description Never changes. The charges port alone issues `facility`, `club` and `fine` (ADR 0070). */
+            /** @description Never changes. The charges port alone issues `facility`, `club`, `fine` (ADR 0070) and `damage` (ADR 0074). */
             kind: components["schemas"]["StaffInvoiceKind"];
             nameAr: string;
             nameEn: string;
@@ -30907,7 +30907,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "vendor_document";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "vendor_document";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -33327,7 +33327,7 @@ export interface components {
             position: number;
         };
         /** @enum {string} */
-        InvoiceKind: "service_charge" | "maintenance" | "other" | "facility" | "club" | "fine";
+        InvoiceKind: "service_charge" | "maintenance" | "other" | "facility" | "club" | "fine" | "damage";
         /** @enum {string} */
         InvoiceLineChange: "same" | "added" | "removed" | "changed";
         /**
@@ -33452,7 +33452,7 @@ export interface components {
             building?: string;
             /** @description A local day of the compound: from today to 366 days ahead. */
             dueOn: string;
-            /** @description The charges port alone issues `facility`, `club` and `fine` (ADR 0070). */
+            /** @description The charges port alone issues `facility`, `club`, `fine` (ADR 0070) and `damage` (ADR 0074). */
             kind: components["schemas"]["StaffInvoiceKind"];
             lines: components["schemas"]["InvoiceLineDto"][];
             /** @enum {string} */
@@ -42030,7 +42030,7 @@ export interface components {
             unitId: string;
         };
         /**
-         * @description The charges port alone issues `facility`, `club` and `fine` (ADR 0070).
+         * @description The charges port alone issues `facility`, `club`, `fine` (ADR 0070) and `damage` (ADR 0074).
          * @enum {string}
          */
         StaffInvoiceKind: "service_charge" | "maintenance" | "other";

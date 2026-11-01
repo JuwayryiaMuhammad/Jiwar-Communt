@@ -3476,6 +3476,12 @@ enum FilePurpose {
   market_listing_photo
   /// A compound album's photo (ADR 0071): an image, 10 MB, the staff's.
   gallery_photo
+  /// A works permit's drawing (ADR 0074): an image or a PDF, 10 MB, the requester's.
+  permit_drawing
+  /// A common area's photo before or after works, or a damage claim's (ADR 0074): an image, 10 MB, the management's.
+  fitout_photo
+  /// The photo a resident joins to the appeal of a damage claim (ADR 0074): an image, 5 MB.
+  damage_appeal_photo
   @@map("file_purpose")
   vendor_document
 }
@@ -6987,6 +6993,8 @@ enum InvoiceKind {
   club
   /// A vehicle fine (ADR 0070): the port only.
   fine
+  /// What a damage claim leaves owing past the works deposit (ADR 0074): the port only.
+  damage
 
   @@map("invoice_kind")
 }

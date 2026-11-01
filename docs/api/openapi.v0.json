@@ -13954,7 +13954,7 @@
                 "$ref": "#/components/schemas/StaffInvoiceKind"
               }
             ],
-            "description": "Never changes. The charges port alone issues `facility`, `club` and `fine` (ADR 0070)."
+            "description": "Never changes. The charges port alone issues `facility`, `club`, `fine` (ADR 0070) and `damage` (ADR 0074)."
           },
           "nameAr": {
             "maxLength": 80,
@@ -23929,6 +23929,9 @@
           "gate_id_scan",
           "market_listing_photo",
           "gallery_photo",
+          "permit_drawing",
+          "fitout_photo",
+          "damage_appeal_photo",
           "vendor_document"
         ],
         "type": "string"
@@ -32048,7 +32051,8 @@
           "other",
           "facility",
           "club",
-          "fine"
+          "fine",
+          "damage"
         ],
         "type": "string"
       },
@@ -32376,7 +32380,7 @@
                 "$ref": "#/components/schemas/StaffInvoiceKind"
               }
             ],
-            "description": "The charges port alone issues `facility`, `club` and `fine` (ADR 0070)."
+            "description": "The charges port alone issues `facility`, `club`, `fine` (ADR 0070) and `damage` (ADR 0074)."
           },
           "lines": {
             "items": {
@@ -60188,7 +60192,7 @@
         "type": "object"
       },
       "StaffInvoiceKind": {
-        "description": "The charges port alone issues `facility`, `club` and `fine` (ADR 0070).",
+        "description": "The charges port alone issues `facility`, `club`, `fine` (ADR 0070) and `damage` (ADR 0074).",
         "enum": [
           "service_charge",
           "maintenance",

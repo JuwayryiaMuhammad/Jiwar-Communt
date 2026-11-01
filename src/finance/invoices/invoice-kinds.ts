@@ -2,8 +2,9 @@ import type { InvoiceKind } from '@prisma/client';
 
 /**
  * What the staff issue and the billing plans bill (ADR 0046). The charges
- * port alone issues the rest — `facility`, `club`, `fine` (ADR 0070) — so a
- * booking, a club request or a fine owes through exactly one invoice.
+ * port alone issues the rest — `facility`, `club`, `fine` (ADR 0070) and
+ * `damage` (ADR 0074) — so a booking, a club request, a fine or a damage
+ * claim owes through exactly one invoice.
  */
 export const STAFF_INVOICE_KINDS = [
   'service_charge',

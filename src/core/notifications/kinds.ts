@@ -2010,6 +2010,65 @@ export const NOTIFICATION_KINDS = {
     params: {},
   },
   /**
+   * Fit-out completion (ADR 0074), each about the works permit. A damage
+   * claim was raised on it: to the requester and the unit's primary.
+   * params.claimNumber: `DC-` and its number.
+   */
+  'unit_permit.damage_claimed': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { claimNumber: {} },
+  },
+  /** A claim was appealed: to whoever manages permits. */
+  'unit_permit.damage_appealed': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { claimNumber: {} },
+  },
+  /**
+   * The management decided the appeal: to the appellant. params.decision:
+   * `upheld` (the claim stands) or `accepted` (it is withdrawn).
+   */
+  'unit_permit.damage_appeal_decided': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { claimNumber: {}, decision: {} },
+  },
+  /** The management withdrew a claim: the requester and the primary. params.reason: the code. */
+  'unit_permit.damage_withdrawn': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { claimNumber: {}, reason: {} },
+  },
+  /**
+   * A claim was settled, from the works deposit and, past it, as an invoice
+   * of the unit's: the requester and the primary. No amounts: the claim
+   * and the invoice show them.
+   */
+  'unit_permit.damage_settled': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { claimNumber: {} },
+  },
+  /** A debris removal's window passed with nothing taken out: the requester and whoever manages permits. */
+  'unit_permit.debris_missed': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: {},
+  },
+  /**
    * An incident was reported (ADR 0053), low to high severity: to the
    * incidents' keepers. params.severity, params.incidentType.
    */

@@ -281,6 +281,9 @@ export const REASON_CODES = {
   ticketStaffClose: ['confirmed_by_phone', 'resident_unreachable', 'resident_left', 'other'],
   warrantyClaimReject: ['not_covered', 'misuse', 'expired', 'no_fault_found', 'other'],
   warrantyClaimWithdraw: ['repaired_otherwise', 'raised_in_error', 'other'],
+  debrisSlotCancel: ['plans_changed', 'not_needed', 'other'],
+  damageClaim: ['common_area_damage', 'lift_damage', 'facade_damage', 'debris_left', 'other'],
+  damageClaimWithdraw: ['appeal_accepted', 'repaired_by_unit', 'issued_in_error', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

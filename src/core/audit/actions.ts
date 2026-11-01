@@ -42,7 +42,8 @@ export const AUDIT_ACTIONS = {
   // A unit's contracts (ADR 0062). metadata: unitId, kind, parties,
   // renewsId (recorded); reasonCode (voided, declined); contractId.
   // Clearances and deposits (ADR 0062). metadata: unitId, number, side
-  // (issued); kind, amount (recorded); parts with codes (settled).
+  // (issued); kind, amount and the works permit it is held for, or null
+  // (recorded, ADR 0074); parts with codes (settled).
   'clearance.issued': { log: 'tenant', target: 'clearance' },
   'deposit.recorded': { log: 'tenant', target: 'deposit' },
   'deposit.refund_requested': { log: 'tenant', target: 'deposit' },
@@ -83,6 +84,27 @@ export const AUDIT_ACTIONS = {
   'permit_inspection.passed': { log: 'tenant', target: 'permit_inspection' },
   // metadata: permitId, cycle, photos, findings (codes).
   'permit_inspection.failed': { log: 'tenant', target: 'permit_inspection' },
+  // Fit-out completion (ADR 0074). Ids, codes, days, counts and amounts:
+  // never a resident's or a staff member's words. A drawing: permitId,
+  // drawings (how many now). A debris removal: permitId, day, from, to and
+  // side (scheduled); side and reasonCode (cancelled); side, staff | gate
+  // (done); the system's (missed). An area record: permitId, commonAreaId,
+  // phase, photos. A damage claim: permitId, unitId, number, reasonCode,
+  // amount, photos (raised); photo, a boolean (appealed); decision (appeal
+  // decided); reasonCode (withdrawn); depositId, deducted, charged and
+  // invoiceId (settled).
+  'permit_drawing.added': { log: 'tenant', target: 'unit_permit' },
+  'permit_drawing.removed': { log: 'tenant', target: 'unit_permit' },
+  'debris_slot.scheduled': { log: 'tenant', target: 'debris_slot' },
+  'debris_slot.cancelled': { log: 'tenant', target: 'debris_slot' },
+  'debris_slot.done': { log: 'tenant', target: 'debris_slot' },
+  'debris_slot.missed': { log: 'tenant', target: 'debris_slot' },
+  'area_record.recorded': { log: 'tenant', target: 'area_record' },
+  'damage_claim.raised': { log: 'tenant', target: 'damage_claim' },
+  'damage_claim.appealed': { log: 'tenant', target: 'damage_claim' },
+  'damage_claim.appeal_decided': { log: 'tenant', target: 'damage_claim' },
+  'damage_claim.withdrawn': { log: 'tenant', target: 'damage_claim' },
+  'damage_claim.settled': { log: 'tenant', target: 'damage_claim' },
   'contract.recorded': { log: 'tenant', target: 'contract' },
   'contract.voided': { log: 'tenant', target: 'contract' },
   'contract_renewal.requested': { log: 'tenant', target: 'contract_renewal' },

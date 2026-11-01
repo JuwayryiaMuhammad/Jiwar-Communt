@@ -1037,4 +1037,22 @@ export const REASON_CODES = {
     'other',
   ],
   warrantyClaimWithdraw: ['repaired_otherwise', 'raised_in_error', 'other'],
+  // Fit-out completion (ADR 0074): why a debris removal slot is called off;
+  // what the management claims a works permit's damage for, and why it
+  // withdraws a claim (`appeal_accepted` when it accepts the appeal). The
+  // migrations' CHECKs repeat them.
+  debrisSlotCancel: ['plans_changed', 'not_needed', 'other'],
+  damageClaim: [
+    'common_area_damage',
+    'lift_damage',
+    'facade_damage',
+    'debris_left',
+    'other',
+  ],
+  damageClaimWithdraw: [
+    'appeal_accepted',
+    'repaired_by_unit',
+    'issued_in_error',
+    'other',
+  ],
 } as const;

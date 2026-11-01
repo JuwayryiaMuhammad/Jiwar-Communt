@@ -397,6 +397,27 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['content.manage'],
   },
+  // A works permit's drawing (ADR 0074): a plan of the works, a photo or a
+  // PDF, its requester's; the management reads it with the permit.
+  permit_drawing: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['permits.request'],
+  },
+  // A photo the management takes for a works permit (ADR 0074): a common
+  // area before the works and after them, or the damage a claim is for.
+  fitout_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 10 * MB,
+    uploaders: ['permits.manage'],
+  },
+  // The photo a requester or the unit's primary joins to the appeal of a
+  // damage claim (ADR 0074), as a violation appeal's.
+  damage_appeal_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['permits.request'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

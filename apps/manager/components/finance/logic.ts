@@ -9,11 +9,12 @@ export const KIND_TEXT: Record<string, string> = {
   other: 'Other',
 };
 
-/** The kinds only the charges port issues (ADR 0070): listed, never issued by hand. */
+/** The kinds only the charges port issues (ADR 0070, 0074): listed, never issued by hand. */
 export const CHARGE_KIND_TEXT: Record<string, string> = {
   facility: 'Facility booking',
   club: 'Club membership',
   fine: 'Vehicle fine',
+  damage: 'Works damage',
 };
 
 export const FREQUENCY_TEXT: Record<string, string> = {

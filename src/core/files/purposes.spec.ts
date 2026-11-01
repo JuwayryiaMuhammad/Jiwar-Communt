@@ -4,21 +4,21 @@ import { FILE_PURPOSES, FILE_TYPES, mediaOf } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0071 recreated both, with every purpose). */
+/** Both CHECKs as they stand now (ADR 0074 recreated both, with every purpose). */
 const both = readFileSync(
   join(
     __dirname,
     migrations,
-    '20270119090100_community_file_purposes/migration.sql',
+    '20270209090100_fitout_file_purposes/migration.sql',
   ),
   'utf8',
 );
-/** The content type CHECK as ADR 0077 recreated it, with every purpose. */
+/** The content type CHECK as ADR 0074 recreated it after ADR 0077's, with every purpose. */
 const types = readFileSync(
   join(
     __dirname,
     migrations,
-    '20270302090100_vendor_file_purposes/migration.sql',
+    '20270302090500_fitout_pdf_purposes/migration.sql',
   ),
   'utf8',
 );
@@ -258,7 +258,7 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,
@@ -318,6 +318,31 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.gallery_photo.maxBytes).toBe(
       FILE_PURPOSES.document.maxBytes,
     );
+    // Fit-out (ADR 0074): a drawing is an image or a PDF of 10 MB, the
+    // management's photo a 10 MB image (both the ELSE), an appeal's photo a
+    // 5 MB image.
+    expect(FILE_PURPOSES.permit_drawing.types).toEqual(
+      FILE_PURPOSES.document.types,
+    );
+    expect(sizeCheck).not.toContain(`WHEN 'permit_drawing'`);
+    expect(FILE_PURPOSES.permit_drawing.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
+    expect(FILE_PURPOSES.fitout_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(sizeCheck).not.toContain(`WHEN 'fitout_photo'`);
+    expect(typeCheck).not.toContain(`'fitout_photo'`);
+    expect(FILE_PURPOSES.fitout_photo.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
+    expect(FILE_PURPOSES.damage_appeal_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'damage_appeal_photo' THEN ${FILE_PURPOSES.damage_appeal_photo.maxBytes}`,
+    );
+    expect(typeCheck).not.toContain(`'damage_appeal_photo'`);
   });
 
   it('only the nine types', () => {

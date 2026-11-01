@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import type { GuardRosterSlot, GuardRosterTemplate } from '@prisma/client';
+import type {
+  GuardRosterSlot,
+  GuardRosterTemplate,
+  StaffCrew,
+} from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
+import { StaffDuty } from '../../core/staff-duty/staff-duty';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { invalid } from '../../core/common/localized';
 import {
@@ -35,6 +40,20 @@ export interface Period {
   /** The first instant after the last day. */
   end: Date;
 }
+
+/** A slot or template's post: a guard's is a gate or a zone; a technician's a zone or none. */
+export interface RosterPost {
+  gateId: string | null;
+  placeId: string | null;
+}
+
+/** Who may hold a crew's slots (ADR 0078): the guards, or the field technicians. */
+export const CREW_PERMISSION: Record<StaffCrew, string> = {
+  security: 'gate.operate',
+  maintenance: 'tickets.work',
+};
+
+const MINUTE = 60_000;
 
 /** A gate or a zone, as a request names it. */
 export interface PostInput {
@@ -78,6 +97,7 @@ export class RosterCore {
     private readonly ctx: RequestContext,
     private readonly settings: TenantSettingsService,
     private readonly audit: AuditService,
+    private readonly duty: StaffDuty,
   ) {}
 
   /** The swaps follow a slot cancelled (ADR 0050). */
@@ -125,9 +145,15 @@ export class RosterCore {
 
   /**
    * The guard's account FOR SHARE, then the guard's roster lock. Returns
-   * whether the account is an active `gate.operate` holder.
+   * whether the account is an active holder of the crew's permission:
+   * `gate.operate` for a guard, `tickets.work` for a technician (ADR 0078).
+   * One lock for both crews: an account's slots never overlap, whoever's.
    */
-  async lockGuard(tx: TenantTxClient, guardId: string): Promise<boolean> {
+  async lockGuard(
+    tx: TenantTxClient,
+    guardId: string,
+    crew: StaffCrew = 'security',
+  ): Promise<boolean> {
     const [row] = await tx.$queryRaw<{ status: string }[]>`
       SELECT status::text AS status FROM accounts
        WHERE id = ${guardId}::uuid FOR SHARE`;
@@ -138,7 +164,9 @@ export class RosterCore {
       (await tx.account.count({
         where: {
           id: guardId,
-          role: { permissions: { some: { permission: 'gate.operate' } } },
+          role: {
+            permissions: { some: { permission: CREW_PERMISSION[crew] } },
+          },
         },
       })) > 0
     );
@@ -160,8 +188,9 @@ export class RosterCore {
     tx: TenantTxClient,
     guardId: string,
     field = 'guardId',
+    crew: StaffCrew = 'security',
   ): Promise<void> {
-    if (!(await this.lockGuard(tx, guardId)))
+    if (!(await this.lockGuard(tx, guardId, crew)))
       throw invalid([{ field, code: FieldErrorCode.GUARD_NOT_ELIGIBLE }]);
   }
 
@@ -188,6 +217,30 @@ export class RosterCore {
         ]);
     }
     return post;
+  }
+
+  /**
+   * A technician's post (ADR 0078): a zone in service, read FOR SHARE as a
+   * guard's is, or none; never a gate.
+   */
+  async requireCrewPost(
+    tx: TenantTxClient,
+    input: PostInput,
+    crew: StaffCrew,
+  ): Promise<RosterPost> {
+    if (crew === 'security') return this.requirePost(tx, input);
+    if (input.gateId)
+      throw invalid([
+        { field: 'gateId', code: FieldErrorCode.FIELD_NOT_ALLOWED },
+      ]);
+    if (!input.zoneId) return { gateId: null, placeId: null };
+    const [row] = await tx.$queryRaw<{ active: boolean }[]>`
+      SELECT active FROM places WHERE id = ${input.zoneId}::uuid FOR SHARE`;
+    if (!row?.active)
+      throw invalid([
+        { field: 'zoneId', code: FieldErrorCode.POST_NOT_AVAILABLE },
+      ]);
+    return { gateId: null, placeId: input.zoneId };
   }
 
   /**
@@ -313,6 +366,7 @@ export class RosterCore {
         data: {
           id: newId(),
           tenantId: t.tenantId,
+          crew: t.crew,
           guardAccountId: t.guardAccountId,
           gateId: t.gateId,
           placeId: t.placeId,
@@ -323,7 +377,8 @@ export class RosterCore {
           createdAt: now,
         },
       });
-      await this.fillFromOpenShift(tx, slot, now);
+      if (slot.crew === 'security') await this.fillFromOpenShift(tx, slot, now);
+      else await this.fillFromDuty(tx, slot, now);
       count++;
     }
     return count;
@@ -361,6 +416,74 @@ export class RosterCore {
         shiftId: shift.id,
         lateMinutes: lateMinutesOf(slot, shift.started_at),
       },
+    });
+  }
+
+  /**
+   * A technician's slot filled by their being on duty `now` (ADR 0078),
+   * when going on duty then would fill it (from 30 minutes before its start
+   * until its end): a slot just made while they are on duty, one whose
+   * window opens while they are, or the one their going on duty finds.
+   * One open duty slot at a time: one still running keeps them; one already
+   * over is closed first, at `now`. The caller holds the technician's lock
+   * and the slot's row.
+   */
+  async fillFromDuty(
+    tx: TenantTxClient,
+    slot: GuardRosterSlot,
+    now: Date,
+  ): Promise<GuardRosterSlot> {
+    if (
+      slot.crew !== 'maintenance' ||
+      slot.status !== 'scheduled' ||
+      slot.dutyStartedAt ||
+      !fills(slot, now)
+    )
+      return slot;
+    if (!(await this.duty.onDuty(tx, slot.guardAccountId))) return slot;
+    const open = await this.openDuty(tx, slot.guardAccountId);
+    if (open) {
+      if (open.endsAt > now) return slot;
+      await this.closeDuty(tx, open, now);
+    }
+    const lateMinutes = lateMinutesOf(slot, now);
+    return tx.guardRosterSlot.update({
+      where: { id: slot.id },
+      data: { dutyStartedAt: now, lateMinutes },
+    });
+  }
+
+  /** The technician's slot they are on duty in, FOR UPDATE, or null. */
+  async openDuty(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<GuardRosterSlot | null> {
+    const [row] = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM guard_roster_slots
+       WHERE guard_account_id = ${accountId}::uuid
+         AND crew = 'maintenance'
+         AND duty_started_at IS NOT NULL AND duty_ended_at IS NULL
+       ORDER BY starts_at, id LIMIT 1 FOR UPDATE`;
+    if (!row) return null;
+    return tx.guardRosterSlot.findUniqueOrThrow({ where: { id: row.id } });
+  }
+
+  /**
+   * Closes a technician's duty slot at `at`: the minutes worked beyond its
+   * end are its overtime (never negative), recorded once.
+   */
+  async closeDuty(
+    tx: TenantTxClient,
+    slot: GuardRosterSlot,
+    at: Date,
+  ): Promise<GuardRosterSlot> {
+    const overtimeMinutes = Math.max(
+      0,
+      Math.floor((at.getTime() - slot.endsAt.getTime()) / MINUTE),
+    );
+    return tx.guardRosterSlot.update({
+      where: { id: slot.id },
+      data: { dutyEndedAt: at, overtimeMinutes },
     });
   }
 

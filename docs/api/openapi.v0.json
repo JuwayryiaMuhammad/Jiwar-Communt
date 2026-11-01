@@ -16823,6 +16823,84 @@
         ],
         "type": "object"
       },
+      "CreateDutySlotDto": {
+        "properties": {
+          "endsAt": {
+            "description": "After the start, a day at most.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "gateId": {
+            "description": "Never for a technician: FIELD_NOT_ALLOWED.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsAt": {
+            "description": "In the future.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "technicianId": {
+            "description": "An active `tickets.work` holder (GUARD_NOT_ELIGIBLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "zoneId": {
+            "description": "A place in service; absent for the whole compound.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "technicianId",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
+      "CreateDutyTemplateDto": {
+        "properties": {
+          "effectiveFrom": {
+            "description": "Its first day, `YYYY-MM-DD`: today or later.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "effectiveUntil": {
+            "description": "Its last day, inclusive. Absent for no end.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "gateId": {
+            "description": "Never for a technician: FIELD_NOT_ALLOWED.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyScheduleDto"
+              }
+            ],
+            "description": "The weekly shifts: never overlapping the technician’s other templates or slots (409 ROSTER_OVERLAP)."
+          },
+          "technicianId": {
+            "description": "An active `tickets.work` holder (GUARD_NOT_ELIGIBLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "zoneId": {
+            "description": "A place in service; absent for the whole compound.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "technicianId",
+          "schedule",
+          "effectiveFrom"
+        ],
+        "type": "object"
+      },
       "CreateEscortRequestDto": {
         "properties": {
           "fromPlaceId": {
@@ -23802,6 +23880,204 @@
           "invoiced",
           "projected",
           "total"
+        ],
+        "type": "object"
+      },
+      "DutySlotView": {
+        "properties": {
+          "absentAt": {
+            "description": "Not on duty an hour after it was due.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "dutyEndedAt": {
+            "description": "When they went off duty.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "dutyStartedAt": {
+            "description": "When going on duty filled it; null until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "late": {
+            "description": "More than ten minutes late.",
+            "type": "boolean"
+          },
+          "lateMinutes": {
+            "description": "Minutes after the slot was due (its start, or when it was made if later) they went on duty; null until they did.",
+            "nullable": true,
+            "type": "number"
+          },
+          "overtimeMinutes": {
+            "description": "Minutes on duty beyond its end, once they went off.",
+            "nullable": true,
+            "type": "number"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSlotStatus"
+              }
+            ]
+          },
+          "technician": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "templateId": {
+            "description": "The template that made it; null for a single slot.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "The zone they cover; null for the whole compound.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "zone",
+          "startsAt",
+          "endsAt",
+          "status",
+          "cancelReason",
+          "dutyStartedAt",
+          "dutyEndedAt",
+          "lateMinutes",
+          "late",
+          "overtimeMinutes",
+          "absentAt",
+          "technician",
+          "templateId"
+        ],
+        "type": "object"
+      },
+      "DutySlotViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DutySlotView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "DutyTemplateView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "effectiveUntil": {
+            "description": "Its last day, inclusive; null for no end.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTemplateEnd"
+              }
+            ],
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/WeeklyScheduleView"
+          },
+          "technician": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "The zone they cover; null for the whole compound.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "technician",
+          "zone",
+          "schedule",
+          "effectiveFrom",
+          "effectiveUntil",
+          "endedAt",
+          "endReason",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "DutyTemplateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DutyTemplateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -41862,6 +42138,110 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/MyDelegationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MyDutySlotView": {
+        "properties": {
+          "absentAt": {
+            "description": "Not on duty an hour after it was due.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "dutyEndedAt": {
+            "description": "When they went off duty.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "dutyStartedAt": {
+            "description": "When going on duty filled it; null until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "late": {
+            "description": "More than ten minutes late.",
+            "type": "boolean"
+          },
+          "lateMinutes": {
+            "description": "Minutes after the slot was due (its start, or when it was made if later) they went on duty; null until they did.",
+            "nullable": true,
+            "type": "number"
+          },
+          "overtimeMinutes": {
+            "description": "Minutes on duty beyond its end, once they went off.",
+            "nullable": true,
+            "type": "number"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSlotStatus"
+              }
+            ]
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "The zone they cover; null for the whole compound.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "zone",
+          "startsAt",
+          "endsAt",
+          "status",
+          "cancelReason",
+          "dutyStartedAt",
+          "dutyEndedAt",
+          "lateMinutes",
+          "late",
+          "overtimeMinutes",
+          "absentAt"
+        ],
+        "type": "object"
+      },
+      "MyDutySlotViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyDutySlotView"
             },
             "type": "array"
           },
@@ -72279,6 +72659,70 @@
         ],
         "type": "object"
       },
+      "TechnicianAttendanceView": {
+        "properties": {
+          "absent": {
+            "description": "Of them, not on duty an hour after they were due.",
+            "type": "number"
+          },
+          "filled": {
+            "description": "Of them, filled on duty.",
+            "type": "number"
+          },
+          "late": {
+            "description": "Of them, on duty more than ten minutes late.",
+            "type": "number"
+          },
+          "overtimeMinutes": {
+            "description": "On duty beyond the filled slots.",
+            "type": "number"
+          },
+          "scheduledMinutes": {
+            "type": "number"
+          },
+          "slots": {
+            "description": "Scheduled slots starting in the period.",
+            "type": "number"
+          },
+          "technician": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "workedMinutes": {
+            "description": "On duty in the filled slots, once they went off.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "technician",
+          "slots",
+          "filled",
+          "late",
+          "absent",
+          "scheduledMinutes",
+          "workedMinutes",
+          "overtimeMinutes"
+        ],
+        "type": "object"
+      },
+      "TechnicianAttendanceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TechnicianAttendanceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "TechnicianAvailabilityState": {
         "description": "A technician who never set it is `unavailable`.",
         "enum": [
@@ -102474,6 +102918,108 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/my-roster": {
+      "get": {
+        "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).",
+        "operationId": "TechnicianRosterController_mine",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyDutySlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my schedule",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/my-roster/attendance": {
+      "get": {
+        "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).",
+        "operationId": "TechnicianRosterController_attendance",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianAttendanceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my attendance",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/outages": {
       "get": {
         "operationId": "OutagesController_list",
@@ -128100,6 +128646,442 @@
         "summary": "The same as CSV",
         "tags": [
           "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/attendance": {
+      "get": {
+        "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG). Recorded only: no payroll.",
+        "operationId": "StaffDutyRosterController_attendance",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "technicianId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianAttendanceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the technicians’ attendance and overtime",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/roster/slots": {
+      "get": {
+        "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).",
+        "operationId": "StaffDutyRosterController_slots",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "technicianId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "scheduled",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DutySlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the technicians’ roster",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "In the future, a day at most; never overlapping their slots or templates (409 ROSTER_OVERLAP). Filled at once when they are on duty and it starts within the half hour.",
+        "operationId": "StaffDutyRosterController_createSlot",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDutySlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DutySlotView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a technician’s single slot",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/roster/slots/{id}/cancel": {
+      "post": {
+        "description": "A filled or cancelled slot: 409 ROSTER_SLOT_CLOSED.",
+        "operationId": "StaffDutyRosterController_cancelSlot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRosterSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DutySlotView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a technician’s slot nobody filled",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/roster/templates": {
+      "get": {
+        "operationId": "StaffDutyRosterController_templates",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "technicianId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default: both.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "live",
+                "ended"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DutyTemplateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the technicians’ roster templates",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "In a zone or for the whole compound. Its slots are made at once, 28 days ahead, and kept so; never overlapping the technician’s other templates or slots (409 ROSTER_OVERLAP).",
+        "operationId": "StaffDutyRosterController_createTemplate",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDutyTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DutyTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a technician’s weekly roster",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/roster/templates/{id}/end": {
+      "post": {
+        "description": "Its slots to come that nobody filled are cancelled (`template_ended`).",
+        "operationId": "StaffDutyRosterController_endTemplate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DutyTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a technician’s roster template",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/technicians": {
+      "get": {
+        "description": "Active accounts holding `tickets.work`.",
+        "operationId": "StaffDutyRosterController_technicians",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterGuardViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the technicians the roster may schedule",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/zones": {
+      "get": {
+        "operationId": "StaffDutyRosterController_zones",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the zones a technician may cover",
+        "tags": [
+          "field-team"
         ],
         "x-no-store": true,
         "x-stability": "draft"

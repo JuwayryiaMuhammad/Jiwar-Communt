@@ -1462,6 +1462,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   guard_roster_slots_late_minutes_range: {
     guarded: 'late_minutes IS NULL is tested first',
   },
+  guard_roster_slots_duty_order: {
+    guarded:
+      'duty_ended_at IS NULL is tested first; filled_shape requires duty_started_at with it',
+  },
+  guard_roster_slots_overtime_range: {
+    guarded: 'overtime_minutes IS NULL is tested first',
+  },
   guard_handover_items_label_length: {},
   guard_handover_items_position_range: {},
   guard_handovers_one_post: {

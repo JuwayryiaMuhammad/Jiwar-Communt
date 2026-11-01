@@ -8436,6 +8436,8 @@ enum GuardSlotStatus {
 model GuardRosterTemplate {
   id             String    @id @db.Uuid
   tenantId       String    @map("tenant_id") @db.Uuid
+  /// The guards' or the technicians' (ADR 0078); a technician's has no gate.
+  crew           StaffCrew @default(security)
   guardAccountId String    @map("guard_account_id") @db.Uuid
   gateId         String?   @map("gate_id") @db.Uuid
   placeId        String?   @map("place_id") @db.Uuid
@@ -8487,6 +8489,13 @@ model GuardRosterSlot {
   absentAt       DateTime?       @map("absent_at") @db.Timestamptz(3)
   /// When a swap last gave it to its guard.
   swappedAt      DateTime?       @map("swapped_at") @db.Timestamptz(3)
+  /// The guards' or the technicians' (ADR 0078); a technician's has no gate.
+  crew           StaffCrew       @default(security)
+  /// A technician's slot: when going on duty filled it (with `lateMinutes`).
+  dutyStartedAt  DateTime?       @map("duty_started_at") @db.Timestamptz(3)
+  /// When they went off duty, with the minutes worked beyond the slot.
+  dutyEndedAt    DateTime?       @map("duty_ended_at") @db.Timestamptz(3)
+  overtimeMinutes Int?           @map("overtime_minutes")
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 

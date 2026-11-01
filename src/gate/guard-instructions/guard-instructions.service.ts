@@ -222,6 +222,7 @@ export class GuardInstructionsService implements OnModuleInit {
     const now = await dbNow(tx);
     const scheduled = await tx.guardRosterSlot.findMany({
       where: {
+        crew: 'security',
         ...(i.gateId ? { gateId: i.gateId } : { placeId: i.placeId }),
         status: 'scheduled',
         endsAt: { gt: now },

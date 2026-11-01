@@ -10555,6 +10555,414 @@
     {
       "item": [
         {
+          "name": "Read my schedule",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "my-roster"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/my-roster"
+            }
+          }
+        },
+        {
+          "name": "Read my attendance",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "my-roster",
+                "attendance"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/my-roster/attendance"
+            }
+          }
+        },
+        {
+          "name": "Read the technicians’ attendance and overtime",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "attendance"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "technicianId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/attendance"
+            }
+          }
+        },
+        {
+          "name": "Read the technicians’ roster",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "roster",
+                "slots"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "technicianId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "zoneId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/roster/slots"
+            }
+          }
+        },
+        {
+          "name": "Add a technician’s single slot",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"technicianId\": \"\",\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsAt` | string (date-time) | yes | After the start, a day at most. |\n| `gateId` | string (uuid) |  | Never for a technician: FIELD_NOT_ALLOWED. |\n| `startsAt` | string (date-time) | yes | In the future. |\n| `technicianId` | string (uuid) | yes | An active `tickets.work` holder (GUARD_NOT_ELIGIBLE). |\n| `zoneId` | string (uuid) |  | A place in service; absent for the whole compound. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "roster",
+                "slots"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/roster/slots"
+            }
+          }
+        },
+        {
+          "name": "Cancel a technician’s slot nobody filled",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"schedule_change\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `schedule_change` \\| `guard_unavailable` \\| `post_closed` \\| `other` | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "roster",
+                "slots",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/roster/slots/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the technicians’ roster templates",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "roster",
+                "templates"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "technicianId",
+                  "value": ""
+                },
+                {
+                  "description": "Default: both.",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/roster/templates"
+            }
+          }
+        },
+        {
+          "name": "Add a technician’s weekly roster",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"technicianId\": \"\",\n  \"schedule\": {\n    \"days\": [],\n    \"windows\": []\n  },\n  \"effectiveFrom\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `effectiveFrom` | string | yes | Its first day, `YYYY-MM-DD`: today or later. |\n| `effectiveUntil` | string |  | Its last day, inclusive. Absent for no end. |\n| `gateId` | string (uuid) |  | Never for a technician: FIELD_NOT_ALLOWED. |\n| `schedule` | object | yes | The weekly shifts: never overlapping the technician’s other templates or slots (409 ROSTER_OVERLAP). |\n| `technicianId` | string (uuid) | yes | An active `tickets.work` holder (GUARD_NOT_ELIGIBLE). |\n| `zoneId` | string (uuid) |  | A place in service; absent for the whole compound. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "roster",
+                "templates"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/roster/templates"
+            }
+          }
+        },
+        {
+          "name": "End a technician’s roster template",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "roster",
+                "templates",
+                ":id",
+                "end"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/roster/templates/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the technicians the roster may schedule",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "technicians"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/technicians"
+            }
+          }
+        },
+        {
+          "name": "List the zones a technician may cover",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "zones"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/zones"
+            }
+          }
+        }
+      ],
+      "name": "field-team"
+    },
+    {
+      "item": [
+        {
           "name": "Declare an upload and get a presigned PUT URL",
           "request": {
             "body": {

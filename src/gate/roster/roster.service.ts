@@ -168,7 +168,7 @@ export class RosterService implements OnModuleInit {
    * not a clash: `materialize` leaves it to the slot the guard has (a
    * template ended and made again mid-shift keeps the old one's today).
    */
-  private async assertTemplateFree(
+  async assertTemplateFree(
     tx: TenantTxClient,
     guardId: string,
     draft: {
@@ -235,7 +235,8 @@ export class RosterService implements OnModuleInit {
   endTemplate(id: string): Promise<RosterTemplateView> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const found = await tx.guardRosterTemplate.findUnique({ where: { id } });
-      if (!found) throw templateNotFound();
+      // A technician's is the field team's (ADR 0078).
+      if (!found || found.crew !== 'security') throw templateNotFound();
       await this.core.lockGuard(tx, found.guardAccountId);
       const [row] = await tx.$queryRaw<{ ended_at: Date | null }[]>`
         SELECT ended_at FROM guard_roster_templates
@@ -283,6 +284,7 @@ export class RosterService implements OnModuleInit {
         guardAccountId: t.guardAccountId,
         status: 'scheduled',
         shiftId: null,
+        dutyStartedAt: null,
         swappedAt: null,
         startsAt: { gt: now },
       },
@@ -296,6 +298,7 @@ export class RosterService implements OnModuleInit {
         !slot ||
         slot.status !== 'scheduled' ||
         slot.shiftId ||
+        slot.dutyStartedAt ||
         slot.guardAccountId !== t.guardAccountId
       )
         continue;
@@ -318,6 +321,7 @@ export class RosterService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const rows = await tx.guardRosterTemplate.findMany({
         where: {
+          crew: 'security',
           ...(q.guardId ? { guardAccountId: q.guardId } : {}),
           ...(q.state === 'live'
             ? { endedAt: null }
@@ -424,7 +428,7 @@ export class RosterService implements OnModuleInit {
     );
     return this.tenantTx.withTenantTx(async (tx) => {
       const slot = await this.core.lockSlot(tx, id);
-      if (!slot) throw slotNotFound();
+      if (!slot || slot.crew !== 'security') throw slotNotFound();
       if (slot.status !== 'scheduled' || slot.shiftId)
         throw appError.conflict(
           ErrorCode.ROSTER_SLOT_CLOSED,
@@ -455,6 +459,7 @@ export class RosterService implements OnModuleInit {
       const p = await this.period(tx, q);
       const rows = await tx.guardRosterSlot.findMany({
         where: {
+          crew: 'security',
           startsAt: { gte: p.start, lt: p.end },
           ...(q.guardId ? { guardAccountId: q.guardId } : {}),
           ...(q.gateId ? { gateId: q.gateId } : {}),
@@ -476,6 +481,7 @@ export class RosterService implements OnModuleInit {
       const p = await this.period(tx, q);
       const rows = await tx.guardRosterSlot.findMany({
         where: {
+          crew: 'security',
           guardAccountId: this.ctx.accountId,
           startsAt: { gte: p.start, lt: p.end },
         },
@@ -546,7 +552,7 @@ export class RosterService implements OnModuleInit {
              count(absent_at)::int AS absent,
              COALESCE(sum(floor(extract(epoch FROM ends_at - starts_at) / 60)), 0)::int AS scheduled
         FROM guard_roster_slots
-       WHERE status = 'scheduled'
+       WHERE status = 'scheduled' AND crew = 'security'
          AND starts_at >= ${p.start} AND starts_at < ${p.end} ${guard}
        GROUP BY guard_account_id`;
     const shifts = await tx.$queryRaw<

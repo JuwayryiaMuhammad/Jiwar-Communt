@@ -7421,6 +7421,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/my-roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read my schedule
+         * @description The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).
+         */
+        get: operations["TechnicianRosterController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/my-roster/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read my attendance
+         * @description The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).
+         */
+        get: operations["TechnicianRosterController_attendance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/outages": {
         parameters: {
             query?: never;
@@ -16165,6 +16205,148 @@ export interface paths {
          * @description One row per bookable facility: its bookings by status, open and booked minutes, use, no-shows and peak share.
          */
         get: operations["FacilityUsageController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the technicians’ attendance and overtime
+         * @description The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG). Recorded only: no payroll.
+         */
+        get: operations["StaffDutyRosterController_attendance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/roster/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the technicians’ roster
+         * @description The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).
+         */
+        get: operations["StaffDutyRosterController_slots"];
+        put?: never;
+        /**
+         * Add a technician’s single slot
+         * @description In the future, a day at most; never overlapping their slots or templates (409 ROSTER_OVERLAP). Filled at once when they are on duty and it starts within the half hour.
+         */
+        post: operations["StaffDutyRosterController_createSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/roster/slots/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a technician’s slot nobody filled
+         * @description A filled or cancelled slot: 409 ROSTER_SLOT_CLOSED.
+         */
+        post: operations["StaffDutyRosterController_cancelSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/roster/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the technicians’ roster templates */
+        get: operations["StaffDutyRosterController_templates"];
+        put?: never;
+        /**
+         * Add a technician’s weekly roster
+         * @description In a zone or for the whole compound. Its slots are made at once, 28 days ahead, and kept so; never overlapping the technician’s other templates or slots (409 ROSTER_OVERLAP).
+         */
+        post: operations["StaffDutyRosterController_createTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/roster/templates/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End a technician’s roster template
+         * @description Its slots to come that nobody filled are cancelled (`template_ended`).
+         */
+        post: operations["StaffDutyRosterController_endTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/technicians": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the technicians the roster may schedule
+         * @description Active accounts holding `tickets.work`.
+         */
+        get: operations["StaffDutyRosterController_technicians"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the zones a technician may cover */
+        get: operations["StaffDutyRosterController_zones"];
         put?: never;
         post?: never;
         delete?: never;
@@ -30920,6 +31102,56 @@ export interface components {
             expiresAt: string;
             scopes: components["schemas"]["DelegationScope"][];
         };
+        CreateDutySlotDto: {
+            /**
+             * Format: date-time
+             * @description After the start, a day at most.
+             */
+            endsAt: string;
+            /**
+             * Format: uuid
+             * @description Never for a technician: FIELD_NOT_ALLOWED.
+             */
+            gateId?: string;
+            /**
+             * Format: date-time
+             * @description In the future.
+             */
+            startsAt: string;
+            /**
+             * Format: uuid
+             * @description An active `tickets.work` holder (GUARD_NOT_ELIGIBLE).
+             */
+            technicianId: string;
+            /**
+             * Format: uuid
+             * @description A place in service; absent for the whole compound.
+             */
+            zoneId?: string;
+        };
+        CreateDutyTemplateDto: {
+            /** @description Its first day, `YYYY-MM-DD`: today or later. */
+            effectiveFrom: string;
+            /** @description Its last day, inclusive. Absent for no end. */
+            effectiveUntil?: string;
+            /**
+             * Format: uuid
+             * @description Never for a technician: FIELD_NOT_ALLOWED.
+             */
+            gateId?: string;
+            /** @description The weekly shifts: never overlapping the technician’s other templates or slots (409 ROSTER_OVERLAP). */
+            schedule: components["schemas"]["WeeklyScheduleDto"];
+            /**
+             * Format: uuid
+             * @description An active `tickets.work` holder (GUARD_NOT_ELIGIBLE).
+             */
+            technicianId: string;
+            /**
+             * Format: uuid
+             * @description A place in service; absent for the whole compound.
+             */
+            zoneId?: string;
+        };
         CreateEscortRequestDto: {
             /**
              * Format: uuid
@@ -33440,6 +33672,77 @@ export interface components {
             /** @description What the unit’s plans will issue it, due in it. */
             projected: string;
             total: string;
+        };
+        DutySlotView: {
+            /**
+             * Format: date-time
+             * @description Not on duty an hour after it was due.
+             */
+            absentAt: string | null;
+            /** @description From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it. */
+            cancelReason: string | null;
+            /**
+             * Format: date-time
+             * @description When they went off duty.
+             */
+            dutyEndedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When going on duty filled it; null until then.
+             */
+            dutyStartedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description More than ten minutes late. */
+            late: boolean;
+            /** @description Minutes after the slot was due (its start, or when it was made if later) they went on duty; null until they did. */
+            lateMinutes: number | null;
+            /** @description Minutes on duty beyond its end, once they went off. */
+            overtimeMinutes: number | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["GuardSlotStatus"];
+            technician: components["schemas"]["AccountRefView"];
+            /**
+             * Format: uuid
+             * @description The template that made it; null for a single slot.
+             */
+            templateId: string | null;
+            /** @description The zone they cover; null for the whole compound. */
+            zone: components["schemas"]["PlaceView"] | null;
+        };
+        DutySlotViewList: {
+            data: components["schemas"]["DutySlotView"][];
+            nextCursor: string | null;
+        };
+        DutyTemplateView: {
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            effectiveFrom: string;
+            /**
+             * Format: date
+             * @description Its last day, inclusive; null for no end.
+             */
+            effectiveUntil: string | null;
+            endReason: components["schemas"]["GuardTemplateEnd"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            schedule: components["schemas"]["WeeklyScheduleView"];
+            technician: components["schemas"]["AccountRefView"];
+            /** @description The zone they cover; null for the whole compound. */
+            zone: components["schemas"]["PlaceView"] | null;
+        };
+        DutyTemplateViewList: {
+            data: components["schemas"]["DutyTemplateView"][];
+            nextCursor: string | null;
         };
         EffectSideView: {
             /** Format: date */
@@ -38979,6 +39282,44 @@ export interface components {
         };
         MyDelegationViewList: {
             data: components["schemas"]["MyDelegationView"][];
+            nextCursor: string | null;
+        };
+        MyDutySlotView: {
+            /**
+             * Format: date-time
+             * @description Not on duty an hour after it was due.
+             */
+            absentAt: string | null;
+            /** @description From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it. */
+            cancelReason: string | null;
+            /**
+             * Format: date-time
+             * @description When they went off duty.
+             */
+            dutyEndedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When going on duty filled it; null until then.
+             */
+            dutyStartedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description More than ten minutes late. */
+            late: boolean;
+            /** @description Minutes after the slot was due (its start, or when it was made if later) they went on duty; null until they did. */
+            lateMinutes: number | null;
+            /** @description Minutes on duty beyond its end, once they went off. */
+            overtimeMinutes: number | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["GuardSlotStatus"];
+            /** @description The zone they cover; null for the whole compound. */
+            zone: components["schemas"]["PlaceView"] | null;
+        };
+        MyDutySlotViewList: {
+            data: components["schemas"]["MyDutySlotView"][];
             nextCursor: string | null;
         };
         MyGateServicesSection: {
@@ -48288,6 +48629,26 @@ export interface components {
             unitCode: string;
             /** Format: uuid */
             unitId: string;
+        };
+        TechnicianAttendanceView: {
+            /** @description Of them, not on duty an hour after they were due. */
+            absent: number;
+            /** @description Of them, filled on duty. */
+            filled: number;
+            /** @description Of them, on duty more than ten minutes late. */
+            late: number;
+            /** @description On duty beyond the filled slots. */
+            overtimeMinutes: number;
+            scheduledMinutes: number;
+            /** @description Scheduled slots starting in the period. */
+            slots: number;
+            technician: components["schemas"]["AccountRefView"];
+            /** @description On duty in the filled slots, once they went off. */
+            workedMinutes: number;
+        };
+        TechnicianAttendanceViewList: {
+            data: components["schemas"]["TechnicianAttendanceView"][];
+            nextCursor: string | null;
         };
         /**
          * @description A technician who never set it is `unavailable`.
@@ -62167,6 +62528,54 @@ export interface operations {
             };
         };
     };
+    TechnicianRosterController_mine: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyDutySlotViewList"];
+                };
+            };
+        };
+    };
+    TechnicianRosterController_attendance: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianAttendanceView"];
+                };
+            };
+        };
+    };
     OutagesController_list: {
         parameters: {
             query?: {
@@ -75634,6 +76043,217 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_attendance: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+                technicianId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianAttendanceViewList"];
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_slots: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+                technicianId?: string;
+                zoneId?: string;
+                status?: "scheduled" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DutySlotViewList"];
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_createSlot: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDutySlotDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DutySlotView"];
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_cancelSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRosterSlotDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DutySlotView"];
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_templates: {
+        parameters: {
+            query?: {
+                technicianId?: string;
+                /** @description Default: both. */
+                state?: "live" | "ended";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DutyTemplateViewList"];
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_createTemplate: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDutyTemplateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DutyTemplateView"];
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_endTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DutyTemplateView"];
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_technicians: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterGuardViewList"];
+                };
+            };
+        };
+    };
+    StaffDutyRosterController_zones: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceViewList"];
                 };
             };
         };

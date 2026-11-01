@@ -1,6 +1,8 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { AuditService } from '../../core/audit/audit.service';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import { StaffDuty, type DutyChange } from '../../core/staff-duty/staff-duty';
+import { dbNow } from '../db-clock';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { SafetyCore } from '../safety/safety-core';
 import {
@@ -20,6 +22,8 @@ import {
 
 export const ROSTER_ATTENDANCE_SWEEP = 'gate.roster_attendance';
 export const ROSTER_MATERIALIZE_SWEEP = 'gate.roster_materialize';
+/** Technicians on duty when a slot of theirs opens (ADR 0078). */
+export const TECHNICIAN_DUTY_SWEEP = 'gate.technician_duty';
 /** Often enough that "an hour late" is at most a minute more. */
 export const ATTENDANCE_INTERVAL_MS = 60_000;
 /** A slot older than this is never marked absent any more (its post was out of service). */
@@ -42,6 +46,13 @@ const MINUTE = 60_000;
  *   there. A later opening still fills it: both are recorded.
  * - **Ending** (an end hook, for every end): overtime for a shift that
  *   filled a slot, its length as unscheduled minutes for one that did not.
+ *
+ * A technician's slot (ADR 0078) is filled by their going on duty, not by
+ * a shift: going on duty fills the earliest slot whose window takes it,
+ * and a slot whose window opens while they are on duty is filled by a
+ * sweep every minute, on time. Going off duty closes it, with the minutes
+ * beyond its end as overtime. Their absence is marked as a guard's, and
+ * the field team is told.
  */
 @Injectable()
 export class RosterAttendance implements OnModuleInit {
@@ -51,6 +62,7 @@ export class RosterAttendance implements OnModuleInit {
     private readonly safety: SafetyCore,
     private readonly audit: AuditService,
     private readonly sweep: SweepRunner,
+    private readonly duty: StaffDuty,
   ) {}
 
   onModuleInit(): void {
@@ -63,6 +75,89 @@ export class RosterAttendance implements OnModuleInit {
     );
     this.sweep.register(ROSTER_MATERIALIZE_SWEEP, (now) =>
       this.materializeDue(now),
+    );
+    this.duty.onChanged((tx, change) => this.dutyChanged(tx, change));
+    this.sweep.register(TECHNICIAN_DUTY_SWEEP, (now) => this.fillOnDuty(now), {
+      intervalMs: ATTENDANCE_INTERVAL_MS,
+    });
+  }
+
+  /**
+   * A technician went on or off duty (ADR 0078), in the change's
+   * transaction, which holds their account row: their roster lock next, as
+   * every writer takes it. On: the earliest scheduled slot of theirs whose
+   * window takes now, FOR UPDATE, is filled, with its lateness. Off: their
+   * open duty slot is closed, with its overtime, eligible or not (losing
+   * the work takes them off duty).
+   */
+  private async dutyChanged(
+    tx: TenantTxClient,
+    change: DutyChange,
+  ): Promise<void> {
+    const eligible = await this.core.lockGuard(
+      tx,
+      change.accountId,
+      'maintenance',
+    );
+    const now = await dbNow(tx);
+    if (!change.onDuty) {
+      const open = await this.core.openDuty(tx, change.accountId);
+      if (open) await this.core.closeDuty(tx, open, now);
+      return;
+    }
+    if (!eligible) return;
+    const earliest = new Date(now.getTime() + LINK_EARLY_MINUTES * MINUTE);
+    const [row] = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM guard_roster_slots
+       WHERE guard_account_id = ${change.accountId}::uuid
+         AND crew = 'maintenance' AND status = 'scheduled'
+         AND duty_started_at IS NULL
+         AND starts_at <= ${earliest} AND ends_at > ${now}
+       ORDER BY starts_at, id LIMIT 1 FOR UPDATE`;
+    if (!row) return;
+    const slot = await this.core.fillFromDuty(
+      tx,
+      await tx.guardRosterSlot.findUniqueOrThrow({ where: { id: row.id } }),
+      now,
+    );
+    if (slot.lateMinutes !== null && isLate(slot.lateMinutes))
+      await this.audit.record(tx, {
+        action: 'technician_shift.late',
+        targetId: slot.id,
+        metadata: { minutes: slot.lateMinutes },
+      });
+  }
+
+  /**
+   * Technicians' slots whose window has opened (from 30 minutes before
+   * their start) while they are on duty: filled, one transaction each,
+   * under the technician's lock and then the slot's row, as going on duty
+   * takes them. Off duty, nothing: going on duty fills it later.
+   */
+  fillOnDuty(now: Date): Promise<number> {
+    const earliest = new Date(now.getTime() + LINK_EARLY_MINUTES * MINUTE);
+    return this.sweep.forEachTenantItem(
+      async (tx) =>
+        await tx.guardRosterSlot.findMany({
+          where: {
+            crew: 'maintenance',
+            status: 'scheduled',
+            dutyStartedAt: null,
+            startsAt: { lte: earliest },
+            endsAt: { gt: now },
+          },
+          orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+          take: SWEEP_BATCH,
+          select: { id: true, guardAccountId: true },
+        }),
+      async (tx, _tenantId, s) => {
+        if (!(await this.core.lockGuard(tx, s.guardAccountId, 'maintenance')))
+          return 0;
+        const slot = await this.core.lockSlot(tx, s.id);
+        if (!slot) return 0;
+        const filled = await this.core.fillFromDuty(tx, slot, now);
+        return filled.dutyStartedAt ? 1 : 0;
+      },
     );
   }
 
@@ -79,6 +174,7 @@ export class RosterAttendance implements OnModuleInit {
       ? await tx.$queryRaw<{ id: string }[]>`
           SELECT id FROM guard_roster_slots
            WHERE guard_account_id = ${shift.guardAccountId}::uuid
+             AND crew = 'security'
              AND gate_id = ${shift.gateId}::uuid
              AND status = 'scheduled' AND shift_id IS NULL
              AND starts_at <= ${earliest} AND ends_at > ${shift.startedAt}
@@ -86,6 +182,7 @@ export class RosterAttendance implements OnModuleInit {
       : await tx.$queryRaw<{ id: string }[]>`
           SELECT id FROM guard_roster_slots
            WHERE guard_account_id = ${shift.guardAccountId}::uuid
+             AND crew = 'security'
              AND place_id = ${shift.placeId}::uuid
              AND status = 'scheduled' AND shift_id IS NULL
              AND starts_at <= ${earliest} AND ends_at > ${shift.startedAt}
@@ -138,6 +235,7 @@ export class RosterAttendance implements OnModuleInit {
             where: {
               status: 'scheduled',
               shiftId: null,
+              dutyStartedAt: null,
               absentAt: null,
               startsAt: { lte: due, gte: floor },
               createdAt: { lte: due },
@@ -158,8 +256,16 @@ export class RosterAttendance implements OnModuleInit {
         if (
           slot.status !== 'scheduled' ||
           slot.shiftId ||
+          slot.dutyStartedAt ||
           slot.absentAt ||
           dueFrom(slot) > due
+        )
+          return 0;
+        // A technician on duty is not absent: the duty sweep fills the
+        // slot, under the technician's lock first (ADR 0078).
+        if (
+          slot.crew === 'maintenance' &&
+          (await this.duty.onDuty(tx, slot.guardAccountId))
         )
           return 0;
         // A post out of service is nobody's absence: the slot stays, and is
@@ -169,6 +275,20 @@ export class RosterAttendance implements OnModuleInit {
           where: { id },
           data: { absentAt: now },
         });
+        if (slot.crew === 'maintenance') {
+          const told = await this.safety.notify(
+            tx,
+            await this.safety.holding(tx, 'field_team.manage'),
+            'technician_shift.absent',
+            id,
+          );
+          await this.audit.record(tx, {
+            action: 'technician_shift.absent',
+            targetId: id,
+            metadata: { recipients: told },
+          });
+          return 1;
+        }
         const others = await this.safety.guardsOnShift(
           tx,
           slot.gateId ?? { placeId: slot.placeId! },
@@ -194,6 +314,8 @@ export class RosterAttendance implements OnModuleInit {
     tx: TenantTxClient,
     slot: { gateId: string | null; placeId: string | null },
   ): Promise<boolean> {
+    // A technician's slot with no zone is always in service (ADR 0078).
+    if (!slot.gateId && !slot.placeId) return true;
     if (slot.gateId)
       return (
         (await tx.gate.count({
@@ -219,11 +341,12 @@ export class RosterAttendance implements OnModuleInit {
           await tx.guardRosterTemplate.findMany({
             where: { endedAt: null },
             orderBy: { id: 'asc' },
-            select: { id: true, guardAccountId: true },
+            select: { id: true, guardAccountId: true, crew: true },
           })
         ).map((t) => t),
       async (tx, _tenantId, t) => {
-        if (!(await this.core.lockGuard(tx, t.guardAccountId))) return 0;
+        if (!(await this.core.lockGuard(tx, t.guardAccountId, t.crew)))
+          return 0;
         const template = await tx.guardRosterTemplate.findUniqueOrThrow({
           where: { id: t.id },
         });

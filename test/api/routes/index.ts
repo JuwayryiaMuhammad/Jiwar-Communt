@@ -32,6 +32,7 @@ import { MAINTENANCE_ANALYTICS_ROUTES } from './maintenance-analytics';
 import { COMPLIANCE_ROUTES, SAFETY_ROUTES } from './compliance';
 import { EXPERIENCE_ROUTES } from './experience';
 import { BOARD_WORK_ROUTES } from './board-work';
+import { DUTY_ROSTER_ROUTES } from './field-team';
 import { READINESS_ROUTES } from './readiness';
 import { FACILITY_BAN_ROUTES } from './facility-bans';
 import { FIELD_SAFETY_ROUTES } from './field-safety';
@@ -456,4 +457,6 @@ export const ROUTES: Row[] = [
   ...BOARD_WORK_ROUTES,
   // ADR 0083.
   ...M211_ROUTES,
+  // ADR 0078.
+  ...DUTY_ROSTER_ROUTES,
 ];

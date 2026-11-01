@@ -266,3 +266,196 @@ export class RosterGuardView {
   @ApiProperty({ type: String, nullable: true })
   fullName: string | null;
 }
+
+/**
+ * A technician's slot (ADR 0078), as they read it: a zone or none, filled
+ * by going on duty and closed by going off it.
+ */
+export class MyDutySlotView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    type: PlaceView,
+    nullable: true,
+    description: 'The zone they cover; null for the whole compound.',
+  })
+  zone: PlaceView | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  startsAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  endsAt: Date;
+  @ApiProperty({
+    enum: ['scheduled', 'cancelled'],
+    enumName: 'GuardSlotStatus',
+  })
+  status: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it.',
+  })
+  cancelReason: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'When going on duty filled it; null until then.',
+  })
+  dutyStartedAt: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'When they went off duty.',
+  })
+  dutyEndedAt: Date | null;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      'Minutes after the slot was due (its start, or when it was made if later) they went on duty; null until they did.',
+  })
+  lateMinutes: number | null;
+  @ApiProperty({ type: Boolean, description: 'More than ten minutes late.' })
+  late: boolean;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Minutes on duty beyond its end, once they went off.',
+  })
+  overtimeMinutes: number | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Not on duty an hour after it was due.',
+  })
+  absentAt: Date | null;
+
+  static from(s: GuardRosterSlot, names: RosterNames): MyDutySlotView {
+    return {
+      id: s.id,
+      zone: s.placeId ? (names.zones.get(s.placeId) ?? null) : null,
+      startsAt: s.startsAt,
+      endsAt: s.endsAt,
+      status: s.status,
+      cancelReason: s.cancelReason,
+      dutyStartedAt: s.dutyStartedAt,
+      dutyEndedAt: s.dutyEndedAt,
+      lateMinutes: s.lateMinutes,
+      late: isLate(s.lateMinutes),
+      overtimeMinutes: s.overtimeMinutes,
+      absentAt: s.absentAt,
+    };
+  }
+}
+
+/** A technician's slot as the field team sees it (ADR 0078). */
+export class DutySlotView extends MyDutySlotView {
+  @ApiProperty({ type: AccountRefView })
+  technician: AccountRefView;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The template that made it; null for a single slot.',
+  })
+  templateId: string | null;
+
+  static of(s: GuardRosterSlot, names: RosterNames): DutySlotView {
+    return {
+      ...MyDutySlotView.from(s, names),
+      technician: accountRef(names.people.get(s.guardAccountId)!),
+      templateId: s.templateId,
+    };
+  }
+}
+
+/** A technician's template, as the field team sees it (ADR 0078). */
+export class DutyTemplateView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: AccountRefView })
+  technician: AccountRefView;
+  @ApiProperty({
+    type: PlaceView,
+    nullable: true,
+    description: 'The zone they cover; null for the whole compound.',
+  })
+  zone: PlaceView | null;
+  @ApiProperty({ type: WeeklyScheduleView })
+  schedule: WeeklyScheduleView;
+  @ApiProperty({ type: String, format: 'date', example: '2026-11-01' })
+  effectiveFrom: string;
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    description: 'Its last day, inclusive; null for no end.',
+  })
+  effectiveUntil: string | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  endedAt: Date | null;
+  @ApiProperty({
+    enum: [...REASON_CODES.guardTemplateEnd],
+    enumName: 'GuardTemplateEnd',
+    nullable: true,
+  })
+  endReason: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(t: GuardRosterTemplate, names: RosterNames): DutyTemplateView {
+    return {
+      id: t.id,
+      technician: accountRef(names.people.get(t.guardAccountId)!),
+      zone: t.placeId ? (names.zones.get(t.placeId) ?? null) : null,
+      schedule: t.schedule as unknown as WeeklyScheduleView,
+      effectiveFrom: dateOnly(t.effectiveFrom),
+      effectiveUntil: t.effectiveUntil ? dateOnly(t.effectiveUntil) : null,
+      endedAt: t.endedAt,
+      endReason: t.endReason,
+      createdAt: t.createdAt,
+    };
+  }
+}
+
+/**
+ * One technician's attendance over a period (ADR 0078). Recorded only, no
+ * payroll. Time on duty outside a slot is in the availability history,
+ * not here.
+ */
+export class TechnicianAttendanceView {
+  @ApiProperty({ type: AccountRefView })
+  technician: AccountRefView;
+  @ApiProperty({
+    type: Number,
+    description: 'Scheduled slots starting in the period.',
+  })
+  slots: number;
+  @ApiProperty({ type: Number, description: 'Of them, filled on duty.' })
+  filled: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Of them, on duty more than ten minutes late.',
+  })
+  late: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Of them, not on duty an hour after they were due.',
+  })
+  absent: number;
+  @ApiProperty({ type: Number })
+  scheduledMinutes: number;
+  @ApiProperty({
+    type: Number,
+    description: 'On duty in the filled slots, once they went off.',
+  })
+  workedMinutes: number;
+  @ApiProperty({
+    type: Number,
+    description: 'On duty beyond the filled slots.',
+  })
+  overtimeMinutes: number;
+}

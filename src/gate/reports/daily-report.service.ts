@@ -296,7 +296,8 @@ export class DailyReportService {
              count(*) FILTER (WHERE late_minutes > ${LATE_AFTER_MINUTES})::int AS late,
              count(absent_at)::int AS absent
         FROM guard_roster_slots
-       WHERE status = 'scheduled' AND starts_at >= ${start} AND starts_at < ${end}
+       WHERE status = 'scheduled' AND crew = 'security'
+         AND starts_at >= ${start} AND starts_at < ${end}
              ${gateOnly}
        GROUP BY gate_id, place_id`;
     for (const r of slots) {

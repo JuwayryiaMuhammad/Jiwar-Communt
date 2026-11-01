@@ -321,6 +321,11 @@ import {
 } from './tasks/tasks.controller';
 import { TasksService } from './tasks/tasks.service';
 import { RosterAttendance } from './roster/roster-attendance';
+import {
+  StaffDutyRosterController,
+  TechnicianRosterController,
+} from './roster/duty-roster.controller';
+import { DutyRosterService } from './roster/duty-roster.service';
 import { RosterCore } from './roster/roster-core';
 import {
   GuardRosterController,
@@ -485,6 +490,8 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     MaterialEntriesController,
     StaffRosterController,
     GuardRosterController,
+    StaffDutyRosterController,
+    TechnicianRosterController,
     GuardHandoverController,
     StaffHandoverController,
     StaffTasksController,
@@ -668,6 +675,7 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     RosterCore,
     RosterService,
     RosterAttendance,
+    DutyRosterService,
     HandoverService,
     TasksService,
     InspectionRequestsService,

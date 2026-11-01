@@ -95,6 +95,7 @@ export class GuardDutyLifecycle implements OnModuleInit {
         guardAccountId: guardId,
         status: 'scheduled',
         shiftId: null,
+        dutyStartedAt: null,
         startsAt: { gt: now },
       },
       select: { id: true },
@@ -102,7 +103,13 @@ export class GuardDutyLifecycle implements OnModuleInit {
     });
     for (const { id } of coming) {
       const slot = await this.core.lockSlot(tx, id);
-      if (!slot || slot.status !== 'scheduled' || slot.shiftId) continue;
+      if (
+        !slot ||
+        slot.status !== 'scheduled' ||
+        slot.shiftId ||
+        slot.dutyStartedAt
+      )
+        continue;
       await this.core.cancelSlot(tx, slot, 'guard_left', null, now);
     }
     const tasks = await tx.$queryRaw<{ id: string }[]>`

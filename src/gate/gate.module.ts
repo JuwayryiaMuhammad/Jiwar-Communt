@@ -354,8 +354,10 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
 import { PermitWorksDeposits } from './permits/permit-works-deposits';
 import {
   FitOutController,
+  GateDebrisSlotsController,
   StaffFitOutController,
 } from './permits/fitout/fitout.controller';
+import { DebrisSlotsService } from './permits/fitout/debris-slots.service';
 import { FitOutAccess } from './permits/fitout/fitout-access';
 import { FitOutService } from './permits/fitout/fitout.service';
 import { PermitDrawingsService } from './permits/fitout/permit-drawings.service';
@@ -475,6 +477,7 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     StaffPermitInspectionsController,
     FitOutController,
     StaffFitOutController,
+    GateDebrisSlotsController,
     PublicWorksCertificatesController,
     MyWorkController,
     GuardSwapsController,
@@ -651,6 +654,7 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     FitOutAccess,
     FitOutService,
     PermitDrawingsService,
+    DebrisSlotsService,
     PermitInspectionsService,
     WorksCertificatePageService,
     MyWorkService,

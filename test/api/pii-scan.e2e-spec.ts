@@ -1722,6 +1722,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/partner-complaints/{id}': w.bComplaintIdOfPartner,
       '/staff/unit-permits/{id}': piiPermit,
       '/gate/unit-permits/{id}': piiPermit,
+      // ADR 0074: the permit's debris removals, as the gate reads them.
+      '/gate/unit-permits/{id}/debris-slots': piiPermit,
       // ADR 0074: the works permit's fit-out, its household's and the staff's.
       '/permits/{id}/fit-out': piiPermit,
       '/staff/unit-permits/{id}/fit-out': piiPermit,

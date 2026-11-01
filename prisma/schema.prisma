@@ -2080,6 +2080,44 @@ model PermitDrawing {
   @@map("permit_drawings")
 }
 
+/// A works permit's debris removal (ADR 0074): a window of a work day of
+/// the permit's period, scheduled by its household or the management, done
+/// by the management or a guard on shift, missed by the sweep, or called off
+/// before it starts. Moves once from scheduled. Keys are the database's.
+model PermitDebrisSlot {
+  id            String         @id @db.Uuid
+  tenantId      String         @map("tenant_id") @db.Uuid
+  permitId      String         @map("permit_id") @db.Uuid
+  /// Always works (CHECK), for the composite key on the permit's kind.
+  permitKind    UnitPermitKind @default(works) @map("permit_kind")
+  day           DateTime       @db.Date
+  fromMinute    Int            @map("from_minute") @db.SmallInt
+  toMinute      Int            @map("to_minute") @db.SmallInt
+  startsAt      DateTime       @map("starts_at") @db.Timestamptz(3)
+  endsAt        DateTime       @map("ends_at") @db.Timestamptz(3)
+  /// scheduled | done | missed | cancelled (CHECK).
+  status        String         @default("scheduled")
+  scheduledBy   String         @map("scheduled_by") @db.Uuid
+  /// resident | staff (CHECK).
+  scheduledSide String         @map("scheduled_side")
+  createdAt     DateTime       @map("created_at") @db.Timestamptz(3)
+  doneAt        DateTime?      @map("done_at") @db.Timestamptz(3)
+  doneBy        String?        @map("done_by") @db.Uuid
+  /// staff | gate (CHECK).
+  doneSide      String?        @map("done_side")
+  missedAt      DateTime?      @map("missed_at") @db.Timestamptz(3)
+  cancelledAt   DateTime?      @map("cancelled_at") @db.Timestamptz(3)
+  cancelledBy   String?        @map("cancelled_by") @db.Uuid
+  /// resident | staff (CHECK).
+  cancelSide    String?        @map("cancel_side")
+  /// REASON_CODES.debrisSlotCancel.
+  cancelReason  String?        @map("cancel_reason")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, permitId, startsAt], map: "permit_debris_slots_permit_idx")
+  @@map("permit_debris_slots")
+}
+
 /// The works completion certificate's public pointer (ADR 0063): global.
 model WorksCertificateLink {
   codeHash     String   @id @map("code_hash") @db.Char(64)

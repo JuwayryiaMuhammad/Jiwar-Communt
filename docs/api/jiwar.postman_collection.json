@@ -45112,6 +45112,71 @@
           }
         },
         {
+          "name": "A works permit’s debris removals scheduled today",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "unit-permits",
+                ":id",
+                "debris-slots"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/unit-permits/:id/debris-slots",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a debris removal done at the gate",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "unit-permits",
+                ":id",
+                "debris-slots",
+                ":slotId",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/unit-permits/:id/debris-slots/:slotId/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "slotId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Stop the work of a works permit",
           "request": {
             "body": {
@@ -45332,6 +45397,99 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Schedule a debris removal of the works",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"day\": \"2026-01-01\",\n  \"window\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `day` | string (date) | yes | A local day of the permit’s period that is a work day of the compound (DAY_OUT_OF_RANGE). |\n| `window` | object | yes | Inside the compound’s hours, 30 minutes to 4 hours, starting ahead; never overlapping another scheduled removal of the permit. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "debris-slots"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/debris-slots",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off a debris removal the household scheduled",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | REASON_CODES.debrisSlotCancel. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "debris-slots",
+                ":slotId",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/debris-slots/:slotId/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "slotId",
                   "value": ""
                 }
               ]
@@ -45949,7 +46107,138 @@
           }
         },
         {
-          "name": "A works permit’s deposit and drawings",
+          "name": "Schedule a debris removal of the works",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"day\": \"2026-01-01\",\n  \"window\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `day` | string (date) | yes | A local day of the permit’s period that is a work day of the compound (DAY_OUT_OF_RANGE). |\n| `window` | object | yes | Inside the compound’s hours, 30 minutes to 4 hours, starting ahead; never overlapping another scheduled removal of the permit. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "debris-slots"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/debris-slots",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off a debris removal",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | REASON_CODES.debrisSlotCancel. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "debris-slots",
+                ":slotId",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/debris-slots/:slotId/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "slotId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a debris removal done",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "debris-slots",
+                ":slotId",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/debris-slots/:slotId/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "slotId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A works permit’s deposit, drawings and debris removals",
           "request": {
             "description": "**Responses:** 200",
             "header": [],

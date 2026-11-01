@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { drawingRow } from '../setup/fitout-rows';
+import { debrisSlotRow, drawingRow } from '../setup/fitout-rows';
 import { permitRow } from '../setup/permits-rows';
 
 /** What a seed needs from one compound. */
@@ -39,6 +39,15 @@ const TABLES: Table[] = [
         tenantId: own.tenantId,
         permitId: link.permitId,
         addedBy: link.accountId,
+      }),
+  },
+  {
+    table: 'permit_debris_slots',
+    insert: (tx, own, link) =>
+      debrisSlotRow(tx, {
+        tenantId: own.tenantId,
+        permitId: link.permitId,
+        scheduledBy: link.accountId,
       }),
   },
 ];

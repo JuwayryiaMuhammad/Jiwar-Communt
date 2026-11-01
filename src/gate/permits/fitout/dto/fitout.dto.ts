@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { IsLocalDate } from '../../../../core/common/validation/local-date';
+import { withParams } from '../../../../core/common/validation/validation-errors';
+import { PermitHoursDto } from '../../dto/permit-settings.dto';
 
 /** A drawing joined to a works permit (ADR 0074). */
 export class AddPermitDrawingDto {
@@ -10,4 +14,33 @@ export class AddPermitDrawingDto {
   })
   @IsUUID()
   fileId: string;
+}
+
+/** A debris removal's window (ADR 0074). */
+export class ScheduleDebrisSlotDto {
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description:
+      'A local day of the permit’s period that is a work day of the compound (DAY_OUT_OF_RANGE).',
+  })
+  @IsLocalDate(withParams({ format: 'YYYY-MM-DD' }))
+  day: string;
+
+  @ApiProperty({
+    type: PermitHoursDto,
+    description:
+      'Inside the compound’s hours, 30 minutes to 4 hours, starting ahead; never overlapping another scheduled removal of the permit.',
+  })
+  @ValidateNested()
+  @Type(() => PermitHoursDto)
+  window: PermitHoursDto;
+}
+
+/** Why a removal is called off (REASON_CODES.debrisSlotCancel). */
+export class CancelDebrisSlotDto {
+  @ApiProperty({ type: String, description: 'REASON_CODES.debrisSlotCancel.' })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
 }

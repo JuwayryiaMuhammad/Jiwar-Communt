@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { UnitPermit } from '@prisma/client';
+import type { PermitDebrisSlot, UnitPermit } from '@prisma/client';
 import {
   TenantTx,
   type TenantTxClient,
@@ -10,7 +10,9 @@ import { WorksDeposits } from '../../../core/works/works-deposits';
 import { dbNow } from '../../db-clock';
 import { permitReference } from '../permit-core';
 import { viewStatus, type PermitViewStatus } from '../permit-records';
+import { timeOf } from '../permit-rules';
 import { PermitSettingsService } from '../permit-settings.service';
+import { DebrisSlotsService } from './debris-slots.service';
 import { FitOutAccess, type FitOutSide } from './fitout-access';
 import { PermitDrawingsService } from './permit-drawings.service';
 
@@ -28,13 +30,49 @@ export interface FitOutRead {
     addedAt: Date;
     file: PresignedRead | null;
   }[];
+  debrisSlots: DebrisSlotRead[];
+}
+
+/** A debris removal, as the views show it: sides and codes, never a person. */
+export interface DebrisSlotRead {
+  id: string;
+  day: string;
+  window: { from: string; to: string };
+  startsAt: Date;
+  endsAt: Date;
+  status: string;
+  scheduledSide: string;
+  doneAt: Date | null;
+  doneSide: string | null;
+  missedAt: Date | null;
+  cancelledAt: Date | null;
+  cancelSide: string | null;
+  cancelReason: string | null;
+}
+
+export function debrisSlotRead(d: PermitDebrisSlot): DebrisSlotRead {
+  return {
+    id: d.id,
+    day: d.day.toISOString().slice(0, 10),
+    window: { from: timeOf(d.fromMinute), to: timeOf(d.toMinute) },
+    startsAt: d.startsAt,
+    endsAt: d.endsAt,
+    status: d.status,
+    scheduledSide: d.scheduledSide,
+    doneAt: d.doneAt,
+    doneSide: d.doneSide,
+    missedAt: d.missedAt,
+    cancelledAt: d.cancelledAt,
+    cancelSide: d.cancelSide,
+    cancelReason: d.cancelReason,
+  };
 }
 
 /**
  * What a works permit's fit-out holds (ADR 0074), for its household and
  * for the management, read in one transaction: the deposit named on it
- * (through core's WorksDeposits port: the gate never reads finance), and
- * the drawings with a read of each.
+ * (through core's WorksDeposits port: the gate never reads finance), the
+ * drawings with a read of each, and the debris removals.
  */
 @Injectable()
 export class FitOutService {
@@ -45,6 +83,7 @@ export class FitOutService {
     private readonly deposits: WorksDeposits,
     private readonly settings: PermitSettingsService,
     private readonly drawings: PermitDrawingsService,
+    private readonly debris: DebrisSlotsService,
   ) {}
 
   get(permitId: string, side: FitOutSide): Promise<FitOutRead> {
@@ -77,6 +116,7 @@ export class FitOutService {
           }
         : null,
       drawings,
+      debrisSlots: (await this.debris.of(tx, p.id)).map(debrisSlotRead),
     };
   }
 }

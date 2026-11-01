@@ -2738,6 +2738,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'removed_at and removed_by under IS [NOT] NULL; the order runs only once removed_at IS NULL fails',
   },
+  permit_debris_slots_window: {},
+  permit_debris_slots_state_shape: {
+    guarded:
+      'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; done_side, cancel_side and cancel_reason are tested IS NULL first and their lists run only on a value',
+  },
 };
 
 interface Check {

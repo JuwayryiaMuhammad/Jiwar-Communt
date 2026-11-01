@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PresignedReadView } from '../../../../core/files/views/file.views';
-import type { FitOutRead } from '../fitout.service';
+import type { DebrisSlotRead, FitOutRead } from '../fitout.service';
 
 /** The finishing-works deposit named on a works permit (ADR 0074). */
 export class FitOutDepositView {
@@ -24,6 +24,55 @@ export class PermitDrawingView {
     description: 'A read of the image or the PDF; null once it is gone.',
   })
   file: PresignedReadView | null;
+}
+
+export class DebrisWindowView {
+  @ApiProperty({
+    type: String,
+    example: '10:00',
+    description: '`HH:mm`, local.',
+  })
+  from: string;
+  @ApiProperty({ type: String, example: '12:00' })
+  to: string;
+}
+
+/** A debris removal of a works permit (ADR 0074): sides and codes, never a person. */
+export class DebrisSlotView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, format: 'date', description: 'The local day.' })
+  day: string;
+  @ApiProperty({ type: DebrisWindowView })
+  window: DebrisWindowView;
+  @ApiProperty({ type: String, format: 'date-time' })
+  startsAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  endsAt: Date;
+  @ApiProperty({ enum: ['scheduled', 'done', 'missed', 'cancelled'] })
+  status: string;
+  @ApiProperty({ enum: ['resident', 'staff'] })
+  scheduledSide: string;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  doneAt: Date | null;
+  @ApiProperty({ enum: ['staff', 'gate'], nullable: true })
+  doneSide: string | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  missedAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  cancelledAt: Date | null;
+  @ApiProperty({ enum: ['resident', 'staff'], nullable: true })
+  cancelSide: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'REASON_CODES.debrisSlotCancel.',
+  })
+  cancelReason: string | null;
+
+  static from(d: DebrisSlotRead): DebrisSlotView {
+    return { ...d, window: { ...d.window } };
+  }
 }
 
 /**
@@ -57,6 +106,8 @@ export class FitOutView {
   deposit: FitOutDepositView | null;
   @ApiProperty({ type: [PermitDrawingView], description: 'Oldest first.' })
   drawings: PermitDrawingView[];
+  @ApiProperty({ type: [DebrisSlotView], description: 'By their window.' })
+  debrisSlots: DebrisSlotView[];
 
   static from(r: FitOutRead): FitOutView {
     return {
@@ -70,6 +121,7 @@ export class FitOutView {
         addedAt: d.addedAt,
         file: PresignedReadView.from(d.file),
       })),
+      debrisSlots: r.debrisSlots.map((d) => DebrisSlotView.from(d)),
     };
   }
 }

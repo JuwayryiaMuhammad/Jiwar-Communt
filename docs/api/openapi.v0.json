@@ -7331,6 +7331,18 @@
         ],
         "type": "object"
       },
+      "CancelDebrisSlotDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "REASON_CODES.debrisSlotCancel.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CancelEmergencyDto": {
         "properties": {
           "reasonCode": {
@@ -18274,6 +18286,116 @@
         ],
         "type": "object"
       },
+      "DebrisSlotView": {
+        "properties": {
+          "cancelReason": {
+            "description": "REASON_CODES.debrisSlotCancel.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelSide": {
+            "enum": [
+              "resident",
+              "staff"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "day": {
+            "description": "The local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "doneSide": {
+            "enum": [
+              "staff",
+              "gate"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "missedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "scheduledSide": {
+            "enum": [
+              "resident",
+              "staff"
+            ],
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "done",
+              "missed",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "window": {
+            "$ref": "#/components/schemas/DebrisWindowView"
+          }
+        },
+        "required": [
+          "id",
+          "day",
+          "window",
+          "startsAt",
+          "endsAt",
+          "status",
+          "scheduledSide",
+          "doneAt",
+          "doneSide",
+          "missedAt",
+          "cancelledAt",
+          "cancelSide",
+          "cancelReason"
+        ],
+        "type": "object"
+      },
+      "DebrisWindowView": {
+        "properties": {
+          "from": {
+            "description": "`HH:mm`, local.",
+            "example": "10:00",
+            "type": "string"
+          },
+          "to": {
+            "example": "12:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
       "DecideAgendaDto": {
         "properties": {
           "note": {
@@ -24311,6 +24433,13 @@
       },
       "FitOutView": {
         "properties": {
+          "debrisSlots": {
+            "description": "By their window.",
+            "items": {
+              "$ref": "#/components/schemas/DebrisSlotView"
+            },
+            "type": "array"
+          },
           "deposit": {
             "allOf": [
               {
@@ -24358,7 +24487,8 @@
           "status",
           "depositRequired",
           "deposit",
-          "drawings"
+          "drawings",
+          "debrisSlots"
         ],
         "type": "object"
       },
@@ -53902,6 +54032,28 @@
           "receivedAt",
           "positionSuspect",
           "run"
+        ],
+        "type": "object"
+      },
+      "ScheduleDebrisSlotDto": {
+        "properties": {
+          "day": {
+            "description": "A local day of the permit’s period that is a work day of the compound (DAY_OUT_OF_RANGE).",
+            "format": "date",
+            "type": "string"
+          },
+          "window": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitHoursDto"
+              }
+            ],
+            "description": "Inside the compound’s hours, 30 minutes to 4 hours, starting ahead; never overlapping another scheduled removal of the permit."
+          }
+        },
+        "required": [
+          "day",
+          "window"
         ],
         "type": "object"
       },
@@ -85489,6 +85641,88 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/unit-permits/{id}/debris-slots": {
+      "get": {
+        "description": "An open shift (NO_OPEN_SHIFT).",
+        "operationId": "GateDebrisSlotsController_today",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DebrisSlotView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A works permit’s debris removals scheduled today",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/unit-permits/{id}/debris-slots/{slotId}/done": {
+      "post": {
+        "description": "A guard on shift, from half an hour before its window until it is missed (DEBRIS_SLOT_CLOSED).",
+        "operationId": "GateDebrisSlotsController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "slotId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a debris removal done at the gate",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/unit-permits/{id}/stop-work": {
       "post": {
         "description": "A guard on shift, at a gate or in a zone (ADR 0053), with a code from `permitWorkStop`: an approved works permit in force (PERMIT_NOT_ACTIVE otherwise). Its workers are refused at the gate (`work_stopped`) until the management resumes it. The requester, the primary and the permits’ staff are told.",
@@ -109351,6 +109585,112 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/permits/{id}/debris-slots": {
+      "post": {
+        "description": "An approved works permit that has not ended (PERMIT_NOT_ACTIVE); a work day of its period inside the compound’s hours, 30 minutes to 4 hours, starting ahead; three scheduled at once (DEBRIS_SLOT_LIMIT), never overlapping.",
+        "operationId": "FitOutController_schedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleDebrisSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule a debris removal of the works",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/debris-slots/{slotId}/cancel": {
+      "post": {
+        "description": "Before its window starts (DEBRIS_SLOT_CLOSED), with a code from `debrisSlotCancel`.",
+        "operationId": "FitOutController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "slotId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelDebrisSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a debris removal the household scheduled",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/permits/{id}/drawings": {
       "post": {
         "description": "While the permit is pending, or approved and not ended (PERMIT_NOT_ACTIVE); at most 10 at once (PERMIT_DRAWING_LIMIT).",
@@ -128788,6 +129128,159 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/unit-permits/{id}/debris-slots": {
+      "post": {
+        "description": "An approved works permit that has not ended (PERMIT_NOT_ACTIVE); a work day of its period inside the compound’s hours, 30 minutes to 4 hours, starting ahead; three scheduled at once (DEBRIS_SLOT_LIMIT), never overlapping.",
+        "operationId": "StaffFitOutController_schedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleDebrisSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule a debris removal of the works",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/debris-slots/{slotId}/cancel": {
+      "post": {
+        "description": "Any of the permit’s, before its window starts (DEBRIS_SLOT_CLOSED), with a code from `debrisSlotCancel`.",
+        "operationId": "StaffFitOutController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "slotId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelDebrisSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a debris removal",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/debris-slots/{slotId}/done": {
+      "post": {
+        "description": "From half an hour before its window until the sweep marks it missed, two hours past its end (DEBRIS_SLOT_CLOSED).",
+        "operationId": "StaffFitOutController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "slotId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a debris removal done",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/unit-permits/{id}/fit-out": {
       "get": {
         "operationId": "StaffFitOutController_get",
@@ -128818,7 +129311,7 @@
             "bearer": []
           }
         ],
-        "summary": "A works permit’s deposit and drawings",
+        "summary": "A works permit’s deposit, drawings and debris removals",
         "tags": [
           "permits"
         ],

@@ -4494,6 +4494,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/unit-permits/{id}/debris-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A works permit’s debris removals scheduled today
+         * @description An open shift (NO_OPEN_SHIFT).
+         */
+        get: operations["GateDebrisSlotsController_today"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/unit-permits/{id}/debris-slots/{slotId}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a debris removal done at the gate
+         * @description A guard on shift, from half an hour before its window until it is missed (DEBRIS_SLOT_CLOSED).
+         */
+        post: operations["GateDebrisSlotsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/unit-permits/{id}/stop-work": {
         parameters: {
             query?: never;
@@ -12277,6 +12317,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/permits/{id}/debris-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Schedule a debris removal of the works
+         * @description An approved works permit that has not ended (PERMIT_NOT_ACTIVE); a work day of its period inside the compound’s hours, 30 minutes to 4 hours, starting ahead; three scheduled at once (DEBRIS_SLOT_LIMIT), never overlapping.
+         */
+        post: operations["FitOutController_schedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/debris-slots/{slotId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off a debris removal the household scheduled
+         * @description Before its window starts (DEBRIS_SLOT_CLOSED), with a code from `debrisSlotCancel`.
+         */
+        post: operations["FitOutController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permits/{id}/drawings": {
         parameters: {
             query?: never;
@@ -18981,6 +19061,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/unit-permits/{id}/debris-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Schedule a debris removal of the works
+         * @description An approved works permit that has not ended (PERMIT_NOT_ACTIVE); a work day of its period inside the compound’s hours, 30 minutes to 4 hours, starting ahead; three scheduled at once (DEBRIS_SLOT_LIMIT), never overlapping.
+         */
+        post: operations["StaffFitOutController_schedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/debris-slots/{slotId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off a debris removal
+         * @description Any of the permit’s, before its window starts (DEBRIS_SLOT_CLOSED), with a code from `debrisSlotCancel`.
+         */
+        post: operations["StaffFitOutController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/debris-slots/{slotId}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a debris removal done
+         * @description From half an hour before its window until the sweep marks it missed, two hours past its end (DEBRIS_SLOT_CLOSED).
+         */
+        post: operations["StaffFitOutController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits/{id}/fit-out": {
         parameters: {
             query?: never;
@@ -18988,7 +19128,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A works permit’s deposit and drawings */
+        /** A works permit’s deposit, drawings and debris removals */
         get: operations["StaffFitOutController_get"];
         put?: never;
         post?: never;
@@ -25451,6 +25591,10 @@ export interface components {
             /** @description From the closed list `collectorVisitCancel`. */
             reasonCode: string;
         };
+        CancelDebrisSlotDto: {
+            /** @description REASON_CODES.debrisSlotCancel. */
+            reasonCode: string;
+        };
         CancelEmergencyDto: {
             /** @description From the closed list `emergencyCancel`; optional. */
             reasonCode?: string;
@@ -29238,6 +29382,45 @@ export interface components {
             data: components["schemas"]["DataExportView"][];
             nextCursor: string | null;
         };
+        DebrisSlotView: {
+            /** @description REASON_CODES.debrisSlotCancel. */
+            cancelReason: string | null;
+            /** @enum {string|null} */
+            cancelSide: "resident" | "staff" | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /**
+             * Format: date
+             * @description The local day.
+             */
+            day: string;
+            /** Format: date-time */
+            doneAt: string | null;
+            /** @enum {string|null} */
+            doneSide: "staff" | "gate" | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            missedAt: string | null;
+            /** @enum {string} */
+            scheduledSide: "resident" | "staff";
+            /** Format: date-time */
+            startsAt: string;
+            /** @enum {string} */
+            status: "scheduled" | "done" | "missed" | "cancelled";
+            window: components["schemas"]["DebrisWindowView"];
+        };
+        DebrisWindowView: {
+            /**
+             * @description `HH:mm`, local.
+             * @example 10:00
+             */
+            from: string;
+            /** @example 12:00 */
+            to: string;
+        };
         DecideAgendaDto: {
             /** @description The board’s words to the proposer. Write no one’s name. */
             note?: string;
@@ -31112,6 +31295,8 @@ export interface components {
             number: string;
         };
         FitOutView: {
+            /** @description By their window. */
+            debrisSlots: components["schemas"]["DebrisSlotView"][];
             deposit: components["schemas"]["FitOutDepositView"] | null;
             /** @description The compound approves works only once a deposit named on them holds money. */
             depositRequired: boolean;
@@ -40320,6 +40505,15 @@ export interface components {
             run: components["schemas"]["ScanRunView"];
             /** Format: date-time */
             scannedAt: string;
+        };
+        ScheduleDebrisSlotDto: {
+            /**
+             * Format: date
+             * @description A local day of the permit’s period that is a work day of the compound (DAY_OUT_OF_RANGE).
+             */
+            day: string;
+            /** @description Inside the compound’s hours, 30 minutes to 4 hours, starting ahead; never overlapping another scheduled removal of the permit. */
+            window: components["schemas"]["PermitHoursDto"];
         };
         SecurityEventView: {
             /** Format: uuid */
@@ -52507,6 +52701,47 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GatePermitView"];
                 };
+            };
+        };
+    };
+    GateDebrisSlotsController_today: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebrisSlotView"][];
+                };
+            };
+        };
+    };
+    GateDebrisSlotsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                slotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -64902,6 +65137,57 @@ export interface operations {
             };
         };
     };
+    FitOutController_schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleDebrisSlotDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    FitOutController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                slotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelDebrisSlotDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
     FitOutController_addDrawing: {
         parameters: {
             query?: never;
@@ -74706,6 +74992,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleDebrisSlotDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                slotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelDebrisSlotDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                slotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
                 };
             };
         };

@@ -71,6 +71,7 @@ import { buildWorld, type World } from './world';
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
 import { today } from '../setup/compound-clock';
 import { workDaysOf, type PermitRulesBody } from '../setup/permits';
+import { debrisSlotRow } from '../setup/fitout-rows';
 /**
  * Every response that carries a secret shown once (ADR 0025) is
  * `Cache-Control: no-store`: each registry row marked `noStore` is called
@@ -740,6 +741,31 @@ describe('API v0 — no-store', () => {
     contractorCompany: 'No-store Builders',
     description: 'Painting',
   };
+  /** A fresh works permit of A's home, approved: its id. */
+  const anApproved = async () => {
+    const id = await aPermit();
+    await as('manager', 'POST', `/staff/unit-permits/${id}/approve`, {});
+    return id;
+  };
+  /** A's first work day two days on or later, inside aWorksBody's period. */
+  const aWorkDay = async () =>
+    workDaysOf(
+      (await as('owner', 'GET', '/community/permit-rules'))
+        .body as PermitRulesBody,
+      1,
+      2,
+    )[0];
+  /** A debris removal of the permit whose window is now: its id. */
+  const aDueSlot = (permitId: string) =>
+    w.helpers.asManager(w.a, () =>
+      h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+        debrisSlotRow(tx, {
+          tenantId: w.a.tenantId,
+          permitId,
+          scheduledBy: w.a.ids.manager,
+        }),
+      ),
+    );
   /** A fresh pending works permit of A's home: its id. */
   // The works deposit's rule (ADR 0074) has its own suite (test/fitout):
   // compound A approves works as before, so these reach the routes.
@@ -1226,6 +1252,67 @@ describe('API v0 — no-store', () => {
       as('owner', 'POST', `/permits/${await aPermit()}/drawings`, {
         fileId: await fileHelpers(h).ready(w.a.tokens.owner, 'permit_drawing'),
       }),
+    // Debris removals (ADR 0074): on an approved works permit of A's home.
+    'POST /permits/{id}/debris-slots': async () =>
+      as('owner', 'POST', `/permits/${await anApproved()}/debris-slots`, {
+        day: await aWorkDay(),
+        window: { from: '10:00', to: '12:00' },
+      }),
+    'POST /permits/{id}/debris-slots/{slotId}/cancel': async () => {
+      const id = await anApproved();
+      const made = body<{ debrisSlots: { id: string }[] }>(
+        await as('owner', 'POST', `/permits/${id}/debris-slots`, {
+          day: await aWorkDay(),
+          window: { from: '10:00', to: '12:00' },
+        }),
+      );
+      return as(
+        'owner',
+        'POST',
+        `/permits/${id}/debris-slots/${made.debrisSlots[0].id}/cancel`,
+        { reasonCode: 'plans_changed' },
+      );
+    },
+    'POST /staff/unit-permits/{id}/debris-slots': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${await anApproved()}/debris-slots`,
+        { day: await aWorkDay(), window: { from: '10:00', to: '12:00' } },
+      ),
+    'POST /staff/unit-permits/{id}/debris-slots/{slotId}/cancel': async () => {
+      const id = await anApproved();
+      const made = body<{ debrisSlots: { id: string }[] }>(
+        await as('manager', 'POST', `/staff/unit-permits/${id}/debris-slots`, {
+          day: await aWorkDay(),
+          window: { from: '10:00', to: '12:00' },
+        }),
+      );
+      return as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${id}/debris-slots/${made.debrisSlots[0].id}/cancel`,
+        { reasonCode: 'not_needed' },
+      );
+    },
+    'POST /staff/unit-permits/{id}/debris-slots/{slotId}/done': async () => {
+      const id = await anApproved();
+      return as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${id}/debris-slots/${await aDueSlot(id)}/done`,
+        {},
+      );
+    },
+    'GET /gate/unit-permits/{id}/debris-slots': async () =>
+      asGuard('GET', `/gate/unit-permits/${await anApproved()}/debris-slots`),
+    'POST /gate/unit-permits/{id}/debris-slots/{slotId}/done': async () => {
+      const id = await anApproved();
+      return asGuard(
+        'POST',
+        `/gate/unit-permits/${id}/debris-slots/${await aDueSlot(id)}/done`,
+      );
+    },
     'POST /permits/{id}/drawings/{drawingId}/remove': async () => {
       const id = await aPermit();
       const added = body<{ drawings: { id: string }[] }>(

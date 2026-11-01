@@ -508,6 +508,36 @@ export const GATE_PERMIT_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  // A works permit's debris removals at the gate (ADR 0074).
+  {
+    method: 'GET',
+    path: '/gate/unit-permits/{id}/debris-slots',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/unit-permits/{id}/debris-slots/{slotId}/done',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({
+        id: w.bPermitId,
+        slotId: '0192a5f0-1c2b-7d3e-8f40-0000000074d2',
+      }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
 ];
 
 /** Material exits at the gate and the materials log (ADR 0049). */

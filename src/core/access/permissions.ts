@@ -319,6 +319,15 @@ export const PERMISSIONS = {
   // Name a deputy who decides in one's place for at most 30 days (ADR
   // 0073): reading and ending one needs no permission.
   'deputies.manage': { kinds: ['manager'] },
+  // Vendors, compound contracts and purchase requests (ADR 0077). The
+  // register, a vendor's papers and evaluations, its suspension; the staff
+  // who need something ask to buy it, the manager approves up to the major
+  // contract threshold and the board above it.
+  'vendors.manage': { kinds: ['staff', 'manager'] },
+  'purchases.request': { kinds: ['staff', 'manager'] },
+  // Staff may hold it too: a deputy decides in the manager's place (ADR
+  // 0073); only the manager's role has it by default.
+  'purchases.approve': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

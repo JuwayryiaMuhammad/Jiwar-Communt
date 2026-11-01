@@ -74,6 +74,7 @@ export const FILES_ROUTES: Row[] = [
               'gate_id_scan',
               'market_listing_photo',
               'gallery_photo',
+              'vendor_document',
             ],
           },
         },

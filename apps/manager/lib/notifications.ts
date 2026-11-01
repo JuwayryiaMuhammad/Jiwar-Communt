@@ -316,6 +316,12 @@ const TEXT: Record<string, (p: P) => string> = {
   'asset.warranty_expiring': (p) => `The warranty of asset ${p.assetRef} ends on ${p.endsOn}`,
   'stock.reorder_level': (p) => `${p.itemRef} is at or under its reorder level`,
   'maintenance_contract.expiring': (p) => `Contract ${p.contractRef} ends on ${p.endsOn}`,
+  // Vendors, compound contracts and purchase requests (ADR 0077).
+  'maintenance_contract.payment_due': (p) => `Contract ${p.contractRef} has ${p.amount} EGP due on ${p.dueOn}`,
+  'vendor_document.expiring': (p) => `A paper of vendor ${p.vendorRef} expires on ${p.expiresOn}`,
+  'purchase_request.submitted': (p) => `Purchase request ${p.requestRef} (${p.amount} EGP) waits for approval`,
+  'purchase_request.decided': (p) =>
+    `Your purchase request ${p.requestRef} was ${p.decision === 'approved' ? 'approved' : 'turned down'}`,
   'meter.anomaly': (p) => `Meter ${p.meterRef} used far more than usual up to ${p.readOn}`,
   'part_request.created': (p) => `${ticket(p)} asks the store for ${p.itemRef}`,
   'maintenance.plan_overdue': (p) => `Planned work on asset ${p.assetRef}, due ${p.dueOn}, is overdue`,
@@ -358,6 +364,10 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'asset' && n.targetId) return can('assets.read') ? `/assets/${n.targetId}` : null;
   if (n.targetType === 'stock_item' && n.targetId) return can('stock.manage') ? `/stock/${n.targetId}` : null;
   if (n.targetType === 'maintenance_contract' && n.targetId) return can('assets.manage') ? `/contracts/${n.targetId}` : null;
+  // Vendors and purchase requests (ADR 0077).
+  if (n.targetType === 'vendor' && n.targetId) return can('vendors.manage') ? `/vendors/${n.targetId}` : null;
+  if (n.targetType === 'purchase_request' && n.targetId)
+    return can('purchases.approve') || can('purchases.request') ? `/purchases/${n.targetId}` : null;
   // Energy (ADR 0066).
   if (n.targetType === 'meter' && n.targetId) return can('energy.read') ? `/meters/${n.targetId}` : null;
   // Readiness (ADR 0067): the program, for who keeps readiness.

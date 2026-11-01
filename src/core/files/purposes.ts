@@ -344,6 +344,14 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['assets.manage'],
   },
+  // A vendor's paper (ADR 0077): its commercial register, tax card, a
+  // licence, an insurance policy; a photo or a PDF, the register keeper's.
+  // The size CHECK's default; the content type CHECK lists it with the PDFs.
+  vendor_document: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['vendors.manage'],
+  },
   // A checklist answer's photo (ADR 0064): what a technician saw doing a
   // planned job or an inspection. Staff only.
   checklist_photo: {

@@ -107,6 +107,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'market.handle',
       'inbox.read',
       'deputies.manage',
+      'vendors.manage',
+      'purchases.request',
+      'purchases.approve',
     ],
   },
   {
@@ -199,6 +202,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       // The control room's channel (ADR 0068).
       'control_room.watch',
       'inbox.read',
+      // What the guards need bought (ADR 0077).
+      'purchases.request',
     ],
   },
   {
@@ -213,6 +218,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'assets.read',
       'inspections.perform',
       'meters.record',
+      // A part or a service the store lacks (ADR 0077).
+      'purchases.request',
     ],
   },
   {
@@ -236,6 +243,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'readiness.manage',
       'safety.manage',
       'inbox.read',
+      'purchases.request',
     ],
   },
   {
@@ -259,6 +267,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'governance.approvals',
       'finance.budget',
       'inbox.read',
+      'purchases.request',
     ],
   },
   {

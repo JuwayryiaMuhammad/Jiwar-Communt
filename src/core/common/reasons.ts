@@ -875,6 +875,24 @@ export const REASON_CODES = {
     'budget',
     'other',
   ],
+  // Vendors and purchase requests (ADR 0077): why a vendor is suspended,
+  // why a purchase request is turned down or called off; the migrations'
+  // CHECKs repeat them.
+  vendorSuspend: [
+    'performance',
+    'documents_lapsed',
+    'safety',
+    'fraud',
+    'other',
+  ],
+  purchaseReject: [
+    'no_budget',
+    'not_needed',
+    'use_stock',
+    'too_costly',
+    'other',
+  ],
+  purchaseCancel: ['not_needed', 'duplicate', 'vendor_unavailable', 'other'],
   // Energy and utilities (ADR 0066): why a meter is retired, why a reading
   // is corrected, what an outage cuts and why one is called off; the
   // migrations' CHECKs repeat them.

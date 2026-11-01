@@ -2557,6 +2557,38 @@ export const NOTIFICATION_KINDS = {
     target: 'maintenance_contract',
     params: { contractRef: {}, endsOn: {} },
   },
+  /** A contract's payment is due within a week (ADR 0077), once. */
+  'maintenance_contract.payment_due': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'maintenance_contract',
+    params: { contractRef: {}, dueOn: {}, amount: {} },
+  },
+  /** A vendor's paper expires within 30 days (ADR 0077), once per date. */
+  'vendor_document.expiring': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'vendor',
+    params: { vendorRef: {}, paperKind: {}, expiresOn: {} },
+  },
+  /** A purchase request waits for its approver (ADR 0077). */
+  'purchase_request.submitted': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'purchase_request',
+    params: { requestRef: {}, amount: {} },
+  },
+  /** The requester's purchase request was approved or turned down. */
+  'purchase_request.decided': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'purchase_request',
+    params: { requestRef: {}, decision: {} },
+  },
   'asset.warranty_expiring': {
     priority: 'normal',
     category: 'maintenance',

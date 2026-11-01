@@ -383,6 +383,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ينتهي العقد {contractRef} في {endsOn}.',
     },
   },
+  'maintenance_contract.payment_due': {
+    en: {
+      title: 'A contract payment is due',
+      body: 'Contract {contractRef} has {amount} EGP due on {dueOn}.',
+    },
+    ar: {
+      title: 'دفعة عقد مستحقة',
+      body: 'على العقد {contractRef} دفعة {amount} جنيه تستحق في {dueOn}.',
+    },
+  },
+  'vendor_document.expiring': {
+    en: {
+      title: 'A vendor paper expires soon',
+      body: 'A paper of vendor {vendorRef} expires on {expiresOn}.',
+    },
+    ar: {
+      title: 'مستند مورد ينتهي قريبًا',
+      body: 'ينتهي أحد مستندات المورد {vendorRef} في {expiresOn}.',
+    },
+  },
+  'purchase_request.submitted': {
+    en: {
+      title: 'A purchase request waits',
+      body: 'Purchase request {requestRef} ({amount} EGP) waits for approval.',
+    },
+    ar: {
+      title: 'طلب شراء بانتظار الاعتماد',
+      body: 'طلب الشراء {requestRef} ({amount} جنيه) بانتظار الاعتماد.',
+    },
+  },
+  'purchase_request.decided': {
+    en: {
+      title: 'Your purchase request was decided',
+      body: 'Purchase request {requestRef} was decided.',
+    },
+    ar: {
+      title: 'تم البت في طلب الشراء',
+      body: 'تم البت في طلب الشراء {requestRef}.',
+    },
+  },
   'stock.reorder_level': {
     en: {
       title: 'Time to reorder',

@@ -1543,6 +1543,35 @@ export const ErrorCode = {
   MAINTENANCE_CONTRACT_NOT_FOUND: 'MAINTENANCE_CONTRACT_NOT_FOUND',
   /** Terminated once: it never changes (409). */
   MAINTENANCE_CONTRACT_TERMINATED: 'MAINTENANCE_CONTRACT_TERMINATED',
+  /** Above the manager's limit: name the board's approval; params.threshold (409). */
+  CONTRACT_NEEDS_APPROVAL: 'CONTRACT_NEEDS_APPROVAL',
+  /** Not an approved major contract, below the value, or signing another; params.reason (409). */
+  CONTRACT_APPROVAL_INVALID: 'CONTRACT_APPROVAL_INVALID',
+  /** Renewed once already; params.renewalId (409). */
+  CONTRACT_ALREADY_RENEWED: 'CONTRACT_ALREADY_RENEWED',
+  CONTRACT_PAYMENT_NOT_FOUND: 'CONTRACT_PAYMENT_NOT_FOUND',
+  /** Paid once: it never changes (409). */
+  CONTRACT_PAYMENT_PAID: 'CONTRACT_PAYMENT_PAID',
+  // Vendors and purchase requests (ADR 0077)
+  VENDOR_NOT_FOUND: 'VENDOR_NOT_FOUND',
+  /** Suspended: no new contract, expense or purchase request names it (409). */
+  VENDOR_SUSPENDED: 'VENDOR_SUSPENDED',
+  /** Another vendor of the compound has the name; params.vendorId (409). */
+  VENDOR_NAME_TAKEN: 'VENDOR_NAME_TAKEN',
+  /** The partner is already another vendor; params.vendorId (409). */
+  VENDOR_PARTNER_TAKEN: 'VENDOR_PARTNER_TAKEN',
+  /** Not in a status this allows; params.status (409). */
+  VENDOR_WRONG_STATUS: 'VENDOR_WRONG_STATUS',
+  VENDOR_DOCUMENT_NOT_FOUND: 'VENDOR_DOCUMENT_NOT_FOUND',
+  PURCHASE_REQUEST_NOT_FOUND: 'PURCHASE_REQUEST_NOT_FOUND',
+  /** Not in a status this allows; params.status (409). */
+  PURCHASE_REQUEST_WRONG_STATUS: 'PURCHASE_REQUEST_WRONG_STATUS',
+  /** Above the manager's limit: name the board's approval; params.threshold (409). */
+  PURCHASE_NEEDS_APPROVAL: 'PURCHASE_NEEDS_APPROVAL',
+  /** Not an approved major contract, below the amount, or signing another; params.reason (409). */
+  PURCHASE_APPROVAL_INVALID: 'PURCHASE_APPROVAL_INVALID',
+  /** Its requester never approves it: another approver does, or the board's approval named (409). */
+  PURCHASE_SELF_APPROVAL: 'PURCHASE_SELF_APPROVAL',
   // Energy and utilities (ADR 0066)
   METER_NOT_FOUND: 'METER_NOT_FOUND',
   /** Retired: it takes no reading and never changes again (409). */

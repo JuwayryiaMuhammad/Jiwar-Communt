@@ -3474,6 +3474,7 @@ enum FilePurpose {
   /// A compound album's photo (ADR 0071): an image, 10 MB, the staff's.
   gallery_photo
   @@map("file_purpose")
+  vendor_document
 }
 
 enum FileStatus {

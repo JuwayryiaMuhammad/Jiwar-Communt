@@ -2071,6 +2071,64 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'maintenance_contract',
   },
+  // Compound contracts (ADR 0077): a renewal is a new contract naming the
+  // old; the schedule's days and amounts and a payment's reference.
+  'maintenance_contract.renewed': {
+    log: 'tenant',
+    target: 'maintenance_contract',
+  },
+  'maintenance_contract.payments_scheduled': {
+    log: 'tenant',
+    target: 'maintenance_contract',
+  },
+  'maintenance_contract.payment_paid': {
+    log: 'tenant',
+    target: 'maintenance_contract',
+  },
+  // Vendors (ADR 0077): numbers, codes, categories, ids; the vendor's
+  // names, contacts and notes as `{ changed }`, business data all the same.
+  'vendor.created': {
+    log: 'tenant',
+    target: 'vendor',
+    sensitive: [
+      'name',
+      'legalName',
+      'contactName',
+      'phone',
+      'email',
+      'address',
+      'notes',
+    ],
+  },
+  'vendor.updated': {
+    log: 'tenant',
+    target: 'vendor',
+    sensitive: [
+      'name',
+      'legalName',
+      'contactName',
+      'phone',
+      'email',
+      'address',
+      'notes',
+    ],
+  },
+  'vendor.suspended': { log: 'tenant', target: 'vendor' },
+  'vendor.reinstated': { log: 'tenant', target: 'vendor' },
+  'vendor.document_added': { log: 'tenant', target: 'vendor' },
+  'vendor.document_removed': { log: 'tenant', target: 'vendor' },
+  'vendor.evaluated': { log: 'tenant', target: 'vendor' },
+  // Purchase requests (ADR 0077): amounts, codes, ids; the title and the
+  // description are the requester's words about work.
+  'purchase_request.submitted': {
+    log: 'tenant',
+    target: 'purchase_request',
+    sensitive: ['title', 'description'],
+  },
+  'purchase_request.approved': { log: 'tenant', target: 'purchase_request' },
+  'purchase_request.rejected': { log: 'tenant', target: 'purchase_request' },
+  'purchase_request.cancelled': { log: 'tenant', target: 'purchase_request' },
+  'purchase_request.fulfilled': { log: 'tenant', target: 'purchase_request' },
   // Energy and utilities (ADR 0066): codes, kinds, ids, days and values;
   // nothing here names a person.
   'meter.created': { log: 'tenant', target: 'meter' },

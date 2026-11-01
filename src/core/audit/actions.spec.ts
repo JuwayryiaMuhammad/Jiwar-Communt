@@ -244,6 +244,9 @@ describe('audit catalog', () => {
         'account_deputy',
         // ADR 0076.
         'warranty_claim',
+        // ADR 0077.
+        'vendor',
+        'purchase_request',
       ]).toContain(def.target);
     }
   });

@@ -74,6 +74,9 @@ export const ENTRY_PERMISSIONS = [
   'market.handle',
   // The staff inbox (ADR 0073).
   'inbox.read',
+  // The vendor register and purchase approvals (ADR 0077).
+  'vendors.manage',
+  'purchases.approve',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

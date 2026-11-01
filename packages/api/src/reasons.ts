@@ -239,6 +239,10 @@ export const REASON_CODES = {
   ticketCompletionAction: ['repaired', 'part_replaced', 'adjusted', 'cleaned', 'no_fault_found', 'referred_to_vendor', 'other'],
   quoteSuggestionDismiss: ['not_needed', 'amount_wrong', 'covered_by_contract', 'other'],
   contractTerminate: ['vendor_performance', 'replaced', 'not_needed', 'budget', 'other'],
+  // Vendors and purchase requests (ADR 0077).
+  vendorSuspend: ['performance', 'documents_lapsed', 'safety', 'fraud', 'other'],
+  purchaseReject: ['no_budget', 'not_needed', 'use_stock', 'too_costly', 'other'],
+  purchaseCancel: ['not_needed', 'duplicate', 'vendor_unavailable', 'other'],
   // Energy and utilities (ADR 0066).
   meterRetire: ['replaced', 'removed', 'faulty', 'other'],
   readingCorrect: ['misread', 'wrong_meter', 'wrong_day', 'other'],

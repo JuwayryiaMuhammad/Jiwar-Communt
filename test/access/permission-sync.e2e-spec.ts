@@ -731,6 +731,7 @@ describe('Permission sync', () => {
       'fines.billing',
       'governance.approvals',
       'inbox.read',
+      'purchases.request',
     ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
@@ -799,6 +800,7 @@ describe('Permission sync', () => {
       'finance.reports',
       'governance.approvals',
       'inbox.read',
+      'purchases.request',
     ]);
 
     const report = await sync(base, t);
@@ -814,6 +816,7 @@ describe('Permission sync', () => {
       'fines.billing',
       'governance.approvals',
       'inbox.read',
+      'purchases.request',
     ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
@@ -1012,6 +1015,7 @@ describe('Permission sync', () => {
       'assets.read',
       'inspections.perform',
       'meters.record',
+      'purchases.request',
       'tickets.work',
     ]);
     expect((await role(t, 'maintenance_supervisor')).permissions).toEqual([
@@ -1022,6 +1026,7 @@ describe('Permission sync', () => {
       'inbox.read',
       'inspections.manage',
       'meters.record',
+      'purchases.request',
       'readiness.manage',
       'safety.manage',
       'stock.manage',
@@ -1408,6 +1413,7 @@ describe('Permission sync', () => {
         'inbox.read',
         'incidents.manage',
         'patrols.manage',
+        'purchases.request',
         'units.directory',
         'violations.manage',
       ]);
@@ -2556,6 +2562,66 @@ describe('Permission sync', () => {
       ])
         expect(
           (await role(t, key)).permissions.filter((p) => m23.includes(p)),
+        ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M2-5 (ADR 0077)', () => {
+    const m25 = ['vendors.manage', 'purchases.request', 'purchases.approve'];
+    /** The catalog before M2-5: no vendor or purchase permission anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m25.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m25.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: the manager keeps the register and approves; the supervisors, the technician and the accountant ask to buy; nobody else gains any', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M2-5 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m25].sort());
+      expect(report.rolesCreated).toEqual([]);
+      expect((await role(t, 'manager')).permissions).toEqual(
+        expect.arrayContaining(m25),
+      );
+      for (const key of [
+        'security_supervisor',
+        'technician',
+        'maintenance_supervisor',
+        'accountant',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => m25.includes(p)),
+        ).toEqual(['purchases.request']);
+      for (const key of [
+        'guard',
+        'collector',
+        'resident',
+        'family_member',
+        'unit_proxy',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => m25.includes(p)),
         ).toEqual([]);
       expect(await sync(base, t)).toMatchObject({
         added: [],

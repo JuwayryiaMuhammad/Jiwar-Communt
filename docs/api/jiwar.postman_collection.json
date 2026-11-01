@@ -39100,6 +39100,12 @@
                   "disabled": true,
                   "key": "archived",
                   "value": ""
+                },
+                {
+                  "description": "`true`: only the kinds that ask me for a decision (ADR 0073).",
+                  "disabled": true,
+                  "key": "needsDecision",
+                  "value": ""
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/me/notifications"

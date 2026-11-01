@@ -6,13 +6,13 @@ import { RequestContext } from '../common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../common/cursor';
 import { appError, ErrorCode } from '../common/errors';
 import type { Env } from '../config/env.schema';
-import { TenantTx } from '../database/tenant-tx.service';
+import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 import { SweepRunner } from '../sweep/sweep-runner';
 import {
   NOTIFICATION_CATEGORIES,
   type NotificationCategory,
 } from '../preferences/categories';
-import { NOTIFICATION_KINDS } from './kinds';
+import { NEEDS_DECISION_KINDS, NOTIFICATION_KINDS } from './kinds';
 
 const notFound = () =>
   appError.notFound(ErrorCode.NOTIFICATION_NOT_FOUND, 'Notification not found');
@@ -31,7 +31,11 @@ export interface InboxItem {
   readAt: Date | null;
   archivedAt: Date | null;
   createdAt: Date;
+  /** Its kind asks the recipient for a decision (ADR 0073). */
+  needsDecision: boolean;
 }
+
+const DECIDING = new Set(NEEDS_DECISION_KINDS);
 
 /** Each delivery category's kinds, from the catalog (ADR 0058). */
 const KINDS_OF = Object.fromEntries(
@@ -85,6 +89,7 @@ export class NotificationsService implements OnModuleInit {
       unread?: boolean;
       category?: NotificationCategory;
       archived?: boolean;
+      needsDecision?: boolean;
     } = {},
   ): Promise<Page<InboxItem>> {
     const limit = clampLimit(q.limit);
@@ -97,6 +102,9 @@ export class NotificationsService implements OnModuleInit {
             q.archived ? { archivedAt: { not: null } } : { archivedAt: null },
             ...(q.unread ? [{ readAt: null }] : []),
             ...(q.category ? [{ kind: { in: KINDS_OF[q.category] } }] : []),
+            ...(q.needsDecision
+              ? [{ kind: { in: [...NEEDS_DECISION_KINDS] } }]
+              : []),
             ...(PAGE.after(q.cursor) as Prisma.NotificationWhereInput[]),
           ],
         },
@@ -116,6 +124,7 @@ export class NotificationsService implements OnModuleInit {
           readAt: n.readAt,
           archivedAt: n.archivedAt,
           createdAt: n.createdAt,
+          needsDecision: DECIDING.has(n.kind),
         })),
       };
     });
@@ -155,6 +164,7 @@ export class NotificationsService implements OnModuleInit {
   /**
    * Out of the list (ADR 0058), read if it was not; kept until the read
    * retention takes it. Idempotent; someone else's is NOTIFICATION_NOT_FOUND.
+   * An unread critical one is kept in the list until read (ADR 0073).
    */
   async archive(id: string): Promise<void> {
     const accountId = this.ctx.accountId;
@@ -164,9 +174,32 @@ export class NotificationsService implements OnModuleInit {
            SET archived_at = COALESCE(archived_at, now()),
                read_at = COALESCE(read_at, now())
          WHERE id = ${id}::uuid AND account_id = ${accountId}::uuid
+           AND NOT (priority = 'critical' AND read_at IS NULL)
         RETURNING id`;
-      if (!row) throw notFound();
+      if (!row) await this.refusal(tx, id, accountId);
     });
+  }
+
+  /**
+   * Why a notification of the caller's was not archived or deleted: an
+   * unread critical one is kept until read (ADR 0073); someone else's, or
+   * none, is NOTIFICATION_NOT_FOUND.
+   */
+  private async refusal(
+    tx: TenantTxClient,
+    id: string,
+    accountId: string,
+  ): Promise<never> {
+    const found = await tx.notification.findFirst({
+      where: { id, accountId },
+      select: { priority: true, readAt: true },
+    });
+    if (found && found.priority === 'critical' && !found.readAt)
+      throw appError.conflict(
+        ErrorCode.NOTIFICATION_CRITICAL_UNREAD,
+        'A critical notification is kept until it is read',
+      );
+    throw notFound();
   }
 
   /** Back in the list, still read. Idempotent. */
@@ -193,9 +226,13 @@ export class NotificationsService implements OnModuleInit {
     const accountId = this.ctx.accountId;
     await this.tenantTx.withTenantTx(async (tx) => {
       const { count } = await tx.notification.deleteMany({
-        where: { id, accountId },
+        where: {
+          id,
+          accountId,
+          NOT: { priority: 'critical', readAt: null },
+        },
       });
-      if (!count) throw notFound();
+      if (!count) await this.refusal(tx, id, accountId);
     });
   }
 

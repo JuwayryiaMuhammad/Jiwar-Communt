@@ -10015,7 +10015,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete one notification */
+        /**
+         * Delete one notification
+         * @description An unread critical one is NOTIFICATION_CRITICAL_UNREAD: read it first (ADR 0073).
+         */
         delete: operations["NotificationsController_remove"];
         options?: never;
         head?: never;
@@ -10031,7 +10034,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Archive one notification (it is read, too) */
+        /**
+         * Archive one notification (it is read, too)
+         * @description An unread critical one is NOTIFICATION_CRITICAL_UNREAD: read it first (ADR 0073).
+         */
         post: operations["NotificationsController_archive"];
         delete?: never;
         options?: never;
@@ -34299,6 +34305,8 @@ export interface components {
             id: string;
             /** @description A catalog code (ADR 0027). */
             kind: string;
+            /** @description Its kind asks me for a decision (ADR 0073). */
+            needsDecision: boolean;
             /** @description The kind's params; the app renders the text. */
             params: {
                 [key: string]: string | number;
@@ -59565,6 +59573,8 @@ export interface operations {
                 category?: components["schemas"]["NotificationCategory"];
                 /** @description `true`: the archived ones only. By default they are left out. */
                 archived?: "true" | "false";
+                /** @description `true`: only the kinds that ask me for a decision (ADR 0073). */
+                needsDecision?: "true" | "false";
             };
             header?: never;
             path?: never;

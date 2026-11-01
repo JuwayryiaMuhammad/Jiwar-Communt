@@ -37,4 +37,14 @@ export class InboxQueryDto extends PageQueryDto {
   @IsOptional()
   @IsIn(BOOL, withParams({ allowed: [...BOOL] }))
   archived?: (typeof BOOL)[number];
+
+  @ApiProperty({
+    required: false,
+    enum: BOOL,
+    description:
+      '`true`: only the kinds that ask me for a decision (ADR 0073).',
+  })
+  @IsOptional()
+  @IsIn(BOOL, withParams({ allowed: [...BOOL] }))
+  needsDecision?: (typeof BOOL)[number];
 }

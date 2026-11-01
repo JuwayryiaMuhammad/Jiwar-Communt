@@ -41,6 +41,7 @@ export class NotificationsController {
         ...q,
         unread: q.unread === 'true',
         archived: q.archived === 'true',
+        needsDecision: q.needsDecision === 'true',
       }),
       (n) => NotificationView.from(n),
     );
@@ -70,7 +71,11 @@ export class NotificationsController {
   }
 
   @Post(':id/archive')
-  @ApiOperation({ summary: 'Archive one notification (it is read, too)' })
+  @ApiOperation({
+    summary: 'Archive one notification (it is read, too)',
+    description:
+      'An unread critical one is NOTIFICATION_CRITICAL_UNREAD: read it first (ADR 0073).',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async archive(@Param('id', parseId()) id: string): Promise<void> {
@@ -86,7 +91,11 @@ export class NotificationsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete one notification' })
+  @ApiOperation({
+    summary: 'Delete one notification',
+    description:
+      'An unread critical one is NOTIFICATION_CRITICAL_UNREAD: read it first (ADR 0073).',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async remove(@Param('id', parseId()) id: string): Promise<void> {

@@ -506,6 +506,7 @@ const ERROR_TEXT: Record<string, string> = {
   DEPUTY_ALREADY_SET: 'You have a deputy already: end it first.',
   DEPUTY_BUSY: 'This account is someone’s deputy already.',
   DEPUTY_ENDED: 'This deputyship ended already.',
+  NOTIFICATION_CRITICAL_UNREAD: 'Read this critical notification first.',
   EXPENSE_AUTHORIZATION_NOT_FOUND: 'This approved contract does not exist.',
   EXPENSE_AUTHORIZATION_EXCEEDED: 'More than the approved contract has left.',
   EXPENSE_ALREADY_VOIDED: 'This expense is voided already.',

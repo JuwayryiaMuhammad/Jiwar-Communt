@@ -1048,6 +1048,8 @@ export const ErrorCode = {
   DEPUTY_BUSY: 'DEPUTY_BUSY',
   /** It ended already (params.reason). */
   DEPUTY_ENDED: 'DEPUTY_ENDED',
+  /** An unread critical notification is kept until read (ADR 0073). */
+  NOTIFICATION_CRITICAL_UNREAD: 'NOTIFICATION_CRITICAL_UNREAD',
   /** Unknown, or another compound's. */
   EXPENSE_AUTHORIZATION_NOT_FOUND: 'EXPENSE_AUTHORIZATION_NOT_FOUND',
   /** More than the approved contract has left (409, params.remaining). */

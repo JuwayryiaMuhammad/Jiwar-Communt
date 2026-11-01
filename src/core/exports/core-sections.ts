@@ -6,6 +6,7 @@ import { ConsentsService } from '../consents/consents.service';
 import { ConsentView } from '../consents/views/consent.views';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx } from '../database/tenant-tx.service';
+import { NEEDS_DECISION_KINDS } from '../notifications/kinds';
 import { NotificationView } from '../notifications/views/notification.views';
 import { NotificationPreferencesService } from '../preferences/notification-preferences.service';
 import { PreferencesView } from '../preferences/views/preferences.views';
@@ -176,6 +177,7 @@ export class CoreExportSections implements OnModuleInit {
             readAt: n.readAt,
             archivedAt: n.archivedAt,
             createdAt: n.createdAt,
+            needsDecision: NEEDS_DECISION_KINDS.includes(n.kind),
           }),
         ),
       };

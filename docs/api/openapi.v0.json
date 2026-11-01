@@ -37466,6 +37466,10 @@
             "description": "A catalog code (ADR 0027).",
             "type": "string"
           },
+          "needsDecision": {
+            "description": "Its kind asks me for a decision (ADR 0073).",
+            "type": "boolean"
+          },
           "params": {
             "additionalProperties": {
               "oneOf": [
@@ -37511,7 +37515,8 @@
           "targetId",
           "readAt",
           "archivedAt",
-          "createdAt"
+          "createdAt",
+          "needsDecision"
         ],
         "type": "object"
       },
@@ -99574,6 +99579,19 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "description": "`true`: only the kinds that ask me for a decision (ADR 0073).",
+            "in": "query",
+            "name": "needsDecision",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -99658,6 +99676,7 @@
     },
     "/api/v1/me/notifications/{id}": {
       "delete": {
+        "description": "An unread critical one is NOTIFICATION_CRITICAL_UNREAD: read it first (ADR 0073).",
         "operationId": "NotificationsController_remove",
         "parameters": [
           {
@@ -99688,6 +99707,7 @@
     },
     "/api/v1/me/notifications/{id}/archive": {
       "post": {
+        "description": "An unread critical one is NOTIFICATION_CRITICAL_UNREAD: read it first (ADR 0073).",
         "operationId": "NotificationsController_archive",
         "parameters": [
           {

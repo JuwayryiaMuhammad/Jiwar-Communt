@@ -15,6 +15,7 @@ const ITEM = [
   'createdAt',
   'id',
   'kind',
+  'needsDecision',
   'params',
   'params.gateName',
   'params.unitCode',
@@ -256,6 +257,68 @@ describe('API v0 — notifications inbox (ADR 0027)', () => {
         }),
       ),
     ).toMatchObject({ archivedAt: null, readAt: null });
+  });
+
+  it('an unread critical one is kept until read; a kind that asks for a decision says so, and filters (ADR 0073)', async () => {
+    const me = await freshResident();
+    await notify([me.id], {
+      kind: 'gate.approval_requested',
+      params: {
+        unitCode: 'A-1',
+        requestKind: 'visitor',
+        partySize: 1,
+        gateName: 'Main',
+      },
+      targetId: w.bEngagementId,
+    });
+    await notify([me.id], entered(w.bEngagementId));
+    const list = async (query: Record<string, string> = {}) =>
+      (
+        (
+          await call(w, 'GET', '/me/notifications', {
+            token: me.token,
+            query,
+          }).expect(200)
+        ).body as {
+          data: {
+            id: string;
+            kind: string;
+            priority: string;
+            needsDecision: boolean;
+          }[];
+        }
+      ).data;
+    const all = await list();
+    const critical = all.find((n) => n.kind === 'gate.approval_requested')!;
+    expect(critical).toMatchObject({
+      priority: 'critical',
+      needsDecision: true,
+    });
+    expect(all.find((n) => n.kind === 'worker.entered')!.needsDecision).toBe(
+      false,
+    );
+    expect((await list({ needsDecision: 'true' })).map((n) => n.kind)).toEqual([
+      'gate.approval_requested',
+    ]);
+    // Unread: neither archived nor deleted.
+    for (const [method, path] of [
+      ['POST', `/me/notifications/${critical.id}/archive`],
+      ['DELETE', `/me/notifications/${critical.id}`],
+    ] as const) {
+      const res = await call(w, method, path, { token: me.token }).expect(409);
+      expect(err(res).code).toBe('NOTIFICATION_CRITICAL_UNREAD');
+    }
+    expect((await list()).map((n) => n.id)).toContain(critical.id);
+    // Read, it goes like any other.
+    await call(w, 'POST', `/me/notifications/${critical.id}/read`, {
+      token: me.token,
+    }).expect(204);
+    await call(w, 'POST', `/me/notifications/${critical.id}/archive`, {
+      token: me.token,
+    }).expect(204);
+    await call(w, 'DELETE', `/me/notifications/${critical.id}`, {
+      token: me.token,
+    }).expect(204);
   });
 
   it('the catalog is enforced at write time, and nothing is written outside a transaction', async () => {

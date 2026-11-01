@@ -38,6 +38,12 @@ export class NotificationView {
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
+  @ApiProperty({
+    type: Boolean,
+    description: 'Its kind asks me for a decision (ADR 0073).',
+  })
+  needsDecision: boolean;
+
   static from(n: InboxItem): NotificationView {
     return {
       id: n.id,
@@ -49,6 +55,7 @@ export class NotificationView {
       readAt: n.readAt,
       archivedAt: n.archivedAt,
       createdAt: n.createdAt,
+      needsDecision: n.needsDecision,
     };
   }
 }

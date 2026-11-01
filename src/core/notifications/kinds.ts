@@ -42,11 +42,18 @@ export interface KindSpec {
   /** What `targetId` refers to; the apps open it. */
   target: string;
   params: Record<string, ParamSpec>;
+  /**
+   * The recipient is asked to decide something (ADR 0073): approve,
+   * answer, accept or vote. A flag of the catalog, never a stored column;
+   * the inbox filters by it and shows it.
+   */
+  needsDecision?: true;
 }
 
 export const NOTIFICATION_KINDS = {
   /** A guard asks the household whether to let someone in (ADR 0028). */
   'gate.approval_requested': {
+    needsDecision: true,
     priority: 'critical',
     category: 'gate_visitors',
     critical: true,
@@ -320,6 +327,7 @@ export const NOTIFICATION_KINDS = {
   /** A technician declined it: it is back in the queue (dispatchers). */
   /** A quote waits for the residents' approval (ADR 0058). */
   'ticket.quote_proposed': {
+    needsDecision: true,
     priority: 'normal',
     category: 'maintenance',
     critical: false,
@@ -368,6 +376,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** A technician asks the store for a part (who keeps it; ADR 0065). */
   'part_request.created': {
+    needsDecision: true,
     priority: 'normal',
     category: 'maintenance',
     critical: false,
@@ -542,6 +551,7 @@ export const NOTIFICATION_KINDS = {
   // when), never consent or a receiver.
   /** A window is proposed (to the other side). */
   'ticket.visit_proposed': {
+    needsDecision: true,
     priority: 'normal',
     category: 'maintenance',
     critical: false,
@@ -712,6 +722,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** The management proposed a slot (the author accepts, or picks another). */
   'management_appointment.proposed': {
+    needsDecision: true,
     priority: 'normal',
     category: 'management',
     critical: false,
@@ -744,6 +755,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** A new request (whoever handles requests). */
   'management_request.created': {
+    needsDecision: true,
     priority: 'normal',
     category: 'management',
     critical: false,
@@ -768,6 +780,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** The author wrote on a request (its assignee, else the handlers); never its body. */
   'management_request.resident_replied': {
+    needsDecision: true,
     priority: 'normal',
     category: 'management',
     critical: false,
@@ -792,6 +805,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** The author picked a slot (the assignee, else the handlers). */
   'management_appointment.requested': {
+    needsDecision: true,
     priority: 'normal',
     category: 'management',
     critical: false,
@@ -849,6 +863,7 @@ export const NOTIFICATION_KINDS = {
   // about: its own kinds target the notice and carry the category alone.
   /** A resident filed a complaint against a unit: to the staff who handle them. */
   'neighbour_complaint.submitted': {
+    needsDecision: true,
     priority: 'normal',
     category: 'neighbours',
     critical: false,
@@ -995,6 +1010,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** The other side agreed to show names and waits for this one. */
   'neighbour_conversation.reveal_requested': {
+    needsDecision: true,
     priority: 'normal',
     category: 'neighbours',
     critical: false,
@@ -1124,6 +1140,7 @@ export const NOTIFICATION_KINDS = {
    * while, to claim. The slot and the hold's end are read on the entry.
    */
   'booking_waitlist.offered': {
+    needsDecision: true,
     priority: 'normal',
     category: 'bookings',
     critical: false,
@@ -1293,6 +1310,7 @@ export const NOTIFICATION_KINDS = {
    * stays open; a responder checks and resolves it. As critical as the SOS.
    */
   'emergency.cancel_requested': {
+    needsDecision: true,
     priority: 'critical',
     category: 'safety',
     critical: true,
@@ -1304,6 +1322,7 @@ export const NOTIFICATION_KINDS = {
   // kind and codes at most: never a name, a unit or what was written.
   /** A new request: the guards on shift (at the lane's gate) and the handlers. */
   'gate_service.requested': {
+    needsDecision: true,
     priority: 'critical',
     category: 'safety',
     critical: true,
@@ -1331,6 +1350,7 @@ export const NOTIFICATION_KINDS = {
   // written.
   /** A new permit to decide: the `permits.manage` holders. */
   'unit_permit.requested': {
+    needsDecision: true,
     priority: 'normal',
     category: 'permits',
     critical: false,
@@ -1342,6 +1362,7 @@ export const NOTIFICATION_KINDS = {
    * (ADR 0063): to the holders of `permits.manage`; the cycle only.
    */
   'permit_inspection.requested': {
+    needsDecision: true,
     priority: 'normal',
     category: 'permits',
     critical: false,
@@ -1440,6 +1461,7 @@ export const NOTIFICATION_KINDS = {
    */
   /** A resident asked for a payment plan (ADR 0069): to the finance staff. */
   'instalment_plan_request.submitted': {
+    needsDecision: true,
     priority: 'normal',
     category: 'finance',
     critical: false,
@@ -1479,6 +1501,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** Collector visits (ADR 0069): one asked for, to who keeps payments. */
   'collector_visit.requested': {
+    needsDecision: true,
     priority: 'normal',
     category: 'finance',
     critical: false,
@@ -1630,6 +1653,7 @@ export const NOTIFICATION_KINDS = {
    * 0063): to the holders of `guard_tasks.manage`; the preferred day only.
    */
   'unit_inspection.requested': {
+    needsDecision: true,
     priority: 'normal',
     category: 'guard_duty',
     critical: false,
@@ -1638,6 +1662,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** A colleague asks the guard to take one of their slots. */
   'guard_swap.requested': {
+    needsDecision: true,
     priority: 'normal',
     category: 'guard_duty',
     critical: false,
@@ -1646,6 +1671,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** The colleague accepted: to the roster's keepers, to decide. */
   'guard_swap.accepted': {
+    needsDecision: true,
     priority: 'normal',
     category: 'guard_duty',
     critical: false,
@@ -1772,6 +1798,7 @@ export const NOTIFICATION_KINDS = {
    * tie to resolve first.
    */
   'governance_election.awaiting_certification': {
+    needsDecision: true,
     priority: 'normal',
     category: 'governance',
     critical: false,
@@ -1837,6 +1864,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** A member proposed a motion: the other sitting members; `matter` approval | appeal | representative. */
   'governance_motion.proposed': {
+    needsDecision: true,
     priority: 'normal',
     category: 'governance',
     critical: false,
@@ -1845,6 +1873,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** A staff decision was appealed to the board: the sitting board; `kind` its kind. */
   'governance_appeal.lodged': {
+    needsDecision: true,
     priority: 'normal',
     category: 'governance',
     critical: false,
@@ -2078,6 +2107,7 @@ export const NOTIFICATION_KINDS = {
    * once: every holder of `gate_exceptions.decide`. Critical: someone waits.
    */
   'gate_exception.requested': {
+    needsDecision: true,
     priority: 'critical',
     category: 'gate_visitors',
     critical: true,
@@ -2238,6 +2268,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** The partner proposed another window: the requester accepts or declines. */
   'partner_request.proposed': {
+    needsDecision: true,
     priority: 'normal',
     category: 'partners',
     critical: false,
@@ -2307,6 +2338,7 @@ export const NOTIFICATION_KINDS = {
   // outcome, never the grounds or the rationale.
   /** A resident appealed a staff decision: the `appeals.decide` holders. */
   'decision_appeal.lodged': {
+    needsDecision: true,
     priority: 'normal',
     category: 'management',
     critical: false,
@@ -2368,6 +2400,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** An owner proposed a matter for the agenda: the sitting board. */
   'governance_agenda.proposed': {
+    needsDecision: true,
     priority: 'normal',
     category: 'governance',
     critical: false,
@@ -2384,6 +2417,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** An owner objected to a published decision: the sitting board. */
   'governance_objection.lodged': {
+    needsDecision: true,
     priority: 'normal',
     category: 'governance',
     critical: false,
@@ -2467,6 +2501,7 @@ export const NOTIFICATION_KINDS = {
    * ticket's number, never the precautions.
    */
   'work_permit.requested': {
+    needsDecision: true,
     priority: 'normal',
     category: 'maintenance',
     critical: false,
@@ -2619,6 +2654,7 @@ export const NOTIFICATION_KINDS = {
   },
   /** Enough units reported a live listing: to who handles the market. */
   'market_listing.under_review': {
+    needsDecision: true,
     priority: 'normal',
     category: 'market',
     critical: false,
@@ -2730,6 +2766,7 @@ export const NOTIFICATION_KINDS = {
    * its domain; `itemType` says which (an inbox type).
    */
   'staff_inbox.overdue': {
+    needsDecision: true,
     priority: 'normal',
     category: 'management',
     critical: false,
@@ -2788,6 +2825,13 @@ export function checkNotification(
   }
   return spec;
 }
+
+/** The kinds that ask their recipient for a decision (ADR 0073). */
+export const NEEDS_DECISION_KINDS: readonly string[] = Object.entries(
+  NOTIFICATION_KINDS as Record<string, KindSpec>,
+)
+  .filter(([, spec]) => spec.needsDecision)
+  .map(([kind]) => kind);
 
 /** The delivery class of a kind, for deliveryDecision. */
 export function kindDelivery(kind: NotificationKind): DeliveryClass {

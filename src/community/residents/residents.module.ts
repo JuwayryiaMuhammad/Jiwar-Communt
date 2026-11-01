@@ -50,6 +50,7 @@ import { RegistrationsController } from './registrations.controller';
 import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsController } from './residents.controller';
 import { ResidentsService } from './residents.service';
+import { CommunityInboxItems } from './community-inbox-items';
 
 /** Residents, occupancies, unit states and self-registration (API v0, ADR 0062). */
 @Module({
@@ -90,6 +91,7 @@ import { ResidentsService } from './residents.service';
     FreezeHooks,
     ErasureHooks,
     RegistrationService,
+    CommunityInboxItems,
     RegistrationStatusLinks,
     RegistrationDocumentsService,
     UnitDocumentsService,

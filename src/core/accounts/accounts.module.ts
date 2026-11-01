@@ -19,6 +19,7 @@ import { ContactChangeService } from './contact-change.service';
 import { IdentityChangesController } from './identity-changes.controller';
 import { IdentityChangesService } from './identity-changes.service';
 import { SelfContactController } from './self-contact.controller';
+import { IdentityInboxItems } from './identity-inbox-items';
 
 @Module({
   imports: [AuthModule, ObjectStorageModule],
@@ -41,6 +42,7 @@ import { SelfContactController } from './self-contact.controller';
     NotMeService,
     ContactChangeService,
     IdentityChangesService,
+    IdentityInboxItems,
   ],
   exports: [
     AccountWriter,

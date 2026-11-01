@@ -2724,6 +2724,18 @@ export const NOTIFICATION_KINDS = {
     target: 'market_listing',
     params: { listingKind: {} },
   },
+  /**
+   * An item in the staff inbox passed its due time (ADR 0073): to whoever
+   * decides its type, once per item. `targetId` is the item's own id in
+   * its domain; `itemType` says which (an inbox type).
+   */
+  'staff_inbox.overdue': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'inbox_item',
+    params: { itemType: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

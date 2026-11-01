@@ -15585,6 +15585,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/inbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List what waits for my decision, oldest first
+         * @description Only the types whose permission the caller holds. `authority.decider` is `board` above the type’s threshold (ADR 0055).
+         */
+        get: operations["StaffInboxController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/inbox/bulk-approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve several items whose approval takes no input
+         * @description Each through its own domain’s approval, one at a time; one refused leaves the others (`outcome: failed` with its code). A type that takes input is INVALID_VALUE on `items[i].type`.
+         */
+        post: operations["StaffInboxController_bulkApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/inbox/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Count what waits for me, and what is overdue */
+        get: operations["StaffInboxController_count"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/inbox/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read every type’s due time */
+        get: operations["StaffInboxController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change some types’ due times */
+        patch: operations["StaffInboxController_updateSettings"];
+        trace?: never;
+    };
     "/api/v1/staff/instalment-plans": {
         parameters: {
             query?: never;
@@ -24211,6 +24286,27 @@ export interface components {
             /** @description The buildings the compound’s units name, in order. */
             buildings: string[];
         };
+        BulkApproveDto: {
+            items: components["schemas"]["BulkItemDto"][];
+        };
+        BulkItemDto: {
+            /** Format: uuid */
+            id: string;
+            type: components["schemas"]["InboxType"];
+        };
+        BulkOutcomeView: {
+            /** @description Why it failed: the error code its own route answers. */
+            code: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            outcome: "approved" | "failed";
+            type: components["schemas"]["InboxType"];
+        };
+        BulkOutcomeViewList: {
+            data: components["schemas"]["BulkOutcomeView"][];
+            nextCursor: string | null;
+        };
         BundleKeyView: {
             /** @description Signs new bundles. */
             current: boolean;
@@ -31255,6 +31351,71 @@ export interface components {
         };
         ImplementedApprovalDto: {
             note?: string;
+        };
+        InboxAuthorityView: {
+            /**
+             * @description `board`: the amount is above the limit, so it goes to the board as an approval request (ADR 0055).
+             * @enum {string}
+             */
+            decider: "manager" | "board";
+            /** @description The board’s threshold for the type (EGP); null: the compound set none. */
+            limit: string | null;
+        };
+        InboxCountView: {
+            overdue: number;
+            total: number;
+            /** @description The types the caller decides, in a fixed order. */
+            types: components["schemas"]["InboxTypeCountView"][];
+        };
+        InboxDueHoursDto: {
+            /** @description Hours from when an item starts waiting to when it is overdue; null goes back to the default. */
+            dueHours: number | null;
+            type: components["schemas"]["InboxType"];
+        };
+        InboxItemView: {
+            /** @description EGP at stake, for a type with a threshold. */
+            amount: string | null;
+            authority: components["schemas"]["InboxAuthorityView"] | null;
+            /** @description Its approval takes no input: a bulk approval may take it. */
+            bulk: boolean;
+            /** Format: date-time */
+            dueAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description What it is within its type (a permit’s kind), a code. */
+            kind: string | null;
+            /** @description Its reference, as its domain shows it. */
+            number: string | null;
+            overdue: boolean;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @description Its domain’s pending status. */
+            status: string;
+            type: components["schemas"]["InboxType"];
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        InboxItemViewList: {
+            data: components["schemas"]["InboxItemView"][];
+            nextCursor: string | null;
+        };
+        InboxSettingView: {
+            /** @description The compound set its own due time. */
+            custom: boolean;
+            defaultDueHours: number;
+            dueHours: number;
+            type: components["schemas"]["InboxType"];
+        };
+        InboxSettingViewList: {
+            data: components["schemas"]["InboxSettingView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request";
+        InboxTypeCountView: {
+            overdue: number;
+            total: number;
+            type: components["schemas"]["InboxType"];
         };
         IncidentAcknowledgementView: {
             account: components["schemas"]["AccountRefView"];
@@ -42968,6 +43129,9 @@ export interface components {
             active?: boolean;
             label?: string;
             position?: number;
+        };
+        UpdateInboxSettingsDto: {
+            items: components["schemas"]["InboxDueHoursDto"][];
         };
         UpdateItemDto: {
             /** Format: date */
@@ -67631,6 +67795,117 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    StaffInboxController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description One type only. */
+                type?: components["schemas"]["InboxType"];
+                /** @description `true`: only what is past its due time. */
+                overdue?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxItemViewList"];
+                };
+            };
+        };
+    };
+    StaffInboxController_bulkApprove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkApproveDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkOutcomeViewList"];
+                };
+            };
+        };
+    };
+    StaffInboxController_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxCountView"];
+                };
+            };
+        };
+    };
+    StaffInboxController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxSettingViewList"];
+                };
+            };
+        };
+    };
+    StaffInboxController_updateSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInboxSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxSettingViewList"];
+                };
             };
         };
     };

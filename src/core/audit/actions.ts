@@ -2213,6 +2213,8 @@ export const AUDIT_ACTIONS = {
   // Its day passed (the sweep, or a new listing of its unit). metadata: kind.
   'market_listing.expired': { log: 'tenant', target: 'market_listing' },
   'market.settings_changed': { log: 'tenant', target: 'tenant' },
+  // A compound's due times in the staff inbox (ADR 0073): `<type>.dueHours`.
+  'staff_inbox.settings_changed': { log: 'tenant', target: 'tenant' },
   // A partner's offer (ADR 0071). metadata: partnerId, and its days when
   // published.
   'partner_offer.published': { log: 'tenant', target: 'partner_offer' },

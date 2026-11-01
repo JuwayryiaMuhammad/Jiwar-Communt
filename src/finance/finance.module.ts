@@ -109,6 +109,7 @@ import {
 } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 import { FinanceMoveSteps } from './clearances/finance-move-steps';
+import { FinanceInboxItems } from './finance-inbox-items';
 
 /**
  * Finance (ADR 0046, 0048, 0055): invoices per unit, recurring billing,
@@ -165,6 +166,7 @@ import { FinanceMoveSteps } from './clearances/finance-move-steps';
     ClearancesService,
     ClearancePageService,
     DepositsService,
+    FinanceInboxItems,
     FinanceMoveSteps,
     FinanceProvisioning,
     FinanceAccess,

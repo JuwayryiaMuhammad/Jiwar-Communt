@@ -17,6 +17,7 @@ import {
   TECHNICIAN_METER_ROUTES,
 } from './energy';
 import { MARKET_ROUTES } from './market';
+import { STAFF_INBOX_ROUTES } from './staff-inbox';
 import { READINESS_ROUTES } from './readiness';
 import { FACILITY_BAN_ROUTES } from './facility-bans';
 import { FIELD_SAFETY_ROUTES } from './field-safety';
@@ -415,4 +416,6 @@ export const ROUTES: Row[] = [
   ...HOUSEHOLD_CONSUMPTION_ROUTES,
   // ADR 0071.
   ...MARKET_ROUTES,
+  // ADR 0073.
+  ...STAFF_INBOX_ROUTES,
 ];

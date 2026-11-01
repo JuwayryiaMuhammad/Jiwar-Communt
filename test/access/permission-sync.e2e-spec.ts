@@ -730,6 +730,7 @@ describe('Permission sync', () => {
       'finance.reports',
       'fines.billing',
       'governance.approvals',
+      'inbox.read',
     ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
@@ -797,6 +798,7 @@ describe('Permission sync', () => {
       'finance.payments',
       'finance.reports',
       'governance.approvals',
+      'inbox.read',
     ]);
 
     const report = await sync(base, t);
@@ -811,6 +813,7 @@ describe('Permission sync', () => {
       'finance.reports',
       'fines.billing',
       'governance.approvals',
+      'inbox.read',
     ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
@@ -1016,6 +1019,7 @@ describe('Permission sync', () => {
       'assets.read',
       'energy.manage',
       'energy.read',
+      'inbox.read',
       'inspections.manage',
       'meters.record',
       'readiness.manage',
@@ -1401,6 +1405,7 @@ describe('Permission sync', () => {
         'guard_reports.read',
         'guard_roster.manage',
         'guard_tasks.manage',
+        'inbox.read',
         'incidents.manage',
         'patrols.manage',
         'units.directory',
@@ -2485,6 +2490,62 @@ describe('Permission sync', () => {
         'unit_proxy',
       ])
         expect((await role(t, key)).permissions).not.toContain('units.manage');
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M2-3 (ADR 0073)', () => {
+    const m23 = ['inbox.read'];
+    /** The catalog before M2-3: no inbox permission anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m23.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m23.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: inbox.read to the manager, the supervisors and the accountant; no other role gains it', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M2-3 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m23].sort());
+      expect(report.rolesCreated).toEqual([]);
+      for (const key of [
+        'manager',
+        'security_supervisor',
+        'maintenance_supervisor',
+        'accountant',
+      ])
+        expect((await role(t, key)).permissions).toContain('inbox.read');
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'technician',
+        'collector',
+        'unit_proxy',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => m23.includes(p)),
+        ).toEqual([]);
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

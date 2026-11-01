@@ -6422,6 +6422,95 @@
         ],
         "type": "object"
       },
+      "BulkApproveDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BulkItemDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "BulkItemDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "BulkOutcomeView": {
+        "properties": {
+          "code": {
+            "description": "Why it failed: the error code its own route answers.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "approved",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "outcome",
+          "code"
+        ],
+        "type": "object"
+      },
+      "BulkOutcomeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BulkOutcomeView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BundleKeyView": {
         "properties": {
           "current": {
@@ -28372,6 +28461,258 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "InboxAuthorityView": {
+        "properties": {
+          "decider": {
+            "description": "`board`: the amount is above the limit, so it goes to the board as an approval request (ADR 0055).",
+            "enum": [
+              "manager",
+              "board"
+            ],
+            "type": "string"
+          },
+          "limit": {
+            "description": "The board’s threshold for the type (EGP); null: the compound set none.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "decider"
+        ],
+        "type": "object"
+      },
+      "InboxCountView": {
+        "properties": {
+          "overdue": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "types": {
+            "description": "The types the caller decides, in a fixed order.",
+            "items": {
+              "$ref": "#/components/schemas/InboxTypeCountView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "total",
+          "overdue",
+          "types"
+        ],
+        "type": "object"
+      },
+      "InboxDueHoursDto": {
+        "properties": {
+          "dueHours": {
+            "description": "Hours from when an item starts waiting to when it is overdue; null goes back to the default.",
+            "maximum": 720,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "dueHours"
+        ],
+        "type": "object"
+      },
+      "InboxItemView": {
+        "properties": {
+          "amount": {
+            "description": "EGP at stake, for a type with a threshold.",
+            "nullable": true,
+            "type": "string"
+          },
+          "authority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxAuthorityView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "bulk": {
+            "description": "Its approval takes no input: a bulk approval may take it.",
+            "type": "boolean"
+          },
+          "dueAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "description": "What it is within its type (a permit’s kind), a code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "description": "Its reference, as its domain shows it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "overdue": {
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "Its domain’s pending status.",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxType"
+              }
+            ]
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "number",
+          "kind",
+          "status",
+          "unitId",
+          "requestedAt",
+          "dueAt",
+          "overdue",
+          "amount",
+          "authority",
+          "bulk"
+        ],
+        "type": "object"
+      },
+      "InboxItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InboxItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "InboxSettingView": {
+        "properties": {
+          "custom": {
+            "description": "The compound set its own due time.",
+            "type": "boolean"
+          },
+          "defaultDueHours": {
+            "type": "number"
+          },
+          "dueHours": {
+            "type": "number"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "dueHours",
+          "defaultDueHours",
+          "custom"
+        ],
+        "type": "object"
+      },
+      "InboxSettingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InboxSettingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "InboxType": {
+        "enum": [
+          "registration",
+          "identity_change",
+          "worker_engagement",
+          "vehicle",
+          "booking",
+          "unit_permit",
+          "work_permit",
+          "field_exception",
+          "plan_request",
+          "invoice_dispute",
+          "decision_appeal",
+          "management_request"
+        ],
+        "type": "string"
+      },
+      "InboxTypeCountView": {
+        "properties": {
+          "overdue": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "total",
+          "overdue"
+        ],
         "type": "object"
       },
       "IncidentAcknowledgementView": {
@@ -66635,6 +66976,22 @@
             "type": "number"
           }
         },
+        "type": "object"
+      },
+      "UpdateInboxSettingsDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InboxDueHoursDto"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
         "type": "object"
       },
       "UpdateItemDto": {
@@ -115055,6 +115412,214 @@
         "summary": "End the interest phase now: open it",
         "tags": [
           "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/inbox": {
+      "get": {
+        "description": "Only the types whose permission the caller holds. `authority.decider` is `board` above the type’s threshold (ADR 0055).",
+        "operationId": "StaffInboxController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "One type only.",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InboxType"
+            }
+          },
+          {
+            "description": "`true`: only what is past its due time.",
+            "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List what waits for my decision, oldest first",
+        "tags": [
+          "staff"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/inbox/bulk-approve": {
+      "post": {
+        "description": "Each through its own domain’s approval, one at a time; one refused leaves the others (`outcome: failed` with its code). A type that takes input is INVALID_VALUE on `items[i].type`.",
+        "operationId": "StaffInboxController_bulkApprove",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkApproveDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkOutcomeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve several items whose approval takes no input",
+        "tags": [
+          "staff"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/inbox/count": {
+      "get": {
+        "operationId": "StaffInboxController_count",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxCountView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Count what waits for me, and what is overdue",
+        "tags": [
+          "staff"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/inbox/settings": {
+      "get": {
+        "operationId": "StaffInboxController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxSettingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read every type’s due time",
+        "tags": [
+          "staff"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StaffInboxController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInboxSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxSettingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change some types’ due times",
+        "tags": [
+          "staff"
         ],
         "x-no-store": true,
         "x-stability": "draft"

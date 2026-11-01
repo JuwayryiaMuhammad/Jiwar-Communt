@@ -46538,6 +46538,171 @@
     {
       "item": [
         {
+          "name": "List what waits for my decision, oldest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "inbox"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "One type only.",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only what is past its due time.",
+                  "disabled": true,
+                  "key": "overdue",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/inbox"
+            }
+          }
+        },
+        {
+          "name": "Approve several items whose approval takes no input",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"items\": [\n    {\n      \"type\": \"registration\",\n      \"id\": \"\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "inbox",
+                "bulk-approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/inbox/bulk-approve"
+            }
+          }
+        },
+        {
+          "name": "Count what waits for me, and what is overdue",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "inbox",
+                "count"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/inbox/count"
+            }
+          }
+        },
+        {
+          "name": "Read every type’s due time",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "inbox",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/inbox/settings"
+            }
+          }
+        },
+        {
+          "name": "Change some types’ due times",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"items\": [\n    {\n      \"type\": \"registration\",\n      \"dueHours\": 1\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "inbox",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/inbox/settings"
+            }
+          }
+        }
+      ],
+      "name": "staff"
+    },
+    {
+      "item": [
+        {
           "name": "Get my availability",
           "request": {
             "description": "**Responses:** 200",

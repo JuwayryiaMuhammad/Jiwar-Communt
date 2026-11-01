@@ -594,6 +594,8 @@ model Tenant {
   bookingWaitlistEntries       BookingWaitlistEntry[]
   facilityNightLocks           FacilityNightLock[]
   marketSettings         MarketSettings?
+  staffInboxDueHours     StaffInboxDueHours[]
+  staffInboxOverdue      StaffInboxOverdue[]
   marketListings         MarketListing[]
   marketShops            MarketShop[]
   marketListingReports   MarketListingReport[]
@@ -11892,4 +11894,31 @@ model GalleryPhotoReport {
   @@unique([tenantId, id])
   @@unique([tenantId, photoId, reporterId], map: "gallery_photo_reports_one_per_reporter")
   @@map("gallery_photo_reports")
+}
+
+/// A compound's own due time for a staff inbox type (ADR 0073); no row:
+/// the code's default.
+model StaffInboxDueHours {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  type      String
+  hours     Int
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, type])
+  @@map("staff_inbox_due_hours")
+}
+
+/// An overdue inbox item whose deciders were told, once ever (ADR 0073).
+model StaffInboxOverdue {
+  tenantId   String   @map("tenant_id") @db.Uuid
+  type       String
+  itemId     String   @map("item_id") @db.Uuid
+  notifiedAt DateTime @map("notified_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, type, itemId])
+  @@map("staff_inbox_overdue")
 }

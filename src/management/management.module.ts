@@ -49,6 +49,7 @@ import {
 } from './topics/topics.controller';
 import { TopicsService } from './topics/topics.service';
 import { UtilitiesMoveStep } from './requests/utilities-move-step';
+import { ManagementInboxItems } from './management-inbox-items';
 
 /**
  * Requests to the management (ADR 0039), and the appeals of staff
@@ -79,6 +80,7 @@ import { UtilitiesMoveStep } from './requests/utilities-move-step';
     ManagementPartnersPort,
     ManagementProvisioning,
     TopicsService,
+    ManagementInboxItems,
     RequestSettingsService,
     OfficeHoursService,
     RequestAccess,

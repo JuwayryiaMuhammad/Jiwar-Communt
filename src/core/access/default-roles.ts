@@ -105,6 +105,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'partners.manage',
       'appeals.decide',
       'market.handle',
+      'inbox.read',
     ],
   },
   {
@@ -196,6 +197,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'units.directory',
       // The control room's channel (ADR 0068).
       'control_room.watch',
+      'inbox.read',
     ],
   },
   {
@@ -232,6 +234,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'meters.record',
       'readiness.manage',
       'safety.manage',
+      'inbox.read',
     ],
   },
   {
@@ -254,6 +257,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.reports',
       'governance.approvals',
       'finance.budget',
+      'inbox.read',
     ],
   },
   {

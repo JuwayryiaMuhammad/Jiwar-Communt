@@ -994,3 +994,9 @@ export const M21_COVERAGE: readonly string[] = [
   'unit_import.applied',
   'unit_import.expired',
 ];
+
+/**
+ * The staff inbox, the board's authority and the deputies (ADR 0073),
+ * covered by test/m23/audit-coverage.e2e-spec.ts.
+ */
+export const M23_COVERAGE: readonly string[] = ['staff_inbox.settings_changed'];

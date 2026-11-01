@@ -64,6 +64,7 @@ import {
 import { FacilityBansService } from './bans/bans.service';
 import { FacilityUsageController } from './usage/usage.controller';
 import { FacilityUsageService } from './usage/usage.service';
+import { BookingInboxItems } from './bookings/booking-inbox-items';
 
 /**
  * Facilities and bookings, the club (ADR 0044). Reads community through
@@ -100,6 +101,7 @@ import { FacilityUsageService } from './usage/usage.service';
   providers: [
     FacilityBusy,
     ResidentBookingItems,
+    BookingInboxItems,
     FacilitiesAccess,
     SuspensionBoardAppeals,
     FacilitiesService,

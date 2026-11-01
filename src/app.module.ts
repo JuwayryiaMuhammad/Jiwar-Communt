@@ -34,6 +34,7 @@ import { ChargesModule } from './core/charges/charges.module';
 import { DecisionAppealsModule } from './core/decision-appeals/decision-appeals.module';
 import { ResidentItemsModule } from './core/resident-items/resident-items.module';
 import { StaffSearchModule } from './core/staff-search/staff-search.module';
+import { StaffInboxModule } from './core/staff-inbox/staff-inbox.module';
 import { MoveStepsModule } from './core/moves/move-steps.module';
 import { WorksCompletionsModule } from './core/works/works-completions.module';
 import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
@@ -127,6 +128,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     DecisionAppealsModule,
     ResidentItemsModule,
     StaffSearchModule,
+    StaffInboxModule,
     MoveStepsModule,
     WorksCompletionsModule,
     FormalNoticesModule,

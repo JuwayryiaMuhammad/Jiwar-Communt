@@ -196,6 +196,7 @@ import {
   TechnicianStatsController,
 } from './economics/technician-stats.controller';
 import { TechnicianStatsService } from './economics/technician-stats.service';
+import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -357,6 +358,7 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     ReadinessSweep,
     CampaignsService,
     WorkPermitsService,
+    WorkPermitInboxItems,
     SafetyInstructionsService,
     WorkHazardsService,
     ResidentOutageSummary,

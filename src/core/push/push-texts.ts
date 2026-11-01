@@ -2974,6 +2974,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'سيُزال إعلانك من السوق بعد يومين.',
     },
   },
+  'staff_inbox.overdue': {
+    en: {
+      title: 'Something waits past its time',
+      body: 'An item in your inbox passed its due time. Open the inbox to decide it.',
+    },
+    ar: {
+      title: 'طلب تجاوز موعده',
+      body: 'عنصر في صندوقك تجاوز موعد قراره. افتح الصندوق لتقرر.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

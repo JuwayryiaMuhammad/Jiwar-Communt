@@ -2639,6 +2639,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   unit_imports_counts_range: {},
   unit_imports_state_shape: {},
   unit_imports_file_kept: {},
+  // The staff inbox (ADR 0073).
+  staff_inbox_due_hours_type: {},
+  staff_inbox_due_hours_range: {},
+  staff_inbox_overdue_type: {},
 };
 
 interface Check {

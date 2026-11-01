@@ -1,4 +1,5 @@
 import { VisitorPassNotices } from './visitors/pass-notices';
+import { GateInboxItems } from './gate-inbox-items';
 import { ResidentGateItems } from './resident-gate-items';
 import { Module } from '@nestjs/common';
 import { GatePartnersPort } from './gate-partners-port';
@@ -488,6 +489,7 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
   ],
   providers: [
     ResidentGateItems,
+    GateInboxItems,
     FineBoardAppeals,
     ViolationBoardAppeals,
     PermitDecisionAppeals,

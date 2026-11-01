@@ -312,6 +312,10 @@ export const PERMISSIONS = {
   // runs the group offers.
   'market.post': { kinds: ['resident', 'family'] },
   'market.handle': { kinds: ['staff', 'manager'] },
+  // The staff inbox (ADR 0073): one queue over what waits for a decision.
+  // It opens the queue only; each type shows to its own permission's
+  // holders, and each decision is its domain's.
+  'inbox.read': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

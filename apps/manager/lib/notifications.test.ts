@@ -395,3 +395,11 @@ test('a reported listing opens the market’s review, a reported photo the galle
   assert.equal(notificationHref(n('gallery_photo.reported', { reason: 'privacy' }, 'gallery_photo', 'x'), all), '/daily-life');
   assert.equal(notificationHref(n('gallery_photo.reported', { reason: 'privacy' }, 'gallery_photo', 'x'), () => false), null);
 });
+
+test('an overdue inbox item opens the inbox, a deputyship the deputy page (ADR 0073)', () => {
+  const all = () => true;
+  assert.equal(notificationHref(n('staff_inbox.overdue', { itemType: 'vehicle' }, 'inbox_item', 'x'), all), '/inbox');
+  assert.equal(notificationHref(n('staff_inbox.overdue', { itemType: 'vehicle' }, 'inbox_item', 'x'), () => false), null);
+  assert.equal(notificationHref(n('deputy.appointed', { permissions: 2 }, 'account_deputy', 'x'), () => false), '/deputies');
+  assert.equal(notificationText(n('deputy.appointed', { permissions: 2 }, 'account_deputy', 'x')), 'You are a deputy: 2 permission(s) are yours until it ends');
+});

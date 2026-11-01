@@ -278,7 +278,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const groups: { label?: string; items: GatedItem[] }[] = [
     {
       // The overview mixes every area's queues: the manager's own page.
-      items: [{ href: '/', label: 'Overview', icon: <LayoutDashboard aria-hidden />, exact: true, show: isManager }],
+      items: [
+        { href: '/', label: 'Overview', icon: <LayoutDashboard aria-hidden />, exact: true, show: isManager },
+        // What waits for my decision, across the compound (ADR 0073).
+        { href: '/inbox', label: 'Inbox', icon: <Inbox aria-hidden />, show: can('inbox.read') },
+      ],
     },
     {
       label: 'Community',
@@ -642,6 +646,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       items: [
         { href: '/roles', label: 'Roles', icon: <ShieldCheck aria-hidden />, show: can('roles.read') },
         { href: '/settings', label: 'Settings', icon: <Settings aria-hidden />, show: can('settings.manage') },
+        // Who decides in my place while I am away (ADR 0073).
+        { href: '/deputies', label: 'Deputy', icon: <ShieldCheck aria-hidden />, show: can('deputies.manage') },
         {
           href: '/maintenance-setup',
           label: 'Maintenance setup',

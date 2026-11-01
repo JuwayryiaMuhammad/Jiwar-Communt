@@ -67,6 +67,8 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'neighbours.manage': 'Set up complaint categories, the boards’ limits and the welcome for new households',
   'market.post': 'List things to sell, give, want or offer, an owned unit to sell or let, and run a small shop',
   'market.handle': 'Review market listings and shops, work their reports, and run group offers',
+  'inbox.read': 'Open the inbox of what waits for a decision, each type by its own permission',
+  'deputies.manage': 'Name a deputy who decides in your place for up to 30 days',
   'facilities.book': 'See the facilities and book them for a unit',
   'facilities.manage': 'Set up facilities, their rules, opening hours, peak times and closures, and the club’s plans',
   'bookings.handle': 'Approve and cancel bookings, mark no-shows, lift suspensions',

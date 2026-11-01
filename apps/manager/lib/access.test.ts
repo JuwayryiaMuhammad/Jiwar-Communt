@@ -121,5 +121,6 @@ test('a role that decides residents’ appeals of staff decisions enters (ADR 00
 
 test('a role that handles the market enters; a resident who posts on it does not (ADR 0071)', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['market.handle'] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['inbox.read'] }), true);
   assert.equal(mayEnter({ type: 'resident', permissions: ['market.post'] }), false);
 });

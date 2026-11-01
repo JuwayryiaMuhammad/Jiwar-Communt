@@ -72,6 +72,8 @@ export const ENTRY_PERMISSIONS = [
   'appeals.decide',
   // The market's review, reports, shops and group offers (ADR 0071).
   'market.handle',
+  // The staff inbox (ADR 0073).
+  'inbox.read',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

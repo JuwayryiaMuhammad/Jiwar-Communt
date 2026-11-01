@@ -1,6 +1,7 @@
 import { residentReporter } from './ticket-visibility';
 import { Injectable } from '@nestjs/common';
 import type { Ticket, TicketHoldReason, TicketStatus } from '@prisma/client';
+import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
@@ -46,6 +47,7 @@ export class WorkService {
     private readonly log: TicketLog,
     private readonly notices: TicketNotices,
     private readonly engine: DispatchEngine,
+    private readonly audit: AuditService,
   ) {}
 
   private readonly completing: CompletionHook[] = [];
@@ -78,6 +80,47 @@ export class WorkService {
 
   resume(id: string): Promise<void> {
     return this.move(id, 'resume', 'in_progress');
+  }
+
+  /**
+   * Dispatch resumes a ticket on hold (ADR 0076): the parts came, the
+   * residents are home again. The work goes back in progress in the hands
+   * of the technician who holds it, under the same gates as their own
+   * resume (a permit in force, the safety instructions acknowledged: theirs,
+   * ADR 0067); they and the residents are told. Audited.
+   */
+  resumeByStaff(id: string): Promise<void> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const ticket = await this.access.load(tx, id, 'dispatch', {
+        lock: true,
+      });
+      assertCan(ticket, 'resume');
+      await this.moveInTx(
+        tx,
+        ticket,
+        'in_progress',
+        null,
+        ticket.technicianId!,
+      );
+      await this.audit.record(tx, {
+        action: 'ticket.resumed_by_staff',
+        targetId: id,
+        metadata: {
+          origin: ticket.origin,
+          holdReason: ticket.holdReason,
+          cycle: ticket.cycle,
+        },
+      });
+      await this.notices.send(
+        tx,
+        [ticket.technicianId],
+        'ticket.status_changed',
+        ticket,
+        { status: 'in_progress' },
+        this.ctx.accountId,
+      );
+    });
   }
 
   /**
@@ -189,6 +232,8 @@ export class WorkService {
     ticket: Ticket,
     to: TicketStatus,
     holdReason: TicketHoldReason | null = null,
+    /** Whose safety acknowledgement the start needs: the doer's (ADR 0067). */
+    worker: string = this.ctx.accountId,
   ): Promise<void> {
     const me = this.ctx.accountId;
     const now = new Date();
@@ -204,7 +249,7 @@ export class WorkService {
       to === 'in_progress' &&
       (NOT_STARTED.includes(ticket.status) || ticket.status === 'on_hold')
     )
-      await assertSafeToStart(tx, ticket, me);
+      await assertSafeToStart(tx, ticket, worker);
     await tx.ticket.update({
       where: { id: ticket.id },
       data: {

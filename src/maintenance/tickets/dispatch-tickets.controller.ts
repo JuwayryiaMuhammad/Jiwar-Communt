@@ -52,6 +52,7 @@ import {
 import { SlaService } from '../sla/sla.service';
 import { SlaEventView } from '../sla/views/sla.views';
 import { TicketsService } from './tickets.service';
+import { WorkService } from './work.service';
 import {
   AssignmentView,
   DispatchTicketDetailView,
@@ -75,6 +76,7 @@ export class DispatchTicketsController {
     private readonly confirmation: ConfirmationService,
     private readonly messages: MessagesService,
     private readonly sla: SlaService,
+    private readonly work: WorkService,
   ) {}
 
   @Get()
@@ -243,6 +245,46 @@ export class DispatchTicketsController {
     @Body() dto: ReasonCodeDto,
   ): Promise<void> {
     return this.confirmation.cancelByDispatcher(id, dto.reasonCode);
+  }
+
+  /**
+   * A resident's completed ticket closed on their behalf (ADR 0076):
+   * `reasonCode` from `ticketStaffClose`. The residents are told and may
+   * still reopen it in their window.
+   */
+  @Post(':id/close')
+  @ApiOperation({ summary: 'Close a resident’s completed ticket for them' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  close(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonCodeDto,
+  ): Promise<void> {
+    return this.confirmation.closeByStaff(id, dto.reasonCode);
+  }
+
+  /**
+   * A closed ticket reopened by dispatch within 30 days of closing (ADR
+   * 0076): `reasonCode` from `ticketReopen`; `reason` goes to the thread.
+   */
+  @Post(':id/reopen')
+  @ApiOperation({ summary: 'Reopen a closed ticket' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  reopen(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonDto,
+  ): Promise<void> {
+    return this.confirmation.reopenByStaff(id, reasonOf(dto));
+  }
+
+  /** A ticket on hold back in progress, in its technician's hands (ADR 0076). */
+  @Post(':id/resume')
+  @ApiOperation({ summary: 'Resume a ticket on hold' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  resume(@Param('id', parseId()) id: string): Promise<void> {
+    return this.work.resumeByStaff(id);
   }
 
   /** A completed work order of the compound's, done well (ADR 0064). */

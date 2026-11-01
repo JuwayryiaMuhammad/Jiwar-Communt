@@ -35,4 +35,45 @@ export const DISPATCH_DEPTH_ROUTES: Row[] = [
       ],
     },
   },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/close',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({ reasonCode: 'confirmed_by_phone' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: ['x'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/reopen',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({ reasonCode: 'not_fixed', reason: 'Still leaking' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: ['x'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/resume',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: { params: (w) => ({ id: w.bTicketId }), code: 'TICKET_NOT_FOUND' },
+    invalid: 'none',
+  },
 ];

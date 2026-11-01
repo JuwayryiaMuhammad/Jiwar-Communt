@@ -7828,6 +7828,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a resident’s completed ticket for them */
+        post: operations["DispatchTicketsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/costs": {
         parameters: {
             query?: never;
@@ -8012,6 +8029,40 @@ export interface paths {
         put?: never;
         /** Reassign a ticket to another technician */
         post: operations["DispatchTicketsController_reassign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen a closed ticket */
+        post: operations["DispatchTicketsController_reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume a ticket on hold */
+        post: operations["DispatchTicketsController_resume"];
         delete?: never;
         options?: never;
         head?: never;
@@ -42276,7 +42327,7 @@ export interface components {
             note: string | null;
         };
         /** @enum {string} */
-        TicketConfirmationStatus: "pending" | "confirmed" | "rejected" | "auto_closed";
+        TicketConfirmationStatus: "pending" | "confirmed" | "rejected" | "auto_closed" | "closed_by_staff";
         TicketCostEntryView: {
             /** @description EGP: quantity × unit amount. */
             amount: string;
@@ -56416,6 +56467,29 @@ export interface operations {
             };
         };
     };
+    DispatchTicketsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     TicketCostsController_list: {
         parameters: {
             query?: never;
@@ -56729,6 +56803,48 @@ export interface operations {
                 "application/json": components["schemas"]["ReassignDto"];
             };
         };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DispatchTicketsController_reopen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DispatchTicketsController_resume: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             204: {
                 headers: {

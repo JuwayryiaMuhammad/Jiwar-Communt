@@ -31,6 +31,8 @@ const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 /** Tickets one sweep run closes per compound. */
 const SWEEP_BATCH = 500;
+/** How long after closing dispatch may still reopen a ticket (ADR 0076). */
+export const STAFF_REOPEN_DAYS = 30;
 
 /**
  * The end of a ticket (ADR 0032): the reporter confirms (a rating, a
@@ -244,6 +246,115 @@ export class ConfirmationService implements OnModuleInit {
           cycle: ticket.cycle,
         },
       });
+      return back;
+    });
+    if (requeued) await this.engine.afterRelease([id]);
+  }
+
+  /**
+   * Dispatch closes a resident's completed ticket on their behalf (ADR
+   * 0076): they confirmed by phone, could not be reached, left the compound.
+   * Closed `closed_by_staff`, the reason code in its history, the residents
+   * told (they may still reopen it in their window) and the technician too.
+   * No rating: that is the residents' word. A compound's work order is
+   * accepted instead: TICKET_NOT_RESIDENTS.
+   */
+  closeByStaff(id: string, reasonCode?: string): Promise<void> {
+    const code = requireReasonCodeOnly(
+      reasonCode,
+      REASON_CODES.ticketStaffClose,
+    );
+    const me = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const ticket = await this.access.load(tx, id, 'dispatch', {
+        lock: true,
+      });
+      if (ticket.origin !== 'resident')
+        throw appError.conflict(
+          ErrorCode.TICKET_NOT_RESIDENTS,
+          'A work order of the compound’s is accepted instead',
+        );
+      assertCan(ticket, 'confirm');
+      await tx.ticket.update({
+        where: { id },
+        data: {
+          status: 'closed',
+          confirmationStatus: 'closed_by_staff',
+          closedAt: await dbNow(tx),
+        },
+      });
+      await this.log.status(tx, ticket, {
+        from: ticket.status,
+        to: 'closed',
+        actorId: me,
+        reasonCode: code,
+        cycle: ticket.cycle,
+      });
+      await this.audit.record(tx, {
+        action: 'ticket.closed_by_staff',
+        targetId: id,
+        metadata: { reasonCode: code, cycle: ticket.cycle },
+      });
+      await this.notices.send(
+        tx,
+        [residentReporter(ticket)],
+        'ticket.closed_by_staff',
+        ticket,
+      );
+      await this.notices.send(
+        tx,
+        [ticket.technicianId],
+        'ticket.status_changed',
+        ticket,
+        { status: 'closed' },
+        me,
+      );
+    });
+  }
+
+  /**
+   * Dispatch reopens a closed ticket (ADR 0076): the problem came back and
+   * the residents said so by phone, or a work order was closed too soon.
+   * Within `STAFF_REOPEN_DAYS` of closing, whatever the residents' own
+   * window; the same path as a resident's reopen (`cycle + 1`, back to the
+   * technician the first time, to the queue after), the reason's words in
+   * the thread, and the residents told.
+   */
+  async reopenByStaff(id: string, reason: ReasonInput): Promise<void> {
+    const r = requireReasonCode(reason, REASON_CODES.ticketReopen);
+    const requeued = await this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const ticket = await this.access.load(tx, id, 'dispatch', {
+        lock: true,
+      });
+      assertCan(ticket, 'reopen');
+      const now = await dbNow(tx);
+      if (now.getTime() > ticket.closedAt!.getTime() + STAFF_REOPEN_DAYS * DAY)
+        throw appError.conflict(
+          ErrorCode.TICKET_REOPEN_WINDOW_PASSED,
+          'Too late to reopen; open a new ticket',
+          { params: { reopenDays: STAFF_REOPEN_DAYS } },
+        );
+      const back = await this.goBack(tx, ticket, 'reopened', r);
+      await this.audit.record(tx, {
+        action: 'ticket.reopened_by_staff',
+        targetId: id,
+        metadata: {
+          origin: ticket.origin,
+          reasonCode: r.code,
+          cycle: ticket.cycle + 1,
+        },
+      });
+      const after = await tx.ticket.findUniqueOrThrow({ where: { id } });
+      await this.notices.send(
+        tx,
+        [residentReporter(ticket)],
+        'ticket.status_changed',
+        after,
+        { status: after.status },
+        this.ctx.accountId,
+      );
       return back;
     });
     if (requeued) await this.engine.afterRelease([id]);

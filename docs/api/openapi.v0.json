@@ -63816,7 +63816,8 @@
           "pending",
           "confirmed",
           "rejected",
-          "auto_closed"
+          "auto_closed",
+          "closed_by_staff"
         ],
         "type": "string"
       },
@@ -93592,6 +93593,46 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/tickets/{id}/close": {
+      "post": {
+        "operationId": "DispatchTicketsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a resident’s completed ticket for them",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/tickets/{id}/costs": {
       "get": {
         "operationId": "TicketCostsController_list",
@@ -94182,6 +94223,76 @@
           }
         ],
         "summary": "Reassign a ticket to another technician",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/reopen": {
+      "post": {
+        "operationId": "DispatchTicketsController_reopen",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reopen a closed ticket",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/resume": {
+      "post": {
+        "operationId": "DispatchTicketsController_resume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resume a ticket on hold",
         "tags": [
           "maintenance"
         ],

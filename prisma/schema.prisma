@@ -3658,6 +3658,9 @@ enum TicketConfirmationStatus {
   confirmed
   rejected
   auto_closed
+  /// ADR 0076: dispatch closed a resident's completed ticket on their behalf
+  /// (a reason code in the status history).
+  closed_by_staff
 
   @@map("ticket_confirmation_status")
 }

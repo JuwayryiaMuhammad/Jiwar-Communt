@@ -23,11 +23,15 @@ const requests = read(
   'prisma/migrations/20261102090300_governance_approval_requests/migration.sql',
 );
 /**
- * ADR 0082 widened the types (`compensation_above_limit`): the newest
- * migration that sets each CHECK is the one the lists match.
+ * ADR 0082 widened the types (`compensation_above_limit`), then ADR 0075
+ * (`manager_handover_override`): the newest migration that sets each CHECK
+ * is the one the lists match; the backfills are in each one's own.
  */
-const authority = read(
+const authority = `${read(
   'prisma/migrations/20270406090200_compensation_authority/migration.sql',
+)} ${read('prisma/migrations/20270518090610_handover_approval_type/migration.sql')}`;
+const latest = read(
+  'prisma/migrations/20270518090610_handover_approval_type/migration.sql',
 );
 const mirror = read('packages/api/src/reasons.ts');
 const quoted = (list: readonly string[]) =>
@@ -35,8 +39,8 @@ const quoted = (list: readonly string[]) =>
 
 describe('board matters’ lists (ADR 0055)', () => {
   it('the approval types and the settings’ rows are the CHECKs’', () => {
-    expect(authority).toContain(`"type" IN (${quoted(APPROVAL_TYPES)})`);
-    expect(authority).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
+    expect(latest).toContain(`"type" IN (${quoted(APPROVAL_TYPES)})`);
+    expect(latest).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
     expect(authority).toContain(`"type" IN (${quoted(THRESHOLD_TYPES)})`);
   });
 

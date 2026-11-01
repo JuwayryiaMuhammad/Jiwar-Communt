@@ -32,6 +32,7 @@ import { ExpensesService } from './budgets/expenses.service';
 import { FinanceOverview } from './budgets/finance-overview';
 import { FinanceDashboardSection } from './reports/finance-dashboard';
 import { CandidacyDues } from './invoices/candidacy-dues';
+import { BudgetHandover } from './budgets/budget-handover';
 import { DisputeBoardAppeals } from './disputes/dispute-board-appeals';
 import { BillingPlansController } from './billing-plans/billing-plans.controller';
 import { BillingPlansService } from './billing-plans/billing-plans.service';
@@ -197,6 +198,7 @@ import { FinanceInboxItems } from './finance-inbox-items';
     FinanceOverview,
     FinanceDashboardSection,
     CandidacyDues,
+    BudgetHandover,
     FinanceNotices,
     InvoicesService,
     ChargeSettler,

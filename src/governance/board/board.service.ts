@@ -19,6 +19,7 @@ import {
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { GovernanceAccess } from '../access';
 import { dbNow } from '../db-clock';
+import { HandoversService } from '../handovers/handovers.service';
 import { GovernanceNotices } from '../governance-notices';
 import {
   APPOINTED_TERM_DAYS,
@@ -82,6 +83,7 @@ export class BoardService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly notices: GovernanceNotices,
+    private readonly handovers: HandoversService,
   ) {}
 
   onModuleInit(): void {
@@ -263,6 +265,8 @@ export class BoardService implements OnModuleInit {
       });
       for (const m of input.members)
         await this.seat(tx, term, m.accountId, m.role, now, 'appointed');
+      // What the board before it left open (ADR 0075).
+      await this.handovers.generatePack(tx, term.id, now);
       return this.load(tx, term, now);
     });
   }

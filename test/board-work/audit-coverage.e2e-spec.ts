@@ -2,6 +2,8 @@ import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
 import { BOARD_WORK_COVERAGE } from '../setup/audit-coverage-split';
 import { day, today } from '../setup/compound-clock';
+import { eraseNow } from '../setup/erasure';
+import { financeHelpers } from '../setup/finance';
 import { governanceHelpers } from '../setup/governance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
@@ -188,6 +190,61 @@ describe('Audit coverage — the board’s work', () => {
       expect(
         (await single('board_meeting_action.cancelled', second)).metadata,
       ).toEqual({ reasonCode: 'other' });
+    });
+  });
+
+  describe('handovers', () => {
+    it('board_handover_pack.generated — the term and the one before, when the board started to sit', async () => {
+      const pack = (
+        await g.http('get', '/board/handover-pack', s.manager.token).expect(200)
+      ).body as { id: string; termId: string };
+      expect(
+        (await single('board_handover_pack.generated', pack.id)).metadata,
+      ).toEqual({ termId: pack.termId, previousTermId: null });
+    });
+
+    it('manager_handover.drafted, .delivered and .notes_cleared — booleans, never the notes', async () => {
+      const admin = await financeHelpers(h).platformAdmin();
+      const p = g.x.person('mgr-audit');
+      const added = (
+        await g
+          .http(
+            'post',
+            `/platform/tenants/${s.c.tenantId}/managers`,
+            admin.token,
+            p,
+          )
+          .expect(201)
+      ).body as { id: string };
+      const leaving = await g.who(s.c, added.id, 'manager');
+      const draft = (
+        await g
+          .http('put', '/staff/governance/handover', leaving.token, {
+            notes: `${MARKER} notes`,
+          })
+          .expect(200)
+      ).body as { id: string };
+      expect(
+        (await single('manager_handover.drafted', draft.id)).metadata,
+      ).toEqual({ notes: true, created: true });
+      await g
+        .http('post', '/staff/governance/handover/deliver', leaving.token)
+        .expect(200);
+      expect(
+        (await single('manager_handover.delivered', draft.id)).metadata,
+      ).toEqual({ notes: true });
+      await g
+        .http(
+          'patch',
+          `/platform/tenants/${s.c.tenantId}/managers/${leaving.id}/status`,
+          admin.token,
+          { status: 'inactive' },
+        )
+        .expect(200);
+      await eraseNow(h, s.c, leaving.id);
+      expect(
+        await single('manager_handover.notes_cleared', draft.id),
+      ).toMatchObject({ targetType: 'manager_handover' });
     });
   });
 

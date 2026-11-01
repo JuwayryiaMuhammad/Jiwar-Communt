@@ -37,6 +37,11 @@ export const ErrorCode = {
   CANNOT_CHANGE_OWN_STATUS: 'CANNOT_CHANGE_OWN_STATUS',
   // frozen accounts (ADR 0023)
   ACCOUNT_FROZEN: 'ACCOUNT_FROZEN',
+  /**
+   * A manager is not deactivated while a board sits until they delivered a
+   * handover or the board approved going without (409; ADR 0075).
+   */
+  HANDOVER_PENDING: 'HANDOVER_PENDING',
   ACCOUNT_NOT_FROZEN: 'ACCOUNT_NOT_FROZEN',
   ACCOUNT_PHONE_MUST_CHANGE: 'ACCOUNT_PHONE_MUST_CHANGE',
   PHONE_RELEASED: 'PHONE_RELEASED',
@@ -1483,6 +1488,17 @@ export const ErrorCode = {
   BOARD_MEETING_ACTION_CLOSED: 'BOARD_MEETING_ACTION_CLOSED',
   /** Only its owner, a sitting member or the manager marks it done (403). */
   BOARD_MEETING_ACTION_NOT_YOURS: 'BOARD_MEETING_ACTION_NOT_YOURS',
+  // Handovers (ADR 0075)
+  /** No handover pack for the board sitting now (404): it started before packs existed, or none sits. */
+  BOARD_HANDOVER_PACK_NOT_FOUND: 'BOARD_HANDOVER_PACK_NOT_FOUND',
+  MANAGER_HANDOVER_NOT_FOUND: 'MANAGER_HANDOVER_NOT_FOUND',
+  /** Delivered already: a delivered handover is kept as it was (409). */
+  MANAGER_HANDOVER_DELIVERED: 'MANAGER_HANDOVER_DELIVERED',
+  /**
+   * The account named is not an active manager owing a handover (409,
+   * params.reason: `not_a_manager` | `delivered`).
+   */
+  MANAGER_HANDOVER_NOT_PENDING: 'MANAGER_HANDOVER_NOT_PENDING',
   // Assets, plans and inspections (ADR 0064)
   /** Unknown, or another compound's (404). */
   COMMON_AREA_NOT_FOUND: 'COMMON_AREA_NOT_FOUND',

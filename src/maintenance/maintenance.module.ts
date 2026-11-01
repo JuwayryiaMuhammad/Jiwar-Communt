@@ -185,6 +185,7 @@ import { ComplianceController } from './compliance/compliance.controller';
 import { ComplianceOverview } from './compliance/compliance-overview';
 import { ComplianceService } from './compliance/compliance.service';
 import { ComplianceSweep } from './compliance/compliance-sweep';
+import { ContractHandover } from './contracts/contract-handover';
 import { MeterAlertsService } from './energy/alerts.service';
 import { ConsumptionService } from './energy/consumption.service';
 import { HouseholdConsumptionController } from './energy/household-consumption.controller';
@@ -428,6 +429,7 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     ComplianceService,
     ComplianceSweep,
     ComplianceOverview,
+    ContractHandover,
     EconomicsService,
     MetersService,
     ReadingsService,

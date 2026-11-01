@@ -18365,6 +18365,138 @@
           }
         },
         {
+          "name": "The sitting board’s handover pack",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "handover-pack"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/handover-pack"
+            }
+          }
+        },
+        {
+          "name": "The sitting board’s handover pack as a PDF",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "handover-pack",
+                "pdf"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/handover-pack/pdf"
+            }
+          }
+        },
+        {
+          "name": "Delivered manager handovers, latest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "manager-handovers"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/manager-handovers"
+            }
+          }
+        },
+        {
+          "name": "Read a delivered handover",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "manager-handovers",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/manager-handovers/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A delivered handover as a PDF",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "board",
+                "manager-handovers",
+                ":id",
+                "pdf"
+              ],
+              "raw": "{{baseUrl}}/api/v1/board/manager-handovers/:id/pdf",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Action items, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -20869,7 +21001,7 @@
               },
               "raw": "{\n  \"type\": \"annual_budget\",\n  \"context\": \"\",\n  \"impact\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `alternatives` | object[] |  |  |\n| `attachmentIds` | string[] |  | The caller’s uploads of purpose `approval_attachment` (FILE_NOT_AVAILABLE). |\n| `budgetId` | string (uuid) |  | annual_budget only (FIELD_REQUIRED / FIELD_NOT_ALLOWED). |\n| `budgetLineId` | string (uuid) |  | budget_increase only: a line of the active budget. |\n| `context` | string | yes |  |\n| `cost` | string |  | EGP. Required for budget_increase (what it adds) and major_contract; not for annual_budget (its total). |\n| `impact` | string | yes |  |\n| `type` | `annual_budget` \\| `budget_increase` \\| `major_contract` \\| `exceptional_fee` \\| `waiver_above_limit` \\| `payment_plan_above_limit` \\| `legal_escalation` \\| `compensation_above_limit` | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `alternatives` | object[] |  |  |\n| `attachmentIds` | string[] |  | The caller’s uploads of purpose `approval_attachment` (FILE_NOT_AVAILABLE). |\n| `budgetId` | string (uuid) |  | annual_budget only (FIELD_REQUIRED / FIELD_NOT_ALLOWED). |\n| `budgetLineId` | string (uuid) |  | budget_increase only: a line of the active budget. |\n| `context` | string | yes |  |\n| `cost` | string |  | EGP. Required for budget_increase (what it adds) and major_contract; not for annual_budget (its total). |\n| `impact` | string | yes |  |\n| `managerAccountId` | string (uuid) |  | manager_handover_override only: the active manager who would leave without delivering a handover (ADR 0075). |\n| `type` | `annual_budget` \\| `budget_increase` \\| `major_contract` \\| `exceptional_fee` \\| `waiver_above_limit` \\| `payment_plan_above_limit` \\| `legal_escalation` \\| `compensation_above_limit` \\| `manager_handover_override` | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -21563,6 +21695,85 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "The caller’s handover",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "handover"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/handover"
+            }
+          }
+        },
+        {
+          "name": "Write the caller’s handover notes",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"notes\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `notes` | string | yes | The outgoing manager’s notes to whoever comes next; null clears them. Write no resident’s name. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "handover"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/handover"
+            }
+          }
+        },
+        {
+          "name": "Deliver the caller’s handover",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "handover",
+                "deliver"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/handover/deliver"
             }
           }
         },

@@ -171,6 +171,8 @@ describe('audit catalog', () => {
         // ADR 0075
         'board_meeting',
         'board_meeting_action',
+        'board_handover_pack',
+        'manager_handover',
         'governance_objection',
         'unit_document',
         'compound_document',

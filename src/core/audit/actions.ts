@@ -1906,6 +1906,28 @@ export const AUDIT_ACTIONS = {
   },
   // Agenda proposals (ADR 0059). changes: the title and the words as
   // changed.
+  // A new board's handover pack written as it started to sit (ADR 0075).
+  // metadata: termId, previousTermId. The pack holds no name.
+  'board_handover_pack.generated': {
+    log: 'tenant',
+    target: 'board_handover_pack',
+  },
+  // A manager's handover drafted or its notes rewritten. metadata: notes
+  // (a boolean), created (a new draft).
+  'manager_handover.drafted': {
+    log: 'tenant',
+    target: 'manager_handover',
+  },
+  // Delivered, once, with its snapshot. metadata: notes (a boolean).
+  'manager_handover.delivered': {
+    log: 'tenant',
+    target: 'manager_handover',
+  },
+  // Its writer's erasure cleared the notes. No metadata.
+  'manager_handover.notes_cleared': {
+    log: 'tenant',
+    target: 'manager_handover',
+  },
   // A board meeting scheduled (ADR 0075). changes: number, kind,
   // scheduledAt, agenda (a count), title and location as changed.
   // metadata: side.

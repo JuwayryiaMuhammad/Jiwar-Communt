@@ -741,6 +741,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   board_meetings_number_key: null,
   board_meetings_minutes_key: null,
   board_meeting_actions_tenant_id_id_key: null,
+  // Handovers (ADR 0075): one pack a term, written once in the transaction
+  // that seats it; one draft a manager, under the manager's handover lock.
+  board_handover_packs_tenant_id_id_key: null,
+  board_handover_packs_term_key: null,
+  manager_handovers_tenant_id_id_key: null,
+  manager_handovers_one_draft: null,
   // The budget and expenses (ADR 0055): one active and one budget in the
   // making per year, decided under the year's drafting lock; one line per
   // category, checked in the input; an increase and an authorization once

@@ -14,6 +14,7 @@ import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { GovernanceAccess } from '../access';
 import { BoardService } from '../board/board.service';
 import { dbNow } from '../db-clock';
+import { HandoversService } from '../handovers/handovers.service';
 import { GovernanceNotices } from '../governance-notices';
 import { electionPhase } from './election-rules';
 import {
@@ -58,6 +59,7 @@ export class CertificationService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly notices: GovernanceNotices,
+    private readonly handovers: HandoversService,
   ) {}
 
   onModuleInit(): void {
@@ -183,6 +185,8 @@ export class CertificationService implements OnModuleInit {
       });
       for (const w of seated)
         await this.board.seat(tx, term, w.accountId, 'member', now, 'elected');
+      // What the board before it left open (ADR 0075).
+      await this.handovers.generatePack(tx, term.id, now);
 
       const certified = await tx.governanceElection.update({
         where: { id },

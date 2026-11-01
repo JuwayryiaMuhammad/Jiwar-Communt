@@ -45,6 +45,8 @@ export interface BoardMattersWorld {
   /** A meeting B's board held, and an action item of it (ADR 0075). */
   bMeetingId: string;
   bMeetingActionId: string;
+  /** A handover B's manager delivered (ADR 0075). */
+  bManagerHandoverId: string;
 }
 
 export async function boardMattersWorld(
@@ -139,9 +141,23 @@ export async function boardMattersWorld(
           createdAt: new Date(),
         },
       });
+      const bManagerHandoverId = newId();
+      await tx.managerHandover.create({
+        data: {
+          id: bManagerHandoverId,
+          tenantId: b.tenantId,
+          accountId: b.ids.manager,
+          status: 'delivered',
+          notes: 'A handover of B',
+          contents: {},
+          createdAt: new Date(),
+          deliveredAt: new Date(),
+        },
+      });
       return {
         bMeetingId,
         bMeetingActionId,
+        bManagerHandoverId,
         bApprovalId,
         bBoardAppealId: await appealRow(tx, {
           tenantId: b.tenantId,

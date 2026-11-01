@@ -77,6 +77,7 @@
 | [08-face-checks-and-id-scans](05-gate/08-face-checks-and-id-scans.md) | فحص الوش ضد قايمة الحظر ومسح البطاقة، من غير ما حاجة تتخزن |
 | [09-gate-calls](05-gate/09-gate-calls.md) | مكالمة من البوابة جوه التطبيق، من غير أرقام |
 | [10-guard-alarms-and-control-room](05-gate/10-guard-alarms-and-control-room.md) | إنذار سقوط الحارس وغرفة التحكم |
+| [11-fit-out](05-gate/11-fit-out.md) | التشطيب: تأمين الأعمال، المخططات، المخلفات، المناطق قبل وبعد، المطالبة بالأضرار، والشهادة |
 
 ### 06 — الصيانة
 | الملف | الفيتشر |

@@ -31,13 +31,15 @@ export type DecisionAppealRefusal = 'not_decided' | 'not_in_force' | 'appealed';
 export const DECISION_APPEAL_EFFECT_REASONS = [
   // The permit: its window passed, its data purged, its requester may no
   // longer ask, the unit's live permits are at the limit, the compound's
-  // work days or hours refuse it, a plate on it is blocklisted.
+  // work days or hours refuse it, a plate on it is blocklisted, its works
+  // deposit holds nothing in a compound that asks for one (ADR 0074).
   'window_passed',
   'purged',
   'requester_gone',
   'unit_limit',
   'work_rules',
   'blocklisted',
+  'deposit_required',
   // The vehicle: no sticker was given, its registrant may no longer keep
   // vehicles, its plate is active on another, the permit's date is out of
   // range, the sticker was issued before; or it changed since (none).

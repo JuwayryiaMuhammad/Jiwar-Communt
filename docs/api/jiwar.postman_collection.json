@@ -11622,7 +11622,7 @@
               },
               "raw": "{\n  \"occupancyId\": \"\",\n  \"kind\": \"finishing_works\",\n  \"amount\": \"5000.00\",\n  \"receivedOn\": \"2026-01-01\",\n  \"method\": \"cash\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP. |\n| `kind` | `finishing_works` \\| `move` \\| `maintenance_fund` \\| `other` | yes |  |\n| `method` | `cash` \\| `bank_transfer` \\| `cheque` | yes |  |\n| `occupancyId` | string (uuid) | yes | The depositor’s active occupancy. |\n| `receivedOn` | string (date) | yes |  |\n| `reference` | string |  |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP. |\n| `kind` | `finishing_works` \\| `move` \\| `maintenance_fund` \\| `other` | yes |  |\n| `method` | `cash` \\| `bank_transfer` \\| `cheque` | yes |  |\n| `occupancyId` | string (uuid) | yes | The depositor’s active occupancy. |\n| `permitId` | string (uuid) |  | A finishing-works deposit only: the works permit of the unit it is held for, one deposit each (ADR 0074). A compound that asks for the deposit approves the permit once it holds money. |\n| `receivedOn` | string (date) | yes |  |\n| `reference` | string |  |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -45687,9 +45687,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"daysOff\": [\n    \"2026-12-25\"\n  ],\n  \"workDays\": [\n    0,\n    1,\n    2,\n    3,\n    4,\n    6\n  ],\n  \"workHours\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  }\n}"
+              "raw": "{\n  \"daysOff\": [\n    \"2026-12-25\"\n  ],\n  \"workDays\": [\n    0,\n    1,\n    2,\n    3,\n    4,\n    6\n  ],\n  \"workHours\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  },\n  \"worksDepositRequired\": false\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `daysOff` | string[] |  | Dated local days with no works and no moves (feasts), at most 100. Replaces the list. |\n| `workDays` | number[] |  | The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one. |\n| `workHours` | object |  |  |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `daysOff` | string[] |  | Dated local days with no works and no moves (feasts), at most 100. Replaces the list. |\n| `workDays` | number[] |  | The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one. |\n| `workHours` | object |  |  |\n| `worksDepositRequired` | boolean |  | On (the default), a works permit is approved only once its finishing-works deposit holds money (ADR 0074). |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",

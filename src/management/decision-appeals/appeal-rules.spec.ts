@@ -27,7 +27,8 @@ describe('decision appeal rules (ADR 0059)', () => {
   });
 
   it('keeps the effect reasons in step with the database', () => {
-    expect(appeals).toContain(
+    // As ADR 0074 recreated the CHECK, with `deposit_required`.
+    expect(read('20270209090200_works_deposits')).toContain(
       `"effect_reason" IN ( ${quoted(DECISION_APPEAL_EFFECT_REASONS)}))`,
     );
   });

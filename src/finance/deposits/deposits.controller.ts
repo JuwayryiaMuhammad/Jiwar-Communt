@@ -84,6 +84,14 @@ export class DepositView {
   receivedOn: string;
   @ApiProperty({ enum: DEPOSIT_METHODS })
   method: string;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description:
+      'The works permit a finishing-works deposit is held for (ADR 0074), or null.',
+  })
+  permitId: string | null;
   @ApiProperty({ type: Boolean })
   refundRequested: boolean;
   @ApiProperty({ type: [DepositEventView] })
@@ -139,6 +147,17 @@ export class NewDepositDto {
   @IsString()
   @Length(1, 100, withParams({ min: 1, max: 100 }))
   reference?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'A finishing-works deposit only: the works permit of the unit it is held for, one deposit each (ADR 0074). A compound that asks for the deposit approves the permit once it holds money.',
+  })
+  @IsOptional()
+  @IsUUID()
+  permitId?: string;
 }
 
 class RefundPartDto {

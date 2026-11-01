@@ -4,6 +4,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -77,4 +78,14 @@ export class UpdatePermitSettingsDto {
   @IsString({ each: true })
   @IsLocalDate({ each: true })
   daysOff?: string[];
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'On (the default), a works permit is approved only once its finishing-works deposit holds money (ADR 0074).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  worksDepositRequired?: boolean;
 }

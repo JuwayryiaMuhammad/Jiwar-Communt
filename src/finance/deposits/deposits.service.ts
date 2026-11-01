@@ -28,6 +28,10 @@ import { asDate, dbNow, fromDate, localToday } from '../db-clock';
 import { money, MONEY, show, ZERO } from '../money';
 import { PaymentsService } from '../payments/payments.service';
 import { WorksCompletions } from '../../core/works/works-completions';
+import {
+  WorksDeposits,
+  type WorksDeposit,
+} from '../../core/works/works-deposits';
 
 export const DEPOSIT_KINDS = [
   'finishing_works',
@@ -62,6 +66,8 @@ export interface DepositRead {
    * null for the other kinds. The refund stays the manager's decision.
    */
   worksCompletion: { at: Date; reference: string } | null;
+  /** The works permit a finishing-works deposit is held for (ADR 0074), or null. */
+  permitId: string | null;
 }
 
 export interface NewDeposit {
@@ -71,6 +77,8 @@ export interface NewDeposit {
   receivedOn: string;
   method: string;
   reference?: string;
+  /** A finishing-works deposit's works permit (ADR 0074): one of the unit's. */
+  permitId?: string;
 }
 
 export interface Settlement {
@@ -111,9 +119,35 @@ export class DepositsService implements OnModuleInit {
     private readonly settings: TenantSettingsService,
     private readonly lifecycle: AccountLifecycle,
     private readonly works: WorksCompletions,
+    private readonly worksDeposits: WorksDeposits,
   ) {}
 
   onModuleInit(): void {
+    // A works permit's deposit, for the gate (ADR 0074): the one named on
+    // each permit, with what is still held.
+    this.worksDeposits.implement({
+      ofPermits: async (tx, permitIds, lock) => {
+        if (lock === 'share')
+          await tx.$queryRaw`
+            SELECT id FROM finance_deposits
+             WHERE permit_id = ANY(${[...permitIds]}::uuid[]) FOR SHARE`;
+        const rows = await tx.financeDeposit.findMany({
+          where: { permitId: { in: [...permitIds] } },
+          include: { events: true },
+        });
+        return new Map(
+          rows.map((d): [string, WorksDeposit] => [
+            d.permitId!,
+            {
+              id: d.id,
+              number: formatNumber('deposit', d.number),
+              amount: money(d.amount),
+              held: heldOf(d),
+            },
+          ]),
+        );
+      },
+    });
     // Money still held for one of the account's occupancies blocks its erasure.
     this.lifecycle.onDeletionCheck(async (tx, account) => {
       const deposits = await tx.financeDeposit.findMany({
@@ -205,6 +239,12 @@ export class DepositsService implements OnModuleInit {
     const fields: FieldError[] = [];
     if (!MONEY.test(input.amount ?? ''))
       fields.push({ field: 'amount', code: FieldErrorCode.INVALID_NUMBER });
+    // Only a finishing-works deposit is held for a works permit (ADR 0074).
+    if (input.permitId !== undefined && input.kind !== 'finishing_works')
+      fields.push({
+        field: 'permitId',
+        code: FieldErrorCode.FIELD_NOT_ALLOWED,
+      });
     if (fields.length)
       throw appError.badRequest(
         ErrorCode.VALIDATION_FAILED,
@@ -222,6 +262,32 @@ export class DepositsService implements OnModuleInit {
           'Occupancy not found',
         );
       await this.access.lockUnits(tx, [occupancy.unitId]);
+      // The permit: a works permit of the deposit's unit, with no deposit
+      // yet (one each). Under the unit's finance lock, so two deposits for
+      // one permit wait for each other and the second is refused.
+      if (input.permitId !== undefined) {
+        const unitId = await this.worksDeposits.unitOf(tx, input.permitId);
+        const taken =
+          unitId === occupancy.unitId &&
+          (await tx.financeDeposit.count({
+            where: { permitId: input.permitId },
+          })) > 0;
+        if (unitId !== occupancy.unitId || taken)
+          throw appError.badRequest(
+            ErrorCode.VALIDATION_FAILED,
+            'Invalid deposit',
+            {
+              fields: [
+                {
+                  field: 'permitId',
+                  code: taken
+                    ? FieldErrorCode.DUPLICATE_VALUE
+                    : FieldErrorCode.INVALID_VALUE,
+                },
+              ],
+            },
+          );
+      }
       const number = await takeNumbers(tx, this.ctx.txTenantId, 'deposit');
       const d = await tx.financeDeposit.create({
         data: {
@@ -237,6 +303,8 @@ export class DepositsService implements OnModuleInit {
           reference: input.reference ?? null,
           recordedBy: this.ctx.accountId,
           createdAt: await dbNow(tx),
+          permitId: input.permitId ?? null,
+          permitKind: input.permitId !== undefined ? 'works' : null,
         },
         include: { events: true },
       });
@@ -248,6 +316,7 @@ export class DepositsService implements OnModuleInit {
           kind: d.kind,
           amount: show(d.amount),
           number: formatNumber('deposit', number),
+          permitId: d.permitId,
         },
       });
       return this.full(tx, d);
@@ -410,6 +479,7 @@ function read(
     held: show(heldOf(d)),
     receivedOn: fromDate(d.receivedOn),
     method: d.method,
+    permitId: d.permitId,
     refundRequested: refundAsked(d),
     events: d.events.map((e) => ({
       kind: e.kind,

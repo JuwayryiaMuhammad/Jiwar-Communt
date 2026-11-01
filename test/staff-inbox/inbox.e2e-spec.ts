@@ -41,6 +41,14 @@ describe('Staff inbox', () => {
     h = await createHttpHarness();
     n = neighboursHelpers(h);
     s = await n.setUp();
+    // ADR 0074: a new compound's works wait for their deposit; this suite's
+    // permits are about the inbox.
+    await n.inTx(s.c, (tx) =>
+      tx.permitSettings.update({
+        where: { tenantId: s.c.tenantId },
+        data: { worksDepositRequired: false },
+      }),
+    );
   }, 180_000);
 
   afterAll(() => h.close());

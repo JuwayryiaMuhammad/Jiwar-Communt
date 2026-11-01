@@ -34,6 +34,7 @@ export const PERMIT_SETTINGS_ROUTES: Row[] = [
         workDays: [],
         workHours: { from: '9', to: '17:00' },
         daysOff: ['2026-02-30'],
+        worksDepositRequired: 'yes',
       },
       fields: [
         {
@@ -43,6 +44,7 @@ export const PERMIT_SETTINGS_ROUTES: Row[] = [
         },
         { field: 'workHours.from', code: 'INVALID_FORMAT' },
         { field: 'daysOff', code: 'INVALID_FORMAT' },
+        { field: 'worksDepositRequired', code: 'INVALID_TYPE' },
       ],
     },
     noStore: true,

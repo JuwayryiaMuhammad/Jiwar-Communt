@@ -70,7 +70,11 @@ export function decisionAppealHelpers(h: HttpHarness) {
     return { ...s, decider: await secondManager(s.c) };
   }
 
-  /** A works permit asked by `as` and rejected by `manager`: its id. */
+  /**
+   * A works permit asked by `as` and rejected by `manager`: its id. Its
+   * finishing-works deposit is recorded first, so an overturn applies in a
+   * compound that asks for one (ADR 0074).
+   */
   async function rejectedPermit(
     manager: Who,
     as: Who,
@@ -78,6 +82,7 @@ export function decisionAppealHelpers(h: HttpHarness) {
     over: Record<string, unknown> = {},
   ): Promise<string> {
     const permit = await p.works(as, unitId, over);
+    await p.deposit(manager, permit.id);
     await p
       .decide(manager, permit.id, 'reject', { reasonCode: 'outside_rules' })
       .expect(200);

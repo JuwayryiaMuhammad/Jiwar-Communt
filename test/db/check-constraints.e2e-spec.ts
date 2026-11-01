@@ -2729,6 +2729,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'open_per_technician IS NULL is tested first; the range runs only on a value',
   },
+  // Fit-out completion (ADR 0074).
+  finance_deposits_permit_shape: {
+    guarded:
+      'permit_id and permit_kind under IS [NOT] NULL; the kind runs only once permit_id IS NULL fails',
+  },
 };
 
 interface Check {

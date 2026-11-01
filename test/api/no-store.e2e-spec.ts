@@ -741,7 +741,16 @@ describe('API v0 — no-store', () => {
     description: 'Painting',
   };
   /** A fresh pending works permit of A's home: its id. */
+  // The works deposit's rule (ADR 0074) has its own suite (test/fitout):
+  // compound A approves works as before, so these reach the routes.
+  let depositRuleOff = false;
   const aPermit = async () => {
+    if (!depositRuleOff) {
+      await as('manager', 'PATCH', '/staff/permit-settings', {
+        worksDepositRequired: false,
+      });
+      depositRuleOff = true;
+    }
     await clearPermits();
     return body<{ id: string }>(
       await as(

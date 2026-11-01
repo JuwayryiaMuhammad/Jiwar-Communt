@@ -351,6 +351,7 @@ import { WorksCertificatePageService } from './permits/works-certificate-page.se
 import { InspectionExportSections } from './tasks/inspection-export-sections';
 import { ResidentInspectionItems } from './resident-inspection-items';
 import { PermitWorksCompletion } from './permits/permit-works-completion';
+import { PermitWorksDeposits } from './permits/permit-works-deposits';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -637,6 +638,7 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     InspectionExportSections,
     ResidentInspectionItems,
     PermitWorksCompletion,
+    PermitWorksDeposits,
     PermitInspectionsService,
     WorksCertificatePageService,
     MyWorkService,

@@ -128,6 +128,9 @@ describe('Permits — privacy (ADR 0049)', () => {
     it('what the resident wrote and their photo go, once; the management’s notes and the rows stay', async () => {
       const c = await household('Privacy Erased Court');
       await p.anyTime(c.manager);
+      // A deposit held for the works would wait for the erasure (ADR 0062);
+      // the deposit's rule (ADR 0074) has its own suite.
+      await p.setRules(c.manager, { worksDepositRequired: false });
       const mine = await p.works(c.alice, c.home.id, {
         contractorCompany: 'PRIV-COMPANY',
         description: 'PRIV-DESCRIPTION',
@@ -308,6 +311,7 @@ describe('Permits — privacy (ADR 0049)', () => {
     it('the account’s own permits with its workers and guests while they last; never the last four, a photo, the staff’s note or another’s permit (L6)', async () => {
       const c = await household('Privacy Export Court');
       await p.anyTime(c.manager);
+      await p.setRules(c.manager, { worksDepositRequired: false });
       const theirs = await p.works(c.alice, c.home.id, {
         description: 'Alice-only words',
       });

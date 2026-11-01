@@ -20,6 +20,7 @@ describe('Permits — the management decides (ADR 0049)', () => {
   it('approves: the requester is told; the household never sees the note', async () => {
     const c = await p.setUp('Decide Approve Court');
     const permit = await p.works(c.alice, c.home.id);
+    await p.deposit(c.manager, permit.id);
     const res = await p
       .decide(c.manager, permit.id, 'approve', { note: 'Staff-only words' })
       .expect(200);

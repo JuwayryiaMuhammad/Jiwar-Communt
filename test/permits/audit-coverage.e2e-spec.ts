@@ -159,6 +159,7 @@ describe('Audit coverage — permits', () => {
       const a = await p.works(s.alice, s.home.id, {
         dailyHours: { from: '10:00', to: '16:00' },
       });
+      await p.deposit(s.manager, a.id);
       await p.decide(s.manager, a.id, 'approve', { note: WORDS }).expect(200);
       const approved = await single('unit_permit.approved', a.id);
       expect(approved).toMatchObject(by(s.manager, 'unit_permit'));

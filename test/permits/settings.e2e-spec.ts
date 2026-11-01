@@ -17,7 +17,7 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
 
   afterAll(() => h.close());
 
-  it('a new compound starts with Saturday to Thursday, 09:00–17:00 and no days off', async () => {
+  it('a new compound starts with Saturday to Thursday, 09:00–17:00, no days off, and works waiting for their deposit', async () => {
     const res = await p
       .http('get', '/staff/permit-settings', s.manager.token)
       .expect(200);
@@ -26,6 +26,7 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
       workDays: [0, 1, 2, 3, 4, 6],
       workHours: { from: '09:00', to: '17:00' },
       daysOff: [],
+      worksDepositRequired: true,
     });
   });
 
@@ -40,6 +41,7 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
       workDays: [0, 1, 4],
       workHours: { from: '08:30', to: '16:00' },
       daysOff: [addDays(today(), 3), addDays(today(), 9)],
+      worksDepositRequired: true,
     });
     const rows = await p.v.x.asManager(c.c, () =>
       p.v.x.prisma.tenant.auditLog.findMany({
@@ -144,6 +146,7 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
         workDays: [0, 1, 2, 3, 4, 6],
         workHours: { from: '09:00', to: '17:00' },
         daysOff: [today(), addDays(today(), 5)],
+        worksDepositRequired: true,
         timeZone: ZONE,
         limits: { ...PERMIT_LIMITS },
       });

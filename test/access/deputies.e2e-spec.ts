@@ -32,6 +32,14 @@ describe('Deputies', () => {
     h = await createHttpHarness();
     n = neighboursHelpers(h);
     s = await n.setUp();
+    // ADR 0074: a new compound's works wait for their deposit; the deputy
+    // here approves one.
+    await n.inTx(s.c, (tx) =>
+      tx.permitSettings.update({
+        where: { tenantId: s.c.tenantId },
+        data: { worksDepositRequired: false },
+      }),
+    );
     deputy = await n.staff(s.c, ['inbox.read']);
   }, 180_000);
 

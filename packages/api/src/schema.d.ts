@@ -29265,7 +29265,7 @@ export interface components {
          * @description Why an overturn was left to the management, or did nothing: the check that refused it.
          * @enum {string}
          */
-        DecisionAppealEffectReason: "window_passed" | "purged" | "requester_gone" | "unit_limit" | "work_rules" | "blocklisted" | "needs_sticker" | "registrant_gone" | "plate_active" | "permit_date" | "sticker_used" | "changed" | "needs_review";
+        DecisionAppealEffectReason: "window_passed" | "purged" | "requester_gone" | "unit_limit" | "work_rules" | "blocklisted" | "deposit_required" | "needs_sticker" | "registrant_gone" | "plate_active" | "permit_date" | "sticker_used" | "changed" | "needs_review";
         /** @enum {string} */
         DecisionAppealKind: "permit_rejection" | "vehicle_rejection" | "worker_rejection" | "neighbour_notice";
         /** @enum {string} */
@@ -29396,6 +29396,11 @@ export interface components {
             number: string;
             /** Format: uuid */
             occupancyId: string;
+            /**
+             * Format: uuid
+             * @description The works permit a finishing-works deposit is held for (ADR 0074), or null.
+             */
+            permitId: string | null;
             /** Format: date */
             receivedOn: string;
             refundRequested: boolean;
@@ -35266,6 +35271,11 @@ export interface components {
              * @description The depositor’s active occupancy.
              */
             occupancyId: string;
+            /**
+             * Format: uuid
+             * @description A finishing-works deposit only: the works permit of the unit it is held for, one deposit each (ADR 0074). A compound that asks for the deposit approves the permit once it holds money.
+             */
+            permitId?: string;
             /** Format: date */
             receivedOn: string;
             reference?: string;
@@ -36851,6 +36861,8 @@ export interface components {
              */
             workDays: number[];
             workHours: components["schemas"]["PermitHoursDto"];
+            /** @description A works permit is approved only once its finishing-works deposit holds money (ADR 0074). */
+            worksDepositRequired: boolean;
         };
         PermitSettingsResponse: {
             /**
@@ -36873,6 +36885,8 @@ export interface components {
              */
             workDays: number[];
             workHours: components["schemas"]["PermitHoursDto"];
+            /** @description A works permit is approved only once its finishing-works deposit holds money (ADR 0074). */
+            worksDepositRequired: boolean;
         };
         PermitView: {
             cancelReason: components["schemas"]["UnitPermitCancelReason"] | null;
@@ -44885,6 +44899,8 @@ export interface components {
              */
             workDays?: number[];
             workHours?: components["schemas"]["PermitHoursDto"];
+            /** @description On (the default), a works permit is approved only once its finishing-works deposit holds money (ADR 0074). */
+            worksDepositRequired?: boolean;
         };
         UpdatePlaceDto: {
             /** @description False retires the place: offered no more, kept by requests. */

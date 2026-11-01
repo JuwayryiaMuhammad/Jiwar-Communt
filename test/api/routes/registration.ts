@@ -682,6 +682,7 @@ export const CLEARANCE_DEPOSIT_ROUTES: Row[] = [
         amount: '10',
         receivedOn: '2026-02-30',
         method: 'cash',
+        permitId: 'x',
       },
       fields: [
         { field: 'occupancyId', code: 'INVALID_UUID' },
@@ -697,6 +698,7 @@ export const CLEARANCE_DEPOSIT_ROUTES: Row[] = [
           code: 'INVALID_FORMAT',
           params: { format: 'YYYY-MM-DD' },
         },
+        { field: 'permitId', code: 'INVALID_UUID' },
       ],
     },
   },

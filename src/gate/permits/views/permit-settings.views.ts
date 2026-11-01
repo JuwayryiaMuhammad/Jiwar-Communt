@@ -25,11 +25,19 @@ export class PermitSettingsResponse {
   })
   daysOff: string[];
 
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'A works permit is approved only once its finishing-works deposit holds money (ADR 0074).',
+  })
+  worksDepositRequired: boolean;
+
   static from(s: PermitSettingsView): PermitSettingsResponse {
     return {
       workDays: s.workDays,
       workHours: { ...s.workHours },
       daysOff: s.daysOff,
+      worksDepositRequired: s.worksDepositRequired,
     };
   }
 }

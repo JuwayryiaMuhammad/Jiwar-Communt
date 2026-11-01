@@ -3,7 +3,7 @@ import type { Response } from 'supertest';
 import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
 import type { Compound } from './community';
 import { addDays } from '../../src/core/common/slots/day-slots';
-import { clock, type Clock, type LocalDate } from './compound-clock';
+import { clock, today, type Clock, type LocalDate } from './compound-clock';
 import { at, day } from './facilities';
 import type { HttpHarness } from './http-app';
 import { safetyHelpers, type Who } from './safety';
@@ -46,11 +46,34 @@ export async function decideInspectionAt(
   }
 }
 
+/**
+ * A request that waits on something first (an upload, a read) yet reads as
+ * one: awaited, its response; `.expect(code)`, the response once it has that
+ * status, else a failure that shows its body.
+ */
+export type Deferred = Promise<Response> & {
+  expect(code: number): Promise<Response>;
+};
+export function deferred(res: Promise<Response>): Deferred {
+  return Object.assign(res, {
+    expect: (code: number) =>
+      res.then((r) => {
+        if (r.status !== code)
+          throw new Error(
+            `expected ${code}, got ${r.status} ${JSON.stringify(r.body)}`,
+          );
+        return r;
+      }),
+  });
+}
+
 /** The compound's permit rules as the API returns them (ADR 0049). */
 export interface PermitSettingsBody {
   workDays: number[];
   workHours: { from: string; to: string };
   daysOff: string[];
+  /** Works wait for their deposit (ADR 0074). */
+  worksDepositRequired: boolean;
 }
 
 /** The rules as the residents read them: with the zone they are read in. */
@@ -66,6 +89,7 @@ const PROVISIONED: PermitRulesBody = {
   workDays: [0, 1, 2, 3, 4, 6],
   workHours: { from: '09:00', to: '17:00' },
   daysOff: [],
+  worksDepositRequired: true,
   timeZone: 'Africa/Cairo',
 };
 
@@ -78,7 +102,7 @@ const MAX_DAYS_AHEAD = 90;
  * Never a fixed offset: that is a day off on some week days.
  */
 export function workDaysOf(
-  rules: PermitRulesBody,
+  rules: Pick<PermitRulesBody, 'workDays' | 'daysOff' | 'timeZone'>,
   count = 1,
   from = 1,
   c: Clock = clock(rules.timeZone),
@@ -99,7 +123,7 @@ export function workDaysOf(
 
 /** `wanted` when the compound's hours hold it; else its first two hours. */
 export function withinHours(
-  rules: PermitSettingsBody,
+  rules: Pick<PermitSettingsBody, 'workHours'>,
   wanted: { from: string; to: string },
 ): { from: string; to: string } {
   const { from, to } = rules.workHours;
@@ -467,9 +491,70 @@ export function permitHelpers(h: HttpHarness) {
     return http('post', `/staff/unit-permits/${id}/${action}`, as.token, body);
   }
 
-  /** Approves a permit that must be approved: the staff's view. */
+  /**
+   * Approves a permit that must be approved: the staff's view. A works
+   * permit of a compound that asks for its deposit (ADR 0074) gets one
+   * first, as the management records it.
+   */
   async function approve(as: Who, id: string): Promise<PermitBody> {
-    return (await decide(as, id, 'approve').expect(200)).body as PermitBody;
+    const first = await decide(as, id, 'approve');
+    if (
+      first.status === 409 &&
+      (first.body as { code?: string }).code === 'PERMIT_DEPOSIT_REQUIRED'
+    ) {
+      await deposit(as, id);
+      return (await decide(as, id, 'approve').expect(200)).body as PermitBody;
+    }
+    return status(first, 200).body as PermitBody;
+  }
+
+  /**
+   * `POST /staff/deposits` as `as`: the unit's primary's finishing-works
+   * deposit for the works permit (ADR 0074), received today.
+   */
+  function depositRaw(
+    as: Who,
+    permitId: string,
+    over: Record<string, unknown> = {},
+  ): Deferred {
+    return deferred(depositCall(as, permitId, over));
+  }
+
+  async function depositCall(
+    as: Who,
+    permitId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<Response> {
+    const permit = status(
+      await http('get', `/staff/unit-permits/${permitId}`, as.token),
+      200,
+    ).body as PermitBody;
+    const unit = status(
+      await http('get', `/units/${permit.unitId}`, as.token),
+      200,
+    ).body as { occupants: { occupancyId: string; isPrimary: boolean }[] };
+    return await http('post', '/staff/deposits', as.token, {
+      occupancyId: unit.occupants.find((o) => o.isPrimary)!.occupancyId,
+      kind: 'finishing_works',
+      amount: '5000',
+      receivedOn: today(),
+      method: 'cash',
+      permitId,
+      ...over,
+    });
+  }
+
+  /** A deposit that must be recorded: its id, number and what it holds. */
+  async function deposit(
+    as: Who,
+    permitId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<{ id: string; number: string; held: string }> {
+    return status(await depositRaw(as, permitId, over), 201).body as {
+      id: string;
+      number: string;
+      held: string;
+    };
   }
 
   /** `GET /permits/:id` as `as`. */
@@ -512,6 +597,8 @@ export function permitHelpers(h: HttpHarness) {
     told,
     decide,
     approve,
+    depositRaw,
+    deposit,
     moveBody,
     moveRaw,
     move,

@@ -31,6 +31,7 @@ export const EFFECT_REASON_TEXT: Record<string, string> = {
   unit_limit: 'the unit is at its limit',
   work_rules: 'the compound’s work days or hours refuse it',
   blocklisted: 'a plate on it is banned',
+  deposit_required: 'its finishing-works deposit holds nothing yet',
   needs_sticker: 'a sticker and the permit’s last day are needed',
   registrant_gone: 'its registrant may no longer keep vehicles there',
   plate_active: 'another vehicle holds the plate',

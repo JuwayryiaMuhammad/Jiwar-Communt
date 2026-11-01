@@ -2206,6 +2206,10 @@ model FinanceDeposit {
   reference   String?
   recordedBy  String   @map("recorded_by") @db.Uuid
   createdAt   DateTime @map("created_at") @db.Timestamptz(3)
+  /// The works permit a finishing-works deposit is held for (ADR 0074): one of its unit's, one deposit each.
+  permitId    String?  @map("permit_id") @db.Uuid
+  /// Always works when named (CHECK), for the composite key on the permit's kind.
+  permitKind  UnitPermitKind? @map("permit_kind")
 
   tenant    Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   unit      Unit                  @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
@@ -7960,6 +7964,8 @@ model PermitSettings {
   workFrom  Int        @default(540) @map("work_from") @db.SmallInt
   workTo    Int        @default(1020) @map("work_to") @db.SmallInt
   daysOff   DateTime[] @default([]) @map("days_off") @db.Date
+  /// A works permit is approved only once a deposit named on it holds money (ADR 0074).
+  worksDepositRequired Boolean @default(true) @map("works_deposit_required")
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 

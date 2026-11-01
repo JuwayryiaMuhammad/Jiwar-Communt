@@ -18584,6 +18584,7 @@
           "unit_limit",
           "work_rules",
           "blocklisted",
+          "deposit_required",
           "needs_sticker",
           "registrant_gone",
           "plate_active",
@@ -19021,6 +19022,12 @@
             "format": "uuid",
             "type": "string"
           },
+          "permitId": {
+            "description": "The works permit a finishing-works deposit is held for (ADR 0074), or null.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "receivedOn": {
             "format": "date",
             "type": "string"
@@ -19053,6 +19060,7 @@
           "held",
           "receivedOn",
           "method",
+          "permitId",
           "refundRequested",
           "events",
           "worksCompletion"
@@ -38086,6 +38094,11 @@
             "format": "uuid",
             "type": "string"
           },
+          "permitId": {
+            "description": "A finishing-works deposit only: the works permit of the unit it is held for, one deposit each (ADR 0074). A compound that asks for the deposit approves the permit once it holds money.",
+            "format": "uuid",
+            "type": "string"
+          },
           "receivedOn": {
             "format": "date",
             "type": "string"
@@ -43017,12 +43030,17 @@
           },
           "workHours": {
             "$ref": "#/components/schemas/PermitHoursDto"
+          },
+          "worksDepositRequired": {
+            "description": "A works permit is approved only once its finishing-works deposit holds money (ADR 0074).",
+            "type": "boolean"
           }
         },
         "required": [
           "workDays",
           "workHours",
           "daysOff",
+          "worksDepositRequired",
           "timeZone",
           "limits"
         ],
@@ -43057,12 +43075,17 @@
           },
           "workHours": {
             "$ref": "#/components/schemas/PermitHoursDto"
+          },
+          "worksDepositRequired": {
+            "description": "A works permit is approved only once its finishing-works deposit holds money (ADR 0074).",
+            "type": "boolean"
           }
         },
         "required": [
           "workDays",
           "workHours",
-          "daysOff"
+          "daysOff",
+          "worksDepositRequired"
         ],
         "type": "object"
       },
@@ -69686,6 +69709,10 @@
           },
           "workHours": {
             "$ref": "#/components/schemas/PermitHoursDto"
+          },
+          "worksDepositRequired": {
+            "description": "On (the default), a works permit is approved only once its finishing-works deposit holds money (ADR 0074).",
+            "type": "boolean"
           }
         },
         "type": "object"

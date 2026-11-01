@@ -1375,7 +1375,12 @@ describe('API v0 — PII leak scan', () => {
         closesAt: new Date(Date.now() + 48 * 3_600_000).toISOString(),
       },
     );
-    // Approved: the guard sees it at the gate today.
+    // Approved: the guard sees it at the gate today. The works deposit's
+    // rule (ADR 0074) has its own suite; A approves works as before.
+    await call(w, 'PATCH', '/staff/permit-settings', {
+      token: a.tokens.manager,
+      body: { worksDepositRequired: false },
+    }).expect(200);
     await call(w, 'POST', `/staff/unit-permits/${piiPermit}/approve`, {
       token: a.tokens.manager,
     }).expect(200);

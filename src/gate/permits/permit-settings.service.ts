@@ -28,6 +28,8 @@ export interface PermitSettingsView {
   workDays: number[];
   workHours: { from: string; to: string };
   daysOff: string[];
+  /** A works permit is approved only once its deposit holds money (ADR 0074). */
+  worksDepositRequired: boolean;
 }
 
 /** What a resident needs to ask for a permit that fits. */
@@ -40,13 +42,18 @@ export interface PermitSettingsUpdate {
   workDays?: number[];
   workHours?: { from: string; to: string };
   daysOff?: string[];
+  worksDepositRequired?: boolean;
 }
 
-function view(rules: WorkRules): PermitSettingsView {
+function view(
+  rules: WorkRules,
+  worksDepositRequired: boolean,
+): PermitSettingsView {
   return {
     workDays: rules.workDays,
     workHours: { from: timeOf(rules.workFrom), to: timeOf(rules.workTo) },
     daysOff: rules.daysOff,
+    worksDepositRequired,
   };
 }
 
@@ -80,9 +87,25 @@ export class PermitSettingsService {
     );
   }
 
+  /** Whether a works permit waits for its deposit (ADR 0074). */
+  async worksDepositRequired(
+    tx: TenantTxClient,
+    tenantId: string,
+  ): Promise<boolean> {
+    return (
+      await tx.permitSettings.findUniqueOrThrow({
+        where: { tenantId },
+        select: { worksDepositRequired: true },
+      })
+    ).worksDepositRequired;
+  }
+
   async get(): Promise<PermitSettingsView> {
     return this.tenantTx.withTenantTx(async (tx) =>
-      view(await this.rules(tx, this.ctx.tenantId)),
+      view(
+        await this.rules(tx, this.ctx.tenantId),
+        await this.worksDepositRequired(tx, this.ctx.tenantId),
+      ),
     );
   }
 
@@ -93,10 +116,13 @@ export class PermitSettingsService {
       const { timezone } = await this.settings.inTx(tx, this.ctx.tenantId);
       const today = localDate(await dbNow(tx), timezone);
       return {
-        ...view({
-          ...rules,
-          daysOff: rules.daysOff.filter((d) => d >= today),
-        }),
+        ...view(
+          {
+            ...rules,
+            daysOff: rules.daysOff.filter((d) => d >= today),
+          },
+          await this.worksDepositRequired(tx, this.ctx.tenantId),
+        ),
         timeZone: timezone,
         limits: PERMIT_LIMITS,
       };
@@ -125,24 +151,25 @@ export class PermitSettingsService {
         SELECT tenant_id FROM permit_settings
          WHERE tenant_id = ${tenantId}::uuid FOR UPDATE`;
       const before = await this.rules(tx, tenantId);
-      const after = workRules(
-        await tx.permitSettings.update({
-          where: { tenantId },
-          data: {
-            workDays: input.workDays && [...new Set(input.workDays)].sort(),
-            workFrom: input.workHours && minuteOf(input.workHours.from),
-            workTo: input.workHours && minuteOf(input.workHours.to),
-            daysOff:
-              input.daysOff &&
-              [...new Set(input.daysOff)]
-                .sort()
-                .map((d) => new Date(`${d}T00:00:00.000Z`)),
-          },
-        }),
-      );
+      const depositBefore = await this.worksDepositRequired(tx, tenantId);
+      const row = await tx.permitSettings.update({
+        where: { tenantId },
+        data: {
+          worksDepositRequired: input.worksDepositRequired,
+          workDays: input.workDays && [...new Set(input.workDays)].sort(),
+          workFrom: input.workHours && minuteOf(input.workHours.from),
+          workTo: input.workHours && minuteOf(input.workHours.to),
+          daysOff:
+            input.daysOff &&
+            [...new Set(input.daysOff)]
+              .sort()
+              .map((d) => new Date(`${d}T00:00:00.000Z`)),
+        },
+      });
+      const after = workRules(row);
       const changes = diffChanges(
-        { ...view(before) },
-        { ...view(after) },
+        { ...view(before, depositBefore) },
+        { ...view(after, row.worksDepositRequired) },
         'permit_settings.changed',
       );
       if (Object.keys(changes).length)
@@ -151,7 +178,7 @@ export class PermitSettingsService {
           targetId: tenantId,
           changes,
         });
-      return view(after);
+      return view(after, row.worksDepositRequired);
     });
   }
 }

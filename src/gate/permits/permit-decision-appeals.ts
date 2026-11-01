@@ -13,6 +13,7 @@ import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { BlocklistMatcher } from '../blocklist/blocklist-matcher';
 import { PermitCore, permitReference } from './permit-core';
 import { PermitSettingsService } from './permit-settings.service';
+import { WorksDeposits } from '../../core/works/works-deposits';
 import { isWorkDay, type WorkRules } from './permit-rules';
 import { daysOf, UNIT_LIMIT } from './permits.service';
 
@@ -42,6 +43,7 @@ export class PermitDecisionAppeals implements OnModuleInit {
     private readonly settings: PermitSettingsService,
     private readonly blocklist: BlocklistMatcher,
     private readonly audit: AuditService,
+    private readonly deposits: WorksDeposits,
   ) {}
 
   onModuleInit(): void {
@@ -206,6 +208,14 @@ export class PermitDecisionAppeals implements OnModuleInit {
           : [];
     if ((await this.blocklist.check(tx, { plates })).kind === 'ban')
       return 'blocklisted';
+    // A compound that asks for the works deposit approves works once a
+    // deposit named on the permit holds money (ADR 0074).
+    if (
+      p.kind === 'works' &&
+      (await this.settings.worksDepositRequired(tx, p.tenantId)) &&
+      !(await this.deposits.ofPermit(tx, p.id, 'share'))?.held.gt(0)
+    )
+      return 'deposit_required';
     return null;
   }
 

@@ -8,14 +8,14 @@ import {
   subjectHref,
 } from './logic.ts';
 
-test('the four kinds and the thirteen reasons of ADR 0059', () => {
+test('the four kinds and the fourteen reasons of ADR 0059 (ADR 0074 adds the deposit)', () => {
   assert.deepEqual(Object.keys(KIND_TEXT), [
     'permit_rejection',
     'vehicle_rejection',
     'worker_rejection',
     'neighbour_notice',
   ]);
-  assert.equal(Object.keys(EFFECT_REASON_TEXT).length, 13);
+  assert.equal(Object.keys(EFFECT_REASON_TEXT).length, 14);
 });
 
 test('only a vehicle overturned asks for a sticker', () => {

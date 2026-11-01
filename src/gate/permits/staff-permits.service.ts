@@ -21,6 +21,8 @@ import { PermitWorkersService } from './permit-workers.service';
 import type { PermitLockoutsView } from './views/permit.views';
 import { clean } from './permits.service';
 import { PermitWorkStopsService } from './permit-work-stops.service';
+import { WorksDeposits } from '../../core/works/works-deposits';
+import { PermitSettingsService } from './permit-settings.service';
 
 const PAGE = keysetCursor('createdAt', 'desc');
 
@@ -48,6 +50,8 @@ export class StaffPermitsService {
     private readonly workers: PermitWorkersService,
     private readonly ids: PermitIdCheck,
     private readonly stops: PermitWorkStopsService,
+    private readonly deposits: WorksDeposits,
+    private readonly settings: PermitSettingsService,
   ) {}
 
   /** Newest first; `live`: approved and in force now. */
@@ -215,6 +219,22 @@ export class StaffPermitsService {
           'Its window has passed',
           { params: { status: 'pending' } },
         );
+      // A compound that asks for the finishing-works deposit approves works
+      // once a deposit named on the permit holds money (ADR 0074). Its row
+      // FOR SHARE, after the permit's: a settlement emptying it waits.
+      if (
+        to === 'approved' &&
+        p.kind === 'works' &&
+        (await this.settings.worksDepositRequired(tx, p.tenantId))
+      ) {
+        const deposit = await this.deposits.ofPermit(tx, id, 'share');
+        if (!deposit?.held.gt(0))
+          throw appError.conflict(
+            ErrorCode.PERMIT_DEPOSIT_REQUIRED,
+            'Record the finishing-works deposit first',
+            deposit ? { params: { deposit: deposit.number } } : undefined,
+          );
+      }
       const done = await tx.unitPermit.update({
         where: { id },
         data: {

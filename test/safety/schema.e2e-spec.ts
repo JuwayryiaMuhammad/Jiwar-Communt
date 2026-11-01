@@ -231,9 +231,12 @@ describe('Safety tables — CHECKs, triggers and privileges', () => {
     });
 
     it('one open per unit and type; a closed one frees it', async () => {
+      // Numbers far above the compound's counter, each its own: random
+      // draws could repeat one and fail on the number, not on one-open.
+      let number = 800_000;
       const insert = (type: string) =>
         `INSERT INTO emergencies (id, tenant_id, number, unit_id, type, reported_by_account_id, responders_notified, updated_at)
-         VALUES (gen_random_uuid(), '${tenantId}', ${800_000 + Math.floor(Math.random() * 99_999)}, '${unitId}', '${type}', '${accountId}', 0, now())`;
+         VALUES (gen_random_uuid(), '${tenantId}', ${++number}, '${unitId}', '${type}', '${accountId}', 0, now())`;
       await expect(asApp(insert('medical'))).rejects.toThrow(
         /emergencies_one_open/,
       );

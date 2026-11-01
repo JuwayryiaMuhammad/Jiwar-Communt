@@ -286,13 +286,15 @@ describe('Gate services — the requester', () => {
 
   it('twenty a day per unit, all kinds together', async () => {
     const { unit, owner } = await home();
+    // Numbers far above the compound's counter, each its own: twenty random
+    // draws could repeat one (gate_service_requests_number_key).
     await x.inTx(s.c, async (tx) => {
       for (let i = 0; i < 20; i++)
         await tx.gateServiceRequest.create({
           data: {
             id: newId(),
             tenantId: s.c.tenantId,
-            number: 800_000 + Math.floor(Math.random() * 99_999),
+            number: 800_000 + i,
             kind: 'suspicious',
             status: 'cancelled',
             cancelledAt: new Date(),

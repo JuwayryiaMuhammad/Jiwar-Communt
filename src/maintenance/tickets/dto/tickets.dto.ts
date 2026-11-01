@@ -131,6 +131,72 @@ export class CreateTicketOnBehalfDto extends TicketBodyDto {
   reporterAccountId: string;
 }
 
+/**
+ * The management opens a work order of its own (ADR 0076): on an asset or a
+ * common area of the compound's (exactly one), or for a meter's spike, whose
+ * meter then says where unless the body does.
+ */
+export class CreateWorkOrderDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'The asset; or `commonAreaId` instead.',
+  })
+  @IsOptional()
+  @IsUUID()
+  assetId?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'A common area (ADR 0064), instead of `assetId`.',
+  })
+  @IsOptional()
+  @IsUUID()
+  commonAreaId?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'The meter’s spike it answers (ADR 0066): acknowledged with it if nobody had; one work order per alert. Without `assetId` or `commonAreaId`, the meter’s asset or area.',
+  })
+  @IsOptional()
+  @IsUUID()
+  meterAlertId?: string;
+
+  @ApiProperty({ type: String, format: 'uuid' })
+  @IsUUID()
+  categoryId: string;
+
+  @ApiProperty({
+    enum: TicketPriority,
+    enumName: 'TicketPriority',
+    required: false,
+    description: "The category's default when absent.",
+  })
+  @IsOptional()
+  @IsEnum(TicketPriority, PRIORITIES)
+  priority?: TicketPriority;
+
+  @ApiProperty({
+    type: String,
+    minLength: DESCRIPTION_LENGTH.min,
+    maxLength: DESCRIPTION_LENGTH.max,
+    description: 'What is to be done: staff’s words.',
+  })
+  @IsString()
+  @Length(
+    DESCRIPTION_LENGTH.min,
+    DESCRIPTION_LENGTH.max,
+    withParams(DESCRIPTION_LENGTH),
+  )
+  description: string;
+}
+
 export class ResidentTicketsQueryDto extends PageQueryDto {
   @ApiProperty({
     enum: TicketStatus,

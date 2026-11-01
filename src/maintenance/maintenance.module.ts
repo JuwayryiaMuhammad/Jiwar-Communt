@@ -55,6 +55,8 @@ import { MessagesService } from './tickets/messages.service';
 import { TechnicianRelease } from './tickets/technician-release';
 import { TechnicianTicketsController } from './tickets/technician-tickets.controller';
 import { WorkService } from './tickets/work.service';
+import { WorkOrdersController } from './tickets/work-orders.controller';
+import { WorkOrdersService } from './tickets/work-orders.service';
 import { ResidentTicketFeed } from './tickets/resident-ticket-feed';
 import { ResidentTicketSummary } from './tickets/resident-ticket-summary';
 import { ResidentTicketItems } from './tickets/resident-ticket-items';
@@ -216,6 +218,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     MaintenanceSettingsController,
     ResidentTicketsController,
     DispatchTicketsController,
+    WorkOrdersController,
     DispatchUnitsController,
     TechnicianTicketsController,
     TechniciansController,
@@ -296,6 +299,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     AttachmentsService,
     DispatchService,
     WorkService,
+    WorkOrdersService,
     TechnicianRelease,
     MessagesService,
     ConfirmationService,

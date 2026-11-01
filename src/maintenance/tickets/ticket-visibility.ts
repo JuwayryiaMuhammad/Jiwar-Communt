@@ -10,6 +10,8 @@ export const TICKET_ORIGINS = [
   'plan',
   'inspection',
   'field',
+  // ADR 0076: the management's own, on an asset or a common area.
+  'staff',
 ] as const;
 export type TicketOrigin = (typeof TICKET_ORIGINS)[number];
 export type StaffOrigin = Exclude<TicketOrigin, 'resident'>;
@@ -21,8 +23,9 @@ export type StaffOrigin = Exclude<TicketOrigin, 'resident'>;
  *
  *  - every resident ticket (its usual reach then applies: the reporter,
  *    the creator, the unit's primary);
- *  - a technician's field ticket on an asset in a unit: the household has
- *    to let the technician in, so it sees it and its visits;
+ *  - a technician's field ticket, or the management's own work order (ADR
+ *    0076), on an asset in a unit: the household has to let the technician
+ *    in, so it sees it and its visits;
  *  - no other work order of the compound's, ever.
  *
  * Both forms below are read from this one list: the database filter every
@@ -34,6 +37,8 @@ const RESIDENT_SIDE: readonly {
 }[] = [
   { origin: 'resident', inUnit: null },
   { origin: 'field', inUnit: true },
+  // ADR 0076: the management's own on an asset in a unit, as a field fault.
+  { origin: 'staff', inUnit: true },
 ];
 
 /** The filter: AND it into every resident-side query of tickets. */

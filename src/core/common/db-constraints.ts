@@ -971,4 +971,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   account_deputies_tenant_id_id_key: null,
   account_deputies_one_per_principal: null,
   account_deputies_one_per_deputy: null,
+  // Dispatch depth (ADR 0076): one staff work order an alert, checked first
+  // under the alert's lock (METER_ALERT_HAS_WORK_ORDER).
+  tickets_one_per_meter_alert: null,
 };

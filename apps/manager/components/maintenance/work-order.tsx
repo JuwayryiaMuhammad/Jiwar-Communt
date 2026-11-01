@@ -14,6 +14,7 @@ const ORIGIN_TEXT: Record<string, string> = {
   plan: 'A maintenance plan opened it',
   inspection: 'An inspection’s finding opened it',
   field: 'A technician reported it on site',
+  staff: 'The management opened it',
 };
 
 /**

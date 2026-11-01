@@ -28,11 +28,12 @@ describe('the resident side of tickets (ADR 0064)', () => {
     { origin, unitId: null },
   ]);
 
-  it('resident tickets, and a field ticket in a unit; never another work order', () => {
+  it('resident tickets, and a field or a staff work order in a unit; never another work order', () => {
     expect(rows.filter(residentVisible)).toEqual([
       { origin: 'resident', unitId: 'unit-1' },
       { origin: 'resident', unitId: null },
       { origin: 'field', unitId: 'unit-1' },
+      { origin: 'staff', unitId: 'unit-1' },
     ]);
   });
 
@@ -58,7 +59,7 @@ describe('the resident side of tickets (ADR 0064)', () => {
     const sql = readFileSync(
       join(
         __dirname,
-        '../../../prisma/migrations/20261201090400_staff_work_orders/migration.sql',
+        '../../../prisma/migrations/20270223090100_manager_work_orders/migration.sql',
       ),
       'utf8',
     );

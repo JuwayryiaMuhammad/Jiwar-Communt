@@ -2657,6 +2657,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'ended_at, end_reason and ended_by_account_id are tested IS [NOT] NULL in both branches; end_reason is compared only where it is NOT NULL',
   },
+  // Dispatch depth (ADR 0076).
+  tickets_meter_alert_staff_only: {},
 };
 
 interface Check {

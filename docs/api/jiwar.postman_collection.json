@@ -32056,6 +32056,46 @@
           }
         },
         {
+          "name": "Open a work order of the compound’s on an asset or a common area",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"categoryId\": \"\",\n  \"description\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  | The asset; or `commonAreaId` instead. |\n| `categoryId` | string (uuid) | yes |  |\n| `commonAreaId` | string (uuid) |  | A common area (ADR 0064), instead of `assetId`. |\n| `description` | string | yes | What is to be done: staff’s words. |\n| `meterAlertId` | string (uuid) |  | The meter’s spike it answers (ADR 0066): acknowledged with it if nobody had; one work order per alert. Without `assetId` or `commonAreaId`, the meter’s asset or area. |\n| `priority` | `normal` \\| `urgent` \\| `emergency` |  | The category's default when absent. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "work-orders"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/work-orders"
+            }
+          }
+        },
+        {
           "name": "List the work permits, the latest asked first",
           "request": {
             "description": "**Responses:** 200",

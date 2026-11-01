@@ -90,6 +90,8 @@ export interface NewWorkOrder {
   responsibleId: string;
   /** Who opens it; null for the system (a plan's sweep). */
   actorId: string | null;
+  /** ADR 0076: the meter's spike a staff work order answers (claimed by the caller). */
+  meterAlertId?: string;
 }
 
 /** What `insert` writes of a work order. */
@@ -99,6 +101,7 @@ interface WorkOrderOf {
   origin: StaffOrigin;
   assetId: string | null;
   commonAreaId: string | null;
+  meterAlertId: string | null;
 }
 
 /** A resident books a check-up (ADR 0038). */
@@ -1083,6 +1086,7 @@ export class TicketsService implements OnModuleInit {
               origin: workOrder.origin,
               assetId: workOrder.assetId,
               commonAreaId: workOrder.commonAreaId,
+              meterAlertId: workOrder.meterAlertId,
             }
           : {}),
         priority: input.priority ?? category.defaultPriority,
@@ -1176,6 +1180,7 @@ export class TicketsService implements OnModuleInit {
         origin: input.origin,
         assetId: input.assetId ?? null,
         commonAreaId: unitId === null ? commonAreaId : null,
+        meterAlertId: input.meterAlertId ?? null,
       },
     );
     await this.audit.record(tx, {
@@ -1187,6 +1192,7 @@ export class TicketsService implements OnModuleInit {
         commonAreaId: ticket.commonAreaId,
         categoryKey: category.key,
         priority: ticket.priority,
+        ...(input.meterAlertId ? { meterAlertId: input.meterAlertId } : {}),
       },
     });
     return ticket;

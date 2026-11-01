@@ -3853,6 +3853,8 @@ model Ticket {
   assetId             String?                   @map("asset_id") @db.Uuid
   /// The area of an inspection's finding without an asset; its name is `commonArea`.
   commonAreaId        String?                   @map("common_area_id") @db.Uuid
+  /// ADR 0076: the meter's spike a staff work order answers; one work order per alert.
+  meterAlertId        String?                   @map("meter_alert_id") @db.Uuid
 
   unit              Unit?              @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   category          TicketCategory     @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)

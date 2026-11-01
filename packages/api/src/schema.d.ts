@@ -8172,6 +8172,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/work-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a work order of the compound’s on an asset or a common area */
+        post: operations["WorkOrdersController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/work-permits": {
         parameters: {
             query?: never;
@@ -27870,6 +27887,29 @@ export interface components {
             /** @description Never returned after creation; deleted with the name. */
             visitorPhone?: string;
         };
+        CreateWorkOrderDto: {
+            /**
+             * Format: uuid
+             * @description The asset; or `commonAreaId` instead.
+             */
+            assetId?: string;
+            /** Format: uuid */
+            categoryId: string;
+            /**
+             * Format: uuid
+             * @description A common area (ADR 0064), instead of `assetId`.
+             */
+            commonAreaId?: string;
+            /** @description What is to be done: staff’s words. */
+            description: string;
+            /**
+             * Format: uuid
+             * @description The meter’s spike it answers (ADR 0066): acknowledged with it if nobody had; one work order per alert. Without `assetId` or `commonAreaId`, the meter’s asset or area.
+             */
+            meterAlertId?: string;
+            /** @description The category's default when absent. */
+            priority?: components["schemas"]["TicketPriority"];
+        };
         CreateWorksPermitDto: {
             /** @example Cairo Finishing Co. */
             contractorCompany: string;
@@ -42292,7 +42332,7 @@ export interface components {
          * @description Who opened it (ADR 0064): a resident, or the compound (`plan`, `inspection`, `field`).
          * @enum {string}
          */
-        TicketOrigin: "resident" | "plan" | "inspection" | "field";
+        TicketOrigin: "resident" | "plan" | "inspection" | "field" | "staff";
         TicketPartView: {
             issued: string;
             /** Format: uuid */
@@ -56922,6 +56962,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketReporterViewList"];
+                };
+            };
+        };
+    };
+    WorkOrdersController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkOrderDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketCreatedView"];
                 };
             };
         };

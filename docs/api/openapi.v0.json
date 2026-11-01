@@ -16663,6 +16663,48 @@
         ],
         "type": "object"
       },
+      "CreateWorkOrderDto": {
+        "properties": {
+          "assetId": {
+            "description": "The asset; or `commonAreaId` instead.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "A common area (ADR 0064), instead of `assetId`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "description": {
+            "description": "What is to be done: staff’s words.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "meterAlertId": {
+            "description": "The meter’s spike it answers (ADR 0066): acknowledged with it if nobody had; one work order per alert. Without `assetId` or `commonAreaId`, the meter’s asset or area.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "description": "The category's default when absent."
+          }
+        },
+        "required": [
+          "categoryId",
+          "description"
+        ],
+        "type": "object"
+      },
       "CreateWorksPermitDto": {
         "properties": {
           "contractorCompany": {
@@ -63944,7 +63986,8 @@
           "resident",
           "plan",
           "inspection",
-          "field"
+          "field",
+          "staff"
         ],
         "type": "string"
       },
@@ -94569,6 +94612,54 @@
           }
         ],
         "summary": "List who a ticket may be opened for in a unit",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/work-orders": {
+      "post": {
+        "operationId": "WorkOrdersController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a work order of the compound’s on an asset or a common area",
         "tags": [
           "maintenance"
         ],

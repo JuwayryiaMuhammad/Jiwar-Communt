@@ -215,3 +215,6 @@ The model is the one before it:
 - A quote that becomes an invoice.
 - More formal notice types (a violation warning, a neighbour notice) with a cure period per type.
 - The release of a hold acted on by the management: today the request is the ask, and the domain's own staff action lifts it.
+
+## Update (Phase M2-3, ADR 0073)
+- An unread critical notification is neither archived nor deleted (`NOTIFICATION_CRITICAL_UNREAD`): read it first. The catalog's `needsDecision` flag shows on every notification and filters the list (`?needsDecision=true`).

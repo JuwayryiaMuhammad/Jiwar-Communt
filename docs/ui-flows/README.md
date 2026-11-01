@@ -42,6 +42,7 @@
 | [02-roles-and-permissions](02-admin/02-roles-and-permissions.md) | الأدوار والصلاحيات، وجدول بكل الصلاحيات الـ36 ومين بياخدها افتراضيًا |
 | [03-staff-accounts](02-admin/03-staff-accounts.md) | حسابات الموظفين: إنشاء، حالة، تغيير بيانات التواصل |
 | [04-compound-settings-and-audit](02-admin/04-compound-settings-and-audit.md) | إعدادات الكمبوند وسجل التدقيق |
+| [05-inbox-and-deputy](02-admin/05-inbox-and-deputy.md) | صندوق القرارات ومهلاته، صلاحية المجلس الملزمة، والنائب (ADR 0073) |
 
 ### 03 — المجتمع: الوحدات والسكان والأسرة
 | الملف | الفيتشر |

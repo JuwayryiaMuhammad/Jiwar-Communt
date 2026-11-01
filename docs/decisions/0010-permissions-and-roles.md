@@ -32,3 +32,7 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (Phase R1, ADR 0036)
 - New permission `residents.assist` (manager kind, manager role by default): acting for a resident or family account that does not use the app.
+
+## Update (Phase M2-3, ADR 0073)
+- **One role per account, amended.** A live deputyship moves the permissions it names from its principal to its deputy for at most 30 days: `PermissionsGuard` reads it on every request. The role stays the account's one role; nothing is stored on it.
+- New permissions: `inbox.read` (staff, manager: the manager, the two supervisors and the accountant by default) and `deputies.manage` (manager).

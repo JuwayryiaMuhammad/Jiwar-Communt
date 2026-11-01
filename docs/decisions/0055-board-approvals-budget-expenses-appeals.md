@@ -274,3 +274,6 @@ Category `governance`, none critical. The params are codes only.
 - **The other thresholds** (exceptional fee, waiver, payment plan) are advisory. Binding them means each domain asking governance before it acts.
 - **Expenses are not posted to the ledger** (ADR 0048), and are not paid through the app.
 - **An appeal of a dispute** leaves the credit to the management, by hand.
+
+## Update (Phase M2-3, ADR 0073)
+- A compound may make `waiver_above_limit`'s and `payment_plan_above_limit`'s thresholds binding (`binding`). Above one, finance refuses a dispute's credit or a plan unless it names the authorization an approved request of the type granted, used once. Both request types now require a cost. `exceptional_fee` stays advisory.

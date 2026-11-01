@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -28,6 +28,29 @@ export class UpdateGovernanceRulesDto {
   @IsOptional()
   @IsBoolean()
   candidacyNotStaff?: boolean;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    description:
+      'The compound’s logo on the board’s documents: one of the caller’s own `compound_logo` uploads (a PNG or a JPEG; FILE_NOT_AVAILABLE otherwise); null takes it off.',
+  })
+  @IsOptional()
+  @ValidateIf((_o, v) => v !== null)
+  @IsUUID()
+  reportLogoFileId?: string | null;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'Send the board the month before’s report on a month’s first days (on by default).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  boardReportMonthly?: boolean;
 }
 
 export class GovernanceRulesResponse {
@@ -35,6 +58,10 @@ export class GovernanceRulesResponse {
   candidacyNoDues: boolean;
   @ApiProperty({ type: Boolean })
   candidacyNotStaff: boolean;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  reportLogoFileId: string | null;
+  @ApiProperty({ type: Boolean })
+  boardReportMonthly: boolean;
   @ApiProperty({
     type: String,
     format: 'date-time',

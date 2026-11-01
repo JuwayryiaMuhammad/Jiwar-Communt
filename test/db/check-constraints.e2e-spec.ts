@@ -2922,6 +2922,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'position and kind are NOT NULL; the subject columns are tested IS [NOT] NULL; title IS NULL is tested first and its length runs only on a value',
   },
   board_handover_packs_contents: {},
+  board_reports_shape: {},
   manager_handovers_shape: {
     guarded:
       'status is NOT NULL; delivered_at, contents, notes and notes_cleared_at are tested IS [NOT] NULL first; jsonb_typeof and the length run only on values',

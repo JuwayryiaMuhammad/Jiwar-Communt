@@ -47,6 +47,8 @@ export interface BoardMattersWorld {
   bMeetingActionId: string;
   /** A handover B's manager delivered (ADR 0075). */
   bManagerHandoverId: string;
+  /** A monthly report of B's board (ADR 0075). */
+  bBoardReportId: string;
 }
 
 export async function boardMattersWorld(
@@ -154,7 +156,19 @@ export async function boardMattersWorld(
           deliveredAt: new Date(),
         },
       });
+      const bBoardReportId = newId();
+      await tx.boardReport.create({
+        data: {
+          id: bBoardReportId,
+          tenantId: b.tenantId,
+          period: new Date(Date.UTC(2026, 0, 1)),
+          version: 1,
+          contents: {},
+          generatedAt: new Date(),
+        },
+      });
       return {
+        bBoardReportId,
         bMeetingId,
         bMeetingActionId,
         bManagerHandoverId,

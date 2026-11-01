@@ -1,5 +1,5 @@
 import type { Response } from 'supertest';
-import { today } from '../setup/compound-clock';
+import { month, today } from '../setup/compound-clock';
 import { lapse } from '../setup/governance';
 import { call, type Method } from './request';
 import type { World } from './world';
@@ -90,6 +90,14 @@ export function boardWorkCalls(
     return manager('POST', '/staff/governance/handover/deliver');
   };
 
+  /** This month's report of A's board, drawn on demand. */
+  const aReport = async () => {
+    await sitting();
+    return landlord('POST', '/board/reports', {
+      month: month(0),
+    });
+  };
+
   return {
     'GET /board/handover-pack': async () => {
       await aBoardWithPack();
@@ -118,6 +126,15 @@ export function boardWorkCalls(
       await sitting();
       return landlord('GET', `/board/manager-handovers/${handoverId}/pdf`);
     },
+    'GET /board/reports': async () => {
+      await sitting();
+      return landlord('GET', '/board/reports');
+    },
+    'POST /board/reports': () => aReport(),
+    'GET /board/reports/{id}': async () =>
+      landlord('GET', `/board/reports/${id(ok(await aReport()))}`),
+    'GET /board/reports/{id}/pdf': async () =>
+      landlord('GET', `/board/reports/${id(ok(await aReport()))}/pdf`),
     'GET /staff/governance/unit-shares': () =>
       manager('GET', '/staff/governance/unit-shares'),
     'PUT /staff/governance/unit-shares': () =>

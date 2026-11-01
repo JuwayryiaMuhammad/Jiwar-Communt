@@ -9,6 +9,7 @@ import { Module } from '@nestjs/common';
 import { CommunityGovernancePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
+import { ObjectStorageModule } from '../core/files/object-storage.module';
 import { EngagementModule } from '../engagement';
 import { GovernanceAccess } from './access';
 import {
@@ -86,6 +87,8 @@ import {
   MyHandoverController,
 } from './handovers/handovers.controller';
 import { HandoversService } from './handovers/handovers.service';
+import { BoardReportsController } from './reports/board-reports.controller';
+import { BoardReportsService } from './reports/board-reports.service';
 import { GovernanceRulesController } from './rules/governance-rules.controller';
 import { GovernanceRulesService } from './rules/governance-rules.service';
 import { UnitSharesController } from './shares/unit-shares.controller';
@@ -104,6 +107,7 @@ import { UnitSharesService } from './shares/unit-shares.service';
     CommunityGovernancePortModule,
     EngagementModule,
     FilesModule,
+    ObjectStorageModule,
   ],
   controllers: [
     CompoundDocumentsController,
@@ -142,6 +146,7 @@ import { UnitSharesService } from './shares/unit-shares.service';
     BoardHandoverPackController,
     MyHandoverController,
     ManagerHandoversController,
+    BoardReportsController,
   ],
   providers: [
     CompoundDocumentsService,
@@ -173,6 +178,7 @@ import { UnitSharesService } from './shares/unit-shares.service';
     GovernanceRulesService,
     MeetingsService,
     HandoversService,
+    BoardReportsService,
   ],
 })
 export class GovernanceModule {}

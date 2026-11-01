@@ -3647,6 +3647,8 @@ enum FilePurpose {
   vendor_document
   /// A compliance item's evidence (ADR 0087): a photo or a PDF, 10 MB.
   compliance_evidence
+  /// The compound's logo on the board's documents (ADR 0075).
+  compound_logo
 }
 
 enum FileStatus {
@@ -9109,6 +9111,24 @@ model ManagerHandover {
   @@map("manager_handovers")
 }
 
+/// A month's board report (ADR 0075): a snapshot, versioned, never changed.
+model BoardReport {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  /// The month's first day.
+  period        DateTime @db.Date
+  version       Int      @db.SmallInt
+  contents      Json
+  generatedAt   DateTime @map("generated_at") @db.Timestamptz(3)
+  /// Null when the monthly sweep wrote it.
+  generatedById String?  @map("generated_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, period, version], map: "board_reports_version_key")
+  @@index([tenantId, generatedAt, id], map: "board_reports_latest_idx")
+  @@map("board_reports")
+}
+
 /// The compound's governance rules (ADR 0075); no row reads as the defaults.
 model GovernanceRules {
   tenantId          String   @id @map("tenant_id") @db.Uuid
@@ -9116,6 +9136,10 @@ model GovernanceRules {
   candidacyNoDues   Boolean  @default(false) @map("candidacy_no_dues")
   /// Refuse a candidacy from an owner who also holds an active staff or manager account.
   candidacyNotStaff Boolean  @default(false) @map("candidacy_not_staff")
+  /// The compound's logo on the board's documents: a `compound_logo` file.
+  reportLogoFileId  String?  @map("report_logo_file_id") @db.Uuid
+  /// Send the board the month before's report on the month's first days.
+  boardReportMonthly Boolean @default(true) @map("board_report_monthly")
   updatedById       String   @map("updated_by_account_id") @db.Uuid
   updatedAt         DateTime @map("updated_at") @db.Timestamptz(3)
 

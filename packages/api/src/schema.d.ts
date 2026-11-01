@@ -1001,6 +1001,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/board/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The board’s monthly reports, latest first */
+        get: operations["BoardReportsController_list"];
+        put?: never;
+        /**
+         * Draw a month’s report again
+         * @description A sitting member (BOARD_SEAT_REQUIRED) or the manager: the month’s next version, the earlier ones kept.
+         */
+        post: operations["BoardReportsController_generate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a board report */
+        get: operations["BoardReportsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/reports/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A board report as a PDF
+         * @description With the compound’s logo when it has one.
+         */
+        get: operations["BoardReportsController_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/board/representatives": {
         parameters: {
             query?: never;
@@ -27110,6 +27168,26 @@ export interface components {
             data: components["schemas"]["BoardPublicationView"][];
             nextCursor: string | null;
         };
+        BoardReportView: {
+            /** @description Written by the monthly run, not by anyone on demand. */
+            bySweep: boolean;
+            /** @description governance: the board’s figures for the month (requests, appeals, polls, elections, meetings, action items); sections: the overview’s (finance’s money, security’s incidents and violations, ADR 0055). Totals only, never a name. */
+            contents: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example 2027-02 */
+            month: string;
+            /** @description From 1; each drawing on demand adds one. */
+            version: number;
+        };
+        BoardReportViewList: {
+            data: components["schemas"]["BoardReportView"][];
+            nextCursor: string | null;
+        };
         BoardRepresentativeMatterView: {
             /**
              * Format: uuid
@@ -34092,7 +34170,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "vendor_document" | "compliance_evidence";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "vendor_document" | "compliance_evidence" | "compound_logo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -34807,6 +34885,13 @@ export interface components {
              */
             updatedBy: "manager" | "platform" | null;
         };
+        GenerateBoardReportDto: {
+            /**
+             * @description The month, up to the current one (DAY_OUT_OF_RANGE): drawn again as its next version.
+             * @example 2027-02
+             */
+            month: string;
+        };
         GeofenceCircleDto: {
             lat: number;
             lng: number;
@@ -35042,8 +35127,11 @@ export interface components {
             unitCode: string;
         };
         GovernanceRulesResponse: {
+            boardReportMonthly: boolean;
             candidacyNoDues: boolean;
             candidacyNotStaff: boolean;
+            /** Format: uuid */
+            reportLogoFileId: string | null;
             /**
              * Format: date-time
              * @description Null until the manager first sets a rule: the defaults.
@@ -49188,10 +49276,17 @@ export interface components {
             titleEn?: string | null;
         };
         UpdateGovernanceRulesDto: {
+            /** @description Send the board the month before’s report on a month’s first days (on by default). */
+            boardReportMonthly?: boolean;
             /** @description Refuse a candidacy while any unit the owner owns owes past its due date (an invoice under an open dispute does not count). */
             candidacyNoDues?: boolean;
             /** @description Refuse a candidacy from an owner who also holds an active staff or manager account in the compound (the same identity document). */
             candidacyNotStaff?: boolean;
+            /**
+             * Format: uuid
+             * @description The compound’s logo on the board’s documents: one of the caller’s own `compound_logo` uploads (a PNG or a JPEG; FILE_NOT_AVAILABLE otherwise); null takes it off.
+             */
+            reportLogoFileId?: string | null;
         };
         UpdateGovernanceSettingsDto: {
             items: components["schemas"]["GovernanceSettingDto"][];
@@ -52043,6 +52138,94 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardObjectionsView"];
+                };
+            };
+        };
+    };
+    BoardReportsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardReportViewList"];
+                };
+            };
+        };
+    };
+    BoardReportsController_generate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateBoardReportDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardReportView"];
+                };
+            };
+        };
+    };
+    BoardReportsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardReportView"];
+                };
+            };
+        };
+    };
+    BoardReportsController_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
                 };
             };
         };

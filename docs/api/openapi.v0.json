@@ -5653,6 +5653,63 @@
         ],
         "type": "object"
       },
+      "BoardReportView": {
+        "properties": {
+          "bySweep": {
+            "description": "Written by the monthly run, not by anyone on demand.",
+            "type": "boolean"
+          },
+          "contents": {
+            "additionalProperties": true,
+            "description": "governance: the board’s figures for the month (requests, appeals, polls, elections, meetings, action items); sections: the overview’s (finance’s money, security’s incidents and violations, ADR 0055). Totals only, never a name.",
+            "type": "object"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "month": {
+            "example": "2027-02",
+            "type": "string"
+          },
+          "version": {
+            "description": "From 1; each drawing on demand adds one.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "month",
+          "version",
+          "generatedAt",
+          "bySweep",
+          "contents"
+        ],
+        "type": "object"
+      },
+      "BoardReportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BoardReportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BoardRepresentativeMatterView": {
         "properties": {
           "accountId": {
@@ -26873,7 +26930,8 @@
           "site_map",
           "floor_plan",
           "vendor_document",
-          "compliance_evidence"
+          "compliance_evidence",
+          "compound_logo"
         ],
         "type": "string"
       },
@@ -29322,6 +29380,20 @@
         ],
         "type": "object"
       },
+      "GenerateBoardReportDto": {
+        "properties": {
+          "month": {
+            "description": "The month, up to the current one (DAY_OUT_OF_RANGE): drawn again as its next version.",
+            "example": "2027-02",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month"
+        ],
+        "type": "object"
+      },
       "GeofenceCircleDto": {
         "properties": {
           "lat": {
@@ -30098,11 +30170,19 @@
       },
       "GovernanceRulesResponse": {
         "properties": {
+          "boardReportMonthly": {
+            "type": "boolean"
+          },
           "candidacyNoDues": {
             "type": "boolean"
           },
           "candidacyNotStaff": {
             "type": "boolean"
+          },
+          "reportLogoFileId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
           },
           "updatedAt": {
             "description": "Null until the manager first sets a rule: the defaults.",
@@ -30114,6 +30194,8 @@
         "required": [
           "candidacyNoDues",
           "candidacyNotStaff",
+          "reportLogoFileId",
+          "boardReportMonthly",
           "updatedAt"
         ],
         "type": "object"
@@ -76260,6 +76342,10 @@
       },
       "UpdateGovernanceRulesDto": {
         "properties": {
+          "boardReportMonthly": {
+            "description": "Send the board the month before’s report on a month’s first days (on by default).",
+            "type": "boolean"
+          },
           "candidacyNoDues": {
             "description": "Refuse a candidacy while any unit the owner owns owes past its due date (an invoice under an open dispute does not count).",
             "type": "boolean"
@@ -76267,6 +76353,12 @@
           "candidacyNotStaff": {
             "description": "Refuse a candidacy from an owner who also holds an active staff or manager account in the compound (the same identity document).",
             "type": "boolean"
+          },
+          "reportLogoFileId": {
+            "description": "The compound’s logo on the board’s documents: one of the caller’s own `compound_logo` uploads (a PNG or a JPEG; FILE_NOT_AVAILABLE otherwise); null takes it off.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -83444,6 +83536,172 @@
           }
         ],
         "summary": "Answer a decision’s objections",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/reports": {
+      "get": {
+        "operationId": "BoardReportsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardReportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The board’s monthly reports, latest first",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A sitting member (BOARD_SEAT_REQUIRED) or the manager: the month’s next version, the earlier ones kept.",
+        "operationId": "BoardReportsController_generate",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateBoardReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Draw a month’s report again",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/reports/{id}": {
+      "get": {
+        "operationId": "BoardReportsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a board report",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/reports/{id}/pdf": {
+      "get": {
+        "description": "With the compound’s logo when it has one.",
+        "operationId": "BoardReportsController_pdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A board report as a PDF",
         "tags": [
           "governance"
         ],

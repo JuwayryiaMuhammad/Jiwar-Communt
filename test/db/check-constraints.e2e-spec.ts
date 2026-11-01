@@ -2631,6 +2631,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; reason_code IS NULL is tested first and its lists run only on a value',
   },
+  // M2-1 (ADR 0072): the unit register.
+  buildings_name_length: {},
+  units_building_both: {},
 };
 
 interface Check {

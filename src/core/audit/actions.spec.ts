@@ -42,6 +42,8 @@ describe('audit catalog', () => {
         'role',
         'occupancy',
         'unit',
+        'building',
+        'unit_import',
         'tenant',
         'platform_admin',
         'household_invite',

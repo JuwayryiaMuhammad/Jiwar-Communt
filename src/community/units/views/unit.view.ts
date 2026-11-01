@@ -9,6 +9,13 @@ export class UnitView {
   code: string;
   @ApiProperty({ type: String, nullable: true })
   building: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The building’s id (ADR 0072); null with `building`.',
+  })
+  buildingId: string | null;
   @ApiProperty({ type: Number, nullable: true })
   floor: number | null;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -19,6 +26,7 @@ export class UnitView {
       id: unit.id,
       code: unit.code,
       building: unit.building,
+      buildingId: unit.buildingId,
       floor: unit.floor,
       createdAt: unit.createdAt,
     };

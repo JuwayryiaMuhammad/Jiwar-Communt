@@ -103,6 +103,13 @@ export class UnitDetailView {
   code: string;
   @ApiProperty({ type: String, nullable: true })
   building: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The building’s id (ADR 0072); null with `building`.',
+  })
+  buildingId: string | null;
   @ApiProperty({ type: Number, nullable: true })
   floor: number | null;
   @ApiProperty({ enum: UnitType, enumName: 'UnitType', nullable: true })
@@ -143,6 +150,7 @@ export class UnitDetailView {
       id: u.id,
       code: u.code,
       building: u.building,
+      buildingId: u.buildingId,
       floor: u.floor,
       unitType: u.unitType,
       areaSqm: u.areaSqm,

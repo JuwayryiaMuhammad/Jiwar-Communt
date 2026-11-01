@@ -38,6 +38,64 @@ export const UNITS_ROUTES: Row[] = [
     },
   },
   {
+    method: 'PATCH',
+    path: '/units/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.b.homeUnitId }),
+      body: () => ({ floor: 2 }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { buildingId: 'x', floor: 500 },
+      fields: [
+        { field: 'buildingId', code: 'INVALID_UUID' },
+        {
+          field: 'floor',
+          code: 'INVALID_NUMBER',
+          params: { min: -5, max: 200 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/buildings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/buildings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { name: '' },
+      fields: [
+        { field: 'name', code: 'INVALID_LENGTH', params: { min: 1, max: 64 } },
+      ],
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/buildings/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bBuildingId }),
+      code: 'BUILDING_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
     method: 'GET',
     path: '/units/needing-review',
     auth: 'tenant',

@@ -1689,6 +1689,16 @@ export const ErrorCode = {
   GALLERY_REPORT_EXISTS: 'GALLERY_REPORT_EXISTS',
   /** The visitor's details are no longer kept: invite them as new (409). */
   VISITOR_DETAILS_PURGED: 'VISITOR_DETAILS_PURGED',
+  BUILDING_NOT_FOUND: 'BUILDING_NOT_FOUND',
+  /** The compound has a building of this name (409). */
+  BUILDING_NAME_TAKEN: 'BUILDING_NAME_TAKEN',
+  /** Units name it: move them first (409, params.units). */
+  BUILDING_IN_USE: 'BUILDING_IN_USE',
+  UNIT_IMPORT_NOT_FOUND: 'UNIT_IMPORT_NOT_FOUND',
+  /** Its dry run is over a day old: upload the file again (409). */
+  UNIT_IMPORT_EXPIRED: 'UNIT_IMPORT_EXPIRED',
+  /** Committed already (409). */
+  UNIT_IMPORT_COMMITTED: 'UNIT_IMPORT_COMMITTED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

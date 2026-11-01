@@ -119,6 +119,7 @@ export interface UnitDetail {
   id: string;
   code: string;
   building: string | null;
+  buildingId: string | null;
   floor: number | null;
   unitType: UnitType | null;
   /** Decimal string. */

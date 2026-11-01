@@ -1166,7 +1166,9 @@ model Unit {
   id          String    @id @db.Uuid
   tenantId    String    @map("tenant_id") @db.Uuid
   code        String
+  /// The building's name, kept in step with `buildingId` by a trigger (ADR 0072).
   building    String?
+  buildingId  String?   @map("building_id") @db.Uuid
   floor       Int?
   /// Closed-unit mode (ADR 0020), set by the owner-resident primary.
   closedSince DateTime? @map("closed_since") @db.Timestamptz(3)
@@ -1228,9 +1230,25 @@ model Unit {
   marketListingsOf   MarketListing[] @relation("MarketListingUnit")
   marketShops        MarketShop[]
   marketReports      MarketListingReport[]
+  buildingRecord     Building? @relation(fields: [tenantId, buildingId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "units_tenant_id_building_fkey")
   @@unique([tenantId, code])
   @@unique([tenantId, id])
+  @@index([tenantId, buildingId], map: "units_building_idx")
   @@map("units")
+}
+
+/// A compound's building (ADR 0072): a name its units carry, given an id.
+/// Never renamed (the name is a key elsewhere); deleted only when no unit names it.
+model Building {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  units     Unit[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, name], map: "buildings_name_key")
+  @@map("buildings")
 }
 
 /// Resident ↔ unit (ADR 0012). Never deleted: ending sets status + ended_at.

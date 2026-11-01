@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
@@ -15,7 +23,10 @@ import {
   toList,
   type ListResponse,
 } from '../../core/common/http/list';
+import { parseId } from '../../core/common/validation/parse-id.pipe';
+import { UnitDetailView } from '../residents/views/occupancy.views';
 import { CreateUnitDto } from './dto/create-unit.dto';
+import { UpdateUnitDto } from './dto/update-unit.dto';
 import { UnitsService } from './units.service';
 import { UnitView } from './views/unit.view';
 
@@ -47,5 +58,30 @@ export class UnitsController {
   @ApiCreatedResponse({ type: UnitView })
   async create(@Body() dto: CreateUnitDto): Promise<UnitView> {
     return UnitView.from(await this.units.create(dto));
+  }
+
+  /** ADR 0072: never the code (QR codes, permits and certificates print it). */
+  @RequirePermissions('units.manage')
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Change a unit’s building, floor, type or area',
+  })
+  @ApiOkResponse({ type: UnitDetailView })
+  async update(
+    @Param('id', parseId()) id: string,
+    @Body() dto: UpdateUnitDto,
+  ): Promise<UnitDetailView> {
+    const u = await this.units.update(id, dto);
+    return UnitDetailView.from({
+      id: u.id,
+      code: u.code,
+      building: u.building,
+      buildingId: u.buildingId,
+      floor: u.floor,
+      unitType: u.unitType,
+      areaSqm: u.areaSqm?.toFixed(2) ?? null,
+      closed: u.closedSince !== null,
+      createdAt: u.createdAt,
+    });
   }
 }

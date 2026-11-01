@@ -1058,6 +1058,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/buildings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the buildings, by name, with their units */
+        get: operations["BuildingsController_list"];
+        put?: never;
+        /** Add a building ahead of its units */
+        post: operations["BuildingsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/buildings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a building no unit names */
+        delete: operations["BuildingsController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/buses": {
         parameters: {
             query?: never;
@@ -20253,7 +20288,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Change a unit’s building, floor, type or area */
+        patch: operations["UnitsController_update"];
         trace?: never;
     };
     "/api/v1/units/{id}/activation": {
@@ -24049,6 +24085,19 @@ export interface components {
             /** Format: date-time */
             since: string;
         };
+        BuildingView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description Units that name it now. */
+            units: number;
+        };
+        BuildingViewList: {
+            data: components["schemas"]["BuildingView"][];
+            nextCursor: string | null;
+        };
         BuildingsView: {
             /** @description The buildings the compound’s units name, in order. */
             buildings: string[];
@@ -26194,6 +26243,10 @@ export interface components {
              */
             startsAt: string;
         };
+        CreateBuildingDto: {
+            /** @description Unique in the compound, exactly as written; never changed. */
+            name: string;
+        };
         CreateBusRouteDto: {
             nameAr: string;
             nameEn: string;
@@ -27391,10 +27444,22 @@ export interface components {
             targetResponseHours: number;
         };
         CreateUnitDto: {
+            /**
+             * @description Square metres, above zero, up to 2 decimals.
+             * @example 120.50
+             */
+            areaSqm?: string;
+            /** @description A building by its name: the compound’s building of exactly that name, a new one if none (ADR 0072). Not with `buildingId`. */
             building?: string;
+            /**
+             * Format: uuid
+             * @description One of the compound’s buildings (ADR 0072).
+             */
+            buildingId?: string;
             /** @description Unit code, unique within the compound, e.g. `B2-104`. */
             code: string;
             floor?: number;
+            unitType?: components["schemas"]["UnitType"];
         };
         CreateVehicleDto: {
             /** @example Silver */
@@ -42056,6 +42121,11 @@ export interface components {
             /** @example 120.50 */
             areaSqm: string | null;
             building: string | null;
+            /**
+             * Format: uuid
+             * @description The building’s id (ADR 0072); null with `building`.
+             */
+            buildingId: string | null;
             /** @description Closed-unit mode (the owner is away). */
             closed: boolean;
             code: string;
@@ -42242,12 +42312,20 @@ export interface components {
             id: string;
             reason: components["schemas"]["UnitReviewReason"];
         };
-        /** @enum {string} */
+        /**
+         * @description Managers only.
+         * @enum {string}
+         */
         UnitReviewReason: "primary_left" | "primary_frozen" | "primary_deceased" | "separation";
         /** @enum {string} */
         UnitType: "apartment" | "villa" | "townhouse" | "duplex" | "penthouse" | "studio" | "commercial" | "other";
         UnitView: {
             building: string | null;
+            /**
+             * Format: uuid
+             * @description The building’s id (ADR 0072); null with `building`.
+             */
+            buildingId: string | null;
             code: string;
             /** Format: date-time */
             createdAt: string;
@@ -43068,6 +43146,20 @@ export interface components {
             ownerRoleId?: string | null;
             /** @description Applies to requests opened or reopened from now on; a running cycle keeps its due time. */
             targetResponseHours?: number;
+        };
+        UpdateUnitDto: {
+            /**
+             * @description Square metres, above zero, up to 2 decimals.
+             * @example 120.50
+             */
+            areaSqm?: string | null;
+            /**
+             * Format: uuid
+             * @description One of the compound’s buildings; null: none.
+             */
+            buildingId?: string | null;
+            floor?: number | null;
+            unitType?: components["schemas"]["UnitType"] | null;
         };
         UpdateVehicleDto: {
             /** @description Keeps the status. */
@@ -45369,6 +45461,67 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ShareLinkView"];
                 };
+            };
+        };
+    };
+    BuildingsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildingViewList"];
+                };
+            };
+        };
+    };
+    BuildingsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBuildingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildingView"];
+                };
+            };
+        };
+    };
+    BuildingsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -74296,6 +74449,31 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitDetailView"];
+                };
+            };
+        };
+    };
+    UnitsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUnitDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {

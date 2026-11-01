@@ -48826,6 +48826,86 @@
     {
       "item": [
         {
+          "name": "List the buildings, by name, with their units",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "buildings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/buildings"
+            }
+          }
+        },
+        {
+          "name": "Add a building ahead of its units",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"name\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `name` | string | yes | Unique in the compound, exactly as written; never changed. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "buildings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/buildings"
+            }
+          }
+        },
+        {
+          "name": "Delete a building no unit names",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "buildings",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/buildings/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Withdraw my renewal request",
           "request": {
             "description": "**Responses:** 200",
@@ -49722,7 +49802,7 @@
               },
               "raw": "{\n  \"code\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `building` | string |  |  |\n| `code` | string | yes | Unit code, unique within the compound, e.g. `B2-104`. |\n| `floor` | number |  |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `areaSqm` | string |  | Square metres, above zero, up to 2 decimals. |\n| `building` | string |  | A building by its name: the compound’s building of exactly that name, a new one if none (ADR 0072). Not with `buildingId`. |\n| `buildingId` | string (uuid) |  | One of the compound’s buildings (ADR 0072). |\n| `code` | string | yes | Unit code, unique within the compound, e.g. `B2-104`. |\n| `floor` | number |  |  |\n| `unitType` | `apartment` \\| `villa` \\| `townhouse` \\| `duplex` \\| `penthouse` \\| `studio` \\| `commercial` \\| `other` |  |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -49784,6 +49864,48 @@
             "description": "**Responses:** 200",
             "header": [],
             "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a unit’s building, floor, type or area",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"areaSqm\": \"120.50\",\n  \"buildingId\": \"\",\n  \"floor\": -5,\n  \"unitType\": \"apartment\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `areaSqm` | string |  | Square metres, above zero, up to 2 decimals. |\n| `buildingId` | string (uuid) |  | One of the compound’s buildings; null: none. |\n| `floor` | number |  |  |\n| `unitType` | `apartment` \\| `villa` \\| `townhouse` \\| `duplex` \\| `penthouse` \\| `studio` \\| `commercial` \\| `other` |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
             "url": {
               "host": [
                 "{{baseUrl}}"

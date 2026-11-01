@@ -43,9 +43,14 @@ export function representativeCalls(
       // A's home (the owner's) and the rented unit (the landlord's) are in
       // building NS: no one gains a unit, so no other route's caller now
       // owns two (a poll's vote, an RSVP would then need to name one).
+      // Triggers are off here: the building row and both unit columns by
+      // hand (ADR 0072 keeps `building` and `building_id` together).
       await superuserSql(
-        `UPDATE units SET building = 'NS' WHERE id = ANY($1::uuid[])`,
-        [[a.homeUnitId, a.rentedUnitId]],
+        `WITH b AS (INSERT INTO buildings (id, tenant_id, name)
+                    VALUES (gen_random_uuid(), $2::uuid, 'NS') RETURNING id)
+         UPDATE units SET building = 'NS', building_id = (SELECT id FROM b)
+          WHERE id = ANY($1::uuid[])`,
+        [[a.homeUnitId, a.rentedUnitId], a.tenantId],
       );
       const unitId = a.homeUnitId;
       const matterId = newId();

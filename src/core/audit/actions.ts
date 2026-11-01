@@ -176,6 +176,10 @@ export const AUDIT_ACTIONS = {
     target: 'resident_registration',
   },
   'unit.created': { log: 'tenant', target: 'unit' },
+  // The unit register (ADR 0072): building, floor, type and area, never the code.
+  'unit.updated': { log: 'tenant', target: 'unit' },
+  'building.created': { log: 'tenant', target: 'building' },
+  'building.deleted': { log: 'tenant', target: 'building' },
   'unit.household_review_flagged': { log: 'tenant', target: 'unit' },
   'unit.household_review_cleared': { log: 'tenant', target: 'unit' },
   'unit.household_ended': { log: 'tenant', target: 'unit' },

@@ -104,6 +104,7 @@ import {
   type GuardVendorsWorld,
 } from './world-guard-vendors';
 import { r11c2World, type R11c2World } from './world-r11c2';
+import { m21World, type M21World } from './world-m21';
 import { fileHelpers } from '../setup/files';
 import { parcelHelpers } from '../setup/parcels';
 import { gateHelpers } from '../setup/gate';
@@ -174,7 +175,8 @@ export interface World
     OfflineWorld,
     R11c1World,
     GuardVendorsWorld,
-    R11c2World {
+    R11c2World,
+    M21World {
   h: HttpHarness;
   helpers: ReturnType<typeof communityHelpers>;
   /** The compound the requests act in. */
@@ -1647,7 +1649,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const r11c1 = await r11c1World(h, helpers, b);
   const guardVendors = await guardVendorsWorld(h, helpers, b);
   const r11c2 = await r11c2World(h, helpers, b, bPartner.id);
+  const m21 = await m21World(h, helpers, b);
   return {
+    ...m21,
     ...gateCompletion,
     ...offline,
     ...r11c1,

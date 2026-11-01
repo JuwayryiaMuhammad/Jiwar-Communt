@@ -984,3 +984,10 @@ export const R11C2_COVERAGE: readonly string[] = [
   'gallery_photo.reported',
   'visitor_pass.reinvited',
 ];
+
+/** The unit register (ADR 0072), covered by test/m21/audit-coverage.e2e-spec.ts. */
+export const M21_COVERAGE: readonly string[] = [
+  'unit.updated',
+  'building.created',
+  'building.deleted',
+];

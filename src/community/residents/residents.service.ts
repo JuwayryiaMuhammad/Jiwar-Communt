@@ -1379,6 +1379,7 @@ export class ResidentsService {
         id: unit.id,
         code: unit.code,
         building: unit.building,
+        buildingId: unit.buildingId,
         floor: unit.floor,
         unitType: unit.unitType,
         areaSqm: unit.areaSqm?.toFixed(2) ?? null,

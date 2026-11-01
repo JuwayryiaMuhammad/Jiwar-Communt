@@ -5,7 +5,7 @@ import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { buildWorld, type World } from './world';
 
-const UNIT = ['building', 'code', 'createdAt', 'floor', 'id'];
+const UNIT = ['building', 'buildingId', 'code', 'createdAt', 'floor', 'id'];
 const DETAIL = [...UNIT, 'areaSqm', 'closed', 'unitType'].sort();
 const OCCUPANCY = [
   'endReason',

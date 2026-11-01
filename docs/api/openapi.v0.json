@@ -6362,6 +6362,51 @@
         ],
         "type": "object"
       },
+      "BuildingView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "units": {
+            "description": "Units that name it now.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "units",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "BuildingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BuildingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BuildingsView": {
         "properties": {
           "buildings": {
@@ -13251,6 +13296,20 @@
         ],
         "type": "object"
       },
+      "CreateBuildingDto": {
+        "properties": {
+          "name": {
+            "description": "Unique in the compound, exactly as written; never changed.",
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
       "CreateBusRouteDto": {
         "properties": {
           "nameAr": {
@@ -16145,9 +16204,20 @@
       },
       "CreateUnitDto": {
         "properties": {
+          "areaSqm": {
+            "description": "Square metres, above zero, up to 2 decimals.",
+            "example": "120.50",
+            "type": "string"
+          },
           "building": {
+            "description": "A building by its name: the compound’s building of exactly that name, a new one if none (ADR 0072). Not with `buildingId`.",
             "maxLength": 64,
             "minLength": 1,
+            "type": "string"
+          },
+          "buildingId": {
+            "description": "One of the compound’s buildings (ADR 0072).",
+            "format": "uuid",
             "type": "string"
           },
           "code": {
@@ -16160,6 +16230,13 @@
             "maximum": 200,
             "minimum": -5,
             "type": "number"
+          },
+          "unitType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitType"
+              }
+            ]
           }
         },
         "required": [
@@ -64183,6 +64260,12 @@
             "nullable": true,
             "type": "string"
           },
+          "buildingId": {
+            "description": "The building’s id (ADR 0072); null with `building`.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "closed": {
             "description": "Closed-unit mode (the owner is away).",
             "type": "boolean"
@@ -64236,6 +64319,7 @@
           "id",
           "code",
           "building",
+          "buildingId",
           "floor",
           "unitType",
           "areaSqm",
@@ -64824,6 +64908,7 @@
         "type": "object"
       },
       "UnitReviewReason": {
+        "description": "Managers only.",
         "enum": [
           "primary_left",
           "primary_frozen",
@@ -64851,6 +64936,12 @@
             "nullable": true,
             "type": "string"
           },
+          "buildingId": {
+            "description": "The building’s id (ADR 0072); null with `building`.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "code": {
             "type": "string"
           },
@@ -64871,6 +64962,7 @@
           "id",
           "code",
           "building",
+          "buildingId",
           "floor",
           "createdAt"
         ],
@@ -67213,6 +67305,37 @@
             "maximum": 720,
             "minimum": 1,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateUnitDto": {
+        "properties": {
+          "areaSqm": {
+            "description": "Square metres, above zero, up to 2 decimals.",
+            "example": "120.50",
+            "nullable": true,
+            "type": "string"
+          },
+          "buildingId": {
+            "description": "One of the compound’s buildings; null: none.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "floor": {
+            "maximum": 200,
+            "minimum": -5,
+            "nullable": true,
+            "type": "number"
+          },
+          "unitType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitType"
+              }
+            ],
+            "nullable": true
           }
         },
         "type": "object"
@@ -72667,6 +72790,100 @@
           "bookings"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/buildings": {
+      "get": {
+        "operationId": "BuildingsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the buildings, by name, with their units",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "BuildingsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBuildingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a building ahead of its units",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/buildings/{id}": {
+      "delete": {
+        "operationId": "BuildingsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a building no unit names",
+        "tags": [
+          "units"
+        ],
         "x-stability": "draft"
       }
     },
@@ -128700,6 +128917,51 @@
           }
         ],
         "summary": "Get one unit",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "UnitsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUnitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a unit’s building, floor, type or area",
         "tags": [
           "units"
         ],

@@ -954,4 +954,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gallery_photos_file_id_key: null,
   gallery_photo_reports_tenant_id_id_key: null,
   gallery_photo_reports_one_per_reporter: null,
+  // The unit register (ADR 0072): one building a name, checked first by the
+  // service (BUILDING_NAME_TAKEN); a violation names the field.
+  buildings_tenant_id_id_key: null,
+  buildings_name_key: ['name'],
 };

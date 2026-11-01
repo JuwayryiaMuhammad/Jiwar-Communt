@@ -1034,6 +1034,13 @@ function validate(input: RegistrationRequest): Valid {
     } else areaSqm = text;
   }
   const building = input.building?.trim() || null;
+  // A building's name is at most 64 characters (ADR 0072).
+  if (building !== null && building.length > 64)
+    fields.push({
+      field: 'building',
+      code: FieldErrorCode.INVALID_LENGTH,
+      params: { max: 64 },
+    });
   const preferredLocale = input.preferredLocale ?? 'ar';
   if (!(LOCALES as readonly string[]).includes(preferredLocale)) {
     fields.push({

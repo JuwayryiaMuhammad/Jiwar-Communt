@@ -364,6 +364,10 @@ export const PERMISSIONS = {
   // board approved): the manager's, never a deputy's.
   'experience.manage': { kinds: ['staff', 'manager'] },
   'experience.compensate': { kinds: ['manager'] },
+  // The field team (ADR 0078): the technicians' roster and attendance on
+  // the guards' one, instructions every technician acknowledges, and the
+  // technicians' calls for help.
+  'field_team.manage': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

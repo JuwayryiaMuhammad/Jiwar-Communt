@@ -280,6 +280,8 @@ describe('audit catalog', () => {
         'ownership_transfer',
         'closed_unit_round',
         'unit_entry',
+        // ADR 0078.
+        'technician_help_request',
       ]).toContain(def.target);
     }
   });

@@ -55,6 +55,11 @@ const CRITICAL_KINDS = [
   // ADR 0050.
   'guard_instruction.urgent',
   'guard_shift.absent_unmanned',
+  // ADR 0078.
+  'technician_help.assigned',
+  'technician_help.escalated',
+  'technician_help.requested',
+  'technician_instruction.urgent',
   'ticket.assigned',
   'ticket.emergency',
   // ADR 0038.

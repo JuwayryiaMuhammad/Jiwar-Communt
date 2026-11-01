@@ -1027,6 +1027,7 @@ describe('Permission sync', () => {
       'dashboard.read',
       'energy.manage',
       'energy.read',
+      'field_team.manage',
       'inbox.read',
       'inspections.manage',
       'meters.record',
@@ -2953,6 +2954,59 @@ describe('Permission sync', () => {
         expect(
           (await role(t, key)).permissions.filter((p) => m210.includes(p)),
         ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M2-12 (ADR 0078)', () => {
+    const m212 = ['field_team.manage'];
+    /** The catalog before M2-12: the field team's permission nowhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m212.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m212.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: the manager and the maintenance supervisor run the field team, nobody else', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M2-12 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual(m212);
+      expect(report.rolesCreated).toEqual([]);
+      const has = async (key: string) =>
+        (await role(t, key)).permissions.filter((p) => m212.includes(p));
+      expect(await has('manager')).toEqual(m212);
+      expect(await has('maintenance_supervisor')).toEqual(m212);
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'security_supervisor',
+        'technician',
+        'accountant',
+        'collector',
+        'unit_proxy',
+      ])
+        expect(await has(key)).toEqual([]);
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

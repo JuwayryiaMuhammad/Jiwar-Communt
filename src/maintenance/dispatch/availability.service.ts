@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import type { TechnicianAvailabilityState } from '@prisma/client';
 import { RequestContext } from '../../core/common/cls/request-context';
+import { StaffDuty } from '../../core/staff-duty/staff-duty';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
@@ -46,7 +47,7 @@ interface Change {
  * an assignment, never inside it.
  */
 @Injectable()
-export class AvailabilityService {
+export class AvailabilityService implements OnModuleInit {
   private readonly logger = new Logger(AvailabilityService.name);
 
   constructor(
@@ -54,7 +55,16 @@ export class AvailabilityService {
     private readonly ctx: RequestContext,
     private readonly access: TicketAccess,
     private readonly engine: DispatchEngine,
+    private readonly duty: StaffDuty,
   ) {}
+
+  /** A technician is on duty while available (ADR 0078). */
+  onModuleInit(): void {
+    this.duty.register(
+      async (tx, accountId) =>
+        (await this.read(tx, accountId)).state === 'available',
+    );
+  }
 
   /** The caller's own state. */
   mine(): Promise<AvailabilityRead> {
@@ -209,6 +219,13 @@ export class AvailabilityService {
         changedById: by.by,
         reasonCode: by.reasonCode,
       },
+    });
+    // The roster's slot and the instructions that reach them (ADR 0078),
+    // in this transaction: the caller holds the account row.
+    await this.duty.changed(tx, {
+      accountId,
+      onDuty: to === 'available',
+      at: now,
     });
     return true;
   }

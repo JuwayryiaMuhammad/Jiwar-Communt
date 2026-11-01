@@ -8414,6 +8414,14 @@ model MaterialEntry {
 // Phase G4 — guard shifts and tasks (ADR 0050)
 // ============================================================================
 
+/// Whose roster a template or a slot is (ADR 0078).
+enum StaffCrew {
+  security
+  maintenance
+
+  @@map("staff_crew")
+}
+
 enum GuardSlotStatus {
   scheduled
   cancelled
@@ -8669,6 +8677,8 @@ enum GuardInstructionAudience {
   all
   gate
   zone
+  /// Every field technician (ADR 0078), with no post.
+  technicians
 
   @@map("guard_instruction_audience")
 }
@@ -8676,6 +8686,8 @@ enum GuardInstructionAudience {
 enum GuardInstructionVia {
   send
   shift_start
+  /// A technician who went on duty while it was live (ADR 0078).
+  on_duty
 
   @@map("guard_instruction_via")
 }
@@ -13411,4 +13423,23 @@ model UnitEntryPhoto {
   @@unique([tenantId, id])
   @@index([tenantId, entryId], map: "unit_entry_photos_entry_idx")
   @@map("unit_entry_photos")
+}
+
+/// What a technician calls for help with (ADR 0078).
+enum TechnicianHelpKind {
+  extra_hands
+  expertise
+  parts
+  safety
+
+  @@map("technician_help_kind")
+}
+
+enum TechnicianHelpStatus {
+  open
+  taken
+  resolved
+  cancelled
+
+  @@map("technician_help_status")
 }

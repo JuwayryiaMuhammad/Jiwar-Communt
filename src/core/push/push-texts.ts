@@ -3494,6 +3494,76 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم تؤكد السعر النهائي {finalPrice} في الوقت المحدد.',
     },
   },
+  'technician_shift.absent': {
+    en: {
+      title: 'Technician absent',
+      body: 'A technician did not go on duty for their shift. Open the roster.',
+    },
+    ar: {
+      title: 'غياب فني',
+      body: 'لم يبدأ فني مناوبته. افتح الجدول.',
+    },
+  },
+  'technician_instruction.issued': {
+    en: {
+      title: 'New instruction',
+      body: 'You have a new instruction to read and acknowledge.',
+    },
+    ar: {
+      title: 'تعليمات جديدة',
+      body: 'لديك تعليمات جديدة لقراءتها وتأكيدها.',
+    },
+  },
+  'technician_instruction.urgent': {
+    en: {
+      title: 'Urgent instruction',
+      body: 'Read and acknowledge an urgent instruction now.',
+    },
+    ar: {
+      title: 'تعليمات عاجلة',
+      body: 'اقرأ التعليمات العاجلة وأكّدها الآن.',
+    },
+  },
+  'technician_help.requested': {
+    en: {
+      title: 'A technician needs help',
+      body: 'A technician called for help. Open the field team.',
+    },
+    ar: {
+      title: 'فني يحتاج مساعدة',
+      body: 'طلب فني المساعدة. افتح الفريق الميداني.',
+    },
+  },
+  'technician_help.taken': {
+    en: {
+      title: 'Help is on the way',
+      body: 'Your call for help was taken.',
+    },
+    ar: {
+      title: 'المساعدة في الطريق',
+      body: 'تم استلام طلب المساعدة.',
+    },
+  },
+  'technician_help.assigned': {
+    en: {
+      title: 'Help a colleague',
+      body: 'You were sent to help a colleague. Open the request.',
+    },
+    ar: {
+      title: 'ساعد زميلك',
+      body: 'تم تكليفك بمساعدة زميل. افتح الطلب.',
+    },
+  },
+  'technician_help.escalated': {
+    en: {
+      title: 'A call for help is waiting',
+      body: 'Nobody has taken a technician’s call for help. Open the field team.',
+    },
+    ar: {
+      title: 'طلب مساعدة بانتظار الرد',
+      body: 'لم يستلم أحد طلب مساعدة من فني. افتح الفريق الميداني.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

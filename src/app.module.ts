@@ -43,6 +43,7 @@ import { MoveStepsModule } from './core/moves/move-steps.module';
 import { VendorDirectoryModule } from './core/vendors/vendor-directory.module';
 import { UnitDuesModule } from './core/unit-dues/unit-dues.module';
 import { WorksCompletionsModule } from './core/works/works-completions.module';
+import { StaffDutyModule } from './core/staff-duty/staff-duty.module';
 import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
 import { PdfModule } from './core/pdf/pdf.module';
 import { ConsentsModule } from './core/consents/consents.module';
@@ -143,6 +144,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     UnitDuesModule,
     WorksCompletionsModule,
     VendorDirectoryModule,
+    StaffDutyModule,
     FormalNoticesModule,
     PdfModule,
     AssistModule,

@@ -1048,3 +1048,23 @@ export const M24_COVERAGE: readonly string[] = [
   'maintenance.service_pressure_changed',
   'gate.log_exported',
 ];
+
+/**
+ * Fit-out completion (ADR 0074), covered by
+ * test/fitout/audit-coverage.e2e-spec.ts.
+ */
+export const FITOUT_COVERAGE: readonly string[] = [
+  'permit_drawing.added',
+  'permit_drawing.removed',
+  'debris_slot.scheduled',
+  'debris_slot.cancelled',
+  'debris_slot.done',
+  'debris_slot.missed',
+  'area_record.recorded',
+  'damage_claim.raised',
+  'damage_claim.appealed',
+  'damage_claim.appeal_decided',
+  'damage_claim.withdrawn',
+  'damage_claim.settled',
+  'damage_claim.appeal_cleared',
+];

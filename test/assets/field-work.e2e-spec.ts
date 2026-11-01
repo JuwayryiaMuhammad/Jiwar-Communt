@@ -81,6 +81,25 @@ describe('Assets — the technician in the field', () => {
       a.http('post', `/technician/assets/${assetId}/readings`, tech.token, {
         readings,
       });
+    // One to twenty readings a time: none, or twenty-one, is the list's
+    // length (the matrix row holds the impossible instant instead).
+    const reading = {
+      metricKey: 'pressure_bar',
+      value: '3',
+      occurredAt: new Date(Date.now() - 3_600_000).toISOString(),
+    };
+    for (const readings of [[], Array.from({ length: 21 }, () => reading)])
+      await record(readings)
+        .expect(400)
+        .expect((r) =>
+          expect(err(r).fields).toEqual([
+            {
+              field: 'readings',
+              code: 'INVALID_LENGTH',
+              params: { min: 1, max: 20 },
+            },
+          ]),
+        );
     await record([
       {
         metricKey: 'pressure_bar',

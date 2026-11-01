@@ -1160,6 +1160,8 @@ export const FIELD_ROUTES: Row[] = [
       }),
       code: 'ASSET_NOT_FOUND',
     },
+    // The module's one instant, so its row; the empty list and twenty-one
+    // readings are refused in test/assets/field-work.
     invalid: {
       body: {
         readings: [

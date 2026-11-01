@@ -3,7 +3,9 @@ import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { BoardMatters } from '../../core/board-matters/board-matters';
 import { RequestContext } from '../../core/common/cls/request-context';
-import { appError, ErrorCode } from '../../core/common/errors';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
+import { invalid } from '../../core/common/localized';
+import { FilesService } from '../../core/files/files.service';
 import { localDate } from '../../core/common/slots/day-slots';
 import {
   TenantTx,
@@ -20,10 +22,19 @@ export type CandidacyRefusal = (typeof CANDIDACY_REFUSALS)[number];
 export interface GovernanceRulesView {
   candidacyNoDues: boolean;
   candidacyNotStaff: boolean;
+  /** The compound's logo on the board's documents (ADR 0075). */
+  reportLogoFileId: string | null;
+  /** The monthly board report is sent on the month's first days. */
+  boardReportMonthly: boolean;
   updatedAt: Date | null;
 }
 
-const DEFAULTS = { candidacyNoDues: false, candidacyNotStaff: false };
+const DEFAULTS = {
+  candidacyNoDues: false,
+  candidacyNotStaff: false,
+  reportLogoFileId: null as string | null,
+  boardReportMonthly: true,
+};
 
 /**
  * The compound's governance rules (ADR 0075): two candidacy checks the
@@ -39,6 +50,7 @@ export class GovernanceRulesService {
     private readonly audit: AuditService,
     private readonly matters: BoardMatters,
     private readonly settings: TenantSettingsService,
+    private readonly files: FilesService,
   ) {}
 
   read(): Promise<GovernanceRulesView> {
@@ -48,6 +60,8 @@ export class GovernanceRulesService {
   update(input: {
     candidacyNoDues?: boolean;
     candidacyNotStaff?: boolean;
+    reportLogoFileId?: string | null;
+    boardReportMonthly?: boolean;
   }): Promise<GovernanceRulesView> {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
@@ -58,7 +72,33 @@ export class GovernanceRulesService {
       const next = {
         candidacyNoDues: input.candidacyNoDues ?? before.candidacyNoDues,
         candidacyNotStaff: input.candidacyNotStaff ?? before.candidacyNotStaff,
+        reportLogoFileId:
+          input.reportLogoFileId === undefined
+            ? before.reportLogoFileId
+            : input.reportLogoFileId,
+        boardReportMonthly:
+          input.boardReportMonthly ?? before.boardReportMonthly,
       };
+      // A new logo: one of the caller's own uploads of the purpose,
+      // attached to the compound from now on.
+      if (
+        next.reportLogoFileId &&
+        next.reportLogoFileId !== before.reportLogoFileId
+      ) {
+        const file = await this.files.claim(
+          tx,
+          next.reportLogoFileId,
+          'compound_logo',
+        );
+        if (!file)
+          throw invalid([
+            {
+              field: 'reportLogoFileId',
+              code: FieldErrorCode.FILE_NOT_AVAILABLE,
+            },
+          ]);
+        await this.files.attach(tx, file);
+      }
       const now = await dbNow(tx);
       await tx.governanceRules.upsert({
         where: { tenantId: this.ctx.txTenantId },
@@ -74,6 +114,8 @@ export class GovernanceRulesService {
         {
           candidacyNoDues: before.candidacyNoDues,
           candidacyNotStaff: before.candidacyNotStaff,
+          reportLogoFileId: before.reportLogoFileId,
+          boardReportMonthly: before.boardReportMonthly,
         },
         next,
         'governance_rules.changed',
@@ -139,6 +181,8 @@ export class GovernanceRulesService {
       ? {
           candidacyNoDues: row.candidacyNoDues,
           candidacyNotStaff: row.candidacyNotStaff,
+          reportLogoFileId: row.reportLogoFileId,
+          boardReportMonthly: row.boardReportMonthly,
           updatedAt: row.updatedAt,
         }
       : { ...DEFAULTS, updatedAt: null };

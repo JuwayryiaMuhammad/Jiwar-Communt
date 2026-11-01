@@ -26,6 +26,7 @@ import { GlobalDbService } from '../../core/database/global-db.service';
 import { PdfRenderer } from '../../core/pdf/pdf-renderer';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { drawBoardDocument } from '../reports/board-document-pdf';
+import { BoardReportsService } from '../reports/board-reports.service';
 import { handoverSections, type HandoverContents } from './handover-pdf';
 import { GovernanceAccess } from '../access';
 import { approvalReference } from '../approvals/approval-rules';
@@ -73,6 +74,7 @@ export class HandoversService implements OnModuleInit {
     private readonly sections: ExportSections,
     private readonly pdf: PdfRenderer,
     private readonly globalDb: GlobalDbService,
+    private readonly reports: BoardReportsService,
   ) {}
 
   onModuleInit(): void {
@@ -177,9 +179,7 @@ export class HandoversService implements OnModuleInit {
   /** The sitting board's pack as a PDF, drawn from its snapshot. */
   async packPdf(): Promise<{ name: string; body: Buffer }> {
     const pack = await this.sittingPack();
-    const compound = await this.tenantTx.withTenantTx((tx) =>
-      this.compoundName(tx),
-    );
+    const { compound, logo } = await this.branding();
     const body = await this.pdf.render(
       { title: 'Board handover pack', createdAt: pack.generatedAt },
       (page) =>
@@ -192,7 +192,7 @@ export class HandoversService implements OnModuleInit {
             pack.contents as unknown as HandoverContents,
             null,
           ),
-          logo: null,
+          logo,
         }),
     );
     return { name: `handover-pack-${fromDate(pack.generatedAt)}.pdf`, body };
@@ -202,9 +202,7 @@ export class HandoversService implements OnModuleInit {
   async handoverPdf(id: string): Promise<{ name: string; body: Buffer }> {
     const h = await this.getDelivered(id);
     if (h.status !== 'delivered') throw notFound();
-    const compound = await this.tenantTx.withTenantTx((tx) =>
-      this.compoundName(tx),
-    );
+    const { compound, logo } = await this.branding();
     const body = await this.pdf.render(
       { title: 'Manager handover', createdAt: h.deliveredAt! },
       (page) =>
@@ -217,10 +215,25 @@ export class HandoversService implements OnModuleInit {
             h.contents as unknown as HandoverContents,
             h.notes,
           ),
-          logo: null,
+          logo,
         }),
     );
     return { name: `manager-handover-${fromDate(h.deliveredAt!)}.pdf`, body };
+  }
+
+  /** The compound's name and logo, for a document's head. */
+  private async branding(): Promise<{
+    compound: string;
+    logo: Buffer | null;
+  }> {
+    const { compound, key } = await this.tenantTx.withTenantTx(async (tx) => ({
+      compound: await this.compoundName(tx),
+      key: await this.reports.logoKey(tx),
+    }));
+    return {
+      compound,
+      logo: key ? await this.reports.logoBytes(key) : null,
+    };
   }
 
   private async compoundName(tx: TenantTxClient): Promise<string> {

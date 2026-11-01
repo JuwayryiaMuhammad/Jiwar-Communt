@@ -173,6 +173,7 @@ describe('audit catalog', () => {
         'board_meeting_action',
         'board_handover_pack',
         'manager_handover',
+        'board_report',
         'governance_objection',
         'unit_document',
         'compound_document',

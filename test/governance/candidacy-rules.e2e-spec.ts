@@ -7,6 +7,8 @@ import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 interface RulesBody {
   candidacyNoDues: boolean;
   candidacyNotStaff: boolean;
+  reportLogoFileId: string | null;
+  boardReportMonthly: boolean;
   updatedAt: string | null;
 }
 
@@ -55,6 +57,8 @@ describe('Governance — candidacy rules', () => {
     expect(await rules()).toEqual({
       candidacyNoDues: false,
       candidacyNotStaff: false,
+      reportLogoFileId: null,
+      boardReportMonthly: true,
       updatedAt: null,
     });
     await g

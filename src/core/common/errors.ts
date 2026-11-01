@@ -1492,6 +1492,7 @@ export const ErrorCode = {
   /** No handover pack for the board sitting now (404): it started before packs existed, or none sits. */
   BOARD_HANDOVER_PACK_NOT_FOUND: 'BOARD_HANDOVER_PACK_NOT_FOUND',
   MANAGER_HANDOVER_NOT_FOUND: 'MANAGER_HANDOVER_NOT_FOUND',
+  BOARD_REPORT_NOT_FOUND: 'BOARD_REPORT_NOT_FOUND',
   /** Delivered already: a delivered handover is kept as it was (409). */
   MANAGER_HANDOVER_DELIVERED: 'MANAGER_HANDOVER_DELIVERED',
   /**

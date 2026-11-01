@@ -1906,6 +1906,12 @@ export const AUDIT_ACTIONS = {
   },
   // Agenda proposals (ADR 0059). changes: the title and the words as
   // changed.
+  // A month's board report written (ADR 0075). metadata: month, version,
+  // bySweep. It holds totals only.
+  'board_report.generated': {
+    log: 'tenant',
+    target: 'board_report',
+  },
   // A new board's handover pack written as it started to sit (ADR 0075).
   // metadata: termId, previousTermId. The pack holds no name.
   'board_handover_pack.generated': {

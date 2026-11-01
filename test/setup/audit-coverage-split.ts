@@ -1177,4 +1177,5 @@ export const BOARD_WORK_COVERAGE: readonly string[] = [
   'manager_handover.drafted',
   'manager_handover.delivered',
   'manager_handover.notes_cleared',
+  'board_report.generated',
 ];

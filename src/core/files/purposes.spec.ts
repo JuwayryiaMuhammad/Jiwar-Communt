@@ -13,12 +13,12 @@ const both = readFileSync(
   ),
   'utf8',
 );
-/** The content type CHECK as ADR 0087 recreated it, after ADR 0074's and 0077's, with every purpose. */
+/** The content type CHECK as ADR 0075 recreated it last, after ADR 0087's, with every purpose. */
 const types = readFileSync(
   join(
     __dirname,
     migrations,
-    '20270518090100_compliance_file_purposes/migration.sql',
+    '20270518090615_compound_logo_content_type/migration.sql',
   ),
   'utf8',
 );
@@ -246,7 +246,7 @@ describe('file purposes', () => {
     // A signature (ADR 0056): a PNG only.
     expect(FILE_PURPOSES.incident_signature.types).toEqual(['image/png']);
     expect(typeCheck).toContain(
-      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature', 'compound_document', 'data_import'))`,
+      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature', 'compound_document', 'data_import', 'compound_logo'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'image/png' AND "purpose" = 'incident_signature')`,
@@ -403,6 +403,23 @@ describe('file purposes', () => {
       expect(FILE_PURPOSES[p].maxBytes).toBe(FILE_PURPOSES.document.maxBytes);
       expect(FILE_PURPOSES[p].uploaders).toEqual(['spaces.manage']);
     }
+  });
+
+  it('the compound’s logo is a PNG or a JPEG of the 10 MB default, the manager’s (ADR 0075)', () => {
+    expect(FILE_PURPOSES.compound_logo.types).toEqual([
+      'image/jpeg',
+      'image/png',
+    ]);
+    expect(sizeCheck).not.toContain(`WHEN 'compound_logo'`);
+    expect(FILE_PURPOSES.compound_logo.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
+    expect(typeCheck).toContain(
+      `("content_type" IN ('image/jpeg', 'image/png') AND "purpose" = 'compound_logo')`,
+    );
+    expect(FILE_PURPOSES.compound_logo.uploaders).toEqual([
+      'governance.manage',
+    ]);
   });
 
   it('a sheet to import is uploaded by whoever keeps the register, the meters or the units (ADR 0064, 0066, 0072)', () => {

@@ -439,6 +439,13 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['spaces.manage'],
   },
+  // The compound's logo on the board's documents (ADR 0075): a PNG or a
+  // JPEG, which a PDF can draw; the manager sets it.
+  compound_logo: {
+    types: ['image/jpeg', 'image/png'],
+    maxBytes: 10 * MB,
+    uploaders: ['governance.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

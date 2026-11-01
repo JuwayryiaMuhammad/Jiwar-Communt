@@ -747,6 +747,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   board_handover_packs_term_key: null,
   manager_handovers_tenant_id_id_key: null,
   manager_handovers_one_draft: null,
+  // The monthly report (ADR 0075): its next version under the month's lock.
+  board_reports_tenant_id_id_key: null,
+  board_reports_version_key: null,
   // The budget and expenses (ADR 0055): one active and one budget in the
   // making per year, decided under the year's drafting lock; one line per
   // category, checked in the input; an increase and an authorization once

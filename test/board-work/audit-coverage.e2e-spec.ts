@@ -1,7 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
 import { BOARD_WORK_COVERAGE } from '../setup/audit-coverage-split';
-import { day, today } from '../setup/compound-clock';
+import { day, month, today } from '../setup/compound-clock';
 import { eraseNow } from '../setup/erasure';
 import { financeHelpers } from '../setup/finance';
 import { governanceHelpers } from '../setup/governance';
@@ -245,6 +245,22 @@ describe('Audit coverage — the board’s work', () => {
       expect(
         await single('manager_handover.notes_cleared', draft.id),
       ).toMatchObject({ targetType: 'manager_handover' });
+    });
+  });
+
+  describe('the monthly report', () => {
+    it('board_report.generated — the month, the version, by whom', async () => {
+      const report = (
+        await g
+          .http('post', '/board/reports', s.owners[0].token, {
+            month: month(0),
+          })
+          .expect(201)
+      ).body as { id: string };
+      expect(await single('board_report.generated', report.id)).toMatchObject({
+        actorId: s.owners[0].id,
+        metadata: { month: month(0), version: 1, bySweep: false },
+      });
     });
   });
 

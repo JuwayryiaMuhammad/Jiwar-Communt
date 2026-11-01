@@ -60108,6 +60108,59 @@
         ],
         "type": "object"
       },
+      "StaffSearchHitView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subtitle": {
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "description": "A code, a name or a reference.",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "unit",
+              "building",
+              "resident",
+              "staff",
+              "ticket",
+              "asset"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "title",
+          "subtitle"
+        ],
+        "type": "object"
+      },
+      "StaffSearchHitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffSearchHitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffShopView": {
         "properties": {
           "building": {
@@ -118518,6 +118571,48 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/search": {
+      "get": {
+        "description": "The staff and the manager who may read at least one kind; a resident is FORBIDDEN (GET /me/search is theirs). At most 8 of a kind, by kind; each kind only with the permission of its own list. 60 searches a minute.",
+        "operationId": "StaffSearchController_find",
+        "parameters": [
+          {
+            "description": "A reference (`MT-000123`, `123`) or words: a code, a name.",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 2,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffSearchHitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search units, buildings, people, tickets and assets I may read",
+        "tags": [
+          "search"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

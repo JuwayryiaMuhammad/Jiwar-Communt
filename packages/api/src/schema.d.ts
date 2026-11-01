@@ -16739,6 +16739,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search units, buildings, people, tickets and assets I may read
+         * @description The staff and the manager who may read at least one kind; a resident is FORBIDDEN (GET /me/search is theirs). At most 8 of a kind, by kind; each kind only with the permission of its own list. 60 searches a minute.
+         */
+        get: operations["StaffSearchController_find"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/attendance": {
         parameters: {
             query?: never;
@@ -41007,6 +41027,19 @@ export interface components {
             /** @description 1 for the first. */
             position: number;
             scan: components["schemas"]["StaffStopScanView"] | null;
+        };
+        StaffSearchHitView: {
+            /** Format: uuid */
+            id: string;
+            subtitle: string | null;
+            /** @description A code, a name or a reference. */
+            title: string;
+            /** @enum {string} */
+            type: "unit" | "building" | "resident" | "staff" | "ticket" | "asset";
+        };
+        StaffSearchHitViewList: {
+            data: components["schemas"]["StaffSearchHitView"][];
+            nextCursor: string | null;
         };
         StaffShopView: {
             building: string | null;
@@ -69344,6 +69377,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RefundView"];
+                };
+            };
+        };
+    };
+    StaffSearchController_find: {
+        parameters: {
+            query: {
+                /** @description A reference (`MT-000123`, `123`) or words: a code, a name. */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffSearchHitViewList"];
                 };
             };
         };

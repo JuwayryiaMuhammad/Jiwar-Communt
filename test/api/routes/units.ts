@@ -151,6 +151,22 @@ export const UNITS_ROUTES: Row[] = [
   },
   {
     method: 'GET',
+    path: '/staff/search',
+    auth: 'tenant',
+    as: 'manager',
+    // The staff's and the manager's; a resident has GET /me/search.
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { q: 'x' },
+      fields: [
+        { field: 'q', code: 'INVALID_LENGTH', params: { min: 2, max: 64 } },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
     path: '/buildings',
     auth: 'tenant',
     as: 'manager',

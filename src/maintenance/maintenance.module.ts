@@ -58,6 +58,7 @@ import { WorkService } from './tickets/work.service';
 import { ResidentTicketFeed } from './tickets/resident-ticket-feed';
 import { ResidentTicketSummary } from './tickets/resident-ticket-summary';
 import { ResidentTicketItems } from './tickets/resident-ticket-items';
+import { MaintenanceStaffSearchSources } from './tickets/staff-search-sources';
 import { ResidentTicketsController } from './tickets/resident-tickets.controller';
 import { TicketAccess } from './tickets/ticket-access';
 import { TicketLog } from './tickets/ticket-log';
@@ -313,6 +314,7 @@ import { TechnicianStatsService } from './economics/technician-stats.service';
     ResidentTicketSummary,
     QuotesService,
     ResidentTicketItems,
+    MaintenanceStaffSearchSources,
     CommonAreasService,
     CompoundCalendar,
     AssetTypesService,

@@ -46378,6 +46378,38 @@
     {
       "item": [
         {
+          "name": "Search units, buildings, people, tickets and assets I may read",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "search"
+              ],
+              "query": [
+                {
+                  "description": "(required) A reference (`MT-000123`, `123`) or words: a code, a name.",
+                  "key": "q",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/search?q="
+            }
+          }
+        }
+      ],
+      "name": "search"
+    },
+    {
+      "item": [
+        {
           "name": "\"Not me\" on an unusual-login alert: freeze my account",
           "request": {
             "description": "**Responses:** 204",

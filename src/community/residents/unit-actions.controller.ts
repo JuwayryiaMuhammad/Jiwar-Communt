@@ -28,6 +28,7 @@ import {
   ActivationView,
   OccupancyResponse,
   UnitDetailView,
+  UnitHistoryView,
   UnitNeedingReviewView,
 } from './views/occupancy.views';
 
@@ -110,5 +111,27 @@ export class UnitActionsController {
     @Body() dto: UnitDetailDto,
   ): Promise<void> {
     await this.residents.submitUnitDetail(id, dto.step, dto.value);
+  }
+}
+
+/** A unit's history for the manager (ADR 0072). */
+@ApiArea('units')
+@RequirePermissions('residents.read')
+@Controller('staff/units/:unitId')
+export class StaffUnitHistoryController {
+  constructor(private readonly residents: ResidentsService) {}
+
+  @Get('occupancy-history')
+  @ApiOperation({
+    summary: 'Every place held in the unit, live or ended, newest first',
+  })
+  @ApiOkResponse({ type: ListOf(UnitHistoryView) })
+  async history(
+    @Param('unitId', parseId('unitId')) unitId: string,
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<UnitHistoryView>> {
+    return toList(await this.residents.unitHistory(unitId, q), (o) =>
+      UnitHistoryView.from(o),
+    );
   }
 }

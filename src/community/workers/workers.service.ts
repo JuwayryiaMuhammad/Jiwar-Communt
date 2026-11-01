@@ -619,6 +619,7 @@ export class WorkersService {
    */
   async engagementsForReview(
     q: {
+      unitId?: string;
       status?: WorkerEngagementStatus;
       cursor?: string;
       limit?: number;
@@ -629,6 +630,7 @@ export class WorkersService {
       const rows = await tx.workerEngagement.findMany({
         where: {
           AND: [
+            ...(q.unitId ? [{ unitId: q.unitId }] : []),
             ...(q.status ? [{ status: q.status }] : []),
             ...(ENGAGEMENT_PAGE.after(
               q.cursor,

@@ -9,7 +9,10 @@ import { FreezeHooks } from './freeze-hooks';
 import { CapabilitiesModule } from '../capabilities/capabilities.module';
 import { MeUnitsController } from './me-units.controller';
 import { OccupanciesController } from './occupancies.controller';
-import { UnitActionsController } from './unit-actions.controller';
+import {
+  StaffUnitHistoryController,
+  UnitActionsController,
+} from './unit-actions.controller';
 import { UnitStatesController } from './unit-states.controller';
 import { FilesModule } from '../../core/files/files.module';
 import { RegistrationDocumentsService } from './registration-documents.service';
@@ -53,6 +56,7 @@ import { ResidentsService } from './residents.service';
     RegistrationStatusController,
     MeUnitsController,
     UnitActionsController,
+    StaffUnitHistoryController,
     OccupanciesController,
     UnitStatesController,
     ResidentsController,

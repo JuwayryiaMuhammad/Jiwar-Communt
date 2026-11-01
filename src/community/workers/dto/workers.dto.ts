@@ -170,6 +170,17 @@ export class CardIncidentDto {
 
 export class EngagementsQueryDto extends PageQueryDto {
   @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'One unit’s engagements: its workers, for the unit card (ADR 0072).',
+  })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiProperty({
     enum: WorkerEngagementStatus,
     enumName: 'WorkerEngagementStatus',
     required: false,

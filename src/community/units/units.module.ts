@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { ExportLimit } from '../../core/common/csv';
 import { BuildingsController } from './buildings.controller';
 import { BuildingsService } from './buildings.service';
-import { UnitsController } from './units.controller';
+import { StaffUnitsController, UnitsController } from './units.controller';
 import { UnitsService } from './units.service';
 
 @Module({
-  controllers: [UnitsController, BuildingsController],
-  providers: [UnitsService, BuildingsService],
+  controllers: [UnitsController, StaffUnitsController, BuildingsController],
+  providers: [UnitsService, BuildingsService, ExportLimit],
 })
 export class UnitsModule {}

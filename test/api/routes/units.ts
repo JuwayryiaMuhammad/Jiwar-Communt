@@ -62,6 +62,40 @@ export const UNITS_ROUTES: Row[] = [
   },
   {
     method: 'GET',
+    path: '/staff/units/export',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'empty' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['vacant', 'occupied', 'closed'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/units/{unitId}/occupancy-history',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { limit: '0' },
+      fields: [{ field: 'limit', code: 'INVALID_NUMBER', params: LIMIT }],
+    },
+  },
+  {
+    method: 'GET',
     path: '/buildings',
     auth: 'tenant',
     as: 'manager',

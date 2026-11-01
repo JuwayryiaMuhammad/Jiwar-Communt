@@ -49,6 +49,7 @@ import { kinshipCalls } from './no-store-kinship';
 import { unitDocumentCalls } from './no-store-unit-documents';
 import { r11c1Calls } from './no-store-r11c1';
 import { marketCalls } from './no-store-market';
+import { unitsCalls } from './no-store-units';
 import { proxyCalls } from './no-store-proxies';
 import { inspectionCalls } from './no-store-inspections';
 import { decisionAppealCalls } from './no-store-decision-appeals';
@@ -3185,6 +3186,7 @@ describe('API v0 — no-store', () => {
     ...waitlistCalls(() => w),
     ...stayCalls(() => w),
     ...marketCalls(() => w),
+    ...unitsCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

@@ -49433,6 +49433,53 @@
           }
         },
         {
+          "name": "The units, with the same filters, as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "Part of the code, any case.",
+                  "disabled": true,
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "buildingId",
+                  "value": ""
+                },
+                {
+                  "description": "`closed`: in closed-unit mode; `occupied`: not closed, someone holds a place; `vacant`: not closed, nobody does. With `units.manage` only.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "Units someone holds a place in as this. With `units.manage` only.",
+                  "disabled": true,
+                  "key": "occupancyType",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/export"
+            }
+          }
+        },
+        {
           "name": "A unit’s contracts",
           "request": {
             "description": "**Responses:** 200",
@@ -49729,6 +49776,49 @@
           }
         },
         {
+          "name": "Every place held in the unit, live or ended, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "occupancy-history"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/occupancy-history",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "A unit’s proxies",
           "request": {
             "description": "**Responses:** 200",
@@ -49783,6 +49873,30 @@
                   "description": "",
                   "disabled": true,
                   "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "Part of the code, any case.",
+                  "disabled": true,
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "buildingId",
+                  "value": ""
+                },
+                {
+                  "description": "`closed`: in closed-unit mode; `occupied`: not closed, someone holds a place; `vacant`: not closed, nobody does. With `units.manage` only.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "Units someone holds a place in as this. With `units.manage` only.",
+                  "disabled": true,
+                  "key": "occupancyType",
                   "value": ""
                 }
               ],
@@ -52589,6 +52703,12 @@
                   "description": "",
                   "disabled": true,
                   "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "One unit’s engagements: its workers, for the unit card (ADR 0072).",
+                  "disabled": true,
+                  "key": "unitId",
                   "value": ""
                 },
                 {

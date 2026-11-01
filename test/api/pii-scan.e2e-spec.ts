@@ -1687,6 +1687,8 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/payments': unit.id,
       '/units/{unitId}/statement': unit.id,
       '/staff/units/{unitId}/statement': unit.id,
+      // ADR 0072: a unit's whole occupancy history.
+      '/staff/units/{unitId}/occupancy-history': unit.id,
       // A foreign checkout: not found for everyone of A.
       '/payment-sessions/{id}': w.bPaymentSessionId,
       // ADR 0048: numbers, amounts and unit codes only.

@@ -18244,6 +18244,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/units/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The units, with the same filters, as CSV
+         * @description One row per unit by code: building, floor, type, area, status, and how many hold a place as owners, as tenants and living there. Counts, never names. At most 100 000 rows (EXPORT_TOO_LARGE).
+         */
+        get: operations["StaffUnitsController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/clearances": {
         parameters: {
             query?: never;
@@ -18376,6 +18396,23 @@ export interface paths {
         put?: never;
         /** Plan a move for an occupancy */
         post: operations["StaffMovesController_plan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/occupancy-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every place held in the unit, live or ended, newest first */
+        get: operations["StaffUnitHistoryController_history"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -20245,7 +20282,7 @@ export interface paths {
         };
         /**
          * List the units I may see
-         * @description Newest first. Every unit for the manager and for a staff role holding `units.directory` (the security supervisor); a resident or a family member lists their own.
+         * @description Newest first. Every unit for the manager and for a staff role holding `units.directory` (the security supervisor); a resident or a family member lists their own. `q` and `buildingId` narrow it for anyone; `status` and `occupancyType` are the manager’s (`units.manage`), FIELD_NOT_ALLOWED otherwise.
          */
         get: operations["UnitsController_list"];
         put?: never;
@@ -42231,6 +42268,27 @@ export interface components {
         };
         UnitFeeViewList: {
             data: components["schemas"]["UnitFeeView"][];
+            nextCursor: string | null;
+        };
+        UnitHistoryView: {
+            account: components["schemas"]["AccountRefView"];
+            endReason: components["schemas"]["OccupancyEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: date-time */
+            handedOverAt: string | null;
+            /** @description The primary resident now. */
+            isPrimary: boolean;
+            /** Format: uuid */
+            occupancyId: string;
+            occupancyType: components["schemas"]["OccupancyType"];
+            resides: boolean;
+            /** Format: date-time */
+            startedAt: string;
+            status: components["schemas"]["OccupancyStatus"];
+        };
+        UnitHistoryViewList: {
+            data: components["schemas"]["UnitHistoryView"][];
             nextCursor: string | null;
         };
         UnitInspectionReportView: {
@@ -71306,6 +71364,33 @@ export interface operations {
             };
         };
     };
+    StaffUnitsController_export: {
+        parameters: {
+            query?: {
+                /** @description Part of the code, any case. */
+                q?: string;
+                buildingId?: string;
+                /** @description `closed`: in closed-unit mode; `occupied`: not closed, someone holds a place; `vacant`: not closed, nobody does. With `units.manage` only. */
+                status?: "vacant" | "occupied" | "closed";
+                /** @description Units someone holds a place in as this. With `units.manage` only. */
+                occupancyType?: components["schemas"]["OccupancyType"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
     StaffClearancesController_issue: {
         parameters: {
             query?: never;
@@ -71525,6 +71610,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MoveView"];
+                };
+            };
+        };
+    };
+    StaffUnitHistoryController_history: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitHistoryViewList"];
                 };
             };
         };
@@ -74376,6 +74486,13 @@ export interface operations {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
+                /** @description Part of the code, any case. */
+                q?: string;
+                buildingId?: string;
+                /** @description `closed`: in closed-unit mode; `occupied`: not closed, someone holds a place; `vacant`: not closed, nobody does. With `units.manage` only. */
+                status?: "vacant" | "occupied" | "closed";
+                /** @description Units someone holds a place in as this. With `units.manage` only. */
+                occupancyType?: components["schemas"]["OccupancyType"];
             };
             header?: never;
             path?: never;
@@ -76957,6 +77074,8 @@ export interface operations {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
+                /** @description One unit’s engagements: its workers, for the unit card (ADR 0072). */
+                unitId?: string;
                 status?: components["schemas"]["WorkerEngagementStatus"];
             };
             header?: never;

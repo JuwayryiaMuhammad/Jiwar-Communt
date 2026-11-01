@@ -64622,6 +64622,92 @@
         ],
         "type": "object"
       },
+      "UnitHistoryView": {
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyEndReason"
+              }
+            ],
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "handedOverAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "isPrimary": {
+            "description": "The primary resident now.",
+            "type": "boolean"
+          },
+          "occupancyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "resides": {
+            "type": "boolean"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "occupancyId",
+          "account",
+          "occupancyType",
+          "resides",
+          "isPrimary",
+          "status",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "handedOverAt"
+        ],
+        "type": "object"
+      },
+      "UnitHistoryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UnitHistoryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "UnitInspectionReportView": {
         "properties": {
           "doneAt": {
@@ -122804,6 +122890,80 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/units/export": {
+      "get": {
+        "description": "One row per unit by code: building, floor, type, area, status, and how many hold a place as owners, as tenants and living there. Counts, never names. At most 100 000 rows (EXPORT_TOO_LARGE).",
+        "operationId": "StaffUnitsController_export",
+        "parameters": [
+          {
+            "description": "Part of the code, any case.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 32,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "buildingId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`closed`: in closed-unit mode; `occupied`: not closed, someone holds a place; `vacant`: not closed, nobody does. With `units.manage` only.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "vacant",
+                "occupied",
+                "closed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Units someone holds a place in as this. With `units.manage` only.",
+            "in": "query",
+            "name": "occupancyType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OccupancyType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The units, with the same filters, as CSV",
+        "tags": [
+          "units"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/units/{unitId}/clearances": {
       "post": {
         "operationId": "StaffClearancesController_issue",
@@ -123223,6 +123383,63 @@
           }
         ],
         "summary": "Plan a move for an occupancy",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/occupancy-history": {
+      "get": {
+        "operationId": "StaffUnitHistoryController_history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitHistoryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Every place held in the unit, live or ended, newest first",
         "tags": [
           "units"
         ],
@@ -128753,7 +128970,7 @@
     },
     "/api/v1/units": {
       "get": {
-        "description": "Newest first. Every unit for the manager and for a staff role holding `units.directory` (the security supervisor); a resident or a family member lists their own.",
+        "description": "Newest first. Every unit for the manager and for a staff role holding `units.directory` (the security supervisor); a resident or a family member lists their own. `q` and `buildingId` narrow it for anyone; `status` and `occupancyType` are the manager’s (`units.manage`), FIELD_NOT_ALLOWED otherwise.",
         "operationId": "UnitsController_list",
         "parameters": [
           {
@@ -128774,6 +128991,49 @@
               "maximum": 100,
               "minimum": 1,
               "type": "number"
+            }
+          },
+          {
+            "description": "Part of the code, any case.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 32,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "buildingId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`closed`: in closed-unit mode; `occupied`: not closed, someone holds a place; `vacant`: not closed, nobody does. With `units.manage` only.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "vacant",
+                "occupied",
+                "closed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Units someone holds a place in as this. With `units.manage` only.",
+            "in": "query",
+            "name": "occupancyType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OccupancyType"
             }
           }
         ],
@@ -133983,6 +134243,16 @@
               "maximum": 100,
               "minimum": 1,
               "type": "number"
+            }
+          },
+          {
+            "description": "One unit’s engagements: its workers, for the unit card (ADR 0072).",
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
             }
           },
           {

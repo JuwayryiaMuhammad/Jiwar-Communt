@@ -48,6 +48,7 @@ import type {
   ResidentView,
   MemberToReview,
   UnitDetail,
+  UnitHistoryEntry,
   UnitNeedingReview,
   UnitOccupant,
 } from './residents.types';
@@ -56,6 +57,8 @@ import type {
 const REVIEW_ORDER = keysetCursor('flaggedAt');
 const REVIEW_PAGE = keysetCursor('flaggedAt');
 const RESIDENT_PAGE = keysetCursor('createdAt');
+/** A unit's occupancies, newest start first (ADR 0072). */
+const HISTORY_PAGE = keysetCursor('startedAt');
 
 const WITH_OCCUPANCIES = {
   occupancies: {
@@ -1400,6 +1403,57 @@ export class ResidentsService {
           reviewFlags: flags,
           occupants,
         },
+      };
+    });
+  }
+
+  /**
+   * Every place held in the unit, live or ended (ADR 0072): newest start
+   * first, a page at a time. Occupancies are never deleted (ADR 0012), so
+   * this is the unit's whole history; an erased account reads as erased.
+   */
+  async unitHistory(
+    unitId: string,
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<UnitHistoryEntry>> {
+    const limit = clampLimit(q.limit);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const unit = await tx.unit.findUnique({
+        where: { id: unitId },
+        select: { id: true },
+      });
+      if (!unit)
+        throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+      const rows = await tx.unitOccupancy.findMany({
+        where: {
+          AND: [
+            { unitId },
+            ...(HISTORY_PAGE.after(
+              q.cursor,
+            ) as Prisma.UnitOccupancyWhereInput[]),
+          ],
+        },
+        include: {
+          account: { select: { id: true, fullName: true, status: true } },
+        },
+        orderBy: HISTORY_PAGE.orderBy,
+        take: limit + 1,
+      });
+      const page = HISTORY_PAGE.toPage(rows, limit);
+      return {
+        ...page,
+        items: page.items.map((o) => ({
+          occupancyId: o.id,
+          account: o.account,
+          occupancyType: o.occupancyType,
+          resides: o.resides,
+          isPrimary: o.isPrimary,
+          status: o.status,
+          startedAt: o.startedAt,
+          endedAt: o.endedAt,
+          endReason: o.endReason,
+          handedOverAt: o.handedOverAt,
+        })),
       };
     });
   }

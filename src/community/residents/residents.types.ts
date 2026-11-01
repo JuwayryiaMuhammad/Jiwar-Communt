@@ -104,6 +104,20 @@ export interface UnitNeedingReview {
   activeOccupants: number;
 }
 
+/** One place someone held or holds in a unit (ADR 0072), for managers. */
+export interface UnitHistoryEntry {
+  occupancyId: string;
+  account: { id: string; fullName: string | null; status: AccountStatus };
+  occupancyType: OccupancyType;
+  resides: boolean;
+  isPrimary: boolean;
+  status: OccupancyStatus;
+  startedAt: Date;
+  endedAt: Date | null;
+  endReason: OccupancyEndReason | null;
+  handedOverAt: Date | null;
+}
+
 /** An active occupant of a unit, for managers. */
 export interface UnitOccupant {
   occupancyId: string;

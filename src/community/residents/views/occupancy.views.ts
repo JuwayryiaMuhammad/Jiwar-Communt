@@ -10,6 +10,7 @@ import { AccountRefView, accountRef } from '../../../core/common/http/personal';
 import type {
   OccupancyView,
   UnitDetail,
+  UnitHistoryEntry,
   UnitNeedingReview,
   UnitOccupant,
 } from '../residents.types';
@@ -81,6 +82,49 @@ export class UnitOccupantView {
       resides: o.resides,
       isPrimary: o.isPrimary,
       startedAt: o.startedAt,
+    };
+  }
+}
+
+/** One place in a unit, held or ended (ADR 0072): who, as what, from when to when, why it ended. */
+export class UnitHistoryView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  occupancyId: string;
+  @ApiProperty({ type: AccountRefView })
+  account: AccountRefView;
+  @ApiProperty({ enum: OccupancyType, enumName: 'OccupancyType' })
+  occupancyType: OccupancyType;
+  @ApiProperty({ type: Boolean })
+  resides: boolean;
+  @ApiProperty({ type: Boolean, description: 'The primary resident now.' })
+  isPrimary: boolean;
+  @ApiProperty({ enum: OccupancyStatus, enumName: 'OccupancyStatus' })
+  status: OccupancyStatus;
+  @ApiProperty({ type: String, format: 'date-time' })
+  startedAt: Date;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  endedAt: Date | null;
+  @ApiProperty({
+    enum: OccupancyEndReason,
+    enumName: 'OccupancyEndReason',
+    nullable: true,
+  })
+  endReason: OccupancyEndReason | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  handedOverAt: Date | null;
+
+  static from(o: UnitHistoryEntry): UnitHistoryView {
+    return {
+      occupancyId: o.occupancyId,
+      account: accountRef(o.account),
+      occupancyType: o.occupancyType,
+      resides: o.resides,
+      isPrimary: o.isPrimary,
+      status: o.status,
+      startedAt: o.startedAt,
+      endedAt: o.endedAt,
+      endReason: o.endReason,
+      handedOverAt: o.handedOverAt,
     };
   }
 }

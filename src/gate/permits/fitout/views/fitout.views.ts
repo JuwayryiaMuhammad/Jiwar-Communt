@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PresignedReadView } from '../../../../core/files/views/file.views';
 import type {
   AreaStageRead,
+  DamageClaimRead,
   DebrisSlotRead,
   FitOutRead,
 } from '../fitout.service';
@@ -126,6 +127,99 @@ export class FitOutAreaView {
   after: AreaStageView | null;
 }
 
+export class DamageAppealView {
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'The appellant’s words; null after their erasure.',
+  })
+  text: string | null;
+  @ApiProperty({ type: PresignedReadView, nullable: true })
+  photo: PresignedReadView | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+  @ApiProperty({ enum: ['upheld', 'accepted'], nullable: true })
+  decision: string | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  decidedAt: Date | null;
+}
+
+export class DamageWithdrawnView {
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+  @ApiProperty({
+    type: String,
+    description: 'REASON_CODES.damageClaimWithdraw.',
+  })
+  reason: string;
+}
+
+export class DamageSettlementView {
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+  @ApiProperty({
+    type: String,
+    description: 'EGP taken from the works deposit.',
+  })
+  deducted: string;
+  @ApiProperty({
+    type: String,
+    description: 'EGP left owing as a `damage` invoice.',
+  })
+  charged: string;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  invoiceId: string | null;
+  @ApiProperty({ enum: ['open', 'paid', 'cancelled'], nullable: true })
+  chargeStatus: string | null;
+}
+
+/** A damage claim on a works permit (ADR 0074): codes, amounts and words, never a person. */
+export class DamageClaimView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, example: 'DC-0012' })
+  number: string;
+  @ApiProperty({ type: String, description: 'REASON_CODES.damageClaim.' })
+  reasonCode: string;
+  @ApiProperty({ type: String, description: 'The management’s words.' })
+  description: string;
+  @ApiProperty({ type: String, description: 'EGP.' })
+  amount: string;
+  @ApiProperty({ enum: ['open', 'under_appeal', 'withdrawn', 'settled'] })
+  status: string;
+  @ApiProperty({ type: FitOutAreaRefView, nullable: true })
+  commonArea: FitOutAreaRefView | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  raisedAt: Date;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'The household appeals until then, once.',
+  })
+  appealUntil: Date;
+  @ApiProperty({ type: [PresignedReadView] })
+  photos: (PresignedReadView | null)[];
+  @ApiProperty({ type: DamageAppealView, nullable: true })
+  appeal: DamageAppealView | null;
+  @ApiProperty({ type: DamageWithdrawnView, nullable: true })
+  withdrawn: DamageWithdrawnView | null;
+  @ApiProperty({ type: DamageSettlementView, nullable: true })
+  settlement: DamageSettlementView | null;
+
+  static from(c: DamageClaimRead): DamageClaimView {
+    return {
+      ...c,
+      commonArea: c.commonArea ? { ...c.commonArea } : null,
+      photos: c.photos.map((ph) => PresignedReadView.from(ph)),
+      appeal: c.appeal
+        ? { ...c.appeal, photo: PresignedReadView.from(c.appeal.photo) }
+        : null,
+      withdrawn: c.withdrawn ? { ...c.withdrawn } : null,
+      settlement: c.settlement ? { ...c.settlement } : null,
+    };
+  }
+}
+
 /**
  * A works permit's fit-out (ADR 0074): its deposit, its drawings — for
  * its household (the requester, the unit's primary) and the management.
@@ -164,6 +258,8 @@ export class FitOutView {
     description: 'Each common area recorded, before the works and after them.',
   })
   areas: FitOutAreaView[];
+  @ApiProperty({ type: [DamageClaimView], description: 'Newest first.' })
+  claims: DamageClaimView[];
 
   static from(r: FitOutRead): FitOutView {
     return {
@@ -183,6 +279,7 @@ export class FitOutView {
         before: AreaStageView.from(a.before),
         after: AreaStageView.from(a.after),
       })),
+      claims: r.claims.map((c) => DamageClaimView.from(c)),
     };
   }
 }

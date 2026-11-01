@@ -72,6 +72,7 @@ import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
 import { today } from '../setup/compound-clock';
 import { workDaysOf, type PermitRulesBody } from '../setup/permits';
 import { debrisSlotRow } from '../setup/fitout-rows';
+import { financeHelpers } from '../setup/finance';
 /**
  * Every response that carries a secret shown once (ADR 0025) is
  * `Cache-Control: no-store`: each registry row marked `noStore` is called
@@ -755,6 +756,39 @@ describe('API v0 — no-store', () => {
       1,
       2,
     )[0];
+  /** A damage claim's body, with a fresh photo of the manager's. */
+  const aClaimBody = async () => ({
+    reasonCode: 'common_area_damage',
+    description: 'A scratched lift door.',
+    amount: '250',
+    photoFileIds: [
+      await fileHelpers(h).ready(w.a.tokens.manager, 'fitout_photo'),
+    ],
+  });
+  /** A claim on a fresh approved works permit of A's home: both ids. */
+  const aWorksClaim = async () => {
+    const permitId = await anApproved();
+    const made = body<{ claims: { id: string }[] }>(
+      await as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${permitId}/damage-claims`,
+        await aClaimBody(),
+      ),
+    );
+    return { permitId, claimId: made.claims[0].id };
+  };
+  /** A claim its household appealed: both ids. */
+  const anAppealedClaim = async () => {
+    const ids = await aWorksClaim();
+    await as(
+      'owner',
+      'POST',
+      `/permits/${ids.permitId}/damage-claims/${ids.claimId}/appeal`,
+      { text: 'Not from our works.' },
+    );
+    return ids;
+  };
   /** A debris removal of the permit whose window is now: its id. */
   const aDueSlot = (permitId: string) =>
     w.helpers.asManager(w.a, () =>
@@ -1324,6 +1358,60 @@ describe('API v0 — no-store', () => {
           ],
         },
       ),
+    // Damage claims (ADR 0074): raised on an approved works permit of A's home.
+    'POST /staff/unit-permits/{id}/damage-claims': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${await anApproved()}/damage-claims`,
+        await aClaimBody(),
+      ),
+    'POST /permits/{id}/damage-claims/{claimId}/appeal': async () => {
+      const { permitId, claimId } = await aWorksClaim();
+      return as(
+        'owner',
+        'POST',
+        `/permits/${permitId}/damage-claims/${claimId}/appeal`,
+        { text: 'Not from our works.' },
+      );
+    },
+    'POST /staff/unit-permits/{id}/damage-claims/{claimId}/appeal-decision':
+      async () => {
+        const { permitId, claimId } = await anAppealedClaim();
+        return as(
+          'manager',
+          'POST',
+          `/staff/unit-permits/${permitId}/damage-claims/${claimId}/appeal-decision`,
+          { decision: 'accepted' },
+        );
+      },
+    'POST /staff/unit-permits/{id}/damage-claims/{claimId}/withdraw':
+      async () => {
+        const { permitId, claimId } = await aWorksClaim();
+        return as(
+          'manager',
+          'POST',
+          `/staff/unit-permits/${permitId}/damage-claims/${claimId}/withdraw`,
+          { reasonCode: 'issued_in_error' },
+        );
+      },
+    'POST /staff/unit-permits/{id}/damage-claims/{claimId}/settle':
+      async () => {
+        const { permitId, claimId } = await anAppealedClaim();
+        await as(
+          'manager',
+          'POST',
+          `/staff/unit-permits/${permitId}/damage-claims/${claimId}/appeal-decision`,
+          { decision: 'upheld' },
+        );
+        await financeHelpers(h).stepUp(w.a.tokens.manager);
+        return as(
+          'manager',
+          'POST',
+          `/staff/unit-permits/${permitId}/damage-claims/${claimId}/settle`,
+          {},
+        );
+      },
     'GET /gate/unit-permits/{id}/debris-slots': async () =>
       asGuard('GET', `/gate/unit-permits/${await anApproved()}/debris-slots`),
     'POST /gate/unit-permits/{id}/debris-slots/{slotId}/done': async () => {

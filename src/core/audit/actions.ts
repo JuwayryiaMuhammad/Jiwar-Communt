@@ -105,6 +105,9 @@ export const AUDIT_ACTIONS = {
   'damage_claim.appeal_decided': { log: 'tenant', target: 'damage_claim' },
   'damage_claim.withdrawn': { log: 'tenant', target: 'damage_claim' },
   'damage_claim.settled': { log: 'tenant', target: 'damage_claim' },
+  // The appellant's erasure: their appeal's words and photo go. metadata:
+  // permitId, photo (a boolean).
+  'damage_claim.appeal_cleared': { log: 'tenant', target: 'damage_claim' },
   'contract.recorded': { log: 'tenant', target: 'contract' },
   'contract.voided': { log: 'tenant', target: 'contract' },
   'contract_renewal.requested': { log: 'tenant', target: 'contract_renewal' },

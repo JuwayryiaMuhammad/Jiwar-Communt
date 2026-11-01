@@ -24,12 +24,24 @@ export interface WorksDepositsImpl {
     permitIds: readonly string[],
     lock?: 'share',
   ): Promise<Map<string, WorksDeposit>>;
+  /**
+   * Takes what a settled damage claim asks from the deposit named on its
+   * permit, as far as it holds: a `damage` deduction, its row FOR UPDATE.
+   * Returns what was taken (zero with no deposit, or nothing held). The
+   * caller holds the unit's finance lock (Charges.lockUnit).
+   */
+  deductForClaim(
+    tx: TenantTxClient,
+    q: { permitId: string; amount: Prisma.Decimal; claimId: string },
+  ): Promise<Prisma.Decimal>;
 }
 
 /** What the gate answers finance about a permit a deposit names. */
 export interface WorksPermitReaders {
   /** The works permit's unit, or null for any other permit, or none. */
   unitOf(tx: TenantTxClient, permitId: string): Promise<string | null>;
+  /** The permit's damage claims not yet settled or withdrawn. */
+  openClaims(tx: TenantTxClient, permitId: string): Promise<number>;
 }
 
 /**
@@ -76,8 +88,19 @@ export class WorksDeposits implements OnApplicationBootstrap {
     );
   }
 
+  deductForClaim(
+    tx: TenantTxClient,
+    q: { permitId: string; amount: Prisma.Decimal; claimId: string },
+  ): Promise<Prisma.Decimal> {
+    return this.need().deductForClaim(tx, q);
+  }
+
   unitOf(tx: TenantTxClient, permitId: string): Promise<string | null> {
     return this.permits().unitOf(tx, permitId);
+  }
+
+  openClaims(tx: TenantTxClient, permitId: string): Promise<number> {
+    return this.permits().openClaims(tx, permitId);
   }
 
   onApplicationBootstrap(): void {

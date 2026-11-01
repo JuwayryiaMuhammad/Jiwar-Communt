@@ -1004,4 +1004,20 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // day, written by the sweep with ON CONFLICT DO NOTHING (never surfaced).
   staff_briefs_tenant_id_id_key: null,
   staff_briefs_day_key: null,
+  // Fit-out completion (ADR 0074): each checked first under the permit's,
+  // the unit's or the claim's lock (a deposit a permit, DUPLICATE_VALUE; an
+  // area a stage, AREA_RECORD_EXISTS; a claim's number under its counter);
+  // a file is claimed once; the composite keys only back foreign keys.
+  unit_permits_tenant_id_id_unit_key: null,
+  finance_deposits_permit_key: null,
+  permit_drawings_tenant_id_id_key: null,
+  permit_drawings_file_id_key: null,
+  permit_debris_slots_tenant_id_id_key: null,
+  permit_area_records_tenant_id_id_key: null,
+  permit_area_records_stage_key: null,
+  permit_area_photos_file_id_key: null,
+  permit_damage_claims_tenant_id_id_key: null,
+  permit_damage_claims_number_key: null,
+  permit_damage_claims_appeal_photo_key: null,
+  permit_damage_claim_photos_file_id_key: null,
 };

@@ -11,6 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { AREA_PHASES, AREA_PHOTOS } from '../area-records.service';
+import { CLAIM_PHOTOS } from '../damage-claims.service';
 import { IsLocalDate } from '../../../../core/common/validation/local-date';
 import { withParams } from '../../../../core/common/validation/validation-errors';
 import { PermitHoursDto } from '../../dto/permit-settings.dto';
@@ -95,4 +96,87 @@ export class RecordAreaDto {
   @IsOptional()
   @IsString()
   note?: string;
+}
+
+/** A damage claim the management raises on a works permit (ADR 0074). */
+export class RaiseDamageClaimDto {
+  @ApiProperty({ type: String, description: 'REASON_CODES.damageClaim.' })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+
+  @ApiProperty({
+    type: String,
+    minLength: 1,
+    maxLength: 1000,
+    description: 'What was damaged, in words the household reads.',
+  })
+  @IsString()
+  description: string;
+
+  @ApiProperty({
+    type: String,
+    example: '1500.00',
+    description: 'EGP, at most 1,000,000.',
+  })
+  @IsString()
+  amount: string;
+
+  @ApiProperty({ type: String, format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  commonAreaId?: string;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    minItems: CLAIM_PHOTOS.min,
+    maxItems: CLAIM_PHOTOS.max,
+    description: 'Finalized `fitout_photo` files.',
+  })
+  @IsArray()
+  @ArrayMinSize(CLAIM_PHOTOS.min, withParams({ min: CLAIM_PHOTOS.min }))
+  @ArrayMaxSize(CLAIM_PHOTOS.max, withParams({ max: CLAIM_PHOTOS.max }))
+  @IsUUID('all', { each: true })
+  photoFileIds: string[];
+}
+
+export const APPEAL_DECISIONS = ['upheld', 'accepted'] as const;
+
+/** The management's decision on a claim's appeal. */
+export class DecideDamageAppealDto {
+  @ApiProperty({
+    enum: APPEAL_DECISIONS,
+    description: '`upheld`: the claim stands; `accepted`: it is withdrawn.',
+  })
+  @IsIn([...APPEAL_DECISIONS], withParams({ allowed: [...APPEAL_DECISIONS] }))
+  decision: 'upheld' | 'accepted';
+}
+
+/** Why the management withdraws a claim (REASON_CODES.damageClaimWithdraw). */
+export class WithdrawDamageClaimDto {
+  @ApiProperty({
+    type: String,
+    description: 'REASON_CODES.damageClaimWithdraw, but `appeal_accepted`.',
+  })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+}
+
+/** The household's appeal of a claim, once. */
+export class AppealDamageClaimDto {
+  @ApiProperty({ type: String, minLength: 1, maxLength: 1000 })
+  @IsString()
+  text: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'A finalized `damage_appeal_photo` file of the caller’s.',
+  })
+  @IsOptional()
+  @IsUUID()
+  photoFileId?: string;
 }

@@ -1285,6 +1285,24 @@
         ],
         "type": "object"
       },
+      "AppealDamageClaimDto": {
+        "properties": {
+          "photoFileId": {
+            "description": "A finalized `damage_appeal_photo` file of the caller’s.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
       "AppealFineDto": {
         "properties": {
           "photoFileId": {
@@ -18065,6 +18083,204 @@
         ],
         "type": "object"
       },
+      "DamageAppealView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "upheld",
+              "accepted"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "text": {
+            "description": "The appellant’s words; null after their erasure.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "photo",
+          "at",
+          "decision",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
+      "DamageClaimView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "appeal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DamageAppealView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "appealUntil": {
+            "description": "The household appeals until then, once.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "commonArea": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FitOutAreaRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "description": {
+            "description": "The management’s words.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "DC-0012",
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.damageClaim.",
+            "type": "string"
+          },
+          "settlement": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DamageSettlementView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "under_appeal",
+              "withdrawn",
+              "settled"
+            ],
+            "type": "string"
+          },
+          "withdrawn": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DamageWithdrawnView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "reasonCode",
+          "description",
+          "amount",
+          "status",
+          "commonArea",
+          "raisedAt",
+          "appealUntil",
+          "photos",
+          "appeal",
+          "withdrawn",
+          "settlement"
+        ],
+        "type": "object"
+      },
+      "DamageSettlementView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "chargeStatus": {
+            "enum": [
+              "open",
+              "paid",
+              "cancelled"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "charged": {
+            "description": "EGP left owing as a `damage` invoice.",
+            "type": "string"
+          },
+          "deducted": {
+            "description": "EGP taken from the works deposit.",
+            "type": "string"
+          },
+          "invoiceId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "deducted",
+          "charged",
+          "invoiceId",
+          "chargeStatus"
+        ],
+        "type": "object"
+      },
+      "DamageWithdrawnView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "description": "REASON_CODES.damageClaimWithdraw.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "reason"
+        ],
+        "type": "object"
+      },
       "DashboardAlertView": {
         "properties": {
           "code": {
@@ -18487,6 +18703,22 @@
         "required": [
           "outcome",
           "compensation"
+        ],
+        "type": "object"
+      },
+      "DecideDamageAppealDto": {
+        "properties": {
+          "decision": {
+            "description": "`upheld`: the claim stands; `accepted`: it is withdrawn.",
+            "enum": [
+              "upheld",
+              "accepted"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
         ],
         "type": "object"
       },
@@ -24525,6 +24757,13 @@
             },
             "type": "array"
           },
+          "claims": {
+            "description": "Newest first.",
+            "items": {
+              "$ref": "#/components/schemas/DamageClaimView"
+            },
+            "type": "array"
+          },
           "debrisSlots": {
             "description": "By their window.",
             "items": {
@@ -24581,7 +24820,8 @@
           "deposit",
           "drawings",
           "debrisSlots",
-          "areas"
+          "areas",
+          "claims"
         ],
         "type": "object"
       },
@@ -46692,6 +46932,46 @@
           "type",
           "context",
           "impact"
+        ],
+        "type": "object"
+      },
+      "RaiseDamageClaimDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, at most 1,000,000.",
+            "example": "1500.00",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "description": {
+            "description": "What was damaged, in words the household reads.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Finalized `fitout_photo` files.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "type": "array"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.damageClaim.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "description",
+          "amount",
+          "photoFileIds"
         ],
         "type": "object"
       },
@@ -73335,6 +73615,18 @@
           "officeHoursAr",
           "emergencyAr",
           "available"
+        ],
+        "type": "object"
+      },
+      "WithdrawDamageClaimDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "REASON_CODES.damageClaimWithdraw, but `appeal_accepted`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -109716,6 +110008,63 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/permits/{id}/damage-claims/{claimId}/appeal": {
+      "post": {
+        "description": "Once, within 14 days of the claim, while it is open (DAMAGE_CLAIM_NO_APPEAL); the management decides it.",
+        "operationId": "FitOutController_appeal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "claimId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealDamageClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Appeal a damage claim",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/permits/{id}/debris-slots": {
       "post": {
         "description": "An approved works permit that has not ended (PERMIT_NOT_ACTIVE); a work day of its period inside the compound’s hours, 30 minutes to 4 hours, starting ahead; three scheduled at once (DEBRIS_SLOT_LIMIT), never overlapping.",
@@ -129301,6 +129650,215 @@
           }
         ],
         "summary": "Record a common area before or after the works",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/damage-claims": {
+      "post": {
+        "description": "An approved (or revoked) works permit: a code from `damageClaim`, words, an amount in EGP, one to six photos. The requester and the unit’s primary are told and may appeal once within 14 days.",
+        "operationId": "StaffFitOutController_raise",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaiseDamageClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Claim damage the works did",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/damage-claims/{claimId}/appeal-decision": {
+      "post": {
+        "operationId": "StaffFitOutController_decideAppeal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "claimId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideDamageAppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decide the appeal of a damage claim",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/damage-claims/{claimId}/settle": {
+      "post": {
+        "description": "A fresh step-up (STEP_UP_REQUIRED); once its appeal was decided or its 14 days passed (DAMAGE_CLAIM_APPEAL_WINDOW). From the works deposit as far as it holds, the rest as a `damage` invoice of the unit’s.",
+        "operationId": "StaffFitOutController_settle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "claimId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Settle a damage claim",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/damage-claims/{claimId}/withdraw": {
+      "post": {
+        "description": "An open claim not under appeal, with a code.",
+        "operationId": "StaffFitOutController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "claimId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawDamageClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitOutView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a damage claim",
         "tags": [
           "permits"
         ],

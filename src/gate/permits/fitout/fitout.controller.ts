@@ -17,10 +17,15 @@ import { ApiArea, NoStore } from '../../../core/common/http/decorators';
 import { parseId } from '../../../core/common/validation/parse-id.pipe';
 import {
   AddPermitDrawingDto,
+  AppealDamageClaimDto,
   CancelDebrisSlotDto,
+  DecideDamageAppealDto,
+  RaiseDamageClaimDto,
   RecordAreaDto,
   ScheduleDebrisSlotDto,
+  WithdrawDamageClaimDto,
 } from './dto/fitout.dto';
+import { DamageClaimsService } from './damage-claims.service';
 import { AreaRecordsService } from './area-records.service';
 import { DebrisSlotsService } from './debris-slots.service';
 import { debrisSlotRead, FitOutService } from './fitout.service';
@@ -42,6 +47,7 @@ export class FitOutController {
     private readonly fitOut: FitOutService,
     private readonly drawings: PermitDrawingsService,
     private readonly debris: DebrisSlotsService,
+    private readonly claims: DamageClaimsService,
   ) {}
 
   private view = async (id: string) =>
@@ -119,6 +125,24 @@ export class FitOutController {
     await this.debris.cancel(id, slotId, 'resident', dto);
     return this.view(id);
   }
+
+  @Post('damage-claims/:claimId/appeal')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Appeal a damage claim',
+    description:
+      'Once, within 14 days of the claim, while it is open (DAMAGE_CLAIM_NO_APPEAL); the management decides it.',
+  })
+  @ApiOkResponse({ type: FitOutView })
+  async appeal(
+    @Param('id', parseId()) id: string,
+    @Param('claimId', parseId('claimId')) claimId: string,
+    @Body() dto: AppealDamageClaimDto,
+  ): Promise<FitOutView> {
+    await this.claims.appeal(id, claimId, dto);
+    return this.view(id);
+  }
 }
 
 /** A works permit's fit-out, the management's side (ADR 0074). */
@@ -130,10 +154,75 @@ export class StaffFitOutController {
     private readonly fitOut: FitOutService,
     private readonly debris: DebrisSlotsService,
     private readonly areas: AreaRecordsService,
+    private readonly claims: DamageClaimsService,
   ) {}
 
   private view = async (id: string) =>
     FitOutView.from(await this.fitOut.get(id, 'staff'));
+
+  @Post('damage-claims')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Claim damage the works did',
+    description:
+      'An approved (or revoked) works permit: a code from `damageClaim`, words, an amount in EGP, one to six photos. The requester and the unit’s primary are told and may appeal once within 14 days.',
+  })
+  @ApiCreatedResponse({ type: FitOutView })
+  async raise(
+    @Param('id', parseId()) id: string,
+    @Body() dto: RaiseDamageClaimDto,
+  ): Promise<FitOutView> {
+    await this.claims.raise(id, { ...dto, reasonCode: dto.reasonCode ?? '' });
+    return this.view(id);
+  }
+
+  @Post('damage-claims/:claimId/appeal-decision')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({ summary: 'Decide the appeal of a damage claim' })
+  @ApiOkResponse({ type: FitOutView })
+  async decideAppeal(
+    @Param('id', parseId()) id: string,
+    @Param('claimId', parseId('claimId')) claimId: string,
+    @Body() dto: DecideDamageAppealDto,
+  ): Promise<FitOutView> {
+    await this.claims.decideAppeal(id, claimId, dto.decision);
+    return this.view(id);
+  }
+
+  @Post('damage-claims/:claimId/withdraw')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Withdraw a damage claim',
+    description: 'An open claim not under appeal, with a code.',
+  })
+  @ApiOkResponse({ type: FitOutView })
+  async withdraw(
+    @Param('id', parseId()) id: string,
+    @Param('claimId', parseId('claimId')) claimId: string,
+    @Body() dto: WithdrawDamageClaimDto,
+  ): Promise<FitOutView> {
+    await this.claims.withdraw(id, claimId, dto);
+    return this.view(id);
+  }
+
+  @Post('damage-claims/:claimId/settle')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Settle a damage claim',
+    description:
+      'A fresh step-up (STEP_UP_REQUIRED); once its appeal was decided or its 14 days passed (DAMAGE_CLAIM_APPEAL_WINDOW). From the works deposit as far as it holds, the rest as a `damage` invoice of the unit’s.',
+  })
+  @ApiOkResponse({ type: FitOutView })
+  async settle(
+    @Param('id', parseId()) id: string,
+    @Param('claimId', parseId('claimId')) claimId: string,
+  ): Promise<FitOutView> {
+    await this.claims.settle(id, claimId);
+    return this.view(id);
+  }
 
   @Post('area-records')
   @NoStore()

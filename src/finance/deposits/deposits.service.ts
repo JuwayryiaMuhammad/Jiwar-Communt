@@ -147,6 +147,37 @@ export class DepositsService implements OnModuleInit {
           ]),
         );
       },
+      // A settled damage claim (ADR 0074): a `damage` deduction as far as
+      // the deposit holds, by whoever settles it, under its row.
+      deductForClaim: async (tx, q) => {
+        const rows = await tx.$queryRaw<{ id: string }[]>`
+          SELECT id FROM finance_deposits
+           WHERE permit_id = ${q.permitId}::uuid FOR UPDATE`;
+        if (!rows.length) return ZERO;
+        const d = await tx.financeDeposit.findUniqueOrThrow({
+          where: { id: rows[0].id },
+          include: { events: true },
+        });
+        const take = Prisma.Decimal.min(heldOf(d), q.amount);
+        if (!take.gt(ZERO)) return ZERO;
+        await this.event(tx, d, {
+          kind: 'deducted',
+          amount: take,
+          reasonCode: 'damage',
+        });
+        await this.audit.record(tx, {
+          action: 'deposit.settled',
+          targetId: d.id,
+          metadata: {
+            unitId: d.unitId,
+            parts: [
+              { kind: 'deducted', amount: show(take), reasonCode: 'damage' },
+            ],
+            claimId: q.claimId,
+          },
+        });
+        return take;
+      },
     });
     // Money still held for one of the account's occupancies blocks its erasure.
     this.lifecycle.onDeletionCheck(async (tx, account) => {
@@ -331,6 +362,17 @@ export class DepositsService implements OnModuleInit {
     const parts = validateSettlement(s);
     return this.write(id, false, async (tx, d) => {
       await this.stepUp.consume(tx);
+      // A refund waits for the permit's damage claims (ADR 0074): settled
+      // or withdrawn first, under the unit's finance lock a claim takes too.
+      if (d.permitId && parts.some((p) => p.kind === 'refunded')) {
+        const claims = await this.worksDeposits.openClaims(tx, d.permitId);
+        if (claims > 0)
+          throw appError.conflict(
+            ErrorCode.DEPOSIT_CLAIM_OPEN,
+            'A damage claim on the permit is open',
+            { params: { claims } },
+          );
+      }
       const total = parts.reduce((sum, p) => sum.add(p.amount), ZERO);
       if (total.gt(heldOf(d)))
         throw appError.conflict(

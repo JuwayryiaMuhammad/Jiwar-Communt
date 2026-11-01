@@ -179,4 +179,95 @@ export const FITOUT_ROUTES: Row[] = [
     },
     noStore: true,
   },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/damage-claims',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({ id: UNKNOWN }),
+      body: () => ({
+        reasonCode: 'other',
+        description: 'Broken tile',
+        amount: '10',
+        photoFileIds: [UNKNOWN],
+      }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { description: 'Broken tile', amount: '10', photoFileIds: [] },
+      fields: [
+        { field: 'photoFileIds', code: 'INVALID_LENGTH', params: { min: 1 } },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/damage-claims/{claimId}/appeal-decision',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({ id: UNKNOWN, claimId: UNKNOWN }),
+      body: () => ({ decision: 'upheld' }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { decision: 'maybe' },
+      fields: [
+        {
+          field: 'decision',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['upheld', 'accepted'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/damage-claims/{claimId}/withdraw',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({ id: UNKNOWN, claimId: UNKNOWN }),
+      body: () => ({ reasonCode: 'other' }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/damage-claims/{claimId}/settle',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({ id: UNKNOWN, claimId: UNKNOWN }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/permits/{id}/damage-claims/{claimId}/appeal',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({ id: UNKNOWN, claimId: UNKNOWN }),
+      body: () => ({ text: 'Not our works' }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { text: 'Not our works', photoFileId: 'x' },
+      fields: [{ field: 'photoFileId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
 ];

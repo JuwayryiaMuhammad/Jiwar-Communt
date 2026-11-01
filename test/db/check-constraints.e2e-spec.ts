@@ -2739,6 +2739,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'removed_at and removed_by under IS [NOT] NULL; the order runs only once removed_at IS NULL fails',
   },
   permit_debris_slots_window: {},
+  permit_damage_claims_terms: {},
+  permit_damage_claims_state_shape: {
+    guarded:
+      'status is NOT NULL; the nullable columns are tested IS [NOT] NULL first; the lists, the lengths and the sum run only on a value',
+  },
   permit_area_records_shape: {
     guarded: 'note IS NULL is tested first; its length runs only on a value',
   },

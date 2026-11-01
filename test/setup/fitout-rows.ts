@@ -140,3 +140,60 @@ export async function areaPhotoRow(
   });
   return id;
 }
+
+let claimNumbers = 0;
+
+/**
+ * An open damage claim on a works permit of the unit, raised now (or as
+ * `raisedAt` says) with an hour to appeal (or until `appealUntil`).
+ */
+export async function damageClaimRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    permitId: string;
+    unitId: string;
+    raisedBy: string;
+    amount?: string;
+    raisedAt?: Date;
+    appealUntil?: Date;
+  },
+): Promise<string> {
+  const id = newId();
+  const raisedAt = input.raisedAt ?? dbClock();
+  await tx.permitDamageClaim.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      number: 900_000 + ++claimNumbers,
+      permitId: input.permitId,
+      unitId: input.unitId,
+      reasonCode: 'other',
+      description: 'A row of the tests',
+      amount: input.amount ?? '100',
+      raisedBy: input.raisedBy,
+      raisedAt,
+      appealUntil:
+        input.appealUntil ?? new Date(raisedAt.getTime() + 3_600_000),
+    },
+  });
+  return id;
+}
+
+/** A photo of a damage claim. */
+export async function damageClaimPhotoRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; claimId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.permitDamageClaimPhoto.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      claimId: input.claimId,
+      fileId: await fitOutFileRow(tx, input.tenantId),
+      createdAt: dbClock(),
+    },
+  });
+  return id;
+}

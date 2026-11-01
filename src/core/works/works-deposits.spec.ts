@@ -1,8 +1,14 @@
 import { WorksDeposits } from './works-deposits';
 
 describe('WorksDeposits', () => {
-  const impl = { ofPermits: () => Promise.resolve(new Map()) };
-  const readers = { unitOf: () => Promise.resolve(null) };
+  const impl = {
+    ofPermits: () => Promise.resolve(new Map()),
+    deductForClaim: () => Promise.reject(new Error('unused')),
+  };
+  const readers = {
+    unitOf: () => Promise.resolve(null),
+    openClaims: () => Promise.resolve(0),
+  };
 
   it('refuses to start without both sides, and takes each once', () => {
     const works = new WorksDeposits();

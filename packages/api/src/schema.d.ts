@@ -12317,6 +12317,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/permits/{id}/damage-claims/{claimId}/appeal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Appeal a damage claim
+         * @description Once, within 14 days of the claim, while it is open (DAMAGE_CLAIM_NO_APPEAL); the management decides it.
+         */
+        post: operations["FitOutController_appeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permits/{id}/debris-slots": {
         parameters: {
             query?: never;
@@ -19081,6 +19101,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/unit-permits/{id}/damage-claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Claim damage the works did
+         * @description An approved (or revoked) works permit: a code from `damageClaim`, words, an amount in EGP, one to six photos. The requester and the unit’s primary are told and may appeal once within 14 days.
+         */
+        post: operations["StaffFitOutController_raise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/damage-claims/{claimId}/appeal-decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide the appeal of a damage claim */
+        post: operations["StaffFitOutController_decideAppeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/damage-claims/{claimId}/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Settle a damage claim
+         * @description A fresh step-up (STEP_UP_REQUIRED); once its appeal was decided or its 14 days passed (DAMAGE_CLAIM_APPEAL_WINDOW). From the works deposit as far as it holds, the rest as a `damage` invoice of the unit’s.
+         */
+        post: operations["StaffFitOutController_settle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/damage-claims/{claimId}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw a damage claim
+         * @description An open claim not under appeal, with a code.
+         */
+        post: operations["StaffFitOutController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits/{id}/debris-slots": {
         parameters: {
             query?: never;
@@ -23789,6 +23886,14 @@ export interface components {
         AnsweredGateCallView: {
             call: components["schemas"]["ResidentGateCallView"];
             join: components["schemas"]["GateCallJoinView"];
+        };
+        AppealDamageClaimDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `damage_appeal_photo` file of the caller’s.
+             */
+            photoFileId?: string;
+            text: string;
         };
         AppealFineDto: {
             /**
@@ -29344,6 +29449,61 @@ export interface components {
             startedAt: string;
             unscheduledMinutes: number | null;
         };
+        DamageAppealView: {
+            /** Format: date-time */
+            at: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @enum {string|null} */
+            decision: "upheld" | "accepted" | null;
+            photo: components["schemas"]["PresignedReadView"] | null;
+            /** @description The appellant’s words; null after their erasure. */
+            text: string | null;
+        };
+        DamageClaimView: {
+            /** @description EGP. */
+            amount: string;
+            appeal: components["schemas"]["DamageAppealView"] | null;
+            /**
+             * Format: date-time
+             * @description The household appeals until then, once.
+             */
+            appealUntil: string;
+            commonArea: components["schemas"]["FitOutAreaRefView"] | null;
+            /** @description The management’s words. */
+            description: string;
+            /** Format: uuid */
+            id: string;
+            /** @example DC-0012 */
+            number: string;
+            photos: components["schemas"]["PresignedReadView"][];
+            /** Format: date-time */
+            raisedAt: string;
+            /** @description REASON_CODES.damageClaim. */
+            reasonCode: string;
+            settlement: components["schemas"]["DamageSettlementView"] | null;
+            /** @enum {string} */
+            status: "open" | "under_appeal" | "withdrawn" | "settled";
+            withdrawn: components["schemas"]["DamageWithdrawnView"] | null;
+        };
+        DamageSettlementView: {
+            /** Format: date-time */
+            at: string;
+            /** @enum {string|null} */
+            chargeStatus: "open" | "paid" | "cancelled" | null;
+            /** @description EGP left owing as a `damage` invoice. */
+            charged: string;
+            /** @description EGP taken from the works deposit. */
+            deducted: string;
+            /** Format: uuid */
+            invoiceId: string | null;
+        };
+        DamageWithdrawnView: {
+            /** Format: date-time */
+            at: string;
+            /** @description REASON_CODES.damageClaimWithdraw. */
+            reason: string;
+        };
         DashboardAlertView: {
             /** @description emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open (warning). */
             code: string;
@@ -29470,6 +29630,13 @@ export interface components {
             /** @description From the closed list `partnerCompensationDecision`; `none` when not upheld. */
             compensation: string;
             outcome: components["schemas"]["PartnerComplaintOutcome"];
+        };
+        DecideDamageAppealDto: {
+            /**
+             * @description `upheld`: the claim stands; `accepted`: it is withdrawn.
+             * @enum {string}
+             */
+            decision: "upheld" | "accepted";
         };
         DecideDecisionAppealDto: {
             outcome: components["schemas"]["DecisionAppealOutcome"];
@@ -31338,6 +31505,8 @@ export interface components {
         FitOutView: {
             /** @description Each common area recorded, before the works and after them. */
             areas: components["schemas"]["FitOutAreaView"][];
+            /** @description Newest first. */
+            claims: components["schemas"]["DamageClaimView"][];
             /** @description By their window. */
             debrisSlots: components["schemas"]["DebrisSlotView"][];
             deposit: components["schemas"]["FitOutDepositView"] | null;
@@ -38236,6 +38405,21 @@ export interface components {
             cost?: string;
             impact: string;
             type: components["schemas"]["ApprovalType"];
+        };
+        RaiseDamageClaimDto: {
+            /**
+             * @description EGP, at most 1,000,000.
+             * @example 1500.00
+             */
+            amount: string;
+            /** Format: uuid */
+            commonAreaId?: string;
+            /** @description What was damaged, in words the household reads. */
+            description: string;
+            /** @description Finalized `fitout_photo` files. */
+            photoFileIds: string[];
+            /** @description REASON_CODES.damageClaim. */
+            reasonCode: string;
         };
         RaiseFieldExceptionDto: {
             /** @description The full ID number on the card they show: matched against the blocklist, never stored, nor kept in the idempotency record. */
@@ -46304,6 +46488,10 @@ export interface components {
             officeHoursEn: string | null;
             rulesAr: string | null;
             rulesEn: string | null;
+        };
+        WithdrawDamageClaimDto: {
+            /** @description REASON_CODES.damageClaimWithdraw, but `appeal_accepted`. */
+            reasonCode: string;
         };
         /** @enum {string} */
         WorkHazard: "hot_work" | "height" | "live_electrical" | "confined_space" | "pool_chemicals";
@@ -65196,6 +65384,32 @@ export interface operations {
             };
         };
     };
+    FitOutController_appeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                claimId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealDamageClaimDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
     FitOutController_schedule: {
         parameters: {
             query?: never;
@@ -75071,6 +75285,105 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_raise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaiseDamageClaimDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_decideAppeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                claimId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideDamageAppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_settle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                claimId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitOutView"];
+                };
+            };
+        };
+    };
+    StaffFitOutController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                claimId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WithdrawDamageClaimDto"];
+            };
+        };
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

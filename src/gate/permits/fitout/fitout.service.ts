@@ -12,7 +12,12 @@ import { permitReference } from '../permit-core';
 import { viewStatus, type PermitViewStatus } from '../permit-records';
 import { timeOf } from '../permit-rules';
 import { PermitSettingsService } from '../permit-settings.service';
+import { Charges } from '../../../core/charges/charges';
 import { AreaRecordsService } from './area-records.service';
+import {
+  DamageClaimsService,
+  damageClaimNumber,
+} from './damage-claims.service';
 import { DebrisSlotsService } from './debris-slots.service';
 import { FitOutAccess, type FitOutSide } from './fitout-access';
 import { PermitDrawingsService } from './permit-drawings.service';
@@ -38,6 +43,44 @@ export interface FitOutRead {
     before: AreaStageRead | null;
     after: AreaStageRead | null;
   }[];
+  /** Newest first. */
+  claims: DamageClaimRead[];
+}
+
+/** A damage claim, as its views show it: codes, amounts and words, never a person. */
+export interface DamageClaimRead {
+  id: string;
+  number: string;
+  reasonCode: string;
+  description: string;
+  amount: string;
+  status: string;
+  commonArea: {
+    id: string;
+    code: string;
+    nameEn: string;
+    nameAr: string;
+  } | null;
+  raisedAt: Date;
+  appealUntil: Date;
+  photos: (PresignedRead | null)[];
+  appeal: {
+    /** The appellant's words, until their erasure. */
+    text: string | null;
+    photo: PresignedRead | null;
+    at: Date;
+    decision: string | null;
+    decidedAt: Date | null;
+  } | null;
+  withdrawn: { at: Date; reason: string } | null;
+  settlement: {
+    at: Date;
+    deducted: string;
+    charged: string;
+    /** The `damage` invoice of what was left owing, or null. */
+    invoiceId: string | null;
+    chargeStatus: string | null;
+  } | null;
 }
 
 /** One stage of an area: the management's photos and note. */
@@ -87,8 +130,9 @@ export function debrisSlotRead(d: PermitDebrisSlot): DebrisSlotRead {
  * What a works permit's fit-out holds (ADR 0074), for its household and
  * for the management, read in one transaction: the deposit named on it
  * (through core's WorksDeposits port: the gate never reads finance), the
- * drawings with a read of each, the debris removals, and the common areas
- * before and after the works.
+ * drawings with a read of each, the debris removals, the common areas
+ * before and after the works, and the damage claims with what settled them
+ * (the charge's state through core's Charges port).
  */
 @Injectable()
 export class FitOutService {
@@ -101,6 +145,8 @@ export class FitOutService {
     private readonly drawings: PermitDrawingsService,
     private readonly debris: DebrisSlotsService,
     private readonly areas: AreaRecordsService,
+    private readonly claims: DamageClaimsService,
+    private readonly charges: Charges,
   ) {}
 
   get(permitId: string, side: FitOutSide): Promise<FitOutRead> {
@@ -135,7 +181,72 @@ export class FitOutService {
       drawings,
       debrisSlots: (await this.debris.of(tx, p.id)).map(debrisSlotRead),
       areas: await this.areaReads(tx, p.id),
+      claims: await this.claimReads(tx, p.id),
     };
+  }
+
+  private async claimReads(
+    tx: TenantTxClient,
+    permitId: string,
+  ): Promise<DamageClaimRead[]> {
+    const rows = await this.claims.of(tx, permitId);
+    if (!rows.length) return [];
+    const charges = await this.charges.of(
+      tx,
+      'damage_claim',
+      rows.map((r) => r.claim.id),
+    );
+    const areaIds = rows.flatMap((r) =>
+      r.claim.commonAreaId ? [r.claim.commonAreaId] : [],
+    );
+    const areas = areaIds.length
+      ? await tx.commonArea.findMany({
+          where: { id: { in: areaIds } },
+          select: { id: true, code: true, nameEn: true, nameAr: true },
+        })
+      : [];
+    const out: DamageClaimRead[] = [];
+    for (const { claim: c, photoFileIds } of rows) {
+      const photos: (PresignedRead | null)[] = [];
+      for (const id of photoFileIds)
+        photos.push(await this.files.readUrl(tx, id));
+      const charge = charges.get(c.id) ?? null;
+      out.push({
+        id: c.id,
+        number: damageClaimNumber(c.number),
+        reasonCode: c.reasonCode,
+        description: c.description,
+        amount: c.amount.toFixed(2),
+        status: c.status,
+        commonArea: areas.find((a) => a.id === c.commonAreaId) ?? null,
+        raisedAt: c.raisedAt,
+        appealUntil: c.appealUntil,
+        photos,
+        appeal: c.appealedAt
+          ? {
+              text: c.appealText,
+              photo: await this.files.readUrl(tx, c.appealPhotoFileId),
+              at: c.appealedAt,
+              decision: c.appealDecision,
+              decidedAt: c.appealDecidedAt,
+            }
+          : null,
+        withdrawn:
+          c.withdrawnAt && c.withdrawReason
+            ? { at: c.withdrawnAt, reason: c.withdrawReason }
+            : null,
+        settlement: c.settledAt
+          ? {
+              at: c.settledAt,
+              deducted: c.deducted!.toFixed(2),
+              charged: c.charged!.toFixed(2),
+              invoiceId: charge?.invoiceId ?? null,
+              chargeStatus: charge?.status ?? null,
+            }
+          : null,
+      });
+    }
+    return out;
   }
 
   private async areaReads(

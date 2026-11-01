@@ -2151,6 +2151,68 @@ model PermitAreaPhoto {
   @@map("permit_area_photos")
 }
 
+/// A damage claim on a works permit (ADR 0074): raised by the management,
+/// appealed once by the household, withdrawn or settled once — from the
+/// works deposit and, past it, as a `damage` charge. Keys are the database's.
+model PermitDamageClaim {
+  id                  String         @id @db.Uuid
+  tenantId            String         @map("tenant_id") @db.Uuid
+  /// `DC-` and the number, the compound's.
+  number              Int
+  permitId            String         @map("permit_id") @db.Uuid
+  /// Always works (CHECK), for the composite key on the permit's kind.
+  permitKind          UnitPermitKind @default(works) @map("permit_kind")
+  /// The permit's unit (a composite key on it).
+  unitId              String         @map("unit_id") @db.Uuid
+  commonAreaId        String?        @map("common_area_id") @db.Uuid
+  /// REASON_CODES.damageClaim.
+  reasonCode          String         @map("reason_code")
+  /// The management's words, the household reads.
+  description         String
+  amount              Decimal        @db.Decimal(12, 2)
+  /// open | under_appeal | withdrawn | settled (CHECK).
+  status              String         @default("open")
+  raisedBy            String         @map("raised_by") @db.Uuid
+  raisedAt            DateTime       @map("raised_at") @db.Timestamptz(3)
+  appealUntil         DateTime       @map("appeal_until") @db.Timestamptz(3)
+  appealText          String?        @map("appeal_text")
+  appealPhotoFileId   String?        @map("appeal_photo_file_id") @db.Uuid
+  appealedBy          String?        @map("appealed_by") @db.Uuid
+  appealedAt          DateTime?      @map("appealed_at") @db.Timestamptz(3)
+  appealTextClearedAt DateTime?      @map("appeal_text_cleared_at") @db.Timestamptz(3)
+  /// upheld | accepted (CHECK).
+  appealDecision      String?        @map("appeal_decision")
+  appealDecidedBy     String?        @map("appeal_decided_by") @db.Uuid
+  appealDecidedAt     DateTime?      @map("appeal_decided_at") @db.Timestamptz(3)
+  withdrawnAt         DateTime?      @map("withdrawn_at") @db.Timestamptz(3)
+  withdrawnBy         String?        @map("withdrawn_by") @db.Uuid
+  /// REASON_CODES.damageClaimWithdraw.
+  withdrawReason      String?        @map("withdraw_reason")
+  settledAt           DateTime?      @map("settled_at") @db.Timestamptz(3)
+  settledBy           String?        @map("settled_by") @db.Uuid
+  /// What the works deposit gave.
+  deducted            Decimal?       @db.Decimal(12, 2)
+  /// What was left owing, as a `damage` charge.
+  charged             Decimal?       @db.Decimal(12, 2)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "permit_damage_claims_number_key")
+  @@index([tenantId, permitId, raisedAt], map: "permit_damage_claims_permit_idx")
+  @@map("permit_damage_claims")
+}
+
+/// A damage claim's photo (ADR 0074): attached when it is raised.
+model PermitDamageClaimPhoto {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  claimId   String   @map("claim_id") @db.Uuid
+  fileId    String   @unique @map("file_id") @db.Uuid
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@index([tenantId, claimId], map: "permit_damage_claim_photos_claim_idx")
+  @@map("permit_damage_claim_photos")
+}
+
 /// The works completion certificate's public pointer (ADR 0063): global.
 model WorksCertificateLink {
   codeHash     String   @id @map("code_hash") @db.Char(64)

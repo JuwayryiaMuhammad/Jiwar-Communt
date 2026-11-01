@@ -45404,6 +45404,56 @@
           }
         },
         {
+          "name": "Appeal a damage claim",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"text\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `photoFileId` | string (uuid) |  | A finalized `damage_appeal_photo` file of the caller’s. |\n| `text` | string | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "damage-claims",
+                ":claimId",
+                "appeal"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/damage-claims/:claimId/appeal",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "claimId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Schedule a debris removal of the works",
           "request": {
             "body": {
@@ -46144,6 +46194,188 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Claim damage the works did",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\",\n  \"description\": \"\",\n  \"amount\": \"1500.00\",\n  \"photoFileIds\": [\n    \"\"\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP, at most 1,000,000. |\n| `commonAreaId` | string (uuid) |  |  |\n| `description` | string | yes | What was damaged, in words the household reads. |\n| `photoFileIds` | string (uuid)[] | yes | Finalized `fitout_photo` files. |\n| `reasonCode` | string | yes | REASON_CODES.damageClaim. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "damage-claims"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/damage-claims",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decide the appeal of a damage claim",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"decision\": \"upheld\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `upheld` \\| `accepted` | yes | `upheld`: the claim stands; `accepted`: it is withdrawn. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "damage-claims",
+                ":claimId",
+                "appeal-decision"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/damage-claims/:claimId/appeal-decision",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "claimId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Settle a damage claim",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "damage-claims",
+                ":claimId",
+                "settle"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/damage-claims/:claimId/settle",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "claimId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw a damage claim",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | REASON_CODES.damageClaimWithdraw, but `appeal_accepted`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "damage-claims",
+                ":claimId",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/damage-claims/:claimId/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "claimId",
                   "value": ""
                 }
               ]

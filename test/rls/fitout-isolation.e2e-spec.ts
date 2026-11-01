@@ -7,6 +7,8 @@ import {
   areaPhotoRow,
   areaRecordRow,
   commonAreaRow,
+  damageClaimPhotoRow,
+  damageClaimRow,
   debrisSlotRow,
   drawingRow,
 } from '../setup/fitout-rows';
@@ -22,6 +24,8 @@ interface Side {
   commonAreaId: string;
   /** A record of the area before the permit's works. */
   areaRecordId: string;
+  /** A damage claim on the permit. */
+  claimId: string;
 }
 
 /**
@@ -76,6 +80,24 @@ const TABLES: Table[] = [
     insert: (tx, own, link) =>
       areaPhotoRow(tx, { tenantId: own.tenantId, recordId: link.areaRecordId }),
   },
+  {
+    table: 'permit_damage_claims',
+    insert: (tx, own, link) =>
+      damageClaimRow(tx, {
+        tenantId: own.tenantId,
+        permitId: link.permitId,
+        unitId: link.unitId,
+        raisedBy: link.accountId,
+      }),
+  },
+  {
+    table: 'permit_damage_claim_photos',
+    insert: (tx, own, link) =>
+      damageClaimPhotoRow(tx, {
+        tenantId: own.tenantId,
+        claimId: link.claimId,
+      }),
+  },
 ];
 
 describe('RLS isolation — fit-out completion (ADR 0074)', () => {
@@ -96,6 +118,7 @@ describe('RLS isolation — fit-out completion (ADR 0074)', () => {
       permitId: '',
       commonAreaId: '',
       areaRecordId: '',
+      claimId: '',
     };
     await inTenant(s, async (tx) => {
       s.permitId = await permitRow(tx, {
@@ -109,6 +132,12 @@ describe('RLS isolation — fit-out completion (ADR 0074)', () => {
         permitId: s.permitId,
         commonAreaId: s.commonAreaId,
         recordedBy: s.accountId,
+      });
+      s.claimId = await damageClaimRow(tx, {
+        tenantId,
+        permitId: s.permitId,
+        unitId: s.unitId,
+        raisedBy: s.accountId,
       });
     });
     return s;

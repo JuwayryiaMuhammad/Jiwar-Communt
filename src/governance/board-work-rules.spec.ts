@@ -1,6 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { APPROVAL_TYPES } from '../core/board-matters/board-matters';
 import { REASON_CODES } from '../core/common/reasons';
+import { SETTING_TYPES } from './approvals/approval-rules';
+import {
+  HANDOVER_LIMITS,
+  HANDOVER_STATUSES,
+} from './handovers/handovers.service';
 import {
   ACTION_STATUSES,
   AGENDA_ITEM_KINDS,
@@ -65,6 +71,23 @@ describe('board meetings: their lists are their CHECKs’ (ADR 0075)', () => {
 
   it('the quorum is more than half of the seats', () => {
     expect([1, 2, 3, 4, 5, 6].map(quorumOf)).toEqual([1, 2, 2, 3, 3, 4]);
+  });
+});
+
+describe('handovers: their lists are their CHECKs’ (ADR 0075)', () => {
+  const sql = migration('20270216090300_governance_handovers');
+
+  it('the approval types and the settings, with the override (dated after ADR 0082’s widening)', () => {
+    const types = migration('20270518090610_handover_approval_type');
+    expect(types).toContain(`"type" IN (${quoted(APPROVAL_TYPES)})`);
+    expect(types).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
+  });
+
+  it('a manager’s handover: its states and the notes’ length', () => {
+    expect(sql).toContain(`"status" IN (${quoted(HANDOVER_STATUSES)})`);
+    expect(sql).toContain(
+      `char_length("notes") BETWEEN 1 AND ${HANDOVER_LIMITS.notes}`,
+    );
   });
 });
 

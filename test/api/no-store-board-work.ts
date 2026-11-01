@@ -1,5 +1,6 @@
 import type { Response } from 'supertest';
 import { today } from '../setup/compound-clock';
+import { lapse } from '../setup/governance';
 import { call, type Method } from './request';
 import type { World } from './world';
 
@@ -57,7 +58,66 @@ export function boardWorkCalls(
       dueOn: today(),
     });
 
+  /**
+   * A board of A's appointed through the API, so it has a handover pack
+   * (the world's board is written as rows, without one): A's owner and
+   * landlord on it.
+   */
+  const aBoardWithPack = async () => {
+    await sitting();
+    if ((await landlord('GET', '/board/handover-pack')).status === 200) return;
+    const board = (await manager('GET', '/staff/governance/board')).body as {
+      board: { id: string } | null;
+    };
+    if (board.board) await lapse(board.board.id);
+    ok(
+      await manager('POST', '/staff/governance/board/appoint', {
+        seats: 15,
+        endsAt: new Date(Date.now() + 9000 * HOUR).toISOString(),
+        members: [world().a.ids.owner, world().a.ids.landlord].map(
+          (accountId) => ({ accountId, role: 'member' }),
+        ),
+      }),
+    );
+  };
+  /** A delivered handover of A's manager. */
+  const aDelivered = async () => {
+    ok(
+      await manager('PUT', '/staff/governance/handover', {
+        notes: 'No-store notes',
+      }),
+    );
+    return manager('POST', '/staff/governance/handover/deliver');
+  };
+
   return {
+    'GET /board/handover-pack': async () => {
+      await aBoardWithPack();
+      return landlord('GET', '/board/handover-pack');
+    },
+    'GET /board/handover-pack/pdf': async () => {
+      await aBoardWithPack();
+      return landlord('GET', '/board/handover-pack/pdf');
+    },
+    'GET /staff/governance/handover': () =>
+      manager('GET', '/staff/governance/handover'),
+    'PUT /staff/governance/handover': () =>
+      manager('PUT', '/staff/governance/handover', { notes: 'No-store' }),
+    'POST /staff/governance/handover/deliver': () => aDelivered(),
+    'GET /board/manager-handovers': async () => {
+      await sitting();
+      return landlord('GET', '/board/manager-handovers');
+    },
+    'GET /board/manager-handovers/{id}': async () => {
+      const handoverId = id(ok(await aDelivered()));
+      await sitting();
+      return landlord('GET', `/board/manager-handovers/${handoverId}`);
+    },
+    'GET /board/manager-handovers/{id}/pdf': async () => {
+      const handoverId = id(ok(await aDelivered()));
+      await sitting();
+      return landlord('GET', `/board/manager-handovers/${handoverId}/pdf`);
+    },
     'GET /staff/governance/unit-shares': () =>
       manager('GET', '/staff/governance/unit-shares'),
     'PUT /staff/governance/unit-shares': () =>

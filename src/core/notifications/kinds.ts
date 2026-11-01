@@ -2505,6 +2505,14 @@ export const NOTIFICATION_KINDS = {
     target: 'representative_thread',
     params: {},
   },
+  /** A manager delivered their handover (ADR 0075): the sitting board and the other managers. */
+  'manager_handover.delivered': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'manager_handover',
+    params: {},
+  },
   /** A meeting of the board was scheduled (ADR 0075): the other sitting members. */
   'board_meeting.scheduled': {
     priority: 'normal',

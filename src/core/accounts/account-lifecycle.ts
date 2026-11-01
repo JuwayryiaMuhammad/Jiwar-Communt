@@ -1,4 +1,5 @@
 import { Injectable, type Logger } from '@nestjs/common';
+import type { ErrorCode } from '../common/errors';
 import type { TenantTxClient } from '../database/tenant-tx.service';
 
 /** Work to run once the transaction that caused it has committed. */
@@ -56,6 +57,16 @@ export type DeletionBlockerCheck = (
 ) => Promise<string[]>;
 
 /**
+ * Why an active account may not be deactivated now (ADR 0075): an error
+ * code to refuse with, or null. Read under the account's row lock, before
+ * the status changes.
+ */
+export type DeactivationCheck = (
+  tx: TenantTxClient,
+  account: { id: string; tenantId: string; type: string },
+) => Promise<ErrorCode | null>;
+
+/**
  * A freeze handler may also hand back work to run after the freeze commits
  * (maintenance retries the tickets it released, ADR 0033).
  */
@@ -81,6 +92,24 @@ export class AccountLifecycle {
   private readonly householdStarts: HouseholdStartHandler[] = [];
   private readonly minorsLeaving: MinorLeavingHandler[] = [];
   private readonly blockerChecks: DeletionBlockerCheck[] = [];
+  private readonly deactivationChecks: DeactivationCheck[] = [];
+
+  /** A domain's reason an account may not be deactivated yet (ADR 0075). */
+  onDeactivationCheck(check: DeactivationCheck): void {
+    this.deactivationChecks.push(check);
+  }
+
+  /** The first refusal of a deactivation, or null. */
+  async deactivationRefusal(
+    tx: TenantTxClient,
+    account: { id: string; tenantId: string; type: string },
+  ): Promise<ErrorCode | null> {
+    for (const check of this.deactivationChecks) {
+      const refusal = await check(tx, account);
+      if (refusal) return refusal;
+    }
+    return null;
+  }
 
   /** A domain's reasons an account cannot be erased yet (ADR 0036). */
   onDeletionCheck(check: DeletionBlockerCheck): void {

@@ -1173,4 +1173,8 @@ export const BOARD_WORK_COVERAGE: readonly string[] = [
   'board_meeting_action.created',
   'board_meeting_action.done',
   'board_meeting_action.cancelled',
+  'board_handover_pack.generated',
+  'manager_handover.drafted',
+  'manager_handover.delivered',
+  'manager_handover.notes_cleared',
 ];

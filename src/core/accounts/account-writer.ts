@@ -191,6 +191,20 @@ export class AccountWriter {
       );
     }
 
+    // A domain may hold an active account open (ADR 0075: a manager's
+    // handover while a board sits).
+    if (status === 'inactive' && before.status === 'active') {
+      const refusal = await this.lifecycle.deactivationRefusal(tx, {
+        id: accountId,
+        tenantId: before.tenantId,
+        type: before.type,
+      });
+      if (refusal)
+        throw appError.conflict(
+          refusal,
+          'The account cannot be deactivated yet',
+        );
+    }
     const account = await tx.account.update({
       where: { id: accountId },
       data: { status },

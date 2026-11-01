@@ -28,6 +28,7 @@ export const DEFAULT_DEADLINE_DAYS: Record<SettingType, number> = {
   payment_plan_above_limit: 14,
   legal_escalation: 14,
   compensation_above_limit: 14,
+  manager_handover_override: 14,
   board_appeal: 30,
   objection: 14,
 };
@@ -38,6 +39,7 @@ export const DEADLINE_DAYS = { min: 1, max: 90 } as const;
 export const SUBJECT_TYPES: readonly ApprovalType[] = [
   'annual_budget',
   'budget_increase',
+  'manager_handover_override',
 ];
 
 export const APPROVAL_LIMITS = {

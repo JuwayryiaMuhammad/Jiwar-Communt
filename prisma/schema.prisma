@@ -9073,6 +9073,42 @@ model BoardMeetingAction {
   @@map("board_meeting_actions")
 }
 
+/// What a board left open when the next one started to sit (ADR 0075): one
+/// per term, a snapshot, never changed; its PDF drawn on demand.
+model BoardHandoverPack {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  termId         String   @map("term_id") @db.Uuid
+  previousTermId String?  @map("previous_term_id") @db.Uuid
+  contents       Json
+  generatedAt    DateTime @map("generated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, termId], map: "board_handover_packs_term_key")
+  @@map("board_handover_packs")
+}
+
+/// A manager's handover (ADR 0075): a draft with their notes, then
+/// delivered once with a snapshot of what waits for the office.
+model ManagerHandover {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  accountId      String    @map("account_id") @db.Uuid
+  /// HANDOVER_STATUSES.
+  status         String    @default("draft")
+  notes          String?
+  notesClearedAt DateTime? @map("notes_cleared_at") @db.Timestamptz(3)
+  contents       Json?
+  createdAt      DateTime  @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deliveredAt    DateTime? @map("delivered_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, accountId, status], map: "manager_handovers_account_idx")
+  @@index([tenantId, deliveredAt, id], map: "manager_handovers_delivered_idx")
+  @@map("manager_handovers")
+}
+
 /// The compound's governance rules (ADR 0075); no row reads as the defaults.
 model GovernanceRules {
   tenantId          String   @id @map("tenant_id") @db.Uuid

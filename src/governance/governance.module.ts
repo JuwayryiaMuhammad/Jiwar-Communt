@@ -80,6 +80,12 @@ import {
   BoardMeetingsController,
 } from './meetings/meetings.controller';
 import { MeetingsService } from './meetings/meetings.service';
+import {
+  BoardHandoverPackController,
+  ManagerHandoversController,
+  MyHandoverController,
+} from './handovers/handovers.controller';
+import { HandoversService } from './handovers/handovers.service';
 import { GovernanceRulesController } from './rules/governance-rules.controller';
 import { GovernanceRulesService } from './rules/governance-rules.service';
 import { UnitSharesController } from './shares/unit-shares.controller';
@@ -133,6 +139,9 @@ import { UnitSharesService } from './shares/unit-shares.service';
     GovernanceRulesController,
     BoardMeetingsController,
     BoardMeetingActionsController,
+    BoardHandoverPackController,
+    MyHandoverController,
+    ManagerHandoversController,
   ],
   providers: [
     CompoundDocumentsService,
@@ -163,6 +172,7 @@ import { UnitSharesService } from './shares/unit-shares.service';
     UnitSharesService,
     GovernanceRulesService,
     MeetingsService,
+    HandoversService,
   ],
 })
 export class GovernanceModule {}

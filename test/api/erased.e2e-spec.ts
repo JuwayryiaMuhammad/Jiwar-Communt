@@ -67,7 +67,16 @@ describe('API v0 — erased accounts everywhere', () => {
     const managerId = (manager.body as { id: string }).id;
 
     await erase(resident.id, 'resident');
-    // An active staff role blocks a deletion (ADR 0036): ended first.
+    // An active staff role blocks a deletion (ADR 0036): ended first, once
+    // the manager handed over to A's sitting board (ADR 0075).
+    const leaving = await w.tokenFor(w.a, managerId, 'manager');
+    await call(w, 'PUT', '/staff/governance/handover', {
+      token: leaving,
+      body: { notes: 'What waits for the office' },
+    }).expect(200);
+    await call(w, 'POST', '/staff/governance/handover/deliver', {
+      token: leaving,
+    }).expect(200);
     await call(w, 'PATCH', `/accounts/${managerId}/status`, {
       token: w.a.tokens.manager,
       body: { status: 'inactive' },

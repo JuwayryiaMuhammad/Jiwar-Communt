@@ -1771,6 +1771,10 @@ describe('API v0 — PII leak scan', () => {
       '/governance/agenda-proposals/{id}': w.bAgendaProposalId,
       '/board/agenda-proposals/{id}': w.bAgendaProposalId,
       '/board/meetings/{id}': w.bMeetingId,
+      '/board/manager-handovers/{id}': w.bManagerHandoverId,
+      // ADR 0075: a handover's PDF (none here: not found, never bytes to scan).
+      '/board/manager-handovers/{id}/pdf':
+        '0192a5f0-1c2b-7d3e-8f40-0000000075a1',
       '/board/publications/{id}/objections': w.bPublicationId,
       // A route and a run of B's: not found for everyone of A.
       '/staff/security/patrols/routes/{id}': w.bRouteId,

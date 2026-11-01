@@ -23,6 +23,8 @@ export const APPROVAL_TYPES = [
   'legal_escalation',
   // ADR 0082: a compensation above the manager's limit.
   'compensation_above_limit',
+  // ADR 0075: the board approves a manager leaving without a handover.
+  'manager_handover_override',
 ] as const;
 export type ApprovalType = (typeof APPROVAL_TYPES)[number];
 
@@ -80,7 +82,7 @@ export interface ApprovalKindHandler {
    * Which subject the request names: a budget, one of its lines, or none.
    * Governance refuses a request that names another.
    */
-  subject: 'budget' | 'budget_line' | null;
+  subject: 'budget' | 'budget_line' | 'manager' | null;
   /**
    * At the raise: locks the subject, refuses with a coded error when it
    * cannot be put to the board, and returns the cost to record when the
@@ -226,6 +228,16 @@ export type DuesReader = (
   today: string,
 ) => Promise<boolean>;
 
+/**
+ * A domain's part in the handover pack a new board receives (ADR 0075):
+ * what it leaves open, as codes, dates and amounts, read in governance's
+ * transaction (`today` is the compound's day). Never a name.
+ */
+export type HandoverSection = (
+  tx: TenantTxClient,
+  today: string,
+) => Promise<Record<string, unknown>>;
+
 @Injectable()
 export class BoardMatters {
   private readonly approvals = new Map<ApprovalType, ApprovalKindHandler>();
@@ -236,6 +248,7 @@ export class BoardMatters {
   private decisions: DecisionReader | null = null;
   private requests: ApprovalReader | null = null;
   private dues: DuesReader | null = null;
+  private readonly handovers = new Map<string, HandoverSection>();
 
   registerApproval(type: ApprovalType, handler: ApprovalKindHandler): void {
     if (this.approvals.has(type))
@@ -290,6 +303,17 @@ export class BoardMatters {
   ): ReturnType<ApprovalReader> {
     if (!this.requests) throw new Error('No approval reader is registered');
     return this.requests(tx, requestId);
+  }
+
+  registerHandover(name: string, section: HandoverSection): void {
+    if (this.handovers.has(name))
+      throw new Error(`Handover section ${name} is registered twice`);
+    this.handovers.set(name, section);
+  }
+
+  /** In registration order. */
+  handover(): [string, HandoverSection][] {
+    return [...this.handovers.entries()];
   }
 
   /** Finance's past-due reader (one reader, ADR 0075). */

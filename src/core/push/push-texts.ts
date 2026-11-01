@@ -2732,6 +2732,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ردّ عليك ممثل مبناك. افتح التطبيق لقراءة الرد.',
     },
   },
+  'manager_handover.delivered': {
+    en: {
+      title: 'A manager’s handover',
+      body: 'A manager delivered their handover. Open it to see what waits.',
+    },
+    ar: {
+      title: 'تسليم من المدير',
+      body: 'سلّم أحد المديرين ملف التسليم. افتحه لترى ما ينتظر.',
+    },
+  },
   'board_meeting.scheduled': {
     en: {
       title: 'A board meeting',

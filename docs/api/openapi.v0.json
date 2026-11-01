@@ -2059,7 +2059,8 @@
           "waiver_above_limit",
           "payment_plan_above_limit",
           "legal_escalation",
-          "compensation_above_limit"
+          "compensation_above_limit",
+          "manager_handover_override"
         ],
         "type": "string"
       },
@@ -5028,6 +5029,40 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BoardHandoverPackView": {
+        "properties": {
+          "contents": {
+            "additionalProperties": true,
+            "description": "What the board before left open when this one started to sit: requests, appeals, objections, proposals and action items by reference, the latest minutes, and the domains’ sections (contracts ending, the active budget). Codes, days and amounts; never a name.",
+            "type": "object"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "previousTermId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "termId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "termId",
+          "previousTermId",
+          "generatedAt",
+          "contents"
         ],
         "type": "object"
       },
@@ -30165,6 +30200,7 @@
           "payment_plan_above_limit",
           "legal_escalation",
           "compensation_above_limit",
+          "manager_handover_override",
           "board_appeal",
           "objection"
         ],
@@ -38633,6 +38669,86 @@
         ],
         "type": "string"
       },
+      "ManagerHandoverStatus": {
+        "enum": [
+          "draft",
+          "delivered"
+        ],
+        "type": "string"
+      },
+      "ManagerHandoverView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "contents": {
+            "additionalProperties": true,
+            "description": "What waited for the office when it was delivered; null for a draft.",
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deliveredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Null when none were written, or once its writer was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagerHandoverStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "fullName",
+          "status",
+          "notes",
+          "contents",
+          "createdAt",
+          "deliveredAt"
+        ],
+        "type": "object"
+      },
+      "ManagerHandoverViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ManagerHandoverView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ManagerParcelDetailView": {
         "properties": {
           "carrier": {
@@ -41495,6 +41611,24 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MyHandoverView": {
+        "properties": {
+          "handover": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagerHandoverView"
+              }
+            ],
+            "description": "The caller’s draft, or else their latest delivered one.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "handover"
         ],
         "type": "object"
       },
@@ -51505,6 +51639,11 @@
             "minLength": 1,
             "type": "string"
           },
+          "managerAccountId": {
+            "description": "manager_handover_override only: the active manager who would leave without delivering a handover (ADR 0075).",
+            "format": "uuid",
+            "type": "string"
+          },
           "type": {
             "allOf": [
               {
@@ -59526,6 +59665,20 @@
           "observations",
           "actions",
           "drills"
+        ],
+        "type": "object"
+      },
+      "SaveHandoverDto": {
+        "properties": {
+          "notes": {
+            "description": "The outgoing manager’s notes to whoever comes next; null clears them. Write no resident’s name.",
+            "maxLength": 4000,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "notes"
         ],
         "type": "object"
       },
@@ -76124,7 +76277,7 @@
             "items": {
               "$ref": "#/components/schemas/GovernanceSettingDto"
             },
-            "maxItems": 10,
+            "maxItems": 11,
             "minItems": 1,
             "type": "array"
           }
@@ -82285,6 +82438,193 @@
           }
         ],
         "summary": "Propose a motion on a request",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/handover-pack": {
+      "get": {
+        "description": "Written once, when the board started to sit (BOARD_HANDOVER_PACK_NOT_FOUND for a board that started before, or none sitting).",
+        "operationId": "BoardHandoverPackController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardHandoverPackView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The sitting board’s handover pack",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/handover-pack/pdf": {
+      "get": {
+        "operationId": "BoardHandoverPackController_pdf",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The sitting board’s handover pack as a PDF",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/manager-handovers": {
+      "get": {
+        "operationId": "ManagerHandoversController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerHandoverViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delivered manager handovers, latest first",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/manager-handovers/{id}": {
+      "get": {
+        "operationId": "ManagerHandoversController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerHandoverView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a delivered handover",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/manager-handovers/{id}/pdf": {
+      "get": {
+        "operationId": "ManagerHandoversController_pdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A delivered handover as a PDF",
         "tags": [
           "governance"
         ],
@@ -130822,6 +131162,103 @@
           }
         ],
         "summary": "Certify an election: the elected board sits",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/handover": {
+      "get": {
+        "operationId": "MyHandoverController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyHandoverView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller’s handover",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "put": {
+        "description": "A new draft when none is open.",
+        "operationId": "MyHandoverController_save",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveHandoverDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerHandoverView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write the caller’s handover notes",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/handover/deliver": {
+      "post": {
+        "description": "Once, with a snapshot of what waits for the office now (MANAGER_HANDOVER_NOT_FOUND with no draft). The sitting board and the other managers are told. From then on the account may be deactivated; until then, while a board sits, HANDOVER_PENDING, unless the board approved going without (`manager_handover_override`).",
+        "operationId": "MyHandoverController_deliver",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerHandoverView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deliver the caller’s handover",
         "tags": [
           "governance"
         ],

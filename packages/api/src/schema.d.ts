@@ -608,6 +608,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/board/handover-pack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The sitting board’s handover pack
+         * @description Written once, when the board started to sit (BOARD_HANDOVER_PACK_NOT_FOUND for a board that started before, or none sitting).
+         */
+        get: operations["BoardHandoverPackController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/handover-pack/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The sitting board’s handover pack as a PDF */
+        get: operations["BoardHandoverPackController_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/manager-handovers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Delivered manager handovers, latest first */
+        get: operations["ManagerHandoversController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/manager-handovers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a delivered handover */
+        get: operations["ManagerHandoversController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/manager-handovers/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A delivered handover as a PDF */
+        get: operations["ManagerHandoversController_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/board/meeting-actions": {
         parameters: {
             query?: never;
@@ -17392,6 +17480,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/handover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller’s handover */
+        get: operations["MyHandoverController_mine"];
+        /**
+         * Write the caller’s handover notes
+         * @description A new draft when none is open.
+         */
+        put: operations["MyHandoverController_save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/handover/deliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deliver the caller’s handover
+         * @description Once, with a snapshot of what waits for the office now (MANAGER_HANDOVER_NOT_FOUND with no draft). The sitting board and the other managers are told. From then on the account may be deactivated; until then, while a board sits, HANDOVER_PENDING, unless the board approved going without (`manager_handover_override`).
+         */
+        post: operations["MyHandoverController_deliver"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/governance/owners": {
         parameters: {
             query?: never;
@@ -25939,7 +26068,7 @@ export interface components {
         /** @enum {string} */
         ApprovalStatus: "pending" | "approved" | "rejected" | "withdrawn";
         /** @enum {string} */
-        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit";
+        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override";
         ApprovalView: {
             alternatives: components["schemas"]["ApprovalAlternativeView"][];
             attachments: components["schemas"]["ApprovalAttachmentView"][];
@@ -26798,6 +26927,20 @@ export interface components {
         BoardAuthorizationViewList: {
             data: components["schemas"]["BoardAuthorizationView"][];
             nextCursor: string | null;
+        };
+        BoardHandoverPackView: {
+            /** @description What the board before left open when this one started to sit: requests, appeals, objections, proposals and action items by reference, the latest minutes, and the domains’ sections (contracts ending, the active budget). Codes, days and amounts; never a name. */
+            contents: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            previousTermId: string | null;
+            /** Format: uuid */
+            termId: string;
         };
         /** @enum {string} */
         BoardMeetingActionStatus: "open" | "done" | "cancelled";
@@ -34930,7 +35073,7 @@ export interface components {
             type: components["schemas"]["GovernanceSettingType"];
         };
         /** @enum {string} */
-        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "board_appeal" | "objection";
+        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override" | "board_appeal" | "objection";
         GovernanceSettingsResponse: {
             items: components["schemas"]["GovernanceSettingResponse"][];
         };
@@ -37575,6 +37718,30 @@ export interface components {
          * @enum {string}
          */
         ManagementSide: "resident" | "staff";
+        /** @enum {string} */
+        ManagerHandoverStatus: "draft" | "delivered";
+        ManagerHandoverView: {
+            /** Format: uuid */
+            accountId: string;
+            /** @description What waited for the office when it was delivered; null for a draft. */
+            contents: {
+                [key: string]: unknown;
+            } | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            deliveredAt: string | null;
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Null when none were written, or once its writer was erased. */
+            notes: string | null;
+            status: components["schemas"]["ManagerHandoverStatus"];
+        };
+        ManagerHandoverViewList: {
+            data: components["schemas"]["ManagerHandoverView"][];
+            nextCursor: string | null;
+        };
         ManagerParcelDetailView: {
             carrier: components["schemas"]["ParcelCarrier"];
             events: components["schemas"]["ParcelEventView"][];
@@ -38428,6 +38595,10 @@ export interface components {
         MyGuardInstructionViewList: {
             data: components["schemas"]["MyGuardInstructionView"][];
             nextCursor: string | null;
+        };
+        MyHandoverView: {
+            /** @description The caller’s draft, or else their latest delivered one. */
+            handover: components["schemas"]["ManagerHandoverView"] | null;
         };
         MyListingView: {
             body: string | null;
@@ -41627,6 +41798,11 @@ export interface components {
             /** @description EGP. Required for budget_increase (what it adds) and major_contract; not for annual_budget (its total). */
             cost?: string;
             impact: string;
+            /**
+             * Format: uuid
+             * @description manager_handover_override only: the active manager who would leave without delivering a handover (ADR 0075).
+             */
+            managerAccountId?: string;
             type: components["schemas"]["ApprovalType"];
         };
         RaiseDamageClaimDto: {
@@ -44119,6 +44295,10 @@ export interface components {
             observations: components["schemas"]["SafetyObservationsView"];
             /** Format: date */
             to: string;
+        };
+        SaveHandoverDto: {
+            /** @description The outgoing manager’s notes to whoever comes next; null clears them. Write no resident’s name. */
+            notes: string | null;
         };
         ScanDto: {
             /** @description Metres, as the device reports it; with a position only. */
@@ -51351,6 +51531,109 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardMotionView"];
+                };
+            };
+        };
+    };
+    BoardHandoverPackController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardHandoverPackView"];
+                };
+            };
+        };
+    };
+    BoardHandoverPackController_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
+    ManagerHandoversController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerHandoverViewList"];
+                };
+            };
+        };
+    };
+    ManagerHandoversController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerHandoverView"];
+                };
+            };
+        };
+    };
+    ManagerHandoversController_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
                 };
             };
         };
@@ -76657,6 +76940,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGovernanceElectionView"];
+                };
+            };
+        };
+    };
+    MyHandoverController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyHandoverView"];
+                };
+            };
+        };
+    };
+    MyHandoverController_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveHandoverDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerHandoverView"];
+                };
+            };
+        };
+    };
+    MyHandoverController_deliver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerHandoverView"];
                 };
             };
         };

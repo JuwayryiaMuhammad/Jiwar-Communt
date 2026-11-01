@@ -58,6 +58,7 @@ const REQUIRED_HANDLERS: ApprovalType[] = [
   'annual_budget',
   'budget_increase',
   'major_contract',
+  'manager_handover_override',
 ];
 const PAGE = keysetCursor('createdAt', 'desc');
 const DAY = 86_400_000;
@@ -66,6 +67,8 @@ export interface NewApproval {
   type: ApprovalType;
   budgetId?: string;
   budgetLineId?: string;
+  /** A manager_handover_override's subject: the manager (ADR 0075). */
+  managerAccountId?: string;
   context: string;
   impact: string;
   cost?: string;
@@ -202,7 +205,8 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
   raise(input: NewApproval): Promise<ApprovalRecord> {
     const fields = packageProblems(input);
     if (fields.length) throw invalid(fields);
-    const subjectId = input.budgetId ?? input.budgetLineId ?? null;
+    const subjectId =
+      input.budgetId ?? input.budgetLineId ?? input.managerAccountId ?? null;
     const handler = this.matters.approval(input.type);
     if (SUBJECT_TYPES.includes(input.type) && !handler)
       throw new Error(`No handler is registered for ${input.type}`);
@@ -243,7 +247,11 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
           {
             fields: [
               {
-                field: input.budgetId ? 'budgetId' : 'budgetLineId',
+                field: input.budgetId
+                  ? 'budgetId'
+                  : input.budgetLineId
+                    ? 'budgetLineId'
+                    : 'managerAccountId',
                 code: FieldErrorCode.DUPLICATE_VALUE,
               },
             ],
@@ -844,9 +852,16 @@ function packageProblems(input: NewApproval): FieldError[] {
   const subject = {
     annual_budget: 'budgetId',
     budget_increase: 'budgetLineId',
-  } as Partial<Record<ApprovalType, 'budgetId' | 'budgetLineId'>>;
+    manager_handover_override: 'managerAccountId',
+  } as Partial<
+    Record<ApprovalType, 'budgetId' | 'budgetLineId' | 'managerAccountId'>
+  >;
   const wanted = subject[input.type];
-  for (const field of ['budgetId', 'budgetLineId'] as const) {
+  for (const field of [
+    'budgetId',
+    'budgetLineId',
+    'managerAccountId',
+  ] as const) {
     if (field === wanted && !input[field])
       fields.push({ field, code: FieldErrorCode.FIELD_REQUIRED });
     if (field !== wanted && input[field])

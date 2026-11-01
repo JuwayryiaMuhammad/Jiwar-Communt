@@ -78,6 +78,17 @@ export class RaiseApprovalDto {
   @IsUUID()
   budgetLineId?: string;
 
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'manager_handover_override only: the active manager who would leave without delivering a handover (ADR 0075).',
+  })
+  @IsOptional()
+  @IsUUID()
+  managerAccountId?: string;
+
   @ApiProperty({ type: String, minLength: 1, maxLength: L.context })
   @IsString()
   @Length(1, L.context, withParams({ min: 1, max: L.context }))

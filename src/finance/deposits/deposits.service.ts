@@ -373,7 +373,11 @@ export class DepositsService implements OnModuleInit {
       ...read(d),
       worksCompletion:
         d.kind === 'finishing_works'
-          ? await this.works.read(tx, { unitId: d.unitId, since: d.receivedOn })
+          ? await this.works.read(tx, {
+              tenantId: d.tenantId,
+              unitId: d.unitId,
+              since: fromDate(d.receivedOn),
+            })
           : null,
     };
   }

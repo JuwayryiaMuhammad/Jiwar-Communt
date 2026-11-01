@@ -1,7 +1,7 @@
-import { today } from '../setup/compound-clock';
+import { at, day, today, type LocalDate } from '../setup/compound-clock';
 import { fileHelpers } from '../setup/files';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
-import { permitHelpers, type Who } from '../setup/permits';
+import { decideInspectionAt, permitHelpers, type Who } from '../setup/permits';
 
 interface InspectionBody {
   id: string;
@@ -159,6 +159,57 @@ describe('Works completion', () => {
     expect(mine.worksCompletion).toMatchObject({
       reference: passed.certificateNumber,
     });
+  });
+
+  /**
+   * A finishing-works deposit received today, and its unit's works passed
+   * at the instant `when` gives: what the resident's deposit reads.
+   */
+  async function receivedTodayWorksPassed(
+    name: string,
+    when: (received: LocalDate) => Date,
+  ) {
+    const s = await p.setUp(name);
+    const occupancy = await p.v.inTx(s.c, (tx) =>
+      tx.unitOccupancy.findFirstOrThrow({
+        where: { unitId: s.home.id, accountId: s.alice.id, status: 'active' },
+      }),
+    );
+    const received = today();
+    await http('post', '/staff/deposits', s.manager, {
+      occupancyId: occupancy.id,
+      kind: 'finishing_works',
+      amount: '5000',
+      receivedOn: received,
+      method: 'cash',
+    }).expect(201);
+    const asked = (await ask(s, await approved(s)).expect(201))
+      .body as InspectionBody;
+    const passed = (await decide(s, asked.id, 'passed')).body as InspectionBody;
+    await decideInspectionAt(asked.id, when(received));
+    const [mine] = (await http('get', '/me/deposits', s.alice).expect(200))
+      .body as { worksCompletion: { reference: string } | null }[];
+    return { passed, mine };
+  }
+
+  // The receipt day is the compound's: 01:30 in Cairo is 23:30 or 22:30
+  // UTC the day before, which midnight UTC of the receipt day would miss.
+  it('works passed in the small hours of the receipt day count, whatever the hour the suite runs', async () => {
+    const { passed, mine } = await receivedTodayWorksPassed(
+      'Works Deposit Small Hours',
+      (received) => at(received, 1, 30),
+    );
+    expect(mine.worksCompletion).toMatchObject({
+      reference: passed.certificateNumber,
+    });
+  });
+
+  it('works passed the evening before the receipt day do not', async () => {
+    const { mine } = await receivedTodayWorksPassed(
+      'Works Deposit Evening Before',
+      () => at(day(-1), 23, 30),
+    );
+    expect(mine.worksCompletion).toBeNull();
   });
 
   it('only an approved works permit, by its requester', async () => {

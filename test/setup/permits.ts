@@ -1,3 +1,4 @@
+import { Client } from 'pg';
 import type { Response } from 'supertest';
 import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
 import type { Compound } from './community';
@@ -6,9 +7,44 @@ import { clock, type Clock, type LocalDate } from './compound-clock';
 import { at, day } from './facilities';
 import type { HttpHarness } from './http-app';
 import { safetyHelpers, type Who } from './safety';
+import { required } from './test-env';
 
 export type { Who } from './safety';
 export { at, day, ZONE } from './facilities';
+
+/**
+ * TEST-ONLY time machine: sets a decided inspection's decision instant (and
+ * its request no later) over a superuser connection with
+ * `session_replication_role = replica`, which skips the trigger that freezes
+ * a decision; the CHECKs still hold. src/ cannot import it.
+ */
+export async function decideInspectionAt(
+  inspectionId: string,
+  decidedAt: Date,
+): Promise<void> {
+  const db = new Client({
+    connectionString: required('TEST_SUPERUSER_DATABASE_URL'),
+  });
+  await db.connect();
+  try {
+    await db.query('BEGIN');
+    await db.query('SET LOCAL session_replication_role = replica');
+    const { rowCount } = await db.query(
+      `UPDATE permit_inspections
+          SET requested_at = LEAST(requested_at, $2), decided_at = $2
+        WHERE id = $1 AND decided_at IS NOT NULL`,
+      [inspectionId, decidedAt],
+    );
+    if (rowCount !== 1)
+      throw new Error(`No decided inspection ${inspectionId}`);
+    await db.query('COMMIT');
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
+  } finally {
+    await db.end();
+  }
+}
 
 /** The compound's permit rules as the API returns them (ADR 0049). */
 export interface PermitSettingsBody {

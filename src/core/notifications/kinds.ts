@@ -3244,6 +3244,63 @@ export const NOTIFICATION_KINDS = {
     target: 'group_offer',
     params: { finalPrice: {} },
   },
+  // ---- The field team (ADR 0078) -------------------------------------------
+  /** A technician was not on duty an hour after their slot was due: to the field team. */
+  'technician_shift.absent': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'guard_roster_slot',
+    params: {},
+  },
+  /** An instruction to the technicians, to read and acknowledge. */
+  'technician_instruction.issued': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'guard_instruction',
+    params: {},
+  },
+  /** An urgent one. */
+  'technician_instruction.urgent': {
+    priority: 'critical',
+    category: 'maintenance',
+    critical: true,
+    target: 'guard_instruction',
+    params: {},
+  },
+  /** A technician calls for help: to the field team. `helpKind` is the closed kind, never words. */
+  'technician_help.requested': {
+    priority: 'critical',
+    category: 'maintenance',
+    critical: true,
+    target: 'technician_help_request',
+    params: { helpKind: {} },
+  },
+  /** Their call was taken: to the technician who called. */
+  'technician_help.taken': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'technician_help_request',
+    params: {},
+  },
+  /** They are sent to help a colleague: to the helper. */
+  'technician_help.assigned': {
+    priority: 'critical',
+    category: 'maintenance',
+    critical: true,
+    target: 'technician_help_request',
+    params: { helpKind: {} },
+  },
+  /** Nobody took a call in fifteen minutes: to the managers. */
+  'technician_help.escalated': {
+    priority: 'critical',
+    category: 'maintenance',
+    critical: true,
+    target: 'technician_help_request',
+    params: { helpKind: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

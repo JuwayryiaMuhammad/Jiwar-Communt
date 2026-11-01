@@ -79,6 +79,7 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'spaces.manage': 'Keep the holiday calendar, the site map, the floor plans and the areas open to use requests',
   'compliance.manage': 'Keep the compliance calendar: fire systems, lifts, insurance, licences and permits, their evidence and lead times',
   'lockdown.start': 'Lock one gate or all down from the office, with the typed confirmation',
+  'field_team.manage': 'Run the field team: the technicians’ roster and attendance, their instructions and their calls for help',
   'facilities.book': 'See the facilities and book them for a unit',
   'facilities.manage': 'Set up facilities, their rules, opening hours, peak times and closures, and the club’s plans',
   'bookings.handle': 'Approve and cancel bookings, mark no-shows, lift suspensions',

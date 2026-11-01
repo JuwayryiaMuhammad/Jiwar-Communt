@@ -2688,6 +2688,35 @@ export const AUDIT_ACTIONS = {
     target: 'group_offer',
   },
   'group_offer.reconfirmed': { log: 'tenant', target: 'group_offer' },
+  // The field team (ADR 0078). A technician's slot: on duty more than ten
+  // minutes after it was due (metadata: minutes), or not on duty an hour
+  // after (metadata: recipients). The templates and slots themselves are
+  // the roster's `guard_roster.*`, with `crew: maintenance`.
+  'technician_shift.late': { log: 'tenant', target: 'guard_roster_slot' },
+  'technician_shift.absent': { log: 'tenant', target: 'guard_roster_slot' },
+  // A technician's call for help. requested: kind, ticketId when about a
+  // ticket (never the note); taken: helperId when one was sent; resolved:
+  // by (requester | taker); escalated: recipients.
+  'technician_help.requested': {
+    log: 'tenant',
+    target: 'technician_help_request',
+  },
+  'technician_help.taken': {
+    log: 'tenant',
+    target: 'technician_help_request',
+  },
+  'technician_help.resolved': {
+    log: 'tenant',
+    target: 'technician_help_request',
+  },
+  'technician_help.cancelled': {
+    log: 'tenant',
+    target: 'technician_help_request',
+  },
+  'technician_help.escalated': {
+    log: 'tenant',
+    target: 'technician_help_request',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

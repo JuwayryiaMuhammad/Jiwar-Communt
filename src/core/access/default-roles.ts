@@ -122,6 +122,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'lockdown.start',
       'experience.manage',
       'experience.compensate',
+      'field_team.manage',
     ],
   },
   {
@@ -258,6 +259,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'inbox.read',
       'purchases.request',
       'dashboard.read',
+      'field_team.manage',
     ],
   },
   {

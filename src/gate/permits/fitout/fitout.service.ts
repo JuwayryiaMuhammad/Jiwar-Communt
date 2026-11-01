@@ -11,6 +11,7 @@ import { dbNow } from '../../db-clock';
 import { permitReference } from '../permit-core';
 import { viewStatus, type PermitViewStatus } from '../permit-records';
 import { timeOf } from '../permit-rules';
+import { certificateBlock } from '../permit-inspections.service';
 import { PermitSettingsService } from '../permit-settings.service';
 import { Charges } from '../../../core/charges/charges';
 import { AreaRecordsService } from './area-records.service';
@@ -45,6 +46,11 @@ export interface FitOutRead {
   }[];
   /** Newest first. */
   claims: DamageClaimRead[];
+  /**
+   * What blocks the completion certificate now: open violations and open
+   * damage claims on the works; null when nothing does.
+   */
+  certificateBlockedBy: { violations: number; claims: number } | null;
 }
 
 /** A damage claim, as its views show it: codes, amounts and words, never a person. */
@@ -182,6 +188,7 @@ export class FitOutService {
       debrisSlots: (await this.debris.of(tx, p.id)).map(debrisSlotRead),
       areas: await this.areaReads(tx, p.id),
       claims: await this.claimReads(tx, p.id),
+      certificateBlockedBy: await certificateBlock(tx, p.id),
     };
   }
 

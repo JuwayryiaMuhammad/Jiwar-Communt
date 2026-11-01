@@ -25995,6 +25995,12 @@ export interface components {
             data: components["schemas"]["CategoryView"][];
             nextCursor: string | null;
         };
+        CertificateBlockView: {
+            /** @description Not yet settled or withdrawn. */
+            claims: number;
+            /** @description Open or under appeal. */
+            violations: number;
+        };
         CertifyElectionDto: {
             /** @description Only with a tie across the last seat (`tiedCandidateIds`): the tied candidates the board chose, exactly as many as the seats left. */
             tieBreak?: string[];
@@ -31505,6 +31511,8 @@ export interface components {
         FitOutView: {
             /** @description Each common area recorded, before the works and after them. */
             areas: components["schemas"]["FitOutAreaView"][];
+            /** @description What blocks the completion certificate now (WORKS_CERTIFICATE_BLOCKED), or null. */
+            certificateBlockedBy: components["schemas"]["CertificateBlockView"] | null;
             /** @description Newest first. */
             claims: components["schemas"]["DamageClaimView"][];
             /** @description By their window. */

@@ -50,6 +50,10 @@ describe('Fit-out — drawings', () => {
     const first = await add(s, permit.id).expect(201);
     expect(first.headers['cache-control']).toBe('no-store');
     expect(Object.keys(fitOut(first)).sort()).toEqual([
+      'areas',
+      'certificateBlockedBy',
+      'claims',
+      'debrisSlots',
       'deposit',
       'depositRequired',
       'drawings',

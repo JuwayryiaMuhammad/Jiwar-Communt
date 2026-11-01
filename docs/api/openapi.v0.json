@@ -8298,6 +8298,23 @@
         ],
         "type": "object"
       },
+      "CertificateBlockView": {
+        "properties": {
+          "claims": {
+            "description": "Not yet settled or withdrawn.",
+            "type": "number"
+          },
+          "violations": {
+            "description": "Open or under appeal.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "violations",
+          "claims"
+        ],
+        "type": "object"
+      },
       "CertifyElectionDto": {
         "properties": {
           "tieBreak": {
@@ -24757,6 +24774,16 @@
             },
             "type": "array"
           },
+          "certificateBlockedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CertificateBlockView"
+              }
+            ],
+            "description": "What blocks the completion certificate now (WORKS_CERTIFICATE_BLOCKED), or null.",
+            "nullable": true,
+            "type": "object"
+          },
           "claims": {
             "description": "Newest first.",
             "items": {
@@ -24821,7 +24848,8 @@
           "drawings",
           "debrisSlots",
           "areas",
-          "claims"
+          "claims",
+          "certificateBlockedBy"
         ],
         "type": "object"
       },

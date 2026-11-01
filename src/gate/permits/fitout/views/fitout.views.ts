@@ -220,6 +220,13 @@ export class DamageClaimView {
   }
 }
 
+export class CertificateBlockView {
+  @ApiProperty({ type: Number, description: 'Open or under appeal.' })
+  violations: number;
+  @ApiProperty({ type: Number, description: 'Not yet settled or withdrawn.' })
+  claims: number;
+}
+
 /**
  * A works permit's fit-out (ADR 0074): its deposit, its drawings — for
  * its household (the requester, the unit's primary) and the management.
@@ -260,6 +267,13 @@ export class FitOutView {
   areas: FitOutAreaView[];
   @ApiProperty({ type: [DamageClaimView], description: 'Newest first.' })
   claims: DamageClaimView[];
+  @ApiProperty({
+    type: CertificateBlockView,
+    nullable: true,
+    description:
+      'What blocks the completion certificate now (WORKS_CERTIFICATE_BLOCKED), or null.',
+  })
+  certificateBlockedBy: CertificateBlockView | null;
 
   static from(r: FitOutRead): FitOutView {
     return {
@@ -280,6 +294,9 @@ export class FitOutView {
         after: AreaStageView.from(a.after),
       })),
       claims: r.claims.map((c) => DamageClaimView.from(c)),
+      certificateBlockedBy: r.certificateBlockedBy
+        ? { ...r.certificateBlockedBy }
+        : null,
     };
   }
 }

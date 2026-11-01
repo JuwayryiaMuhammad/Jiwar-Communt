@@ -23,6 +23,24 @@ import { dbNow } from '../db-clock';
 import { PermitCore, permitReference } from './permit-core';
 
 export const WORKS_CERTIFICATE_CODE = /^[A-Za-z0-9_-]{22}$/;
+
+/**
+ * What blocks a works permit's completion certificate (ADR 0074): its
+ * violations still open or under appeal, and its damage claims not yet
+ * settled or withdrawn; null when nothing does.
+ */
+export async function certificateBlock(
+  tx: TenantTxClient,
+  permitId: string,
+): Promise<{ violations: number; claims: number } | null> {
+  const violations = await tx.unitViolation.count({
+    where: { permitId, status: { in: ['open', 'under_appeal'] } },
+  });
+  const claims = await tx.permitDamageClaim.count({
+    where: { permitId, status: { in: ['open', 'under_appeal'] } },
+  });
+  return violations || claims ? { violations, claims } : null;
+}
 export const worksCodeHash = (code: string) =>
   createHash('sha256').update(code, 'utf8').digest('hex');
 export const worksCertificateNumber = (n: number) =>
@@ -253,6 +271,12 @@ export class PermitInspectionsService {
         select: { unitId: true, requestedById: true },
       });
       await this.core.lockUnit(tx, permit.unitId);
+      // The permit's row, after the unit's lock (ADR 0049's order): a
+      // violation issued on it (FOR SHARE) and a damage claim raised on it
+      // (under the unit's lock) wait for this decision, or came first and
+      // are counted below (ADR 0074).
+      await tx.$queryRaw`
+        SELECT id FROM unit_permits WHERE id = ${found.permitId}::uuid FOR UPDATE`;
       await tx.$queryRaw`
         SELECT id FROM permit_inspections WHERE id = ${id}::uuid FOR UPDATE`;
       const row = await tx.permitInspection.findUniqueOrThrow({
@@ -263,6 +287,17 @@ export class PermitInspectionsService {
           ErrorCode.PERMIT_INSPECTION_DECIDED,
           'Decided already',
         );
+      // Open violations and damage claims on the works block the
+      // certificate (ADR 0074): settled, cancelled or withdrawn first.
+      if (input.outcome === 'passed') {
+        const blockedBy = await certificateBlock(tx, row.permitId);
+        if (blockedBy)
+          throw appError.conflict(
+            ErrorCode.WORKS_CERTIFICATE_BLOCKED,
+            'Open violations or damage claims on the works',
+            { params: blockedBy },
+          );
+      }
       const now = await dbNow(tx);
       for (const fileId of input.photoFileIds.slice(0, MAX_PHOTOS)) {
         const file = await this.files.claim(

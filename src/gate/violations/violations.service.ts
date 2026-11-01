@@ -185,6 +185,10 @@ export class ViolationsService implements OnModuleInit {
       // The unit: by its code, or by its works permit (contractor hours).
       let unitId: string | null = null;
       if (input.permitId) {
+        // FOR SHARE: a completion certificate decided at once waits for
+        // this violation, or was issued first (ADR 0074).
+        await tx.$queryRaw`
+          SELECT id FROM unit_permits WHERE id = ${input.permitId}::uuid FOR SHARE`;
         const permit = await tx.unitPermit.findUnique({
           where: { id: input.permitId },
           select: { unitId: true, kind: true },

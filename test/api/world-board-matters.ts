@@ -42,6 +42,9 @@ export interface BoardMattersWorld {
   /** An owner's agenda proposal of B's, and a decision B's board published. */
   bAgendaProposalId: string;
   bPublicationId: string;
+  /** A meeting B's board held, and an action item of it (ADR 0075). */
+  bMeetingId: string;
+  bMeetingActionId: string;
 }
 
 export async function boardMattersWorld(
@@ -103,7 +106,42 @@ export async function boardMattersWorld(
         tenantId: b.tenantId,
         budgetId: bBudgetId,
       });
+      const bMeetingId = newId();
+      await tx.boardMeeting.create({
+        data: {
+          id: bMeetingId,
+          tenantId: b.tenantId,
+          termId: seat.termId,
+          number: 1,
+          kind: 'regular',
+          title: 'A meeting of B',
+          scheduledAt: new Date(),
+          status: 'held',
+          heldAt: new Date(),
+          seatedCount: 1,
+          presentCount: 1,
+          quorate: true,
+          authorSide: 'board',
+          createdById: b.ids.owner,
+          createdAt: new Date(),
+        },
+      });
+      const bMeetingActionId = newId();
+      await tx.boardMeetingAction.create({
+        data: {
+          id: bMeetingActionId,
+          tenantId: b.tenantId,
+          meetingId: bMeetingId,
+          title: 'An action of B',
+          ownerId: b.ids.owner,
+          dueOn: new Date(Date.UTC(2099, 0, 1)),
+          createdById: b.ids.owner,
+          createdAt: new Date(),
+        },
+      });
       return {
+        bMeetingId,
+        bMeetingActionId,
         bApprovalId,
         bBoardAppealId: await appealRow(tx, {
           tenantId: b.tenantId,

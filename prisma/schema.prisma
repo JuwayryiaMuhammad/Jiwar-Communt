@@ -8982,6 +8982,97 @@ model GovernancePoll {
   @@map("governance_polls")
 }
 
+/// A meeting of the board that sits (ADR 0075): changed while scheduled,
+/// then held (with who was there) or cancelled, once; its minutes a board
+/// publication, linked once.
+model BoardMeeting {
+  id                   String    @id @db.Uuid
+  tenantId             String    @map("tenant_id") @db.Uuid
+  termId               String    @map("term_id") @db.Uuid
+  number               Int
+  /// MEETING_KINDS.
+  kind                 String
+  title                String
+  location             String?
+  scheduledAt          DateTime  @map("scheduled_at") @db.Timestamptz(3)
+  /// MEETING_STATUSES.
+  status               String    @default("scheduled")
+  heldAt               DateTime? @map("held_at") @db.Timestamptz(3)
+  seatedCount          Int?      @map("seated_count") @db.SmallInt
+  presentCount         Int?      @map("present_count") @db.SmallInt
+  quorate              Boolean?
+  minutesPublicationId String?   @map("minutes_publication_id") @db.Uuid
+  cancelledAt          DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  /// REASON_CODES.boardMeetingCancel.
+  cancelReason         String?   @map("cancel_reason")
+  authorSide           String    @map("author_side")
+  createdById          String    @map("created_by_account_id") @db.Uuid
+  createdAt            DateTime  @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "board_meetings_number_key")
+  @@index([tenantId, termId, scheduledAt, id], map: "board_meetings_term_idx")
+  @@index([tenantId, scheduledAt, id], map: "board_meetings_scheduled_idx")
+  @@map("board_meetings")
+}
+
+/// One item of a meeting's agenda (ADR 0075): a pending request, a pending
+/// appeal, an open agenda proposal, or words of its own.
+model BoardMeetingAgendaItem {
+  tenantId          String  @map("tenant_id") @db.Uuid
+  meetingId         String  @map("meeting_id") @db.Uuid
+  position          Int     @db.SmallInt
+  /// AGENDA_ITEM_KINDS.
+  kind              String
+  approvalRequestId String? @map("approval_request_id") @db.Uuid
+  boardAppealId     String? @map("board_appeal_id") @db.Uuid
+  agendaProposalId  String? @map("agenda_proposal_id") @db.Uuid
+  title             String?
+
+  @@id([tenantId, meetingId, position])
+  @@map("board_meeting_agenda_items")
+}
+
+/// A seat sitting when the meeting was held, and whether it was there.
+model BoardMeetingAttendance {
+  tenantId  String  @map("tenant_id") @db.Uuid
+  meetingId String  @map("meeting_id") @db.Uuid
+  memberId  String  @map("member_id") @db.Uuid
+  present   Boolean
+
+  @@id([tenantId, meetingId, memberId])
+  @@map("board_meeting_attendance")
+}
+
+/// An action a held meeting decided (ADR 0075): its owner and due day,
+/// done or cancelled once.
+model BoardMeetingAction {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  meetingId         String    @map("meeting_id") @db.Uuid
+  title             String
+  ownerId           String    @map("owner_account_id") @db.Uuid
+  dueOn             DateTime  @map("due_on") @db.Date
+  /// ACTION_STATUSES.
+  status            String    @default("open")
+  doneAt            DateTime? @map("done_at") @db.Timestamptz(3)
+  doneById          String?   @map("done_by_account_id") @db.Uuid
+  doneNote          String?   @map("done_note")
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  /// REASON_CODES.boardActionCancel.
+  cancelReason      String?   @map("cancel_reason")
+  overdueNotifiedAt DateTime? @map("overdue_notified_at") @db.Timestamptz(3)
+  createdById       String    @map("created_by_account_id") @db.Uuid
+  createdAt         DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, meetingId, createdAt, id], map: "board_meeting_actions_meeting_idx")
+  @@index([tenantId, status, dueOn, id], map: "board_meeting_actions_open_idx")
+  @@index([tenantId, ownerId, status], map: "board_meeting_actions_owner_idx")
+  @@map("board_meeting_actions")
+}
+
 /// The compound's governance rules (ADR 0075); no row reads as the defaults.
 model GovernanceRules {
   tenantId          String   @id @map("tenant_id") @db.Uuid

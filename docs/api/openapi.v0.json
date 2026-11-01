@@ -369,6 +369,31 @@
         ],
         "type": "object"
       },
+      "AddActionDto": {
+        "properties": {
+          "dueOn": {
+            "description": "The compound’s day it is due: today to a year ahead (DAY_OUT_OF_RANGE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "ownerAccountId": {
+            "description": "Who carries it out: a sitting member of the meeting’s board, or an active manager.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "ownerAccountId",
+          "dueOn"
+        ],
+        "type": "object"
+      },
       "AddBusDepartureDto": {
         "properties": {
           "fromStop": {
@@ -5005,6 +5030,38 @@
           "nextCursor"
         ],
         "type": "object"
+      },
+      "BoardMeetingActionStatus": {
+        "enum": [
+          "open",
+          "done",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "BoardMeetingAgendaKind": {
+        "enum": [
+          "approval_request",
+          "board_appeal",
+          "agenda_proposal",
+          "other"
+        ],
+        "type": "string"
+      },
+      "BoardMeetingKind": {
+        "enum": [
+          "regular",
+          "extraordinary"
+        ],
+        "type": "string"
+      },
+      "BoardMeetingStatus": {
+        "enum": [
+          "scheduled",
+          "held",
+          "cancelled"
+        ],
+        "type": "string"
       },
       "BoardMotionOutcome": {
         "enum": [
@@ -12525,6 +12582,16 @@
           "buildings",
           "areas"
         ],
+        "type": "object"
+      },
+      "CompleteActionDto": {
+        "properties": {
+          "note": {
+            "description": "How it was done. Write no one’s name.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "CompleteGuardTaskDto": {
@@ -32341,6 +32408,22 @@
         ],
         "type": "object"
       },
+      "HoldMeetingDto": {
+        "properties": {
+          "presentMemberIds": {
+            "description": "The seats present (board member ids), from the seats sitting now; the others are recorded absent. An empty list is a meeting nobody attended.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "presentMemberIds"
+        ],
+        "type": "object"
+      },
       "HoldType": {
         "description": "`maintenance`: a ticket on hold; `unit_permit`: a stopped works permit; `unit_credit`: the unit’s credit (its id is the unit’s).",
         "enum": [
@@ -36775,6 +36858,19 @@
         ],
         "type": "object"
       },
+      "LinkMinutesDto": {
+        "properties": {
+          "publicationId": {
+            "description": "A board publication of kind `minutes` of the same board, not archived, linked to no other meeting.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "publicationId"
+        ],
+        "type": "object"
+      },
       "ListedUnitView": {
         "properties": {
           "areaSqm": {
@@ -39657,6 +39753,471 @@
           "durationMs",
           "url",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "MeetingActionView": {
+        "properties": {
+          "cancelReason": {
+            "description": "From `boardActionCancel`, once cancelled.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "doneNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "example": "2027-03-01",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "meetingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "meetingReference": {
+            "example": "BM-0003",
+            "type": "string"
+          },
+          "overdue": {
+            "description": "Open past its due day, by the compound’s day.",
+            "type": "boolean"
+          },
+          "ownerAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ownerName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingActionStatus"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "meetingId",
+          "meetingReference",
+          "title",
+          "ownerAccountId",
+          "ownerName",
+          "dueOn",
+          "status",
+          "overdue",
+          "doneAt",
+          "doneNote",
+          "cancelledAt",
+          "cancelReason",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MeetingActionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MeetingActionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MeetingAgendaItemDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingAgendaKind"
+              }
+            ]
+          },
+          "subjectId": {
+            "description": "The pending approval request, the pending appeal to the board, or the owner’s open agenda proposal; none for `other`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "description": "Only for `other`: the item in the board’s words.",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
+      "MeetingAgendaItemView": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingAgendaKind"
+              }
+            ]
+          },
+          "position": {
+            "type": "number"
+          },
+          "reference": {
+            "description": "A request’s or an appeal’s reference; null otherwise.",
+            "example": "AR-0007",
+            "nullable": true,
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "subjectStatus": {
+            "description": "The subject’s status now; null for an item of its own.",
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "description": "The item’s own words, or the proposal’s title (null once its proposer was erased).",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "kind",
+          "subjectId",
+          "reference",
+          "subjectStatus",
+          "title"
+        ],
+        "type": "object"
+      },
+      "MeetingAttendanceView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "present": {
+            "type": "boolean"
+          },
+          "role": {
+            "example": "chair",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId",
+          "accountId",
+          "fullName",
+          "role",
+          "present"
+        ],
+        "type": "object"
+      },
+      "MeetingDetailView": {
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/MeetingActionView"
+            },
+            "type": "array"
+          },
+          "agenda": {
+            "items": {
+              "$ref": "#/components/schemas/MeetingAgendaItemView"
+            },
+            "type": "array"
+          },
+          "attendance": {
+            "description": "Every seat sitting when it was held; empty before.",
+            "items": {
+              "$ref": "#/components/schemas/MeetingAttendanceView"
+            },
+            "type": "array"
+          },
+          "authorSide": {
+            "enum": [
+              "manager",
+              "board"
+            ],
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "From `boardMeetingCancel`, once cancelled.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "followUp": {
+            "description": "Open action items of the same board’s earlier meetings: the decisions to follow up.",
+            "items": {
+              "$ref": "#/components/schemas/MeetingActionView"
+            },
+            "type": "array"
+          },
+          "heldAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingKind"
+              }
+            ]
+          },
+          "location": {
+            "nullable": true,
+            "type": "string"
+          },
+          "minutesPublicationId": {
+            "description": "The board publication holding its minutes.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "present": {
+            "nullable": true,
+            "type": "number"
+          },
+          "quorate": {
+            "description": "More than half of the seats were present.",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "BM-0001",
+            "type": "string"
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "seated": {
+            "description": "Seats sitting when it was held.",
+            "nullable": true,
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingStatus"
+              }
+            ]
+          },
+          "termId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "termId",
+          "kind",
+          "title",
+          "location",
+          "scheduledAt",
+          "status",
+          "heldAt",
+          "seated",
+          "present",
+          "quorate",
+          "minutesPublicationId",
+          "cancelledAt",
+          "cancelReason",
+          "authorSide",
+          "createdAt",
+          "agenda",
+          "attendance",
+          "actions",
+          "followUp"
+        ],
+        "type": "object"
+      },
+      "MeetingView": {
+        "properties": {
+          "authorSide": {
+            "enum": [
+              "manager",
+              "board"
+            ],
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "From `boardMeetingCancel`, once cancelled.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "heldAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingKind"
+              }
+            ]
+          },
+          "location": {
+            "nullable": true,
+            "type": "string"
+          },
+          "minutesPublicationId": {
+            "description": "The board publication holding its minutes.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "present": {
+            "nullable": true,
+            "type": "number"
+          },
+          "quorate": {
+            "description": "More than half of the seats were present.",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "BM-0001",
+            "type": "string"
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "seated": {
+            "description": "Seats sitting when it was held.",
+            "nullable": true,
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingStatus"
+              }
+            ]
+          },
+          "termId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "termId",
+          "kind",
+          "title",
+          "location",
+          "scheduledAt",
+          "status",
+          "heldAt",
+          "seated",
+          "present",
+          "quorate",
+          "minutesPublicationId",
+          "cancelledAt",
+          "cancelReason",
+          "authorSide",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MeetingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MeetingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -59162,6 +59723,47 @@
         ],
         "type": "object"
       },
+      "ScheduleMeetingDto": {
+        "properties": {
+          "agenda": {
+            "description": "The agenda, in order, as a whole (an update replaces it). Up to 30 items, each subject once.",
+            "items": {
+              "$ref": "#/components/schemas/MeetingAgendaItemDto"
+            },
+            "maxItems": 30,
+            "type": "array"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingKind"
+              }
+            ]
+          },
+          "location": {
+            "description": "Where it meets; null clears it.",
+            "maxLength": 200,
+            "nullable": true,
+            "type": "string"
+          },
+          "scheduledAt": {
+            "description": "When it meets: up to 30 days back (a meeting recorded after the fact) and a year ahead (INVALID_VALUE).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "title",
+          "scheduledAt"
+        ],
+        "type": "object"
+      },
       "SecurityEventView": {
         "properties": {
           "accountId": {
@@ -75748,6 +76350,41 @@
         },
         "type": "object"
       },
+      "UpdateMeetingDto": {
+        "properties": {
+          "agenda": {
+            "description": "The agenda, in order, as a whole (an update replaces it). Up to 30 items, each subject once.",
+            "items": {
+              "$ref": "#/components/schemas/MeetingAgendaItemDto"
+            },
+            "maxItems": 30,
+            "type": "array"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardMeetingKind"
+              }
+            ]
+          },
+          "location": {
+            "description": "Where it meets; null clears it.",
+            "maxLength": 200,
+            "nullable": true,
+            "type": "string"
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateMeterDto": {
         "properties": {
           "installedOn": {
@@ -81648,6 +82285,550 @@
           }
         ],
         "summary": "Propose a motion on a request",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meeting-actions": {
+      "get": {
+        "description": "Open ones to follow up (`status=open`), or the caller’s own (`mine=true`).",
+        "operationId": "BoardMeetingActionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BoardMeetingActionStatus"
+            }
+          },
+          {
+            "description": "Only the caller’s own action items.",
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingActionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Action items, newest first",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meeting-actions/{id}/cancel": {
+      "post": {
+        "description": "A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). Once, with a code from `boardActionCancel`.",
+        "operationId": "BoardMeetingActionsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingActionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an action item",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meeting-actions/{id}/done": {
+      "post": {
+        "description": "Its owner, a sitting member or the manager (BOARD_MEETING_ACTION_NOT_YOURS); once (BOARD_MEETING_ACTION_CLOSED).",
+        "operationId": "BoardMeetingActionsController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteActionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingActionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark an action item done",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meetings": {
+      "get": {
+        "operationId": "BoardMeetingsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BoardMeetingStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The board’s meetings, latest first",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). With no board sitting: BOARD_NOT_SITTING. Its agenda names pending requests, pending appeals and open agenda proposals (INVALID_VALUE otherwise), or items in the board’s own words. The other sitting members are told.",
+        "operationId": "BoardMeetingsController_schedule",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleMeetingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule a meeting of the board that sits",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meetings/{id}": {
+      "get": {
+        "description": "Its agenda, who was there once held, its action items, and the open items of the same board’s earlier meetings.",
+        "operationId": "BoardMeetingsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a meeting",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). While scheduled (BOARD_MEETING_NOT_SCHEDULED); an agenda given replaces the one it had.",
+        "operationId": "BoardMeetingsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeetingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a scheduled meeting",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meetings/{id}/actions": {
+      "post": {
+        "description": "Its owner (a sitting member of the meeting’s board or an active manager) is told, and told once more when it runs past its day.",
+        "operationId": "BoardMeetingsController_addAction",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddActionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingActionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an action item to a held meeting",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meetings/{id}/cancel": {
+      "post": {
+        "description": "A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). Once, with a code from `boardMeetingCancel`. The other sitting members are told.",
+        "operationId": "BoardMeetingsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a scheduled meeting",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meetings/{id}/hold": {
+      "post": {
+        "description": "A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). Once: who of the seats sitting now was present; whether that was more than half (quorate).",
+        "operationId": "BoardMeetingsController_hold",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldMeetingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a meeting held",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/board/meetings/{id}/minutes": {
+      "post": {
+        "description": "Once (BOARD_MEETING_MINUTES_LINKED), after it was held (BOARD_MEETING_NOT_HELD): a board publication of kind `minutes` of the same board, published to the owners as ADR 0051 says.",
+        "operationId": "BoardMeetingsController_minutes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkMinutesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Link a held meeting’s minutes",
         "tags": [
           "governance"
         ],

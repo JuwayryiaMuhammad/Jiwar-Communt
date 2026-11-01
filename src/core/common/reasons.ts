@@ -791,6 +791,15 @@ export const REASON_CODES = {
   ],
   // Why a sitting member declines an owner's agenda proposal (ADR 0059).
   agendaDecline: ['out_of_scope', 'duplicate', 'not_now', 'other'],
+  // Why a board meeting is called off, and why one of its action items is
+  // (ADR 0075). Codes only; the migration's CHECKs repeat both.
+  boardMeetingCancel: [
+    'postponed',
+    'no_quorum_expected',
+    'superseded',
+    'other',
+  ],
+  boardActionCancel: ['not_needed', 'superseded', 'other'],
   // The asset register (ADR 0064): why an asset is out of service, and why
   // it was retired. Codes only; the migration's CHECK repeats both.
   assetOutOfService: [

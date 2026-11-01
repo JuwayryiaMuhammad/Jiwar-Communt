@@ -2732,6 +2732,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ردّ عليك ممثل مبناك. افتح التطبيق لقراءة الرد.',
     },
   },
+  'board_meeting.scheduled': {
+    en: {
+      title: 'A board meeting',
+      body: 'A meeting of the board was scheduled. Open the app to see its agenda.',
+    },
+    ar: {
+      title: 'اجتماع للمجلس',
+      body: 'تحدد موعد اجتماع للمجلس. افتح التطبيق للاطلاع على جدول أعماله.',
+    },
+  },
+  'board_meeting.cancelled': {
+    en: {
+      title: 'A board meeting was called off',
+      body: 'A scheduled meeting of the board was called off.',
+    },
+    ar: {
+      title: 'أُلغي اجتماع للمجلس',
+      body: 'أُلغي اجتماع كان مقررًا للمجلس.',
+    },
+  },
+  'board_meeting_action.assigned': {
+    en: {
+      title: 'An action for you',
+      body: 'The board gave you an action item from its meeting.',
+    },
+    ar: {
+      title: 'مهمة لك',
+      body: 'كلّفك المجلس بمهمة من اجتماعه.',
+    },
+  },
+  'board_meeting_action.overdue': {
+    en: {
+      title: 'An action is past its day',
+      body: 'An action item of yours from a board meeting is past its due day.',
+    },
+    ar: {
+      title: 'مهمة تجاوزت موعدها',
+      body: 'تجاوزت مهمة لك من اجتماع المجلس موعد استحقاقها.',
+    },
+  },
   'governance_agenda.proposed': {
     en: {
       title: 'An agenda proposal',

@@ -168,6 +168,9 @@ describe('audit catalog', () => {
         'governance_representative',
         'governance_representative_matter',
         'governance_agenda_proposal',
+        // ADR 0075
+        'board_meeting',
+        'board_meeting_action',
         'governance_objection',
         'unit_document',
         'compound_document',

@@ -1468,6 +1468,21 @@ export const ErrorCode = {
   OBJECTIONS_NONE: 'OBJECTIONS_NONE',
   /** The request's follow-up is final: implemented or not implementable (409). */
   APPROVAL_PROGRESS_FINAL: 'APPROVAL_PROGRESS_FINAL',
+  // Board meetings and their action items (ADR 0075)
+  BOARD_MEETING_NOT_FOUND: 'BOARD_MEETING_NOT_FOUND',
+  /** Held or cancelled already: only a scheduled meeting changes (409, params.status). */
+  BOARD_MEETING_NOT_SCHEDULED: 'BOARD_MEETING_NOT_SCHEDULED',
+  /** Not held (yet): minutes and action items come after (409, params.status). */
+  BOARD_MEETING_NOT_HELD: 'BOARD_MEETING_NOT_HELD',
+  /** The board that scheduled it no longer sits (409). */
+  BOARD_MEETING_BOARD_GONE: 'BOARD_MEETING_BOARD_GONE',
+  /** Its minutes are linked already (409, params.publicationId). */
+  BOARD_MEETING_MINUTES_LINKED: 'BOARD_MEETING_MINUTES_LINKED',
+  BOARD_MEETING_ACTION_NOT_FOUND: 'BOARD_MEETING_ACTION_NOT_FOUND',
+  /** Done or cancelled already (409, params.status). */
+  BOARD_MEETING_ACTION_CLOSED: 'BOARD_MEETING_ACTION_CLOSED',
+  /** Only its owner, a sitting member or the manager marks it done (403). */
+  BOARD_MEETING_ACTION_NOT_YOURS: 'BOARD_MEETING_ACTION_NOT_YOURS',
   // Assets, plans and inspections (ADR 0064)
   /** Unknown, or another compound's (404). */
   COMMON_AREA_NOT_FOUND: 'COMMON_AREA_NOT_FOUND',

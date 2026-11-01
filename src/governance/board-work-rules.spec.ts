@@ -1,5 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { REASON_CODES } from '../core/common/reasons';
+import {
+  ACTION_STATUSES,
+  AGENDA_ITEM_KINDS,
+  MEETING_KINDS,
+  MEETING_LIMITS,
+  MEETING_STATUSES,
+  quorumOf,
+} from './meetings/meeting-rules';
 import {
   POLL_WEIGHTINGS,
   scaledWeight,
@@ -23,6 +32,39 @@ describe('the board’s work: its lists are its CHECKs’ (ADR 0075)', () => {
     expect(weighted).toContain(
       `"share" > ${UNIT_SHARE_LIMITS.min} AND "share" <= ${UNIT_SHARE_LIMITS.max}`,
     );
+  });
+});
+
+describe('board meetings: their lists are their CHECKs’ (ADR 0075)', () => {
+  const sql = migration('20270216090200_board_meetings');
+
+  it('a meeting’s kinds, states and cancel codes', () => {
+    expect(sql).toContain(`"kind" IN (${quoted(MEETING_KINDS)})`);
+    expect(sql).toContain(`"status" IN (${quoted(MEETING_STATUSES)})`);
+    expect(sql).toContain(
+      `"cancel_reason" IN (${quoted(REASON_CODES.boardMeetingCancel)})`,
+    );
+    expect(sql).toContain(
+      `char_length("title") BETWEEN 1 AND ${MEETING_LIMITS.title}`,
+    );
+  });
+
+  it('an agenda item’s kinds and an action item’s states and codes', () => {
+    expect(sql).toContain(`"kind" IN (${quoted(AGENDA_ITEM_KINDS)})`);
+    expect(sql).toContain(
+      `"position" BETWEEN 1 AND ${MEETING_LIMITS.agendaItems}`,
+    );
+    expect(sql).toContain(`"status" IN (${quoted(ACTION_STATUSES)})`);
+    expect(sql).toContain(
+      `"cancel_reason" IN (${quoted(REASON_CODES.boardActionCancel)})`,
+    );
+    expect(sql).toContain(
+      `char_length("title") BETWEEN 1 AND ${MEETING_LIMITS.actionTitle}`,
+    );
+  });
+
+  it('the quorum is more than half of the seats', () => {
+    expect([1, 2, 3, 4, 5, 6].map(quorumOf)).toEqual([1, 2, 2, 3, 3, 4]);
   });
 });
 

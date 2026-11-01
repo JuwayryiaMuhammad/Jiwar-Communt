@@ -1165,4 +1165,12 @@ export const M210_COVERAGE: readonly string[] = [
 export const BOARD_WORK_COVERAGE: readonly string[] = [
   'governance_unit_share.changed',
   'governance_rules.changed',
+  'board_meeting.scheduled',
+  'board_meeting.changed',
+  'board_meeting.held',
+  'board_meeting.cancelled',
+  'board_meeting.minutes_linked',
+  'board_meeting_action.created',
+  'board_meeting_action.done',
+  'board_meeting_action.cancelled',
 ];

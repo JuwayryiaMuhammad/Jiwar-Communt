@@ -1,7 +1,8 @@
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 
 /** What governance numbers per compound (ADR 0051, 0055). */
-export type GovernanceCounterKind = 'poll' | 'election' | 'approval' | 'appeal';
+export type GovernanceCounterKind =
+  'poll' | 'election' | 'approval' | 'appeal' | 'meeting';
 
 /**
  * The next number of `kind` in the compound. The counter row stays locked

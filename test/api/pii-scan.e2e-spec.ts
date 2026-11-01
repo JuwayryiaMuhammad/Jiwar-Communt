@@ -1770,6 +1770,7 @@ describe('API v0 — PII leak scan', () => {
       // B's agenda proposal and published decision: not found for A.
       '/governance/agenda-proposals/{id}': w.bAgendaProposalId,
       '/board/agenda-proposals/{id}': w.bAgendaProposalId,
+      '/board/meetings/{id}': w.bMeetingId,
       '/board/publications/{id}/objections': w.bPublicationId,
       // A route and a run of B's: not found for everyone of A.
       '/staff/security/patrols/routes/{id}': w.bRouteId,

@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
 import { BOARD_WORK_COVERAGE } from '../setup/audit-coverage-split';
+import { day, today } from '../setup/compound-clock';
 import { governanceHelpers } from '../setup/governance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
@@ -70,6 +71,123 @@ describe('Audit coverage — the board’s work', () => {
         targetType: 'tenant',
         changes: { candidacyNotStaff: { from: false, to: true } },
       });
+    });
+  });
+
+  describe('meetings', () => {
+    const o = (i: number) => s.owners[i];
+    const post = (path: string, body: object, as = o(0)) =>
+      g.http('post', path, as.token, body);
+    const schedule = async () =>
+      (
+        (
+          await post('/board/meetings', {
+            kind: 'regular',
+            title: `${MARKER} title`,
+            location: `${MARKER} place`,
+            scheduledAt: new Date(Date.now() + 48 * 3_600_000).toISOString(),
+          }).expect(201)
+        ).body as { id: string }
+      ).id;
+
+    it('board_meeting.scheduled, .changed, .held, .cancelled and .minutes_linked — terms by value, the words as changed', async () => {
+      const id = await schedule();
+      expect(await single('board_meeting.scheduled', id)).toMatchObject({
+        actorId: o(0).id,
+        targetType: 'board_meeting',
+        changes: {
+          kind: { from: null, to: 'regular' },
+          agenda: { from: null, to: 0 },
+          title: { changed: true },
+          location: { changed: true },
+        },
+        metadata: { side: 'board' },
+      });
+      await g
+        .http('patch', `/board/meetings/${id}`, o(1).token, {
+          kind: 'extraordinary',
+          title: `${MARKER} new`,
+        })
+        .expect(200);
+      expect((await single('board_meeting.changed', id)).changes).toEqual({
+        kind: { from: 'regular', to: 'extraordinary' },
+        title: { changed: true },
+      });
+      await post(`/board/meetings/${id}/hold`, { presentMemberIds: [] }).expect(
+        200,
+      );
+      expect((await single('board_meeting.held', id)).metadata).toEqual({
+        seated: 3,
+        present: 0,
+        quorate: false,
+        side: 'board',
+      });
+      const publicationId = (
+        (
+          await post('/governance/publications', {
+            kind: 'minutes',
+            decidedOn: today(),
+            titleEn: `${MARKER} minutes`,
+            bodyEn: MARKER,
+          }).expect(201)
+        ).body as { id: string }
+      ).id;
+      await post(`/board/meetings/${id}/minutes`, { publicationId }).expect(
+        200,
+      );
+      expect(
+        (await single('board_meeting.minutes_linked', id)).metadata,
+      ).toEqual({ publicationId });
+      const other = await schedule();
+      await post(`/board/meetings/${other}/cancel`, {
+        reasonCode: 'superseded',
+      }).expect(200);
+      expect((await single('board_meeting.cancelled', other)).metadata).toEqual(
+        { reasonCode: 'superseded', side: 'board' },
+      );
+    });
+
+    it('board_meeting_action.created, .done and .cancelled — owner, day and codes; never the words', async () => {
+      const id = await schedule();
+      await post(`/board/meetings/${id}/hold`, { presentMemberIds: [] }).expect(
+        200,
+      );
+      const add = async () =>
+        (
+          (
+            await post(`/board/meetings/${id}/actions`, {
+              title: `${MARKER} item`,
+              ownerAccountId: o(1).id,
+              dueOn: day(5),
+            }).expect(201)
+          ).body as { id: string }
+        ).id;
+      const first = await add();
+      expect(await single('board_meeting_action.created', first)).toMatchObject(
+        {
+          changes: {
+            meetingId: { from: null, to: id },
+            ownerId: { from: null, to: o(1).id },
+            dueOn: { from: null, to: day(5) },
+            title: { changed: true },
+          },
+        },
+      );
+      await post(
+        `/board/meeting-actions/${first}/done`,
+        { note: `${MARKER} note` },
+        o(1),
+      ).expect(200);
+      expect(
+        (await single('board_meeting_action.done', first)).metadata,
+      ).toEqual({ note: true, byOwner: true });
+      const second = await add();
+      await post(`/board/meeting-actions/${second}/cancel`, {
+        reasonCode: 'other',
+      }).expect(200);
+      expect(
+        (await single('board_meeting_action.cancelled', second)).metadata,
+      ).toEqual({ reasonCode: 'other' });
     });
   });
 

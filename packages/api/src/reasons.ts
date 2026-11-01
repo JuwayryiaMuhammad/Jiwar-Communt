@@ -188,6 +188,13 @@ export const REASON_CODES = {
   governanceTieBreak: ['board_decision', 'lot_drawn'],
   approvalWithdraw: ['no_longer_needed', 'raised_in_error', 'superseded', 'other'],
   agendaDecline: ['out_of_scope', 'duplicate', 'not_now', 'other'],
+  boardMeetingCancel: [
+    'postponed',
+    'no_quorum_expected',
+    'superseded',
+    'other',
+  ],
+  boardActionCancel: ['not_needed', 'superseded', 'other'],
   expenseVoid: ['entered_in_error', 'duplicate', 'vendor_refund', 'other'],
   patrolRunCancel: ['not_needed', 'post_closed', 'other'],
   patrolRunCancelSystem: ['route_changed', 'route_retired', 'post_out_of_service'],

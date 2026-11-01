@@ -608,6 +608,191 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/board/meeting-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Action items, newest first
+         * @description Open ones to follow up (`status=open`), or the caller’s own (`mine=true`).
+         */
+        get: operations["BoardMeetingActionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/meeting-actions/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel an action item
+         * @description A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). Once, with a code from `boardActionCancel`.
+         */
+        post: operations["BoardMeetingActionsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/meeting-actions/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark an action item done
+         * @description Its owner, a sitting member or the manager (BOARD_MEETING_ACTION_NOT_YOURS); once (BOARD_MEETING_ACTION_CLOSED).
+         */
+        post: operations["BoardMeetingActionsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/meetings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The board’s meetings, latest first */
+        get: operations["BoardMeetingsController_list"];
+        put?: never;
+        /**
+         * Schedule a meeting of the board that sits
+         * @description A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). With no board sitting: BOARD_NOT_SITTING. Its agenda names pending requests, pending appeals and open agenda proposals (INVALID_VALUE otherwise), or items in the board’s own words. The other sitting members are told.
+         */
+        post: operations["BoardMeetingsController_schedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/meetings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a meeting
+         * @description Its agenda, who was there once held, its action items, and the open items of the same board’s earlier meetings.
+         */
+        get: operations["BoardMeetingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a scheduled meeting
+         * @description A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). While scheduled (BOARD_MEETING_NOT_SCHEDULED); an agenda given replaces the one it had.
+         */
+        patch: operations["BoardMeetingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/board/meetings/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add an action item to a held meeting
+         * @description Its owner (a sitting member of the meeting’s board or an active manager) is told, and told once more when it runs past its day.
+         */
+        post: operations["BoardMeetingsController_addAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/meetings/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off a scheduled meeting
+         * @description A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). Once, with a code from `boardMeetingCancel`. The other sitting members are told.
+         */
+        post: operations["BoardMeetingsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/meetings/{id}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a meeting held
+         * @description A sitting member of the board (BOARD_SEAT_REQUIRED) or the manager; a member acts on their own board’s meetings (BOARD_MEETING_BOARD_GONE). Once: who of the seats sitting now was present; whether that was more than half (quorate).
+         */
+        post: operations["BoardMeetingsController_hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/board/meetings/{id}/minutes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link a held meeting’s minutes
+         * @description Once (BOARD_MEETING_MINUTES_LINKED), after it was held (BOARD_MEETING_NOT_HELD): a board publication of kind `minutes` of the same board, published to the owners as ADR 0051 says.
+         */
+        post: operations["BoardMeetingsController_minutes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/board/motions/{id}/close": {
         parameters: {
             query?: never;
@@ -25199,6 +25384,16 @@ export interface components {
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
         };
+        AddActionDto: {
+            /** @description The compound’s day it is due: today to a year ahead (DAY_OUT_OF_RANGE). */
+            dueOn: string;
+            /**
+             * Format: uuid
+             * @description Who carries it out: a sitting member of the meeting’s board, or an active manager.
+             */
+            ownerAccountId: string;
+            title: string;
+        };
         AddBusDepartureDto: {
             fromStop: string;
             /**
@@ -26604,6 +26799,14 @@ export interface components {
             data: components["schemas"]["BoardAuthorizationView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        BoardMeetingActionStatus: "open" | "done" | "cancelled";
+        /** @enum {string} */
+        BoardMeetingAgendaKind: "approval_request" | "board_appeal" | "agenda_proposal" | "other";
+        /** @enum {string} */
+        BoardMeetingKind: "regular" | "extraordinary";
+        /** @enum {string} */
+        BoardMeetingStatus: "scheduled" | "held" | "cancelled";
         /** @enum {string} */
         BoardMotionOutcome: "approve" | "reject" | "uphold" | "overturn";
         /** @enum {string} */
@@ -28926,6 +29129,10 @@ export interface components {
             from: string;
             /** Format: date */
             to: string;
+        };
+        CompleteActionDto: {
+            /** @description How it was done. Write no one’s name. */
+            note?: string;
         };
         CompleteGuardTaskDto: {
             note?: string;
@@ -35382,6 +35589,10 @@ export interface components {
         HoldDto: {
             holdReason: components["schemas"]["TicketHoldReason"];
         };
+        HoldMeetingDto: {
+            /** @description The seats present (board member ids), from the seats sitting now; the others are recorded absent. An empty list is a meeting nobody attended. */
+            presentMemberIds: string[];
+        };
         /**
          * @description `maintenance`: a ticket on hold; `unit_permit`: a stopped works permit; `unit_credit`: the unit’s credit (its id is the unit’s).
          * @enum {string}
@@ -36805,6 +37016,13 @@ export interface components {
              */
             runId?: string;
         };
+        LinkMinutesDto: {
+            /**
+             * Format: uuid
+             * @description A board publication of kind `minutes` of the same board, not archived, linked to no other meeting.
+             */
+            publicationId: string;
+        };
         ListedUnitView: {
             /** @description Square metres, two decimals. */
             areaSqm: string | null;
@@ -37679,6 +37897,152 @@ export interface components {
             kind: components["schemas"]["MediaKind"];
             /** @description A short-lived presigned URL. */
             url: string;
+        };
+        MeetingActionView: {
+            /** @description From `boardActionCancel`, once cancelled. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            doneAt: string | null;
+            doneNote: string | null;
+            /**
+             * Format: date
+             * @example 2027-03-01
+             */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            meetingId: string;
+            /** @example BM-0003 */
+            meetingReference: string;
+            /** @description Open past its due day, by the compound’s day. */
+            overdue: boolean;
+            /** Format: uuid */
+            ownerAccountId: string;
+            ownerName: string | null;
+            status: components["schemas"]["BoardMeetingActionStatus"];
+            title: string;
+        };
+        MeetingActionViewList: {
+            data: components["schemas"]["MeetingActionView"][];
+            nextCursor: string | null;
+        };
+        MeetingAgendaItemDto: {
+            kind: components["schemas"]["BoardMeetingAgendaKind"];
+            /**
+             * Format: uuid
+             * @description The pending approval request, the pending appeal to the board, or the owner’s open agenda proposal; none for `other`.
+             */
+            subjectId?: string;
+            /** @description Only for `other`: the item in the board’s words. */
+            title?: string;
+        };
+        MeetingAgendaItemView: {
+            kind: components["schemas"]["BoardMeetingAgendaKind"];
+            position: number;
+            /**
+             * @description A request’s or an appeal’s reference; null otherwise.
+             * @example AR-0007
+             */
+            reference: string | null;
+            /** Format: uuid */
+            subjectId: string | null;
+            /** @description The subject’s status now; null for an item of its own. */
+            subjectStatus: string | null;
+            /** @description The item’s own words, or the proposal’s title (null once its proposer was erased). */
+            title: string | null;
+        };
+        MeetingAttendanceView: {
+            /** Format: uuid */
+            accountId: string;
+            fullName: string | null;
+            /** Format: uuid */
+            memberId: string;
+            present: boolean;
+            /** @example chair */
+            role: string;
+        };
+        MeetingDetailView: {
+            actions: components["schemas"]["MeetingActionView"][];
+            agenda: components["schemas"]["MeetingAgendaItemView"][];
+            /** @description Every seat sitting when it was held; empty before. */
+            attendance: components["schemas"]["MeetingAttendanceView"][];
+            /** @enum {string} */
+            authorSide: "manager" | "board";
+            /** @description From `boardMeetingCancel`, once cancelled. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Open action items of the same board’s earlier meetings: the decisions to follow up. */
+            followUp: components["schemas"]["MeetingActionView"][];
+            /** Format: date-time */
+            heldAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BoardMeetingKind"];
+            location: string | null;
+            /**
+             * Format: uuid
+             * @description The board publication holding its minutes.
+             */
+            minutesPublicationId: string | null;
+            present: number | null;
+            /** @description More than half of the seats were present. */
+            quorate: boolean | null;
+            /** @example BM-0001 */
+            reference: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            /** @description Seats sitting when it was held. */
+            seated: number | null;
+            status: components["schemas"]["BoardMeetingStatus"];
+            /** Format: uuid */
+            termId: string;
+            title: string;
+        };
+        MeetingView: {
+            /** @enum {string} */
+            authorSide: "manager" | "board";
+            /** @description From `boardMeetingCancel`, once cancelled. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            heldAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BoardMeetingKind"];
+            location: string | null;
+            /**
+             * Format: uuid
+             * @description The board publication holding its minutes.
+             */
+            minutesPublicationId: string | null;
+            present: number | null;
+            /** @description More than half of the seats were present. */
+            quorate: boolean | null;
+            /** @example BM-0001 */
+            reference: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            /** @description Seats sitting when it was held. */
+            seated: number | null;
+            status: components["schemas"]["BoardMeetingStatus"];
+            /** Format: uuid */
+            termId: string;
+            title: string;
+        };
+        MeetingViewList: {
+            data: components["schemas"]["MeetingView"][];
+            nextCursor: string | null;
         };
         MemberGrantResponse: {
             /** @description Finance only: the cap per operation. */
@@ -43825,6 +44189,19 @@ export interface components {
             /** @description Inside the compound’s hours, 30 minutes to 4 hours, starting ahead; never overlapping another scheduled removal of the permit. */
             window: components["schemas"]["PermitHoursDto"];
         };
+        ScheduleMeetingDto: {
+            /** @description The agenda, in order, as a whole (an update replaces it). Up to 30 items, each subject once. */
+            agenda?: components["schemas"]["MeetingAgendaItemDto"][];
+            kind: components["schemas"]["BoardMeetingKind"];
+            /** @description Where it meets; null clears it. */
+            location?: string | null;
+            /**
+             * Format: date-time
+             * @description When it meets: up to 30 days back (a meeting recorded after the fact) and a year ahead (INVALID_VALUE).
+             */
+            scheduledAt: string;
+            title: string;
+        };
         SecurityEventView: {
             /** Format: uuid */
             accountId: string | null;
@@ -48709,6 +49086,16 @@ export interface components {
             /** @description A new or changed listing waits for a handler first. */
             requiresReview?: boolean;
         };
+        UpdateMeetingDto: {
+            /** @description The agenda, in order, as a whole (an update replaces it). Up to 30 items, each subject once. */
+            agenda?: components["schemas"]["MeetingAgendaItemDto"][];
+            kind?: components["schemas"]["BoardMeetingKind"];
+            /** @description Where it meets; null clears it. */
+            location?: string | null;
+            /** Format: date-time */
+            scheduledAt?: string;
+            title?: string;
+        };
         UpdateMeterDto: {
             /** Format: date */
             installedOn?: string | null;
@@ -50964,6 +51351,275 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardMotionView"];
+                };
+            };
+        };
+    };
+    BoardMeetingActionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["BoardMeetingActionStatus"];
+                /** @description Only the caller’s own action items. */
+                mine?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingActionViewList"];
+                };
+            };
+        };
+    };
+    BoardMeetingActionsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingActionView"];
+                };
+            };
+        };
+    };
+    BoardMeetingActionsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteActionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingActionView"];
+                };
+            };
+        };
+    };
+    BoardMeetingsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["BoardMeetingStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingViewList"];
+                };
+            };
+        };
+    };
+    BoardMeetingsController_schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleMeetingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingDetailView"];
+                };
+            };
+        };
+    };
+    BoardMeetingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingDetailView"];
+                };
+            };
+        };
+    };
+    BoardMeetingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMeetingDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingDetailView"];
+                };
+            };
+        };
+    };
+    BoardMeetingsController_addAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddActionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingActionView"];
+                };
+            };
+        };
+    };
+    BoardMeetingsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingDetailView"];
+                };
+            };
+        };
+    };
+    BoardMeetingsController_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldMeetingDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingDetailView"];
+                };
+            };
+        };
+    };
+    BoardMeetingsController_minutes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkMinutesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingDetailView"];
                 };
             };
         };

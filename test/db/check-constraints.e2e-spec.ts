@@ -2909,6 +2909,22 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   governance_electors_weight: {
     guarded: 'weight IS NULL is tested first; the range runs only on a value',
   },
+  board_meetings_shape: {
+    guarded:
+      'location IS NULL is tested first; its length runs only on a value; number, kind, title and author_side are NOT NULL',
+  },
+  board_meetings_state_shape: {
+    guarded:
+      'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; present_count IS NULL comes before seated_count IS NOT NULL and the range; cancel_reason IS NULL before its list',
+  },
+  board_meeting_agenda_items_shape: {
+    guarded:
+      'position and kind are NOT NULL; the subject columns are tested IS [NOT] NULL; title IS NULL is tested first and its length runs only on a value',
+  },
+  board_meeting_actions_shape: {
+    guarded:
+      'title and status are NOT NULL; done_note, cancel_reason, done_at and cancelled_at are tested IS NULL first (done_at IS NOT NULL before the note’s length); created_at is NOT NULL',
+  },
 };
 
 interface Check {

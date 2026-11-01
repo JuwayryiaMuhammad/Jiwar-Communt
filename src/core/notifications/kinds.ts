@@ -2505,6 +2505,38 @@ export const NOTIFICATION_KINDS = {
     target: 'representative_thread',
     params: {},
   },
+  /** A meeting of the board was scheduled (ADR 0075): the other sitting members. */
+  'board_meeting.scheduled': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'board_meeting',
+    params: { kind: {} },
+  },
+  /** A scheduled meeting was called off: the other sitting members. */
+  'board_meeting.cancelled': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'board_meeting',
+    params: { reason: {} },
+  },
+  /** An action item of a held meeting: its owner. */
+  'board_meeting_action.assigned': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'board_meeting_action',
+    params: {},
+  },
+  /** An open action item ran past its due day: its owner, once. */
+  'board_meeting_action.overdue': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'board_meeting_action',
+    params: {},
+  },
   /** An owner proposed a matter for the agenda: the sitting board. */
   'governance_agenda.proposed': {
     needsDecision: true,

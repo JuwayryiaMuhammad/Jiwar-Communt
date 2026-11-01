@@ -1906,6 +1906,52 @@ export const AUDIT_ACTIONS = {
   },
   // Agenda proposals (ADR 0059). changes: the title and the words as
   // changed.
+  // A board meeting scheduled (ADR 0075). changes: number, kind,
+  // scheduledAt, agenda (a count), title and location as changed.
+  // metadata: side.
+  'board_meeting.scheduled': {
+    log: 'tenant',
+    target: 'board_meeting',
+    sensitive: ['title', 'location'],
+  },
+  // A scheduled meeting changed: the diff, the words as changed.
+  'board_meeting.changed': {
+    log: 'tenant',
+    target: 'board_meeting',
+    sensitive: ['title', 'location'],
+  },
+  // Held, once. metadata: seated, present (counts), quorate, side.
+  'board_meeting.held': {
+    log: 'tenant',
+    target: 'board_meeting',
+  },
+  // Called off, once. metadata: reasonCode (boardMeetingCancel), side.
+  'board_meeting.cancelled': {
+    log: 'tenant',
+    target: 'board_meeting',
+  },
+  // Its minutes linked, once. metadata: publicationId.
+  'board_meeting.minutes_linked': {
+    log: 'tenant',
+    target: 'board_meeting',
+  },
+  // An action item written. changes: meetingId, ownerId, dueOn; the title
+  // as changed.
+  'board_meeting_action.created': {
+    log: 'tenant',
+    target: 'board_meeting_action',
+    sensitive: ['title'],
+  },
+  // Done, once. metadata: note (a boolean), byOwner.
+  'board_meeting_action.done': {
+    log: 'tenant',
+    target: 'board_meeting_action',
+  },
+  // Cancelled, once. metadata: reasonCode (boardActionCancel).
+  'board_meeting_action.cancelled': {
+    log: 'tenant',
+    target: 'board_meeting_action',
+  },
   // The compound's governance rules changed (ADR 0075): changes:
   // candidacyNoDues, candidacyNotStaff, by value.
   'governance_rules.changed': {

@@ -1,5 +1,6 @@
 import { BUSY_LEVELS, type BusyLevel } from '../../busy/busy-levels';
 import { ApiProperty } from '@nestjs/swagger';
+import { HolidayFlagView } from '../../../core/holidays/views/holidays.views';
 import { BookingSide, BookingStatus, type Booking } from '@prisma/client';
 
 /** A booking's occasion: one of the unit's children (ADR 0054). */
@@ -200,4 +201,11 @@ export class FacilitySlotsView {
       'The slots of the day that may be booked now, in order. Too soon and too far are left out.',
   })
   slots: FacilitySlotView[];
+  @ApiProperty({
+    type: HolidayFlagView,
+    nullable: true,
+    description:
+      'The compound’s holiday that day (ADR 0084): a flag; the slots are as the facility’s hours make them.',
+  })
+  holiday: HolidayFlagView | null;
 }

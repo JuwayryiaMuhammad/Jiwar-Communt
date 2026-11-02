@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { HolidayFlagView } from '../../../core/holidays/views/holidays.views';
 import {
   TicketPriority,
   type MaintenancePlan,
@@ -250,8 +251,15 @@ export class PlanCalendarEntryView {
   occurrenceId: string | null;
   @ApiProperty({ type: String, format: 'uuid', nullable: true })
   ticketId: string | null;
+  @ApiProperty({
+    type: HolidayFlagView,
+    nullable: true,
+    description:
+      'The compound’s holiday on its day (ADR 0084): a flag, the date is not moved.',
+  })
+  holiday: HolidayFlagView | null;
 
   static from(e: CalendarEntry): PlanCalendarEntryView {
-    return { ...e };
+    return { ...e, holiday: HolidayFlagView.from(e.holiday) };
   }
 }

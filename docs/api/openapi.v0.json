@@ -15357,6 +15357,35 @@
         ],
         "type": "object"
       },
+      "CreateHolidayDto": {
+        "properties": {
+          "day": {
+            "description": "A local day of the compound, at most a year back and two years ahead (DAY_OUT_OF_RANGE); one holiday a day (HOLIDAY_EXISTS).",
+            "format": "date",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "stopsWorks": {
+            "description": "On (the default), works and moves stop that day: a day off of the permits (ADR 0049). Bookings and planned work are only flagged, either way.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "day",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "CreateInspectionDto": {
         "properties": {
           "assetId": {
@@ -23685,6 +23714,16 @@
             "description": "The local day, `YYYY-MM-DD`.",
             "type": "string"
           },
+          "holiday": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HolidayFlagView"
+              }
+            ],
+            "description": "The compound’s holiday that day (ADR 0084): a flag; the slots are as the facility’s hours make them.",
+            "nullable": true,
+            "type": "object"
+          },
           "slots": {
             "description": "The slots of the day that may be booked now, in order. Too soon and too far are left out.",
             "items": {
@@ -23695,7 +23734,8 @@
         },
         "required": [
           "date",
-          "slots"
+          "slots",
+          "holiday"
         ],
         "type": "object"
       },
@@ -29760,6 +29800,75 @@
           "unit_credit"
         ],
         "type": "string"
+      },
+      "HolidayFlagView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "HolidayView": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "stopsWorks": {
+            "description": "Works and moves stop that day (a day off of the permits).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "day",
+          "nameEn",
+          "nameAr",
+          "stopsWorks"
+        ],
+        "type": "object"
+      },
+      "HolidayViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/HolidayView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "HostRequestResponse": {
         "properties": {
@@ -43606,7 +43715,7 @@
       "PermitRulesResponse": {
         "properties": {
           "daysOff": {
-            "description": "Dated local days off, ascending.",
+            "description": "Dated local days off, ascending: the holidays that stop works on the compound’s calendar (ADR 0084), kept at /staff/holidays.",
             "example": [
               "2026-12-25"
             ],
@@ -43659,7 +43768,7 @@
       "PermitSettingsResponse": {
         "properties": {
           "daysOff": {
-            "description": "Dated local days off, ascending.",
+            "description": "Dated local days off, ascending: the holidays that stop works on the compound’s calendar (ADR 0084), kept at /staff/holidays.",
             "example": [
               "2026-12-25"
             ],
@@ -44275,6 +44384,16 @@
             "format": "date",
             "type": "string"
           },
+          "holiday": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HolidayFlagView"
+              }
+            ],
+            "description": "The compound’s holiday on its day (ADR 0084): a flag, the date is not moved.",
+            "nullable": true,
+            "type": "object"
+          },
           "occurrenceId": {
             "format": "uuid",
             "nullable": true,
@@ -44321,7 +44440,8 @@
           "priority",
           "status",
           "occurrenceId",
-          "ticketId"
+          "ticketId",
+          "holiday"
         ],
         "type": "object"
       },
@@ -69999,6 +70119,24 @@
         },
         "type": "object"
       },
+      "UpdateHolidayDto": {
+        "properties": {
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "stopsWorks": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "UpdateInboxSettingsDto": {
         "properties": {
           "items": {
@@ -70392,16 +70530,6 @@
       },
       "UpdatePermitSettingsDto": {
         "properties": {
-          "daysOff": {
-            "description": "Dated local days with no works and no moves (feasts), at most 100. Replaces the list.",
-            "example": [
-              "2026-12-25"
-            ],
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
           "workDays": {
             "description": "The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one.",
             "example": [
@@ -78752,6 +78880,36 @@
         "summary": "Show a hidden photo again",
         "tags": [
           "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/holidays": {
+      "get": {
+        "description": "Today included. `stopsWorks`: no works or moves that day (the permits’ days off).",
+        "operationId": "HolidaysController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compound’s holidays of the coming year",
+        "tags": [
+          "spaces"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -121204,6 +121362,171 @@
         "summary": "End the interest phase now: open it",
         "tags": [
           "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/holidays": {
+      "get": {
+        "operationId": "StaffHolidaysController_list",
+        "parameters": [
+          {
+            "description": "Today by default.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "At most 366 days from `from` (PERIOD_TOO_LONG); a year on by default.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compound’s holidays over up to a year, by day",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "One a day (HOLIDAY_EXISTS); at most 100 from today on (HOLIDAYS_TOO_MANY). One that stops works refuses works and moves that day from now on, as a permits’ day off did; permits already approved keep their dates.",
+        "operationId": "StaffHolidaysController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHolidayDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a holiday",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/holidays/{id}": {
+      "delete": {
+        "operationId": "StaffHolidaysController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a holiday",
+        "tags": [
+          "spaces"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Its day is fixed: remove it and add another.",
+        "operationId": "StaffHolidaysController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHolidayDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a holiday’s names, or whether works stop on it",
+        "tags": [
+          "spaces"
         ],
         "x-no-store": true,
         "x-stability": "draft"

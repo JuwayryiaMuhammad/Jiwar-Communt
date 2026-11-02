@@ -7,8 +7,8 @@ import {
 
 /**
  * The fixed limits of a unit's permits (ADR 0049). The compound sets only
- * its work days, hours and days off (permit_settings); these are the
- * product's.
+ * its work days and hours (permit_settings) and its days off (the holidays
+ * that stop works, ADR 0084); these are the product's.
  */
 export const PERMIT_LIMITS = {
   /** Pending or approved and not ended, per unit and kind. */
@@ -30,7 +30,7 @@ export const PERMIT_LIMITS = {
   eventMaxHours: 24,
   /** How far ahead a permit may start, in days. */
   maxDaysAhead: 90,
-  /** Dated days off a compound keeps. */
+  /** Holidays from today on a compound's calendar keeps (ADR 0084). */
   daysOff: 100,
 } as const;
 
@@ -56,16 +56,22 @@ export interface WorkRules {
   /** Minutes after local midnight; from < to. */
   workFrom: number;
   workTo: number;
-  /** Local `YYYY-MM-DD`, ascending. */
+  /**
+   * Local `YYYY-MM-DD`, ascending: the holidays that stop works (ADR 0084,
+   * which took over permit_settings.days_off).
+   */
   daysOff: LocalDate[];
 }
 
-export function workRules(s: PermitSettings): WorkRules {
+export function workRules(
+  s: PermitSettings,
+  daysOff: readonly LocalDate[],
+): WorkRules {
   return {
     workDays: [...s.workDays].sort((a, b) => a - b),
     workFrom: s.workFrom,
     workTo: s.workTo,
-    daysOff: s.daysOff.map((d) => d.toISOString().slice(0, 10)).sort(),
+    daysOff: [...daysOff].sort(),
   };
 }
 

@@ -22,6 +22,7 @@ import {
   workRules,
   type WorkRules,
 } from './permit-rules';
+import { readWorkRules } from './permit-work-rules';
 
 /** The compound's permit rules as the management sets them. */
 export interface PermitSettingsView {
@@ -38,10 +39,10 @@ export interface PermitRulesView extends PermitSettingsView {
   limits: typeof PERMIT_LIMITS;
 }
 
+/** The days off are the calendar's (ADR 0084): changed there, not here. */
 export interface PermitSettingsUpdate {
   workDays?: number[];
   workHours?: { from: string; to: string };
-  daysOff?: string[];
   worksDepositRequired?: boolean;
 }
 
@@ -72,19 +73,16 @@ export class PermitSettingsService {
     private readonly settings: TenantSettingsService,
   ) {}
 
-  /** The rules, inside the caller's transaction; `share` waits for a change. */
-  async rules(
+  /**
+   * The rules, inside the caller's transaction; `share` waits for a change
+   * of the rules or of the calendar's days off (ADR 0084).
+   */
+  rules(
     tx: TenantTxClient,
     tenantId: string,
     lock: 'share' | 'none' = 'none',
   ): Promise<WorkRules> {
-    if (lock === 'share')
-      await tx.$queryRaw`
-        SELECT tenant_id FROM permit_settings
-         WHERE tenant_id = ${tenantId}::uuid FOR SHARE`;
-    return workRules(
-      await tx.permitSettings.findUniqueOrThrow({ where: { tenantId } }),
-    );
+    return readWorkRules(tx, tenantId, lock);
   }
 
   /** Whether a works permit waits for its deposit (ADR 0074). */
@@ -159,14 +157,9 @@ export class PermitSettingsService {
           workDays: input.workDays && [...new Set(input.workDays)].sort(),
           workFrom: input.workHours && minuteOf(input.workHours.from),
           workTo: input.workHours && minuteOf(input.workHours.to),
-          daysOff:
-            input.daysOff &&
-            [...new Set(input.daysOff)]
-              .sort()
-              .map((d) => new Date(`${d}T00:00:00.000Z`)),
         },
       });
-      const after = workRules(row);
+      const after = workRules(row, before.daysOff);
       const changes = diffChanges(
         { ...view(before, depositBefore) },
         { ...view(after, row.worksDepositRequired) },

@@ -7,7 +7,8 @@ import { GateSubjects, type Refusal } from '../entries/subjects';
 import { EVENT_EARLY_MS } from '../entries/subjects';
 import { LockdownCore, scopeOf } from '../lockdown/lockdown-core';
 import { permitReference } from '../permits/permit-core';
-import { workRules, type WorkRules } from '../permits/permit-rules';
+import { type WorkRules } from '../permits/permit-rules';
+import { readWorkRules } from '../permits/permit-work-rules';
 import { PassTokens } from '../visitors/pass-tokens';
 import { longTag, shortTag } from './offline-tags';
 
@@ -242,11 +243,7 @@ export class BundleBuilder {
         workers: workers.items,
         blocklist,
         residents,
-        workRules: workRules(
-          await tx.permitSettings.findUniqueOrThrow({
-            where: { tenantId: b.tenantId },
-          }),
-        ),
+        workRules: await readWorkRules(tx, b.tenantId),
         ...permits,
         serviceVehicles,
         children,

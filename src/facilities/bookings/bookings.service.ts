@@ -26,7 +26,15 @@ import { FacilitiesAccess } from '../access';
 import { BookingNotices } from '../notices/booking-notices';
 import { needOf, WaitlistOffers } from '../waitlist/waitlist-offers';
 import { banInForce, dayOf } from '../bans/ban-reads';
-import { closedOver, closuresBetween } from '../closures/closure-reads';
+import {
+  closedOver,
+  closuresBetween,
+  reservationsBetween,
+} from '../closures/closure-reads';
+import {
+  holidaysBetween,
+  type HolidayFlag,
+} from '../../core/holidays/holiday-reads';
 import { dbNow } from '../db-clock';
 import {
   feeFor,
@@ -239,7 +247,11 @@ export class BookingsService implements OnModuleInit {
     facilityId: string,
     date: LocalDate | undefined,
     unitId?: string,
-  ): Promise<{ date: LocalDate; slots: SlotState[] }> {
+  ): Promise<{
+    date: LocalDate;
+    slots: SlotState[];
+    holiday: HolidayFlag | null;
+  }> {
     return this.tenantTx.withTenantTx(async (tx) => {
       if (unitId) await this.requirePlace(tx, unitId);
       const facility = await this.facilities.lock(tx, facilityId, 'share');
@@ -247,22 +259,33 @@ export class BookingsService implements OnModuleInit {
       const cal = await this.calendar(tx, facility, rules);
       const now = await dbNow(tx);
       const on = date ?? localDate(now, cal.timeZone);
+      // A holiday flags the day (ADR 0084); the facility's hours decide.
+      const holiday = (await holidaysBetween(tx, on, on))[0] ?? null;
       const day = slotsOfDate(on, cal).filter(
         (s) => bookableWhen(s, now, rules, cal.timeZone) === null,
       );
-      if (!day.length) return { date: on, slots: [] };
+      if (!day.length) return { date: on, slots: [], holiday };
       const holding = await this.holdingBetween(
         tx,
         facilityId,
         day[0].startsAt,
         day[day.length - 1].endsAt,
       );
-      const closures = await closuresBetween(
-        tx,
-        facilityId,
-        day[0].startsAt,
-        day[day.length - 1].endsAt,
-      );
+      // Closures in force, and the approved uses of its area (ADR 0084).
+      const closures: Slot[] = [
+        ...(await closuresBetween(
+          tx,
+          facilityId,
+          day[0].startsAt,
+          day[day.length - 1].endsAt,
+        )),
+        ...(await reservationsBetween(
+          tx,
+          facilityId,
+          day[0].startsAt,
+          day[day.length - 1].endsAt,
+        )),
+      ];
       // Live waitlist offers hold their places (ADR 0070).
       const offers = await tx.bookingWaitlistEntry.findMany({
         where: {
@@ -295,7 +318,7 @@ export class BookingsService implements OnModuleInit {
               BookingsService.taken(rules, slot, holding) / rules.capacity,
             ),
       }));
-      return { date: on, slots };
+      return { date: on, slots, holiday };
     });
   }
 

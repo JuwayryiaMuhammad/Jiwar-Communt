@@ -14,8 +14,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { IsLocalDate } from '../../../core/common/validation/local-date';
-import { PERMIT_LIMITS, TIME_OF_DAY } from '../permit-rules';
+import { TIME_OF_DAY } from '../permit-rules';
 
 /** A time window of one day, in the compound's time zone. */
 export class PermitHoursDto {
@@ -62,22 +61,6 @@ export class UpdatePermitSettingsDto {
   @ValidateNested()
   @Type(() => PermitHoursDto)
   workHours?: PermitHoursDto;
-
-  @ApiProperty({
-    type: [String],
-    required: false,
-    example: ['2026-12-25'],
-    description: `Dated local days with no works and no moves (feasts), at most ${PERMIT_LIMITS.daysOff}. Replaces the list.`,
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(
-    PERMIT_LIMITS.daysOff,
-    withParams({ min: 0, max: PERMIT_LIMITS.daysOff }),
-  )
-  @IsString({ each: true })
-  @IsLocalDate({ each: true })
-  daysOff?: string[];
 
   @ApiProperty({
     type: Boolean,

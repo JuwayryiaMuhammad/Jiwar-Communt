@@ -21,7 +21,8 @@ export class PermitSettingsResponse {
   @ApiProperty({
     type: [String],
     example: ['2026-12-25'],
-    description: 'Dated local days off, ascending.',
+    description:
+      'Dated local days off, ascending: the holidays that stop works on the compound’s calendar (ADR 0084), kept at /staff/holidays.',
   })
   daysOff: string[];
 

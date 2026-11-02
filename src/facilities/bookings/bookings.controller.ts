@@ -27,6 +27,7 @@ import {
   UnitBookingsQueryDto,
 } from './dto/bookings.dto';
 import { BookingView, FacilitySlotsView } from './views/booking.views';
+import { HolidayFlagView } from '../../core/holidays/views/holidays.views';
 
 /** A facility's slots of a day, as residents see them (ADR 0044). */
 @ApiArea('bookings')
@@ -43,9 +44,14 @@ export class FacilitySlotsController {
     @Param('id', parseId()) id: string,
     @Query() q: FacilitySlotsQueryDto,
   ): Promise<FacilitySlotsView> {
-    const { date, slots } = await this.bookings.slots(id, q.date, q.unitId);
+    const { date, slots, holiday } = await this.bookings.slots(
+      id,
+      q.date,
+      q.unitId,
+    );
     return {
       date,
+      holiday: HolidayFlagView.from(holiday),
       slots: slots.map((s) => ({
         startsAt: s.startsAt,
         endsAt: s.endsAt,

@@ -46001,9 +46001,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"daysOff\": [\n    \"2026-12-25\"\n  ],\n  \"workDays\": [\n    0,\n    1,\n    2,\n    3,\n    4,\n    6\n  ],\n  \"workHours\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  },\n  \"worksDepositRequired\": false\n}"
+              "raw": "{\n  \"workDays\": [\n    0,\n    1,\n    2,\n    3,\n    4,\n    6\n  ],\n  \"workHours\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  },\n  \"worksDepositRequired\": false\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `daysOff` | string[] |  | Dated local days with no works and no moves (feasts), at most 100. Replaces the list. |\n| `workDays` | number[] |  | The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one. |\n| `workHours` | object |  |  |\n| `worksDepositRequired` | boolean |  | On (the default), a works permit is approved only once its finishing-works deposit holds money (ADR 0074). |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `workDays` | number[] |  | The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one. |\n| `workHours` | object |  |  |\n| `worksDepositRequired` | boolean |  | On (the default), a works permit is approved only once its finishing-works deposit holds money (ADR 0074). |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -49028,6 +49028,171 @@
         }
       ],
       "name": "security"
+    },
+    {
+      "item": [
+        {
+          "name": "List the compound’s holidays of the coming year",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "holidays"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/holidays"
+            }
+          }
+        },
+        {
+          "name": "List the compound’s holidays over up to a year, by day",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "holidays"
+              ],
+              "query": [
+                {
+                  "description": "Today by default.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "At most 366 days from `from` (PERIOD_TOO_LONG); a year on by default.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/holidays"
+            }
+          }
+        },
+        {
+          "name": "Add a holiday",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"day\": \"2026-01-01\",\n  \"nameEn\": \"\",\n  \"nameAr\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `day` | string (date) | yes | A local day of the compound, at most a year back and two years ahead (DAY_OUT_OF_RANGE); one holiday a day (HOLIDAY_EXISTS). |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `stopsWorks` | boolean |  | On (the default), works and moves stop that day: a day off of the permits (ADR 0049). Bookings and planned work are only flagged, either way. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "holidays"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/holidays"
+            }
+          }
+        },
+        {
+          "name": "Change a holiday’s names, or whether works stop on it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"stopsWorks\": false\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `stopsWorks` | boolean |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "holidays",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/holidays/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a holiday",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "holidays",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/holidays/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "spaces"
     },
     {
       "item": [

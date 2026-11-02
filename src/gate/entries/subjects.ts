@@ -15,7 +15,8 @@ import {
 } from '../../community';
 import { localParts } from '../../core/common/slots/day-slots';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
-import { workRules, workTimeRefusal } from '../permits/permit-rules';
+import { workTimeRefusal } from '../permits/permit-rules';
+import { readWorkRules } from '../permits/permit-work-rules';
 
 /** Guests may come this long before an event starts (ADR 0049). */
 export const EVENT_EARLY_MS = 30 * 60_000;
@@ -284,11 +285,7 @@ export class GateSubjects {
     if (s.guest && (s.guest.removedAt || s.guest.purgedAt))
       return 'guest_removed';
     if (s.type === 'event_guest') return null;
-    const rules = workRules(
-      await tx.permitSettings.findUniqueOrThrow({
-        where: { tenantId: p.tenantId },
-      }),
-    );
+    const rules = await readWorkRules(tx, p.tenantId);
     const compound = workTimeRefusal(rules, at, timeZone);
     if (compound) return compound;
     if (s.type === 'permit_worker') {

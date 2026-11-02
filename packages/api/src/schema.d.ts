@@ -1646,6 +1646,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/holidays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the compound’s holidays of the coming year
+         * @description Today included. `stopsWorks`: no works or moves that day (the permits’ days off).
+         */
+        get: operations["HolidaysController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/community/permit-rules": {
         parameters: {
             query?: never;
@@ -16306,6 +16326,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/holidays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the compound’s holidays over up to a year, by day */
+        get: operations["StaffHolidaysController_list"];
+        put?: never;
+        /**
+         * Add a holiday
+         * @description One a day (HOLIDAY_EXISTS); at most 100 from today on (HOLIDAYS_TOO_MANY). One that stops works refuses works and moves that day from now on, as a permits’ day off did; permits already approved keep their dates.
+         */
+        post: operations["StaffHolidaysController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/holidays/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a holiday */
+        delete: operations["StaffHolidaysController_remove"];
+        options?: never;
+        head?: never;
+        /**
+         * Change a holiday’s names, or whether works stop on it
+         * @description Its day is fixed: remove it and add another.
+         */
+        patch: operations["StaffHolidaysController_update"];
+        trace?: never;
+    };
     "/api/v1/staff/inbox": {
         parameters: {
             query?: never;
@@ -28313,6 +28375,17 @@ export interface components {
             /** @default 0 */
             position: number;
         };
+        CreateHolidayDto: {
+            /**
+             * Format: date
+             * @description A local day of the compound, at most a year back and two years ahead (DAY_OUT_OF_RANGE); one holiday a day (HOLIDAY_EXISTS).
+             */
+            day: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description On (the default), works and moves stop that day: a day off of the permits (ADR 0049). Bookings and planned work are only flagged, either way. */
+            stopsWorks?: boolean;
+        };
         CreateInspectionDto: {
             /**
              * Format: uuid
@@ -31187,6 +31260,8 @@ export interface components {
         FacilitySlotsView: {
             /** @description The local day, `YYYY-MM-DD`. */
             date: string;
+            /** @description The compound’s holiday that day (ADR 0084): a flag; the slots are as the facility’s hours make them. */
+            holiday: components["schemas"]["HolidayFlagView"] | null;
             /** @description The slots of the day that may be booked now, in order. Too soon and too far are left out. */
             slots: components["schemas"]["FacilitySlotView"][];
         };
@@ -32966,6 +33041,26 @@ export interface components {
          * @enum {string}
          */
         HoldType: "maintenance" | "unit_permit" | "unit_credit";
+        HolidayFlagView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        HolidayView: {
+            /** Format: date */
+            day: string;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description Works and moves stop that day (a day off of the permits). */
+            stopsWorks: boolean;
+        };
+        HolidayViewList: {
+            data: components["schemas"]["HolidayView"][];
+            nextCursor: string | null;
+        };
         HostRequestResponse: {
             /** Format: date-time */
             createdAt: string;
@@ -37351,7 +37446,7 @@ export interface components {
         };
         PermitRulesResponse: {
             /**
-             * @description Dated local days off, ascending.
+             * @description Dated local days off, ascending: the holidays that stop works on the compound’s calendar (ADR 0084), kept at /staff/holidays.
              * @example [
              *       "2026-12-25"
              *     ]
@@ -37381,7 +37476,7 @@ export interface components {
         };
         PermitSettingsResponse: {
             /**
-             * @description Dated local days off, ascending.
+             * @description Dated local days off, ascending: the holidays that stop works on the compound’s calendar (ADR 0084), kept at /staff/holidays.
              * @example [
              *       "2026-12-25"
              *     ]
@@ -37576,6 +37671,8 @@ export interface components {
             assetId: string;
             /** Format: date */
             dueOn: string;
+            /** @description The compound’s holiday on its day (ADR 0084): a flag, the date is not moved. */
+            holiday: components["schemas"]["HolidayFlagView"] | null;
             /** Format: uuid */
             occurrenceId: string | null;
             /** Format: uuid */
@@ -45307,6 +45404,11 @@ export interface components {
             label?: string;
             position?: number;
         };
+        UpdateHolidayDto: {
+            nameAr?: string;
+            nameEn?: string;
+            stopsWorks?: boolean;
+        };
         UpdateInboxSettingsDto: {
             items: components["schemas"]["InboxDueHoursDto"][];
         };
@@ -45434,13 +45536,6 @@ export interface components {
             position?: number;
         };
         UpdatePermitSettingsDto: {
-            /**
-             * @description Dated local days with no works and no moves (feasts), at most 100. Replaces the list.
-             * @example [
-             *       "2026-12-25"
-             *     ]
-             */
-            daysOff?: string[];
             /**
              * @description The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one.
              * @example [
@@ -49070,6 +49165,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    HolidaysController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HolidayViewList"];
+                };
             };
         };
     };
@@ -71186,6 +71300,97 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    StaffHolidaysController_list: {
+        parameters: {
+            query?: {
+                /** @description Today by default. */
+                from?: string;
+                /** @description At most 366 days from `from` (PERIOD_TOO_LONG); a year on by default. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HolidayViewList"];
+                };
+            };
+        };
+    };
+    StaffHolidaysController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateHolidayDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HolidayView"];
+                };
+            };
+        };
+    };
+    StaffHolidaysController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffHolidaysController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateHolidayDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HolidayView"];
+                };
             };
         };
     };

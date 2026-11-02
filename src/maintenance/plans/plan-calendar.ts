@@ -9,6 +9,11 @@ import {
   ofDateColumnOrNull,
   type LocalDate,
 } from '../schedules/local-dates';
+import {
+  byDay,
+  holidaysBetween,
+  type HolidayFlag,
+} from '../../core/holidays/holiday-reads';
 import { afterGeneration } from './plan-rules';
 import { seriesOfPlan } from './plans.service';
 
@@ -28,6 +33,8 @@ export interface CalendarEntry {
   status: string;
   occurrenceId: string | null;
   ticketId: string | null;
+  /** The compound's holiday on its day (ADR 0084): a flag, never a move. */
+  holiday: HolidayFlag | null;
 }
 
 /**
@@ -37,6 +44,8 @@ export interface CalendarEntry {
  * their next due date (a fixed series' every date; a floating one's next
  * only, as its following date waits for the work). A usage plan has no
  * date until its metric says so. Up to 93 days and 2000 dates, by day.
+ * A date on one of the compound's holidays carries it (ADR 0084): flagged,
+ * neither moved nor refused.
  */
 @Injectable()
 export class PlanCalendar {
@@ -77,6 +86,7 @@ export class PlanCalendar {
         status: o.status,
         occurrenceId: o.id,
         ticketId: o.ticket_id,
+        holiday: null,
       }));
       const generated = new Set(
         occurrences.map(
@@ -114,10 +124,13 @@ export class PlanCalendar {
               status: 'projected',
               occurrenceId: null,
               ticketId: null,
+              holiday: null,
             });
           due = afterGeneration(series, due);
         }
       }
+      const holidays = byDay(await holidaysBetween(tx, from, to));
+      for (const e of out) e.holiday = holidays.get(e.dueOn) ?? null;
       return out
         .sort(
           (x, y) =>

@@ -25,7 +25,8 @@ import {
   PermitRecords,
   type PermitRecord,
 } from './permit-records';
-import { isWorkDay, workRules, type WorkRules } from './permit-rules';
+import { isWorkDay, type WorkRules } from './permit-rules';
+import { readWorkRules } from './permit-work-rules';
 import { startOfDay } from './permits.service';
 
 /** What the guard sees of a permit, with who of it is inside now. */
@@ -256,11 +257,7 @@ export class GatePermitsService {
   ): Promise<GatePermitRecord[]> {
     if (!rows.length) return [];
     const records = await this.records.loadMany(tx, rows, faces);
-    const rules = workRules(
-      await tx.permitSettings.findUniqueOrThrow({
-        where: { tenantId: this.ctx.txTenantId },
-      }),
-    );
+    const rules = await readWorkRules(tx, this.ctx.txTenantId);
     const ids = records.flatMap((r) => [
       r.permit.id,
       ...r.workers.map((w) => w.id),

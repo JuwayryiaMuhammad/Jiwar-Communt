@@ -5,7 +5,7 @@ import { ValidateNested } from 'class-validator';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { TenantTx } from '../../core/database/tenant-tx.service';
-import { AudienceDto } from './audience';
+import { AnnouncementAudienceDto } from './audience';
 import { AudienceCheck } from './audience-check';
 
 export class BuildingsView {
@@ -17,10 +17,10 @@ export class BuildingsView {
 }
 
 export class AudiencePreviewDto {
-  @ApiProperty({ type: AudienceDto })
+  @ApiProperty({ type: AnnouncementAudienceDto })
   @ValidateNested()
-  @Type(() => AudienceDto)
-  audience: AudienceDto;
+  @Type(() => AnnouncementAudienceDto)
+  audience: AnnouncementAudienceDto;
 }
 
 export class AudienceSizeView {

@@ -19,7 +19,7 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { AudienceDto } from '../../audience/audience';
+import { AnnouncementAudienceDto } from '../../audience/audience';
 import { MAX_ATTACHMENTS } from '../../content/attachments';
 import {
   ANNOUNCEMENT_STATUSES,
@@ -152,15 +152,15 @@ class AnnouncementContentDto {
   expiresAt?: Date | null;
 
   @ApiProperty({
-    type: AudienceDto,
+    type: AnnouncementAudienceDto,
     required: false,
     description:
-      'Absent: the whole compound, everyone. May change only until the announcement is out.',
+      'Absent: the whole compound, everyone. Buildings or single units, never both (ADR 0080). May change only until the announcement is out.',
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => AudienceDto)
-  audience?: AudienceDto;
+  @Type(() => AnnouncementAudienceDto)
+  audience?: AnnouncementAudienceDto;
 
   @ApiProperty({
     type: [String],

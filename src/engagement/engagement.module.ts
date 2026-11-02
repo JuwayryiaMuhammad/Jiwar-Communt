@@ -53,6 +53,8 @@ import {
 import { SuggestionsService } from './suggestions/suggestions.service';
 import { EngagementSettingsController } from './settings/engagement-settings.controller';
 import { EngagementSettingsService } from './settings/engagement-settings.service';
+import { AnnouncementTemplatesController } from './templates/announcement-templates.controller';
+import { AnnouncementTemplatesService } from './templates/announcement-templates.service';
 import {
   SuggestionTopicOptionsController,
   SuggestionTopicsController,
@@ -81,6 +83,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     AudienceController,
     StaffAnnouncementsController,
     AnnouncementsController,
+    AnnouncementTemplatesController,
     StaffEventsController,
     EventsController,
     StaffPollsController,
@@ -105,6 +108,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     EngagementSettingsService,
     SuggestionTopicsService,
     AnnouncementsService,
+    AnnouncementTemplatesService,
     EventsService,
     PollsService,
     SuggestionsService,

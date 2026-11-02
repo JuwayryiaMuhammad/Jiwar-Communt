@@ -17,10 +17,15 @@ export class AudienceCheck {
   async check(
     tx: TenantTxClient,
     input:
-      | { buildings?: string[] | null; occupancy: Audience['occupancy'] }
+      | {
+          buildings?: string[] | null;
+          occupancy: Audience['occupancy'];
+          unitIds?: string[] | null;
+        }
       | undefined,
   ): Promise<Audience> {
     if (!input) return EVERYONE;
+    if (input.unitIds?.length) return this.units(tx, input);
     if (!input.buildings?.length)
       return { buildings: null, occupancy: input.occupancy };
     const known = new Set(await this.community.buildings(tx));
@@ -38,6 +43,43 @@ export class AudienceCheck {
     return {
       buildings: [...new Set(input.buildings)],
       occupancy: input.occupancy,
+    };
+  }
+
+  /**
+   * An audience of single units (ADR 0080): never beside buildings
+   * (FIELD_NOT_ALLOWED on `audience.unitIds`), each one of the compound's
+   * units (INVALID_VALUE on `audience.unitIds.<i>`).
+   */
+  private async units(
+    tx: TenantTxClient,
+    input: {
+      buildings?: string[] | null;
+      occupancy: Audience['occupancy'];
+      unitIds?: string[] | null;
+    },
+  ): Promise<Audience> {
+    const ids = input.unitIds ?? [];
+    if (input.buildings?.length)
+      throw invalid([
+        { field: 'audience.unitIds', code: FieldErrorCode.FIELD_NOT_ALLOWED },
+      ]);
+    const known = await this.community.knownUnits(tx, ids);
+    const unknown = ids.flatMap((id, i) =>
+      known.has(id)
+        ? []
+        : [
+            {
+              field: `audience.unitIds.${i}`,
+              code: FieldErrorCode.INVALID_VALUE,
+            },
+          ],
+    );
+    if (unknown.length) throw invalid(unknown);
+    return {
+      buildings: null,
+      occupancy: input.occupancy,
+      units: [...new Set(ids)].sort(),
     };
   }
 

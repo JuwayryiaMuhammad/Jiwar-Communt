@@ -29,11 +29,12 @@ import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { GateStatusPort, type GateStatus } from '../../gate';
 import { EngagementAccess } from '../access';
 import {
+  announcementAudienceWhere,
   audienceColumns,
   audienceOf,
-  audienceWhere,
   placesIn,
   sees,
+  unitColumns,
 } from '../audience/audience';
 import { AudienceCheck } from '../audience/audience-check';
 import {
@@ -100,7 +101,11 @@ interface ContentInput {
   priority?: AnnouncementPriority;
   pinnedUntil?: Date | null;
   expiresAt?: Date | null;
-  audience?: { buildings?: string[] | null; occupancy: Audience['occupancy'] };
+  audience?: {
+    buildings?: string[] | null;
+    occupancy: Audience['occupancy'];
+    unitIds?: string[] | null;
+  };
   attachmentFileIds?: string[];
   works?: WorksInput;
 }
@@ -146,6 +151,8 @@ export interface AnnouncementRead {
   attachments: AttachmentRead[] | null;
   /** Whether the reader opened it; null for the staff. */
   read: boolean | null;
+  /** The codes of the units it is put to (ADR 0080); the staff's reads only. */
+  unitCodes: string[];
 }
 
 export interface VersionRead {
@@ -162,6 +169,40 @@ export interface ReadCounts {
   audienceAccounts: number;
   audienceUnits: number;
 }
+
+/**
+ * How an announcement reached its audience (ADR 0080): what its notice and
+ * its reminder wrote to the inbox and how many of those were read there,
+ * the pushes queued for them by outcome, and who opened it. Counts only.
+ */
+export interface DeliveryStats {
+  notifiedAt: Date | null;
+  remindedAt: Date | null;
+  /** Inbox rows written by the notice and by the reminder. */
+  notified: number;
+  reminded: number;
+  /** Of those, read in the inbox. */
+  notifiedRead: number;
+  remindedRead: number;
+  /**
+   * Pushes to devices, both notices together, while the delivery rows are
+   * kept (ADR 0041): sent, given up on, or still to go.
+   */
+  pushSent: number;
+  pushFailed: number;
+  pushPending: number;
+  /** As `readCounts`. */
+  opened: ReadCounts;
+}
+
+/** The two kinds that tell an announcement's audience. */
+export const ANNOUNCEMENT_NOTICE_KINDS = [
+  'community_announcement.important',
+  'community_announcement.reminder',
+] as const;
+
+/** Refs looked up per query when finding who has not opened it. */
+const MARK_CHUNK = 500;
 
 const byCreation = keysetCursor('createdAt');
 const byPublication = keysetCursor('publishAt');
@@ -291,6 +332,7 @@ function audited(a: Announcement) {
     expiresAt: a.expiresAt,
     audienceOccupancy: a.audienceOccupancy,
     audienceBuildings: a.audienceBuildings,
+    audienceUnits: a.audienceUnits,
     worksStartsAt: a.worksStartsAt,
     worksEndsAt: a.worksEndsAt,
     worksAreaKind: a.worksAreaKind,
@@ -386,6 +428,7 @@ export class AnnouncementsService implements OnModuleInit {
           kind: input.kind,
           ...settingsColumns(settings),
           ...audienceColumns(audience),
+          ...unitColumns(audience),
           createdById: me,
           createdAt: now,
         },
@@ -439,15 +482,22 @@ export class AnnouncementsService implements OnModuleInit {
       const errors = shapeErrors(before.kind, settings, before.publishAt);
       if (errors.length) throw invalid(errors);
 
-      let audience = audienceColumns(audienceOf(before));
+      const was = audienceOf(before);
+      let audience = {
+        ...audienceColumns(was),
+        ...unitColumns(was),
+      };
       if (input.audience) {
-        const next = audienceColumns(
-          await this.audiences.check(tx, input.audience),
-        );
+        const checked = await this.audiences.check(tx, input.audience);
+        const next = {
+          ...audienceColumns(checked),
+          ...unitColumns(checked),
+        };
         const same =
           next.audienceOccupancy === audience.audienceOccupancy &&
           next.audienceBuildings.join('\n') ===
-            audience.audienceBuildings.join('\n');
+            audience.audienceBuildings.join('\n') &&
+          next.audienceUnits.join('\n') === audience.audienceUnits.join('\n');
         if (!same && !isAhead(before, now)) throw wrongState(status);
         audience = next;
       }
@@ -840,21 +890,142 @@ export class AnnouncementsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const a = await tx.announcement.findUnique({ where: { id } });
       if (!a) throw announcementNotFound();
-      const marks = await tx.announcementReadMark.groupBy({
-        by: ['kind'],
-        where: { announcementId: id },
-        _count: { _all: true },
-      });
-      const count = (kind: 'account' | 'unit') =>
-        marks.find((m) => m.kind === kind)?._count._all ?? 0;
-      const members = await this.community.members(tx, audienceOf(a));
+      return this.counts(tx, a);
+    });
+  }
+
+  private async counts(
+    tx: TenantTxClient,
+    a: Announcement,
+  ): Promise<ReadCounts> {
+    const marks = await tx.announcementReadMark.groupBy({
+      by: ['kind'],
+      where: { announcementId: a.id },
+      _count: { _all: true },
+    });
+    const count = (kind: 'account' | 'unit') =>
+      marks.find((m) => m.kind === kind)?._count._all ?? 0;
+    const members = await this.community.members(tx, audienceOf(a));
+    return {
+      accounts: count('account'),
+      units: count('unit'),
+      audienceAccounts: new Set(members.map((m) => m.accountId)).size,
+      audienceUnits: new Set(members.map((m) => m.unitId)).size,
+    };
+  }
+
+  /**
+   * How it reached its audience (ADR 0080): the inbox rows its notice and
+   * its reminder wrote, how many were read there, and the pushes by
+   * outcome. Counts over the rows the notices left; nobody is named. A
+   * normal announcement that was never reminded has none of them.
+   */
+  delivery(id: string): Promise<DeliveryStats> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const a = await tx.announcement.findUnique({ where: { id } });
+      if (!a) throw announcementNotFound();
+      const kinds = [...ANNOUNCEMENT_NOTICE_KINDS];
+      const inbox = await tx.$queryRaw<
+        { kind: string; told: number; read: number }[]
+      >`
+        SELECT kind, count(*)::int AS told, count(read_at)::int AS read
+          FROM notifications
+         WHERE target_id = ${id}::uuid AND kind = ANY(${kinds}::text[])
+         GROUP BY kind`;
+      const pushes = await tx.$queryRaw<{ status: string; n: number }[]>`
+        SELECT d.status::text AS status, count(*)::int AS n
+          FROM push_deliveries d
+          JOIN notifications n ON n.id = d.notification_id
+         WHERE n.target_id = ${id}::uuid AND n.kind = ANY(${kinds}::text[])
+           AND d.tenant_id = n.tenant_id
+         GROUP BY d.status`;
+      const of = (kind: string) => inbox.find((r) => r.kind === kind);
+      const push = (...statuses: string[]) =>
+        pushes
+          .filter((p) => statuses.includes(p.status))
+          .reduce((sum, p) => sum + p.n, 0);
       return {
-        accounts: count('account'),
-        units: count('unit'),
-        audienceAccounts: new Set(members.map((m) => m.accountId)).size,
-        audienceUnits: new Set(members.map((m) => m.unitId)).size,
+        notifiedAt: a.notifiedAt,
+        remindedAt: a.remindedAt,
+        notified: of(kinds[0])?.told ?? 0,
+        reminded: of(kinds[1])?.told ?? 0,
+        notifiedRead: of(kinds[0])?.read ?? 0,
+        remindedRead: of(kinds[1])?.read ?? 0,
+        pushSent: push('sent'),
+        pushFailed: push('dead'),
+        pushPending: push('pending', 'processing'),
+        opened: await this.counts(tx, a),
       };
     });
+  }
+
+  /**
+   * Reminds the people of its audience who have not opened it, once ever
+   * (ADR 0080). Who has not is found now, with the secret: each person's
+   * mark is derived again and looked up, and nothing records who was
+   * reminded but the inbox rows themselves. Under the announcement's row
+   * lock: two reminders at once, one goes and the other is refused.
+   */
+  remind(id: string): Promise<{ recipients: number }> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const before = await this.locked(tx, id);
+      if (before.kind === 'board') throw boardsOwn();
+      const now = await dbNow(tx);
+      const status = statusOf(before, now);
+      if (status !== 'published') throw wrongState(status);
+      if (before.remindedAt)
+        throw appError.conflict(
+          ErrorCode.ANNOUNCEMENT_ALREADY_REMINDED,
+          'Its non-readers were reminded already',
+          { params: { remindedAt: before.remindedAt.toISOString() } },
+        );
+      const members = await this.community.members(tx, audienceOf(before));
+      const accounts = [...new Set(members.map((m) => m.accountId))];
+      const unread = await this.notOpenedBy(tx, before.id, accounts);
+      await this.notifier.notify(tx, unread, {
+        kind: 'community_announcement.reminder',
+        params: {},
+        targetId: before.id,
+      });
+      await tx.announcement.update({
+        where: { id },
+        data: { remindedAt: now },
+      });
+      await this.audit.record(tx, {
+        action: 'announcement.reminded',
+        targetId: id,
+        metadata: { recipients: unread.length, audience: accounts.length },
+      });
+      return { recipients: unread.length };
+    });
+  }
+
+  /** Of these accounts, the ones with no read mark on the announcement. */
+  private async notOpenedBy(
+    tx: TenantTxClient,
+    announcementId: string,
+    accountIds: readonly string[],
+  ): Promise<string[]> {
+    const out: string[] = [];
+    for (let i = 0; i < accountIds.length; i += MARK_CHUNK) {
+      const chunk = accountIds.slice(i, i + MARK_CHUNK);
+      const refs = chunk.map((accountId) => ({
+        accountId,
+        ref: this.refs.readMark('account', announcementId, accountId),
+      }));
+      const marks = await tx.announcementReadMark.findMany({
+        where: {
+          announcementId,
+          kind: 'account',
+          ref: { in: refs.map((r) => r.ref) },
+        },
+        select: { ref: true },
+      });
+      for (const r of refs)
+        if (!marks.some((m) => sameRef(m.ref, r.ref))) out.push(r.accountId);
+    }
+    return out;
   }
 
   // --------------------------------------------------------------------------
@@ -873,7 +1044,7 @@ export class AnnouncementsService implements OnModuleInit {
       const where: Prisma.AnnouncementWhereInput = {
         AND: [
           outWhere(now),
-          audienceWhere(places),
+          announcementAudienceWhere(places),
           q.kind ? { kind: q.kind } : {},
           q.pinned ? { priority: 'important', pinnedUntil: { gt: now } } : {},
           ...byPublication.after(q.cursor),
@@ -950,7 +1121,7 @@ export class AnnouncementsService implements OnModuleInit {
       where: {
         AND: [
           outWhere(now),
-          audienceWhere(places),
+          announcementAudienceWhere(places),
           {
             OR: [
               { priority: 'important', pinnedUntil: { gt: now } },
@@ -1138,6 +1309,14 @@ export class AnnouncementsService implements OnModuleInit {
       ? await this.gates.statuses(tx)
       : [];
     const opened = reader ? await this.openedBy(tx, rows, reader) : null;
+    // The units an announcement is put to, by code: the staff's reads only.
+    const codes =
+      reader === null
+        ? await this.community.unitCodes(
+            tx,
+            rows.flatMap((a) => a.audienceUnits),
+          )
+        : new Map<string, string>();
     return rows.map((announcement) => ({
       announcement,
       version: versions.find((v) => v.announcementId === announcement.id)!,
@@ -1147,6 +1326,10 @@ export class AnnouncementsService implements OnModuleInit {
       gate: gates.find((g) => g.id === announcement.worksGateId) ?? null,
       attachments: null,
       read: opened ? opened.has(announcement.id) : null,
+      unitCodes: announcement.audienceUnits
+        .map((u) => codes.get(u))
+        .filter((c): c is string => c !== undefined)
+        .sort(),
     }));
   }
 

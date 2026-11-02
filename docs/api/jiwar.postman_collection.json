@@ -6048,6 +6048,132 @@
           }
         },
         {
+          "name": "List the announcement templates",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcement-templates"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcement-templates"
+            }
+          }
+        },
+        {
+          "name": "Add an announcement template",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"name\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `name` | string | yes | The compound’s own, once (DUPLICATE_RESOURCE). |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcement-templates"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcement-templates"
+            }
+          }
+        },
+        {
+          "name": "Change an announcement template",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bodyAr\": \"\",\n  \"bodyEn\": \"\",\n  \"name\": \"\",\n  \"titleAr\": \"\",\n  \"titleEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `name` | string |  |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcement-templates",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcement-templates/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete an announcement template",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcement-templates",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcement-templates/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the announcements, drafts and archived included",
           "request": {
             "description": "**Responses:** 200",
@@ -6105,7 +6231,7 @@
               },
               "raw": "{\n  \"kind\": \"general\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. May change only until the announcement is out. |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `expiresAt` | string (date-time) |  | No longer shown from then on. A general announcement’s only: works end by their own dates. |\n| `kind` | `general` \\| `works` | yes | `works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance. |\n| `pinnedUntil` | string (date-time) |  | Stays on top until then. Only when `important`. |\n| `priority` | `normal` \\| `important` |  | An `important` one tells its audience when it comes out, and may be pinned. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n| `works` | object |  | Required for `works`, refused otherwise. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. Buildings or single units, never both (ADR 0080). May change only until the announcement is out. |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `expiresAt` | string (date-time) |  | No longer shown from then on. A general announcement’s only: works end by their own dates. |\n| `kind` | `general` \\| `works` | yes | `works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance. |\n| `pinnedUntil` | string (date-time) |  | Stays on top until then. Only when `important`. |\n| `priority` | `normal` \\| `important` |  | An `important` one tells its audience when it comes out, and may be pinned. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n| `works` | object |  | Required for `works`, refused otherwise. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -6173,7 +6299,7 @@
               },
               "raw": "{\n  \"attachmentFileIds\": [],\n  \"audience\": {\n    \"occupancy\": \"everyone\"\n  },\n  \"bodyAr\": \"\",\n  \"bodyEn\": \"\",\n  \"expiresAt\": \"2026-01-01T09:00:00.000Z\",\n  \"pinnedUntil\": \"2026-01-01T09:00:00.000Z\",\n  \"priority\": \"normal\",\n  \"titleAr\": \"\",\n  \"titleEn\": \"\",\n  \"works\": {\n    \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n    \"endsAt\": \"2026-01-01T09:00:00.000Z\",\n    \"areaKind\": \"road\"\n  }\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. May change only until the announcement is out. |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `expiresAt` | string (date-time) |  | No longer shown from then on. A general announcement’s only: works end by their own dates. |\n| `pinnedUntil` | string (date-time) |  | Stays on top until then. Only when `important`. |\n| `priority` | `normal` \\| `important` |  | An `important` one tells its audience when it comes out, and may be pinned. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n| `works` | object |  | Replaces the dates and the area of works as a whole. |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. Buildings or single units, never both (ADR 0080). May change only until the announcement is out. |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `expiresAt` | string (date-time) |  | No longer shown from then on. A general announcement’s only: works end by their own dates. |\n| `pinnedUntil` | string (date-time) |  | Stays on top until then. Only when `important`. |\n| `priority` | `normal` \\| `important` |  | An `important` one tells its audience when it comes out, and may be pinned. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n| `works` | object |  | Replaces the dates and the area of works as a whole. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",
@@ -6223,6 +6349,35 @@
                 "archive"
               ],
               "raw": "{{baseUrl}}/api/v1/community/announcements/:id/archive",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Count how an announcement reached its audience",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements",
+                ":id",
+                "delivery"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements/:id/delivery",
               "variable": [
                 {
                   "description": "",
@@ -6296,6 +6451,35 @@
                 "reads"
               ],
               "raw": "{{baseUrl}}/api/v1/community/announcements/:id/reads",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remind the people who have not opened an announcement",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements",
+                ":id",
+                "remind"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements/:id/remind",
               "variable": [
                 {
                   "description": "",

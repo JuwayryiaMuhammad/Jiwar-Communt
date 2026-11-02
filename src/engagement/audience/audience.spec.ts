@@ -24,7 +24,7 @@ describe('audience columns (ADR 0040)', () => {
     });
     expect(
       audienceOf({ audienceBuildings: [], audienceOccupancy: 'owners' }),
-    ).toEqual({ buildings: null, occupancy: 'owners' });
+    ).toEqual({ buildings: null, units: null, occupancy: 'owners' });
   });
 
   it('buildings are stored once each, sorted', () => {

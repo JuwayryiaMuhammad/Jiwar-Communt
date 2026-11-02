@@ -6,11 +6,12 @@ import {
   type Announcement,
   type AnnouncementVersion,
 } from '@prisma/client';
-import { AudienceView } from '../../audience/audience';
+import { AnnouncementAudienceView } from '../../audience/audience';
 import { CommunityAttachmentView } from '../../content/attachment.view';
 import {
   ANNOUNCEMENT_STATUSES,
   type AnnouncementRead,
+  type DeliveryStats,
   type ReadCounts,
   type VersionRead,
 } from '../announcements.service';
@@ -190,8 +191,14 @@ export class StaffAnnouncementListItemView extends AnnouncementTextView {
   expiresAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   archivedAt: Date | null;
-  @ApiProperty({ type: AudienceView })
-  audience: AudienceView;
+  @ApiProperty({ type: AnnouncementAudienceView })
+  audience: AnnouncementAudienceView;
+  @ApiProperty({
+    type: [String],
+    description:
+      'The codes of the units it is put to, when by unit (ADR 0080).',
+  })
+  audienceUnitCodes: string[];
   @ApiProperty({ type: Number, description: 'The version it shows.' })
   version: number;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
@@ -203,6 +210,13 @@ export class StaffAnnouncementListItemView extends AnnouncementTextView {
     description: 'When its audience was told (important ones only).',
   })
   notifiedAt: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'When its non-readers were reminded, once ever (ADR 0080).',
+  })
+  remindedAt: Date | null;
   @ApiProperty({ type: WorksView, nullable: true })
   works: WorksView | null;
   @ApiProperty({ type: Number })
@@ -222,10 +236,12 @@ export class StaffAnnouncementListItemView extends AnnouncementTextView {
       publishAt: a.publishAt,
       expiresAt: a.expiresAt,
       archivedAt: a.archivedAt,
-      audience: AudienceView.from(a),
+      audience: AnnouncementAudienceView.fromAnnouncement(a),
+      audienceUnitCodes: r.unitCodes,
       version: a.currentVersion,
       editedAt: a.editedAt,
       notifiedAt: a.notifiedAt,
+      remindedAt: a.remindedAt,
       ...textOf(r.version),
       works: WorksView.from(r),
       attachmentCount: r.version.attachmentIds.length,
@@ -295,4 +311,57 @@ export class AnnouncementReadCountsView {
       audienceUnits: c.audienceUnits,
     };
   }
+}
+
+/**
+ * How an announcement reached its audience (ADR 0080). Counts only: the
+ * inbox rows its notice and its one reminder wrote and how many were read
+ * there, the pushes to devices by outcome, and who opened it.
+ */
+export class AnnouncementDeliveryView {
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  notifiedAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  remindedAt: Date | null;
+  @ApiProperty({
+    type: Number,
+    description: 'Told when it came out (important ones only).',
+  })
+  notified: number;
+  @ApiProperty({ type: Number, description: 'Told by the reminder.' })
+  reminded: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Of `notified`, read in the inbox.',
+  })
+  notifiedRead: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Of `reminded`, read in the inbox.',
+  })
+  remindedRead: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Pushes delivered to a device, both notices together, while the delivery rows are kept.',
+  })
+  pushSent: number;
+  @ApiProperty({ type: Number, description: 'Pushes given up on.' })
+  pushFailed: number;
+  @ApiProperty({ type: Number, description: 'Pushes still to go.' })
+  pushPending: number;
+  @ApiProperty({ type: AnnouncementReadCountsView })
+  opened: AnnouncementReadCountsView;
+
+  static from(d: DeliveryStats): AnnouncementDeliveryView {
+    return { ...d, opened: AnnouncementReadCountsView.from(d.opened) };
+  }
+}
+
+export class AnnouncementReminderView {
+  @ApiProperty({
+    type: Number,
+    description: 'The people of its audience who had not opened it, told now.',
+  })
+  recipients: number;
 }

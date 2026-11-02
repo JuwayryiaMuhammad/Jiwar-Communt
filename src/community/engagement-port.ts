@@ -16,6 +16,11 @@ export type AudienceOccupancy = 'everyone' | 'owners' | 'tenants';
 export interface Audience {
   buildings: readonly string[] | null;
   occupancy: AudienceOccupancy;
+  /**
+   * Single units instead of buildings (ADR 0080, announcements only): the
+   * people of these units, within the occupancy. Null or absent: not by unit.
+   */
+  units?: readonly string[] | null;
 }
 
 /**
@@ -37,6 +42,7 @@ export interface CommunityPlace {
  * and every notice shares:
  *
  * - a unit without a building is in whole-compound audiences only;
+ * - an audience of units (ADR 0080) is those units' places only;
  * - `owners` are the unit's active owners, landlords included, and nobody
  *   else: not a tenant, not a member of any household;
  * - `tenants` are the unit's active tenants and the members of a rented
@@ -44,6 +50,7 @@ export interface CommunityPlace {
  * - `everyone` is every place.
  */
 export function inAudience(place: CommunityPlace, audience: Audience): boolean {
+  if (audience.units && !audience.units.includes(place.unitId)) return false;
   if (
     audience.buildings !== null &&
     (place.building === null || !audience.buildings.includes(place.building))
@@ -148,10 +155,10 @@ export class CommunityEngagementPort {
     tx: TenantTxClient,
     audience: Audience,
   ): Promise<CommunityPlace[]> {
-    const all = await this.placesWhere(
-      tx,
-      audience.buildings === null ? {} : { buildings: audience.buildings },
-    );
+    const all = await this.placesWhere(tx, {
+      ...(audience.buildings === null ? {} : { buildings: audience.buildings }),
+      ...(audience.units ? { units: audience.units } : {}),
+    });
     return all.filter((p) => inAudience(p, audience));
   }
 
@@ -208,6 +215,19 @@ export class CommunityEngagementPort {
     return out;
   }
 
+  /** Which of these ids are units of the compound (ADR 0080's audiences). */
+  async knownUnits(
+    tx: TenantTxClient,
+    unitIds: readonly string[],
+  ): Promise<Set<string>> {
+    if (!unitIds.length) return new Set();
+    const units = await tx.unit.findMany({
+      where: { id: { in: [...new Set(unitIds)] } },
+      select: { id: true },
+    });
+    return new Set(units.map((u) => u.id));
+  }
+
   /** Every unit of the compound, by id. */
   async unitIds(tx: TenantTxClient): Promise<string[]> {
     const units = await tx.unit.findMany({
@@ -256,10 +276,14 @@ export class CommunityEngagementPort {
       accountId?: string;
       unitId?: string;
       buildings?: readonly string[];
+      units?: readonly string[];
     },
   ): Promise<CommunityPlace[]> {
     const unit = {
       ...(filter.unitId ? { id: filter.unitId } : {}),
+      ...(filter.units && !filter.unitId
+        ? { id: { in: [...filter.units] } }
+        : {}),
       ...(filter.buildings ? { building: { in: [...filter.buildings] } } : {}),
     };
     const account: Prisma.AccountWhereInput = {

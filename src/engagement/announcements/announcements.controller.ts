@@ -34,8 +34,10 @@ import {
 } from './dto/announcements.dto';
 import {
   AnnouncementCreatedView,
+  AnnouncementDeliveryView,
   AnnouncementListItemView,
   AnnouncementReadCountsView,
+  AnnouncementReminderView,
   AnnouncementVersionView,
   AnnouncementView,
   StaffAnnouncementListItemView,
@@ -147,6 +149,32 @@ export class StaffAnnouncementsController {
     return AnnouncementReadCountsView.from(
       await this.announcements.readCounts(id),
     );
+  }
+
+  @Get(':id/delivery')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Count how an announcement reached its audience',
+  })
+  @ApiOkResponse({ type: AnnouncementDeliveryView })
+  async delivery(
+    @Param('id', parseId()) id: string,
+  ): Promise<AnnouncementDeliveryView> {
+    return AnnouncementDeliveryView.from(await this.announcements.delivery(id));
+  }
+
+  /** Once ever; a second is ANNOUNCEMENT_ALREADY_REMINDED. */
+  @Post(':id/remind')
+  @NoStore()
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Remind the people who have not opened an announcement',
+  })
+  @ApiOkResponse({ type: AnnouncementReminderView })
+  async remind(
+    @Param('id', parseId()) id: string,
+  ): Promise<AnnouncementReminderView> {
+    return this.announcements.remind(id);
   }
 }
 

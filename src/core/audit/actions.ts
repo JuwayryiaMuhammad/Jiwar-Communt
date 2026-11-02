@@ -550,6 +550,24 @@ export const AUDIT_ACTIONS = {
   // Its audience was told (important ones; the publisher's action, or the
   // sweep's as actor system). metadata: recipients, a count.
   'announcement.announced': { log: 'tenant', target: 'announcement' },
+  // ADR 0080: its non-readers reminded, once ever. metadata: recipients and
+  // audience, counts; never who.
+  'announcement.reminded': { log: 'tenant', target: 'announcement' },
+  // ADR 0080: the compound's announcement templates. metadata: name;
+  // changes: name by value, the words as `{ changed: true }`.
+  'announcement_template.created': {
+    log: 'tenant',
+    target: 'announcement_template',
+  },
+  'announcement_template.changed': {
+    log: 'tenant',
+    target: 'announcement_template',
+    sensitive: ['words'],
+  },
+  'announcement_template.deleted': {
+    log: 'tenant',
+    target: 'announcement_template',
+  },
   // Events. changes: startsAt, endsAt, capacity, audienceOccupancy,
   // audienceBuildings, attachments (a count) by value; the words and the
   // place as `{ changed: true }`.

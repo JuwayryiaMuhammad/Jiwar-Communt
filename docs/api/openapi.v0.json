@@ -918,6 +918,77 @@
         ],
         "type": "object"
       },
+      "AnnouncementAudienceDto": {
+        "properties": {
+          "buildings": {
+            "description": "Buildings, as `GET /community/buildings` lists them. Null or absent: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "nullable": true,
+            "type": "array"
+          },
+          "occupancy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceOccupancy"
+              }
+            ],
+            "description": "`owners`: the active owners of a unit, landlords included, and nobody else. `tenants`: the tenants and their households."
+          },
+          "unitIds": {
+            "description": "Single units of the compound, instead of buildings: their people within the occupancy. Null or absent: not by unit.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "required": [
+          "occupancy"
+        ],
+        "type": "object"
+      },
+      "AnnouncementAudienceView": {
+        "properties": {
+          "buildings": {
+            "description": "Null: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "occupancy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceOccupancy"
+              }
+            ]
+          },
+          "unitIds": {
+            "description": "Null: not by unit.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "required": [
+          "buildings",
+          "occupancy",
+          "unitIds"
+        ],
+        "type": "object"
+      },
       "AnnouncementCreatedView": {
         "properties": {
           "createdAt": {
@@ -932,6 +1003,64 @@
         "required": [
           "id",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "AnnouncementDeliveryView": {
+        "properties": {
+          "notified": {
+            "description": "Told when it came out (important ones only).",
+            "type": "number"
+          },
+          "notifiedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "notifiedRead": {
+            "description": "Of `notified`, read in the inbox.",
+            "type": "number"
+          },
+          "opened": {
+            "$ref": "#/components/schemas/AnnouncementReadCountsView"
+          },
+          "pushFailed": {
+            "description": "Pushes given up on.",
+            "type": "number"
+          },
+          "pushPending": {
+            "description": "Pushes still to go.",
+            "type": "number"
+          },
+          "pushSent": {
+            "description": "Pushes delivered to a device, both notices together, while the delivery rows are kept.",
+            "type": "number"
+          },
+          "reminded": {
+            "description": "Told by the reminder.",
+            "type": "number"
+          },
+          "remindedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "remindedRead": {
+            "description": "Of `reminded`, read in the inbox.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "notifiedAt",
+          "remindedAt",
+          "notified",
+          "reminded",
+          "notifiedRead",
+          "remindedRead",
+          "pushSent",
+          "pushFailed",
+          "pushPending",
+          "opened"
         ],
         "type": "object"
       },
@@ -1085,6 +1214,78 @@
           "units",
           "audienceAccounts",
           "audienceUnits"
+        ],
+        "type": "object"
+      },
+      "AnnouncementReminderView": {
+        "properties": {
+          "recipients": {
+            "description": "The people of its audience who had not opened it, told now.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "recipients"
+        ],
+        "type": "object"
+      },
+      "AnnouncementTemplateView": {
+        "properties": {
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "titleEn",
+          "bodyEn",
+          "titleAr",
+          "bodyAr",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "AnnouncementTemplateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementTemplateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -3470,7 +3671,7 @@
       "AudiencePreviewDto": {
         "properties": {
           "audience": {
-            "$ref": "#/components/schemas/AudienceDto"
+            "$ref": "#/components/schemas/AnnouncementAudienceDto"
           }
         },
         "required": [
@@ -13784,10 +13985,10 @@
           "audience": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/AudienceDto"
+                "$ref": "#/components/schemas/AnnouncementAudienceDto"
               }
             ],
-            "description": "Absent: the whole compound, everyone. May change only until the announcement is out."
+            "description": "Absent: the whole compound, everyone. Buildings or single units, never both (ADR 0080). May change only until the announcement is out."
           },
           "bodyAr": {
             "maxLength": 5000,
@@ -13853,6 +14054,45 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreateAnnouncementTemplateDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "The compound’s own, once (DUPLICATE_RESOURCE).",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "A language is whole or absent; at least one is there.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
         ],
         "type": "object"
       },
@@ -57299,7 +57539,14 @@
             "type": "number"
           },
           "audience": {
-            "$ref": "#/components/schemas/AudienceView"
+            "$ref": "#/components/schemas/AnnouncementAudienceView"
+          },
+          "audienceUnitCodes": {
+            "description": "The codes of the units it is put to, when by unit (ADR 0080).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "bodyAr": {
             "nullable": true,
@@ -57362,6 +57609,12 @@
             "nullable": true,
             "type": "string"
           },
+          "remindedAt": {
+            "description": "When its non-readers were reminded, once ever (ADR 0080).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "status": {
             "description": "From its dates, now: `draft`, `scheduled`, `published`, `expired` (past its expiry), `ended` (works over) or `archived`.",
             "enum": [
@@ -57412,9 +57665,11 @@
           "expiresAt",
           "archivedAt",
           "audience",
+          "audienceUnitCodes",
           "version",
           "editedAt",
           "notifiedAt",
+          "remindedAt",
           "works",
           "attachmentCount",
           "createdAt"
@@ -57457,7 +57712,14 @@
             "type": "array"
           },
           "audience": {
-            "$ref": "#/components/schemas/AudienceView"
+            "$ref": "#/components/schemas/AnnouncementAudienceView"
+          },
+          "audienceUnitCodes": {
+            "description": "The codes of the units it is put to, when by unit (ADR 0080).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "bodyAr": {
             "nullable": true,
@@ -57520,6 +57782,12 @@
             "nullable": true,
             "type": "string"
           },
+          "remindedAt": {
+            "description": "When its non-readers were reminded, once ever (ADR 0080).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "status": {
             "description": "From its dates, now: `draft`, `scheduled`, `published`, `expired` (past its expiry), `ended` (works over) or `archived`.",
             "enum": [
@@ -57570,9 +57838,11 @@
           "expiresAt",
           "archivedAt",
           "audience",
+          "audienceUnitCodes",
           "version",
           "editedAt",
           "notifiedAt",
+          "remindedAt",
           "works",
           "attachmentCount",
           "createdAt",
@@ -69788,10 +70058,10 @@
           "audience": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/AudienceDto"
+                "$ref": "#/components/schemas/AnnouncementAudienceDto"
               }
             ],
-            "description": "Absent: the whole compound, everyone. May change only until the announcement is out."
+            "description": "Absent: the whole compound, everyone. Buildings or single units, never both (ADR 0080). May change only until the announcement is out."
           },
           "bodyAr": {
             "maxLength": 5000,
@@ -69845,6 +70115,41 @@
               }
             ],
             "description": "Replaces the dates and the area of works as a whole."
+          }
+        },
+        "type": "object"
+      },
+      "UpdateAnnouncementTemplateDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "A language is whole or absent; at least one is there.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -78620,6 +78925,149 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/community/announcement-templates": {
+      "get": {
+        "operationId": "AnnouncementTemplatesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementTemplateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the announcement templates",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "AnnouncementTemplatesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAnnouncementTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an announcement template",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/announcement-templates/{id}": {
+      "delete": {
+        "operationId": "AnnouncementTemplatesController_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an announcement template",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "AnnouncementTemplatesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAnnouncementTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change an announcement template",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/community/announcements": {
       "get": {
         "operationId": "StaffAnnouncementsController_list",
@@ -78849,6 +79297,44 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/community/announcements/{id}/delivery": {
+      "get": {
+        "operationId": "StaffAnnouncementsController_delivery",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementDeliveryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Count how an announcement reached its audience",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/community/announcements/{id}/publish": {
       "post": {
         "operationId": "StaffAnnouncementsController_publish",
@@ -78921,6 +79407,44 @@
           }
         ],
         "summary": "Count who opened an announcement",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/announcements/{id}/remind": {
+      "post": {
+        "operationId": "StaffAnnouncementsController_remind",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementReminderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remind the people who have not opened an announcement",
         "tags": [
           "community"
         ],

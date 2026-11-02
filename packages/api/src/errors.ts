@@ -611,6 +611,16 @@ const ERROR_TEXT: Record<string, string> = {
   SPACE_USE_LIMIT: 'The unit has as many open requests as it may.',
   FACILITY_CLOSURE_PREVIEW_REQUIRED: 'Preview the closure first: it cancels bookings with a fee.',
   FACILITY_CLOSURE_PREVIEW_STALE: 'The bookings changed since the preview. Preview again.',
+  // Announcements and the office queue (ADR 0080).
+  ANNOUNCEMENT_ALREADY_REMINDED: 'Those who had not opened it were reminded already: once only.',
+  ANNOUNCEMENT_TEMPLATE_NOT_FOUND: 'This template was not found.',
+  REPLY_TEMPLATE_NOT_FOUND: 'This reply template was not found.',
+  MANAGEMENT_REQUEST_TOPIC_FIXED: 'This request’s topic cannot change.',
+  MANAGEMENT_REQUEST_CONVERTED: 'This request became a ticket: follow the ticket.',
+  OFFICIAL_LETTER_NOT_FOUND: 'This letter was not found.',
+  OFFICIAL_LETTER_NOT_OCCUPANT: 'This person holds no place in this unit now.',
+  OFFICIAL_LETTER_REVOKED: 'This letter is revoked already.',
+  OFFICIAL_LETTER_ERASED: 'The person this letter names was erased: it can no longer be printed.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

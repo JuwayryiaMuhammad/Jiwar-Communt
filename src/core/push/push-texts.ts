@@ -3204,6 +3204,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يُبتّ في طلبك استخدام {area} في الوقت المناسب.',
     },
   },
+  'community_announcement.reminder': {
+    en: {
+      title: 'Reminder',
+      body: 'An announcement of the management is waiting for you. Open the app to read it.',
+    },
+    ar: {
+      title: 'تذكير',
+      body: 'في إعلان من الإدارة مستنيك. افتح التطبيق لقراءته.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

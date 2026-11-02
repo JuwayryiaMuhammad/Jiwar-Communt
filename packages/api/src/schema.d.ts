@@ -1283,6 +1283,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/announcement-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the announcement templates */
+        get: operations["AnnouncementTemplatesController_list"];
+        put?: never;
+        /** Add an announcement template */
+        post: operations["AnnouncementTemplatesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/announcement-templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an announcement template */
+        delete: operations["AnnouncementTemplatesController_delete"];
+        options?: never;
+        head?: never;
+        /** Change an announcement template */
+        patch: operations["AnnouncementTemplatesController_update"];
+        trace?: never;
+    };
     "/api/v1/community/announcements": {
         parameters: {
             query?: never;
@@ -1336,6 +1372,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/announcements/{id}/delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Count how an announcement reached its audience */
+        get: operations["StaffAnnouncementsController_delivery"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/community/announcements/{id}/publish": {
         parameters: {
             query?: never;
@@ -1364,6 +1417,23 @@ export interface paths {
         get: operations["StaffAnnouncementsController_reads"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/announcements/{id}/remind": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remind the people who have not opened an announcement */
+        post: operations["StaffAnnouncementsController_remind"];
         delete?: never;
         options?: never;
         head?: never;
@@ -24225,11 +24295,47 @@ export interface components {
             /** Format: uuid */
             shiftId: string;
         };
+        AnnouncementAudienceDto: {
+            /** @description Buildings, as `GET /community/buildings` lists them. Null or absent: the whole compound. */
+            buildings?: string[] | null;
+            /** @description `owners`: the active owners of a unit, landlords included, and nobody else. `tenants`: the tenants and their households. */
+            occupancy: components["schemas"]["AudienceOccupancy"];
+            /** @description Single units of the compound, instead of buildings: their people within the occupancy. Null or absent: not by unit. */
+            unitIds?: string[] | null;
+        };
+        AnnouncementAudienceView: {
+            /** @description Null: the whole compound. */
+            buildings: string[] | null;
+            occupancy: components["schemas"]["AudienceOccupancy"];
+            /** @description Null: not by unit. */
+            unitIds: string[] | null;
+        };
         AnnouncementCreatedView: {
             /** Format: date-time */
             createdAt: string;
             /** Format: uuid */
             id: string;
+        };
+        AnnouncementDeliveryView: {
+            /** @description Told when it came out (important ones only). */
+            notified: number;
+            /** Format: date-time */
+            notifiedAt: string | null;
+            /** @description Of `notified`, read in the inbox. */
+            notifiedRead: number;
+            opened: components["schemas"]["AnnouncementReadCountsView"];
+            /** @description Pushes given up on. */
+            pushFailed: number;
+            /** @description Pushes still to go. */
+            pushPending: number;
+            /** @description Pushes delivered to a device, both notices together, while the delivery rows are kept. */
+            pushSent: number;
+            /** @description Told by the reminder. */
+            reminded: number;
+            /** Format: date-time */
+            remindedAt: string | null;
+            /** @description Of `reminded`, read in the inbox. */
+            remindedRead: number;
         };
         /** @enum {string} */
         AnnouncementKind: "general" | "works" | "board";
@@ -24275,6 +24381,25 @@ export interface components {
             audienceUnits: number;
             /** @description Units at least one of whose people opened it. */
             units: number;
+        };
+        AnnouncementReminderView: {
+            /** @description The people of its audience who had not opened it, told now. */
+            recipients: number;
+        };
+        AnnouncementTemplateView: {
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            titleAr: string | null;
+            titleEn: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AnnouncementTemplateViewList: {
+            data: components["schemas"]["AnnouncementTemplateView"][];
+            nextCursor: string | null;
         };
         AnnouncementVersionView: {
             attachments: components["schemas"]["CommunityAttachmentView"][];
@@ -24988,7 +25113,7 @@ export interface components {
          */
         AudienceOccupancy: "everyone" | "owners" | "tenants";
         AudiencePreviewDto: {
-            audience: components["schemas"]["AudienceDto"];
+            audience: components["schemas"]["AnnouncementAudienceDto"];
         };
         AudienceSizeView: {
             /** @description Accounts in the audience now. */
@@ -28139,8 +28264,8 @@ export interface components {
         CreateAnnouncementDto: {
             /** @description The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
             attachmentFileIds?: string[];
-            /** @description Absent: the whole compound, everyone. May change only until the announcement is out. */
-            audience?: components["schemas"]["AudienceDto"];
+            /** @description Absent: the whole compound, everyone. Buildings or single units, never both (ADR 0080). May change only until the announcement is out. */
+            audience?: components["schemas"]["AnnouncementAudienceDto"];
             bodyAr?: string | null;
             bodyEn?: string | null;
             /**
@@ -28162,6 +28287,15 @@ export interface components {
             titleEn?: string | null;
             /** @description Required for `works`, refused otherwise. */
             works?: components["schemas"]["WorksDto"];
+        };
+        CreateAnnouncementTemplateDto: {
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            /** @description The compound’s own, once (DUPLICATE_RESOURCE). */
+            name: string;
+            titleAr?: string | null;
+            /** @description A language is whole or absent; at least one is there. */
+            titleEn?: string | null;
         };
         CreateAssetDto: {
             /** @description Unique; never changes. */
@@ -42100,7 +42234,9 @@ export interface components {
             /** Format: date-time */
             archivedAt: string | null;
             attachmentCount: number;
-            audience: components["schemas"]["AudienceView"];
+            audience: components["schemas"]["AnnouncementAudienceView"];
+            /** @description The codes of the units it is put to, when by unit (ADR 0080). */
+            audienceUnitCodes: string[];
             bodyAr: string | null;
             bodyEn: string | null;
             /** Format: date-time */
@@ -42127,6 +42263,11 @@ export interface components {
              * @description Null: a draft.
              */
             publishAt: string | null;
+            /**
+             * Format: date-time
+             * @description When its non-readers were reminded, once ever (ADR 0080).
+             */
+            remindedAt: string | null;
             /**
              * @description From its dates, now: `draft`, `scheduled`, `published`, `expired` (past its expiry), `ended` (works over) or `archived`.
              * @enum {string}
@@ -42148,7 +42289,9 @@ export interface components {
             archivedAt: string | null;
             attachmentCount: number;
             attachments: components["schemas"]["CommunityAttachmentView"][];
-            audience: components["schemas"]["AudienceView"];
+            audience: components["schemas"]["AnnouncementAudienceView"];
+            /** @description The codes of the units it is put to, when by unit (ADR 0080). */
+            audienceUnitCodes: string[];
             bodyAr: string | null;
             bodyEn: string | null;
             /** Format: date-time */
@@ -42175,6 +42318,11 @@ export interface components {
              * @description Null: a draft.
              */
             publishAt: string | null;
+            /**
+             * Format: date-time
+             * @description When its non-readers were reminded, once ever (ADR 0080).
+             */
+            remindedAt: string | null;
             /**
              * @description From its dates, now: `draft`, `scheduled`, `published`, `expired` (past its expiry), `ended` (works over) or `archived`.
              * @enum {string}
@@ -45657,8 +45805,8 @@ export interface components {
         UpdateAnnouncementDto: {
             /** @description The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
             attachmentFileIds?: string[];
-            /** @description Absent: the whole compound, everyone. May change only until the announcement is out. */
-            audience?: components["schemas"]["AudienceDto"];
+            /** @description Absent: the whole compound, everyone. Buildings or single units, never both (ADR 0080). May change only until the announcement is out. */
+            audience?: components["schemas"]["AnnouncementAudienceDto"];
             bodyAr?: string | null;
             bodyEn?: string | null;
             /**
@@ -45678,6 +45826,14 @@ export interface components {
             titleEn?: string | null;
             /** @description Replaces the dates and the area of works as a whole. */
             works?: components["schemas"]["WorksDto"];
+        };
+        UpdateAnnouncementTemplateDto: {
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            name?: string;
+            titleAr?: string | null;
+            /** @description A language is whole or absent; at least one is there. */
+            titleEn?: string | null;
         };
         UpdateAssetDto: {
             /**
@@ -49228,6 +49384,92 @@ export interface operations {
             };
         };
     };
+    AnnouncementTemplatesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementTemplateViewList"];
+                };
+            };
+        };
+    };
+    AnnouncementTemplatesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAnnouncementTemplateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementTemplateView"];
+                };
+            };
+        };
+    };
+    AnnouncementTemplatesController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AnnouncementTemplatesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAnnouncementTemplateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementTemplateView"];
+                };
+            };
+        };
+    };
     StaffAnnouncementsController_list: {
         parameters: {
             query?: {
@@ -49342,6 +49584,27 @@ export interface operations {
             };
         };
     };
+    StaffAnnouncementsController_delivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementDeliveryView"];
+                };
+            };
+        };
+    };
     StaffAnnouncementsController_publish: {
         parameters: {
             query?: never;
@@ -49382,6 +49645,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnnouncementReadCountsView"];
+                };
+            };
+        };
+    };
+    StaffAnnouncementsController_remind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementReminderView"];
                 };
             };
         };

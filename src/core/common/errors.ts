@@ -1813,6 +1813,22 @@ export const ErrorCode = {
   FACILITY_CLOSURE_PREVIEW_REQUIRED: 'FACILITY_CLOSURE_PREVIEW_REQUIRED',
   /** What the closure would cancel or credit changed since its preview (409). */
   FACILITY_CLOSURE_PREVIEW_STALE: 'FACILITY_CLOSURE_PREVIEW_STALE',
+  // Announcements and the office queue (ADR 0080).
+  /** Its non-readers were reminded already, once ever (409, params.remindedAt). */
+  ANNOUNCEMENT_ALREADY_REMINDED: 'ANNOUNCEMENT_ALREADY_REMINDED',
+  ANNOUNCEMENT_TEMPLATE_NOT_FOUND: 'ANNOUNCEMENT_TEMPLATE_NOT_FOUND',
+  REPLY_TEMPLATE_NOT_FOUND: 'REPLY_TEMPLATE_NOT_FOUND',
+  /** On a system topic or about a hold: its topic never changes (409). */
+  MANAGEMENT_REQUEST_TOPIC_FIXED: 'MANAGEMENT_REQUEST_TOPIC_FIXED',
+  /** It became a ticket and closed for good (409, params.ticketNumber). */
+  MANAGEMENT_REQUEST_CONVERTED: 'MANAGEMENT_REQUEST_CONVERTED',
+  OFFICIAL_LETTER_NOT_FOUND: 'OFFICIAL_LETTER_NOT_FOUND',
+  /** The account holds no live occupancy of the unit (409). */
+  OFFICIAL_LETTER_NOT_OCCUPANT: 'OFFICIAL_LETTER_NOT_OCCUPANT',
+  /** Revoked already (409, params.revokedAt). */
+  OFFICIAL_LETTER_REVOKED: 'OFFICIAL_LETTER_REVOKED',
+  /** Its subject's account was erased: the PDF is no longer drawn (409). */
+  OFFICIAL_LETTER_ERASED: 'OFFICIAL_LETTER_ERASED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

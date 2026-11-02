@@ -838,6 +838,17 @@ export const NOTIFICATION_KINDS = {
     target: 'community_announcement',
     params: {},
   },
+  /**
+   * ADR 0080: the staff reminded the people of an announcement's audience
+   * who had not opened it, once ever.
+   */
+  'community_announcement.reminder': {
+    priority: 'normal',
+    category: 'community',
+    critical: false,
+    target: 'community_announcement',
+    params: {},
+  },
   /** An event the account said it is going to was cancelled. */
   'community_event.cancelled': {
     priority: 'normal',

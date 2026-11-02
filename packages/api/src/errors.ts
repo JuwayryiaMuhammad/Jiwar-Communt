@@ -621,6 +621,13 @@ const ERROR_TEXT: Record<string, string> = {
   OFFICIAL_LETTER_NOT_OCCUPANT: 'This person holds no place in this unit now.',
   OFFICIAL_LETTER_REVOKED: 'This letter is revoked already.',
   OFFICIAL_LETTER_ERASED: 'The person this letter names was erased: it can no longer be printed.',
+  // Maintenance analytics and cases (ADR 0081).
+  MAINTENANCE_CASE_NOT_FOUND: 'This case was not found.',
+  MAINTENANCE_CASE_CLOSED: 'This case is closed already.',
+  MAINTENANCE_CASE_HAS_WORK_ORDER: 'This case has its work order already.',
+  PLAN_SUGGESTION_NOT_FOUND: 'This suggestion was not found.',
+  PLAN_SUGGESTION_DECIDED: 'This suggestion is decided already.',
+  PLAN_NOT_OF_ASSET: 'That plan is not an active plan of this asset.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

@@ -3254,6 +3254,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'صدر لك الخطاب رقم {letterNumber}. افتح التطبيق لتحميله.',
     },
   },
+  'maintenance_case.opened': {
+    en: {
+      title: 'Community case opened',
+      body: '{ticketCount} reports of one kind in one building make a case.',
+    },
+    ar: {
+      title: 'حالة مجتمعية جديدة',
+      body: '{ticketCount} بلاغات من نوع واحد في مبنى واحد أصبحت حالة واحدة.',
+    },
+  },
+  'ticket.case_linked': {
+    en: {
+      title: 'Your report is being handled together',
+      body: 'Ticket #{ticketNumber} is one of several the management handles as one case.',
+    },
+    ar: {
+      title: 'بلاغك يُعالَج مع غيره',
+      body: 'البلاغ رقم {ticketNumber} من بلاغات تعالجها الإدارة كحالة واحدة.',
+    },
+  },
+  'ticket.case_resolved': {
+    en: {
+      title: 'Case resolved',
+      body: 'The case ticket #{ticketNumber} belongs to was resolved.',
+    },
+    ar: {
+      title: 'تمت معالجة الحالة',
+      body: 'عولجت الحالة التي يتبعها البلاغ رقم {ticketNumber}.',
+    },
+  },
+  'maintenance.plan_suggested': {
+    en: {
+      title: 'Planned work suggested',
+      body: '{ticketCount} repeat faults suggest planned work. Open the app to decide.',
+    },
+    ar: {
+      title: 'اقتراح صيانة دورية',
+      body: '{ticketCount} أعطال متكررة تقترح صيانة دورية. افتح التطبيق لتقرر.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -2467,6 +2467,23 @@ export const AUDIT_ACTIONS = {
   'space_use.refused': { log: 'tenant', target: 'space_use' },
   'space_use.cancelled': { log: 'tenant', target: 'space_use' },
   'space_use.expired': { log: 'tenant', target: 'space_use' },
+  // Maintenance analytics and cases (ADR 0081). A ticket marked sensitive or
+  // cleared: metadata sensitive and the reason code. The analytics
+  // settings: changes. A plan suggestion accepted (the plan, whether it was
+  // made for it) or dismissed (the code). A community case opened (the
+  // category's code, the building, the count; the ticket that tipped it, or
+  // the person who opened it), resolved or dismissed (the code, the count).
+  // Never anyone's words.
+  'ticket.sensitivity_changed': { log: 'tenant', target: 'ticket' },
+  'maintenance.analytics_settings_changed': {
+    log: 'tenant',
+    target: 'tenant',
+  },
+  'plan_suggestion.accepted': { log: 'tenant', target: 'plan_suggestion' },
+  'plan_suggestion.dismissed': { log: 'tenant', target: 'plan_suggestion' },
+  'maintenance_case.opened': { log: 'tenant', target: 'maintenance_case' },
+  'maintenance_case.resolved': { log: 'tenant', target: 'maintenance_case' },
+  'maintenance_case.dismissed': { log: 'tenant', target: 'maintenance_case' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -259,6 +259,9 @@ describe('audit catalog', () => {
         'announcement_template',
         'reply_template',
         'official_letter',
+        // ADR 0081.
+        'plan_suggestion',
+        'maintenance_case',
       ]).toContain(def.target);
     }
   });

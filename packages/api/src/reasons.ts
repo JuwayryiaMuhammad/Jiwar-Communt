@@ -288,6 +288,11 @@ export const REASON_CODES = {
   spaceUseRefuse: ['area_unavailable', 'conflicts_with_event', 'not_suitable', 'too_many_guests', 'other'],
   spaceUseCancel: ['area_unavailable', 'safety', 'requester_asked', 'other'],
   spaceUseWithdraw: ['no_longer_needed', 'plans_changed', 'other'],
+  ticketSensitive: ['resident_privacy', 'safeguarding', 'security', 'legal', 'staff_conduct', 'other'],
+  ticketSensitiveClear: ['marked_in_error', 'no_longer_sensitive', 'other'],
+  maintenanceCaseResolve: ['fixed', 'work_planned', 'external_cause', 'other'],
+  maintenanceCaseDismiss: ['not_related', 'isolated_faults', 'raised_in_error', 'other'],
+  planSuggestionDismiss: ['already_planned', 'not_recurring', 'replacement_planned', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

@@ -96,6 +96,11 @@ export const PERMISSIONS = {
   'tickets.create': { kinds: ['resident', 'family', 'proxy'] },
   'tickets.work': { kinds: ['staff'] },
   'tickets.dispatch': { kinds: ['staff', 'manager'] },
+  // Sensitive tickets (ADR 0081): a ticket dispatch marked sensitive is
+  // hidden from every staff reader without this (its lists, search, export,
+  // an asset's timeline, the counts); every staff read of one is logged.
+  // The manager's by default; a compound may give it to a staff role.
+  'tickets.sensitive': { kinds: ['staff', 'manager'] },
   'maintenance.manage': { kinds: ['manager'] },
   // Assets and inspections (ADR 0064). Technicians read the asset register
   // in the field (scan a tag, see its card, record readings) and perform

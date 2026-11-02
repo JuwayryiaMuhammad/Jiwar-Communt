@@ -2969,6 +2969,20 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'each nullable column is tested IS [NOT] NULL first; owed_at_approval, dues_exception_code and cancel_reason are compared only on a value',
   },
+  // The field team (ADR 0078).
+  technician_help_requests_note_length: {
+    guarded: 'note IS NULL is tested first',
+  },
+  technician_help_requests_status_shape: {},
+  technician_help_requests_helper_not_requester: {
+    guarded: 'helper_account_id IS NULL is tested first',
+  },
+  technician_help_requests_taker_not_requester: {
+    guarded: 'taken_by_account_id IS NULL is tested first',
+  },
+  technician_help_requests_escalated_before_taken: {
+    guarded: 'escalated_at and taken_at IS NULL are tested first',
+  },
 };
 
 interface Check {

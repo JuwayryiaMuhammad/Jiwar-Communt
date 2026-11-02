@@ -1,6 +1,7 @@
 import type { Response } from 'supertest';
 import { addDays } from '../../src/core/common/slots/day-slots';
 import { at, today } from '../setup/compound-clock';
+import { gateHelpers } from '../setup/gate';
 import { call } from './request';
 import type { World } from './world';
 
@@ -45,7 +46,84 @@ export function fieldTeamCalls(
       title: 'No-store',
       body: 'An instruction for the no-store calls.',
     });
+  /**
+   * A fresh technician of A's with a call for help: one live call each,
+   * so every call that writes gets its own.
+   */
+  const helpCall = async () => {
+    const w = world();
+    const tech = await gateHelpers(w.h).guard(w.a, 'technician');
+    const token = await w.h.tokenFor({
+      sub: tech.id,
+      tid: w.a.tenantId,
+      typ: 'staff',
+    });
+    const res = await call(w, 'POST', '/maintenance/help-requests', {
+      token,
+      body: { kind: 'parts' },
+    });
+    return { id: id(res), token };
+  };
+  const takenCall = async () => {
+    const c = await helpCall();
+    await manager('POST', `/staff/field-team/help-requests/${c.id}/take`, {});
+    return c;
+  };
   return {
+    'POST /maintenance/help-requests': async () => {
+      const w = world();
+      const tech = await gateHelpers(w.h).guard(w.a, 'technician');
+      return call(w, 'POST', '/maintenance/help-requests', {
+        token: await w.h.tokenFor({
+          sub: tech.id,
+          tid: w.a.tenantId,
+          typ: 'staff',
+        }),
+        body: { kind: 'safety' },
+      });
+    },
+    'GET /maintenance/help-requests/mine': () =>
+      technician('GET', '/maintenance/help-requests/mine'),
+    'POST /maintenance/help-requests/{id}/resolve': async () => {
+      const c = await takenCall();
+      return call(
+        world(),
+        'POST',
+        `/maintenance/help-requests/${c.id}/resolve`,
+        {
+          token: c.token,
+        },
+      );
+    },
+    'POST /maintenance/help-requests/{id}/cancel': async () => {
+      const c = await helpCall();
+      return call(
+        world(),
+        'POST',
+        `/maintenance/help-requests/${c.id}/cancel`,
+        {
+          token: c.token,
+        },
+      );
+    },
+    'GET /staff/field-team/help-requests': () =>
+      manager('GET', '/staff/field-team/help-requests'),
+    'GET /staff/field-team/help-requests/{id}': async () =>
+      manager(
+        'GET',
+        `/staff/field-team/help-requests/${(await helpCall()).id}`,
+      ),
+    'POST /staff/field-team/help-requests/{id}/take': async () =>
+      manager(
+        'POST',
+        `/staff/field-team/help-requests/${(await helpCall()).id}/take`,
+        {},
+      ),
+    'POST /staff/field-team/help-requests/{id}/resolve': async () =>
+      manager(
+        'POST',
+        `/staff/field-team/help-requests/${(await takenCall()).id}/resolve`,
+      ),
     'GET /staff/field-team/technicians': () =>
       manager('GET', '/staff/field-team/technicians'),
     'GET /staff/field-team/zones': () =>

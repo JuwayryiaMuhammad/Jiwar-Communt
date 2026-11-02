@@ -1936,6 +1936,13 @@ export const ErrorCode = {
   MARKET_UNIT_LISTING_LIMIT_REACHED: 'MARKET_UNIT_LISTING_LIMIT_REACHED',
   /** Nothing of the caller's waits for a re-confirmation (409). */
   GROUP_OFFER_RECONFIRM_NOT_NEEDED: 'GROUP_OFFER_RECONFIRM_NOT_NEEDED',
+  // ---- The field team (ADR 0078) -------------------------------------------
+  /** A call for help not found, or not the caller's to see (404). */
+  TECHNICIAN_HELP_NOT_FOUND: 'TECHNICIAN_HELP_NOT_FOUND',
+  /** The technician has a live call already: one at a time (409). */
+  TECHNICIAN_HELP_LIVE: 'TECHNICIAN_HELP_LIVE',
+  /** The call was taken, resolved or called off already, `params.status` (409). */
+  TECHNICIAN_HELP_CLOSED: 'TECHNICIAN_HELP_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

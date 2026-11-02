@@ -13452,3 +13452,31 @@ enum TechnicianHelpStatus {
 
   @@map("technician_help_status")
 }
+
+/// A technician's call for help (ADR 0078): taken by the field team, sent
+/// another technician or none, resolved or called off; escalated to the
+/// managers once when nobody takes it. One live call per technician.
+model TechnicianHelpRequest {
+  id                 String               @id @db.Uuid
+  tenantId           String               @map("tenant_id") @db.Uuid
+  requesterId        String               @map("requester_account_id") @db.Uuid
+  kind               TechnicianHelpKind
+  ticketId           String?              @map("ticket_id") @db.Uuid
+  /// The technician's own words, staff-only.
+  note               String?
+  status             TechnicianHelpStatus @default(open)
+  takenById          String?              @map("taken_by_account_id") @db.Uuid
+  takenAt            DateTime?            @map("taken_at") @db.Timestamptz(3)
+  /// The technician sent to help, if any.
+  helperId           String?              @map("helper_account_id") @db.Uuid
+  escalatedAt        DateTime?            @map("escalated_at") @db.Timestamptz(3)
+  resolvedAt         DateTime?            @map("resolved_at") @db.Timestamptz(3)
+  resolvedById       String?              @map("resolved_by_account_id") @db.Uuid
+  cancelledAt        DateTime?            @map("cancelled_at") @db.Timestamptz(3)
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt, id], map: "technician_help_requests_status_idx")
+  @@map("technician_help_requests")
+}

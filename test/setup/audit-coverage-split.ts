@@ -1198,3 +1198,15 @@ export const M211_COVERAGE: readonly string[] = [
   'group_offer.reconfirm_requested',
   'group_offer.reconfirmed',
 ];
+
+/** The field team (ADR 0078): test/field-team/audit-coverage.e2e-spec.ts. */
+export const FIELD_TEAM_COVERAGE: readonly string[] = [
+  'technician_shift.late',
+  'technician_shift.absent',
+  'technician_help.requested',
+  'technician_help.taken',
+  'technician_help.resolved',
+  'technician_help.cancelled',
+  'technician_help.escalated',
+  'technician_help.note_cleared',
+];

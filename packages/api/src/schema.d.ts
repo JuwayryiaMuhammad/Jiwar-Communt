@@ -7037,6 +7037,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/help-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call for help
+         * @description More hands, someone who knows the fault, parts, or a second person for safety, about one of my tickets or none. One live call at a time (409 TECHNICIAN_HELP_LIVE). The field team is told at once; the managers if nobody takes it in fifteen minutes.
+         */
+        post: operations["TechnicianHelpController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/help-requests/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my calls for help
+         * @description Mine and those I was sent to help, newest first.
+         */
+        get: operations["TechnicianHelpController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/help-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off my call for help
+         * @description While open or taken.
+         */
+        post: operations["TechnicianHelpController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/help-requests/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a call for help resolved
+         * @description Mine or one I was sent to help, once taken (409 TECHNICIAN_HELP_CLOSED otherwise).
+         */
+        post: operations["TechnicianHelpController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/inspection-report": {
         parameters: {
             query?: never;
@@ -16284,6 +16364,83 @@ export interface paths {
         get: operations["StaffDutyRosterController_attendance"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/help-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the calls for help
+         * @description Newest first.
+         */
+        get: operations["StaffHelpController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/help-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a call for help */
+        get: operations["StaffHelpController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/help-requests/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a call for help resolved
+         * @description Once taken (409 TECHNICIAN_HELP_CLOSED otherwise).
+         */
+        post: operations["StaffHelpController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/help-requests/{id}/take": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a call for help
+         * @description Once, while open (409 TECHNICIAN_HELP_CLOSED): sending another technician or none. The caller and the helper are told.
+         */
+        post: operations["StaffHelpController_take"];
         delete?: never;
         options?: never;
         head?: never;
@@ -36573,6 +36730,44 @@ export interface components {
             /** Format: date-time */
             serverTime: string;
         };
+        HelpRequestView: {
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the managers were told nobody had taken it.
+             */
+            escalatedAt: string | null;
+            /** @description The technician sent to help, if any. */
+            helper: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["TechnicianHelpKind"];
+            /** @description The caller’s own words, staff-only. */
+            note: string | null;
+            /** @description The technician who called. */
+            requester: components["schemas"]["AccountRefView"];
+            /** Format: date-time */
+            resolvedAt: string | null;
+            /** @description `open` until the field team takes it, `taken` (with a helper or none), then `resolved`; `cancelled` when the caller calls it off. */
+            status: components["schemas"]["TechnicianHelpStatus"];
+            /** Format: date-time */
+            takenAt: string | null;
+            takenBy: components["schemas"]["AccountRefView"] | null;
+            ticket: components["schemas"]["HelpTicketView"] | null;
+        };
+        HelpRequestViewList: {
+            data: components["schemas"]["HelpRequestView"][];
+            nextCursor: string | null;
+        };
+        HelpTicketView: {
+            /** Format: uuid */
+            id: string;
+            /** @example T-000123 */
+            number: string;
+        };
         HoldDto: {
             holdReason: components["schemas"]["TicketHoldReason"];
         };
@@ -43916,6 +44111,16 @@ export interface components {
             /** Format: date-time */
             escalatedAt: string;
         };
+        RequestHelpDto: {
+            kind: components["schemas"]["TechnicianHelpKind"];
+            /** @description Their own words, for the field team and the helper only. */
+            note?: string;
+            /**
+             * Format: uuid
+             * @description One of the caller’s own tickets (assigned to them); otherwise TICKET_NOT_FOUND.
+             */
+            ticketId?: string;
+        };
         RequestMessageCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -48756,6 +48961,13 @@ export interface components {
             /** @description What the QR holds: `JWA1.…` (an asset) or `JWL1.…` (an area). */
             code: string;
         };
+        TakeHelpDto: {
+            /**
+             * Format: uuid
+             * @description Another active technician to send (GUARD_NOT_ELIGIBLE otherwise); absent to handle it without one.
+             */
+            helperId?: string;
+        };
         TariffView: {
             /** Format: date-time */
             createdAt: string;
@@ -48798,6 +49010,13 @@ export interface components {
          * @enum {string}
          */
         TechnicianAvailabilityState: "available" | "unavailable";
+        /** @enum {string} */
+        TechnicianHelpKind: "extra_hands" | "expertise" | "parts" | "safety";
+        /**
+         * @description `open` until the field team takes it, `taken` (with a helper or none), then `resolved`; `cancelled` when the caller calls it off.
+         * @enum {string}
+         */
+        TechnicianHelpStatus: "open" | "taken" | "resolved" | "cancelled";
         TechnicianIncidentDto: {
             /** @description What happened, in the technician’s words. */
             description: string;
@@ -61962,6 +62181,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TariffView"];
+                };
+            };
+        };
+    };
+    TechnicianHelpController_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestHelpDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HelpRequestView"];
+                };
+            };
+        };
+    };
+    TechnicianHelpController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HelpRequestViewList"];
+                };
+            };
+        };
+    };
+    TechnicianHelpController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HelpRequestView"];
+                };
+            };
+        };
+    };
+    TechnicianHelpController_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HelpRequestView"];
                 };
             };
         };
@@ -76280,6 +76583,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TechnicianAttendanceViewList"];
+                };
+            };
+        };
+    };
+    StaffHelpController_list: {
+        parameters: {
+            query?: {
+                /** @description Default: all. */
+                status?: components["schemas"]["TechnicianHelpStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HelpRequestViewList"];
+                };
+            };
+        };
+    };
+    StaffHelpController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HelpRequestView"];
+                };
+            };
+        };
+    };
+    StaffHelpController_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HelpRequestView"];
+                };
+            };
+        };
+    };
+    StaffHelpController_take: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TakeHelpDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HelpRequestView"];
                 };
             };
         };

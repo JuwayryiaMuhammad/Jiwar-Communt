@@ -127,16 +127,37 @@ export class GuardDutyExportSections implements OnModuleInit {
     };
     yield {
       path: 'guard-duty/roster.json',
-      json: d.slots.map((x) => ({
-        ...post(x),
-        startsAt: x.startsAt,
-        endsAt: x.endsAt,
-        status: x.status,
-        cancelReason: x.cancelReason,
-        absentAt: x.absentAt,
-        swappedAt: x.swappedAt,
-      })),
+      json: d.slots
+        .filter((x) => x.crew === 'security')
+        .map((x) => ({
+          ...post(x),
+          startsAt: x.startsAt,
+          endsAt: x.endsAt,
+          status: x.status,
+          cancelReason: x.cancelReason,
+          absentAt: x.absentAt,
+          swappedAt: x.swappedAt,
+        })),
     };
+    // A technician's slots (ADR 0078): the zone, the times, and when going
+    // on and off duty filled and closed each.
+    const duty = d.slots.filter((x) => x.crew === 'maintenance');
+    if (duty.length)
+      yield {
+        path: 'field-team/slots.json',
+        json: duty.map((x) => ({
+          zone: x.placeId ? (d.zones.get(x.placeId) ?? null) : null,
+          startsAt: x.startsAt,
+          endsAt: x.endsAt,
+          status: x.status,
+          cancelReason: x.cancelReason,
+          dutyStartedAt: x.dutyStartedAt,
+          dutyEndedAt: x.dutyEndedAt,
+          lateMinutes: x.lateMinutes,
+          overtimeMinutes: x.overtimeMinutes,
+          absentAt: x.absentAt,
+        })),
+      };
     yield {
       path: 'guard-duty/swaps.json',
       json: d.swaps.map((x) => ({

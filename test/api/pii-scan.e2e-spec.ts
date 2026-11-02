@@ -1858,6 +1858,9 @@ describe('API v0 — PII leak scan', () => {
       '/staff/field-team/instructions/{id}':
         '0192a5f0-1c2b-7d3e-8f40-0000000078a1',
       '/maintenance/instructions/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000078a1',
+      // A call for help nowhere (not found).
+      '/staff/field-team/help-requests/{id}':
+        '0192a5f0-1c2b-7d3e-8f40-0000000078a2',
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,
